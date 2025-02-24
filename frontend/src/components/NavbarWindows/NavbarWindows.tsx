@@ -8,7 +8,7 @@ function NavbarWindows() {
 	return (
 		<div className="navbar-windows-component">
 			<div className="logo-box">
-
+				Science-Park
 			</div>
 			<div className="navigetion-box">
 				<NavLink to="/" className={({ isActive }) => (isActive ? "link active" : "link")}>หน้าหลัก</NavLink>
