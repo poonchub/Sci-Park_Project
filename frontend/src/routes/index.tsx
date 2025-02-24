@@ -10,6 +10,7 @@ function ConfigRoutes(){
 
     routes = [CustomerRoutes()];
 
+    
     return useRoutes(routes)
 }
 export default ConfigRoutes;
