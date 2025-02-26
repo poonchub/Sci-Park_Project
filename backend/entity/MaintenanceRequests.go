@@ -12,4 +12,6 @@ type MaintenanceRequest struct {
 	Room           Room   `gorm:"foreignKey:RoomID"` // foreign key ไปที่ Room
 	RequestStatusID uint   `json:"request_status_id"`
 	RequestStatus  RequestStatus `gorm:"foreignKey:RequestStatusID"` // foreign key ไปที่ RequestStatus
+
+	MaintenanceImages []MaintenanceImage `gorm:"foreignKey:RequestID"`
 }
