@@ -13,3 +13,4 @@ type UserPackage struct {
 	TrainingRoomUsed      int     `json:"training_room_used"`
 	MultiFunctionRoomUsed int     `json:"multi_function_room_used"`
 }
+     

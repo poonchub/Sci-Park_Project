@@ -13,7 +13,14 @@ type User struct {
 	Password       string  `json:"password"`
 	Phone          string  `json:"phone"`
 	ProfilePath    string  `json:"profile_path"`
+	
 	UserPackageID  *uint   `json:"userpackage_id"` // foreign key จาก UserPackage
+	
 	RoleID         uint    `json:"role_id"`    // foreign key ไปที่ Role
 	Role           Role    `gorm:"foreignKey:RoleID"`   // เชื่อมกับ Role
+
+	Inspections        	[]Inspection        	`gorm:"foreignKey:UserID"`
+	MaintenanceRequests []MaintenanceRequest 	`gorm:"foreignKey:UserID"`
+	MaintenanceTasks   	[]MaintenanceTask   	`gorm:"foreignKey:UserID"`
+	ManagerApprovals   	[]ManagerApproval   	`gorm:"foreignKey:UserID"`
 }
