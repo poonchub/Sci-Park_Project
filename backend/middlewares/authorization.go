@@ -5,7 +5,7 @@ import (
    "net/http"
    "strings"
 
-
+   "sci-park_web-application/config"
    "sci-park_web-application/services"
    "github.com/gin-gonic/gin"
 )
@@ -37,9 +37,9 @@ func Authorizes() gin.HandlerFunc {
 
 
        jwtWrapper := services.JwtWrapper{
-           SecretKey: "SvNQpBN8y3qlVrsGAYYWoJJk56LtzFHx",
-           Issuer:    "AuthService",
-       }
+        SecretKey: config.GetSecretKey(),
+        Issuer:    "AuthService",
+        }
 
 
        _, err := jwtWrapper.ValidateToken(clientToken)

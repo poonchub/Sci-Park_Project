@@ -2,49 +2,51 @@ package main
 
 import (
 	"net/http"
+	"sci-park_web-application/config"
+	"sci-park_web-application/middlewares"
+	"sci-park_web-application/controller"
 
 	"github.com/gin-gonic/gin"
-
-	"sci-park_web-application/config"
-	// "sci-park_web-application/app/controller/users"
-	"sci-park_web-application/middlewares"
 )
 
 const PORT = "8000"
 
 func main() {
-	// เปิดการเชื่อมต่อฐานข้อมูล
+	// โหลดค่าจาก .env ก่อนเชื่อมต่อฐานข้อมูล
+	config.LoadEnv()
 	config.ConnectionDB()
-
-	// สร้างตารางฐานข้อมูล
 	config.SetupDatabase()
 
+	// ตั้งค่า CORS Middleware
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
-	// Auth Routes
-	// r.POST("/signup", users.SignUp)
-	// r.POST("/signin", users.SignIn)
-
-	// Protected Routes
-	router := r.Group("/")
-	router.Use(middlewares.Authorizes())
+	// 🌍 Public API (ไม่ต้องใช้ Token)
+	public := r.Group("/")
 	{
-		// router.PUT("/user/:id", users.Update)
-		// router.GET("/users", users.GetAll)
-		// router.GET("/user/:id", users.Get)
-		// router.DELETE("/user/:id", users.Delete)
+		public.POST("/auth/login", controller.UserLogin)
+		
 	}
 
-	// Root Route
+	// 🔒 Protected API (ต้องใช้ Token)
+	protected := r.Group("/")
+	protected.Use(middlewares.Authorizes()) // ✅ Middleware ตรวจสอบ Token
+	{
+
+		// protected.GET("/users", controller.GetAllUsers)
+		
+	}
+
+	// 🌍 Root Route
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
 
-	// Run the server
-	r.Run("localhost:" + PORT)
+	// 🚀 Start Server
+	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น
 }
 
+// 🛠 CORS Middleware
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
