@@ -4,6 +4,7 @@ import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import MaintenanceRequest from "../pages/MaintenanceRequest/MaintenanceRequest";
 import Home from "../pages/Home/Home";
+import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 
 const CustomerRoutes = (): RouteObject => {
 	return {
@@ -21,6 +22,10 @@ const CustomerRoutes = (): RouteObject => {
 			{
 				path: "/maintenance-request",
 				element: <MaintenanceRequest/>
+			},
+			{
+				path: "/create-maintenance-request",
+				element: <CreateMaintenanceRequest/>
 			},
 		]
 	}

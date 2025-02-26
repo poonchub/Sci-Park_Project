@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import "./MaintenanceRequest.css"
 
 function MaintenanceRequest() {
@@ -18,16 +19,19 @@ function MaintenanceRequest() {
                 <p className="text-title">รายการแจ้งซ่อม</p>
             </div>
             <div className="data-query-section">
-                <div className="status-button btn-active">ทั้งหมด</div>
-                {
-                    status.map((item, index) => {
-                        return (
-                            <div key={index} className="status-button">
-                                {item.statusName}
-                            </div>
-                        )
-                    })
-                }
+                <div className="status-button-container">
+                    <div className="status-button btn-active">ทั้งหมด</div>
+                    {
+                        status.map((item, index) => {
+                            return (
+                                <button key={index} className="status-button">
+                                    {item.statusName}
+                                </button>
+                            )
+                        })
+                    }
+                </div>
+                <Link to="/create-maintenance-request" className="create-request-button">เขียนคำร้องแจ้งซ่อม</Link>
             </div>
         </div>
     )

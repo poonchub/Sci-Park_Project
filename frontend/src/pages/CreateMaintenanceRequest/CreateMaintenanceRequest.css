@@ -1,0 +1,103 @@
+.create-maintenance-request-page {
+    height: 100%;
+
+    .step-card {
+        border-radius: 20px;
+        background: var(--color-primary);
+        box-shadow: 0px 0px 8px var(--shadow-light);
+        padding: 10px 22%;
+        padding-top: 18px;
+
+        /* ปรับแต่งวงกลมของ Step */
+        .custom-steps .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--step-background-pending) !important;
+            border-radius: 50% !important;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+            font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        /* ปรับแต่ง title ให้ตรงกลางและเพิ่ม margin-left */
+        .custom-steps .ant-steps-item-title {
+            margin-left: 6px;
+            font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        /* ปรับแต่งวงกลมและเครื่องหมายถูกเมื่อเสร็จสิ้น */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--step-border-success) !important;
+            background-color: var(--step-background-success) !important;
+            font-size: 16px;
+            width: 40px;
+            height: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ปรับแต่งวงกลมเมื่ออยู่ในสถานะที่กำลังทำ (processing) */
+        .custom-steps .ant-steps-item-process .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--step-border-processing) !important;
+            background-color: #fff !important;
+            width: 40px;
+            height: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ปรับแต่งตัวเลขในสถานะที่ยังไม่ทำ (pending) */
+        .custom-steps .ant-steps-item-wait .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        /* ปรับแต่งเครื่องหมายถูกภายในวงกลม */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-icon svg {
+            fill: var(--text-secondary) !important;
+            width: 18px !important;
+            height: 18px !important;
+            display: block !important;
+        }
+
+        /* ลดความยาวของเส้นเชื่อม */
+        .custom-steps .ant-steps-item-tail {
+            width: 105% !important;
+            /* height: 3px !important; */
+            position: relative;
+            z-index: 1;
+            top: 21px;
+            /* ปรับขยับเส้นเชื่อมลง */
+        }
+
+        /* เปลี่ยนสีเส้นเชื่อมในสถานะที่เสร็จสมบูรณ์ (success) */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-tail {
+            background-color: var(--step-line-success) !important;
+            height: 1px !important;
+        }
+
+        /* ปรับสีตัวเลขในขั้นตอนที่กำลังดำเนินการ (processing) */
+        .custom-steps .ant-steps-item-process .ant-steps-item-icon .ant-steps-icon {
+            color: black !important;
+        }
+
+        .custom-steps .ant-steps-item-finish .ant-steps-item-container .ant-steps-item-tail::after {
+            display: none !important;
+        }
+    }
+}
