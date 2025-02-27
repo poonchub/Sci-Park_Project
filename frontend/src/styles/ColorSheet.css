@@ -8,7 +8,7 @@
     /* Theme Color */
     --color-primary: #FFFFFF;
     --color-secondary: #F26522;
-    --background-color: #F5F5F7;
+    --background-color: #fcfcfc;
 
     /* Text Color */
     --text-primary: #000000;
@@ -45,4 +45,12 @@
     --step-border-processing: #F26522;
     --step-background-pending: #F4F4F4;
     --step-line-success: #F26522;
+
+    /* Radio */
+    --radio-border-check: #F26522;
+    --radio-border-uncheck: #8a8a8a;
+
+    /* Input */
+    --input-border: rgba(109, 110, 112, 0.4);
+    --input-focus: #08aff1;
 }
