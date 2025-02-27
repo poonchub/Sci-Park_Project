@@ -1,0 +1,92 @@
+.maintenance-request-page{
+    height: 100%;
+    border-radius: 20px;
+    background: var(--color-primary);
+    box-shadow: 0px 0px 8px var(--shadow-light);
+
+    .header-title{
+        width: 100%;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        padding: 8px 40px;
+        background: var(--color-secondary);
+        border-radius: 20px 20px 40px 40px;
+        box-shadow: 0px 0px 8px var(--shadow-light);
+        gap: 16px;
+
+        .circle-icon{
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            padding: 7px;
+            overflow: hidden;
+            background: var(--color-primary);
+            
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        .text-title{
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 24px;
+        }
+    }
+
+    .data-query-section{
+        padding: 30px 70px;
+        display: flex;
+        justify-content: space-between;
+
+        .status-button-container{
+            display: flex;
+            gap: 14px;
+
+            .status-button{
+                background-color: var(--button-secondary-gray-bg);
+                padding: 6px 14px;
+                border-radius: 20px;
+                color: var(--button-secondary-gray-texty);
+                transition: all ease-in 0.3s;
+                cursor: pointer;
+                border: 0px;
+            }
+    
+            .status-button:hover{
+                box-shadow: 0px 1px 4px var(--shadow-light);
+                color: var(--sut-black);
+            }
+    
+            .btn-active{
+                box-shadow: 0px 1px 4px var(--shadow-light);
+                background: var(--button-secondary-gold-bg);
+                color: var(--button-secondary-gold-text);
+                font-weight: 600;
+            }
+
+            .btn-active:hover{
+                color: var(--button-secondary-gold-text);
+            }
+        }
+
+        .create-request-button{
+            border: 2px solid var(--button-secondary-blue-border);
+            color: var(--button-secondary-blue-text);
+            background: var(--button-secondary-blue-bg);
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 6px 14px;
+            transition: all ease 0.3s;
+        }
+
+        .create-request-button:hover{
+            background: var(--button-secondary-blue-bg-hover);
+            color: var(--button-secondary-blue-text-hover);
+        }
+    }
+}

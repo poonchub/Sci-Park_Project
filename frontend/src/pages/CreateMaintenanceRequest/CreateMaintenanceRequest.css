@@ -1,0 +1,346 @@
+.create-maintenance-request-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    .step-card {
+        border-radius: 20px;
+        background: var(--color-primary);
+        box-shadow: 0px 0px 8px var(--shadow-light);
+        padding: 10px 22%;
+        padding-top: 18px;
+
+        /* ปรับแต่งวงกลมของ Step */
+        .custom-steps .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--step-background-pending) !important;
+            border-radius: 50% !important;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+            font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        /* ปรับแต่ง title ให้ตรงกลางและเพิ่ม margin-left */
+        .custom-steps .ant-steps-item-title {
+            margin-left: 6px;
+            font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        /* ปรับแต่งวงกลมและเครื่องหมายถูกเมื่อเสร็จสิ้น */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--step-border-success) !important;
+            background-color: var(--step-background-success) !important;
+            font-size: 16px;
+            width: 40px;
+            height: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ปรับแต่งวงกลมเมื่ออยู่ในสถานะที่กำลังทำ (processing) */
+        .custom-steps .ant-steps-item-process .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--step-border-processing) !important;
+            background-color: #fff !important;
+            width: 40px;
+            height: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ปรับแต่งตัวเลขในสถานะที่ยังไม่ทำ (pending) */
+        .custom-steps .ant-steps-item-wait .ant-steps-item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        /* ปรับแต่งเครื่องหมายถูกภายในวงกลม */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-icon svg {
+            fill: var(--text-secondary) !important;
+            width: 18px !important;
+            height: 18px !important;
+            display: block !important;
+        }
+
+        /* ลดความยาวของเส้นเชื่อม */
+        .custom-steps .ant-steps-item-tail {
+            width: 105% !important;
+            /* height: 3px !important; */
+            position: relative;
+            z-index: 1;
+            top: 21px;
+            /* ปรับขยับเส้นเชื่อมลง */
+        }
+
+        /* เปลี่ยนสีเส้นเชื่อมในสถานะที่เสร็จสมบูรณ์ (success) */
+        .custom-steps .ant-steps-item-finish .ant-steps-item-tail {
+            background-color: var(--step-line-success) !important;
+            height: 1px !important;
+        }
+
+        /* ปรับสีตัวเลขในขั้นตอนที่กำลังดำเนินการ (processing) */
+        .custom-steps .ant-steps-item-process .ant-steps-item-icon .ant-steps-icon {
+            color: black !important;
+        }
+
+        .custom-steps .ant-steps-item-finish .ant-steps-item-container .ant-steps-item-tail::after {
+            display: none !important;
+        }
+    }
+
+    .form-card {
+        height: 100%;
+        border-radius: 20px;
+        background: var(--color-primary);
+        box-shadow: 0px 0px 8px var(--shadow-light);
+
+        .header-title {
+            width: 100%;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 8px 40px;
+            background: var(--color-secondary);
+            border-radius: 20px 20px 40px 40px;
+            box-shadow: 0px 0px 8px var(--shadow-light);
+            gap: 16px;
+
+            .circle-icon {
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                padding: 4px;
+                padding-left: 6px;
+                padding-right: 2px;
+                overflow: hidden;
+                background: var(--color-primary);
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+            }
+
+            .text-title {
+                font-weight: 600;
+                color: var(--text-secondary);
+                font-size: 24px;
+            }
+        }
+
+        .form-container{
+            padding: 16px 0px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+
+            .column{
+                display: flex;
+                flex-direction: column;
+                margin: 0px 16%;
+
+                .label-title-text{
+                    font-weight: 600;
+                    margin-top: 14px;
+                    margin-bottom: 6px;
+                    font-size: 18px;
+                }
+
+                .radio-input-box{
+                    display: flex;
+                    flex-wrap: wrap;
+                    padding-left: 12px;
+
+                    .custom-radio {
+                        display: inline-flex;
+                        align-items: center;
+                        cursor: pointer;
+                        font-size: 16px;
+                        margin-right: 15px;
+                        position: relative;
+
+                        input {
+                            position: absolute;
+                            opacity: 0;
+                            cursor: pointer;
+                        }
+
+                        .checkmark {
+                            min-height: 14px;
+                            min-width: 14px;
+                            border: 2px solid var(--radio-border-uncheck);
+                            border-radius: 50%;
+                            margin-right: 8px;
+                            position: relative;
+                        }
+                    }
+
+                    .custom-radio input:checked + .checkmark {
+                        border-color: var(--radio-border-check);
+                    }
+
+                    .custom-radio input:checked + .checkmark::after {
+                        content: "";
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 7px;
+                        height: 7px;
+                        background: var(--sut-gold);
+                        border-radius: 50%;
+                        transform: translate(-50%, -50%);
+                    }  
+                }
+
+                .custom-select {
+                    width: 100%;
+                    padding: 6px;
+                    text-align: center;
+                    font-size: 16px;
+                    border: 1px solid var(--input-border);
+                    border-radius: 8px;
+                    color: var(--text-primary);
+                    cursor: pointer;
+                }
+
+                .custom-select:focus {
+                    outline: none;
+                    border-color: var(--input-focus);
+                    box-shadow: 0 0 5px var(--shadow-light);
+                }
+
+                .selection-box{
+                    display: flex;
+                    gap: 10px;
+                    
+                    .subbox{
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                    }
+                }
+
+                textarea{
+                    border-radius: 8px;
+                    min-height: 100px;
+                    border-color: var(--input-border);
+                    padding: 10px 12px;
+                    outline: none;
+                    font-size: 16px;
+                }
+
+                textarea:focus{
+                    border: 1px solid var(--input-focus);
+                    box-shadow: 0 0 5px var(--shadow-light);
+                }
+
+                input{
+                    border-radius: 8px;
+                    padding: 6px 10px;
+                    outline: none;
+                    border: 1px solid var(--input-border);
+                    font-size: 16px;
+                    width: 100%;
+                }
+
+                input:focus{
+                    border: 1px solid var(--input-focus);
+                    box-shadow: 0 0 5px var(--shadow-light);
+                }
+
+                .input-contact-box{
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+
+                    .sub-box{
+                        display: flex;
+                        position: relative;
+
+                        .icon-box{
+                            position: absolute;
+                            width: 30px;
+                            height: 30px;
+                            min-width: 30px;
+                            min-height: 30px;
+                            overflow: hidden;
+                            left: 14px;
+                            top: 2px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            
+                            img{
+                                width: 70%;
+                                height: 70%;
+                                object-fit: cover;
+                            }
+                        }
+
+                        input {
+                            padding-left: 55px;
+                        }
+                    }
+
+                    .edit-button{
+                        align-self: flex-end;
+                        padding: 2px 14px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        background: var(--button-secondary-blue-bg);
+                        border: 2px solid var(--button-secondary-blue-border);
+                        border-radius: 6px;
+                        color: var(--button-secondary-blue-text);
+                        cursor: pointer;
+
+                        .icon{
+                            width: 16px;
+                            height: 16px;
+                            margin-bottom: 3px;
+                        }
+                    }
+                }
+
+                .input-checkbox-box{
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding-left: 16px;
+                    
+                    .checkbox{
+                        height: 20px;
+                        width: 20px;
+                        border-color: var(--input-border);
+
+                    }
+                }
+
+                .input-time-box{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+            }
+        }
+    }
+}

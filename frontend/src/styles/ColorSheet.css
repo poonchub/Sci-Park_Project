@@ -2,6 +2,55 @@
     --sut-orange: #F26522;
     --sut-white: #FFFFFF;
     --sut-black: #000000;
-    --suth-gray: #6D6E70;
+    --sut-gray: #6D6E70;
     --sut-gold: #A67436;
+
+    /* Theme Color */
+    --color-primary: #FFFFFF;
+    --color-secondary: #F26522;
+    --background-color: #fcfcfc;
+
+    /* Text Color */
+    --text-primary: #000000;
+    --text-secondary: #FFFFFF;
+    --text-link: #08aff1;
+
+    /* Button Color */
+    --button-primary-bg: #F26522;
+    --button-primary-border: #F26522;
+    --button-primary-text: #FFFFFF;
+
+    --button-secondary-blue-bg: #FFFFFF;
+    --button-secondary-blue-border: #08aff1;
+    --button-secondary-blue-text: #08aff1;
+    --button-secondary-blue-bg-hover: #08aff1;
+    --button-secondary-blue-text-hover: #FFFFFF;
+
+    --button-secondary-gray-bg: #F4F4F4;
+    --button-secondary-gray-border: #F4F4F4;
+    --button-secondary-gray-text: #6D6E70;
+
+    --button-secondary-gold-bg: #A67436;
+    --button-secondary-gold-border: #A67436;
+    --button-secondary-gold-text: #FFFFFF;
+
+    /* Shadow */
+    --shadow-light: rgba(0, 0, 0, 0.25);
+
+    /* Step */
+    --step-active: #A67436;
+    --step-border: #6D6E70;
+    --step-border-success: #F26522;
+    --step-background-success: #F26522;
+    --step-border-processing: #F26522;
+    --step-background-pending: #F4F4F4;
+    --step-line-success: #F26522;
+
+    /* Radio */
+    --radio-border-check: #F26522;
+    --radio-border-uncheck: #8a8a8a;
+
+    /* Input */
+    --input-border: rgba(109, 110, 112, 0.4);
+    --input-focus: #08aff1;
 }
