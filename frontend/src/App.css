@@ -43,3 +43,7 @@ button{
 select, input{
   font-family: "Noto Sans Thai", sans-serif;
 }
+
+textarea::placeholder{
+  font-family: "Noto Sans Thai", sans-serif;
+}

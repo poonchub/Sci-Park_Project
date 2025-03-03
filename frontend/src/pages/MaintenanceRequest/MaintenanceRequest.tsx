@@ -12,26 +12,31 @@ function MaintenanceRequest() {
 
     return (
         <div className="maintenance-request-page">
-            <div className="header-title">
-                <div className="circle-icon">
-                    <img src="icons/maintenance.png" alt="" />
+            <div className="card">
+                <div className="header-title">
+                    <div className="circle-icon">
+                        <img src="icons/maintenance.png" alt="" />
+                    </div>
+                    <p className="text-title">รายการแจ้งซ่อม</p>
                 </div>
-                <p className="text-title">รายการแจ้งซ่อม</p>
-            </div>
-            <div className="data-query-section">
-                <div className="status-button-container">
-                    <div className="status-button btn-active">ทั้งหมด</div>
-                    {
-                        status.map((item, index) => {
-                            return (
-                                <button key={index} className="status-button">
-                                    {item.statusName}
-                                </button>
-                            )
-                        })
-                    }
+                <div className="data-query-section">
+                    <div className="status-button-container">
+                        <div className="status-button btn-active">ทั้งหมด</div>
+                        {
+                            status.map((item, index) => {
+                                return (
+                                    <button key={index} className="status-button">
+                                        {item.statusName}
+                                    </button>
+                                )
+                            })
+                        }
+                    </div>
+                    <Link to="/create-maintenance-request" className="create-request-button">
+                        <img src="icons/writing.png" alt="" />
+                        <span>เขียนคำร้องแจ้งซ่อม</span>
+                    </Link>
                 </div>
-                <Link to="/create-maintenance-request" className="create-request-button">เขียนคำร้องแจ้งซ่อม</Link>
             </div>
         </div>
     )
