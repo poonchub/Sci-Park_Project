@@ -14,7 +14,7 @@ const PORT = "8000"
 func main() {
 	// โหลดค่าจาก .env ก่อนเชื่อมต่อฐานข้อมูล
 	config.LoadEnv()
-	config.ConnectionDB()
+	config.ConnectDB()
 	config.SetupDatabase()
 
 	// ตั้งค่า CORS Middleware

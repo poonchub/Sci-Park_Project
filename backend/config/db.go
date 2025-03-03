@@ -2,32 +2,39 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"sci-park_web-application/entity"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 var db *gorm.DB
 
-// ฟังก์ชันสำหรับเรียกใช้งาน DB
+// ฟังก์ชันสำหรับเรียกใช้งานฐานข้อมูล
 func DB() *gorm.DB {
 	return db
 }
 
 // ฟังก์ชันเชื่อมต่อฐานข้อมูล
-func ConnectionDB() {
+func ConnectDB() {
+	var err error
 	database, err := gorm.Open(sqlite.Open("sci-park_web-application.db?cache=shared"), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatal("❌ Failed to connect database:", err)
 	}
-	fmt.Println("Connected to database")
+
+	fmt.Println("✅ Connected to database")
 	db = database
 }
 
-// ฟังก์ชันสำหรับสร้างตารางในฐานข้อมูล
+// ฟังก์ชันสร้างตารางในฐานข้อมูล
 func SetupDatabase() {
-	// สร้างตารางที่เกี่ยวข้องทั้งหมด
-	db.AutoMigrate(
+	if db == nil {
+		log.Fatal("❌ Database connection is nil. Please call ConnectDB() first.")
+	}
+
+	err := db.AutoMigrate(
 		&entity.User{},
 		&entity.UserPackage{},
 		&entity.RoomType{},
@@ -41,97 +48,117 @@ func SetupDatabase() {
 		&entity.MaintenanceRequest{},
 		&entity.MaintenanceImage{},
 		&entity.Inspection{},
+		&entity.Gender{},
+		&entity.Floor{},
+		&entity.Area{},
 	)
 
-	// สร้างและเพิ่มข้อมูลตัวอย่างสำหรับ User
-	user1 := entity.User{
-		CompanyName:   "TechCorp",
-		BusinessDetail: "Technology Solutions Provider",
-		FirstName:     "John",
-		LastName:      "Doe",
-		Email:         "john.doe@example.com",
-		Password:      "password123",
-		Phone:         "123456789",
-		ProfilePath:   "/profiles/john.jpg",
-		RoleID:        2,
+	if err != nil {
+		log.Fatal("❌ Failed to migrate database:", err)
 	}
 
-	user2 := entity.User{
-		CompanyName:   "MediCare",
-		BusinessDetail: "Healthcare Services",
-		FirstName:     "Alice",
-		LastName:      "Smith",
-		Email:         "alice.smith@example.com",
-		Password:      "securepass",
-		Phone:         "987654321",
-		ProfilePath:   "/profiles/alice.jpg",
-		RoleID:        1,
+	fmt.Println("✅ Database migrated successfully!")
+
+	SeedDatabase()
+}
+
+// ฟังก์ชันเพิ่มข้อมูลตัวอย่าง
+func SeedDatabase() {
+	// 🔹 ข้อมูล Gender
+	genders := []entity.Gender{{Name: "Male"}, {Name: "Female"}}
+	for _, gender := range genders {
+		db.FirstOrCreate(&gender, entity.Gender{Name: gender.Name})
 	}
 
-	// แฮชรหัสผ่านก่อนบันทึก
-	user1.Password, _ = HashPassword(user1.Password)
-	user2.Password, _ = HashPassword(user2.Password)
+	// 🔹 ข้อมูล Role
+	roles := []entity.Role{{Name: "Employee"}, {Name: "Outsider"}, {Name: "Manager"}, {Name: "Admin"}}
+	for _, role := range roles {
+		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
+	}
 
-	// ใช้ FirstOrCreate แทน Create
-	db.FirstOrCreate(&user1, entity.User{Email: user1.Email})
-	db.FirstOrCreate(&user2, entity.User{Email: user2.Email})
+	// 🔹 ข้อมูล Floor
+	floors := []entity.Floor{{Number: 1}, {Number: 2}}
+	for _, floor := range floors {
+		db.FirstOrCreate(&floor, entity.Floor{Number: floor.Number})
+	}
 
-	// สร้างและเพิ่ม RoomStatus
-	roomStatusReserved := entity.RoomStatus{StatusName: "Reserved"}
-	roomStatusNotReserved := entity.RoomStatus{StatusName: "Not Reserved"}
-	db.FirstOrCreate(&roomStatusReserved, entity.RoomStatus{StatusName: roomStatusReserved.StatusName})
-	db.FirstOrCreate(&roomStatusNotReserved, entity.RoomStatus{StatusName: roomStatusNotReserved.StatusName})
+	// 🔹 ข้อมูล Area
+	areas := []entity.Area{{Name: "Top room F11"}, {Name: "Outside behind green bin"}}
+	for _, area := range areas {
+		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
+	}
 
-	// สร้างและเพิ่ม RoomType
-	roomTypeMeeting := entity.RoomType{TypeName: "Meeting Room", HalfDayRate: 1000.0, FullDayRate: 2000.0}
-	roomTypeTraining := entity.RoomType{TypeName: "Training Room", HalfDayRate: 1500.0, FullDayRate: 3000.0}
-	db.FirstOrCreate(&roomTypeMeeting, entity.RoomType{TypeName: roomTypeMeeting.TypeName})
-	db.FirstOrCreate(&roomTypeTraining, entity.RoomType{TypeName: roomTypeTraining.TypeName})
+	// 🔹 ข้อมูล RequestStatus
+	requestStatuses := []entity.RequestStatus{
+		{Name: "Pending"}, {Name: "Approved"}, {Name: "Rejected"},
+		{Name: "In Progress"}, {Name: "Completed"}, {Name: "Failed"},
+	}
+	for _, status := range requestStatuses {
+		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
+	}
 
-	// สร้างและเพิ่มห้อง
-	room1 := entity.Room{Floor: 1, Capacity: 10, RoomStatusID: roomStatusReserved.ID, RoomTypeID: roomTypeMeeting.ID}
-	room2 := entity.Room{Floor: 2, Capacity: 20, RoomStatusID: roomStatusNotReserved.ID, RoomTypeID: roomTypeTraining.ID}
-	db.FirstOrCreate(&room1, entity.Room{Floor: room1.Floor, Capacity: room1.Capacity})
-	db.FirstOrCreate(&room2, entity.Room{Floor: room2.Floor, Capacity: room2.Capacity})
+	// 🔹 ข้อมูล RoomStatus
+	roomStatuses := []entity.RoomStatus{{StatusName: "Reserved"}, {StatusName: "Not Reserved"}}
+	for _, status := range roomStatuses {
+		db.FirstOrCreate(&status, entity.RoomStatus{StatusName: status.StatusName})
+	}
 
-	// สร้างและเพิ่ม Package
-	packageSilver := entity.Package{PackageName: "Silver", MeetingRoomLimit: 10, TrainingRoomLimit: 5, MultiFunctionRoomLimit: 3}
-	packageGold := entity.Package{PackageName: "Gold", MeetingRoomLimit: 20, TrainingRoomLimit: 10, MultiFunctionRoomLimit: 5}
-	db.FirstOrCreate(&packageSilver, entity.Package{PackageName: packageSilver.PackageName})
-	db.FirstOrCreate(&packageGold, entity.Package{PackageName: packageGold.PackageName})
+	// 🔹 ข้อมูล RoomType
+	roomTypes := []entity.RoomType{
+		{TypeName: "Meeting Room", HalfDayRate: 1000.0, FullDayRate: 2000.0},
+		{TypeName: "Training Room", HalfDayRate: 1500.0, FullDayRate: 3000.0},
+	}
+	for _, roomType := range roomTypes {
+		db.FirstOrCreate(&roomType, entity.RoomType{TypeName: roomType.TypeName})
+	}
 
-	// สร้าง UserPackage สำหรับ user1
-	userPackage := entity.UserPackage{UserID: &user1.ID, PackageID: packageSilver.ID, MeetingRoomUsed: 5, TrainingRoomUsed: 3, MultiFunctionRoomUsed: 1}
+	// 🔹 ข้อมูล Users
+	users := []entity.User{
+		{CompanyName: "TechCorp", BusinessDetail: "Tech Solutions", FirstName: "John", LastName: "Doe", Email: "john.doe@example.com", Password: "password123", Phone: "123456789", ProfilePath: "/profiles/john.jpg", RoleID: 3, GenderID: 1},
+		{CompanyName: "MediCare", BusinessDetail: "Healthcare Services", FirstName: "Alice", LastName: "Smith", Email: "alice.smith@example.com", Password: "securepass", Phone: "987654321", ProfilePath: "/profiles/alice.jpg", RoleID: 1, GenderID: 2},
+	}
+	for i, user := range users {
+		users[i].Password, _ = HashPassword(user.Password)
+		db.FirstOrCreate(&users[i], entity.User{Email: user.Email})
+	}
+
+	// 🔹 ข้อมูล Rooms
+	rooms := []entity.Room{
+		{FloorID: 1, Capacity: 10, RoomStatusID: 1, RoomTypeID: 1},
+		{FloorID: 2, Capacity: 20, RoomStatusID: 2, RoomTypeID: 2},
+	}
+	for _, room := range rooms {
+		db.FirstOrCreate(&room, entity.Room{FloorID: room.FloorID, Capacity: room.Capacity})
+	}
+
+	// 🔹 ข้อมูล Packages
+	packages := []entity.Package{
+		{PackageName: "Silver", MeetingRoomLimit: 10, TrainingRoomLimit: 5, MultiFunctionRoomLimit: 3},
+		{PackageName: "Gold", MeetingRoomLimit: 20, TrainingRoomLimit: 10, MultiFunctionRoomLimit: 5},
+	}
+	for _, pkg := range packages {
+		db.FirstOrCreate(&pkg, entity.Package{PackageName: pkg.PackageName})
+	}
+
+	// 🔹 ข้อมูล UserPackage
+	userPackage := entity.UserPackage{UserID: &users[0].ID, PackageID: packages[0].ID, MeetingRoomUsed: 2, TrainingRoomUsed: 1, MultiFunctionRoomUsed: 0}
 	db.FirstOrCreate(&userPackage)
-	user1.UserPackageID = &userPackage.ID
-	db.Save(&user1)
 
-	// สร้างและเพิ่ม RequestStatus
-	requestStatusPending := entity.RequestStatus{Name: "Pending"}
-	requestStatusApproved := entity.RequestStatus{Name: "Approved"}
-	db.FirstOrCreate(&requestStatusPending, entity.RequestStatus{Name: requestStatusPending.Name})
-	db.FirstOrCreate(&requestStatusApproved, entity.RequestStatus{Name: requestStatusApproved.Name})
+	// 🔹 ข้อมูล MaintenanceRequest
+	maintenanceRequest := entity.MaintenanceRequest{Description: "Fix the AC", UserID: users[0].ID, RoomID: rooms[0].ID, RequestStatusID: 1}
+	db.FirstOrCreate(&maintenanceRequest)
 
-	// สร้างและเพิ่ม MaintenanceRequest
-	maintenanceRequest := entity.MaintenanceRequest{Description: "Fix the AC", UserID: user1.ID, RoomID: room1.ID, RequestStatusID: requestStatusPending.ID}
-	db.FirstOrCreate(&maintenanceRequest, entity.MaintenanceRequest{UserID: maintenanceRequest.UserID, RoomID: maintenanceRequest.RoomID, RequestStatusID: maintenanceRequest.RequestStatusID})
+	// 🔹 ข้อมูล MaintenanceTask
+	maintenanceTask := entity.MaintenanceTask{Description: "Repairing air conditioning", UserID: users[1].ID, RequestID: maintenanceRequest.ID, RequestStatusID: 4} // In Progress
+	db.FirstOrCreate(&maintenanceTask)
 
-	// สร้างและเพิ่ม MaintenanceImage
+	// 🔹 ข้อมูล Inspection
+	inspection := entity.Inspection{Description: "Routine safety check", UserID: users[1].ID, RequestID: maintenanceRequest.ID, RequestStatusID: 5} // Completed
+	db.FirstOrCreate(&inspection)
+
+	// 🔹 ข้อมูล MaintenanceImage
 	maintenanceImage := entity.MaintenanceImage{FilePath: "/images/ac_repair.jpg", RequestID: maintenanceRequest.ID}
-	db.FirstOrCreate(&maintenanceImage, entity.MaintenanceImage{RequestID: maintenanceImage.RequestID})
+	db.FirstOrCreate(&maintenanceImage)
 
-	// สร้างและเพิ่ม ManagerApproval
-	managerApproval := entity.ManagerApproval{Description: "Approved for Repair", UserID: user2.ID, RequestID: maintenanceRequest.ID, RequestStatusID: requestStatusApproved.ID}
-	db.FirstOrCreate(&managerApproval, entity.ManagerApproval{RequestID: managerApproval.RequestID, UserID: managerApproval.UserID})
-
-	// สร้างและเพิ่ม MaintenanceTask
-	maintenanceTask := entity.MaintenanceTask{Description: "AC repair in progress", UserID: user1.ID, RequestID: maintenanceRequest.ID, RequestStatusID: requestStatusApproved.ID}
-	db.FirstOrCreate(&maintenanceTask, entity.MaintenanceTask{RequestID: maintenanceTask.RequestID, UserID: maintenanceTask.UserID})
-
-	// สร้างและเพิ่ม Inspection
-	inspection := entity.Inspection{Description: "Initial inspection completed", UserID: user2.ID, RequestID: maintenanceRequest.ID, RequestStatusID: requestStatusApproved.ID}
-	db.FirstOrCreate(&inspection, entity.Inspection{RequestID: inspection.RequestID, UserID: inspection.UserID})
-
-	fmt.Println("Database migrated and sample data added successfully!")
-
+	fmt.Println("✅ Sample data added successfully!")
 }

@@ -1,0 +1,5 @@
+# Ignore database file
+sci-park_web-application.db
+
+# Ignore environment files
+.env

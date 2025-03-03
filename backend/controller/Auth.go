@@ -67,6 +67,8 @@ func UserLogin(c *gin.Context) {
 		"BusinessDetail": user.BusinessDetail,
 		"FirstName":      user.FirstName,
 		"LastName":       user.LastName,
+		"GenderID":		  user.GenderID,
+		"Gender":		  user.Gender.Name,
 		"Email":          user.Email,
 		"Phone":          user.Phone,
 		"ProfilePath":    user.ProfilePath,
