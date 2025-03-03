@@ -17,6 +17,7 @@
 
     /* Button Color */
     --button-primary-bg: #F26522;
+    --button-primary-bg-hover: #dd591c;
     --button-primary-border: #F26522;
     --button-primary-text: #FFFFFF;
 
@@ -34,8 +35,14 @@
     --button-secondary-gold-border: #A67436;
     --button-secondary-gold-text: #FFFFFF;
 
+    --button-cancel-bg: #FF3B30;
+    --button-cancel-border: #FF3B30;
+    --button-cancel-text: #FF3B30;
+
     /* Shadow */
     --shadow-light: rgba(0, 0, 0, 0.25);
+    --shadow-blue-light: rgba(8, 175, 241, 0.25);
+    --shadow-red-light: rgba(255, 59, 48, 0.25);
 
     /* Step */
     --step-active: #A67436;

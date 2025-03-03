@@ -8,11 +8,13 @@ const WindowsLayout: React.FC = () => {
 			<NavbarWindows/>
 			<div className="content" style={{
 				height: "calc(100vh - 65px)",
-				overflow: "scroll",
-				padding: "30px 70px"
+				overflow: "hidden",
 			}}>
 				<Outlet/>
 			</div>
+			<footer>
+				
+			</footer>
 		</div>
   )
 }
