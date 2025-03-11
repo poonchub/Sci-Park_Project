@@ -1,63 +1,92 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Grid, Link, Paper, IconButton, InputAdornment } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material'; // นำเข้าไอคอนสำหรับเปิด/ปิดการดูรหัสผ่าน
-import bg from '../../assets/background/bg.png'; // Background image
-import './LoginPage.css';  // นำเข้าไฟล์ CSS ที่เราสร้างขึ้น
-import { useNavigate } from 'react-router-dom'; // นำเข้า useNavigate สำหรับการนำทาง
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import bg from '../../assets/background/bg.png';
+import './LoginPage.css';
+import { useNavigate } from 'react-router-dom';
+import { UserLogin } from '../../services/http/Login';
+import { UserLoginInterface } from '../../interfaces/IUserLogin';
+import SuccessAlert from '../../components/Alert/SuccessAlert';
+import WarningAlert from '../../components/Alert/WarningAlert'; // Import WarningAlert
+import ErrorAlert from '../../components/Alert/ErrorAlert';    // Import ErrorAlert
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // ใช้สถานะสำหรับเปิด/ปิดการดูรหัส
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);  // For Warning
   const navigate = useNavigate();
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
-    // แสดงข้อมูลที่กรอกเข้ามา
-    console.log('Email:', email);
-    console.log('Password:', password);
-
-    // ตั้งค่าการเข้าสู่ระบบ
-    localStorage.setItem("isLogin", "true");
-
-    // localStorage.setItem("role", "Admin");
-    localStorage.setItem("role", "Outsider");
-
-    // กำหนดบทบาท
-    const role = "Admin"; // เปลี่ยนเป็นค่าบทบาทที่ได้รับจากผู้ใช้ หรือระบบ
-    let redirectPath = "/login"; // กำหนดเส้นทางเริ่มต้นเป็น /login
-    
-    // กำหนดเส้นทางตามบทบาท
-    switch (role) {
-      case "Admin":
-        redirectPath = "/"; // หากเป็น Admin ให้ไปที่หน้า home หรือหน้าอื่น ๆ ที่กำหนด
-        break;
-      default:
-        redirectPath = "/login"; // ถ้าไม่ใช่บทบาทที่กำหนดจะไปที่หน้า login
+    console.log(email,password)
+    // Validate form input before sending data to backend
+    if (email === "" || password === "" ) {
+      setErrorMessage("Please fill in all the fields.");
+      setShowWarning(true); // Show WarningAlert if fields are missing
+      return;
     }
-    
-    // ใช้ navigate เพื่อไปยังเส้นทางที่เลือก
-    navigate(redirectPath);
+
+    const data: UserLoginInterface = {
+      Email: email,
+      Password: password,
+    };
+
+    try {
+      const response: any = await UserLogin(data);
+
+      if (response && response.Token && response.Role) {
+        localStorage.setItem("isLogin", "true");
+        localStorage.setItem("role", response.Role || "Outsider");
+        localStorage.setItem("token", response.Token);
+
+        setSuccessMessage("Login successful!");
+        setShowSuccess(true);  // Show SuccessAlert on successful login
+
+        let redirectPath = "/login";
+        if (response.Role === "Admin") {
+          redirectPath = "/";
+        }
+
+        navigate(redirectPath);
+      } else {
+        setErrorMessage(response?.Error || "Login failed! Please check your credentials.");
+        setShowError(true);  // Show ErrorAlert on failed login
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error && (error as any).response) {
+        const errorMessage = (error as any).response?.data?.Error || "An error occurred during login.";
+        console.error("Error from backend:", errorMessage);
+        setErrorMessage(errorMessage);
+        setShowError(true);  // Show ErrorAlert when there is an error from the backend
+      } else {
+        console.error("An error occurred:", error);
+        setErrorMessage("An error occurred while logging in.");
+        setShowError(true);  // Show ErrorAlert when there is a general error
+      }
+    }
   };
 
   const handleClickShowPassword = () => {
-    setShowPassword(!showPassword); // สลับสถานะการแสดงรหัส
+    setShowPassword(!showPassword);
   };
 
   const handleMouseDownPassword = (event: React.MouseEvent) => {
-    event.preventDefault(); // ป้องกันไม่ให้ฟอร์มถูกส่งเมื่อคลิก
+    event.preventDefault();
   };
 
   return (
-    <div className="login-page">  {/* เพิ่มคลาส login-page ที่ครอบทั้งหมด */}
+    <div className="login-page">
       <Grid container spacing={0}>
-        {/* Left Side */}
         <Grid item xs={12} sm={6}>
           <div
             className="left-side"
             style={{
-              backgroundImage: `url(${bg})`,  // ใช้เส้นทางที่ถูกต้อง
+              backgroundImage: `url(${bg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               height: '100vh',
@@ -75,10 +104,34 @@ const LoginPage: React.FC = () => {
           </div>
         </Grid>
 
-        {/* Right Side */}
         <Grid item xs={12} sm={6}>
           <Paper className="right-side">
             <Typography variant="h5" gutterBottom>Sign In</Typography>
+
+            {/* Show Success Alert */}
+            {showSuccess && (
+              <SuccessAlert
+                message={successMessage}
+                onClose={() => setShowSuccess(false)}
+              />
+            )}
+
+            {/* Show Error Alert */}
+            {showError && (
+              <ErrorAlert
+                message={errorMessage}
+                onClose={() => setShowError(false)}
+              />
+            )}
+
+            {/* Show Warning Alert */}
+            {showWarning && (
+              <WarningAlert
+                message={errorMessage}
+                onClose={() => setShowWarning(false)}
+              />
+            )}
+
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
@@ -93,18 +146,18 @@ const LoginPage: React.FC = () => {
                 label="Password"
                 variant="outlined"
                 margin="normal"
-                type={showPassword ? "text" : "password"} // สลับระหว่าง "text" และ "password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={handleClickShowPassword} // คลิกเพื่อเปิด/ปิดการดูรหัส
-                        onMouseDown={handleMouseDownPassword} // ป้องกันการคลิกของเมาส์
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
                         edge="end"
                       >
-                        {showPassword ? <Visibility /> : <VisibilityOff />} {/* ไอคอนตา */}
+                        {showPassword ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
                   ),
