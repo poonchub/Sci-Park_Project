@@ -114,8 +114,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Users
 	users := []entity.User{
-		{CompanyName: "TechCorp", BusinessDetail: "Tech Solutions", FirstName: "John", LastName: "Doe", Email: "john.doe@example.com", Password: "password123", Phone: "123456789", ProfilePath: "/profiles/john.jpg", RoleID: 4, GenderID: 1},
-		{CompanyName: "MediCare", BusinessDetail: "Healthcare Services", FirstName: "Alice", LastName: "Smith", Email: "alice.smith@example.com", Password: "securepass", Phone: "987654321", ProfilePath: "/profiles/alice.jpg", RoleID: 2, GenderID: 2},
+		{CompanyName: "TechCorp", BusinessDetail: "Tech Solutions", FirstName: "John", LastName: "Doe", Email: "admin@gmail.com", Password: "123456", Phone: "123456789", ProfilePath: "/profiles/john.jpg", RoleID: 4, GenderID: 1},
+		{CompanyName: "MediCare", BusinessDetail: "Healthcare Services", FirstName: "Alice", LastName: "Smith", Email: "outsider@gmail.com", Password: "123456", Phone: "987654321", ProfilePath: "/profiles/alice.jpg", RoleID: 2, GenderID: 2},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)

@@ -15,6 +15,7 @@ function OutsiderNavbar() {
             </div>
             <div className="navigetion-box">
                 <NavLink to="/" className={({ isActive }) => (isActive ? "link active" : "link")}>หน้าหลัก</NavLink>
+                <NavLink to="/outsider-maintenance-request" className={({ isActive }) => (isActive ? "link active" : "link")}>maintenance Req</NavLink>
             </div>
             <div className="login-box">
                 <div className="name">{`${fname} ${lname}`}</div>

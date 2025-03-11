@@ -48,7 +48,7 @@ const LoginPage: React.FC = () => {
         setShowSuccess(true);  // Show SuccessAlert on successful login
 
         let redirectPath = "/login";
-        if (response.Role === "Admin") {
+        if (response.Role) {
           redirectPath = "/";
         }
 

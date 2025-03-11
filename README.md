@@ -37,7 +37,11 @@ go get -u github.com/dgrijalva/jwt-go
 go get -u golang.org/x/crypto@v0.16.0
 
 npm install react-loader-spinner --legacy-peer-deps
-
 npm install @mui/material @emotion/react @emotion/styled     --legacy-peer-deps
 npm install @mui/icons-material --legacy-peer-deps
+npm install @mui/x-date-pickers --legacy-peer-deps
+npm install @mui/x-date-pickers @mui/icons-material --legacy-peer-deps
+
+npm install @mui/material @mui/icons-material @mui/x-date-pickers dayjs @mui/x-date-pickers-pro --legacy-peer-deps
+
 
