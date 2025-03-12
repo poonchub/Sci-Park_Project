@@ -33,7 +33,7 @@ func main() {
 	protected.Use(middlewares.Authorizes()) // ✅ Middleware ตรวจสอบ Token
 	{
 
-		// protected.GET("/users", controller.GetAllUsers)
+		protected.POST("/create-user", controller.CreateUser)
 		
 	}
 

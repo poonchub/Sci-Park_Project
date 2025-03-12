@@ -1,0 +1,131 @@
+package controller
+
+import (
+	"net/http"
+	"sci-park_web-application/config"
+	"sci-park_web-application/entity"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+	"path"
+	"os"
+	"fmt"
+	"strconv"
+)
+
+func CreateUser(c *gin.Context) {
+	var user entity.User
+
+	// รับข้อมูลจาก form-data
+	user.CompanyName = c.PostForm("company_name")
+	user.BusinessDetail = c.PostForm("business_detail")
+	user.FirstName = c.PostForm("first_name")
+	user.LastName = c.PostForm("last_name")
+	user.Email = c.PostForm("email")
+	user.Password = c.PostForm("password")
+	user.Phone = c.PostForm("phone")
+
+	// Default UserPackageID to 1 if not provided
+	packageIDStr := c.DefaultPostForm("package_id", "1")
+	packageID, err := strconv.Atoi(packageIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package_id"})
+		return
+	}
+
+	// Convert packageID (int) to uint
+	packageIDUint := uint(packageID)
+	user.UserPackageID = &packageIDUint
+
+
+	// รับ RoleID และ GenderID จากฟอร์ม, ถ้าไม่ส่งค่าเข้ามาจะใช้ค่าเริ่มต้น
+	roleIDStr := c.DefaultPostForm("role_id", "1")
+	genderIDStr := c.DefaultPostForm("gender_id", "1")
+
+	// แปลง roleID และ genderID จาก string เป็น uint
+	roleID, err := strconv.ParseUint(roleIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role_id"})
+		return
+	}
+	user.RoleID = uint(roleID)
+
+	genderID, err := strconv.ParseUint(genderIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid gender_id"})
+		return
+	}
+	user.GenderID = uint(genderID)
+
+	// ตรวจสอบการมีอยู่ของอีเมล
+	var existingUser entity.User
+	if err := config.DB().Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
+		return
+	}
+
+	// แฮชรหัสผ่าน
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+	user.Password = string(hashedPassword)
+
+	// รับไฟล์ภาพโปรไฟล์จาก form-data (ไฟล์เป็น optional)
+	var filePath string
+	file, err := c.FormFile("profile_image") // 'profile_image' คือชื่อฟิลด์ในฟอร์ม
+	if err == nil {
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
+		profileFolder := "./images/Profiles"
+		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(profileFolder, os.ModePerm)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				return
+			}
+		}
+
+		// กำหนด path ของไฟล์ที่จะเก็บ
+		filePath = path.Join(profileFolder, fmt.Sprintf("%s-%s", user.FirstName, file.Filename))
+
+		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+			return
+		}
+	}
+
+	// ตั้งค่า path ของไฟล์ที่บันทึก (ถ้ามี)
+	if filePath != "" {
+		user.ProfilePath = filePath
+	}
+
+	// บันทึกข้อมูลผู้ใช้ใหม่ในฐานข้อมูล
+	if err := config.DB().Create(&user).Error; err != nil {
+		if err == gorm.ErrDuplicatedKey {
+			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user"})
+		}
+		return
+	}
+
+	// สร้าง UserPackage โดยอ้างอิงจาก User ที่เพิ่งสร้าง
+	userPackage := entity.UserPackage{
+		UserID:      &user.ID,    // Link the user
+		PackageID:   uint(packageID), // Link the selected package
+		MeetingRoomUsed: 0,  // Default usage values
+		TrainingRoomUsed: 0,
+		MultiFunctionRoomUsed: 0,
+	}
+
+	// บันทึกข้อมูล UserPackage
+	if err := config.DB().Create(&userPackage).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user package"})
+		return
+	}
+
+	// ตอบกลับเมื่อสร้างผู้ใช้สำเร็จ
+	c.JSON(http.StatusCreated, gin.H{"message": "User and UserPackage created successfully", "data": user})
+}
