@@ -56,33 +56,51 @@ function MaintenanceRequest() {
     ];
 
     const rows = [
-        {   id: 1, lastName: 'Snow', firstName: 'Jon', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ' },
-        {   id: 2, lastName: 'Lannister', firstName: 'Cersei', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ' },
-        {   id: 3, lastName: 'Lannister', firstName: 'Jaime', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        { id: 4, lastName: 'Stark', firstName: 'Arya', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        {   id: 5, lastName: 'Targaryen', firstName: 'Daenerys', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        {   id: 6, lastName: 'Melisandre', firstName: null,     
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        {   id: 7, lastName: 'Clifford', firstName: 'Ferrara', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        {   id: 8, lastName: 'Frances', firstName: 'Rossini',   
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
-        {   id: 9, lastName: 'Roxie', firstName: 'Harvey', 
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม', 
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'  },
+        {
+            id: 1, lastName: 'Snow', firstName: 'Jon',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 2, lastName: 'Lannister', firstName: 'Cersei',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 3, lastName: 'Lannister', firstName: 'Jaime',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 4, lastName: 'Stark', firstName: 'Arya',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 5, lastName: 'Targaryen', firstName: 'Daenerys',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 6, lastName: 'Melisandre', firstName: null,
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 7, lastName: 'Clifford', firstName: 'Ferrara',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 8, lastName: 'Frances', firstName: 'Rossini',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
+        {
+            id: 9, lastName: 'Roxie', firstName: 'Harvey',
+            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
+            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+        },
     ];
 
     const getRequestStatuses = async () => {
@@ -103,7 +121,7 @@ function MaintenanceRequest() {
     console.log(requestStatuses)
 
     return (
-        <div className="outsider-maintenance-request">
+        <div className="maintenance-request">
             <Grid2 container spacing={2}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
                     <Typography variant="h6" className="title">
@@ -111,7 +129,9 @@ function MaintenanceRequest() {
                     </Typography>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
-                    <Button variant="contained" sx={{ borderRadius: '4px', bgcolor: '#08aff1' }}>{'เขียนคำร้องแจ้งซ่อม'}</Button>
+                    <Link to="/create-maintenance-request">
+                        <Button variant="contained" sx={{ borderRadius: '4px', bgcolor: '#08aff1' }}>เขียนคำร้องแจ้งซ่อม</Button>
+                    </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 8 }}>
                     {/* Status Section */}
