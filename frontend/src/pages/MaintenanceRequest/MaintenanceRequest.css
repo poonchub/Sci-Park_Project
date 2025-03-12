@@ -1,18 +1,19 @@
-.outsider-maintenance-request{
-    .status-section{
-        .status-card{
+.outsider-maintenance-request {
+    .status-section {
+        .status-card {
             margin: 0;
             padding: 0;
         }
     }
 
-    .filter-section{
-        .search-box{
+    .filter-section {
+        .search-box {
             margin: 0 !important;
         }
     }
 
-    .outsider-maintenance-request .MuiTextField-root {
+    .MuiTextField-root {
         margin-bottom: 0 !important;
     }
+
 }

@@ -65,13 +65,21 @@ func SetupDatabase() {
 // ฟังก์ชันเพิ่มข้อมูลตัวอย่าง
 func SeedDatabase() {
 	// 🔹 ข้อมูล Gender
-	genders := []entity.Gender{{Name: "Male"}, {Name: "Female"}}
+	genders := []entity.Gender{
+		{Name: "Male"}, 
+		{Name: "Female"},
+	}
 	for _, gender := range genders {
 		db.FirstOrCreate(&gender, entity.Gender{Name: gender.Name})
 	}
 
 	// 🔹 ข้อมูล Role
-	roles := []entity.Role{{Name: "Employee"}, {Name: "Outsider"}, {Name: "Manager"}, {Name: "Admin"}}
+	roles := []entity.Role{
+		{Name: "Employee"}, 
+		{Name: "Outsider"}, 
+		{Name: "Manager"}, 
+		{Name: "Admin"},
+	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
 	}
@@ -83,22 +91,32 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Area
-	areas := []entity.Area{{Name: "Top room F11"}, {Name: "Outside behind green bin"}}
+	areas := []entity.Area{
+		{Name: "Top room F11"}, 
+		{Name: "Outside behind green bin"},
+	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
 	}
 
 	// 🔹 ข้อมูล RequestStatus
 	requestStatuses := []entity.RequestStatus{
-		{Name: "Pending"}, {Name: "Approved"}, {Name: "Rejected"},
-		{Name: "In Progress"}, {Name: "Completed"}, {Name: "Failed"},
+		{Name: "Pending"}, 
+		{Name: "Approved"}, 
+		{Name: "Rejected"},
+		{Name: "In Progress"}, 
+		{Name: "Completed"}, 
+		{Name: "Failed"},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
 	}
 
 	// 🔹 ข้อมูล RoomStatus
-	roomStatuses := []entity.RoomStatus{{StatusName: "Reserved"}, {StatusName: "Not Reserved"}}
+	roomStatuses := []entity.RoomStatus{
+		{StatusName: "Reserved"}, 
+		{StatusName: "Not Reserved"},
+	}
 	for _, status := range roomStatuses {
 		db.FirstOrCreate(&status, entity.RoomStatus{StatusName: status.StatusName})
 	}
@@ -114,8 +132,26 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Users
 	users := []entity.User{
-		{CompanyName: "TechCorp", BusinessDetail: "Tech Solutions", FirstName: "John", LastName: "Doe", Email: "admin@gmail.com", Password: "123456", Phone: "123456789", ProfilePath: "/profiles/john.jpg", RoleID: 4, GenderID: 1},
-		{CompanyName: "MediCare", BusinessDetail: "Healthcare Services", FirstName: "Alice", LastName: "Smith", Email: "outsider@gmail.com", Password: "123456", Phone: "987654321", ProfilePath: "/profiles/alice.jpg", RoleID: 2, GenderID: 2},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "John", 
+			LastName: "Doe", 
+			Email: "admin@gmail.com", 
+			Password: "123456", 
+			Phone: "123456789", 
+			ProfilePath: "/profiles/john.jpg", 
+			RoleID: 4, GenderID: 1},
+		{
+			CompanyName: "MediCare", 
+			BusinessDetail: "Healthcare Services", 
+			FirstName: "Alice", 
+			LastName: "Smith", 
+			Email: "outsider@gmail.com", 
+			Password: "123456", 
+			Phone: "987654321", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 2, GenderID: 2},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)
@@ -133,31 +169,65 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Packages
 	packages := []entity.Package{
-		{PackageName: "Silver", MeetingRoomLimit: 10, TrainingRoomLimit: 5, MultiFunctionRoomLimit: 3},
-		{PackageName: "Gold", MeetingRoomLimit: 20, TrainingRoomLimit: 10, MultiFunctionRoomLimit: 5},
+		{
+			PackageName: "Silver", 
+			MeetingRoomLimit: 10, 
+			TrainingRoomLimit: 5, 
+			MultiFunctionRoomLimit: 3,
+		},
+		{
+			PackageName: "Gold", 
+			MeetingRoomLimit: 20, 
+			TrainingRoomLimit: 10, 
+			MultiFunctionRoomLimit: 5,
+		},
 	}
 	for _, pkg := range packages {
 		db.FirstOrCreate(&pkg, entity.Package{PackageName: pkg.PackageName})
 	}
 
 	// 🔹 ข้อมูล UserPackage
-	userPackage := entity.UserPackage{UserID: &users[0].ID, PackageID: packages[0].ID, MeetingRoomUsed: 2, TrainingRoomUsed: 1, MultiFunctionRoomUsed: 0}
+	userPackage := entity.UserPackage{
+		UserID: &users[0].ID, 
+		PackageID: packages[0].ID, 
+		MeetingRoomUsed: 2, 
+		TrainingRoomUsed: 1, 
+		MultiFunctionRoomUsed: 0,
+	}
 	db.FirstOrCreate(&userPackage)
 
 	// 🔹 ข้อมูล MaintenanceRequest
-	maintenanceRequest := entity.MaintenanceRequest{Description: "Fix the AC", UserID: users[0].ID, RoomID: rooms[0].ID, RequestStatusID: 1}
+	maintenanceRequest := entity.MaintenanceRequest{
+		Description: "Fix the AC", 
+		UserID: users[0].ID, 
+		RoomID: rooms[0].ID, 
+		RequestStatusID: 1,
+	}
 	db.FirstOrCreate(&maintenanceRequest)
 
 	// 🔹 ข้อมูล MaintenanceTask
-	maintenanceTask := entity.MaintenanceTask{Description: "Repairing air conditioning", UserID: users[1].ID, RequestID: maintenanceRequest.ID, RequestStatusID: 4} // In Progress
+	maintenanceTask := entity.MaintenanceTask{
+		Description: "Repairing air conditioning", 
+		UserID: users[1].ID, 
+		RequestID: maintenanceRequest.ID, 
+		RequestStatusID: 4,
+	} // In Progress
 	db.FirstOrCreate(&maintenanceTask)
 
 	// 🔹 ข้อมูล Inspection
-	inspection := entity.Inspection{Description: "Routine safety check", UserID: users[1].ID, RequestID: maintenanceRequest.ID, RequestStatusID: 5} // Completed
+	inspection := entity.Inspection{
+		Description: "Routine safety check", 
+		UserID: users[1].ID, RequestID: 
+		maintenanceRequest.ID, 
+		RequestStatusID: 5,
+	} // Completed
 	db.FirstOrCreate(&inspection)
 
 	// 🔹 ข้อมูล MaintenanceImage
-	maintenanceImage := entity.MaintenanceImage{FilePath: "/images/ac_repair.jpg", RequestID: maintenanceRequest.ID}
+	maintenanceImage := entity.MaintenanceImage{
+		FilePath: "/images/ac_repair.jpg", 
+		RequestID: maintenanceRequest.ID,
+	}
 	db.FirstOrCreate(&maintenanceImage)
 
 	fmt.Println("✅ Sample data added successfully!")
