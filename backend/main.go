@@ -34,8 +34,25 @@ func main() {
 	{
 
 		// protected.GET("/users", controller.GetAllUsers)
-		protected.GET("/request-statuses", controller.ListRequestStatusess)
+
+		// Areas
+		protected.GET("/areas", controller.ListAreas)
+
+		// RequestStatuses
+		protected.GET("/request-statuses", controller.ListRequestStatuses)
+
+		// Rooms
+		protected.GET("/rooms", controller.ListRooms)
+
+		// RoomTypes
+		protected.GET("/room-types", controller.ListRoomTypes)
+
+		// Users
 		protected.POST("/create-user", controller.CreateUser)
+
+		// MaintenanceRequests
+		protected.POST("/create-maintenance-requests", controller.CreateMaintenanceRequests)
+
 		
 	}
 
