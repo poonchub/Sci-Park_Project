@@ -14,9 +14,13 @@ function getAuthHeaders() {
   
   // ฟังก์ชันสำหรับการ Login
   async function UserLogin(data: UserInterface) {
-    const requestOptions = { headers: getAuthHeaders(), body: JSON.stringify(data) };
+    const requestOptions = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
     return await axios
-      .post(`${apiUrl}/auth/login`, requestOptions)
+      .post(`${apiUrl}/auth/login`,data, requestOptions)
       .then((res) => res)
       .catch((e) => e.response);
   }
