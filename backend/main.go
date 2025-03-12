@@ -34,6 +34,7 @@ func main() {
 	{
 
 		// protected.GET("/users", controller.GetAllUsers)
+		protected.GET("/request-statuses", controller.ListRequestStatusess)
 		
 	}
 
