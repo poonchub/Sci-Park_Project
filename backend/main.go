@@ -35,6 +35,7 @@ func main() {
 
 		// protected.GET("/users", controller.GetAllUsers)
 		protected.GET("/request-statuses", controller.ListRequestStatusess)
+		protected.POST("/create-user", controller.CreateUser)
 		
 	}
 

@@ -3,3 +3,6 @@ sci-park_web-application.db
 
 # Ignore environment files
 .env
+
+# Ignore images folder containing profile pictures
+/images/Profiles/*

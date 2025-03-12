@@ -1,4 +1,4 @@
-export interface UserLoginInterface {
+export interface UserInterface {
     ID?: number;
     CompanyName?: string;
     BusinessDetail?: string;
@@ -13,4 +13,5 @@ export interface UserLoginInterface {
     RoleID?: number;
     Role?: string;
     Password?: string;
+    Profile_Image?: File;
 }

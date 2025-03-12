@@ -4,8 +4,8 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import bg from '../../assets/background/bg.png';
 import './LoginPage.css';
 import { useNavigate } from 'react-router-dom';
-import { UserLogin } from '../../services/http/Login';
-import { UserLoginInterface } from '../../interfaces/IUserLogin';
+import { UserLogin } from '../../services/http';
+import { UserLoginInterface } from '../../interfaces/IUser';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import WarningAlert from '../../components/Alert/WarningAlert'; // Import WarningAlert
 import ErrorAlert from '../../components/Alert/ErrorAlert';    // Import ErrorAlert
