@@ -61,6 +61,14 @@ const WindowsLayout: React.FC = () => {
 				]
 			)
 
+		} else if (role === "SuperAdmin") {
+			setPages(
+				[
+					{ path: '/', name: 'หน้าหลัก' },
+					{ path: '/add-user', name: 'เพิ่มผู้ใช้' },
+					
+				]
+			)
 		} else {
 			setPages(
 				[
@@ -70,6 +78,7 @@ const WindowsLayout: React.FC = () => {
 				]
 			)
 		}
+
 	};
 
 	const handleOpenUserMenu = () => {

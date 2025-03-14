@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { TextField, Button, Typography, Grid, Link, Paper, IconButton, InputAdornment } from '@mui/material';
+import { TextField, Button, Typography, Link, IconButton, InputAdornment } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import bg from '../../assets/background/bg.png';
-import './LoginPage.css';
+import './LoginPage.css'; // ใช้ CSS ที่มีอยู่
 import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
 import { UserInterface } from '../../interfaces/IUser';
@@ -23,9 +22,9 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log(email,password)
+    console.log(email, password);
     // Validate form input before sending data to backend
-    if (email === "" || password === "" ) {
+    if (email === "" || password === "") {
       setErrorMessage("Please fill in all the fields.");
       setShowWarning(true); // Show WarningAlert if fields are missing
       return;
@@ -81,98 +80,84 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page">
-      <Grid container spacing={0}>
-        <Grid item xs={12} sm={6}>
-          <div
-            className="left-side"
-            style={{
-              backgroundImage: `url(${bg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              height: '100vh',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              color: 'white',
-              textAlign: 'center',
-              padding: '16px',
+      <div className="right-side">
+        <Typography variant="h2" gutterBottom>Sign In</Typography>
+
+        {/* Show Success Alert */}
+        {showSuccess && (
+          <SuccessAlert
+            message={successMessage}
+            onClose={() => setShowSuccess(false)}
+          />
+        )}
+
+        {/* Show Error Alert */}
+        {showError && (
+          <ErrorAlert
+            message={errorMessage}
+            onClose={() => setShowError(false)}
+          />
+        )}
+
+        {/* Show Warning Alert */}
+        {showWarning && (
+          <WarningAlert
+            message={errorMessage}
+            onClose={() => setShowWarning(false)}
+          />
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Email"
+            variant="outlined"
+            margin="normal"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            helperText={showWarning && !email ? "Please enter your email" : ""}
+            slotProps={{
+              inputLabel: {
+                sx: { color: '#6D6E70' }, // Apply gray color to label
+              },
             }}
-          >
-            <Typography variant="h3" fontWeight="bold">Science Park</Typography>
-            <Typography variant="h6">Welcome back! Please sign in to continue</Typography>
-          </div>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <Paper className="right-side">
-            <Typography variant="h5" gutterBottom>Sign In</Typography>
-
-            {/* Show Success Alert */}
-            {showSuccess && (
-              <SuccessAlert
-                message={successMessage}
-                onClose={() => setShowSuccess(false)}
-              />
-            )}
-
-            {/* Show Error Alert */}
-            {showError && (
-              <ErrorAlert
-                message={errorMessage}
-                onClose={() => setShowError(false)}
-              />
-            )}
-
-            {/* Show Warning Alert */}
-            {showWarning && (
-              <WarningAlert
-                message={errorMessage}
-                onClose={() => setShowWarning(false)}
-              />
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email"
-                variant="outlined"
-                margin="normal"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <TextField
-                fullWidth
-                label="Password"
-                variant="outlined"
-                margin="normal"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
-                        edge="end"
-                      >
-                        {showPassword ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Button type="submit" fullWidth variant="contained" color="primary" className="sign-in-button">
-                Sign In
-              </Button>
-              <Link href="#" className="forgot-link">
-                Forgot Email or Password?
-              </Link>
-            </form>
-          </Paper>
-        </Grid>
-      </Grid>
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            variant="outlined"
+            margin="normal"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            helperText={showWarning && !password ? "Please enter your password" : ""}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+              inputLabel: {
+                sx: { color: '#6D6E70' }, // Apply gray color to label
+              },
+            }}
+          />
+          <Button type="submit" fullWidth variant="contained" color="primary" className="sign-in-button">
+            Sign In
+          </Button>
+          <Link href="#" className="forgot-link">
+            Forgot Email or Password?
+          </Link>
+        </form>
+      </div>
     </div>
   );
 };

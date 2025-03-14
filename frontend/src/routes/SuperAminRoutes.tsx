@@ -1,10 +1,10 @@
 import { RouteObject } from "react-router-dom";
 
 import WindowsLayout from "../layouts/WindowsLayout";
-import BookingRoom from "../pages/BookingRoom/BookingRoom";
-import MaintenanceRequest from "../pages/MaintenanceRequest/MaintenanceRequest";
-import Home from "../pages/Home/Home";
-import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
+import Loadable from "../components/Loadable/Loadable";
+import { lazy } from "react";
+const  Home = Loadable(lazy(() => import("../pages/Home/Home")));
+import AddUserForm from "../pages/AddUser/AddUserForm";
 
 const SuperAdminRoutes = (): RouteObject => {
     return {
@@ -16,17 +16,10 @@ const SuperAdminRoutes = (): RouteObject => {
                 element: <Home/>
             },
             {
-                path: "/booking-room",
-                element: <BookingRoom/>
+                path: "/add-user",
+                element: <AddUserForm/>
             },
-            {
-                path: "/maintenance-request",
-                element: <MaintenanceRequest/>
-            },
-            {
-                path: "/create-maintenance-request",
-                element: <CreateMaintenanceRequest/>
-            },
+
         ]
     }
 }
