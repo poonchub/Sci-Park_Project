@@ -5,7 +5,7 @@ import bg from '../../assets/background/bg.png';
 import './LoginPage.css';
 import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
-import { UserLoginInterface } from '../../interfaces/IUser';
+import { UserInterface } from '../../interfaces/IUser';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import WarningAlert from '../../components/Alert/WarningAlert'; // Import WarningAlert
 import ErrorAlert from '../../components/Alert/ErrorAlert';    // Import ErrorAlert
@@ -31,14 +31,14 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const data: UserLoginInterface = {
+    const data: UserInterface = {
       Email: email,
       Password: password,
     };
 
     try {
-      const response: any = await UserLogin(data);
-
+      const responseData: any = await UserLogin(data);
+      const response = responseData?.data;
       if (response && response.Token && response.Role) {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("role", response.Role || "Outsider");
