@@ -5,19 +5,19 @@ import "gorm.io/gorm"
 // User คือ entity สำหรับผู้ใช้ในระบบ
 type User struct {
     gorm.Model
-    CompanyName     string   `json:"company_name"`
-    BusinessDetail  string   `json:"business_detail"`
-    FirstName       string   `json:"first_name"`
-    LastName        string   `json:"last_name"`
-    Email           string   `json:"email"`
-    Password        string   `json:"password"`
-    Phone           string   `json:"phone"`
-    ProfilePath     string   `json:"profile_path"`
+    CompanyName     string
+    BusinessDetail  string
+    FirstName       string
+    LastName        string
+    Email           string
+    Password        string
+    Phone           string
+    ProfilePath     string
     
-    UserPackageID   *uint    `json:"userpackage_id"`
-    RoleID          uint     `json:"role_id"`
+    UserPackageID   *uint
+    RoleID          uint 
     Role            Role     `gorm:"foreignKey:RoleID"`
-    GenderID        uint     `json:"gender_id"`
+    GenderID        uint
     Gender          Gender   `gorm:"foreignKey:GenderID"`
 
     Inspections         []Inspection         `gorm:"foreignKey:UserID"`

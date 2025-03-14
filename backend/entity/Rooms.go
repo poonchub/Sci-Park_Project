@@ -6,11 +6,15 @@ import (
 
 type Room struct {
     gorm.Model
-    FloorID       uint       `json:"floor_id"`
-    Floor         Floor      `gorm:"foreignKey:FloorID"`
-    Capacity      int        `json:"capacity"`
-    RoomStatusID  uint       `json:"room_status_id"`
+    RoomNumber    string
+    Capacity      int  
+
+    RoomStatusID  uint     
     RoomStatus    RoomStatus `gorm:"foreignKey:RoomStatusID"`
-    RoomTypeID    uint       `json:"room_type_id"`
+
+    FloorID       uint     
+    Floor         Floor      `gorm:"foreignKey:FloorID"`
+
+    RoomTypeID    uint      
     RoomType      RoomType   `gorm:"foreignKey:RoomTypeID"`
 }

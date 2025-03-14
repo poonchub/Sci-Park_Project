@@ -118,8 +118,6 @@ function MaintenanceRequest() {
         getRequestStatuses();
     }, []);
 
-    console.log(requestStatuses)
-
     return (
         <div className="maintenance-request">
             <Grid2 container spacing={2}>
@@ -130,7 +128,13 @@ function MaintenanceRequest() {
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
                     <Link to="/create-maintenance-request">
-                        <Button variant="contained" sx={{ borderRadius: '4px', bgcolor: '#08aff1' }}>เขียนคำร้องแจ้งซ่อม</Button>
+                        <Button variant="contained" sx={{
+                            borderRadius: '4px',
+                            bgcolor: '#08A0DC',
+                            "&:hover": {
+                                backgroundColor: "#08A0DC"
+                            },
+                        }}>เขียนคำร้องแจ้งซ่อม</Button>
                     </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 8 }}>
