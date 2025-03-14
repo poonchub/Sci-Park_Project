@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GET /request-statuses
-func ListRequestStatuses(c *gin.Context) {
-	var status []entity.RequestStatus
+// GET /room-types
+func ListRoomTypes(c *gin.Context) {
+	var roomType []entity.RoomType
 
 	db := config.DB()
 
-	db.Find(&status)
+	db.Find(&roomType)
 
-	c.JSON(http.StatusOK, &status)
+	c.JSON(http.StatusOK, &roomType)
 }
