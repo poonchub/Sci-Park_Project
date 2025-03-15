@@ -1,18 +1,27 @@
 package entity
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // MaintenanceRequest คือ entity สำหรับคำขอซ่อม
 type MaintenanceRequest struct {
     gorm.Model
-    Description     string            `json:"description"`
-    UserID          uint              `json:"user_id"`
+    Description     string     
+    StartTime       time.Time       
+	EndTime         time.Time     
+        
+    UserID          uint              
     User            User              `gorm:"foreignKey:UserID"`
-    RoomID          uint              `json:"room_id"`
+    RoomID          uint              
     Room            Room              `gorm:"foreignKey:RoomID"`
-    RequestStatusID uint              `json:"request_status_id"`
+    RequestStatusID uint             
     RequestStatus   RequestStatus     `gorm:"foreignKey:RequestStatusID"`
-    AreaID          uint              `json:"area_id"`
+    AreaID          uint             
     Area            Area              `gorm:"foreignKey:AreaID"`
+    MaintenanceTypeID   uint          
+    MaintenanceType MaintenanceType   `gorm:"foreignKey:MaintenanceTypeID"`
     MaintenanceImages []MaintenanceImage `gorm:"foreignKey:RequestID"`
 }

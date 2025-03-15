@@ -24,7 +24,6 @@ func Authorizes() gin.HandlerFunc {
            return
        }
 
-
        extractedToken := strings.Split(clientToken, "Bearer ")
 
 
@@ -42,15 +41,15 @@ func Authorizes() gin.HandlerFunc {
         }
 
 
-       _, err := jwtWrapper.ValidateToken(clientToken)
+        claims, err := jwtWrapper.ValidateToken(clientToken)
        if err != nil {
            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
            return
 
 
        }
+
+       c.Set("user_id", claims.Id)
        c.Next()
    }
-
-
 }

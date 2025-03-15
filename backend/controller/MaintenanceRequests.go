@@ -2,14 +2,27 @@ package controller
 
 import (
 	"net/http"
+
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 
 	"github.com/gin-gonic/gin"
 )
 
-// POST /create-maintenance-requests
-func CreateMaintenanceRequests(c *gin.Context) {
+// GET /maintenance-requests
+func ListMaintenanceRequests(c *gin.Context) {
+	var request []entity.MaintenanceRequest
+
+	db := config.DB()
+
+	db.Preload("User").Preload("Room").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Find(&request)
+
+	c.JSON(http.StatusOK, &request)
+}
+
+// POST /create-maintenance-request
+func CreateMaintenanceRequest(c *gin.Context) {
+
 	var request entity.MaintenanceRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -17,7 +30,7 @@ func CreateMaintenanceRequests(c *gin.Context) {
 		return
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&request); !ok {
+	// if ok, err := govalidator.ValidateStruct(&booking); !ok {
 	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 	// 	return
 	// }
@@ -49,11 +62,14 @@ func CreateMaintenanceRequests(c *gin.Context) {
 	}
 
 	rq := entity.MaintenanceRequest{
-		Description: request.Description,
-		UserID: request.UserID,
-		RoomID: request.RoomID,
-		RequestStatusID: request.RequestStatusID,
-		AreaID: request.AreaID,
+		Description:      	request.Description,
+		StartTime: 		 	request.StartTime,
+		EndTime: 			request.EndTime,			
+		UserID:            	request.UserID,
+		RoomID:            	request.RoomID,
+		RequestStatusID:   	request.RequestStatusID,
+		AreaID:            	request.AreaID,
+		MaintenanceTypeID: 	request.MaintenanceTypeID,
 	}
 
 	if err := db.Create(&rq).Error; err != nil {

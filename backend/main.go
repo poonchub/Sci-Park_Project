@@ -49,11 +49,20 @@ func main() {
 
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
+		r.GET("/user", middlewares.Authorizes(), controller.GetUserByID)
 
 		// MaintenanceRequests
-		protected.POST("/create-maintenance-requests", controller.CreateMaintenanceRequests)
+		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
+		protected.POST("/create-maintenance-request", controller.CreateMaintenanceRequest)
 
-		
+		// MaintenanceTypes
+		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
+
+		// MaintenanceImages
+		protected.POST("/create-maintenance-images", controller.CreateMaintenanceImages)
+
+		// Floor
+		protected.GET("/floors", controller.ListFloors)
 	}
 
 	// 🌍 Root Route

@@ -22,7 +22,6 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log(email, password);
     // Validate form input before sending data to backend
     if (email === "" || password === "") {
       setErrorMessage("Please fill in all the fields.");

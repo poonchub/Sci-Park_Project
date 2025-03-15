@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sci-park_web-application/entity"
+	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -171,8 +172,12 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Rooms
 	rooms := []entity.Room{
-		{FloorID: 1, Capacity: 10, RoomStatusID: 1, RoomTypeID: 1},
-		{FloorID: 2, Capacity: 20, RoomStatusID: 2, RoomTypeID: 2},
+		{RoomNumber: "A01", FloorID: 1, Capacity: 10, RoomStatusID: 1, RoomTypeID: 1},
+		{RoomNumber: "A02", FloorID: 1, Capacity: 10, RoomStatusID: 2, RoomTypeID: 1},
+		{RoomNumber: "A03", FloorID: 1, Capacity: 10, RoomStatusID: 2, RoomTypeID: 1},
+		{RoomNumber: "B01", FloorID: 2, Capacity: 20, RoomStatusID: 1, RoomTypeID: 2},
+		{RoomNumber: "B02", FloorID: 2, Capacity: 20, RoomStatusID: 2, RoomTypeID: 2},
+		{RoomNumber: "B02", FloorID: 2, Capacity: 20, RoomStatusID: 2, RoomTypeID: 2},
 	}
 	for _, room := range rooms {
 		db.FirstOrCreate(&room, entity.Room{FloorID: room.FloorID, Capacity: room.Capacity})
@@ -207,12 +212,29 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&userPackage)
 
+	// 🔹 ข้อมูล MaintenanceTypes
+	maintenanceTypes := []entity.MaintenanceType{
+		{TypeName: "งานไฟฟ้า",},
+		{TypeName: "งานเครื่องใช้ไฟฟ้า",},
+		{TypeName: "งานเฟอร์นิเจอร์",},
+		{TypeName: "งานประปา",},
+	}
+	for _, mt := range maintenanceTypes {
+		db.FirstOrCreate(&mt, entity.MaintenanceType{TypeName: mt.TypeName})
+	}
+
 	// 🔹 ข้อมูล MaintenanceRequest
+	startTime, _ := time.Parse("15:04:05", "15:00:00")
+	endTime, _ := time.Parse("15:04:05", "18:00:00")
 	maintenanceRequest := entity.MaintenanceRequest{
 		Description: "Fix the AC", 
+		StartTime: startTime,
+		EndTime: endTime,
 		UserID: users[0].ID, 
 		RoomID: rooms[0].ID, 
 		RequestStatusID: 1,
+		AreaID: 1,
+		MaintenanceTypeID: 1,
 	}
 	db.FirstOrCreate(&maintenanceRequest)
 

@@ -1,16 +1,17 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"path"
-	"os"
-	"fmt"
-	"strconv"
 )
 
 func CreateUser(c *gin.Context) {
@@ -128,4 +129,18 @@ func CreateUser(c *gin.Context) {
 
 	// ตอบกลับเมื่อสร้างผู้ใช้สำเร็จ
 	c.JSON(http.StatusCreated, gin.H{"message": "User and UserPackage created successfully", "data": user})
+}
+
+// GET /user-token/:id
+func GetUserByID(c *gin.Context) {
+	var user entity.User
+	id := c.Param("id")
+
+	db := config.DB()
+	if err := db.First(&user, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }

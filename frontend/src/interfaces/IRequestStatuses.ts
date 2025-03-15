@@ -1,4 +1,4 @@
 export interface RequestStatusesInterface{
-    ID: number;
-    Name: string;
+    ID?:    number;
+    Name?:  string;
 }

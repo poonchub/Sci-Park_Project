@@ -14,13 +14,15 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Avatar, Button, Menu, MenuItem, Tooltip } from '@mui/material';
 import { AppBar } from '../components/AppBar/AppBar';
 import { Drawer } from '../components/Drawer/Drawer';
 
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
+import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
@@ -34,14 +36,15 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 
 const WindowsLayout: React.FC = () => {
-	const [pages, setPages] = useState<{
+	const [pagesAppbar, setPagesAppbar] = useState<{
 		path: string;
 		name: string;
 	}[]>([]);
 
-	const [fname, setFname] = useState("พูลทรัพย์");
-	const [lname, setLname] = useState("นานาวัน");
-
+	const [pagesDrawer, setPagesDrawer] = useState<{
+		path: string;
+		name: string;
+	}[]>([]);
 
 	const theme = useTheme();
 	const [open, setOpen] = React.useState(false);
@@ -53,24 +56,30 @@ const WindowsLayout: React.FC = () => {
 	const renderNavbarLinkPage = () => {
 		const role = localStorage.getItem("role");
 		if (role === "Admin") {
-			setPages(
+			setPagesAppbar(
 				[
 					{ path: '/', name: 'หน้าหลัก' },
 					{ path: '/booking-room', name: 'จองห้อง' },
 					{ path: '/maintenance-request', name: 'แจ้งซ่อม' },
 				]
 			)
-
+			setPagesDrawer(
+				[
+					{ path: '/', name: 'แดชบอร์ด' },
+					{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
+					{ path: '/', name: 'มอบหมายงานซ่อม' },
+					{ path: '/', name: 'จัดการผู้ใช้งาน' },
+        ]
+      )
 		} else if (role === "SuperAdmin") {
 			setPages(
 				[
 					{ path: '/', name: 'หน้าหลัก' },
 					{ path: '/add-user', name: 'เพิ่มผู้ใช้' },
-					
 				]
 			)
 		} else {
-			setPages(
+			setPagesAppbar(
 				[
 					{ path: '/', name: 'หน้าหลัก' },
 					{ path: '/booking-room', name: 'จองห้อง' },
@@ -104,7 +113,7 @@ const WindowsLayout: React.FC = () => {
 	return (
 		<Box sx={{ display: 'flex' }}>
 			<CssBaseline />
-			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary' }}>
+			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary', zIndex: 98 }}>
 				<Toolbar>
 					<IconButton
 						color="inherit"
@@ -124,13 +133,14 @@ const WindowsLayout: React.FC = () => {
 						<img src="/images/logo.png" alt="" style={{ height: '30px' }} />
 					</Box>
 					<Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex', gap: '10px', justifyContent: 'center' } }}>
-						{pages.map((page: { path: string; name: string }) => {
+						{pagesAppbar.map((page: { path: string; name: string }) => {
 							return (
 								<Link to={page.path} key={page.name}>
 									<Button
 										sx={{
 											my: 2,
 											display: 'block',
+											borderRadius: 10
 										}}
 										variant={location.pathname === page.path ? 'contained' : 'text'}
 									>
@@ -140,7 +150,7 @@ const WindowsLayout: React.FC = () => {
 							);
 						})}
 					</Box>
-					<Typography >{fname}</Typography>
+					<Typography ></Typography>
 					<Box sx={{ flexGrow: 0, flexDirection: 'column', ml: '10px' }}>
 						<Tooltip title="Open settings">
 							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0, border: `3px solid ${theme.palette.primary.main}`, }}>
@@ -172,63 +182,76 @@ const WindowsLayout: React.FC = () => {
 					</Box>
 				</Toolbar>
 			</AppBar>
-			<Drawer variant="permanent" open={open}>
+			<Drawer variant="permanent" open={open} sx={{ zIndex: 97}}>
 				<DrawerHeader>
 					<IconButton onClick={handleDrawerClose} sx={{ color: 'text.secondary' }}>
 						{theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
 					</IconButton>
 				</DrawerHeader>
 				<List>
-					{['แดชบอร์ด', 'รายการแจ้งซ่อม', 'มอบหมายงานซ่อม', 'จัดการผู้ใช้งาน'].map((text, index) => (
-						<ListItem key={text} disablePadding sx={{ display: 'block' }}>
-							<ListItemButton
-								sx={[
-									{
-										minHeight: 48,
-										px: 2.5,
-
-									},
-									open
-										? {
-											justifyContent: 'initial',
-										}
-										: {
-											justifyContent: 'center',
-										},
-								]}
-							>
-								<ListItemIcon
+					{pagesDrawer.map((page, index) => {
+						return (
+							<ListItem key={index} disablePadding sx={{ display: 'block' }}>
+								<Link to={page.path}>
+								<ListItemButton
 									sx={[
 										{
-											minWidth: 0,
-											justifyContent: 'center',
+											minHeight: 48,
+											px: 2.5,
+											bgcolor: location.pathname === page.path ? '#F26522' : 'transparent',
+											"&:hover": {
+												bgcolor: '#dd591c'
+											}
 										},
 										open
 											? {
-												mr: 3,
+												justifyContent: 'initial',
 											}
 											: {
-												mr: 'auto',
+												justifyContent: 'center',
 											},
 									]}
 								>
-									{index % 2 === 0 ? <InboxIcon sx={{ color: 'text.secondary' }} /> : <MailIcon sx={{ color: 'text.secondary' }} />}
-								</ListItemIcon>
-								<ListItemText
-									primary={text}
-									sx={[
-										open
-											? {
-												opacity: 1,
-											}
-											: {
-												opacity: 0,
+									<ListItemIcon
+										sx={[
+											{
+												minWidth: 0,
+												justifyContent: 'center',
 											},
-									]}
-								/>
-							</ListItemButton>
-						</ListItem>
-					))}
+											open
+												? {
+													mr: 3,
+												}
+												: {
+													mr: 'auto',
+												},
+										]}
+									>
+										{
+											index === 0 ? <DashboardOutlinedIcon sx={{ color: 'text.secondary' }} /> :
+												index === 1 ? <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} /> :
+													index === 2 ? <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} /> : <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />
+										}
+									</ListItemIcon>
+									<ListItemText
+										primary={page.name}
+										sx={[
+											open
+												? {
+													opacity: 1,
+													color: '#fff'
+												}
+												: {
+													opacity: 0,
+												},
+										]}
+									/>
+								</ListItemButton>
+								</Link>
+								
+							</ListItem>
+						)
+					})}
 				</List>
 			</Drawer>
 			<Box component="main" sx={{ flexGrow: 1, p: 3 }}>
