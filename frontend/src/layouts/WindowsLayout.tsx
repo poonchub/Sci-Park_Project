@@ -105,7 +105,7 @@ const WindowsLayout: React.FC = () => {
 	return (
 		<Box sx={{ display: 'flex' }}>
 			<CssBaseline />
-			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary' }}>
+			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary', zIndex: 98 }}>
 				<Toolbar>
 					<IconButton
 						color="inherit"
@@ -174,7 +174,7 @@ const WindowsLayout: React.FC = () => {
 					</Box>
 				</Toolbar>
 			</AppBar>
-			<Drawer variant="permanent" open={open}>
+			<Drawer variant="permanent" open={open} sx={{ zIndex: 97}}>
 				<DrawerHeader>
 					<IconButton onClick={handleDrawerClose} sx={{ color: 'text.secondary' }}>
 						{theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
@@ -182,7 +182,6 @@ const WindowsLayout: React.FC = () => {
 				</DrawerHeader>
 				<List>
 					{pagesDrawer.map((page, index) => {
-						console.log(pagesDrawer)
 						return (
 							<ListItem key={index} disablePadding sx={{ display: 'block' }}>
 								<Link to={page.path}>
@@ -232,6 +231,7 @@ const WindowsLayout: React.FC = () => {
 											open
 												? {
 													opacity: 1,
+													color: '#fff'
 												}
 												: {
 													opacity: 0,

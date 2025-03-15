@@ -3,7 +3,7 @@ import "./CreateMaintenanceRequest.css"
 
 import { Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUser } from "../../services/http";
+import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUser } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
@@ -18,6 +18,7 @@ import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
+import SuccessAlert from "../../components/Alert/SuccessAlert";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -30,7 +31,11 @@ function CreateMaintenanceRequestPage() {
 
     const [selectedRoomtype, setSelectedRoomtype] = useState('')
     const [selectedFloor, setSelectedFloor] = useState('')
-    const [isAllTime, setIsAllTime] = useState(true)
+    // const [isAllTime, setIsAllTime] = useState(true)
+
+    const [message, setMessage] = useState(<></>)
+    const [showMessage, setShowMessage] = useState(false)
+
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         Description: "",
@@ -139,10 +144,32 @@ function CreateMaintenanceRequestPage() {
         formData.EndTime = `0001-01-01T${formData.EndTime}:00Z`
 
         try {
-            const res = await CreateMaintenanceRequest(formData)
-            console.log(res)
-            if (res) {
+            const resRequest = await CreateMaintenanceRequest(formData)
+            console.log(resRequest)
+            if (resRequest) {
+                const formDataFile = new FormData();
+                formDataFile.append("userID", String(user?.ID));
+                formDataFile.append("requestID", resRequest.data.ID);
 
+                // เพิ่มไฟล์ทั้งหมดลงใน formData
+                for (let i = 0; i < files.length; i++) {
+                    formDataFile.append("files", files[i]); // ใช้ key "file" ให้ตรงกับ API
+                }
+
+                for (let pair of formDataFile.entries()) {
+                    console.log("📤 FormData:", pair[0], pair[1]);
+                }
+
+                const resImage = await CreateMaintenanceImages(formDataFile)
+                if (resImage) {
+                    setShowMessage(true)
+                    setMessage(<SuccessAlert
+                        message={'ส่งคำร้องแจ้งซ่อมสำเร็จ'}
+                        onClose={()=>setShowMessage(false)}
+                    />)
+                }
+                else {
+                }
             } else {
 
             }
@@ -188,6 +215,7 @@ function CreateMaintenanceRequestPage() {
 
     return (
         <div className="create-maintenance-request-page">
+            {showMessage && message}
             {/* Header Section */}
             <Grid2 container spacing={2}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
@@ -225,7 +253,7 @@ function CreateMaintenanceRequestPage() {
                                             {
                                                 areas.map((item, index) => {
                                                     return (
-                                                        <FormControlLabel key={index} value={item.ID} control={<Radio />} label={item.Name}/>
+                                                        <FormControlLabel key={index} value={item.ID} control={<Radio />} label={item.Name} />
                                                     )
                                                 })
                                             }
@@ -344,8 +372,8 @@ function CreateMaintenanceRequestPage() {
                                         onChange={handleInputChange}
                                         placeholder="ระบุรายละเอียดงานแจ้งซ่อม"
                                         slotProps={{
-                                            input: { 
-                                                className: "custom-input" 
+                                            input: {
+                                                className: "custom-input"
                                             }
                                         }}
                                     />
@@ -414,7 +442,7 @@ function CreateMaintenanceRequestPage() {
                                             disabled={!onEdit}
                                             value={user ? user.Phone : ''}
                                             slotProps={{
-                                                input: { 
+                                                input: {
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             <PhoneOutlinedIcon />
@@ -429,7 +457,7 @@ function CreateMaintenanceRequestPage() {
                                             disabled={!onEdit}
                                             value={user ? user.Email : ''}
                                             slotProps={{
-                                                input: { 
+                                                input: {
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             <MailOutlineOutlinedIcon />
@@ -440,18 +468,18 @@ function CreateMaintenanceRequestPage() {
                                         />
                                     </Grid2>
                                     <Grid2 container size={{ xs: 6, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                        <Button 
-                                            variant="contained" 
+                                        <Button
+                                            variant="contained"
 
-                                            onClick={()=>setOnEdit(!onEdit)}
+                                            onClick={() => setOnEdit(!onEdit)}
                                             sx={{
-                                            background: "#08aff1",
-                                            display: onEdit ? 'none' : '',
-                                            "&:hover": {
-                                                backgroundColor: "#08A0DC"
-                                            }
-                                        }}>
-                                            <EditOutlinedIcon/>
+                                                background: "#08aff1",
+                                                display: onEdit ? 'none' : '',
+                                                "&:hover": {
+                                                    backgroundColor: "#08A0DC"
+                                                }
+                                            }}>
+                                            <EditOutlinedIcon />
                                             {"แก้ไข"}
                                         </Button>
                                     </Grid2>
@@ -504,7 +532,7 @@ function CreateMaintenanceRequestPage() {
                             <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
                                 <Button>รีเซ็ตข้อมูล</Button>
                                 <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
-                                    <IosShareOutlinedIcon/>
+                                    <IosShareOutlinedIcon />
                                     {"ส่งคำร้องแจ้งซ่อม"}
                                 </Button>
                             </Grid2>

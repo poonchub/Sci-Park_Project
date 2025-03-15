@@ -9,6 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GET /maintenance-requests
+func ListMaintenanceRequests(c *gin.Context) {
+	var request []entity.MaintenanceRequest
+
+	db := config.DB()
+
+	db.Preload("User").Preload("Room").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Find(&request)
+
+	c.JSON(http.StatusOK, &request)
+}
+
 // POST /create-maintenance-request
 func CreateMaintenanceRequest(c *gin.Context) {
 

@@ -210,6 +210,26 @@ async function GetMaintenanceTypes() {
 }
 
 // MaintenanceRequests
+async function GetMaintenanceRequests() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
     const requestOptions = {
         method: "POST",
@@ -220,13 +240,30 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
         body: JSON.stringify(data),
     };
 
-    console.log("Request Data:", data);
-
-    const token = localStorage.getItem("token");
-    console.log("Token:", token);
-
     let res = await fetch(`${apiUrl}/create-maintenance-request`, requestOptions).then((res) => {
-        if (res.status == 200) {
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+// MaintenanceImages
+async function CreateMaintenanceImages(data: FormData) {
+    const requestOptions = {
+        method: "POST",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/create-maintenance-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 201) {
             return res.json();
         } else {
             return false;
@@ -261,7 +298,12 @@ export {
     GetMaintenanceTypes,
 
     // MaintenanceRequests
+    GetMaintenanceRequests,
     CreateMaintenanceRequest,
+
+    // MaintenanceImages
+    CreateMaintenanceImages,
+
 }
 
 

@@ -1,106 +1,134 @@
 import { Link } from "react-router-dom"
 import "./MaintenanceRequest.css"
-import { Button, Card, CardContent, Container, FormControl, Grid2, InputLabel, MenuItem, Select, Stack, TextField, Typography } from "@mui/material"
+import { Box, Button, Card, CardContent, FormControl, Grid2, MenuItem, Typography } from "@mui/material"
 import { CheckCircle } from "@mui/icons-material"
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
+import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
-import { GetRequestStatuses } from "../../services/http"
+import { GetMaintenanceRequests, GetRequestStatuses } from "../../services/http"
 import { LineChart } from "@mui/x-charts"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
+import { UserInterface } from "../../interfaces/IUser"
+import { TextField } from "../../components/TextField/TextField"
+import { Select } from "../../components/Select/Select"
+import { DatePicker } from "../../components/DatePicker/DatePicker"
+import { AreasInterface } from "../../interfaces/IAreas"
+
+import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 
 function MaintenanceRequest() {
 
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
+    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
 
-    const columns: GridColDef<(typeof rows)[number]>[] = [
-        { field: 'id', headerName: 'ID', width: 90 },
+    const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
+        { field: 'ID', headerName: 'ID', width: 90 },
         {
-            field: 'ผู้แจ้งซ่อม',
+            field: 'User',
             headerName: 'ผู้แจ้งซ่อม',
             description: 'This column has a value getter and is not sortable.',
             sortable: false,
             width: 160,
-            valueGetter: (value, row) => `${row.firstName || ''} ${row.lastName || ''}`,
+            valueGetter: (params: UserInterface) => `${params.FirstName || ''} ${params.LastName || ''}`,
         },
         {
-            field: 'date',
+            field: 'CreatedAt',
             headerName: 'วันที่',
             type: 'string',
-            width: 110,
-            editable: true,
+            width: 150,
+            // editable: true,
+            valueGetter: (params) => dateFormat(params),
         },
         {
-            field: 'area',
-            headerName: 'บริเวณ',
+            field: 'Area',
+            headerName: 'บริเวณที่แจ้งซ่อม',
             type: 'string',
-            width: 160,
-            editable: true,
+            width: 200,
+            // editable: true,
+            valueGetter: (params: AreasInterface) => params.Name,
         },
         {
-            field: 'details',
+            field: 'Description',
             headerName: 'รายละเอียด',
             type: 'string',
-            width: 250,
-            editable: true,
+            width: 200,
+            // editable: true,
         },
         {
-            field: 'status',
+            field: 'RequestStatus',
             headerName: 'สถานะ',
             type: 'string',
-            width: 100,
-            editable: true,
-        },
-    ];
+            width: 200,
+            // editable: true,
+            renderCell: (params) => (
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '100%'
+                }}>
+                    <Box sx={{
+                        bgcolor: '#08aff1',
+                        borderRadius: 10,
+                        px: 1.5,
+                        py: 0.5,
+                        display: 'flex',
+                        gap: 1,
+                        color: '#fff'
+                    }}>
+                        <CheckCircleOutlineOutlinedIcon />
+                        <Typography>
+                            {params.row.RequestStatus?.Name || "-"}
+                        </Typography>
+                    </Box>
 
-    const rows = [
-        {
-            id: 1, lastName: 'Snow', firstName: 'Jon',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+                </Box>
+            ),
         },
         {
-            id: 2, lastName: 'Lannister', firstName: 'Cersei',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+            field: 'Approve',
+            headerName: 'จัดการ',
+            type: 'string',
+            width: 200,
+            // editable: true,
+            renderCell: () => (
+                <Box>
+                    <Button
+                        size="small"
+                        sx={{ bgcolor: '#08aff1', color: '#fff', fontSize: '14px' }}
+                    >
+                        อนุมัติ
+                    </Button>
+                    <Button
+                        size="small"
+                        sx={{ color: '#f00', fontSize: '14px', border: '1px solid' }}
+                    >
+                        <ClearOutlinedIcon />
+                    </Button>
+                </Box>
+
+            ),
         },
         {
-            id: 3, lastName: 'Lannister', firstName: 'Jaime',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
+            field: 'Check',
+            headerName: 'action',
+            type: 'string',
+            width: 200,
+            // editable: true,
+            renderCell: () => (
+                <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                >
+                    ตรวจสอบ
+                </Button>
+            ),
         },
-        {
-            id: 4, lastName: 'Stark', firstName: 'Arya',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
-        {
-            id: 5, lastName: 'Targaryen', firstName: 'Daenerys',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
-        {
-            id: 6, lastName: 'Melisandre', firstName: null,
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
-        {
-            id: 7, lastName: 'Clifford', firstName: 'Ferrara',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
-        {
-            id: 8, lastName: 'Frances', firstName: 'Rossini',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
-        {
-            id: 9, lastName: 'Roxie', firstName: 'Harvey',
-            date: "25/02/68", area: 'ห้องทำงาน/ห้องประชุม',
-            details: 'แอร์ไม่สามารถใช้งานได้ มีไฟสีแดงสลับกับสีส้มกระพริบเป็นระยะๆ', status: 'สำเร็จ'
-        },
+
     ];
 
     const getRequestStatuses = async () => {
@@ -114,9 +142,27 @@ function MaintenanceRequest() {
         }
     };
 
+    const getMaintenanceRequests = async () => {
+        try {
+            const res = await GetMaintenanceRequests();
+            if (res) {
+                setMaintenanceRequests(res);
+            }
+        } catch (error) {
+            console.error("Error fetching request maintenance requests:", error);
+        }
+    };
+
+    const dateFormat = (date: string) => {
+        return `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
+    }
+
     useEffect(() => {
         getRequestStatuses();
+        getMaintenanceRequests()
     }, []);
+
+    console.log(maintenanceRequests)
 
     return (
         <div className="maintenance-request">
@@ -144,8 +190,8 @@ function MaintenanceRequest() {
                             requestStatuses.map((item, index) => {
                                 return (
                                     <Grid2 size={{ xs: 10, md: 4 }} key={index}>
-                                        <Card variant="outlined" className="status-card" sx={{ height: 70 }}>
-                                            <CardContent>
+                                        <Card className="status-card" sx={{ height: 70 }}>
+                                            <CardContent className="status-card-content">
                                                 <Typography variant="body1" color="textPrimary">{item.Name}</Typography>
                                                 <div className="status-item success">
                                                     <CheckCircle /> <span>3 รายการ</span>
@@ -227,8 +273,9 @@ function MaintenanceRequest() {
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
                     <DataGrid
-                        rows={rows}
+                        rows={maintenanceRequests}
                         columns={columns}
+                        getRowId={(row) => String(row.ID)}
                         initialState={{
                             pagination: {
                                 paginationModel: {

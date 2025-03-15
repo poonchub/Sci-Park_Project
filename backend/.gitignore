@@ -6,3 +6,5 @@ sci-park_web-application.db
 
 # Ignore images folder containing profile pictures
 /images/Profiles/*
+
+/images

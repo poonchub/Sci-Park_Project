@@ -52,10 +52,14 @@ func main() {
 		r.GET("/user", middlewares.Authorizes(), controller.GetUserByID)
 
 		// MaintenanceRequests
+		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
 		protected.POST("/create-maintenance-request", controller.CreateMaintenanceRequest)
 
 		// MaintenanceTypes
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
+
+		// MaintenanceImages
+		protected.POST("/create-maintenance-images", controller.CreateMaintenanceImages)
 
 		// Floor
 		protected.GET("/floors", controller.ListFloors)

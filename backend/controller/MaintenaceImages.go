@@ -1,84 +1,87 @@
 package controller
 
 import (
-	// "encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-	// "sci-park_web-application/config"
-	// "sci-park_web-application/entity"
+	"os"
+	"path"
+	"sci-park_web-application/config"
+	"sci-park_web-application/entity"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// POST /create-maintenance-request
+func createFolderIfNotExist(folderPath string) {
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		err := os.MkdirAll(folderPath, os.ModePerm)
+		if err != nil {
+			log.Fatalf("ไม่สามารถสร้างโฟลเดอร์ %s: %v", folderPath, err)
+		}
+	}
+}
+
+// POST /create-maintenance-images
 func CreateMaintenanceImages(c *gin.Context) {
+	// รับ UserID และ RequestID จาก form-data
+	UserIDStr := c.PostForm("userID")
+	RequestIDtr := c.PostForm("requestID")
+	RequestID, err2 := strconv.ParseUint(RequestIDtr, 10, 32)
 
-	fmt.Println("Received Content-Type:", c.ContentType()) // ✅ Log
+	if UserIDStr == "" || err2 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "กรุณาระบุ UserIDStr และ RequestID"})
+		return
+	}
 
-    if c.ContentType() != "multipart/form-data" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Content-Type"})
-        return
-    }
+	db := config.DB()
 
-    fmt.Println("Parsing form data...") // ✅ Log เพิ่ม
+	// รับไฟล์จากฟอร์มหลายไฟล์
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์"})
+		return
+	}
 
-    // ✅ อ่าน JSON จาก FormData
-    jsonData := c.PostForm("jsonData")
-    fmt.Println("Received JSON Data:", jsonData)
-
-    // ✅ อ่านไฟล์จาก FormData
-    form, err := c.MultipartForm()
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
-        return
-    }
-
+	// รับไฟล์จากฟอร์ม
 	files := form.File["files"]
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์"})
+		return
+	}
 
-    if len(files) == 0 {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "No image files provided"})
-        return
-    }
+	// สร้างโฟลเดอร์ XX ถ้ายังไม่มี
+	customerFolder := fmt.Sprintf("images/maintenance-request/user%s/request%s", UserIDStr,RequestIDtr)
+	createFolderIfNotExist(customerFolder)
 
-	// db := config.DB()
+	var images []entity.MaintenanceImage
+	for index, file := range files {
+		// ตั้งชื่อไฟล์ใหม่
+		newFileName := fmt.Sprintf("request%s_%d.jpg", RequestIDtr, index+1)
+		filePath := path.Join(customerFolder, newFileName)
 
-	// var user entity.User
-	// if err := db.First(&user, jsonData.UserID).Error; err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-	// 	return
-	// }
+		// บันทึกไฟล์ลงในโฟลเดอร์
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถบันทึกไฟล์ได้"})
+			return
+		}
 
-	// var room entity.Room
-	// if err := db.First(&room, jsonData.RoomID).Error; err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
-	// 	return
-	// }
+		// สร้าง MaintenanceImage entity สำหรับไฟล์นี้
+		image := entity.MaintenanceImage{
+			FilePath:  filePath,
+			RequestID: uint(RequestID),
+		}
 
-	// var status entity.RequestStatus
-	// if err := db.First(&status, jsonData.RequestStatusID).Error; err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "request status not found"})
-	// 	return
-	// }
+		// บันทึกข้อมูลในฐานข้อมูล
+		if err := db.FirstOrCreate(&image, &entity.MaintenanceImage{
+			FilePath: image.FilePath,
+		}).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
-	// var area entity.Area
-	// if err := db.First(&area, jsonData.AreaID).Error; err != nil {
-	// 	c.JSON(http.StatusNotFound, gin.H{"error": "area not found"})
-	// 	return
-	// }
+		images = append(images, image)
+	}
 
-	// rq := entity.MaintenanceRequest{
-	// 	Description:       requestData.Description,
-	// 	UserID:            requestData.UserID,
-	// 	RoomID:            requestData.RoomID,
-	// 	RequestStatusID:   requestData.RequestStatusID,
-	// 	AreaID:            requestData.AreaID,
-	// 	MaintenanceTypeID: requestData.MaintenanceTypeID,
-	// }
-
-	// if err := db.Create(&rq).Error; err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	// c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": rq})
+	c.JSON(http.StatusCreated, gin.H{"message": "อัพโหลดสำเร็จ", "MaintenanceImage": images})
 }
