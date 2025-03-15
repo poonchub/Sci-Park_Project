@@ -1,0 +1,99 @@
+/* Wrapper for the entire Add User page */
+.add-user {
+  display: flex;
+  justify-content: center;
+  height: auto;
+}
+
+/* Form container inside .add-user */
+.add-user .add-user-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  max-width: 100%;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px 8px 20px 20px; /* Rounded corners with a soft bottom curve */
+  width: 100%;
+  max-width: 100vw;
+  margin-left: auto;  /* Center the form horizontally */
+  margin-right: auto; /* Center the form horizontally */
+}
+
+/* Button for profile image upload inside .add-user */
+.add-user .upload-button {
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 4px;
+  background-color: #ff6f00; /* Orange color */
+  color: white;
+}
+
+.add-user .upload-button input {
+  display: none;
+}
+
+/* Profile container for image inside .add-user */
+.add-user .profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Grid layout for form inputs inside .add-user */
+.add-user .grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Each grid item inside .add-user */
+.add-user .grid-item {
+  padding: 10px;
+}
+
+/* Optional style for inputs to match Material UI's spacing inside .add-user */
+.add-user .MuiFormControl-root {
+  margin-bottom: 20px;
+}
+
+/* Submit button inside .add-user */
+.add-user button[type="submit"] {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 20px;
+  margin-top: 20px;
+  background-color: #ff6f00; /* Orange color */
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.add-user button[type="submit"]:hover {
+  background-color: #e65c00; /* Darker orange when hovered */
+}
+
+/* Text styles */
+.add-user .MuiTypography-h5 {
+  color: #ff6f00; /* Orange color */
+  text-align: left; /* Align text to the left */
+  font-weight: bold; /* Make the text bold */
+}
+
+
+/* Adjust form and layout for mobile devices */
+@media (max-width: 600px) {
+  .add-user .add-user-form {
+    width: 90%;  /* Adjust form size */
+    margin-left: 0;  /* Remove left margin on mobile */
+  }
+
+  .add-user .profile-container {
+    padding: 10px;
+    height: auto;
+  }
+}

@@ -80,6 +80,7 @@ func SeedDatabase() {
 		{Name: "Outsider"}, 
 		{Name: "Manager"}, 
 		{Name: "Admin"},
+		{Name: "SuperAdmin"},
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
@@ -153,6 +154,16 @@ func SeedDatabase() {
 			Phone: "987654321", 
 			ProfilePath: "/profiles/alice.jpg", 
 			RoleID: 2, GenderID: 2},
+		{
+			CompanyName: "NO COM", 
+			BusinessDetail: "NO Business", 
+			FirstName: "Jaydee", 
+			LastName: "Somkom", 
+			Email: "superadmin@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 5, GenderID: 2},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)

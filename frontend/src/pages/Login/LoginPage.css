@@ -1,78 +1,65 @@
 /* สไตล์สำหรับหน้า Login */
 .login-page {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
+  display: flex;
+  justify-content: flex-end; /* เลื่อนฟอร์มไปทางขวา */
+  align-items: center;
+  height: 100vh;
+  background-image: url('../../assets/background/bg3.png'); /* ใช้ภาพพื้นหลัง */
+  background-size: cover; /* ให้ภาพขยายเต็มจอ */
+  background-position: center; /* ให้ภาพอยู่ตรงกลาง */
+  background-attachment: fixed; /* ภาพจะไม่เลื่อนตามการ scroll */
+  padding: 0 20px; /* เว้นระยะซ้ายขวา */
 }
 
-/* สไตล์สำหรับด้านซ้าย (ส่วนที่มีภาพพื้นหลัง) */
-.login-page .left-side {
-    background-image: url("/assets/background/bg.png"); /* ใช้ภาพพื้นหลังที่คุณอัพโหลด */
-    background-size: cover;
-    background-position: center;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: white;
-    text-align: center;
-    padding: 16px;
-}
 
-/* สไตล์สำหรับด้านขวา (ฟอร์มการเข้าสู่ระบบ) */
+/* สไตล์สำหรับฟอร์มการเข้าสู่ระบบ */
 .login-page .right-side {
-    margin-top: 20vh;
-    width: 100%;
-    max-width: 400px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background-color: white;
-    margin-left: auto;  /* ทำให้ card อยู่ทางขวา */
-    margin-right: auto; /* ทำให้ card อยู่ตรงกลาง */
-    border-radius: 8px 8px 20px 20px; /* เพิ่มมุมมนด้านล่าง */
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background-color: white;
+  margin-top: 20px; /* เลื่อนฟอร์มลงมาจากขอบบน */
+  border-radius: 8px 8px 20px 20px; /* เพิ่มมุมมนด้านล่าง */
 }
 
 /* ปรับฟอนต์และขนาดของป้าย */
-.login-page .right-side .MuiTypography-h5 {
-    color: #ff6f00; /* สีส้ม */
-    text-align: center;
+.login-page .right-side .MuiTypography-h2 {
+  color: #ff6f00; /* สีส้ม */
+  text-align: center;
 }
 
 /* ปรับปุ่ม Sign In */
 .login-page .right-side .sign-in-button {
-    margin-top: 16px;
-    background-color: #ff6f00; /* สีส้ม */
-    color: white;
+  margin-top: 16px;
+  background-color: #ff6f00; /* สีส้ม */
+  color: white;
+  font-weight: bold; /* ทำให้ข้อความหนาขึ้น */
 }
 
+
 .login-page .right-side .sign-in-button:hover {
-    background-color: #e65c00; /* สีส้มเข้มขึ้นตอน hover */
+  background-color: #e65c00; /* สีส้มเข้มขึ้นตอน hover */
 }
 
 /* ปรับลิงก์ "Forgot Email or Password?" */
 .login-page .right-side .forgot-link {
-    margin-top: 16px;
-    display: block;
-    text-align: center;
-    color: #1976d2; /* สีน้ำเงิน */
-    text-decoration: none;
-    font-weight: bold;
+  margin-top: 16px;
+  display: block;
+  text-align: center;
+  color: #1976d2; /* สีน้ำเงิน */
+  text-decoration: none;
+  font-weight: bold;
 }
 
 /* ปรับขนาดของฟอร์มและการจัดเรียง */
 @media (max-width: 600px) {
   .login-page .right-side {
     width: 90%;  /* ปรับขนาดของฟอร์ม */
-    margin-left: 0;  /* สำหรับมือถือให้ไม่มีการเยื้องซ้าย */
-  }
-
-  .login-page .left-side {
-    padding: 10px;
-    height: auto;
   }
 }
+
+

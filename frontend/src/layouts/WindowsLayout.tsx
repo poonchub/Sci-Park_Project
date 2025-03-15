@@ -69,6 +69,13 @@ const WindowsLayout: React.FC = () => {
 					{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
 					{ path: '/', name: 'มอบหมายงานซ่อม' },
 					{ path: '/', name: 'จัดการผู้ใช้งาน' },
+        ]
+      )
+		} else if (role === "SuperAdmin") {
+			setPages(
+				[
+					{ path: '/', name: 'หน้าหลัก' },
+					{ path: '/add-user', name: 'เพิ่มผู้ใช้' },
 				]
 			)
 		} else {
@@ -80,6 +87,7 @@ const WindowsLayout: React.FC = () => {
 				]
 			)
 		}
+
 	};
 
 	const handleOpenUserMenu = () => {

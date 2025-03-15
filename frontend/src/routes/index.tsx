@@ -2,7 +2,7 @@ import { RouteObject, useRoutes } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
 import LoginRoutes from "./LoginRoutes";
 import OutsiderRoutes from "./OutsiderRoutes";
-
+import SuperAdminRoutes from "./SuperAminRoutes";
 function ConfigRoutes() {
   const isLoggedIn = localStorage.getItem("isLogin") === "true"; // ตรวจสอบสถานะการเข้าสู่ระบบ
   const role = localStorage.getItem("role"); // รับค่าบทบาทจาก localStorage
@@ -17,6 +17,9 @@ function ConfigRoutes() {
         break;
       case "Outsider":
         routes = [OutsiderRoutes()]; // เมื่อบทบาทเป็น Outsider ให้ใช้เส้นทางของ Outsider
+        break;
+      case "SuperAdmin":
+        routes = [SuperAdminRoutes()]; // เมื่อบทบาทเป็น Outsider ให้ใช้เส้นทางของ Outsider
         break;
       default:
         routes = [LoginRoutes()]; // กรณีอื่นๆ ใช้เส้นทางของ Login
