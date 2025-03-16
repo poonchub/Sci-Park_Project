@@ -25,7 +25,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         width: '50%',
-        zIndex: 10,
+        zIndex: 1000,
         backgroundColor: '#f8d7da',  // Light red background for error
         border: '1px solid #dc3545', // Red border
         borderRadius: '10px',         // Rounded corners

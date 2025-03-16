@@ -88,7 +88,7 @@ func CreateUser(c *gin.Context) {
 		}
 
 		// กำหนด path ของไฟล์ที่จะเก็บ
-		filePath = path.Join(profileFolder, fmt.Sprintf("%s-%s", user.FirstName, file.Filename))
+		filePath = path.Join(profileFolder, fmt.Sprintf("%s-%s", user.Email, file.Filename))
 
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, filePath); err != nil {

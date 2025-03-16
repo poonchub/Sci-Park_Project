@@ -63,6 +63,15 @@ func main() {
 
 		// Floor
 		protected.GET("/floors", controller.ListFloors)
+
+		// Gender
+		protected.GET("/genders",controller.ListGenders)
+
+		// Role
+		protected.GET("/roles",controller.ListRoles)
+
+		// Package
+		protected.GET("/packages",controller.ListPackages)
 	}
 
 	// 🌍 Root Route

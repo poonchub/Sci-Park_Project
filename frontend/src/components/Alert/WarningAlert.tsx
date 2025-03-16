@@ -25,7 +25,7 @@ const WarningAlert: React.FC<WarningAlertProps> = ({ message, onClose }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         width: '50%',
-        zIndex: 10,
+        zIndex: 1000,
         backgroundColor: '#fff3cd',  // Light yellow background for warning
         border: '1px solid #ffc107', // Yellow border
         borderRadius: '10px',         // Rounded corners

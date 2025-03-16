@@ -4,15 +4,6 @@ import { UserInterface } from "../../interfaces/IUser";
 import axios from 'axios';
 
 
-// ฟังก์ชันดึง Authorization Header
-function getAuthHeaders() {
-    const token = localStorage.getItem("authToken");
-    return {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-    };
-}
-
 // ฟังก์ชันสำหรับการ Login
 async function UserLogin(data: UserInterface) {
     const requestOptions = {
@@ -46,36 +37,82 @@ async function GetUser() {
 
     return res;
 }
-
-async function CreateUser(data: UserInterface) {
+async function CreateUser(data: any) {
     const formData = new FormData();
 
-    // Append regular fields
     formData.append("company_name", data.CompanyName || "");
     formData.append("business_detail", data.BusinessDetail || "");
     formData.append("first_name", data.FirstName || "");
     formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID?.toString() || "1");
+    formData.append("gender_id", data.GenderID?.toString() || "2");
     formData.append("email", data.Email || "");
+    formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
     formData.append("role_id", data.RoleID?.toString() || "1");
     formData.append("profile_path", data.ProfilePath || "");
 
-    // Append Profile Image if present
     if (data.Profile_Image) {
+        console.log(">>>>>",data.Profile_Image)
         formData.append("profile_image", data.Profile_Image);
     }
+    formData.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+    });
 
-    // Handle the user package ID (can be optional or default value)
     formData.append("userpackage_id", data.UserPackageID?.toString() || "1");
 
-    const requestOptions = { headers: getAuthHeaders() };
+    const token = localStorage.getItem("token");  
+    const requestOptions = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
 
-    return await axios
-        .post(`${apiUrl}/create-user`, formData, { ...requestOptions, headers: { ...requestOptions.headers, 'Content-Type': 'multipart/form-data' } })
-        .then((res) => res)
-        .catch((e) => e.response);
+
+        
+    try {
+        // Send FormData with requestOptions
+        const response = await axios.post(`${apiUrl}/create-user`, formData, requestOptions);
+
+        // Handle the response and return a custom object
+        if (response.status === 201) {
+            return {
+                status: 'success',
+                message: 'User created successfully',
+                data: response.data,  // You can return response data
+            };
+        } else {
+            return {
+                status: 'error',
+                message: 'Failed to create user',
+                data: response.data,  // Include error data in response
+            };
+        }
+    } catch (error) {
+        // If the error is from axios, it will be caught here
+        if (axios.isAxiosError(error)) {
+            // Check if the error has a response and message
+            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+
+            return {
+                status: 'error',
+                message: errorMessage,
+                data: null,
+            };
+        } else {
+            // If the error is not from axios, handle it here
+            return {
+                status: 'error',
+                message: 'An unexpected error occurred',
+                data: null,
+            };
+        }
+    }
+    
 }
+
+
+
 
 // Request Statuses
 async function GetRequestStatuses() {
@@ -273,6 +310,72 @@ async function CreateMaintenanceImages(data: FormData) {
     return res;
 }
 
+// Gender
+async function ListGenders() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/genders`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+// Role
+async function ListRoles() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/roles`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+// Package
+async function ListPackages() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/packages`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -303,6 +406,16 @@ export {
 
     // MaintenanceImages
     CreateMaintenanceImages,
+
+    // Gender
+    ListGenders,
+
+    // Package
+    ListPackages,
+
+    // Role
+    ListRoles,
+    
 
 }
 

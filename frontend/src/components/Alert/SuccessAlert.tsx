@@ -28,7 +28,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         width: '50%',
-        zIndex: 99,
+        zIndex: 1000,
         backgroundColor: '#d4edda',  // Light green background for success
         border: '1px solid #28a745', // Darker green border
         borderRadius: '10px',         // Rounded corners

@@ -25,7 +25,7 @@ const InfoAlert: React.FC<InfoAlertProps> = ({ message, onClose }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         width: '50%',
-        zIndex: 10,
+        zIndex: 1000,
         backgroundColor: '#e7f3fe',  // Light blue background for info
         border: '1px solid #007bff', // Blue border
         borderRadius: '10px',         // Rounded corners

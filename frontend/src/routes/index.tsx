@@ -19,7 +19,7 @@ function ConfigRoutes() {
         routes = [OutsiderRoutes()]; // เมื่อบทบาทเป็น Outsider ให้ใช้เส้นทางของ Outsider
         break;
       case "SuperAdmin":
-        routes = [SuperAdminRoutes()]; // เมื่อบทบาทเป็น Outsider ให้ใช้เส้นทางของ Outsider
+        routes = [SuperAdminRoutes()]; // เมื่อบทบาทเป็น SuperAdmin ให้ใช้เส้นทางของ Outsider
         break;
       default:
         routes = [LoginRoutes()]; // กรณีอื่นๆ ใช้เส้นทางของ Login
