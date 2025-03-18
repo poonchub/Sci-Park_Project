@@ -162,8 +162,6 @@ function MaintenanceRequest() {
         getMaintenanceRequests()
     }, []);
 
-    console.log(maintenanceRequests)
-
     return (
         <div className="maintenance-request">
             <Grid2 container spacing={2}>

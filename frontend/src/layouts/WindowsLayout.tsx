@@ -23,6 +23,8 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import { GetUser } from '../services/http';
+import { UserInterface } from '../interfaces/IUser';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
@@ -36,6 +38,8 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 
 const WindowsLayout: React.FC = () => {
+	const [user, setUser] = useState<UserInterface>()
+
 	const [pagesAppbar, setPagesAppbar] = useState<{
 		path: string;
 		name: string;
@@ -53,6 +57,17 @@ const WindowsLayout: React.FC = () => {
 
 	const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
+	const getUser = async () => {
+		try {
+			const res = await GetUser();
+			if (res) {
+				setUser(res);
+			}
+		} catch (error) {
+			console.error("Error fetching user:", error);
+		}
+	}
+
 	const renderNavbarLinkPage = () => {
 		const role = localStorage.getItem("role");
 		if (role === "Admin") {
@@ -69,8 +84,8 @@ const WindowsLayout: React.FC = () => {
 					{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
 					{ path: '/', name: 'มอบหมายงานซ่อม' },
 					{ path: '/', name: 'จัดการผู้ใช้งาน' },
-        ]
-      )
+				]
+			)
 		} else if (role === "SuperAdmin") {
 			setPagesAppbar(
 				[
@@ -114,6 +129,7 @@ const WindowsLayout: React.FC = () => {
 
 	useEffect(() => {
 		renderNavbarLinkPage()
+		getUser()
 	}, [])
 
 	return (
@@ -156,7 +172,7 @@ const WindowsLayout: React.FC = () => {
 							);
 						})}
 					</Box>
-					<Typography ></Typography>
+					<Typography >{user?.FirstName}</Typography>
 					<Box sx={{ flexGrow: 0, flexDirection: 'column', ml: '10px' }}>
 						<Tooltip title="Open settings">
 							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0, border: `3px solid ${theme.palette.primary.main}`, }}>
@@ -188,7 +204,7 @@ const WindowsLayout: React.FC = () => {
 					</Box>
 				</Toolbar>
 			</AppBar>
-			<Drawer variant="permanent" open={open} sx={{ zIndex: 97}}>
+			<Drawer variant="permanent" open={open} sx={{ zIndex: 97 }}>
 				<DrawerHeader>
 					<IconButton onClick={handleDrawerClose} sx={{ color: 'text.secondary' }}>
 						{theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
@@ -199,62 +215,62 @@ const WindowsLayout: React.FC = () => {
 						return (
 							<ListItem key={index} disablePadding sx={{ display: 'block' }}>
 								<Link to={page.path}>
-								<ListItemButton
-									sx={[
-										{
-											minHeight: 48,
-											px: 2.5,
-											bgcolor: location.pathname === page.path ? '#F26522' : 'transparent',
-											"&:hover": {
-												bgcolor: '#dd591c'
-											}
-										},
-										open
-											? {
-												justifyContent: 'initial',
-											}
-											: {
-												justifyContent: 'center',
-											},
-									]}
-								>
-									<ListItemIcon
+									<ListItemButton
 										sx={[
 											{
-												minWidth: 0,
-												justifyContent: 'center',
+												minHeight: 48,
+												px: 2.5,
+												bgcolor: location.pathname === page.path ? '#F26522' : 'transparent',
+												"&:hover": {
+													bgcolor: '#dd591c'
+												}
 											},
 											open
 												? {
-													mr: 3,
+													justifyContent: 'initial',
 												}
 												: {
-													mr: 'auto',
+													justifyContent: 'center',
 												},
 										]}
 									>
-										{
-											index === 0 ? <DashboardOutlinedIcon sx={{ color: 'text.secondary' }} /> :
-												index === 1 ? <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} /> :
-													index === 2 ? <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} /> : <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />
-										}
-									</ListItemIcon>
-									<ListItemText
-										primary={page.name}
-										sx={[
-											open
-												? {
-													opacity: 1,
-													color: '#fff'
-												}
-												: {
-													opacity: 0,
+										<ListItemIcon
+											sx={[
+												{
+													minWidth: 0,
+													justifyContent: 'center',
 												},
-										]}
-									/>
-								</ListItemButton>
+												open
+													? {
+														mr: 3,
+													}
+													: {
+														mr: 'auto',
+													},
+											]}
+										>
+											{
+												index === 0 ? <DashboardOutlinedIcon sx={{ color: 'text.secondary' }} /> :
+													index === 1 ? <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} /> :
+														index === 2 ? <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} /> : <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />
+											}
+										</ListItemIcon>
+										<ListItemText
+											primary={page.name}
+											sx={[
+												open
+													? {
+														opacity: 1,
+														color: '#fff'
+													}
+													: {
+														opacity: 0,
+													},
+											]}
+										/>
+									</ListItemButton>
 								</Link>
-								
+
 							</ListItem>
 						)
 					})}

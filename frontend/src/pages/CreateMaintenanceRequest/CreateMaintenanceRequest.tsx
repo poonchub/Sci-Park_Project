@@ -29,8 +29,8 @@ function CreateMaintenanceRequestPage() {
     const [floors, setFloors] = useState<FloorsInterface[]>([])
     const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([])
 
-    const [selectedRoomtype, setSelectedRoomtype] = useState('')
-    const [selectedFloor, setSelectedFloor] = useState('')
+    const [selectedRoomtype, setSelectedRoomtype] = useState(0)
+    const [selectedFloor, setSelectedFloor] = useState(0)
     // const [isAllTime, setIsAllTime] = useState(true)
 
     const [message, setMessage] = useState(<></>)
@@ -41,9 +41,9 @@ function CreateMaintenanceRequestPage() {
         Description: "",
         StartTime: "",
         EndTime: "",
-        RoomID: undefined,
+        RoomID: 0,
         AreaID: 1,
-        MaintenanceTypeID: undefined,
+        MaintenanceTypeID: 0,
     });
 
     const [onEdit, setOnEdit] = useState(false);
@@ -165,7 +165,7 @@ function CreateMaintenanceRequestPage() {
                     setShowMessage(true)
                     setMessage(<SuccessAlert
                         message={'ส่งคำร้องแจ้งซ่อมสำเร็จ'}
-                        onClose={()=>setShowMessage(false)}
+                        onClose={() => setShowMessage(false)}
                     />)
                 }
                 else {
@@ -203,6 +203,44 @@ function CreateMaintenanceRequestPage() {
             setFiles(selectedFiles);
         }
     };
+
+    const handleSelectedFilter = (value: number, selectName: string) => {
+        if (selectName === 'roomtype') {
+            if (value === 0) {
+                formData.RoomID = 0;
+                setSelectedFloor(0);
+                setSelectedRoomtype(value);
+            } else {
+                setSelectedRoomtype(value);
+            }
+        } else if (selectName === 'floorNumber') {
+            if (value === 0) {
+                formData.RoomID = 0;
+                setSelectedFloor(value);
+            } else {
+                setSelectedFloor(value);
+            }
+        }
+    }
+
+    const handleResetData = () => {
+        setFormData({
+            Description: "",
+            StartTime: "",
+            EndTime: "",
+            RoomID: 0,
+            AreaID: 1,
+            MaintenanceTypeID: 0,
+        })
+        setSelectedFloor(0)
+        setSelectedRoomtype(0)
+    }
+
+    const filteredRooms = rooms.filter((room) => {
+        return (
+            room.FloorID === selectedFloor && room.RoomTypeID === selectedRoomtype
+        );
+    });
 
     useEffect(() => {
         getUser()
@@ -268,10 +306,11 @@ function CreateMaintenanceRequestPage() {
                                     <FormControl fullWidth>
                                         <Select
                                             displayEmpty
-                                            defaultValue={""}
-                                            onChange={(e) => setSelectedRoomtype(String(e.target.value))}
+                                            defaultValue={0}
+                                            value={selectedRoomtype}
+                                            onChange={(e) => handleSelectedFilter(Number(e.target.value), 'roomtype')}
                                         >
-                                            <MenuItem value="">
+                                            <MenuItem value={0}>
                                                 <em>{'-- เลือกประเภทห้อง --'}</em>
                                             </MenuItem>
                                             {
@@ -292,11 +331,11 @@ function CreateMaintenanceRequestPage() {
                                         <Select
                                             displayEmpty
                                             defaultValue={""}
-                                            value={selectedRoomtype === '' ? '' : selectedFloor}
-                                            disabled={selectedRoomtype === ''}
-                                            onChange={(e) => setSelectedFloor(String(e.target.value))}
+                                            value={selectedRoomtype === 0 ? 0 : selectedFloor}
+                                            disabled={selectedRoomtype === 0}
+                                            onChange={(e) => handleSelectedFilter(Number(e.target.value), 'floorNumber')}
                                         >
-                                            <MenuItem value="">
+                                            <MenuItem value={0}>
                                                 <em>{'-- เลือกตำแหน่งหรือชั้น --'}</em>
                                             </MenuItem>
                                             {
@@ -316,16 +355,16 @@ function CreateMaintenanceRequestPage() {
                                     <FormControl fullWidth>
                                         <Select
                                             name="RoomID"
-                                            value={selectedFloor === '' || selectedRoomtype === '' ? '' : String(formData.RoomID)}
+                                            value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
                                             onChange={handleSelectChange}
                                             displayEmpty
-                                            disabled={selectedFloor === '' || selectedRoomtype === ''}
+                                            disabled={selectedFloor === 0 || selectedRoomtype === 0}
                                         >
-                                            <MenuItem value={''}>
+                                            <MenuItem value={0}>
                                                 <em>{'-- เลือกหมายเลขห้อง --'}</em>
                                             </MenuItem>
                                             {
-                                                rooms.map((item, index) => {
+                                                filteredRooms.map((item, index) => {
                                                     return (
                                                         <MenuItem key={index} value={item.ID}>{item.RoomNumber}</MenuItem>
                                                     )
@@ -341,11 +380,11 @@ function CreateMaintenanceRequestPage() {
                                     <FormControl fullWidth>
                                         <Select
                                             name="MaintenanceTypeID"
-                                            value={String(formData.MaintenanceTypeID)}
+                                            value={Number(formData.MaintenanceTypeID)}
                                             onChange={handleSelectChange}
                                             displayEmpty
                                         >
-                                            <MenuItem value={undefined}>
+                                            <MenuItem value={0}>
                                                 <em>{'-- เลือกประเภทปัญหา --'}</em>
                                             </MenuItem>
                                             {
@@ -418,6 +457,7 @@ function CreateMaintenanceRequestPage() {
                                                 fullWidth
                                                 value={formData.EndTime}
                                                 onChange={handleInputChange}
+                                                inputProps={{ step: 600 }}
                                             />
                                         </Grid2>
                                     </Grid2>
@@ -530,7 +570,7 @@ function CreateMaintenanceRequestPage() {
 
                             {/* Buttom Section */}
                             <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                <Button>รีเซ็ตข้อมูล</Button>
+                                <Button onClick={handleResetData}>รีเซ็ตข้อมูล</Button>
                                 <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
                                     <IosShareOutlinedIcon />
                                     {"ส่งคำร้องแจ้งซ่อม"}
