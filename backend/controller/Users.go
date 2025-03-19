@@ -27,12 +27,18 @@ func CreateUser(c *gin.Context) {
 	user.Phone = c.PostForm("phone")
 
 	// Default UserPackageID to 1 if not provided
-	packageIDStr := c.DefaultPostForm("package_id", "1")
+	packageIDStr := c.PostForm("package_id")
+	if packageIDStr == "" {
+		// กรณีที่ไม่ส่ง package_id มา ให้ใช้ค่าเริ่มต้นเป็น "1"
+		packageIDStr = "1"
+	}
+	
 	packageID, err := strconv.Atoi(packageIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package_id"})
 		return
 	}
+	
 
 	// Convert packageID (int) to uint
 	packageIDUint := uint(packageID)
@@ -124,6 +130,14 @@ func CreateUser(c *gin.Context) {
 	// บันทึกข้อมูล UserPackage
 	if err := config.DB().Create(&userPackage).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user package"})
+		return
+	}
+
+	user.UserPackageID = &userPackage.ID  // ตั้งค่า UserPackageID ให้เป็น ID ของ userPackage ที่สร้างล่าสุด
+
+	// อัพเดตข้อมูลของ User ในฐานข้อมูล
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update User with UserPackageID"})
 		return
 	}
 
