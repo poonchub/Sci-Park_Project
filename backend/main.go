@@ -35,6 +35,9 @@ func main() {
 
 		// protected.GET("/users", controller.GetAllUsers)
 
+		// Send Email res
+		protected.POST("/send-email", controller.SendEmailController)
+
 		// Areas
 		protected.GET("/areas", controller.ListAreas)
 
