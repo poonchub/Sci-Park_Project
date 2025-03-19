@@ -111,14 +111,14 @@
 
 /* ทำให้ปุ่มอยู่ที่มุมขวาล่าง */
 .add-user .submit-button-container {
-  position: absolute;
   margin-top: 24px;
+  position: relative; /* เพิ่ม position เพื่อให้สามารถใช้ bottom, right ได้ */
   bottom: 24px;  /* ระยะห่างจากขอบล่าง */
   right: 24px;   /* ระยะห่างจากขอบขวา */
-  width: auto;
+  display: flex;  /* ใช้ flexbox เพื่อจัดตำแหน่ง */
+  justify-content: flex-end; /* จัดให้ปุ่มชิดขวา */
 }
 
-/* สไตล์สำหรับปุ่ม */
 .add-user button[type="submit"] {
   font-size: 16px;
   font-weight: bold;
