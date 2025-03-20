@@ -92,7 +92,7 @@ const LoginPage: React.FC = () => {
           padding: '30px',
           height: '100%', // ให้สูงเท่ากับขนาดของเนื้อหา
           minWidth: '300px', // ใช้ค่าเดียว ไม่ต้องกำหนดซ้ำ
-          width: '30%', // ให้เต็มตามขนาด max-width ที่กำหนด
+          width: 'auto', // ให้เต็มตามขนาด max-width ที่กำหนด
           display: 'flex',
           flexDirection: 'column',
 
