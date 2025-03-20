@@ -150,6 +150,7 @@ const LoginPage: React.FC = () => {
               slotProps={{
                 inputLabel: {
                   sx: { color: '#6D6E70' }, // Apply gray color to label
+                  // Apply gray color to label
                 },
               }}
             />
