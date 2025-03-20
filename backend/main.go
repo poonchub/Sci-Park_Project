@@ -75,6 +75,9 @@ func main() {
 
 		// Package
 		protected.GET("/packages",controller.ListPackages)
+
+		// ManagerApproval
+		protected.POST("/manager-approval", controller.CreateManagerApproval)
 	}
 
 	// 🌍 Root Route
