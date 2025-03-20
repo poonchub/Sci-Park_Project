@@ -98,7 +98,7 @@ const LoginPage: React.FC = () => {
 
         }}
         initial={{ opacity: 0, x: '50%' }} // เริ่มจากขวานอกจอ
-        animate={{ opacity: 1, x: '20%' }} // ขยับเข้ามาจากขวา
+        animate={{ opacity: 1, x: '5%' }} // ขยับเข้ามาจากขวา
         transition={{
           type: 'spring',
           stiffness: 40,
