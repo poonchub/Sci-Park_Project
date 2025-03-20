@@ -53,7 +53,10 @@ func main() {
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
-		protected.POST("/create-maintenance-request", controller.CreateMaintenanceRequest)
+		protected.GET("/maintenance-request/:id", controller.GetMaintenanceRequestByID)
+		protected.POST("/maintenance-request", controller.CreateMaintenanceRequest)
+		protected.PATCH("/maintenance-request/:id", controller.UpdateMaintenanceRequestByID)
+		protected.DELETE("/maintenance-request/:id", controller.DeleteMaintenanceRequestByID)
 
 		// MaintenanceTypes
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
