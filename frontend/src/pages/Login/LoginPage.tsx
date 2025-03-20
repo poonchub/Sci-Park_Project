@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { TextField, Button, Typography, Link, IconButton, InputAdornment } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { TextField, Button, Typography, Divider, Link, IconButton, InputAdornment, Box } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import './LoginPage.css'; // ใช้ CSS ที่มีอยู่
 import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
@@ -8,6 +9,7 @@ import { UserInterface } from '../../interfaces/IUser';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import WarningAlert from '../../components/Alert/WarningAlert'; // Import WarningAlert
 import ErrorAlert from '../../components/Alert/ErrorAlert';    // Import ErrorAlert
+import RSP from '../../assets/background/RSP.png';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +24,6 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Validate form input before sending data to backend
     if (email === "" || password === "") {
       setErrorMessage("Please fill in all the fields.");
       setShowWarning(true); // Show WarningAlert if fields are missing
@@ -79,84 +80,122 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page">
-      <div className="right-side">
-        <Typography variant="h2" gutterBottom>Sign In</Typography>
+      <motion.div
+        style={{
 
-        {/* Show Success Alert */}
-        {showSuccess && (
-          <SuccessAlert
-            message={successMessage}
-            onClose={() => setShowSuccess(false)}
-          />
-        )}
+          top: '50%',
+          right: '5%', // กำหนดระยะจากขอบขวา
+          transform: 'translateY(-50%)', // จัดให้อยู่ตรงกลางแนวตั้ง
+          backgroundColor: 'white',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: '8px', // ใช้ค่าที่กำหนดเพียงครั้งเดียว
+          padding: '30px',
+          height: '100%', // ให้สูงเท่ากับขนาดของเนื้อหา
+          minWidth: '300px', // ใช้ค่าเดียว ไม่ต้องกำหนดซ้ำ
+          width: '30%', // ให้เต็มตามขนาด max-width ที่กำหนด
+          display: 'flex',
+          flexDirection: 'column',
 
-        {/* Show Error Alert */}
-        {showError && (
-          <ErrorAlert
-            message={errorMessage}
-            onClose={() => setShowError(false)}
-          />
-        )}
+        }}
+        initial={{ opacity: 0, x: '50%' }} // เริ่มจากขวานอกจอ
+        animate={{ opacity: 1, x: '20%' }} // ขยับเข้ามาจากขวา
+        transition={{
+          type: 'spring',
+          stiffness: 40,
+          damping: 30,
+        }}
+      >
 
-        {/* Show Warning Alert */}
-        {showWarning && (
-          <WarningAlert
-            message={errorMessage}
-            onClose={() => setShowWarning(false)}
-          />
-        )}
+        <div className="right-side">
+          <Typography variant="h4" className='sign-in-welcome' >
+            Welcome to
+          </Typography>
+          {RSP && <img src={RSP} alt="RSP" className="sign-in-image" />}
 
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
-            variant="outlined"
-            margin="normal"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            helperText={showWarning && !email ? "Please enter your email" : ""}
-            slotProps={{
-              inputLabel: {
-                sx: { color: '#6D6E70' }, // Apply gray color to label
-              },
-            }}
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            variant="outlined"
-            margin="normal"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            helperText={showWarning && !password ? "Please enter your password" : ""}
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-              inputLabel: {
-                sx: { color: '#6D6E70' }, // Apply gray color to label
-              },
-            }}
-          />
-          <Button type="submit" fullWidth variant="contained" color="primary" className="sign-in-button">
-            Sign In
-          </Button>
-          <Link href="#" className="forgot-link">
-            Forgot Email or Password?
-          </Link>
-        </form>
-      </div>
+
+
+          {/* Show Success Alert */}
+          {showSuccess && (
+            <SuccessAlert
+              message={successMessage}
+              onClose={() => setShowSuccess(false)}
+            />
+          )}
+
+          {/* Show Error Alert */}
+          {showError && (
+            <ErrorAlert
+              message={errorMessage}
+              onClose={() => setShowError(false)}
+            />
+          )}
+
+          {/* Show Warning Alert */}
+          {showWarning && (
+            <WarningAlert
+              message={errorMessage}
+              onClose={() => setShowWarning(false)}
+            />
+          )}
+
+          <form onSubmit={handleSubmit} >
+            <TextField
+              fullWidth
+              label="Email"
+              variant="outlined"
+              margin="normal"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              helperText={showWarning && !email ? "Please enter your email" : ""}
+              slotProps={{
+                inputLabel: {
+                  sx: { color: '#6D6E70' }, // Apply gray color to label
+                },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              variant="outlined"
+              margin="normal"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              helperText={showWarning && !password ? "Please enter your password" : ""}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleClickShowPassword}
+                        onMouseDown={handleMouseDownPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+                inputLabel: {
+                  sx: { color: '#6D6E70' }, // Apply gray color to label
+                },
+              }}
+            />
+            <Button type="submit" fullWidth variant="contained" color="primary" className='sign-in-button'>
+              Sign In
+            </Button>
+            <Divider sx={{ my: 2 }}>
+              <Typography variant="body2" sx={{ color: 'gray', px: 1 }}>
+                OR
+              </Typography>
+            </Divider>
+            <Link href="#" className="forgot-link">
+              Forgot Email or Password?
+            </Link>
+          </form>
+        </div>
+      </motion.div>
+
     </div>
   );
 };
