@@ -59,7 +59,6 @@ function CreateMaintenanceRequestPage() {
             const res = await GetUser();
             if (res) {
                 setUser(res);
-                // setFormData((prev) => ({ ...prev, UserID: res.ID }))
             }
         } catch (error) {
             console.error("Error fetching user:", error);

@@ -5,7 +5,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
-import { GetMaintenanceRequests, GetRequestStatuses } from "../../services/http"
+import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
 import { LineChart } from "@mui/x-charts"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
@@ -15,28 +15,38 @@ import { TextField } from "../../components/TextField/TextField"
 import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
-
-import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
-import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHourglassHalf, faCheck, faArrowsSpin, faFlagCheckered, faBan, faExclamation, faQuestionCircle, faBullseye, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faHourglassHalf, faCheck, faArrowsSpin, faFlagCheckered, faBan, faExclamation, faQuestionCircle, faBullseye, faMagnifyingGlass, IconDefinition, faXmark } from "@fortawesome/free-solid-svg-icons";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
+import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals"
+import SuccessAlert from "../../components/Alert/SuccessAlert"
+import dayjs from "dayjs"
 
 function MaintenanceRequest() {
+    const [user, setUser] = useState<UserInterface>()
 
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
 
     const [countRequestStatus, setCountRequestStatus] = useState<Record<string, number>>()
+    const [searchText, setSearchText] = useState('')
     const [selectedStatus, setSelectedStatus] = useState(0)
+    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
 
-    const statusConfig = {
-        "Pending": { color: "#FFC107", icon: faHourglassHalf },
-        "Approved": { color: "#28A745", icon: faCheck },
-        "Rejected": { color: "#DC3545", icon: faBan },
-        "In Progress": { color: "#007BFF", icon: faArrowsSpin },
-        "Completed": { color: "#6F42C1", icon: faFlagCheckered },
-        "Failed": { color: "#6C757D", icon: faExclamation }
+    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+    const [requestSelected, setRequestSelected] = useState(0)
+
+    const [message, setMessage] = useState(<></>)
+    const [showMessage, setShowMessage] = useState(false)
+
+    const statusConfig: Record<string, { color: string; colorLite: string; icon: IconDefinition }> = {
+        "Pending": { color: "#FFC107", colorLite: "rgb(254, 255, 184)", icon: faHourglassHalf },
+        "Approved": { color: "#28A745", colorLite: "rgb(203, 255, 215)", icon: faCheck },
+        "Rejected": { color: "#DC3545", colorLite: "rgb(255, 211, 216)", icon: faBan },
+        "In Progress": { color: "#007BFF", colorLite: "rgb(159, 205, 255)", icon: faArrowsSpin },
+        "Completed": { color: "#6F42C1", colorLite: "rgb(207, 181, 255)", icon: faFlagCheckered },
+        "Failed": { color: "#6C757D", colorLite: "rgb(239, 247, 255)", icon: faExclamation }
     };
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
@@ -82,53 +92,86 @@ function MaintenanceRequest() {
             type: 'string',
             flex: 1.2,
             // editable: true,
-            renderCell: (params) => (
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '100%'
-                }}>
-                    <Box sx={{
-                        bgcolor: '#08aff1',
-                        borderRadius: 10,
-                        px: 1.5,
-                        py: 0.5,
-                        display: 'flex',
-                        gap: 1,
-                        color: '#fff'
-                    }}>
-                        <CheckCircleOutlineOutlinedIcon />
-                        <Typography>
-                            {params.row.RequestStatus?.Name || "-"}
-                        </Typography>
-                    </Box>
+            renderCell: (params) => {
+                const statusName = params.row.RequestStatus?.Name || "Pending"
+                const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
+                const { color, colorLite, icon } = statusConfig[statusKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-                </Box>
-            ),
+                return (
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '100%'
+                    }}>
+                        <Box sx={{
+                            bgcolor: colorLite,
+                            borderRadius: 10,
+                            px: 1.5,
+                            py: 0.5,
+                            display: 'flex',
+                            gap: 1,
+                            color: color,
+                            alignItems: 'center',
+                        }}>
+                            <FontAwesomeIcon icon={icon} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                {statusName}
+                            </Typography>
+                        </Box>
+
+                    </Box>
+                )
+            },
         },
         {
-            field: 'Approve',
+            field: 'Approved',
             headerName: 'จัดการ',
             type: 'string',
             flex: 1.4,
             // editable: true,
-            renderCell: () => (
-                <Box>
-                    <Button
-                        size="small"
-                        sx={{ bgcolor: '#08aff1', color: '#fff', fontSize: '14px' }}
-                    >
-                        อนุมัติ
-                    </Button>
-                    <Button
-                        size="small"
-                        sx={{ color: '#f00', fontSize: '14px', border: '1px solid' }}
-                    >
-                        <ClearOutlinedIcon />
-                    </Button>
-                </Box>
-
-            ),
+            renderCell: (item) => {
+                return item.row.RequestStatus?.Name === 'Pending' ? (
+                    <Box>
+                        <Button
+                            onClick={() => {
+                                setOpenConfirmApproved(true)
+                                setRequestSelected(Number(item.id))
+                            }}
+                            sx={{
+                                bgcolor: '#08aff1',
+                                color: '#fff',
+                                fontSize: '14px',
+                                border: '1px solid #08aff1',
+                                mr: 0.6,
+                                "&:hover": {
+                                    borderColor: 'transparent'
+                                }
+                            }}
+                        >
+                            อนุมัติ
+                        </Button>
+                        <Button
+                            // variant="outlined"
+                            onClick={() => {
+                                setOpenConfirmRejected(true)
+                                setRequestSelected(Number(item.id))
+                            }}
+                            sx={{
+                                color: '#f00',
+                                fontSize: '14px',
+                                border: '1px solid',
+                                py: 0.75,
+                                px: 0.5,
+                                minWidth: 25
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                        </Button>
+                    </Box>
+                ) : (
+                    <></>
+                )
+            },
         },
         {
             field: 'Check',
@@ -148,6 +191,17 @@ function MaintenanceRequest() {
         },
 
     ];
+
+    const getUser = async () => {
+        try {
+            const res = await GetUser();
+            if (res) {
+                setUser(res);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    }
 
     const getRequestStatuses = async () => {
         try {
@@ -171,19 +225,66 @@ function MaintenanceRequest() {
         }
     };
 
+    const handleAction = async (statusID: number, successMessage: string) => {
+        try {
+            const managerApp: ManagerApprovalsInterface = {
+                UserID: user?.ID,
+                RequestID: requestSelected,
+                RequestStatusID: statusID
+            };
+
+            const request: MaintenanceRequestsInterface = {
+                RequestStatusID: statusID
+            };
+
+            const resApproval = await CreateManagerApproval(managerApp);
+            if (!resApproval) return;
+
+            const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
+            if (!resRequest) return;
+
+            setShowMessage(true);
+            setMessage(<SuccessAlert message={successMessage} onClose={() => setShowMessage(false)} />);
+
+            setTimeout(() => window.location.reload(), 2000);
+        } catch (error) {
+            console.error("Error submitting request:", error);
+            alert("เกิดข้อผิดพลาด");
+        }
+    };
+
     const dateFormat = (date: string) => {
         return `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
     }
 
-    const filteredRequest = maintenanceRequests.filter((request) => {
-        return (
-            selectedStatus !== 0 ? request.RequestStatusID === selectedStatus : request
-        );
+    const filteredRequests = maintenanceRequests.filter((request) => {
+        const requestId = request.ID ? Number(request.ID) : null;
+        const firstName = request.User?.FirstName?.toLowerCase() || "";
+        const lastName = request.User?.LastName?.toLowerCase() || "";
+        const areaName = request.Area?.Name?.toLowerCase() || "";
+        const createdAt = request.CreatedAt ? dateFormat(request.CreatedAt) : null;
+
+        const matchText =
+            !searchText ||
+            requestId === Number(searchText) ||
+            firstName.includes(searchText.toLowerCase()) ||
+            lastName.includes(searchText.toLowerCase()) ||
+            areaName.includes(searchText.toLowerCase());
+
+        // เงื่อนไขการกรองวันที่
+        const matchDate = !selectedDate || (createdAt === selectedDate.format("DD/MM/YYYY"));
+
+        // เงื่อนไขการกรองสถานะ
+        const matchStatus = selectedStatus === 0 || request.RequestStatusID === selectedStatus;
+
+        // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+        return matchText && matchDate && matchStatus;
     });
 
     useEffect(() => {
         getRequestStatuses();
         getMaintenanceRequests()
+        getUser()
     }, []);
 
     useEffect(() => {
@@ -197,9 +298,29 @@ function MaintenanceRequest() {
 
     return (
         <div className="maintenance-request">
+            {showMessage && message}
+
+            {/* Approved Confirm */}
+            <ConfirmDialog
+                open={openConfirmApproved}
+                setOpenConfirm={setOpenConfirmApproved}
+                handleFunction={() => handleAction(2, "อนุมัติสำเร็จ")}
+                title="ยืนยันการอนุมัติงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            />
+
+            {/* Rejected Confirm */}
+            <ConfirmDialog
+                open={openConfirmRejected}
+                setOpenConfirm={setOpenConfirmRejected}
+                handleFunction={() => handleAction(3, "ปฏิเสธสำเร็จ")}
+                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            />
+
             <Grid2 container spacing={3}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700}}>
+                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         รายการแจ้งซ่อม
                     </Typography>
                 </Grid2>
@@ -215,13 +336,13 @@ function MaintenanceRequest() {
                     </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
+
                     {/* Status Section */}
                     <Grid2 container size={{ xs: 10, md: 12 }} spacing={3} className='status-section'>
                         {
                             requestStatuses.map((item, index) => {
                                 const statusKey = item.Name as keyof typeof statusConfig;
                                 const { color, icon } = statusConfig[statusKey] ?? { color: "#000", icon: faQuestionCircle };
-
 
                                 return (
                                     <Grid2 size={{ xs: 10, md: 4 }} key={index}>
@@ -263,6 +384,7 @@ function MaintenanceRequest() {
                             })
                         }
                     </Grid2>
+
                     {/* Filters Section */}
                     <Grid2 container
                         spacing={2}
@@ -279,11 +401,13 @@ function MaintenanceRequest() {
                                 variant="outlined"
                                 placeholder="ค้นหา"
                                 margin="none"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
                                 slotProps={{
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl"/>
+                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
                                             </InputAdornment>
                                         ),
                                     }
@@ -294,7 +418,8 @@ function MaintenanceRequest() {
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     format="DD/MM/YYYY"
-                                // renderInput={(params) => <TextField {...params} />}
+                                    value={selectedDate}
+                                    onChange={(newValue) => setSelectedDate(newValue)}
                                 />
                             </LocalizationProvider>
                         </Grid2>
@@ -351,13 +476,13 @@ function MaintenanceRequest() {
                             height={215}
                         />
                     </Card>
-
                 </Grid2>
+
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
                     <Card sx={{ height: "100%", width: "100%" }}>
                         <DataGrid
-                            rows={filteredRequest}
+                            rows={filteredRequests}
                             columns={columns}
                             getRowId={(row) => String(row.ID)}
                             initialState={{

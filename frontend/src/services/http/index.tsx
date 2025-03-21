@@ -440,11 +440,11 @@ async function ListPackages() {
 async function CreateManagerApproval(data: ManagerApprovalsInterface) {
     const requestOptions = {
         method: "POST",
-        body: JSON.stringify(data),
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
+        body: JSON.stringify(data),
     };
 
     let res = await fetch(`${apiUrl}/manager-approval`, requestOptions).then((res) => {
