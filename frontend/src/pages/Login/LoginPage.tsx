@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Button, Typography, Divider, Link, IconButton, InputAdornment, Box } from '@mui/material';
+import React, { useState } from 'react';
+import { Button, Typography, Divider, Link, IconButton, InputAdornment } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import {  motion } from 'framer-motion';
 import './LoginPage.css'; // ใช้ CSS ที่มีอยู่
 import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
@@ -10,23 +10,23 @@ import SuccessAlert from '../../components/Alert/SuccessAlert';
 import WarningAlert from '../../components/Alert/WarningAlert'; // Import WarningAlert
 import ErrorAlert from '../../components/Alert/ErrorAlert';    // Import ErrorAlert
 import RSP from '../../assets/background/RSP.png';
+import { TextField } from "../../components/TextField/TextField";
+import Loader from '../../components/Loadable/Loader';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   const [showWarning, setShowWarning] = useState(false);  // For Warning
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (email === "" || password === "") {
-      setErrorMessage("Please fill in all the fields.");
-      setShowWarning(true); // Show WarningAlert if fields are missing
+      setShowWarning(true);
+      setAlerts([...alerts, { type: 'warning', message: "Please fill in all the fields." }]);  // Add warning alert
       return;
     }
 
@@ -43,29 +43,29 @@ const LoginPage: React.FC = () => {
         localStorage.setItem("role", response.Role || "Outsider");
         localStorage.setItem("token", response.Token);
 
-        setSuccessMessage("Login successful!");
-        setShowSuccess(true);  // Show SuccessAlert on successful login
-
-        let redirectPath = "/login";
-        if (response.Role) {
-          redirectPath = "/";
-        }
-
-        navigate(redirectPath);
+        setAlerts([...alerts, { type: 'success', message: "Login successful!" }]);  // Add success alert
+      
+        setLoading(true);  // Start loading
+        setTimeout(() => {
+          let redirectPath = "/login";
+          if (response.Role) {
+            redirectPath = "/";
+          }
+          navigate(redirectPath);
+          setLoading(false);  // Stop loading after navigation
+        }, 2000);  // 2 seconds delay
       } else {
-        setErrorMessage(response?.Error || "Login failed! Please check your credentials.");
-        setShowError(true);  // Show ErrorAlert on failed login
+
+        setAlerts([...alerts, { type: 'error', message: response?.Error || "Login failed!" }]);  // Add error alert
       }
     } catch (error: unknown) {
       if (error instanceof Error && (error as any).response) {
         const errorMessage = (error as any).response?.data?.Error || "An error occurred during login.";
-        console.error("Error from backend:", errorMessage);
-        setErrorMessage(errorMessage);
-        setShowError(true);  // Show ErrorAlert when there is an error from the backend
+        
+        setAlerts([...alerts, { type: 'error', message: errorMessage }]);  // Add error alert
       } else {
-        console.error("An error occurred:", error);
-        setErrorMessage("An error occurred while logging in.");
-        setShowError(true);  // Show ErrorAlert when there is a general error
+        
+        setAlerts([...alerts, { type: 'error', message: "An error occurred while logging in." }]);  // Add error alert
       }
     }
   };
@@ -79,7 +79,44 @@ const LoginPage: React.FC = () => {
   };
 
   return (
+    <div>
+      {/* Show Alerts */}
+      {alerts.map((alert, index) => {
+        return (
+          <React.Fragment key={index}>
+            {alert.type === 'success' && (
+              <SuccessAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={Number(index)}
+                totalAlerts={alerts.length}
+              />
+            )}
+            {alert.type === 'error' && (
+              <ErrorAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+            {alert.type === 'warning' && (
+              <WarningAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    {loading ? (
+      <Loader />
+    ) : ( 
     <div className="login-page">
+
+      
       <motion.div
         style={{
 
@@ -114,32 +151,11 @@ const LoginPage: React.FC = () => {
 
 
 
-          {/* Show Success Alert */}
-          {showSuccess && (
-            <SuccessAlert
-              message={successMessage}
-              onClose={() => setShowSuccess(false)}
-            />
-          )}
 
-          {/* Show Error Alert */}
-          {showError && (
-            <ErrorAlert
-              message={errorMessage}
-              onClose={() => setShowError(false)}
-            />
-          )}
-
-          {/* Show Warning Alert */}
-          {showWarning && (
-            <WarningAlert
-              message={errorMessage}
-              onClose={() => setShowWarning(false)}
-            />
-          )}
 
           <form onSubmit={handleSubmit} >
             <TextField
+              className='field'
               fullWidth
               label="Email"
               variant="outlined"
@@ -151,9 +167,13 @@ const LoginPage: React.FC = () => {
                 inputLabel: {
                   sx: { color: '#6D6E70' }, // Apply gray color to label
                 },
+                formHelperText: {
+                  sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
+                },
               }}
             />
             <TextField
+              className="field"
               fullWidth
               label="Password"
               variant="outlined"
@@ -177,10 +197,15 @@ const LoginPage: React.FC = () => {
                   ),
                 },
                 inputLabel: {
-                  sx: { color: '#6D6E70' }, // Apply gray color to label
+                  sx: { color: "#6D6E70" }, // Apply gray color to label
+                },
+                formHelperText: {
+                  sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
                 },
               }}
             />
+
+
             <Button type="submit" fullWidth variant="contained" color="primary" className='sign-in-button'>
               Sign In
             </Button>
@@ -195,8 +220,9 @@ const LoginPage: React.FC = () => {
           </form>
         </div>
       </motion.div>
-
+    
     </div>
+            )}</div>
   );
 };
 

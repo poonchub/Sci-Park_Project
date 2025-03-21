@@ -1,9 +1,7 @@
 import { RouteObject } from "react-router-dom";
 
 import WindowsLayout from "../layouts/WindowsLayout";
-import Loadable from "../components/Loadable/Loadable";
-import { lazy } from "react";
-const  Home = Loadable(lazy(() => import("../pages/Home/Home")));
+import Home from "../pages/Home/Home";
 import AddUserForm from "../pages/AddUser/AddUserForm";
 import DemoPopupLeft from "../pages/TestPopupSignup/DemoPopupLeft";
 
