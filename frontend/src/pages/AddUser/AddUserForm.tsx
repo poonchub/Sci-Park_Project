@@ -10,6 +10,7 @@ import { PackagesInterface } from '../../interfaces/IPackages';
 import { UserInterface } from '../../interfaces/IUser';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
+import WarningAlert from '../../components/Alert/WarningAlert';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Select } from "../../components/Select/Select";
@@ -24,10 +25,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
   const [file, setFile] = useState<File | null>(null);  // เก็บไฟล์เดียว
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   // Fetch data when component mounts
   const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
   const [userType, setUserType] = useState<string>('internal');
@@ -89,16 +87,22 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
       console.log('User created successfully', response);
 
       if (response.status === "success") {
-        setSuccessMessage(response.message);
-        setShowSuccess(true);
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { type: 'success', message: response.message },
+        ]);
       } else {
-        setErrorMessage(response.message);
-        setShowError(true);
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { type: 'error', message: response.message },
+        ]);
       }
     } catch (error) {
       console.error('Error creating user', error);
-      setErrorMessage('An unexpected error occurred.');
-      setShowError(true);
+      setAlerts((prevAlerts) => [
+        ...prevAlerts,
+        { type: 'error', message: 'An unexpected error occurred.' },
+      ]);
     }
 
   };
@@ -114,21 +118,37 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
 
   return (
     <>
-      {/* Show Success Alert */}
-      {showSuccess && (
-        <SuccessAlert
-          message={successMessage}
-          onClose={() => setShowSuccess(false)}
-        />
-      )}
-
-      {/* Show Error Alert */}
-      {showError && (
-        <ErrorAlert
-          message={errorMessage}
-          onClose={() => setShowError(false)}
-        />
-      )}
+      {/* Show Alerts */}
+      {alerts.map((alert, index) => {
+        return (
+          <React.Fragment key={index}>
+            {alert.type === 'success' && (
+              <SuccessAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={Number(index)}
+                totalAlerts={alerts.length}
+              />
+            )}
+            {alert.type === 'error' && (
+              <ErrorAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+            {alert.type === 'warning' && (
+              <WarningAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
       <Typography
         variant="h6"
         className="title"

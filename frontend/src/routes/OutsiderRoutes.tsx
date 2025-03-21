@@ -3,10 +3,8 @@ import { RouteObject } from "react-router-dom";
 import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import OutsiderMaintenanceRequest from "../pages/OutsiderMaintenanceRequest/OutsiderMaintenanceRequest";
+import Home from "../pages/Home/Home";
 
-import Loadable from "../components/Loadable/Loadable";
-import { lazy } from "react";
-const  Home = Loadable(lazy(() => import("../pages/Home/Home")));
 
 
 const OutsiderRoutes = (): RouteObject => {

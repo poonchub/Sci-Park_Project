@@ -3,9 +3,7 @@ import { RouteObject } from "react-router-dom";
 import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import MaintenanceRequest from "../pages/MaintenanceRequest/MaintenanceRequest";
-import Loadable from "../components/Loadable/Loadable";
-import { lazy } from "react";
-const  Home = Loadable(lazy(() => import("../pages/Home/Home")));
+import Home from "../pages/Home/Home";
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 
 const AdminRoutes = (): RouteObject => {
