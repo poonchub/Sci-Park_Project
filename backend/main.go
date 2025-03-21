@@ -62,7 +62,7 @@ func main() {
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
 
 		// MaintenanceImages
-		protected.POST("/create-maintenance-images", controller.CreateMaintenanceImages)
+		protected.POST("/maintenance-images", controller.CreateMaintenanceImages)
 
 		// Floor
 		protected.GET("/floors", controller.ListFloors)

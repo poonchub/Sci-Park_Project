@@ -1,5 +1,6 @@
 export const apiUrl = "http://localhost:8000";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
+import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { UserInterface } from "../../interfaces/IUser";
 import axios from 'axios';
 
@@ -110,9 +111,6 @@ async function CreateUser(data: any) {
     }
     
 }
-
-
-
 
 // Request Statuses
 async function GetRequestStatuses() {
@@ -298,13 +296,14 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/create-maintenance-request`, requestOptions).then((res) => {
+    let res = await fetch(`${apiUrl}/maintenance-request`, requestOptions).then((res) => {
         if (res.status == 201) {
             return res.json();
         } else {
             return false;
         }
     });
+    
 
     return res;
 }
@@ -437,6 +436,29 @@ async function ListPackages() {
     return res;
 }
 
+// ManagerApproval
+async function CreateManagerApproval(data: ManagerApprovalsInterface) {
+    const requestOptions = {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/manager-approval`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -480,6 +502,8 @@ export {
     // Role
     ListRoles,
     
+    // ManagerApproval
+    CreateManagerApproval,
 
 }
 

@@ -7,6 +7,7 @@ export const DatePicker = styled(MuiDatePicker)(() => ({
         borderRadius: "10px",
         height: '45px',
         border: "none",
+        width: '100%'
     },
     "& .MuiOutlinedInput-notchedOutline": {
         borderColor: "rgb(109, 110, 112, 0.4)", // เปลี่ยนสีเส้นขอบ

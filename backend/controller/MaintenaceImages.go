@@ -22,7 +22,7 @@ func createFolderIfNotExist(folderPath string) {
 	}
 }
 
-// POST /create-maintenance-images
+// POST /maintenance-images
 func CreateMaintenanceImages(c *gin.Context) {
 	// รับ UserID และ RequestID จาก form-data
 	UserIDStr := c.PostForm("userID")

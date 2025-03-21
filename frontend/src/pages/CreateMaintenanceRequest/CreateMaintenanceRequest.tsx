@@ -145,7 +145,6 @@ function CreateMaintenanceRequestPage() {
 
         try {
             const resRequest = await CreateMaintenanceRequest(formData)
-            console.log(resRequest)
             if (resRequest) {
                 const formDataFile = new FormData();
                 formDataFile.append("userID", String(user?.ID));

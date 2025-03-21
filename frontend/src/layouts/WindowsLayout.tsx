@@ -172,7 +172,7 @@ const WindowsLayout: React.FC = () => {
 							);
 						})}
 					</Box>
-					<Typography >{user?.FirstName}</Typography>
+					<Typography >{`${user?.FirstName} ${user?.LastName}`}</Typography>
 					<Box sx={{ flexGrow: 0, flexDirection: 'column', ml: '10px' }}>
 						<Tooltip title="Open settings">
 							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0, border: `3px solid ${theme.palette.primary.main}`, }}>
