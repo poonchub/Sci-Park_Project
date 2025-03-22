@@ -3,7 +3,7 @@ import "./MaintenanceRequest.css"
 import { Box, Button, Card, CardContent, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
 import { LineChart } from "@mui/x-charts"
@@ -21,6 +21,8 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals"
 import SuccessAlert from "../../components/Alert/SuccessAlert"
 import dayjs from "dayjs"
+import ErrorAlert from "../../components/Alert/ErrorAlert"
+import WarningAlert from "../../components/Alert/WarningAlert"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -37,8 +39,7 @@ function MaintenanceRequest() {
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [requestSelected, setRequestSelected] = useState(0)
 
-    const [message, setMessage] = useState(<></>)
-    const [showMessage, setShowMessage] = useState(false)
+    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
     const statusConfig: Record<string, { color: string; colorLite: string; icon: IconDefinition }> = {
         "Pending": { color: "#FFC107", colorLite: "rgb(254, 255, 184)", icon: faHourglassHalf },
@@ -262,7 +263,7 @@ function MaintenanceRequest() {
         }
     };
 
-    const handleAction = async (statusID: number, successMessage: string) => {
+    const handleAction = async (statusID: number, message: string) => {
         try {
             const managerApp: ManagerApprovalsInterface = {
                 UserID: user?.ID,
@@ -275,18 +276,22 @@ function MaintenanceRequest() {
             };
 
             const resApproval = await CreateManagerApproval(managerApp);
-            if (!resApproval) return;
+            if (!resApproval) {
+                setAlerts([...alerts, { type: 'error', message: resApproval?.Error || "error!" }]);
+                return
+            }
 
             const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
-            if (!resRequest) return;
+            if (!resRequest) {
+                setAlerts([...alerts, { type: 'error', message: resApproval?.Error || "error!" }]);
+                return
+            }
 
-            setShowMessage(true);
-            setMessage(<SuccessAlert message={successMessage} onClose={() => setShowMessage(false)} />);
+            setAlerts([...alerts, { type: 'success', message: message }]);
 
-            setTimeout(() => window.location.reload(), 1800);
+            setTimeout(() => window.location.reload(), 3000);
         } catch (error) {
-            console.error("Error submitting request:", error);
-            alert("เกิดข้อผิดพลาด");
+
         }
     };
 
@@ -335,7 +340,37 @@ function MaintenanceRequest() {
 
     return (
         <div className="maintenance-request">
-            {showMessage && message}
+            {/* Show Alerts */}
+            {alerts.map((alert, index) => {
+                return (
+                    <React.Fragment key={index}>
+                        {alert.type === 'success' && (
+                            <SuccessAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={Number(index)}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'error' && (
+                            <ErrorAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'warning' && (
+                            <WarningAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                    </React.Fragment>
+                );
+            })}
 
             {/* Approved Confirm */}
             <ConfirmDialog
@@ -516,7 +551,7 @@ function MaintenanceRequest() {
 
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2}}>
+                    <Card sx={{ width: "100%", borderRadius: 2 }}>
                         <DataGrid
                             rows={filteredRequests}
                             columns={columns}

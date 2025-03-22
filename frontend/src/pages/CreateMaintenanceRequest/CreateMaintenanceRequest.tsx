@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./CreateMaintenanceRequest.css"
 
 import { Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
@@ -19,6 +19,8 @@ import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import SuccessAlert from "../../components/Alert/SuccessAlert";
+import ErrorAlert from "../../components/Alert/ErrorAlert";
+import WarningAlert from "../../components/Alert/WarningAlert";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -33,9 +35,7 @@ function CreateMaintenanceRequestPage() {
     const [selectedFloor, setSelectedFloor] = useState(0)
     // const [isAllTime, setIsAllTime] = useState(true)
 
-    const [message, setMessage] = useState(<></>)
-    const [showMessage, setShowMessage] = useState(false)
-
+    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         Description: "",
@@ -160,25 +160,19 @@ function CreateMaintenanceRequestPage() {
 
                 const resImage = await CreateMaintenanceImages(formDataFile)
                 if (resImage) {
-                    setShowMessage(true)
-                    setMessage(<SuccessAlert
-                        message={'ส่งคำร้องแจ้งซ่อมสำเร็จ'}
-                        onClose={() => setShowMessage(false)}
-                        index={0}
-                        totalAlerts={1}
-                    />)
-                    setTimeout(()=>{
+                    setAlerts([...alerts, { type: 'success', message: "ส่งคำร้องแจ้งซ่อมสำเร็จ" }]);
+                    setTimeout(() => {
                         location.href = "/maintenance-request";
                     }, 1800)
                 }
                 else {
+                    setAlerts([...alerts, { type: 'error', message: resImage?.Error || "failed!" }]);
                 }
             } else {
-
+                setAlerts([...alerts, { type: 'error', message: resRequest?.Error || "failed!" }]);
             }
         } catch (error) {
-            console.error("Error submitting request:", error);
-            alert("เกิดข้อผิดพลาด");
+
         }
     }
 
@@ -188,7 +182,7 @@ function CreateMaintenanceRequestPage() {
 
         if (droppedFiles.length > 3) {
             droppedFiles = droppedFiles.slice(0, 3);
-            alert("สามารถเลือกได้สูงสุด 3 ไฟล์");
+            setAlerts([...alerts, { type: 'warning', message: "สามารถเลือกได้สูงสุด 3 ไฟล์" }]); 
         }
 
         setFiles(droppedFiles);
@@ -200,7 +194,7 @@ function CreateMaintenanceRequestPage() {
 
             if (selectedFiles.length > 3) {
                 selectedFiles = selectedFiles.slice(0, 3);
-                alert("สามารถเลือกได้สูงสุด 3 ไฟล์");
+                setAlerts([...alerts, { type: 'warning', message: "สามารถเลือกได้สูงสุด 3 ไฟล์" }]); 
             }
 
             setFiles(selectedFiles);
@@ -212,7 +206,7 @@ function CreateMaintenanceRequestPage() {
             formData.RoomID = 0;
             setSelectedFloor(0);
             setSelectedRoomtype(value);
-            
+
         } else if (selectName === 'floorNumber') {
             formData.RoomID = 0;
             setSelectedFloor(value);
@@ -249,7 +243,37 @@ function CreateMaintenanceRequestPage() {
 
     return (
         <div className="create-maintenance-request-page">
-            {showMessage && message}
+            {/* Show Alerts */}
+            {alerts.map((alert, index) => {
+                return (
+                    <React.Fragment key={index}>
+                        {alert.type === 'success' && (
+                            <SuccessAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={Number(index)}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'error' && (
+                            <ErrorAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'warning' && (
+                            <WarningAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                    </React.Fragment>
+                );
+            })}
 
             {/* Header Section */}
             <Grid2 container spacing={2}>
