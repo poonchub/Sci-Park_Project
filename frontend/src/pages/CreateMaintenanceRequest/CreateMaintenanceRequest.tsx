@@ -165,6 +165,9 @@ function CreateMaintenanceRequestPage() {
                         message={'ส่งคำร้องแจ้งซ่อมสำเร็จ'}
                         onClose={() => setShowMessage(false)}
                     />)
+                    setTimeout(()=>{
+                        location.href = "/maintenance-request";
+                    }, 1800)
                 }
                 else {
                 }
@@ -204,20 +207,13 @@ function CreateMaintenanceRequestPage() {
 
     const handleSelectedFilter = (value: number, selectName: string) => {
         if (selectName === 'roomtype') {
-            if (value === 0) {
-                formData.RoomID = 0;
-                setSelectedFloor(0);
-                setSelectedRoomtype(value);
-            } else {
-                setSelectedRoomtype(value);
-            }
+            formData.RoomID = 0;
+            setSelectedFloor(0);
+            setSelectedRoomtype(value);
+            
         } else if (selectName === 'floorNumber') {
-            if (value === 0) {
-                formData.RoomID = 0;
-                setSelectedFloor(value);
-            } else {
-                setSelectedFloor(value);
-            }
+            formData.RoomID = 0;
+            setSelectedFloor(value);
         }
     }
 
@@ -252,6 +248,7 @@ function CreateMaintenanceRequestPage() {
     return (
         <div className="create-maintenance-request-page">
             {showMessage && message}
+
             {/* Header Section */}
             <Grid2 container spacing={2}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>

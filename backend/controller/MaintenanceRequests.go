@@ -15,7 +15,7 @@ func ListMaintenanceRequests(c *gin.Context) {
 
 	db := config.DB()
 
-	results := db.Preload("User").Preload("Room").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Find(&request)
+	results := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Find(&request)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return

@@ -7,6 +7,7 @@ import Loadable from "../components/Loadable/Loadable";
 import { lazy } from "react";
 const  Home = Loadable(lazy(() => import("../pages/Home/Home")));
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
+import AssignWork from "../pages/AssignWork/AssignWork";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -28,6 +29,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/create-maintenance-request",
 				element: <CreateMaintenanceRequest/>
+			},
+			{
+				path: "/assign-work",
+				element: <AssignWork/>
 			},
 		]
 	}

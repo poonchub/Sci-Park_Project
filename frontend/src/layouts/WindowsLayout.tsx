@@ -82,7 +82,7 @@ const WindowsLayout: React.FC = () => {
 				[
 					{ path: '/', name: 'แดชบอร์ด' },
 					{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
-					{ path: '/', name: 'มอบหมายงานซ่อม' },
+					{ path: '/assign-work', name: 'มอบหมายงานซ่อม' },
 					{ path: '/', name: 'จัดการผู้ใช้งาน' },
 				]
 			)
@@ -164,7 +164,8 @@ const WindowsLayout: React.FC = () => {
 											display: 'block',
 											borderRadius: 10
 										}}
-										variant={location.pathname === page.path ? 'contained' : 'text'}
+										variant={
+											location.pathname === page.path || (page.name === 'แจ้งซ่อม' && (location.pathname === '/assign-work' || location.pathname === '/create-maintenance-request')) ? 'contained' : 'text'}
 									>
 										{page.name}
 									</Button>
@@ -276,7 +277,11 @@ const WindowsLayout: React.FC = () => {
 					})}
 				</List>
 			</Drawer>
-			<Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+			<Box component="main" sx={{ 
+				flexGrow: 1, 
+				p: 3, 
+				width: open ? "calc(100% - 240px)" : "100%", 
+			}}>
 				<DrawerHeader />
 				<Outlet />
 			</Box>

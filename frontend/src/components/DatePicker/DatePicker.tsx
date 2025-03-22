@@ -13,6 +13,6 @@ export const DatePicker = styled(MuiDatePicker)(() => ({
         borderColor: "rgb(109, 110, 112, 0.4)", // เปลี่ยนสีเส้นขอบ
     },
     "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#F26522", // เปลี่ยนสีขอบเมื่อ hover
+        borderColor: "#F26522 !important", // เปลี่ยนสีขอบเมื่อ hover
     },
 }));

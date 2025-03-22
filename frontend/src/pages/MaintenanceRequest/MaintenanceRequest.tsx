@@ -60,7 +60,7 @@ function MaintenanceRequest() {
             headerName: 'ผู้แจ้งซ่อม',
             description: 'This column has a value getter and is not sortable.',
             sortable: false,
-            flex: 1.4,
+            flex: 1.2,
             valueGetter: (params: UserInterface) => `${params.FirstName || ''} ${params.LastName || ''}`,
         },
         {
@@ -83,8 +83,46 @@ function MaintenanceRequest() {
             field: 'Description',
             headerName: 'รายละเอียด',
             type: 'string',
-            flex: 2,
+            flex: 1.8,
             // editable: true,
+            renderCell: (params) => {
+                console.log(params.row)
+                const roomtype = params.row.Room?.RoomType?.TypeName
+                const roomNum = params.row.Room?.RoomNumber
+                const roomFloor = params.row.Room?.Floor?.Number
+                return (
+                    <Box sx={{
+                        display: 'flex',
+                        height: '100%',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                    }}>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%" // ✅ ป้องกันขยายเกิน
+                            }}
+                        >
+                            {`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
+                                color: '#6D6E70'
+                            }}
+                        >
+                            {params.row.Description}
+                        </Typography>
+                    </Box>
+                )
+            },
         },
         {
             field: 'RequestStatus',
@@ -189,7 +227,6 @@ function MaintenanceRequest() {
                 </Button>
             ),
         },
-
     ];
 
     const getUser = async () => {
@@ -246,7 +283,7 @@ function MaintenanceRequest() {
             setShowMessage(true);
             setMessage(<SuccessAlert message={successMessage} onClose={() => setShowMessage(false)} />);
 
-            setTimeout(() => window.location.reload(), 2000);
+            setTimeout(() => window.location.reload(), 1800);
         } catch (error) {
             console.error("Error submitting request:", error);
             alert("เกิดข้อผิดพลาด");
@@ -372,7 +409,7 @@ function MaintenanceRequest() {
                                                     display: "flex",
                                                     alignItems: "center",
                                                     justifyContent: "center",
-                                                    width: 55, // กำหนดขนาดตามต้องการ
+                                                    width: 55,
                                                     color: '#fff'
                                                 }}>
                                                     <FontAwesomeIcon icon={icon} size="2xl" />
@@ -425,7 +462,6 @@ function MaintenanceRequest() {
                         </Grid2>
                         <Grid2 size={{ xs: 10, md: 3 }}>
                             <FormControl fullWidth>
-                                {/* <InputLabel id="demo-simple-select-label">Age</InputLabel> */}
                                 <Select
                                     value={selectedStatus}
                                     onChange={(e) => setSelectedStatus(Number(e.target.value))}
@@ -480,22 +516,23 @@ function MaintenanceRequest() {
 
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ height: "100%", width: "100%" }}>
+                    <Card sx={{ width: "100%", borderRadius: 2}}>
                         <DataGrid
                             rows={filteredRequests}
                             columns={columns}
                             getRowId={(row) => String(row.ID)}
                             initialState={{
                                 pagination: {
-                                    paginationModel: {
-                                        pageSize: 5,
-                                    },
+                                    paginationModel: { pageSize: 10 },
                                 },
                             }}
-                            pageSizeOptions={[10]}
                             checkboxSelection
                             disableRowSelectionOnClick
-                            sx={{ width: "100%" }}
+                            disableColumnResize={false}
+                            sx={{
+                                width: "100%",
+                                borderRadius: 2,
+                            }}
                         />
                     </Card>
                 </Grid2>

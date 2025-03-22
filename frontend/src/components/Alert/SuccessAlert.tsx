@@ -23,7 +23,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose }) => {
       severity="success"
       onClose={onClose}
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         top: 20,
         left: '50%',
         transform: 'translateX(-50%)',
