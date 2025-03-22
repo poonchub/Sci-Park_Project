@@ -164,6 +164,8 @@ function CreateMaintenanceRequestPage() {
                     setMessage(<SuccessAlert
                         message={'ส่งคำร้องแจ้งซ่อมสำเร็จ'}
                         onClose={() => setShowMessage(false)}
+                        index={0}
+                        totalAlerts={1}
                     />)
                     setTimeout(()=>{
                         location.href = "/maintenance-request";

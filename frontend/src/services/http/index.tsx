@@ -40,27 +40,26 @@ async function GetUser() {
 }
 async function CreateUser(data: any) {
     const formData = new FormData();
-
     formData.append("company_name", data.CompanyName || "");
     formData.append("business_detail", data.BusinessDetail || "");
     formData.append("first_name", data.FirstName || "");
     formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID?.toString() || "2");
+    formData.append("gender_id", data.GenderID.toString());
     formData.append("email", data.Email || "");
     formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
-    formData.append("role_id", data.RoleID?.toString() || "1");
+    formData.append("role_id", data.RoleID.toString());
     formData.append("profile_path", data.ProfilePath || "");
 
     if (data.Profile_Image) {
-        console.log(">>>>>",data.Profile_Image)
+        console.log(">>>>>",data.formData)
         formData.append("profile_image", data.Profile_Image);
     }
     formData.forEach((value, key) => {
         console.log(`${key}: ${value}`);
     });
 
-    formData.append("userpackage_id", data.UserPackageID?.toString() || "1");
+    formData.append("package_id", data.UserPackageID?.toString() || "5");
 
     const token = localStorage.getItem("token");  
     const requestOptions = {

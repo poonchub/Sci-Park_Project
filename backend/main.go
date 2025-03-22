@@ -25,6 +25,10 @@ func main() {
 	public := r.Group("/")
 	{
 		public.POST("/auth/login", controller.UserLogin)
+
+		// Send Email OTP
+		public.POST("/send-otp-email", controller.ResetPasswordController)
+
 		
 	}
 
@@ -34,6 +38,8 @@ func main() {
 	{
 
 		// protected.GET("/users", controller.GetAllUsers)
+
+		
 
 		// Areas
 		protected.GET("/areas", controller.ListAreas)
