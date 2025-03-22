@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom"
 import "./MaintenanceRequest.css"
-import { Box, Button, Card, CardContent, FormControl, Grid2, MenuItem, Typography } from "@mui/material"
-import { CheckCircle } from "@mui/icons-material"
+import { Box, Button, Card, CardContent, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
-import { GetMaintenanceRequests, GetRequestStatuses } from "../../services/http"
+import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
 import { LineChart } from "@mui/x-charts"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
@@ -16,30 +15,59 @@ import { TextField } from "../../components/TextField/TextField"
 import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
-
-import ClearOutlinedIcon from '@mui/icons-material/ClearOutlined';
-import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHourglassHalf, faCheck, faArrowsSpin, faFlagCheckered, faBan, faExclamation, faQuestionCircle, faBullseye, faMagnifyingGlass, IconDefinition, faXmark } from "@fortawesome/free-solid-svg-icons";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
+import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals"
+import SuccessAlert from "../../components/Alert/SuccessAlert"
+import dayjs from "dayjs"
 
 function MaintenanceRequest() {
+    const [user, setUser] = useState<UserInterface>()
 
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
 
+    const [countRequestStatus, setCountRequestStatus] = useState<Record<string, number>>()
+    const [searchText, setSearchText] = useState('')
+    const [selectedStatus, setSelectedStatus] = useState(0)
+    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
+
+    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+    const [requestSelected, setRequestSelected] = useState(0)
+
+    const [message, setMessage] = useState(<></>)
+    const [showMessage, setShowMessage] = useState(false)
+
+    const statusConfig: Record<string, { color: string; colorLite: string; icon: IconDefinition }> = {
+        "Pending": { color: "#FFC107", colorLite: "rgb(254, 255, 184)", icon: faHourglassHalf },
+        "Approved": { color: "#28A745", colorLite: "rgb(203, 255, 215)", icon: faCheck },
+        "Rejected": { color: "#DC3545", colorLite: "rgb(255, 211, 216)", icon: faBan },
+        "In Progress": { color: "#007BFF", colorLite: "rgb(159, 205, 255)", icon: faArrowsSpin },
+        "Completed": { color: "#6F42C1", colorLite: "rgb(207, 181, 255)", icon: faFlagCheckered },
+        "Failed": { color: "#6C757D", colorLite: "rgb(239, 247, 255)", icon: faExclamation }
+    };
+
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
-        { field: 'ID', headerName: 'ID', width: 90 },
+        {
+            field: 'ID',
+            headerName: 'ID',
+            flex: 0.5
+        },
         {
             field: 'User',
             headerName: 'ผู้แจ้งซ่อม',
             description: 'This column has a value getter and is not sortable.',
             sortable: false,
-            width: 160,
+            flex: 1.2,
             valueGetter: (params: UserInterface) => `${params.FirstName || ''} ${params.LastName || ''}`,
         },
         {
             field: 'CreatedAt',
             headerName: 'วันที่',
             type: 'string',
-            width: 150,
+            flex: 1,
             // editable: true,
             valueGetter: (params) => dateFormat(params),
         },
@@ -47,7 +75,7 @@ function MaintenanceRequest() {
             field: 'Area',
             headerName: 'บริเวณที่แจ้งซ่อม',
             type: 'string',
-            width: 200,
+            flex: 1.2,
             // editable: true,
             valueGetter: (params: AreasInterface) => params.Name,
         },
@@ -55,68 +83,139 @@ function MaintenanceRequest() {
             field: 'Description',
             headerName: 'รายละเอียด',
             type: 'string',
-            width: 200,
+            flex: 1.8,
             // editable: true,
+            renderCell: (params) => {
+                console.log(params.row)
+                const roomtype = params.row.Room?.RoomType?.TypeName
+                const roomNum = params.row.Room?.RoomNumber
+                const roomFloor = params.row.Room?.Floor?.Number
+                return (
+                    <Box sx={{
+                        display: 'flex',
+                        height: '100%',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                    }}>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%" // ✅ ป้องกันขยายเกิน
+                            }}
+                        >
+                            {`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
+                                color: '#6D6E70'
+                            }}
+                        >
+                            {params.row.Description}
+                        </Typography>
+                    </Box>
+                )
+            },
         },
         {
             field: 'RequestStatus',
             headerName: 'สถานะ',
             type: 'string',
-            width: 200,
+            flex: 1.2,
             // editable: true,
-            renderCell: (params) => (
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '100%'
-                }}>
-                    <Box sx={{
-                        bgcolor: '#08aff1',
-                        borderRadius: 10,
-                        px: 1.5,
-                        py: 0.5,
-                        display: 'flex',
-                        gap: 1,
-                        color: '#fff'
-                    }}>
-                        <CheckCircleOutlineOutlinedIcon />
-                        <Typography>
-                            {params.row.RequestStatus?.Name || "-"}
-                        </Typography>
-                    </Box>
+            renderCell: (params) => {
+                const statusName = params.row.RequestStatus?.Name || "Pending"
+                const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
+                const { color, colorLite, icon } = statusConfig[statusKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-                </Box>
-            ),
+                return (
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '100%'
+                    }}>
+                        <Box sx={{
+                            bgcolor: colorLite,
+                            borderRadius: 10,
+                            px: 1.5,
+                            py: 0.5,
+                            display: 'flex',
+                            gap: 1,
+                            color: color,
+                            alignItems: 'center',
+                        }}>
+                            <FontAwesomeIcon icon={icon} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                {statusName}
+                            </Typography>
+                        </Box>
+
+                    </Box>
+                )
+            },
         },
         {
-            field: 'Approve',
+            field: 'Approved',
             headerName: 'จัดการ',
             type: 'string',
-            width: 200,
+            flex: 1.4,
             // editable: true,
-            renderCell: () => (
-                <Box>
-                    <Button
-                        size="small"
-                        sx={{ bgcolor: '#08aff1', color: '#fff', fontSize: '14px' }}
-                    >
-                        อนุมัติ
-                    </Button>
-                    <Button
-                        size="small"
-                        sx={{ color: '#f00', fontSize: '14px', border: '1px solid' }}
-                    >
-                        <ClearOutlinedIcon />
-                    </Button>
-                </Box>
-
-            ),
+            renderCell: (item) => {
+                return item.row.RequestStatus?.Name === 'Pending' ? (
+                    <Box>
+                        <Button
+                            onClick={() => {
+                                setOpenConfirmApproved(true)
+                                setRequestSelected(Number(item.id))
+                            }}
+                            sx={{
+                                bgcolor: '#08aff1',
+                                color: '#fff',
+                                fontSize: '14px',
+                                border: '1px solid #08aff1',
+                                mr: 0.6,
+                                "&:hover": {
+                                    borderColor: 'transparent'
+                                }
+                            }}
+                        >
+                            อนุมัติ
+                        </Button>
+                        <Button
+                            // variant="outlined"
+                            onClick={() => {
+                                setOpenConfirmRejected(true)
+                                setRequestSelected(Number(item.id))
+                            }}
+                            sx={{
+                                color: '#f00',
+                                fontSize: '14px',
+                                border: '1px solid',
+                                py: 0.75,
+                                px: 0.5,
+                                minWidth: 25
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                        </Button>
+                    </Box>
+                ) : (
+                    <></>
+                )
+            },
         },
         {
             field: 'Check',
             headerName: 'action',
             type: 'string',
-            width: 200,
+            flex: 1,
             // editable: true,
             renderCell: () => (
                 <Button
@@ -128,8 +227,18 @@ function MaintenanceRequest() {
                 </Button>
             ),
         },
-
     ];
+
+    const getUser = async () => {
+        try {
+            const res = await GetUser();
+            if (res) {
+                setUser(res);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    }
 
     const getRequestStatuses = async () => {
         try {
@@ -153,20 +262,102 @@ function MaintenanceRequest() {
         }
     };
 
+    const handleAction = async (statusID: number, successMessage: string) => {
+        try {
+            const managerApp: ManagerApprovalsInterface = {
+                UserID: user?.ID,
+                RequestID: requestSelected,
+                RequestStatusID: statusID
+            };
+
+            const request: MaintenanceRequestsInterface = {
+                RequestStatusID: statusID
+            };
+
+            const resApproval = await CreateManagerApproval(managerApp);
+            if (!resApproval) return;
+
+            const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
+            if (!resRequest) return;
+
+            setShowMessage(true);
+            setMessage(<SuccessAlert message={successMessage} onClose={() => setShowMessage(false)} />);
+
+            setTimeout(() => window.location.reload(), 1800);
+        } catch (error) {
+            console.error("Error submitting request:", error);
+            alert("เกิดข้อผิดพลาด");
+        }
+    };
+
     const dateFormat = (date: string) => {
         return `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
     }
 
+    const filteredRequests = maintenanceRequests.filter((request) => {
+        const requestId = request.ID ? Number(request.ID) : null;
+        const firstName = request.User?.FirstName?.toLowerCase() || "";
+        const lastName = request.User?.LastName?.toLowerCase() || "";
+        const areaName = request.Area?.Name?.toLowerCase() || "";
+        const createdAt = request.CreatedAt ? dateFormat(request.CreatedAt) : null;
+
+        const matchText =
+            !searchText ||
+            requestId === Number(searchText) ||
+            firstName.includes(searchText.toLowerCase()) ||
+            lastName.includes(searchText.toLowerCase()) ||
+            areaName.includes(searchText.toLowerCase());
+
+        // เงื่อนไขการกรองวันที่
+        const matchDate = !selectedDate || (createdAt === selectedDate.format("DD/MM/YYYY"));
+
+        // เงื่อนไขการกรองสถานะ
+        const matchStatus = selectedStatus === 0 || request.RequestStatusID === selectedStatus;
+
+        // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+        return matchText && matchDate && matchStatus;
+    });
+
     useEffect(() => {
         getRequestStatuses();
         getMaintenanceRequests()
+        getUser()
     }, []);
+
+    useEffect(() => {
+        const countStatus = maintenanceRequests.reduce<Record<string, number>>((acc, item) => {
+            const status = item.RequestStatus?.Name || "Unknown";
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+        setCountRequestStatus(countStatus)
+    }, [maintenanceRequests])
 
     return (
         <div className="maintenance-request">
-            <Grid2 container spacing={2}>
+            {showMessage && message}
+
+            {/* Approved Confirm */}
+            <ConfirmDialog
+                open={openConfirmApproved}
+                setOpenConfirm={setOpenConfirmApproved}
+                handleFunction={() => handleAction(2, "อนุมัติสำเร็จ")}
+                title="ยืนยันการอนุมัติงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            />
+
+            {/* Rejected Confirm */}
+            <ConfirmDialog
+                open={openConfirmRejected}
+                setOpenConfirm={setOpenConfirmRejected}
+                handleFunction={() => handleAction(3, "ปฏิเสธสำเร็จ")}
+                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            />
+
+            <Grid2 container spacing={3}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
-                    <Typography variant="h6" className="title">
+                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         รายการแจ้งซ่อม
                     </Typography>
                 </Grid2>
@@ -181,28 +372,65 @@ function MaintenanceRequest() {
                         }}>เขียนคำร้องแจ้งซ่อม</Button>
                     </Link>
                 </Grid2>
-                <Grid2 container size={{ xs: 10, md: 8 }}>
+                <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
+
                     {/* Status Section */}
-                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={2} className='status-section'>
+                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={3} className='status-section'>
                         {
                             requestStatuses.map((item, index) => {
+                                const statusKey = item.Name as keyof typeof statusConfig;
+                                const { color, icon } = statusConfig[statusKey] ?? { color: "#000", icon: faQuestionCircle };
+
                                 return (
                                     <Grid2 size={{ xs: 10, md: 4 }} key={index}>
-                                        <Card className="status-card" sx={{ height: 70 }}>
-                                            <CardContent className="status-card-content">
-                                                <Typography variant="body1" color="textPrimary">{item.Name}</Typography>
-                                                <div className="status-item success">
-                                                    <CheckCircle /> <span>3 รายการ</span>
-                                                </div>
-                                            </CardContent>
+                                        <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
+                                            <Grid2 size={{ xs: 10, md: 12 }}>
+                                                <CardContent className="status-card-content">
+                                                    <Typography variant="body1" sx={{
+                                                        fontWeight: 500,
+                                                        fontSize: 16
+                                                    }}>{item.Name}</Typography>
+                                                    <Typography variant="body1" sx={{
+                                                        fontWeight: 600,
+                                                        fontSize: 20
+                                                    }}>{`${countRequestStatus?.[item.Name || "Unknown"] ?? 0} รายการ`}</Typography>
+                                                </CardContent>
+                                            </Grid2>
+                                            <Grid2 size={{ xs: 10, md: 8 }} sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}>
+                                                <Box sx={{
+                                                    borderRadius: '50%',
+                                                    bgcolor: color,
+                                                    border: 1,
+                                                    aspectRatio: '1/1',
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    width: 55,
+                                                    color: '#fff'
+                                                }}>
+                                                    <FontAwesomeIcon icon={icon} size="2xl" />
+                                                </Box>
+                                            </Grid2>
                                         </Card>
                                     </Grid2>
                                 )
                             })
                         }
                     </Grid2>
+
                     {/* Filters Section */}
-                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={2} className='filter-section'>
+                    <Grid2 container
+                        spacing={2}
+                        className='filter-section'
+                        size={{ xs: 10, md: 12 }}
+                        sx={{
+                            alignItems: "flex-end",
+                            height: 'auto'
+                        }}>
                         <Grid2 size={{ xs: 10, md: 6 }}>
                             <TextField
                                 fullWidth
@@ -210,26 +438,41 @@ function MaintenanceRequest() {
                                 variant="outlined"
                                 placeholder="ค้นหา"
                                 margin="none"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                slotProps={{
+                                    input: {
+                                        startAdornment: (
+                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                            </InputAdornment>
+                                        ),
+                                    }
+                                }}
                             />
                         </Grid2>
                         <Grid2 size={{ xs: 10, md: 3 }}>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
-                                // renderInput={(params) => <TextField {...params} />}
+                                    format="DD/MM/YYYY"
+                                    value={selectedDate}
+                                    onChange={(newValue) => setSelectedDate(newValue)}
                                 />
                             </LocalizationProvider>
                         </Grid2>
                         <Grid2 size={{ xs: 10, md: 3 }}>
                             <FormControl fullWidth>
-                                {/* <InputLabel id="demo-simple-select-label">Age</InputLabel> */}
                                 <Select
-                                    // labelId="demo-simple-select-label"
-                                    // id="demo-simple-select"
-                                    // value={age}
-                                    // label="Age"
-                                    // onChange={handleChange}
-                                    defaultValue={1}
+                                    value={selectedStatus}
+                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
+                                    displayEmpty
+                                    startAdornment={
+                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                            <FontAwesomeIcon icon={faBullseye} size="xl" />
+                                        </InputAdornment>
+                                    }
                                 >
+                                    <MenuItem value={0}>{'ทุกสถานะ'}</MenuItem>
                                     {
                                         requestStatuses.map((item, index) => {
                                             return (
@@ -243,48 +486,55 @@ function MaintenanceRequest() {
                     </Grid2>
                 </Grid2>
                 {/* Chart Section */}
-                <Grid2 size={{ xs: 10, md: 4 }} sx={{ bgcolor: "#212121", borderRadius: 1, py: 2, px: 3 }}>
-                    <Typography variant="body1" color="#ffffff">
-                        รายการแจ้งซ่อม
-                    </Typography>
-                    <LineChart
-                        xAxis={[{
-                            scaleType: 'point',
-                            data: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-                            tickLabelStyle: { fill: '#ffffff' },
-                        }]}
-                        yAxis={[{
-                            tickLabelStyle: { fill: '#ffffff' },
-                        }]}
-                        series={[
-                            {
-                                data: [12, 15, 8, 20, 18],
-                                // color: '#08aff1',
-                                area: true,
-                                baseline: 'min',
+                <Grid2 size={{ xs: 10, md: 5 }} >
+                    <Card sx={{ bgcolor: "#212121", borderRadius: 2, py: 2, px: 3 }}>
+                        <Typography variant="body1" color="#ffffff">
+                            รายการแจ้งซ่อม
+                        </Typography>
+                        <LineChart
+                            xAxis={[{
+                                scaleType: 'point',
+                                data: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                                tickLabelStyle: { fill: '#ffffff' },
+                            }]}
+                            yAxis={[{
+                                tickLabelStyle: { fill: '#ffffff' },
+                            }]}
+                            series={[
+                                {
+                                    data: [12, 15, 8, 20, 18],
+                                    // color: '#08aff1',
+                                    area: true,
+                                    baseline: 'min',
 
-                            },
-                        ]}
-                        height={170}
-                    />
+                                },
+                            ]}
+                            height={215}
+                        />
+                    </Card>
                 </Grid2>
+
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
-                    <DataGrid
-                        rows={maintenanceRequests}
-                        columns={columns}
-                        getRowId={(row) => String(row.ID)}
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                    pageSize: 5,
+                    <Card sx={{ width: "100%", borderRadius: 2}}>
+                        <DataGrid
+                            rows={filteredRequests}
+                            columns={columns}
+                            getRowId={(row) => String(row.ID)}
+                            initialState={{
+                                pagination: {
+                                    paginationModel: { pageSize: 10 },
                                 },
-                            },
-                        }}
-                        pageSizeOptions={[5]}
-                        checkboxSelection
-                        disableRowSelectionOnClick
-                    />
+                            }}
+                            checkboxSelection
+                            disableRowSelectionOnClick
+                            disableColumnResize={false}
+                            sx={{
+                                width: "100%",
+                                borderRadius: 2,
+                            }}
+                        />
+                    </Card>
                 </Grid2>
             </Grid2>
         </div>

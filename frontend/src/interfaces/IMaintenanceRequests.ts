@@ -6,6 +6,7 @@ import { UserInterface } from "./IUser";
 
 export interface MaintenanceRequestsInterface {
     ID?:            number;
+    CreatedAt?:      string;
     Description?:   string;
     StartTime?:     string;
     EndTime?:       string;

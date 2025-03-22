@@ -59,7 +59,6 @@ function CreateMaintenanceRequestPage() {
             const res = await GetUser();
             if (res) {
                 setUser(res);
-                // setFormData((prev) => ({ ...prev, UserID: res.ID }))
             }
         } catch (error) {
             console.error("Error fetching user:", error);
@@ -145,7 +144,6 @@ function CreateMaintenanceRequestPage() {
 
         try {
             const resRequest = await CreateMaintenanceRequest(formData)
-            console.log(resRequest)
             if (resRequest) {
                 const formDataFile = new FormData();
                 formDataFile.append("userID", String(user?.ID));
@@ -169,6 +167,9 @@ function CreateMaintenanceRequestPage() {
                         index={0}
                         totalAlerts={1}
                     />)
+                    setTimeout(()=>{
+                        location.href = "/maintenance-request";
+                    }, 1800)
                 }
                 else {
                 }
@@ -208,20 +209,13 @@ function CreateMaintenanceRequestPage() {
 
     const handleSelectedFilter = (value: number, selectName: string) => {
         if (selectName === 'roomtype') {
-            if (value === 0) {
-                formData.RoomID = 0;
-                setSelectedFloor(0);
-                setSelectedRoomtype(value);
-            } else {
-                setSelectedRoomtype(value);
-            }
+            formData.RoomID = 0;
+            setSelectedFloor(0);
+            setSelectedRoomtype(value);
+            
         } else if (selectName === 'floorNumber') {
-            if (value === 0) {
-                formData.RoomID = 0;
-                setSelectedFloor(value);
-            } else {
-                setSelectedFloor(value);
-            }
+            formData.RoomID = 0;
+            setSelectedFloor(value);
         }
     }
 
@@ -256,6 +250,7 @@ function CreateMaintenanceRequestPage() {
     return (
         <div className="create-maintenance-request-page">
             {showMessage && message}
+
             {/* Header Section */}
             <Grid2 container spacing={2}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>

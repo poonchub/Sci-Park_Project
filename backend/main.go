@@ -59,13 +59,16 @@ func main() {
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
-		protected.POST("/create-maintenance-request", controller.CreateMaintenanceRequest)
+		protected.GET("/maintenance-request/:id", controller.GetMaintenanceRequestByID)
+		protected.POST("/maintenance-request", controller.CreateMaintenanceRequest)
+		protected.PATCH("/maintenance-request/:id", controller.UpdateMaintenanceRequestByID)
+		protected.DELETE("/maintenance-request/:id", controller.DeleteMaintenanceRequestByID)
 
 		// MaintenanceTypes
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
 
 		// MaintenanceImages
-		protected.POST("/create-maintenance-images", controller.CreateMaintenanceImages)
+		protected.POST("/maintenance-images", controller.CreateMaintenanceImages)
 
 		// Floor
 		protected.GET("/floors", controller.ListFloors)
@@ -78,6 +81,9 @@ func main() {
 
 		// Package
 		protected.GET("/packages",controller.ListPackages)
+
+		// ManagerApproval
+		protected.POST("/manager-approval", controller.CreateManagerApproval)
 	}
 
 	// 🌍 Root Route
@@ -95,7 +101,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, PATCH, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)

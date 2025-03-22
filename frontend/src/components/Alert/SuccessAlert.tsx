@@ -22,7 +22,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
       severity="success"
       onClose={onClose}
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         top: `${20 + index * 100}px`, // Dynamic top position based on index
         left: '50%',
         transform: 'translateX(-50%)',

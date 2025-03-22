@@ -5,6 +5,7 @@ import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import MaintenanceRequest from "../pages/MaintenanceRequest/MaintenanceRequest";
 import Home from "../pages/Home/Home";
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
+import AssignWork from "../pages/AssignWork/AssignWork";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -26,6 +27,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/create-maintenance-request",
 				element: <CreateMaintenanceRequest/>
+			},
+			{
+				path: "/assign-work",
+				element: <AssignWork/>
 			},
 		]
 	}
