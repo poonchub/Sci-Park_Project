@@ -52,7 +52,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
       severity="error"
       onClose={handleClose}  // Use handleClose here instead of directly passing onClose
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         top: `${20 + index * 100}px`, // Dynamic top position based on index
         left: '100%', // Start from the right side of the screen
         transform: 'translateX(-50%)',

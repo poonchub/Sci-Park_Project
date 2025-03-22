@@ -56,7 +56,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
         top: `${20 + index * 100}px`, // Dynamic top position based on index
         left: '100%', // Start from the right side of the screen
         transform: 'translateX(-50%)',
-        width: '50%',
+        width: '35%',
         zIndex: 1000 + totalAlerts - index, // Dynamic zIndex to ensure the last alert is on top
         backgroundColor: 'white', // Background color
         color: 'black', // Text color
@@ -84,13 +84,13 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
             opacity: 0, // Fully transparent
           },
           '100%': {
-            transform: 'translateX(-150%)', // Move to the center
+            transform: 'translateX(-200%)', // Move to the center
             opacity: 1, // Fully opaque
           },
         },
         '@keyframes slideOutToRight': {
           '0%': {
-            transform: 'translateX(-150%)', // Start at the center
+            transform: 'translateX(-200%)', // Start at the center
             opacity: 1, // Fully visible
           },
           '100%': {
