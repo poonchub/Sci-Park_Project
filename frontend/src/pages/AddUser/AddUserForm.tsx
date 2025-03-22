@@ -434,7 +434,8 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 <Controller
                   name="RoleID"
                   control={control}
-                  defaultValue={3}
+                  defaultValue={2}
+                  
                   rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
                   render={({ field }) => (
                     <Select {...field} label="กรุณาเลือก ตำแหน่ง">
@@ -458,6 +459,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                   name="UserPackageID"
                   control={control}
                   defaultValue=""
+                  
                   render={({ field }) => (
                     <Select {...field} label="สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
                       {packages.map((pkg) => (
