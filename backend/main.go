@@ -28,6 +28,9 @@ func main() {
 
 		// Send Email OTP
 		public.POST("/send-otp-email", controller.ResetPasswordController)
+		// Validate OTP
+		public.POST("/validate-otp", controller.ValidateResetTokenController)
+
 
 		
 	}
@@ -55,7 +58,8 @@ func main() {
 
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
-		r.GET("/user", middlewares.Authorizes(), controller.GetUserByID)
+		protected.GET("/user", controller.GetUserByID)
+		protected.PATCH("/change-password", controller.ChangePassword)
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)

@@ -18,6 +18,44 @@ async function UserLogin(data: UserInterface) {
         .catch((e) => e.response);
 }
 
+async function SendOTP(data: UserInterface) {
+    const requestOptions = {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    return await axios
+        .post(`${apiUrl}/send-otp-email`, data, requestOptions)
+        .then((res) => res)
+        .catch((e) => e.response);
+}
+
+async function ValidateOTP(data: any) {
+    const requestOptions = {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    };
+    return await axios
+        .post(`${apiUrl}/validate-otp`, data, requestOptions)
+        .then((res) => res)
+        .catch((e) => e.response);
+}
+
+async function ChangePassword(data: any) {
+    const requestOptions = {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+    return await axios
+        .patch(`${apiUrl}/change-password`, data, requestOptions)
+        .then((res) => res)
+        .catch((e) => e.response);
+}
+
+
 async function GetUser() {
     const requestOptions = {
         method: "GET",
@@ -466,6 +504,9 @@ export {
     GetUser,
     UserLogin,
     CreateUser,
+    SendOTP,
+    ValidateOTP,
+    ChangePassword,
 
     // Areas
     GetAreas,

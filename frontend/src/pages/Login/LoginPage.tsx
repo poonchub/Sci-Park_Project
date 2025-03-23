@@ -215,9 +215,7 @@ const LoginPage: React.FC = () => {
                 OR
               </Typography>
             </Divider>
-            <Link href="#" className="forgot-link">
-              Forgot Email or Password?
-            </Link>
+            <Link href="/reset-password" className="forgot-link">Forgot Email or Password?</Link>
           </form>
         </div>
       </motion.div>
