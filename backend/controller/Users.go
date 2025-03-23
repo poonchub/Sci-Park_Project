@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"time"
 )
 
 func CreateUser(c *gin.Context) {
@@ -157,4 +158,43 @@ func GetUserByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+func ChangePassword(c *gin.Context) {
+	var changePasswordRequest struct {
+		ID          uint   `json:"id" binding:"required"`
+		NewPassword string `json:"password" binding:"required"`
+	}
+
+	// รับข้อมูลจาก JSON request
+	if err := c.ShouldBindJSON(&changePasswordRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// ค้นหาผู้ใช้จาก ID
+	var user entity.User
+	if err := config.DB().First(&user, changePasswordRequest.ID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// แฮชรหัสผ่านใหม่
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(changePasswordRequest.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash new password"})
+		return
+	}
+
+	// อัปเดตรหัสผ่าน + ล้าง ResetToken และ Expiry
+	user.Password = string(hashedPassword)
+	user.ResetToken = ""
+	user.ResetTokenExpiry = time.Time{} // set เป็น zero value
+
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	// ตอบกลับเมื่อเปลี่ยนรหัสผ่านสำเร็จ
+	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 }

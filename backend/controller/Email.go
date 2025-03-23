@@ -466,29 +466,30 @@ body := fmt.Sprintf(`
 
 func Generate6DigitToken(db *gorm.DB) (string, error) {
 	for {
-		// สุ่มเลข 6 หลัก
-		rand.Seed(time.Now().UnixNano())
-		token := fmt.Sprintf("%06d", rand.Intn(1000000))
+			// สุ่มเลข 6 หลัก
+			token := fmt.Sprintf("%06d", rand.Intn(1000000))
 
-		// ตรวจสอบว่า token นี้มีอยู่ในฐานข้อมูลหรือไม่
-		var existing entity.User
-		if err := db.Where("reset_token = ?", token).First(&existing).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				// ถ้าไม่เจอ record ที่มี token ซ้ำ ให้ return token
-				return token, nil
+			// ตรวจสอบว่า token นี้มีอยู่ในฐานข้อมูลหรือไม่
+			var existing entity.User
+			if err := db.Where("reset_token = ?", token).First(&existing).Error; err != nil {
+					if err == gorm.ErrRecordNotFound {
+							// ถ้าไม่เจอ record ที่มี token ซ้ำ ให้ return token
+							return token, nil
+					}
+					// หากเกิดข้อผิดพลาดอื่นใน query ให้คืน error
+					return "", err
 			}
-			// หากเกิดข้อผิดพลาดอื่นใน query ให้คืน error
-			return "", err
-		}
-		// ถ้าเจอ token ซ้ำ ลูปสุ่มใหม่
+			// ถ้าเจอ token ซ้ำ ลูปสุ่มใหม่
 	}
 }
+
 
 
 // ValidateResetTokenController ตรวจสอบว่า UUID ถูกต้องและยังไม่หมดอายุ
 func ValidateResetTokenController(c *gin.Context) {
 	type RequestPayload struct {
 		Token string `json:"token" binding:"required"`
+		Email string `json:"email" binding:"required,email"` // รับ email เพิ่ม
 	}
 
 	var payload RequestPayload
@@ -501,8 +502,8 @@ func ValidateResetTokenController(c *gin.Context) {
 
 	// ตรวจสอบว่า Token มีในระบบและยังไม่หมดอายุ
 	var user entity.User
-	if err := db.Where("reset_token = ?", payload.Token).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "โทเค็นไม่ถูกต้องหรือหมดอายุ"})
+	if err := db.Where("reset_token = ? AND email = ?", payload.Token, payload.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "โทเค็นหรืออีเมลไม่ถูกต้องหรือหมดอายุ"})
 		return
 	}
 
@@ -529,8 +530,7 @@ func ValidateResetTokenController(c *gin.Context) {
 	// ส่ง Response กลับ พร้อม JWT Token และ Employee ID
 	c.JSON(http.StatusOK, gin.H{
 		"message": "โทเค็นถูกต้อง",
-		"jwt":     tokenString, // JWT Token ที่ส่งกลับ
-		"id":      user.ID, // ส่ง ID ของ Employee กลับไป
+		"token":     tokenString, // JWT Token ที่ส่งกลับ
+		"id":      user.ID,     // ส่ง ID ของ Employee กลับไป
 	})
 }
-

@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 import OutletLayout from "../layouts/OutletLayout";
 import Loadable from "../components/Loadable/Loadable";
+import ResetPassword from "../pages/Login/ResetPasswordPage";
 
 const  Login = Loadable(lazy(() => import("../pages/Login/LoginPage")));
 
@@ -17,6 +18,10 @@ const LoginRoutes = (): RouteObject => {
       {
         path: "/login",
         element: <Login />,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPassword />,
       },
 
     ],

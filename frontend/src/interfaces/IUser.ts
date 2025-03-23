@@ -14,4 +14,5 @@ export interface UserInterface {
     Role?: string;
     Password?: string;
     Profile_Image?: File;
+    Token?: string;
 }
