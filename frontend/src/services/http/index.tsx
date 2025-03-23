@@ -458,6 +458,110 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
     return res;
 }
 
+
+// ฟังก์ชันสำหรับการดึงข้อมูลห้องทั้งหมด
+async function Get1Rooms() {
+    const response = await fetch(`${apiUrl}/rooms`);
+    if (response.ok) {
+        return await response.json();
+    } else {
+        console.error("Failed to fetch rooms");
+        return false;
+    }
+}
+
+// ฟังก์ชันสำหรับการดึงข้อมูลห้องตาม ID
+async function GetRoomById(id: number) {
+    const response = await fetch(`${apiUrl}/rooms/${id}`);
+    if (response.ok) {
+        return await response.json();
+    } else {
+        console.error("Failed to fetch room by ID");
+        return false;
+    }
+}
+
+// ฟังก์ชันสำหรับการสร้างห้อง
+async function CreateRoom(data: { roomNumber: string, capacity: number }) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/rooms`, requestOptions)
+        .then((res) => {
+            if (res.status === 201) {
+                return res.json();
+            } else {
+                return false;
+            }
+        })
+        .catch((error) => {
+            console.error("Error creating room:", error);
+            return false;
+        });
+
+    return res;
+}
+
+// ฟังก์ชันสำหรับการอัปเดตห้อง
+async function UpdateRoom(id: number, data: { roomNumber: string, capacity: number }) {
+    const requestOptions = {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/rooms/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        })
+        .catch((error) => {
+            console.error("Error updating room:", error);
+            return false;
+        });
+
+    return res;
+}
+
+// ฟังก์ชันสำหรับการลบห้อง
+async function DeleteRoom(id: number) {
+    const requestOptions = {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/rooms/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return true;
+            } else {
+                return false;
+            }
+        })
+        .catch((error) => {
+            console.error("Error deleting room:", error);
+            return false;
+        });
+
+    return res;
+}
+
+
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -503,6 +607,12 @@ export {
     
     // ManagerApproval
     CreateManagerApproval,
+
+    Get1Rooms,          // สำหรับดึงข้อมูลห้องทั้งหมด
+    GetRoomById,       // สำหรับดึงข้อมูลห้องตาม ID
+    CreateRoom,        // สำหรับสร้างห้องใหม่
+    UpdateRoom,        // สำหรับอัปเดตห้อง
+    DeleteRoom,        // สำหรับลบห้อง
 
 }
 
