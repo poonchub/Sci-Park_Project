@@ -81,6 +81,7 @@ func SeedDatabase() {
 		{Name: "Manager"}, 
 		{Name: "Admin"},
 		{Name: "SuperAdmin"},
+		{Name: "Operator"},
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
@@ -143,7 +144,8 @@ func SeedDatabase() {
 			Password: "123456", 
 			Phone: "123456789", 
 			ProfilePath: "/profiles/john.jpg", 
-			RoleID: 4, GenderID: 1},
+			RoleID: 4, GenderID: 1,
+		},
 		{
 			CompanyName: "MediCare", 
 			BusinessDetail: "Healthcare Services", 
@@ -153,7 +155,8 @@ func SeedDatabase() {
 			Password: "123456", 
 			Phone: "987654321", 
 			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 2, GenderID: 2},
+			RoleID: 2, GenderID: 2,
+		},
 		{
 			CompanyName: "NO COM", 
 			BusinessDetail: "NO Business", 
@@ -163,7 +166,41 @@ func SeedDatabase() {
 			Password: "123456", 
 			Phone: "1232323", 
 			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 5, GenderID: 2},
+			RoleID: 5, GenderID: 2,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Jaya", 
+			LastName: "Kunlee", 
+			Email: "operator1@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 6, GenderID: 2,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Martin", 
+			LastName: "Ninja", 
+			Email: "operator2@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 6, GenderID: 2,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Connan", 
+			LastName: "Gun", 
+			Email: "operator3@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 6, GenderID: 2,
+		},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)

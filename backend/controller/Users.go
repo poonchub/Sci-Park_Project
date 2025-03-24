@@ -198,3 +198,19 @@ func ChangePassword(c *gin.Context) {
 	// ตอบกลับเมื่อเปลี่ยนรหัสผ่านสำเร็จ
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 }
+
+// GET /operators
+func ListOperators(c *gin.Context) {
+	var users []entity.User
+
+	db := config.DB()
+
+	operatorRoleID := 6
+
+	if err := db.Where("role_id = ?", operatorRoleID).Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+}

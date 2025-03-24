@@ -35,6 +35,10 @@ function MaintenanceRequest() {
     const [selectedStatus, setSelectedStatus] = useState(0)
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
 
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [total, setTotal] = useState(0);
+
     const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [requestSelected, setRequestSelected] = useState(0)
@@ -87,7 +91,6 @@ function MaintenanceRequest() {
             flex: 1.8,
             // editable: true,
             renderCell: (params) => {
-                console.log(params.row)
                 const roomtype = params.row.Room?.RoomType?.TypeName
                 const roomNum = params.row.Room?.RoomNumber
                 const roomFloor = params.row.Room?.Floor?.Number
@@ -252,11 +255,12 @@ function MaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async () => {
+    const getMaintenanceRequests = async (status: number, page: number, limit: number, maintenanceType: number, createdAt: string) => {
         try {
-            const res = await GetMaintenanceRequests();
+            const res = await GetMaintenanceRequests(status, page, limit, maintenanceType, createdAt);
             if (res) {
-                setMaintenanceRequests(res);
+                setMaintenanceRequests(res.data);
+                setTotal(res.total);
             }
         } catch (error) {
             console.error("Error fetching request maintenance requests:", error);
@@ -304,7 +308,6 @@ function MaintenanceRequest() {
         const firstName = request.User?.FirstName?.toLowerCase() || "";
         const lastName = request.User?.LastName?.toLowerCase() || "";
         const areaName = request.Area?.Name?.toLowerCase() || "";
-        const createdAt = request.CreatedAt ? dateFormat(request.CreatedAt) : null;
 
         const matchText =
             !searchText ||
@@ -313,19 +316,13 @@ function MaintenanceRequest() {
             lastName.includes(searchText.toLowerCase()) ||
             areaName.includes(searchText.toLowerCase());
 
-        // เงื่อนไขการกรองวันที่
-        const matchDate = !selectedDate || (createdAt === selectedDate.format("DD/MM/YYYY"));
-
-        // เงื่อนไขการกรองสถานะ
-        const matchStatus = selectedStatus === 0 || request.RequestStatusID === selectedStatus;
-
         // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
-        return matchText && matchDate && matchStatus;
+        return matchText
     });
 
     useEffect(() => {
         getRequestStatuses();
-        getMaintenanceRequests()
+        getMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "")
         getUser()
     }, []);
 
@@ -337,6 +334,10 @@ function MaintenanceRequest() {
         }, {});
         setCountRequestStatus(countStatus)
     }, [maintenanceRequests])
+
+    useEffect(() => {
+        getMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "")
+    }, [page, limit, selectedStatus, selectedDate])
 
     return (
         <div className="maintenance-request">
@@ -555,14 +556,21 @@ function MaintenanceRequest() {
                         <DataGrid
                             rows={filteredRequests}
                             columns={columns}
+                            pageSizeOptions={[5, 10, 20]}
                             getRowId={(row) => String(row.ID)}
+                            paginationMode="server"
                             initialState={{
                                 pagination: {
-                                    paginationModel: { pageSize: 10 },
+                                    paginationModel: { page, pageSize: limit },
                                 },
                             }}
+                            rowCount={total}
                             checkboxSelection
                             disableRowSelectionOnClick
+                            onPaginationModelChange={(params) => {
+                                setPage(params.page + 1);
+                                setLimit(params.pageSize);
+                            }}
                             disableColumnResize={false}
                             sx={{
                                 width: "100%",
