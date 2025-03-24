@@ -148,6 +148,26 @@ async function CreateUser(data: any) {
     }
     
 }
+async function GetOperators() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/operators`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 
 // Request Statuses
 async function GetRequestStatuses() {
@@ -282,7 +302,27 @@ async function GetMaintenanceTypes() {
 }
 
 // MaintenanceRequests
-async function GetMaintenanceRequests() {
+// async function GetMaintenanceRequests() {
+//     const requestOptions = {
+//         method: "GET",
+//         headers: {
+//             "Content-Type": "application/json",
+//             "Authorization": `Bearer ${localStorage.getItem("token")}`,
+//         },
+//     };
+
+//     let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
+//         .then((res) => {
+//             if (res.status == 200) {
+//                 return res.json();
+//             } else {
+//                 return false;
+//             }
+//         });
+
+//     return res;
+// }
+async function GetMaintenanceRequests(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -291,7 +331,7 @@ async function GetMaintenanceRequests() {
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
+    let res = await fetch(`${apiUrl}/maintenance-requests-option?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -407,7 +447,7 @@ async function CreateMaintenanceImages(data: FormData) {
     return res;
 }
 
-// Gender
+// Genders
 async function ListGenders() {
     const requestOptions = {
         method: "GET",
@@ -429,7 +469,7 @@ async function ListGenders() {
     return res;
 }
 
-// Role
+// Roles
 async function ListRoles() {
     const requestOptions = {
         method: "GET",
@@ -451,7 +491,7 @@ async function ListRoles() {
     return res;
 }
 
-// Package
+// Packages
 async function ListPackages() {
     const requestOptions = {
         method: "GET",
@@ -473,7 +513,7 @@ async function ListPackages() {
     return res;
 }
 
-// ManagerApproval
+// ManagerApprovals
 async function CreateManagerApproval(data: ManagerApprovalsInterface) {
     const requestOptions = {
         method: "POST",
@@ -496,6 +536,29 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
     return res;
 }
 
+// MaintenanceTasks
+async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-task`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -507,6 +570,7 @@ export {
     SendOTP,
     ValidateOTP,
     ChangePassword,
+    GetOperators,
 
     // Areas
     GetAreas,
@@ -517,7 +581,7 @@ export {
     // RoomTypes
     GetRoomTypes,
 
-    // Floor
+    // Floors
     GetFloors,
 
     // MaintenanceTypes
@@ -533,17 +597,20 @@ export {
     // MaintenanceImages
     CreateMaintenanceImages,
 
-    // Gender
+    // Genders
     ListGenders,
 
-    // Package
+    // Packages
     ListPackages,
 
-    // Role
+    // Roles
     ListRoles,
     
-    // ManagerApproval
+    // ManagerApprovals
     CreateManagerApproval,
+
+    // MaintenanceTasks
+    CreateMaintenanceTask,
 
 }
 

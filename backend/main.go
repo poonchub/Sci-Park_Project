@@ -30,8 +30,6 @@ func main() {
 		public.POST("/send-otp-email", controller.ResetPasswordController)
 		// Validate OTP
 		public.POST("/validate-otp", controller.ValidateResetTokenController)
-
-
 		
 	}
 
@@ -60,6 +58,7 @@ func main() {
 		protected.POST("/create-user", controller.CreateUser)
 		protected.GET("/user", controller.GetUserByID)
 		protected.PATCH("/change-password", controller.ChangePassword)
+		protected.GET("/operators", controller.ListOperators)
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
@@ -67,6 +66,7 @@ func main() {
 		protected.POST("/maintenance-request", controller.CreateMaintenanceRequest)
 		protected.PATCH("/maintenance-request/:id", controller.UpdateMaintenanceRequestByID)
 		protected.DELETE("/maintenance-request/:id", controller.DeleteMaintenanceRequestByID)
+		protected.GET("/maintenance-requests-option", controller.GetMaintenanceRequests)
 
 		// MaintenanceTypes
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
@@ -74,20 +74,23 @@ func main() {
 		// MaintenanceImages
 		protected.POST("/maintenance-images", controller.CreateMaintenanceImages)
 
-		// Floor
+		// Floors
 		protected.GET("/floors", controller.ListFloors)
 
-		// Gender
+		// Genders
 		protected.GET("/genders",controller.ListGenders)
 
-		// Role
+		// Roles
 		protected.GET("/roles",controller.ListRoles)
 
-		// Package
+		// Packages
 		protected.GET("/packages",controller.ListPackages)
 
-		// ManagerApproval
+		// ManagerApprovals
 		protected.POST("/manager-approval", controller.CreateManagerApproval)
+
+		// MaintenanceTasks
+		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
 	}
 
 	// 🌍 Root Route
