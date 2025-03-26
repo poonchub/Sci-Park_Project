@@ -282,9 +282,10 @@ const WindowsLayout: React.FC = () => {
 			<Box component="main" sx={{ 
 				flexGrow: 1, 
 				p: 3, 
-				width: open ? "calc(100% - 240px)" : "100%", 
+				pt: 11,
+				width: open ? "calc(100% - 240px)" : "100%",
+				minHeight: '100vh',
 			}}>
-				<DrawerHeader />
 				<Outlet />
 			</Box>
 		</Box>

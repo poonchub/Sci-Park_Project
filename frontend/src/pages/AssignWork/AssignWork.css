@@ -1,4 +1,6 @@
 .assign-work-page{
+    height: 100%;
+    
     .MuiTextField-root {
         margin-bottom: 0 !important;
         width: 100% !important;

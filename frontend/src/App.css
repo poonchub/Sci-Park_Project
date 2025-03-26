@@ -14,6 +14,8 @@ body {
   background-color: var(--background-color);
   padding: 0;
   margin: 0;
+  overflow-x: scroll;
+  overflow-y: auto;
 }
 
 ::-webkit-scrollbar-track {
@@ -26,6 +28,7 @@ body {
   width: 2px;
   height: 5px;
   background-color: transparent;
+  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
