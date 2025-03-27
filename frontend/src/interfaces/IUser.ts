@@ -1,5 +1,6 @@
 export interface UserInterface {
     ID?: number;
+    EmployeeID?: string;
     CompanyName?: string;
     BusinessDetail?: string;
     FirstName?: string;
@@ -15,4 +16,7 @@ export interface UserInterface {
     Password?: string;
     Profile_Image?: File;
     Token?: string;
+
+
+    UserNameCombined?: string;
 }

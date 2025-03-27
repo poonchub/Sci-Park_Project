@@ -374,6 +374,7 @@ function AssignWork() {
                                             <FontAwesomeIcon icon={faBullseye} size="xl" />
                                         </InputAdornment>
                                     }
+                                    
                                 >
                                     <MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
                                     {

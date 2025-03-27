@@ -19,7 +19,7 @@ import { TextField } from "../../components/TextField/TextField";
 type AddUserFormProps = {};
 
 const AddUserForm: React.FC<AddUserFormProps> = () => {
-  const { control, handleSubmit, formState: { errors } } = useForm();
+  const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [roles, setRoles] = useState<RolesInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
@@ -78,7 +78,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
       Profile_Image: file,  // Adding the profile image data to the form data
       ...(userType === "external" && { RoleID: 2 }) // Conditionally add RoleID if userType is "external"
     };
-    
+
 
     // Call CreateUser function to send data
 
@@ -165,27 +165,27 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
 
             {/* User Type Selection (บุคคลภายใน/บุคคลภายนอก) */}
             <Grid size={{ xs: 6, md: 6 }}>
-  <Typography variant="body1" className="title-field">ประเภทผู้ใช้</Typography>
-  <FormControl>
-    <RadioGroup
-      row
-      name="userType"
-      value={userType}
-      onChange={(e) => setUserType(e.target.value)} // Set the value of the selected radio button
-    >
-      <FormControlLabel
-        value="internal"
-        control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />} 
-        label="บุคคลภายใน"
-      />
-      <FormControlLabel
-        value="external"
-        control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />}
-        label="บุคคลภายนอก"
-      />
-    </RadioGroup>
-  </FormControl>
-</Grid>
+              <Typography variant="body1" className="title-field">ประเภทผู้ใช้</Typography>
+              <FormControl>
+                <RadioGroup
+                  row
+                  name="userType"
+                  value={userType}
+                  onChange={(e) => setUserType(e.target.value)} // Set the value of the selected radio button
+                >
+                  <FormControlLabel
+                    value="internal"
+                    control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />}
+                    label="บุคคลภายใน"
+                  />
+                  <FormControlLabel
+                    value="external"
+                    control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />}
+                    label="บุคคลภายนอก"
+                  />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
 
 
             {/* Profile Image and Button */}
@@ -213,14 +213,14 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                     defaultValue=""
                     rules={{ required: 'กรุณากรอกชื่อบริษัท' }}
                     render={({ field }) => (
-                      <TextField {...field} label="ชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message) || ""} 
-                      slotProps={{
-                        inputLabel: {
-                          sx: { color: '#6D6E70' }
-                        }
-                      }}
+                      <TextField {...field} label="ชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message) || ""}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { color: '#6D6E70' }
+                          }
+                        }}
                       />
-                      
+
                     )}
                   />
                 </Grid>
@@ -232,16 +232,16 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                     defaultValue=""
                     rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }}
                     render={({ field }) => (
-                      <TextField {...field} label="คำอธิบายธุรกิจ" fullWidth error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message) || ""} 
-                      slotProps={{
-                        inputLabel: {
-                          sx: { color: '#6D6E70' }
-                        }
-                      }}
+                      <TextField {...field} label="คำอธิบายธุรกิจ" fullWidth error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message) || ""}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { color: '#6D6E70' }
+                          }
+                        }}
                       />
-                      
+
                     )}
-                    
+
                   />
                 </Grid>
               </>
@@ -423,11 +423,12 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                     )}
                   />
                 </Grid>
+
               </Grid>
             </Grid>
 
             {/* Role Dropdown (previously Radio Buttons) */}
-            {userType === 'internal' &&<Grid size={{ xs: 12, sm: 6 }}>
+            {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
               <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
               <FormControl fullWidth error={!!errors.role}>
                 <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก ตำแหน่ง</InputLabel>
@@ -435,7 +436,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                   name="RoleID"
                   control={control}
                   defaultValue={2}
-                  
+
                   rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
                   render={({ field }) => (
                     <Select {...field} label="กรุณาเลือก ตำแหน่ง">
@@ -450,6 +451,39 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
             </Grid>
             }
 
+            {/* EmployeeID Field */}
+            {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
+              <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
+              <Controller
+                name="EmployeeID"
+                control={control}
+                defaultValue=""
+                rules={{
+                  required: 'กรุณากรอกรหัสพนักงาน',
+                  pattern: {
+                    value: /^[A-Z]{1}[0-9]{5}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
+                    message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง ขึ้นต้นด้วยพิมพ์ใหญ่ ตามด้วยตัวเลข 5 ตัว'
+                  }
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="กรุณากรอกรหัสพนักงาน"
+                    fullWidth
+                    error={!!errors.EmployeeID}  // เปลี่ยนจาก errors.Email เป็น errors.EmployeeID
+                    helperText={String(errors.EmployeeID?.message) || ""}
+                    slotProps={{
+                      inputLabel: {
+                        sx: { color: '#6D6E70' }
+                      }
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+              }
+
+
             {/* Package Dropdown */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
@@ -459,7 +493,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                   name="UserPackageID"
                   control={control}
                   defaultValue=""
-                  
+
                   render={({ field }) => (
                     <Select {...field} label="สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
                       {packages.map((pkg) => (
@@ -472,13 +506,23 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
               </FormControl>
             </Grid>
 
-
-
             {/* Submit Button */}
             <Grid size={{ xs: 12 }} className="submit-button-container">
+                            {/* ปุ่ม Reset */}
+                            <Button
+                type="reset"
+                variant="outlined"
+                color="secondary"
+                sx={{ marginRight: 2 }}
+                onClick={() => { reset(); setProfileImage(""); }} // เรียกใช้ reset() เพื่อรีเซ็ตฟอร์ม
+              >
+                รีเซ็ต
+              </Button>
               <Button type="submit" variant="contained" color="primary">
                 เพิ่มผู้ใช้งาน
               </Button>
+
+              
             </Grid>
 
           </Grid>

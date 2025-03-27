@@ -75,6 +75,7 @@ func UserLogin(c *gin.Context) {
 		"UserPackageID":  user.UserPackageID,
 		"RoleID":         user.RoleID,
 		"Role":           user.Role.Name,
+		"EmployeeID":     user.EmployeeID,
 		"Token":          tokenString,
 	})
 }

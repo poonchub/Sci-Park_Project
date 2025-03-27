@@ -8,6 +8,7 @@ import ("gorm.io/gorm"
 type User struct {
     gorm.Model
     CompanyName     string
+    EmployeeID      string
     BusinessDetail  string
     FirstName       string
     LastName        string
@@ -29,4 +30,5 @@ type User struct {
     MaintenanceRequests []MaintenanceRequest `gorm:"foreignKey:UserID"`
     MaintenanceTasks    []MaintenanceTask    `gorm:"foreignKey:UserID"`
     ManagerApprovals    []ManagerApproval    `gorm:"foreignKey:UserID"`
+    UserPackages        []UserPackage        `gorm:"foreignKey:UserID"`
 }

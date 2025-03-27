@@ -26,6 +26,7 @@ func CreateUser(c *gin.Context) {
 	user.Email = c.PostForm("email")
 	user.Password = c.PostForm("password")
 	user.Phone = c.PostForm("phone")
+	user.EmployeeID = c.PostForm("employee_id")
 
 	// Default UserPackageID to 1 if not provided
 	packageIDStr := c.PostForm("package_id")
@@ -38,6 +39,15 @@ func CreateUser(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package_id"})
 		return
+	}
+
+	if user.EmployeeID != "" {
+		// ตรวจสอบว่า EmployeeID นี้มีในฐานข้อมูลแล้วหรือไม่
+		var existingUser entity.User
+		if err := config.DB().Where("employee_id = ?", user.EmployeeID).First(&existingUser).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "EmployeeID already in use"})
+			return
+		}
 	}
 	
 
@@ -214,3 +224,57 @@ func ListOperators(c *gin.Context) {
 
 	c.JSON(http.StatusOK, users)
 }
+
+
+// GET /users
+func ListUsers(c *gin.Context) {
+	var users []entity.User
+
+	// เชื่อมต่อกับฐานข้อมูล
+	db := config.DB()
+
+	if err := db.Preload("UserPackages").
+		Preload("UserPackages.Package").
+		Preload("Role"). // เพิ่ม Preload สำหรับ Role
+		Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		return
+	}
+
+	// จัดรูปแบบข้อมูลที่ส่งกลับให้เป็น PascalCase
+	var userResponses []map[string]interface{}
+	for _, user := range users {
+		// ใช้การ Preload เพื่อดึงข้อมูล UserPackage และ Package
+		userResponse := map[string]interface{}{
+			"ID":             user.ID,
+			"CompanyName":    user.CompanyName,
+			"BusinessDetail": user.BusinessDetail,
+			"FirstName":      user.FirstName,
+			"LastName":       user.LastName,
+			"GenderID":       user.GenderID,
+			"Gender":         user.Gender.Name,
+			"Email":          user.Email,
+			"Phone":          user.Phone,
+			"ProfilePath":    user.ProfilePath,
+			"UserPackageID":  user.UserPackageID,
+			"RoleID":         user.RoleID,
+			"Role":           user.Role.Name,
+			"EmployeeID":     user.EmployeeID,
+			"UserNameCombined": user.FirstName + " " + user.LastName,
+		}
+
+		// ดึงข้อมูล PackageName จาก UserPackage ที่ Preload มา
+		if len(user.UserPackages) > 0 {
+			// ดึงชื่อของ Package จาก UserPackage
+			userResponse["PackageName"] = user.UserPackages[0].Package.PackageName
+		}
+
+		userResponses = append(userResponses, userResponse)
+	}
+
+	// ส่งข้อมูลผู้ใช้ทั้งหมดกลับไปในรูปแบบ JSON
+	c.JSON(http.StatusOK, userResponses)
+}
+
+
+

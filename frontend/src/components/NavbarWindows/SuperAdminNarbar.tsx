@@ -17,6 +17,7 @@ function SuperAdminNavbar() {
                 <NavLink to="/" className={({ isActive }) => (isActive ? "link active" : "link")}>หน้าหลัก</NavLink>
                 <NavLink to="/add-user" className={({ isActive }) => (isActive ? "link active" : "link")}>เพิ่มผู้ใช้งาน</NavLink>
                 <NavLink to="/test-popup" className={({ isActive }) => (isActive ? "link active" : "link")}>Test demo</NavLink>
+                <NavLink to="/manage-user" className={({ isActive }) => (isActive ? "link active" : "link")}>จัดการผู้ใช้งาน</NavLink>
             </div>
             <div className="login-box">
                 <div className="name">{`${fname} ${lname}`}</div>

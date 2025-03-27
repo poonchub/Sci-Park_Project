@@ -4,6 +4,7 @@ import WindowsLayout from "../layouts/WindowsLayout";
 import Home from "../pages/Home/Home";
 import AddUserForm from "../pages/AddUser/AddUserForm";
 import DemoPopupLeft from "../pages/TestPopupSignup/DemoPopupLeft";
+import ManageUsers from "../pages/ManageUsers/ManageUsers";
 
 const SuperAdminRoutes = (): RouteObject => {
     return {
@@ -21,6 +22,10 @@ const SuperAdminRoutes = (): RouteObject => {
             {
                 path: "/test-popup",
                 element: <DemoPopupLeft/>
+            },
+            {
+                path: "/manage-user",
+                element: <ManageUsers/>
             },
 
         ]

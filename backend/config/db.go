@@ -138,7 +138,8 @@ func SeedDatabase() {
 		{
 			CompanyName: "TechCorp", 
 			BusinessDetail: "Tech Solutions", 
-			FirstName: "John", 
+			FirstName: "John",
+			EmployeeID: "EMP001", 
 			LastName: "Doe", 
 			Email: "admin@gmail.com", 
 			Password: "123456", 
@@ -161,6 +162,7 @@ func SeedDatabase() {
 			CompanyName: "NO COM", 
 			BusinessDetail: "NO Business", 
 			FirstName: "Jaydee", 
+			EmployeeID: "EMP002",
 			LastName: "Somkom", 
 			Email: "superadmin@gmail.com", 
 			Password: "123456", 

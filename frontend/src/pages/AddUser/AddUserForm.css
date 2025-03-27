@@ -53,17 +53,7 @@
   margin-bottom: 5px;
 }
 
-/* Submit button inside .add-user */
-.add-user button[type="submit"] {
-  font-size: 16px;
-  font-weight: bold;
-  padding: 12px 20px;
-  margin-top: 20px;
-  background-color: #ff6f00; /* Orange color */
-  color: white;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
+
 
 .add-user button[type="submit"]:hover {
   background-color: #e65c00; /* Darker orange when hovered */
@@ -125,6 +115,16 @@
   padding: 12px 20px;
   background-color: #ff6f00;
   color: white;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.add-user button[type="reset"] {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 20px;
+  background-color: #ffffff;
+  color: rgb(45, 213, 255);
   border-radius: 4px;
   transition: background-color 0.3s ease;
 }

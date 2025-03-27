@@ -57,6 +57,7 @@ func main() {
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
 		protected.GET("/user", controller.GetUserByID)
+		protected.GET("/users", controller.ListUsers)
 		protected.PATCH("/change-password", controller.ChangePassword)
 		protected.GET("/operators", controller.ListOperators)
 

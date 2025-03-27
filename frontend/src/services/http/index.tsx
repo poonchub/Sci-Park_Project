@@ -76,6 +76,29 @@ async function GetUser() {
 
     return res;
 }
+
+
+async function ListUsers() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/users`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 async function CreateUser(data: any) {
     const formData = new FormData();
     formData.append("company_name", data.CompanyName || "");
@@ -88,6 +111,7 @@ async function CreateUser(data: any) {
     formData.append("phone", data.Phone || "");
     formData.append("role_id", data.RoleID.toString());
     formData.append("profile_path", data.ProfilePath || "");
+    formData.append("employee_id", data.EmployeeID || "");
 
     if (data.Profile_Image) {
         console.log(">>>>>",data.formData)
@@ -568,6 +592,7 @@ export {
     UserLogin,
     CreateUser,
     SendOTP,
+    ListUsers,
     ValidateOTP,
     ChangePassword,
     GetOperators,

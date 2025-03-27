@@ -92,6 +92,7 @@ const WindowsLayout: React.FC = () => {
 					{ path: '/', name: 'หน้าหลัก' },
 					{ path: '/add-user', name: 'เพิ่มผู้ใช้' },
 					{ path: '/test-popup', name: 'Test demo' },
+					{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
 				]
 			)
 			setPagesDrawer(
@@ -99,6 +100,7 @@ const WindowsLayout: React.FC = () => {
 					{ path: '/', name: 'แดชบอร์ด' },
 					{ path: '/add-user', name: 'จัดการผู้ใช้งาน' },
 					{ path: '/test-popup', name: 'Test demo' },
+					{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
         ]
       )
 		} else {
