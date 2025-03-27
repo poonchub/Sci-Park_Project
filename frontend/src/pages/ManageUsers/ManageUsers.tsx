@@ -1,6 +1,7 @@
-import { Box, Button, Card, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid2, InputAdornment, MenuItem, Typography, Select } from "@mui/material";
+import { Box, Button, Card, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { faAward, faUserTie, faMagnifyingGlass, faQuestionCircle, faTv } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
+import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
