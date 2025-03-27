@@ -160,7 +160,7 @@ function CreateMaintenanceRequestPage() {
 
                 const resImage = await CreateMaintenanceImages(formDataFile)
                 if (resImage) {
-                    setAlerts([...alerts, { type: 'success', message: "ส่งคำร้องแจ้งซ่อมสำเร็จ" }]);
+                    setAlerts([...alerts, { type: 'success', message: "Maintenance request sumitted successfully" }]);
                     setTimeout(() => {
                         location.href = "/maintenance-request";
                     }, 1800)
@@ -182,7 +182,7 @@ function CreateMaintenanceRequestPage() {
 
         if (droppedFiles.length > 3) {
             droppedFiles = droppedFiles.slice(0, 3);
-            setAlerts([...alerts, { type: 'warning', message: "สามารถเลือกได้สูงสุด 3 ไฟล์" }]); 
+            setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]); 
         }
 
         setFiles(droppedFiles);
@@ -194,7 +194,7 @@ function CreateMaintenanceRequestPage() {
 
             if (selectedFiles.length > 3) {
                 selectedFiles = selectedFiles.slice(0, 3);
-                setAlerts([...alerts, { type: 'warning', message: "สามารถเลือกได้สูงสุด 3 ไฟล์" }]); 
+                setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]); 
             }
 
             setFiles(selectedFiles);

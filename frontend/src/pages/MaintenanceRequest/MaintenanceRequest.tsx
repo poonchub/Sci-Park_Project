@@ -23,6 +23,7 @@ import SuccessAlert from "../../components/Alert/SuccessAlert"
 import dayjs from "dayjs"
 import ErrorAlert from "../../components/Alert/ErrorAlert"
 import WarningAlert from "../../components/Alert/WarningAlert"
+import { SearchOff } from "@mui/icons-material"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -36,7 +37,7 @@ function MaintenanceRequest() {
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
 
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
     const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
@@ -255,9 +256,9 @@ function MaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async (status: number, page: number, limit: number, maintenanceType: number, createdAt: string) => {
+    const getMaintenanceRequests = async () => {
         try {
-            const res = await GetMaintenanceRequests(status, page, limit, maintenanceType, createdAt);
+            const res = await GetMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
@@ -268,9 +269,14 @@ function MaintenanceRequest() {
     };
 
     const handleAction = async (statusID: number, message: string) => {
+        if (!user?.ID || !requestSelected) {
+            setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
+            return;
+        }
+
         try {
             const managerApp: ManagerApprovalsInterface = {
-                UserID: user?.ID,
+                UserID: user.ID,
                 RequestID: requestSelected,
                 RequestStatusID: statusID
             };
@@ -280,22 +286,23 @@ function MaintenanceRequest() {
             };
 
             const resApproval = await CreateManagerApproval(managerApp);
-            if (!resApproval) {
-                setAlerts([...alerts, { type: 'error', message: resApproval?.Error || "error!" }]);
-                return
-            }
+            if (!resApproval || resApproval.error) throw new Error(resApproval?.error || "Failed to create manager approval");
 
             const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
-            if (!resRequest) {
-                setAlerts([...alerts, { type: 'error', message: resApproval?.Error || "error!" }]);
-                return
-            }
+            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
 
-            setAlerts([...alerts, { type: 'success', message: message }]);
+            setAlerts((prev) => [...prev, { type: 'success', message }]);
 
-            setTimeout(() => window.location.reload(), 3000);
+            setTimeout(() => {
+                getMaintenanceRequests();
+                setOpenConfirmApproved(false);
+                setOpenConfirmRejected(false);
+            }, 1200);
+
         } catch (error) {
-
+            console.error("API Error:", error);
+            const errMessage = (error as Error).message || "Unknown error!";
+            setAlerts((prev) => [...prev, { type: 'error', message: errMessage }]);
         }
     };
 
@@ -322,7 +329,7 @@ function MaintenanceRequest() {
 
     useEffect(() => {
         getRequestStatuses();
-        getMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "")
+        getMaintenanceRequests()
         getUser()
     }, []);
 
@@ -336,7 +343,7 @@ function MaintenanceRequest() {
     }, [maintenanceRequests])
 
     useEffect(() => {
-        getMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "")
+        getMaintenanceRequests()
     }, [page, limit, selectedStatus, selectedDate])
 
     return (
@@ -377,7 +384,7 @@ function MaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmApproved}
                 setOpenConfirm={setOpenConfirmApproved}
-                handleFunction={() => handleAction(2, "อนุมัติสำเร็จ")}
+                handleFunction={() => handleAction(2, "Approval successful")}
                 title="ยืนยันการอนุมัติงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             />
@@ -386,7 +393,7 @@ function MaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleAction(3, "ปฏิเสธสำเร็จ")}
+                handleFunction={() => handleAction(3, "Rejection successful")}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             />
@@ -556,7 +563,7 @@ function MaintenanceRequest() {
                         <DataGrid
                             rows={filteredRequests}
                             columns={columns}
-                            pageSizeOptions={[5, 10, 20]}
+                            pageSizeOptions={[5, 10, 20, 50]}
                             getRowId={(row) => String(row.ID)}
                             paginationMode="server"
                             initialState={{
@@ -575,6 +582,25 @@ function MaintenanceRequest() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
+                            }}
+                            slots={{
+                                noRowsOverlay: () => (
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%',
+                                            color: 'gray',
+                                        }}
+                                    >
+                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
+                                        <Typography variant="body1" sx={{ mt: 1 }}>
+                                            ไม่พบข้อมูลงานแจ้งซ่อม
+                                        </Typography>
+                                    </Box>
+                                ),
                             }}
                         />
                     </Card>
