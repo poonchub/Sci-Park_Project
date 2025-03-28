@@ -520,10 +520,11 @@ func ValidateResetTokenController(c *gin.Context) {
 		ExpirationHours: 24,
 	}
 
-	// ใช้ Email ของ user เพื่อสร้าง Token
-	tokenString, err := jwtWrapper.GenerateToken(user.Email)
+	role := "admin"
+	// สร้าง Token โดยส่งทั้ง email และ role
+	tokenString, err := jwtWrapper.GenerateToken(user.Email, role) // ส่งทั้ง email และ role
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างโทเค็นได้"})
+		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Could not generate token"})
 		return
 	}
 

@@ -53,12 +53,16 @@ func UserLogin(c *gin.Context) {
 		ExpirationHours: 24,  // หมดอายุใน 24 ชั่วโมง
 	}
 
-	// สร้าง Token
-	tokenString, err := jwtWrapper.GenerateToken(user.Email)
+		// กำหนด role สำหรับผู้ใช้
+	role := user.Role.Name // หรือ "user" หรือ "guest" ขึ้นอยู่กับบทบาทที่คุณต้องการให้กับผู้ใช้
+
+	// สร้าง Token โดยส่งทั้ง email และ role
+	tokenString, err := jwtWrapper.GenerateToken(user.Email, role) // ส่งทั้ง email และ role
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Could not generate token"})
 		return
 	}
+
 
 	// ส่งข้อมูล User กลับ โดยใช้ PascalCase
 	c.JSON(http.StatusOK, gin.H{
