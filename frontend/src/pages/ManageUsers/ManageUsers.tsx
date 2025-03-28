@@ -1,5 +1,5 @@
 import { Box, Button, Card, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { faAward, faUserTie, faMagnifyingGlass, faQuestionCircle, faTv } from "@fortawesome/free-solid-svg-icons";
+import { faAward, faUserTie, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -9,6 +9,8 @@ import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Im
 import { UserInterface } from "../../interfaces/IUser";
 import { PackagesInterface } from "../../interfaces/IPackages";
 import { RolesInterface } from "../../interfaces/IRoles";
+import { SearchOff } from "@mui/icons-material";
+import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
 
 function ManageUsers() {
@@ -20,8 +22,10 @@ function ManageUsers() {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
+    const [openPopup, setOpenPopup] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [debouncedSearchText, setDebouncedSearchText] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     // Columns definition
     const columns: GridColDef[] = [
@@ -65,29 +69,87 @@ function ManageUsers() {
             flex: 1.2,
             valueGetter: (params: PackagesInterface) => params || '-',
         },
+        {
+            field: 'assigned',
+            headerName: 'จัดการ',
+            renderCell: (params) => (
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวนอนให้ตรงกลาง
+                        alignItems: 'center', // จัดตำแหน่งปุ่มในแนวตั้งให้ตรงกลาง
+                        height: '100%', // ให้ Box ขยายเต็มความสูงของช่อง
+                    }}
+                >
+                    <Button
+                        onClick={() => handleOpenPopup(params.row.ID)}
+                        sx={{
+                            bgcolor: '#08aff1',
+                            color: '#fff',
+                            fontSize: '14px',
+                            border: '1px solid #08aff1',
+                            mr: 0.6,
+                            "&:hover": {
+                                borderColor: 'transparent'
+                            }
+                        }}
+                    >
+                        แก้ไข
+                    </Button>
+                </Box>
+            ),
+        }
+        
     ];
 
     // ฟังก์ชันค้นหาข้อมูล
     const handleSearch = () => {
-        if (searchText === '') {
-            getUsers();  // ดึงข้อมูลทั้งหมดหากไม่มีการกรอกคำค้นหา
-        } else {
-            const filteredUsers = users.filter((user) =>
+        let filteredUsers = users;
+
+        // การกรองข้อมูลจากคำค้นหาผ่าน searchText
+        if (searchText !== '') {
+            filteredUsers = filteredUsers.filter((user) =>
                 (user.UserNameCombined && user.UserNameCombined.toLowerCase().includes(searchText.toLowerCase())) ||
                 (user.EmployeeID && user.EmployeeID.toLowerCase().includes(searchText.toLowerCase())) ||
                 (user.Email && user.Email.toLowerCase().includes(searchText.toLowerCase()))
             );
-            setUsers(filteredUsers);  // กำหนดผลลัพธ์ที่ค้นหาแล้ว
         }
+
+        // การกรองข้อมูลตามตำแหน่ง (role) หากเลือกตำแหน่ง
+        if (selectrole !== 0) {
+            filteredUsers = filteredUsers.filter((user) => user.RoleID === selectrole);
+        }
+
+        // การกรองข้อมูลตามสิทธิพิเศษ (package) หากเลือกสิทธิพิเศษ
+        if (selectpackage !== 0) {
+            filteredUsers = filteredUsers.filter((user) => user.UserPackageID === selectpackage);
+        }
+
+        setUsers(filteredUsers);  // กำหนดผลลัพธ์ที่กรองแล้ว
     };
+
+    const handleOpenPopup = (userId: number) => {
+        setSelectedUserId(userId);
+        setOpenPopup(true);
+      };
+    
+      const handleClosePopup = () => {
+        setOpenPopup(false);
+        setSelectedUserId(null);
+      };
 
     // Fetch users from the API
     const getUsers = async () => {
         try {
-            const res = await ListUsers();  // Call the API to get users data
+            const res = await ListUsers({
+                roleID: selectrole,
+                packageID: selectpackage,
+                page: page,
+                limit: limit,
+            });  // Call the API to get users data
             if (res) {
-                setUsers(res);  // Set the fetched users to state
-                setTotal(res.length);  // Set the total number of users
+                setUsers(res.data);  // Set the fetched users to state
+                setTotal(res.total);  // Set the total number of users
             }
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -99,7 +161,6 @@ function ManageUsers() {
             const res = await ListPackages();  // Call the API to get users data
             if (res) {
                 setPackages(res);  // Set the fetched users to state
-                console.log(res);
             }
         } catch (error) {
             console.error("Error fetching package:", error);
@@ -111,8 +172,6 @@ function ManageUsers() {
             const res = await ListRoles();  // Call the API to get users data
             if (res) {
                 setRoles(res);  // Set the fetched users to state
-                console.log(res);
-
             }
         } catch (error) {
             console.error("Error fetching role:", error);
@@ -124,7 +183,6 @@ function ManageUsers() {
             setDebouncedSearchText(searchText);  // เมื่อหยุดพิมพ์ 500ms จะตั้งค่า debouncedSearchText
         }, 500);  // delay 500ms (หรือสามารถปรับให้เหมาะสม)
 
-        // cleanup function to clear timeout if the user types again before the delay
         return () => clearTimeout(timer);
     }, [searchText]);
 
@@ -132,13 +190,11 @@ function ManageUsers() {
         getUsers();  // ดึงข้อมูลเมื่อหน้าโหลด
         getPackages();
         getRoles();
-    }, []);
+    }, [selectrole, selectpackage, page, limit]);
 
-    // เมื่อ debouncedSearchText เปลี่ยนแปลง จะเริ่มค้นหาทันที
     useEffect(() => {
         handleSearch();
     }, [debouncedSearchText]);
-
 
     return (
         <div className="manage-users-page">
@@ -150,16 +206,12 @@ function ManageUsers() {
                 </Grid2>
 
                 <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
-
                     {/* Filters Section */}
                     <Grid2 container
                         spacing={2}
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
-                        sx={{
-                            alignItems: "flex-end",
-                            height: 'auto'
-                        }}>
+                        sx={{ alignItems: "flex-end", height: 'auto' }}>
                         <Grid2 size={{ xs: 10, md: 6 }}>
                             <TextField
                                 fullWidth
@@ -184,24 +236,26 @@ function ManageUsers() {
                             />
                         </Grid2>
 
-
                         <Grid2 size={{ xs: 10, md: 3 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectrole}
-                                    onChange={(e) => setSelectRole(Number(e.target.value))}
+                                    onChange={(e) => {
+                                        setSelectRole(Number(e.target.value));  // อัปเดต selectrole
+                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                    }}
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
                                             <FontAwesomeIcon icon={faUserTie} size="xl" />
                                         </InputAdornment>
                                     }
-                                    sx={{ borderRadius: 2 }}  // เพิ่ม borderRadius ที่นี่
+                                    sx={{ borderRadius: 2 }}
                                 >
                                     <MenuItem value={0}>{'ทุกตำแหน่ง'}</MenuItem>
                                     {
                                         roles.length > 0 ? roles.map((item, index) => (
-                                            <MenuItem key={index} value={index + 1}>{item.Name}</MenuItem>
+                                            <MenuItem key={index} value={item.ID}>{item.Name}</MenuItem>
                                         )) : null
                                     }
                                 </Select>
@@ -212,20 +266,22 @@ function ManageUsers() {
                             <FormControl fullWidth>
                                 <Select
                                     value={selectpackage}
-                                    onChange={(e) => setSelectPackage(Number(e.target.value))}
+                                    onChange={(e) => {
+                                        setSelectPackage(Number(e.target.value));  // อัปเดต selectpackage
+                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                    }}
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
                                             <FontAwesomeIcon icon={faAward} size="xl" />
                                         </InputAdornment>
                                     }
-                                    sx={{ borderRadius: 2 }}  // เพิ่ม borderRadius ที่นี่
-                                    
+                                    sx={{ borderRadius: 2 }}
                                 >
                                     <MenuItem value={0}>{'ทุกสิทธิพิเศษ'}</MenuItem>
                                     {
                                         packages.length > 0 ? packages.map((item, index) => (
-                                            <MenuItem key={index} value={index + 1}>{item.PackageName}</MenuItem>
+                                            <MenuItem key={index} value={item.ID}>{item.PackageName}</MenuItem>
                                         )) : null
                                     }
                                 </Select>
@@ -235,8 +291,6 @@ function ManageUsers() {
                     </Grid2>
                 </Grid2>
 
-
-
                 <Grid2 size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
                         <DataGrid
@@ -245,6 +299,25 @@ function ManageUsers() {
                             pageSizeOptions={[5, 10, 20]}  // Options for page size
                             getRowId={(row) => String(row.ID)}  // Set the row ID to be the unique 'ID' value
                             paginationMode="server"  // Enable server-side pagination
+                            slots={{
+                                noRowsOverlay: () => (
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%',
+                                            color: 'gray',
+                                        }}
+                                    >
+                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
+                                        <Typography variant="body1" sx={{ mt: 1 }}>
+                                            ไม่มีรายละเอียดที่ตรงกับคำค้นหา
+                                        </Typography>
+                                    </Box>
+                                ),
+                            }}
                             initialState={{
                                 pagination: {
                                     paginationModel: { page, pageSize: limit },
@@ -262,9 +335,20 @@ function ManageUsers() {
                                 width: "100%",
                                 borderRadius: 2,
                             }}
+
                         />
                     </Card>
                 </Grid2>
+
+                {/* Pop-up */}
+      {selectedUserId !== null && (
+        <EditUserPopup
+          userId={selectedUserId}
+          open={openPopup}
+          onClose={handleClosePopup}
+        />
+      )}
+
             </Grid2>
         </div>
     );

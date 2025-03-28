@@ -3,7 +3,7 @@ import "./CreateMaintenanceRequest.css"
 
 import { Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUser } from "../../services/http";
+import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUserById } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
@@ -56,7 +56,7 @@ function CreateMaintenanceRequestPage() {
 
     const getUser = async () => {
         try {
-            const res = await GetUser();
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
             if (res) {
                 setUser(res);
             }
