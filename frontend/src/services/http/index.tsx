@@ -1,6 +1,7 @@
 export const apiUrl = "http://localhost:8000";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
+import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import axios from 'axios';
 
@@ -56,7 +57,7 @@ async function ChangePassword(data: any) {
 }
 
 
-async function GetUser() {
+async function GetUserById(id:number) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -65,7 +66,7 @@ async function GetUser() {
         },
     };
 
-    let res = await fetch(`${apiUrl}/user`, requestOptions)
+    let res = await fetch(`${apiUrl}/user/${id}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -78,7 +79,16 @@ async function GetUser() {
 }
 
 
-async function ListUsers() {
+async function ListUsers(data: QuarryInterface) {
+    // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
+    const params = new URLSearchParams();
+    
+    // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
+    if (data.roleID && data.roleID > 0) params.append("role_id", String(data.roleID));
+    if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
+    params.append("page", String(data.page));  // แปลง page เป็น string
+    params.append("limit", String(data.limit));  // แปลง limit เป็น string
+
     const requestOptions = {
         method: "GET",
         headers: {
@@ -87,7 +97,8 @@ async function ListUsers() {
         },
     };
 
-    let res = await fetch(`${apiUrl}/users`, requestOptions)
+    // ใช้ fetch กับ URL ที่ประกอบไปด้วย query parameters
+    let res = await fetch(`${apiUrl}/users?${params.toString()}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -98,6 +109,8 @@ async function ListUsers() {
 
     return res;
 }
+
+
 
 async function CreateUser(data: any) {
     const formData = new FormData();
@@ -110,18 +123,13 @@ async function CreateUser(data: any) {
     formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
     formData.append("role_id", data.RoleID.toString());
-    formData.append("profile_path", data.ProfilePath || "");
     formData.append("employee_id", data.EmployeeID || "");
 
     if (data.Profile_Image) {
-        console.log(">>>>>",data.formData)
         formData.append("profile_image", data.Profile_Image);
     }
-    formData.forEach((value, key) => {
-        console.log(`${key}: ${value}`);
-    });
 
-    formData.append("package_id", data.UserPackageID?.toString() || "5");
+    formData.append("package_id", data.UserPackageID?.toString() || "1");
 
     const token = localStorage.getItem("token");  
     const requestOptions = {
@@ -172,6 +180,79 @@ async function CreateUser(data: any) {
     }
     
 }
+
+
+async function UpdateUserbyID(data: any) {
+
+    const formData = new FormData();
+    formData.append("company_name", data.CompanyName || "");
+    formData.append("business_detail", data.BusinessDetail || "");
+    formData.append("first_name", data.FirstName || "");
+    formData.append("last_name", data.LastName || "");
+    formData.append("gender_id", data.GenderID.toString());
+    formData.append("email", data.Email || "");
+    formData.append("password", data.Password || "");
+    formData.append("phone", data.Phone || "");
+    formData.append("role_id", data.RoleID.toString());
+    formData.append("employee_id", data.EmployeeID || "");
+    formData.append("profile_check", data.ImageCheck || "");
+
+    if (data.Profile_Image) {
+        formData.append("profile_image", data.Profile_Image);
+    }
+    const UserID = data.UserID;
+    formData.append("package_id", data.UserPackageID?.toString() || "1");
+
+    const token = localStorage.getItem("token");  
+    const requestOptions = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+
+
+        
+    try {
+        // Send FormData with requestOptions
+        const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
+
+        // Handle the response and return a custom object
+        if (response.status === 200) {
+            return {
+                status: 'success',
+                message: 'User updated successfully',
+                data: response.data,  // You can return response data
+            };
+        } else {
+            return {
+                status: 'error',
+                message: 'Failed to updated user',
+                data: response.data,  // Include error data in response
+            };
+        }
+    } catch (error) {
+        // If the error is from axios, it will be caught here
+        if (axios.isAxiosError(error)) {
+            // Check if the error has a response and message
+            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+
+            return {
+                status: 'error',
+                message: errorMessage,
+                data: null,
+            };
+        } else {
+            // If the error is not from axios, handle it here
+            return {
+                status: 'error',
+                message: 'An unexpected error occurred',
+                data: null,
+            };
+        }
+    }
+    
+}
+
 async function GetOperators() {
     const requestOptions = {
         method: "GET",
@@ -588,7 +669,7 @@ export {
     GetRequestStatuses,
 
     // Users
-    GetUser,
+    GetUserById,
     UserLogin,
     CreateUser,
     SendOTP,
@@ -596,6 +677,7 @@ export {
     ValidateOTP,
     ChangePassword,
     GetOperators,
+    UpdateUserbyID,
 
     // Areas
     GetAreas,

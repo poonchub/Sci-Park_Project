@@ -23,11 +23,11 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
-import { GetUser } from '../services/http';
+import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
-
+const userId = localStorage.getItem("userId");
 const DrawerHeader = styled('div')(({ theme }) => ({
 	display: 'flex',
 	alignItems: 'center',
@@ -59,9 +59,10 @@ const WindowsLayout: React.FC = () => {
 
 	const getUser = async () => {
 		try {
-			const res = await GetUser();
+			const res = await GetUserById(Number(userId));
 			if (res) {
 				setUser(res);
+				console.log("User:", res);
 			}
 		} catch (error) {
 			console.error("Error fetching user:", error);

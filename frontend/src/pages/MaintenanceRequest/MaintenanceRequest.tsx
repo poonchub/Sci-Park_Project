@@ -5,7 +5,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import React, { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
-import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
+import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUserById, UpdateMaintenanceRequestByID } from "../../services/http"
 import { LineChart } from "@mui/x-charts"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
@@ -236,7 +236,7 @@ function MaintenanceRequest() {
 
     const getUser = async () => {
         try {
-            const res = await GetUser();
+            const res = await GetUserById(Number(localStorage.getItem('userID')));
             if (res) {
                 setUser(res);
             }
