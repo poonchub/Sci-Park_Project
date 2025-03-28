@@ -95,8 +95,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Area
 	areas := []entity.Area{
-		{Name: "Top room F11"}, 
-		{Name: "Outside behind green bin"},
+		{Name: "ห้องประชุม/ห้องทำงาน"}, 
+		{Name: "บริเวณอื่นๆ"},
 	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})

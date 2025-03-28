@@ -9,7 +9,9 @@ import (
 // MaintenanceRequest คือ entity สำหรับคำขอซ่อม
 type MaintenanceRequest struct {
     gorm.Model
-    Description     string     
+    AreaDetail      string
+    Description     string  
+    IsAnytimeAvailable  bool   
     StartTime       time.Time       
 	EndTime         time.Time     
         

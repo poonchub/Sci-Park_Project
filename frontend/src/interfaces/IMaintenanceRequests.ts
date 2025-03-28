@@ -6,7 +6,9 @@ import { UserInterface } from "./IUser";
 
 export interface MaintenanceRequestsInterface {
     ID?:            number;
-    CreatedAt?:      string;
+    CreatedAt?:     string;
+    AreaDetail?:    string;
+    IsAnytimeAvailable?:    boolean;
     Description?:   string;
     StartTime?:     string;
     EndTime?:       string;

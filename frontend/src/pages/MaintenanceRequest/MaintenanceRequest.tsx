@@ -6,7 +6,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import React, { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
-import { LineChart } from "@mui/x-charts"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
@@ -24,6 +23,7 @@ import dayjs from "dayjs"
 import ErrorAlert from "../../components/Alert/ErrorAlert"
 import WarningAlert from "../../components/Alert/WarningAlert"
 import { SearchOff } from "@mui/icons-material"
+import ApexChart from "../../components/ApexChart/ApexChart"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -92,6 +92,8 @@ function MaintenanceRequest() {
             flex: 1.8,
             // editable: true,
             renderCell: (params) => {
+                const areaID = params.row.Area?.ID
+                const AreaDetail = params.row.AreaDetail
                 const roomtype = params.row.Room?.RoomType?.TypeName
                 const roomNum = params.row.Room?.RoomNumber
                 const roomFloor = params.row.Room?.Floor?.Number
@@ -108,10 +110,16 @@ function MaintenanceRequest() {
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
-                                maxWidth: "100%" // ✅ ป้องกันขยายเกิน
+                                maxWidth: "100%"
                             }}
                         >
-                            {`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                            {   
+                                areaID === 2 ? (
+                                    `${AreaDetail}`
+                                ) : (
+                                    `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
+                                )
+                            }
                         </Typography>
                         <Typography
                             sx={{
@@ -267,6 +275,8 @@ function MaintenanceRequest() {
             console.error("Error fetching request maintenance requests:", error);
         }
     };
+
+    console.log(selectedDate?.format('YYYY-MM-DD'))
 
     const handleAction = async (statusID: number, message: string) => {
         if (!user?.ID || !requestSelected) {
@@ -528,32 +538,13 @@ function MaintenanceRequest() {
                         </Grid2>
                     </Grid2>
                 </Grid2>
+
                 {/* Chart Section */}
                 <Grid2 size={{ xs: 10, md: 5 }} >
                     <Card sx={{ bgcolor: "#212121", borderRadius: 2, py: 2, px: 3 }}>
-                        <Typography variant="body1" color="#ffffff">
-                            รายการแจ้งซ่อม
-                        </Typography>
-                        <LineChart
-                            xAxis={[{
-                                scaleType: 'point',
-                                data: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-                                tickLabelStyle: { fill: '#ffffff' },
-                            }]}
-                            yAxis={[{
-                                tickLabelStyle: { fill: '#ffffff' },
-                            }]}
-                            series={[
-                                {
-                                    data: [12, 15, 8, 20, 18],
-                                    // color: '#08aff1',
-                                    area: true,
-                                    baseline: 'min',
-
-                                },
-                            ]}
-                            height={215}
-                        />
+                        <Typography variant="body1" color="#ffffff">รายการแจ้งซ่อม</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
+                        <ApexChart data={maintenanceRequests} height={160}/>
                     </Card>
                 </Grid2>
 

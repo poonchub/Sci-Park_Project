@@ -355,6 +355,8 @@ async function GetMaintenanceRequests(statusID: number, page: number, limit: num
         },
     };
 
+    console.log(`${apiUrl}/maintenance-requests-option?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}`)
+
     let res = await fetch(`${apiUrl}/maintenance-requests-option?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
@@ -398,6 +400,7 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-request`, requestOptions).then((res) => {
+        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
