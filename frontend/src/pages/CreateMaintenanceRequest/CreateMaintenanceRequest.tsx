@@ -332,7 +332,7 @@ function CreateMaintenanceRequestPage() {
                 </Grid2>
 
                 <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
-                    <CardContent sx={{ pt: 3}}>
+                    <CardContent sx={{ p: '16px 24px' }}>
                         <StepperComponent activeStep={0} steps={steps}/>
                     </CardContent>
                 </Card>

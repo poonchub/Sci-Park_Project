@@ -113,7 +113,7 @@ function MaintenanceRequest() {
                                 maxWidth: "100%"
                             }}
                         >
-                            {   
+                            {
                                 areaID === 2 ? (
                                     `${AreaDetail}`
                                 ) : (
@@ -230,15 +230,22 @@ function MaintenanceRequest() {
             type: 'string',
             flex: 1,
             // editable: true,
-            renderCell: () => (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                >
-                    ตรวจสอบ
-                </Button>
-            ),
+            renderCell: (item) => {
+                const requestID = String(item.row.ID)
+                return (
+                    <Link to="/check-requests" >
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={() => localStorage.setItem('requestID', requestID)}
+                        >
+                            ตรวจสอบ
+                        </Button>
+                    </Link>
+
+                )
+            }
         },
     ];
 
@@ -275,8 +282,6 @@ function MaintenanceRequest() {
             console.error("Error fetching request maintenance requests:", error);
         }
     };
-
-    console.log(selectedDate?.format('YYYY-MM-DD'))
 
     const handleAction = async (statusID: number, message: string) => {
         if (!user?.ID || !requestSelected) {
@@ -357,7 +362,7 @@ function MaintenanceRequest() {
     }, [page, limit, selectedStatus, selectedDate])
 
     return (
-        <div className="maintenance-request">
+        <div className="maintenance-request-page">
             {/* Show Alerts */}
             {alerts.map((alert, index) => {
                 return (
@@ -437,8 +442,8 @@ function MaintenanceRequest() {
                                 return (
                                     <Grid2 size={{ xs: 10, md: 4 }} key={index}>
                                         <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
-                                            <Grid2 size={{ xs: 10, md: 12 }}>
-                                                <CardContent className="status-card-content">
+                                            <CardContent className="status-card-content">
+                                                <Grid2 size={{ xs: 10, md: 12 }}>
                                                     <Typography variant="body1" sx={{
                                                         fontWeight: 500,
                                                         fontSize: 16
@@ -447,27 +452,27 @@ function MaintenanceRequest() {
                                                         fontWeight: 600,
                                                         fontSize: 20
                                                     }}>{`${countRequestStatus?.[item.Name || "Unknown"] ?? 0} รายการ`}</Typography>
-                                                </CardContent>
-                                            </Grid2>
-                                            <Grid2 size={{ xs: 10, md: 8 }} sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                <Box sx={{
-                                                    borderRadius: '50%',
-                                                    bgcolor: color,
-                                                    border: 1,
-                                                    aspectRatio: '1/1',
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    width: 55,
-                                                    color: '#fff'
+                                                </Grid2>
+                                                <Grid2 size={{ xs: 10, md: 8 }} sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
                                                 }}>
-                                                    <FontAwesomeIcon icon={icon} size="2xl" />
-                                                </Box>
-                                            </Grid2>
+                                                    <Box sx={{
+                                                        borderRadius: '50%',
+                                                        bgcolor: color,
+                                                        border: 1,
+                                                        aspectRatio: '1/1',
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        width: 55,
+                                                        color: '#fff'
+                                                    }}>
+                                                        <FontAwesomeIcon icon={icon} size="2xl" />
+                                                    </Box>
+                                                </Grid2>
+                                            </CardContent>
                                         </Card>
                                     </Grid2>
                                 )
@@ -544,7 +549,7 @@ function MaintenanceRequest() {
                     <Card sx={{ bgcolor: "#212121", borderRadius: 2, py: 2, px: 3 }}>
                         <Typography variant="body1" color="#ffffff">รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexChart data={maintenanceRequests} height={160}/>
+                        <ApexChart data={maintenanceRequests} height={160} />
                     </Card>
                 </Grid2>
 

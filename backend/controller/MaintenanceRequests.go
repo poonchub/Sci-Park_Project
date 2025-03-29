@@ -33,7 +33,7 @@ func GetMaintenanceRequestByID(c *gin.Context) {
 	var request entity.MaintenanceRequest
 
 	db := config.DB()
-	results := db.Preload("User").Preload("Room").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").First(&request, ID)
+	results := db.Preload("User").Preload("Room.Floor").Preload(("Room.RoomType")).Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Preload("ManagerApproval.User").Preload("MaintenanceTask.User").First(&request, ID)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
