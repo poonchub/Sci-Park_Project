@@ -21,7 +21,7 @@ import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
 import ErrorAlert from "../../components/Alert/ErrorAlert";
 import WarningAlert from "../../components/Alert/WarningAlert";
-import { AssignmentLate, SearchOff } from "@mui/icons-material";
+import { SearchOff } from "@mui/icons-material";
 
 function AssignWork() {
     const [operators, setOperators] = useState<UserInterface[]>([])
@@ -87,6 +87,8 @@ function AssignWork() {
             flex: 1.8,
             // editable: true,
             renderCell: (params) => {
+                const areaID = params.row.Area?.ID
+                const AreaDetail = params.row.AreaDetail
                 const roomtype = params.row.Room?.RoomType?.TypeName
                 const roomNum = params.row.Room?.RoomNumber
                 const roomFloor = params.row.Room?.Floor?.Number
@@ -103,10 +105,16 @@ function AssignWork() {
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
-                                maxWidth: "100%" // ✅ ป้องกันขยายเกิน
+                                maxWidth: "100%"
                             }}
                         >
-                            {`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                            {   
+                                areaID === 2 ? (
+                                    `${AreaDetail}`
+                                ) : (
+                                    `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
+                                )
+                            }
                         </Typography>
                         <Typography
                             sx={{
@@ -489,7 +497,6 @@ function AssignWork() {
                                             <FontAwesomeIcon icon={faBullseye} size="lg" />
                                         </InputAdornment>
                                     }
-                                    
                                 >
                                     <MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
                                     {

@@ -407,26 +407,6 @@ async function GetMaintenanceTypes() {
 }
 
 // MaintenanceRequests
-// async function GetMaintenanceRequests() {
-//     const requestOptions = {
-//         method: "GET",
-//         headers: {
-//             "Content-Type": "application/json",
-//             "Authorization": `Bearer ${localStorage.getItem("token")}`,
-//         },
-//     };
-
-//     let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
-//         .then((res) => {
-//             if (res.status == 200) {
-//                 return res.json();
-//             } else {
-//                 return false;
-//             }
-//         });
-
-//     return res;
-// }
 async function GetMaintenanceRequests(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
     const requestOptions = {
         method: "GET",
@@ -447,7 +427,7 @@ async function GetMaintenanceRequests(statusID: number, page: number, limit: num
 
     return res;
 }
-async function GetMaintenanceRequestID(customerid: Number) {
+async function GetMaintenanceRequestByID(id: Number) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -456,7 +436,7 @@ async function GetMaintenanceRequestID(customerid: Number) {
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-request/${customerid}`, requestOptions).then(
+    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions).then(
         (res) => {
             if (res.status == 200) {
                 return res.json();
@@ -479,6 +459,7 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-request`, requestOptions).then((res) => {
+        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -696,7 +677,7 @@ export {
 
     // MaintenanceRequests
     GetMaintenanceRequests,
-    GetMaintenanceRequestID,
+    GetMaintenanceRequestByID,
     CreateMaintenanceRequest,
     UpdateMaintenanceRequestByID,
     DeleteMaintenanceRequestByID,

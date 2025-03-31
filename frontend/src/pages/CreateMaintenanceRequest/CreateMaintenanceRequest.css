@@ -3,4 +3,8 @@
         font-weight: 600;
         margin-bottom: 8px;
     }
+
+    .css-c2i0tp-MuiCardContent-root:last-child {
+        padding-bottom: 16px;
+    }
 }
