@@ -6,7 +6,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import React, { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
-import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUser, UpdateMaintenanceRequestByID } from "../../services/http"
+import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUserById, UpdateMaintenanceRequestByID } from "../../services/http"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
@@ -252,7 +252,7 @@ function MaintenanceRequest() {
 
     const getUser = async () => {
         try {
-            const res = await GetUserById(Number(localStorage.getItem('userID')));
+            const res = await GetUserById(Number(localStorage.getItem('userId')));
             if (res) {
                 setUser(res);
             }
@@ -285,6 +285,7 @@ function MaintenanceRequest() {
     };
 
     const handleAction = async (statusID: number, message: string) => {
+        console.log(user)
         if (!user?.ID || !requestSelected) {
             setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
             return;
