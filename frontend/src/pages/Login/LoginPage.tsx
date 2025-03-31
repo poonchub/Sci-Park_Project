@@ -42,6 +42,8 @@ const LoginPage: React.FC = () => {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("role", response.Role || "Outsider");
         localStorage.setItem("token", response.Token);
+        localStorage.setItem("userId", response.ID);
+        localStorage.setItem("email", response.Email);
 
         setAlerts([...alerts, { type: 'success', message: "Login successful!" }]);  // Add success alert
       
