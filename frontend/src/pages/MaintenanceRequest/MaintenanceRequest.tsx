@@ -3,10 +3,10 @@ import "./MaintenanceRequest.css"
 import { Box, Button, Card, CardContent, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
-import { CreateManagerApproval, GetMaintenanceRequests, GetRequestStatuses, GetUserById, UpdateMaintenanceRequestByID } from "../../services/http"
+import { GetMaintenanceRequests, GetRequestStatuses, GetUserById } from "../../services/http"
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
@@ -18,13 +18,12 @@ import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHourglassHalf, faCheck, faArrowsSpin, faFlagCheckered, faBan, faExclamation, faQuestionCircle, faBullseye, faMagnifyingGlass, IconDefinition, faXmark } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
-import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals"
-import SuccessAlert from "../../components/Alert/SuccessAlert"
 import dayjs from "dayjs"
-import ErrorAlert from "../../components/Alert/ErrorAlert"
-import WarningAlert from "../../components/Alert/WarningAlert"
 import { SearchOff } from "@mui/icons-material"
 import ApexChart from "../../components/ApexChart/ApexChart"
+import AlertGroup from "../../components/AlertGroup/AlertGroup"
+import dateFormat from "../../utils/dateFormat"
+import handleAction from "../../utils/handleAction"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -227,7 +226,7 @@ function MaintenanceRequest() {
         },
         {
             field: 'Check',
-            headerName: 'action',
+            headerName: '',
             type: 'string',
             flex: 1,
             // editable: true,
@@ -284,48 +283,16 @@ function MaintenanceRequest() {
         }
     };
 
-    const handleAction = async (statusID: number, message: string) => {
-        console.log(user)
-        if (!user?.ID || !requestSelected) {
-            setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
-            return;
-        }
-
-        try {
-            const managerApp: ManagerApprovalsInterface = {
-                UserID: user.ID,
-                RequestID: requestSelected,
-                RequestStatusID: statusID
-            };
-
-            const request: MaintenanceRequestsInterface = {
-                RequestStatusID: statusID
-            };
-
-            const resApproval = await CreateManagerApproval(managerApp);
-            if (!resApproval || resApproval.error) throw new Error(resApproval?.error || "Failed to create manager approval");
-
-            const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
-            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
-
-            setAlerts((prev) => [...prev, { type: 'success', message }]);
-
-            setTimeout(() => {
-                getMaintenanceRequests();
-                setOpenConfirmApproved(false);
-                setOpenConfirmRejected(false);
-            }, 1200);
-
-        } catch (error) {
-            console.error("API Error:", error);
-            const errMessage = (error as Error).message || "Unknown error!";
-            setAlerts((prev) => [...prev, { type: 'error', message: errMessage }]);
-        }
+    const handleClick = (statusID: number, message: string) => {
+        handleAction(statusID, message, {
+            userID: user?.ID,
+            requestSelected,
+            setAlerts,
+            refreshRequestData: getMaintenanceRequests,
+            setOpenConfirmApproved,
+            setOpenConfirmRejected,
+        });
     };
-
-    const dateFormat = (date: string) => {
-        return `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
-    }
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = request.ID ? Number(request.ID) : null;
@@ -366,42 +333,13 @@ function MaintenanceRequest() {
     return (
         <div className="maintenance-request-page">
             {/* Show Alerts */}
-            {alerts.map((alert, index) => {
-                return (
-                    <React.Fragment key={index}>
-                        {alert.type === 'success' && (
-                            <SuccessAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={Number(index)}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'error' && (
-                            <ErrorAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'warning' && (
-                            <WarningAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                    </React.Fragment>
-                );
-            })}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             {/* Approved Confirm */}
             <ConfirmDialog
                 open={openConfirmApproved}
                 setOpenConfirm={setOpenConfirmApproved}
-                handleFunction={() => handleAction(2, "Approval successful")}
+                handleFunction={() => handleClick(2, "Approval successful")}
                 title="ยืนยันการอนุมัติงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             />
@@ -410,7 +348,7 @@ function MaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleAction(3, "Rejection successful")}
+                handleFunction={() => handleClick(3, "Rejection successful")}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             />
@@ -548,8 +486,8 @@ function MaintenanceRequest() {
 
                 {/* Chart Section */}
                 <Grid2 size={{ xs: 10, md: 5 }} >
-                    <Card sx={{ bgcolor: "#212121", borderRadius: 2, py: 2, px: 3 }}>
-                        <Typography variant="body1" color="#ffffff">รายการแจ้งซ่อม</Typography>
+                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3 }}>
+                        <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
                         <ApexChart data={maintenanceRequests} height={160} />
                     </Card>

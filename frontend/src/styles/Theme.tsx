@@ -5,6 +5,7 @@ const theme = createTheme({
         // สีหลักของระบบ
         primary: {
             main: "#F26522", // sut-orange
+            light: "rgb(255, 238, 227)",
             contrastText: "#FFFFFF",
         },
         secondary: {
@@ -17,7 +18,7 @@ const theme = createTheme({
         },
         text: {
             primary: "#000000", // text-primary
-            secondary: "#FFFFFF", // text-secondary
+            secondary: "#FFFFFF", // text-secondary,
         },
         info: {
             main: "#08aff1", // text-link

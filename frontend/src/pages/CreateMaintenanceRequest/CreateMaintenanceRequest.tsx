@@ -15,12 +15,10 @@ import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
-import SuccessAlert from "../../components/Alert/SuccessAlert";
-import ErrorAlert from "../../components/Alert/ErrorAlert";
-import WarningAlert from "../../components/Alert/WarningAlert";
 import StepperComponent from "../../components/Stepper/Stepper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser} from "@fortawesome/free-solid-svg-icons";
+import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -284,36 +282,7 @@ function CreateMaintenanceRequestPage() {
     return (
         <div className="create-maintenance-request-page">
             {/* Show Alerts */}
-            {alerts.map((alert, index) => {
-                return (
-                    <React.Fragment key={index}>
-                        {alert.type === 'success' && (
-                            <SuccessAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={Number(index)}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'error' && (
-                            <ErrorAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'warning' && (
-                            <WarningAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                    </React.Fragment>
-                );
-            })}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             {/* Header Section */}
             <Grid2 container spacing={2}>

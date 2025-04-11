@@ -1,4 +1,5 @@
 import { AreasInterface } from "./IAreas";
+import { MaintenaceImagesInterface } from "./IMaintenaceImages";
 import { MaintenanceTasksInterface } from "./IMaintenanceTasks";
 import { MaintenanceTypesInteface } from "./IMaintenanceTypes";
 import { ManagerApprovalsInterface } from "./IManagerApprovals";
@@ -27,4 +28,5 @@ export interface MaintenanceRequestsInterface {
 
     ManagerApproval?:   ManagerApprovalsInterface;
     MaintenanceTask?:   MaintenanceTasksInterface;
+    MaintenanceImages?:  MaintenaceImagesInterface[];
 }
