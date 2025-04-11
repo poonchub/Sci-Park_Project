@@ -21,6 +21,8 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
+	r.Static("/images", "./images")
+
 	// 🌍 Public API (ไม่ต้องใช้ Token)
 	public := r.Group("/")
 	{

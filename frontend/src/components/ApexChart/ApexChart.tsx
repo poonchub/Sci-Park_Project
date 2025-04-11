@@ -31,7 +31,7 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
                 categories: [],
                 labels: {
                     style: {
-                        colors: '#FFF',
+                        colors: 'text.primary',
                         fontSize: '14px',
                         fontFamily: 'Noto Sans Thai, sans-serif'
                     }
@@ -40,7 +40,7 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
             yaxis: {
                 labels: {
                     style: {
-                        colors: '#FFF', // ตั้งค่าสีของตัวอักษรบนแกน y
+                        colors: 'text.primary', 
                         fontSize: '14px',
                         fontFamily: 'Noto Sans Thai, sans-serif'
                     }
