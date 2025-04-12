@@ -7,6 +7,7 @@ import Home from "../pages/Home/Home";
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 import AssignWork from "../pages/AssignWork/AssignWork";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
+import Dashboard from "../pages/Dashboard/Dashboard";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -36,6 +37,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/check-requests",
 				element: <CheckRequests/>
+			},
+			{
+				path: "/dashboard",
+				element: <Dashboard/>
 			},
 		]
 	}

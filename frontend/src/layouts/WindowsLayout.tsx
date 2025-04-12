@@ -14,10 +14,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, Button, Menu, MenuItem, Tooltip } from '@mui/material';
 import { AppBar } from '../components/AppBar/AppBar';
-import { Drawer } from '../components/Drawer/Drawer';
+import { Drawer, drawerWidth } from '../components/Drawer/Drawer';
 
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
@@ -25,6 +25,7 @@ import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
+import Footer from '../components/Footer/Footer';
 
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 const userId = localStorage.getItem("userId");
@@ -39,6 +40,10 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 const WindowsLayout: React.FC = () => {
 	const [user, setUser] = useState<UserInterface>()
+
+	const [mainMenu, setMainMenu] = useState<string>('');
+
+	const navigate = useNavigate();
 
 	const [pagesAppbar, setPagesAppbar] = useState<{
 		path: string;
@@ -102,8 +107,8 @@ const WindowsLayout: React.FC = () => {
 					{ path: '/add-user', name: 'จัดการผู้ใช้งาน' },
 					{ path: '/test-popup', name: 'Test demo' },
 					{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
-        ]
-      )
+				]
+			)
 		} else {
 			setPagesAppbar(
 				[
@@ -132,13 +137,69 @@ const WindowsLayout: React.FC = () => {
 		setOpen(false);
 	};
 
+	const handleMainMenuClick = (menu: string) => {
+		setMainMenu(menu);
+	  
+		if (menu === 'home') {
+		  setOpen(false); // ไม่แสดง Drawer
+		  setPagesDrawer([]); // เคลียร์ Drawer
+		  navigate('/'); // 👉 ไปยังหน้าหลัก
+		} else if (menu === 'maintenance') {
+		  setOpen(true);
+		  setPagesDrawer([
+			{ path: '/dashboard', name: 'แดชบอร์ด' },
+			{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
+			{ path: '/assign-work', name: 'มอบหมายงานซ่อม' },
+			{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
+		  ]);
+		  navigate('/dashboard'); // 👉 ไปยังหน้าแดชบอร์ดของแจ้งซ่อม
+		} else if (menu === 'booking') {
+		  setOpen(true);
+		  setPagesDrawer([
+			{ path: '/booking-room/1', name: 'ตารางการจอง' },
+			{ path: '/booking-room/2', name: 'รายการของฉัน' },
+		  ]);
+		  navigate('/booking-room/1'); // 👉 ตัวอย่าง: ไปหน้าแรกของการจอง
+		}
+	  };	  
+
 	useEffect(() => {
-		renderNavbarLinkPage()
-		getUser()
-	}, [])
+		renderNavbarLinkPage();
+		getUser();
+
+		const currentPath = location.pathname;
+		const currentMenu = Object.entries(pathToMenuMap).find(([path]) => currentPath.startsWith(path));
+		handleMainMenuClick(currentMenu?.[1] || 'home');
+	}, []);
+
+	const pathToMenuMap: { [key: string]: string } = {
+		'/': 'home',
+		'/booking-room': 'booking',
+		'/booking-room/1': 'booking',
+		'/booking-room/2': 'booking',
+		'/maintenance-request': 'maintenance',
+		'/assign-work': 'maintenance',
+		'/manage-user': 'maintenance',
+	};
 
 	return (
-		<Box sx={{ display: 'flex' }}>
+		<Box sx={(theme) => {
+			const closedWidth = {
+				xs: `calc(${theme.spacing(7)} + 1px)`,
+				sm: `calc(${theme.spacing(8)} + 1px)`,
+			};
+
+			return {
+				display: 'flex',
+				flexDirection: 'column',
+				minHeight: '100vh',
+				transition: theme.transitions.create('margin', {
+					easing: theme.transitions.easing.sharp,
+					duration: theme.transitions.duration.standard,
+				}),
+				marginLeft: open ? `${drawerWidth}px` : closedWidth,
+			};
+		}}>
 			<CssBaseline />
 			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary', zIndex: 98 }}>
 				<Toolbar>
@@ -159,25 +220,23 @@ const WindowsLayout: React.FC = () => {
 					<Box>
 						<img src="/images/logo.png" alt="" style={{ height: '30px' }} />
 					</Box>
+
 					<Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex', gap: '10px', justifyContent: 'center' } }}>
-						{pagesAppbar.map((page: { path: string; name: string }) => {
+						{pagesAppbar.map((page) => {
+							const menuKey = pathToMenuMap[page.path];
 							return (
-								<Link to={page.path} key={page.name}>
-									<Button
-										sx={{
-											my: 2,
-											display: 'block',
-											borderRadius: 10
-										}}
-										variant={
-											location.pathname === page.path || (page.name === 'แจ้งซ่อม' && (location.pathname === '/assign-work' || location.pathname === '/create-maintenance-request')) ? 'contained' : 'text'}
-									>
-										{page.name}
-									</Button>
-								</Link>
+								<Button
+									key={page.name}
+									onClick={() => handleMainMenuClick(menuKey)}
+									variant={mainMenu === menuKey ? 'contained' : 'text'}
+									sx={{ my: 2, borderRadius: 10 }}
+								>
+									{page.name}
+								</Button>
 							);
 						})}
 					</Box>
+
 					<Typography >{`${user?.FirstName} ${user?.LastName}`}</Typography>
 					<Box sx={{ flexGrow: 0, flexDirection: 'column', ml: '10px' }}>
 						<Tooltip title="Open settings">
@@ -282,15 +341,15 @@ const WindowsLayout: React.FC = () => {
 					})}
 				</List>
 			</Drawer>
-			<Box component="main" sx={{ 
-				flexGrow: 1, 
-				p: 3, 
+			<Box component="main" sx={{
+				flexGrow: 1,
+				p: 3,
 				pt: 11,
-				width: open ? "calc(100% - 240px)" : "100%",
 				minHeight: '100vh',
 			}}>
 				<Outlet />
 			</Box>
+			<Footer />
 		</Box>
 	)
 }

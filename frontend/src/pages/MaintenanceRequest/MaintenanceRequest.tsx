@@ -16,7 +16,7 @@ import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHourglassHalf, faCheck, faArrowsSpin, faFlagCheckered, faBan, faExclamation, faQuestionCircle, faBullseye, faMagnifyingGlass, IconDefinition, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faBullseye, faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
 import { SearchOff } from "@mui/icons-material"
@@ -24,6 +24,7 @@ import ApexChart from "../../components/ApexChart/ApexChart"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
 import handleAction from "../../utils/handleAction"
+import { statusConfig } from "../../constants/statusConfig"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -45,15 +46,6 @@ function MaintenanceRequest() {
     const [requestSelected, setRequestSelected] = useState(0)
 
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
-
-    const statusConfig: Record<string, { color: string; colorLite: string; icon: IconDefinition }> = {
-        "Pending": { color: "#FFC107", colorLite: "rgb(254, 255, 184)", icon: faHourglassHalf },
-        "Approved": { color: "#28A745", colorLite: "rgb(203, 255, 215)", icon: faCheck },
-        "Rejected": { color: "#DC3545", colorLite: "rgb(255, 211, 216)", icon: faBan },
-        "In Progress": { color: "#007BFF", colorLite: "rgb(159, 205, 255)", icon: faArrowsSpin },
-        "Completed": { color: "#6F42C1", colorLite: "rgb(207, 181, 255)", icon: faFlagCheckered },
-        "Failed": { color: "#6C757D", colorLite: "rgb(239, 247, 255)", icon: faExclamation }
-    };
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
@@ -184,36 +176,24 @@ function MaintenanceRequest() {
                 return item.row.RequestStatus?.Name === 'Pending' ? (
                     <Box>
                         <Button
+                            variant="containedBlue"
                             onClick={() => {
                                 setOpenConfirmApproved(true)
                                 setRequestSelected(Number(item.id))
                             }}
-                            sx={{
-                                bgcolor: '#08aff1',
-                                color: '#fff',
-                                fontSize: '14px',
-                                border: '1px solid #08aff1',
-                                mr: 0.6,
-                                "&:hover": {
-                                    borderColor: 'transparent'
-                                }
-                            }}
+                            sx={{ mr: 0.5 }}
                         >
                             อนุมัติ
                         </Button>
                         <Button
-                            // variant="outlined"
+                            variant="outlinedCancel"
                             onClick={() => {
                                 setOpenConfirmRejected(true)
                                 setRequestSelected(Number(item.id))
                             }}
-                            sx={{
-                                color: '#f00',
-                                fontSize: '14px',
-                                border: '1px solid',
-                                py: 0.75,
-                                px: 0.5,
-                                minWidth: 25
+                            sx={{ 
+                                minWidth: '0px', 
+                                px: '6px',
                             }}
                         >
                             <FontAwesomeIcon icon={faXmark} size="xl" />
@@ -361,13 +341,7 @@ function MaintenanceRequest() {
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
                     <Link to="/create-maintenance-request">
-                        <Button variant="contained" sx={{
-                            borderRadius: '4px',
-                            bgcolor: '#08A0DC',
-                            "&:hover": {
-                                backgroundColor: "#08A0DC"
-                            },
-                        }}>เขียนคำร้องแจ้งซ่อม</Button>
+                        <Button variant="containedBlue" >เขียนคำร้องแจ้งซ่อม</Button>
                     </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>

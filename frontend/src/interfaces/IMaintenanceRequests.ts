@@ -15,6 +15,7 @@ export interface MaintenanceRequestsInterface {
     Description?:   string;
     StartTime?:     string;
     EndTime?:       string;
+    OtherTypeDetail?:   string;
     UserID?:        number;
     User?:          UserInterface;
     RoomID?:        number;

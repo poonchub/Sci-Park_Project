@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button, Card, CardContent, Grid2, ImageList, ImageListItem, Stack, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faUserTie, faXmark } from "@fortawesome/free-solid-svg-icons";
 import StepperComponent from "../../components/Stepper/Stepper";
@@ -31,6 +31,8 @@ function CheckRequest() {
     const [selectedOperator, setSelectedOperator] = useState(0)
     const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+
+    const navigate = useNavigate();
 
     const getMaintenanceRequest = async () => {
         try {
@@ -86,6 +88,11 @@ function CheckRequest() {
             setOpenConfirmApproved,
             setOpenConfirmRejected,
         });
+    };
+
+    const handleBack = () => {
+        localStorage.removeItem('requestID');
+        navigate(-1);
     };
 
     const managerApproval = maintenanceRequest?.ManagerApproval;
@@ -179,38 +186,29 @@ function CheckRequest() {
                             time == null && type == 'approved' ? (
                                 <>
                                     <Button
+                                        variant="contained"
                                         onClick={() => {
                                             setOpenConfirmApproved(true)
                                         }}
-                                        sx={{
-                                            bgcolor: '#08aff1',
-                                            color: '#fff',
-                                            fontSize: '14px',
-                                            border: '1px solid #08aff1',
-                                            mr: 0.6,
-                                            "&:hover": {
-                                                borderColor: 'transparent'
-                                            }
-                                        }}
+                                        sx={{ backgroundColor: '#08aff1', mr: 0.5 }}
                                     >
                                         อนุมัติ
                                     </Button>
                                     <Button
-                                        // variant="outlined"
+                                        variant="outlined"
                                         onClick={() => {
                                             setOpenConfirmRejected(true)
                                         }}
                                         sx={{
-                                            color: '#f00',
-                                            fontSize: '14px',
-                                            border: '1px solid',
-                                            py: 0.75,
-                                            px: 0.5,
-                                            minWidth: 25
+                                            minWidth: '0px',
+                                            px: '6px',
+                                            color: '#FF3B30',
+                                            borderColor: '#FF3B30'
                                         }}
                                     >
                                         <FontAwesomeIcon icon={faXmark} size="xl" />
-                                    </Button></>
+                                    </Button>
+                                </>
                             ) : time == null && type == 'assigned' ? (
                                 <Button
                                     onClick={() => {
@@ -260,82 +258,82 @@ function CheckRequest() {
 
     const renderImages = (images: MaintenaceImagesInterface[], apiUrl: string) => {
         const count = images.length;
-      
+
         if (count === 1) {
-          return (
-            <Grid2 size={{ xs: 12, md: 12 }} sx={{ alignItems: "center" }}>
-              <img
-                src={`${apiUrl}/${images[0].FilePath}`}
-                alt="image"
-                style={{ width: '100%', borderRadius: 8 }}
-              />
-            </Grid2>
-          );
+            return (
+                <Grid2 size={{ xs: 12, md: 12 }} sx={{ alignItems: "center" }}>
+                    <img
+                        src={`${apiUrl}/${images[0].FilePath}`}
+                        alt="image"
+                        style={{ width: '100%', borderRadius: 8 }}
+                    />
+                </Grid2>
+            );
         }
-      
+
         if (count === 2) {
-          return (
-            <>
-              <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
-                <img
-                  src={`${apiUrl}/${images[0].FilePath}`}
-                  alt="image1"
-                  style={{ width: '100%', borderRadius: 8 }}
-                />
-              </Grid2>
-              <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
-                <img
-                  src={`${apiUrl}/${images[1].FilePath}`}
-                  alt="image2"
-                  style={{ width: '100%', borderRadius: 8 }}
-                />
-              </Grid2>
-            </>
-          );
+            return (
+                <>
+                    <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
+                        <img
+                            src={`${apiUrl}/${images[0].FilePath}`}
+                            alt="image1"
+                            style={{ width: '100%', borderRadius: 8 }}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
+                        <img
+                            src={`${apiUrl}/${images[1].FilePath}`}
+                            alt="image2"
+                            style={{ width: '100%', borderRadius: 8 }}
+                        />
+                    </Grid2>
+                </>
+            );
         }
-      
+
         if (count === 3) {
-          return (
-            <>
-              <Grid2 size={{ xs: 12, md: 8 }} sx={{ alignItems: "center" }}>
-                <img
-                  src={`${apiUrl}/${images[0].FilePath}`}
-                  alt="image1"
-                  style={{ width: '100%', borderRadius: 8 }}
-                />
-              </Grid2>
-              <Grid2 size={{ xs: 12, md: 4 }} sx={{ alignItems: "center" }}>
-                <Stack spacing={2}>
-                  <img
-                    src={`${apiUrl}/${images[1].FilePath}`}
-                    alt="image2"
-                    style={{ width: '100%', borderRadius: 8 }}
-                  />
-                  <img
-                    src={`${apiUrl}/${images[2].FilePath}`}
-                    alt="image3"
-                    style={{ width: '100%', borderRadius: 8 }}
-                  />
-                </Stack>
-              </Grid2>
-            </>
-          );
+            return (
+                <>
+                    <Grid2 size={{ xs: 12, md: 8 }} sx={{ alignItems: "center" }}>
+                        <img
+                            src={`${apiUrl}/${images[0].FilePath}`}
+                            alt="image1"
+                            style={{ width: '100%', borderRadius: 8 }}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, md: 4 }} sx={{ alignItems: "center" }}>
+                        <Stack spacing={2}>
+                            <img
+                                src={`${apiUrl}/${images[1].FilePath}`}
+                                alt="image2"
+                                style={{ width: '100%', borderRadius: 8 }}
+                            />
+                            <img
+                                src={`${apiUrl}/${images[2].FilePath}`}
+                                alt="image3"
+                                style={{ width: '100%', borderRadius: 8 }}
+                            />
+                        </Stack>
+                    </Grid2>
+                </>
+            );
         }
-      
+
         return (
-          <ImageList cols={3} gap={12} sx={{ width: '100%' }}>
-            {images.map((img, i) => (
-              <ImageListItem key={i}>
-                <img
-                  src={`${apiUrl}/${img.FilePath}`}
-                  alt={`image-${i + 1}`}
-                  style={{ borderRadius: 8 }}
-                />
-              </ImageListItem>
-            ))}
-          </ImageList>
+            <ImageList cols={3} gap={12} sx={{ width: '100%' }}>
+                {images.map((img, i) => (
+                    <ImageListItem key={i}>
+                        <img
+                            src={`${apiUrl}/${img.FilePath}`}
+                            alt={`image-${i + 1}`}
+                            style={{ borderRadius: 8 }}
+                        />
+                    </ImageListItem>
+                ))}
+            </ImageList>
         );
-      };
+    };
 
     useEffect(() => {
         getMaintenanceRequest()
@@ -386,12 +384,13 @@ function CheckRequest() {
                     </Typography>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end" }}>
-                    <Link to="/maintenance-request" style={{ textAlign: 'center' }}>
-                        <Button variant="outlined">
-                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                            <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
-                        </Button>
-                    </Link>
+                    <Button
+                        variant="outlined"
+                        onClick={handleBack}
+                    >
+                        <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                        <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
+                    </Button>
                 </Grid2>
 
                 <Grid2 size={{ xs: 10, md: 8 }}>

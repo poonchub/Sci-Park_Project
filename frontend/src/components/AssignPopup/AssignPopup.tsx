@@ -41,7 +41,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
 }) => {
     return (
         <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
-            <DialogTitle>มอบหมายงานซ่อม</DialogTitle>
+            <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>มอบหมายงานซ่อม</DialogTitle>
             <DialogContent sx={{ minWidth: 500 }}>
                 <Grid2 container spacing={1}>
                     <Grid2 size={{ xs: 10, md: 12 }}>
@@ -50,7 +50,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                                 ? requestSelected.AreaDetail
                                 : `${requestSelected.Area?.Name || "-"} ชั้น ${requestSelected.Room?.Floor?.Number || "-"} ห้อง ${requestSelected.Room?.RoomNumber || "-"}`}
                         </Typography>
-                        <Typography>
+                        <Typography sx={{ color: '#6D6E70'}}>
                             {requestSelected.Description || "ไม่มีรายละเอียด"}
                         </Typography>
                     </Grid2>
@@ -67,8 +67,8 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                                 sx={{
                                     bgcolor: colorLite,
                                     borderRadius: 10,
-                                    px: 1.5,
-                                    py: 0.5,
+                                    px: 3,
+                                    py: 1,
                                     display: 'flex',
                                     gap: 1,
                                     color,
@@ -83,7 +83,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                     })()}
 
                     <Grid2 size={{ xs: 10, md: 12 }}>
-                        <Typography variant="body1">ผู้รับผิดชอบงาน</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500, mt: 2 }}>ผู้รับผิดชอบงาน</Typography>
                         <Select
                             value={selectedOperator ?? 0}
                             onChange={(e) => setSelectedOperator(Number(e.target.value))}
@@ -94,6 +94,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                                     <FontAwesomeIcon icon={faUser} size="lg" />
                                 </InputAdornment>
                             }
+                            sx={{ mt: 1 }}
                         >
                             <MenuItem value={0}><em>{'-- เลือกผู้ดำเนินการ --'}</em></MenuItem>
                             {operators.map((item) => (
@@ -105,8 +106,8 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                     </Grid2>
                 </Grid2>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>ยกเลิก</Button>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button variant='text' onClick={onClose}>ยกเลิก</Button>
                 <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
             </DialogActions>
         </Dialog>

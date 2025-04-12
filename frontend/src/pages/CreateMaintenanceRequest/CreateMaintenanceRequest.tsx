@@ -17,7 +17,7 @@ import { TextField } from "../../components/TextField/TextField";
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import StepperComponent from "../../components/Stepper/Stepper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser} from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
 function CreateMaintenanceRequestPage() {
@@ -40,6 +40,7 @@ function CreateMaintenanceRequestPage() {
         Description: "",
         StartTime: "",
         EndTime: "",
+        OtherTypeDetail: "",
         RoomID: 0,
         AreaID: 1,
         MaintenanceTypeID: 0,
@@ -128,6 +129,13 @@ function CreateMaintenanceRequestPage() {
             ...prev,
             [name]: value,
         }));
+
+        if (name == 'MaintenanceTypeID') {
+            setFormData((prev) => ({
+                ...prev,
+                ['OtherTypeDetail']: '',
+            }));
+        }
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -241,6 +249,7 @@ function CreateMaintenanceRequestPage() {
             IsAnytimeAvailable: false,
             StartTime: "",
             EndTime: "",
+            OtherTypeDetail: "",
             RoomID: 0,
             AreaID: ignore === 'AreaID' ? formData.AreaID : 1,
             MaintenanceTypeID: 0,
@@ -284,17 +293,18 @@ function CreateMaintenanceRequestPage() {
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-            {/* Header Section */}
             <Grid2 container spacing={2}>
+
+                {/* Header Section */}
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
-                    <Typography variant="h6" className="title">
+                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         เขียนคำร้องแจ้งซ่อม
                     </Typography>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end" }}>
                     <Link to="/maintenance-request" style={{ textAlign: 'center' }}>
-                        <Button variant="outlined">
-                            <FontAwesomeIcon icon={faAngleLeft} size="lg"/>
+                        <Button variant="outlined" >
+                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
                             <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
                         </Button>
                     </Link>
@@ -302,7 +312,7 @@ function CreateMaintenanceRequestPage() {
 
                 <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
                     <CardContent sx={{ p: '16px 24px' }}>
-                        <StepperComponent activeStep={0} steps={steps}/>
+                        <StepperComponent activeStep={0} steps={steps} />
                     </CardContent>
                 </Card>
 
@@ -317,6 +327,7 @@ function CreateMaintenanceRequestPage() {
                         >
                             {/* Left Section (Form Inputs) */}
                             <Grid2 container size={{ xs: 6, md: 6 }} spacing={3}>
+
                                 {/* Area Selection */}
                                 <Grid2 size={{ xs: 6, md: 12 }}>
                                     <Typography variant="body1" className="title-field">บริเวณที่ต้องการแจ้งซ่อม</Typography>
@@ -469,6 +480,33 @@ function CreateMaintenanceRequestPage() {
                                             }
                                         </Select>
                                     </FormControl>
+                                    {
+                                        formData.MaintenanceTypeID == 6 ? (
+                                            <>
+                                                {/* OtherType Detail Input */}
+                                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                                    <TextField
+                                                        multiline
+                                                        rows={2}
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        name="OtherTypeDetail"
+                                                        value={formData.OtherTypeDetail}
+                                                        onChange={handleInputChange}
+                                                        placeholder="ระบุประเภทปัญหา"
+                                                        slotProps={{
+                                                            input: {
+                                                                className: "custom-input"
+                                                            }
+                                                        }}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                </Grid2>
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
                                 </Grid2>
 
                                 {/* Description Input */}
@@ -543,15 +581,15 @@ function CreateMaintenanceRequestPage() {
 
                                 <Grid2 size={{ xs: 6, md: 12 }}>
                                     <Typography variant="body1" className="title-field">ผู้เขียนคำร้อง</Typography>
-                                    <TextField 
-                                        fullWidth 
-                                        variant="outlined" 
-                                        value={`${user?.FirstName} ${user?.LastName}`} 
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        value={`${user?.FirstName} ${user?.LastName}`}
                                         slotProps={{
                                             input: {
                                                 startAdornment: (
-                                                    <InputAdornment position="start" sx={{ mr: 1.6}}>
-                                                        <FontAwesomeIcon icon={faUser} size="lg"/>
+                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                        <FontAwesomeIcon icon={faUser} size="lg" />
                                                     </InputAdornment>
                                                 ),
                                             }
@@ -571,8 +609,8 @@ function CreateMaintenanceRequestPage() {
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
-                                                        <InputAdornment position="start" sx={{ mr: 1.6}}>
-                                                            <FontAwesomeIcon icon={faPhone} size="lg"/>
+                                                        <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                            <FontAwesomeIcon icon={faPhone} size="lg" />
                                                         </InputAdornment>
                                                     ),
                                                 }
@@ -586,7 +624,7 @@ function CreateMaintenanceRequestPage() {
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
-                                                        <InputAdornment position="start" sx={{ mr: 1.6}}>
+                                                        <InputAdornment position="start" sx={{ mr: 1.6 }}>
                                                             <FontAwesomeIcon icon={faEnvelope} size="lg" />
                                                         </InputAdornment>
                                                     ),
@@ -596,17 +634,13 @@ function CreateMaintenanceRequestPage() {
                                     </Grid2>
                                     <Grid2 container size={{ xs: 6, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
                                         <Button
-                                            variant="contained"
-
+                                            variant="containedBlue"
                                             onClick={() => setOnEdit(!onEdit)}
                                             sx={{
-                                                background: "#08aff1",
                                                 display: onEdit ? 'none' : '',
-                                                "&:hover": {
-                                                    backgroundColor: "#08A0DC"
-                                                }
+                                                
                                             }}>
-                                            <FontAwesomeIcon icon={faPencil} size="lg"/>
+                                            <FontAwesomeIcon icon={faPencil} size="lg" />
                                             <Typography sx={{ fontSize: 14, ml: 0.6 }}>แก้ไข</Typography>
                                         </Button>
                                     </Grid2>
