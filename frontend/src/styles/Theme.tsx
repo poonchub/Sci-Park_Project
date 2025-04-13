@@ -6,6 +6,7 @@ const theme = createTheme({
         primary: {
             main: "#F26522", // sut-orange
             contrastText: "#FFFFFF",
+            dark: "rgb(194, 78, 25)"
         },
         secondary: {
             main: "#FFFFFF", // sut-gold
