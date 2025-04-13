@@ -253,10 +253,12 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล MaintenanceTypes
 	maintenanceTypes := []entity.MaintenanceType{
-		{TypeName: "งานไฟฟ้า",},
-		{TypeName: "งานเครื่องใช้ไฟฟ้า",},
-		{TypeName: "งานเฟอร์นิเจอร์",},
-		{TypeName: "งานประปา",},
+		{TypeName: "งานไฟฟ้า"},
+		{TypeName: "งานเครื่องปรับอากาศ"},
+		{TypeName: "งานอินเทอร์เน็ต"},
+		{TypeName: "งานประปา"},
+		{TypeName: "งานโครงสร้าง"},
+		{TypeName: "งานอื่นๆ"},
 	}
 	for _, mt := range maintenanceTypes {
 		db.FirstOrCreate(&mt, entity.MaintenanceType{TypeName: mt.TypeName})

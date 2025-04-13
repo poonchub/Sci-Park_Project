@@ -1,62 +1,45 @@
-
 import React, { useEffect, useState } from 'react';
-import { styled, useTheme } from '@mui/material/styles';
+import { Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import List from '@mui/material/List';
 import CssBaseline from '@mui/material/CssBaseline';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Avatar, Button, Menu, MenuItem, Tooltip } from '@mui/material';
-import { AppBar } from '../components/AppBar/AppBar';
-import { Drawer } from '../components/Drawer/Drawer';
 
-import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
-import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
-import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
 
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+import AppBarMenu from '../components/AppBarMenu/AppBarMenu';
+import SideDrawer from '../components/SideDrawer/SideDrawer';
+import Footer from '../components/Footer/Footer';
+
+import {
+	SECTIONS,
+	getDrawerItemsBySection,
+	getCurrentSectionKey,
+	Role
+} from '../constants/navigationConfig';
+
+import { drawerWidth } from '../components/Drawer/Drawer';
+
 const userId = localStorage.getItem("userId");
-const DrawerHeader = styled('div')(({ theme }) => ({
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'flex-end',
-	padding: theme.spacing(0, 1),
-	// necessary for content to be below app bar
-	...theme.mixins.toolbar,
-}));
 
 const WindowsLayout: React.FC = () => {
-	const [user, setUser] = useState<UserInterface>()
+	const [user, setUser] = useState<UserInterface>();
 
-	const [pagesAppbar, setPagesAppbar] = useState<{
-		path: string;
-		name: string;
-	}[]>([]);
+	// Role of current user (from localStorage)
+	const role = (localStorage.getItem("role") || 'Guest') as Role;
 
-	const [pagesDrawer, setPagesDrawer] = useState<{
-		path: string;
-		name: string;
-	}[]>([]);
+	// Determine current top-level section based on current URL
+	const currentSectionKey = getCurrentSectionKey(location.pathname);
 
-	const theme = useTheme();
-	const [open, setOpen] = React.useState(false);
+	// Drawer items for current section and role
+	const pagesDrawer = getDrawerItemsBySection(currentSectionKey, role);
 
-	const location = useLocation();
+	// AppBar sections (static)
+	const pagesAppbar = SECTIONS;
 
-	const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+	// Drawer open/close state
+	const [open, setOpen] = useState(false);
 
+	// Fetch user data by ID (stored in localStorage)
 	const getUser = async () => {
 		try {
 			const res = await GetUserById(Number(userId));
@@ -67,232 +50,72 @@ const WindowsLayout: React.FC = () => {
 		} catch (error) {
 			console.error("Error fetching user:", error);
 		}
-	}
-
-	const renderNavbarLinkPage = () => {
-		const role = localStorage.getItem("role");
-		if (role === "Admin") {
-			setPagesAppbar(
-				[
-					{ path: '/', name: 'หน้าหลัก' },
-					{ path: '/booking-room', name: 'จองห้อง' },
-					{ path: '/maintenance-request', name: 'แจ้งซ่อม' },
-				]
-			)
-			setPagesDrawer(
-				[
-					{ path: '/', name: 'แดชบอร์ด' },
-					{ path: '/maintenance-request', name: 'รายการแจ้งซ่อม' },
-					{ path: '/assign-work', name: 'มอบหมายงานซ่อม' },
-					{ path: '/', name: 'จัดการผู้ใช้งาน' },
-				]
-			)
-		} else if (role === "SuperAdmin") {
-			setPagesAppbar(
-				[
-					{ path: '/', name: 'หน้าหลัก' },
-					{ path: '/add-user', name: 'เพิ่มผู้ใช้' },
-					{ path: '/test-popup', name: 'Test demo' },
-					{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
-				]
-			)
-			setPagesDrawer(
-				[
-					{ path: '/', name: 'แดชบอร์ด' },
-					{ path: '/add-user', name: 'จัดการผู้ใช้งาน' },
-					{ path: '/test-popup', name: 'Test demo' },
-					{ path: '/manage-user', name: 'จัดการผู้ใช้งาน' },
-        ]
-      )
-		} else {
-			setPagesAppbar(
-				[
-					{ path: '/', name: 'หน้าหลัก' },
-					{ path: '/booking-room', name: 'จองห้อง' },
-					{ path: '/outsider-maintenance-request', name: 'แจ้งซ่อม' },
-				]
-			)
-		}
-
 	};
 
-	const handleOpenUserMenu = () => {
-		setOpen(!open);
-	};
+	// Open and close drawer handlers
+	const handleDrawerOpen = () => setOpen(true);
+	const handleDrawerClose = () => setOpen(false);
 
-	const handleCloseUserMenu = () => {
-		setAnchorElUser(null);
-	};
-
-	const handleDrawerOpen = () => {
-		setOpen(true);
-	};
-
-	const handleDrawerClose = () => {
-		setOpen(false);
-	};
-
+	// Fetch user info on first load
 	useEffect(() => {
-		renderNavbarLinkPage()
-		getUser()
-	}, [])
+		getUser();
+	}, []);
 
 	return (
-		<Box sx={{ display: 'flex' }}>
-			<CssBaseline />
-			<AppBar position="fixed" open={open} sx={{ bgcolor: 'secondary.main', color: 'text.primary', zIndex: 98 }}>
-				<Toolbar>
-					<IconButton
-						color="inherit"
-						aria-label="open drawer"
-						onClick={handleDrawerOpen}
-						edge="start"
-						sx={[
-							{
-								marginRight: 5,
-							},
-							open && { display: 'none' },
-						]}
-					>
-						<MenuIcon />
-					</IconButton>
-					<Box>
-						<img src="/images/logo.png" alt="" style={{ height: '30px' }} />
-					</Box>
-					<Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex', gap: '10px', justifyContent: 'center' } }}>
-						{pagesAppbar.map((page: { path: string; name: string }) => {
-							return (
-								<Link to={page.path} key={page.name}>
-									<Button
-										sx={{
-											my: 2,
-											display: 'block',
-											borderRadius: 10
-										}}
-										variant={
-											location.pathname === page.path || (page.name === 'แจ้งซ่อม' && (location.pathname === '/assign-work' || location.pathname === '/create-maintenance-request')) ? 'contained' : 'text'}
-									>
-										{page.name}
-									</Button>
-								</Link>
-							);
-						})}
-					</Box>
-					<Typography >{`${user?.FirstName} ${user?.LastName}`}</Typography>
-					<Box sx={{ flexGrow: 0, flexDirection: 'column', ml: '10px' }}>
-						<Tooltip title="Open settings">
-							<IconButton onClick={handleOpenUserMenu} sx={{ p: 0, border: `3px solid ${theme.palette.primary.main}`, }}>
-								<Avatar alt="Remy Sharp" src="/images/test-profile.jpg" />
-							</IconButton>
-						</Tooltip>
-						<Menu
-							sx={{ mt: '45px' }}
-							id="menu-appbar"
-							anchorEl={anchorElUser}
-							anchorOrigin={{
-								vertical: 'top',
-								horizontal: 'right',
-							}}
-							keepMounted
-							transformOrigin={{
-								vertical: 'top',
-								horizontal: 'right',
-							}}
-							open={Boolean(anchorElUser)}
-							onClose={handleCloseUserMenu}
-						>
-							{settings.map((setting) => (
-								<MenuItem key={setting} onClick={handleCloseUserMenu}>
-									<Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-								</MenuItem>
-							))}
-						</Menu>
-					</Box>
-				</Toolbar>
-			</AppBar>
-			<Drawer variant="permanent" open={open} sx={{ zIndex: 97 }}>
-				<DrawerHeader>
-					<IconButton onClick={handleDrawerClose} sx={{ color: 'text.secondary' }}>
-						{theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-					</IconButton>
-				</DrawerHeader>
-				<List>
-					{pagesDrawer.map((page, index) => {
-						return (
-							<ListItem key={index} disablePadding sx={{ display: 'block' }}>
-								<Link to={page.path}>
-									<ListItemButton
-										sx={[
-											{
-												minHeight: 48,
-												px: 2.5,
-												bgcolor: location.pathname === page.path ? '#F26522' : 'transparent',
-												"&:hover": {
-													bgcolor: '#dd591c'
-												}
-											},
-											open
-												? {
-													justifyContent: 'initial',
-												}
-												: {
-													justifyContent: 'center',
-												},
-										]}
-									>
-										<ListItemIcon
-											sx={[
-												{
-													minWidth: 0,
-													justifyContent: 'center',
-												},
-												open
-													? {
-														mr: 3,
-													}
-													: {
-														mr: 'auto',
-													},
-											]}
-										>
-											{
-												index === 0 ? <DashboardOutlinedIcon sx={{ color: 'text.secondary' }} /> :
-													index === 1 ? <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} /> :
-														index === 2 ? <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} /> : <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />
-											}
-										</ListItemIcon>
-										<ListItemText
-											primary={page.name}
-											sx={[
-												open
-													? {
-														opacity: 1,
-														color: '#fff'
-													}
-													: {
-														opacity: 0,
-													},
-											]}
-										/>
-									</ListItemButton>
-								</Link>
+		<Box
+			sx={(theme) => {
+				const closedWidth = {
+					xs: `calc(${theme.spacing(7)} + 1px)`,
+					sm: `calc(${theme.spacing(8)} + 1px)`,
+				};
 
-							</ListItem>
-						)
-					})}
-				</List>
-			</Drawer>
-			<Box component="main" sx={{ 
-				flexGrow: 1, 
-				p: 3, 
-				pt: 11,
-				width: open ? "calc(100% - 240px)" : "100%",
-				minHeight: '100vh',
-			}}>
+				return {
+					display: 'flex',
+					flexDirection: 'column',
+					minHeight: '100vh',
+					transition: theme.transitions.create('margin', {
+						easing: theme.transitions.easing.sharp,
+						duration: theme.transitions.duration.standard,
+					}),
+					marginLeft: open ? `${drawerWidth}px` : closedWidth,
+				};
+			}}
+		>
+			<CssBaseline />
+
+			{/* Top AppBar */}
+			<AppBarMenu
+				open={open}
+				onDrawerOpen={handleDrawerOpen}
+				sections={pagesAppbar}
+				user={user}
+			/>
+
+			{/* Left Side Drawer */}
+			<SideDrawer
+				open={open}
+				onClose={handleDrawerClose}
+				drawerItems={pagesDrawer}
+				currentPath={location.pathname}
+			/>
+
+			{/* Main content area */}
+			<Box
+				component="main"
+				sx={{
+					flexGrow: 1,
+					p: 3,
+					pt: 11, // Ensure content is below the AppBar
+					minHeight: '100vh',
+				}}
+			>
 				<Outlet />
 			</Box>
+
+			{/* Bottom Footer */}
+			<Footer />
 		</Box>
-	)
-}
+	);
+};
 
 export default WindowsLayout;

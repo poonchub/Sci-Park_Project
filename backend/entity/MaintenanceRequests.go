@@ -13,7 +13,8 @@ type MaintenanceRequest struct {
     Description     string  
     IsAnytimeAvailable  bool   
     StartTime       time.Time       
-	EndTime         time.Time     
+	EndTime         time.Time
+    OtherTypeDetail string
         
     UserID          uint              
     User            User              `gorm:"foreignKey:UserID"`

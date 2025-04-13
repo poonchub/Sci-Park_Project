@@ -94,6 +94,7 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		Description:        request.Description,
 		StartTime:          request.StartTime,
 		EndTime:            request.EndTime,
+		OtherTypeDetail: 	request.OtherTypeDetail,
 		UserID:             request.UserID,
 		RoomID:             request.RoomID,
 		RequestStatusID:    uint(RequestStatusID),

@@ -23,6 +23,7 @@ import handleAssignWork from "../../utils/handleAssignWork";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import AssignPopup from "../../components/AssignPopup/AssignPopup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
+import { Link } from "react-router-dom";
 
 function AssignWork() {
     const [operators, setOperators] = useState<UserInterface[]>([])
@@ -137,6 +138,8 @@ function AssignWork() {
                 const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                 const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
+                
+
                 return (
                     <Box sx={{
                         display: 'flex',
@@ -199,19 +202,26 @@ function AssignWork() {
         },
         {
             field: 'Check',
-            headerName: 'action',
+            headerName: '',
             type: 'string',
             flex: 1,
             // editable: true,
-            renderCell: () => (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                >
-                    ตรวจสอบ
-                </Button>
-            ),
+            renderCell: (item) => {
+                const requestID = String(item.row.ID)
+                return (
+                    <Link to="/check-requests" >
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={() => localStorage.setItem('requestID', requestID)}
+                        >
+                            ตรวจสอบ
+                        </Button>
+                    </Link>
+
+                )
+            }
         },
     ];
 
