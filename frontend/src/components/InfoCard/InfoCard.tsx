@@ -3,16 +3,18 @@ import { Card, CardContent, Typography, Button, Box, Grid2 } from '@mui/material
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie, faXmark } from '@fortawesome/free-solid-svg-icons';
 
+// Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
-    type: 'approved' | 'assigned';
-    title: string;
-    name: string | null;
-    time: string | null;
-    onApprove?: () => void;
-    onReject?: () => void;
-    onAssign?: () => void;
+    type: 'approved' | 'assigned'; // Determines if the card is for 'approved' or 'assigned'
+    title: string; // Title of the card
+    name: string | null; // Name of the person, can be null
+    time: string | null; // Time related to the action (approval, assignment), can be null
+    onApprove?: () => void; // Callback for approving (optional)
+    onReject?: () => void; // Callback for rejecting (optional)
+    onAssign?: () => void; // Callback for assigning (optional)
 }
 
+// InfoCard component definition
 const InfoCard: React.FC<InfoCardProps> = ({
     type,
     title,
@@ -22,17 +24,21 @@ const InfoCard: React.FC<InfoCardProps> = ({
     onReject,
     onAssign
 }) => (
+    // Card layout wrapped inside Grid2 for responsiveness
     <Grid2 size={{ xs: 10, md: 2 }}>
         <Card
             className="card"
             sx={{ width: '100%', borderRadius: 2, px: 2.5, py: 2, minHeight: '100%' }}
         >
             <CardContent className="card-content" sx={{ pt: 3 }}>
+
+                {/* Title of the card */}
                 <Grid2 size={{ xs: 10, md: 12 }}>
                     <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
                         {title}
                     </Typography>
 
+                    {/* Handle the case where name is null */}
                     {name == null && type === 'approved' ? (
                         <Typography variant="body1" sx={{ fontSize: 14, color: '#6D6E70', mb: '4px' }}>
                             ยังไม่ได้อนุมัติ
@@ -47,8 +53,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
                         </Typography>
                     )}
 
+                    {/* Handle actions (approve, reject, assign) based on the 'time' value */}
                     {time == null && type === 'approved' ? (
                         <>
+                            {/* Approve button */}
                             <Button
                                 variant="contained"
                                 onClick={onApprove}
@@ -56,6 +64,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             >
                                 อนุมัติ
                             </Button>
+                            {/* Reject button */}
                             <Button
                                 variant="outlined"
                                 onClick={onReject}
@@ -70,6 +79,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             </Button>
                         </>
                     ) : time == null && type === 'assigned' ? (
+                        // Assign button for unassigned tasks
                         <Button
                             onClick={onAssign}
                             sx={{
@@ -85,12 +95,14 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             มอบหมายงาน
                         </Button>
                     ) : (
+                        // Display the time when the task has been either approved or assigned
                         <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: '#6D6E70' }}>
                             {time}
                         </Typography>
                     )}
                 </Grid2>
 
+                {/* Icon displaying an avatar or role-related icon */}
                 <Grid2
                     size={{ xs: 10, md: 8 }}
                     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -108,6 +120,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             color: '#fff'
                         }}
                     >
+                        {/* Icon representing the role or user */}
                         <FontAwesomeIcon icon={faUserTie} size="2xl" />
                     </Box>
                 </Grid2>

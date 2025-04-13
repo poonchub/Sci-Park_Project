@@ -1,12 +1,15 @@
+// Importing necessary FontAwesome icons
 import { faBolt, faFaucet, faWifi, faFan, faHammer, faTools } from "@fortawesome/free-solid-svg-icons";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
+// Configuration for each maintenance type
 export interface MaintenanceTypeConfig {
-  color: string;
-  colorLite: string;
-  icon: IconDefinition;
+  color: string; // Main color
+  colorLite: string; // Light color
+  icon: IconDefinition; // Associated icon
 }
 
+// Maintenance type configurations
 export const maintenanceTypeConfig: Record<string, MaintenanceTypeConfig> = {
   "งานไฟฟ้า": { color: "#FFA500", colorLite: "rgb(255, 241, 217)", icon: faBolt },
   "งานเครื่องปรับอากาศ": { color: "#00CED1", colorLite: "rgb(217, 254, 255)", icon: faFan },

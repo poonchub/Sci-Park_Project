@@ -1,19 +1,23 @@
+// Define possible user roles in the system
 export type Role = 'Manager' | 'Outsider' | 'Admin' | 'SuperAdmin';
 
+// Type definition for navigation items in the drawer
 type NavItem = {
-    path: string;
-    name: string;
-    roles: Role[];
+    path: string; // Path for the navigation item
+    name: string; // Name of the navigation item
+    roles: Role[]; // Roles that can access this item
 };
 
+// Main sections of the app with key, path, and display name
 export const SECTIONS = [
     { key: 'home', path: '/', name: 'หน้าหลัก' },
     { key: 'booking', path: '/booking-room', name: 'จองห้อง' },
     { key: 'maintenance', path: '/dashboard', name: 'แจ้งซ่อม' },
-] as { key: string; path: string; name: string }[];
+];
 
+// Drawer items categorized by section and filtered by user roles
 const DRAWER_ITEMS: Record<string, NavItem[]> = {
-    home: [],
+    home: [], // No drawer items for 'home'
     booking: [
         { path: '/booking-room', name: 'ระบบจองห้อง', roles: ['Outsider', 'Admin', 'SuperAdmin'] },
     ],
@@ -27,11 +31,13 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
     ]
 };
 
+// Get drawer items based on the current section and user role
 export const getDrawerItemsBySection = (sectionKey: string, role: Role): NavItem[] => {
-    const items = DRAWER_ITEMS[sectionKey] || [];
-    return items.filter(item => item.roles.includes(role));
+    const items = DRAWER_ITEMS[sectionKey] || []; // Get items for the section
+    return items.filter(item => item.roles.includes(role)); // Filter by user role
 };
 
+// Map the current URL to the appropriate section key
 export const getCurrentSectionKey = (pathname: string): string => {
     const map: Record<string, string> = {
         '/dashboard': 'maintenance',
@@ -45,5 +51,5 @@ export const getCurrentSectionKey = (pathname: string): string => {
         '/test-popup': 'maintenance',
     };
 
-    return map[Object.keys(map).find(key => pathname.startsWith(key)) || ''] || 'home';
+    return map[Object.keys(map).find(key => pathname.startsWith(key)) || ''] || 'home'; // Return the section key
 };
