@@ -6,15 +6,14 @@ import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceReque
 function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number }) {
     const { data, height } = props;
 
+    // State to store the count of requests per day
     const [countRequests, setCountRequest] = useState<Record<string, number>>({});
+    // State to store chart data and options
     const [state, setState] = useState<{
-        series: { name: string; data: number[] }[]; // กำหนดประเภทของ series ให้ถูกต้อง
-        options: ApexOptions;
+        series: { name: string; data: number[] }[]; // Data for the chart
+        options: ApexOptions; // Configuration for the chart
     }>({
-        series: [{
-            name: 'Requests',
-            data: []
-        }],
+        series: [{ name: 'Requests', data: [] }],
         options: {
             chart: {
                 height: height,
@@ -40,7 +39,7 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
             yaxis: {
                 labels: {
                     style: {
-                        colors: 'text.primary', 
+                        colors: 'text.primary',
                         fontSize: '14px',
                         fontFamily: 'Noto Sans Thai, sans-serif'
                     }
@@ -54,15 +53,15 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
         },
     });
 
+    // Calculate the number of requests per day
     useEffect(() => {
-        // คำนวณจำนวนคำขอในแต่ละวัน
-        const countR: Record<string, number> = data.reduce((acc, item) => {
+        const countR = data.reduce((acc, item) => {
             const date = item.CreatedAt?.slice(0, 10) || "Unknown";
             acc[date] = (acc[date] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
 
-        // จัดเรียงข้อมูลตามวันที่
+        // Sort the requests by date
         const sortedCountR = Object.entries(countR)
             .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
             .reduce((acc, [date, value]) => {
@@ -70,47 +69,33 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
                 return acc;
             }, {} as Record<string, number>);
 
+        // Update the state with the sorted data
         setCountRequest(sortedCountR);
     }, [data]);
 
-
+    // Update chart state based on the request counts
     useEffect(() => {
-        // อัปเดตข้อมูลกราฟตาม countRequests
         const categories = Object.keys(countRequests);
         const dataSeries = categories.map(date => countRequests[date]);
 
-        // แปลง categories ให้อยู่ในรูปแบบ '29 Mar'
+        // Format the dates for the x-axis labels
         const formattedCategories = categories.map(date => {
             const parsedDate = new Date(date);
-            return new Intl.DateTimeFormat('en-GB', {
-                day: '2-digit',
-                month: 'short'
-            }).format(parsedDate);
+            return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(parsedDate);
         });
 
+        // Update the chart state with new categories and series data
         setState(prevState => ({
             ...prevState,
-            series: [{
-                name: 'Requests',
-                data: dataSeries,
-            }],
-            options: {
-                ...prevState.options,
-                xaxis: {
-                    type: 'category',
-                    categories: formattedCategories,
-                },
-            },
+            series: [{ name: 'Requests', data: dataSeries }],
+            options: { ...prevState.options, xaxis: { categories: formattedCategories } },
         }));
     }, [countRequests]);
 
-
     return (
         <div>
-            <div id="chart">
-                <ReactApexChart options={state.options} series={state.series} type="area" height={height} />
-            </div>
-            <div id="html-dist"></div>
+            {/* Render the chart */}
+            <ReactApexChart options={state.options} series={state.series} type="area" height={height} />
         </div>
     );
 }

@@ -9,19 +9,28 @@ interface RequestInfoTableProps {
     data: MaintenanceRequestsInterface | undefined;
 }
 
+// Display detailed information of a maintenance request in a table format
 const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
     if (!data) return null;
 
     return (
         <Table>
             <TableBody>
+                {/* Request ID */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">หมายเลขคำร้อง</Typography></TableCell>
-                    <TableCell><Typography>{data.ID}</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">หมายเลขคำร้อง</Typography>
+                    </TableCell>
+                    <TableCell>
+                        <Typography>{data.ID}</Typography>
+                    </TableCell>
                 </TableRow>
 
+                {/* Request timestamp */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">เวลาที่ร้องขอ</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">เวลาที่ร้องขอ</Typography>
+                    </TableCell>
                     <TableCell>
                         <Typography>
                             {`${dateFormat(data.CreatedAt || '')}, ${data.CreatedAt?.slice(11, 16)} น.`}
@@ -29,8 +38,11 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                 </TableRow>
 
+                {/* Room/Location info */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">พื้นที่/ห้อง</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">พื้นที่/ห้อง</Typography>
+                    </TableCell>
                     <TableCell>
                         <Typography>
                             {`${data.Room?.RoomType?.TypeName} ชั้น ${data.Room?.Floor?.Number} ห้อง ${data.Room?.RoomNumber}`}
@@ -38,18 +50,31 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                 </TableRow>
 
+                {/* Maintenance type */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">ประเภทงาน</Typography></TableCell>
-                    <TableCell><Typography>{data.MaintenanceType?.TypeName}</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">ประเภทงาน</Typography>
+                    </TableCell>
+                    <TableCell>
+                        <Typography>{data.MaintenanceType?.TypeName}</Typography>
+                    </TableCell>
                 </TableRow>
 
+                {/* Description */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">รายละเอียด</Typography></TableCell>
-                    <TableCell><Typography>{data.Description}</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">รายละเอียด</Typography>
+                    </TableCell>
+                    <TableCell>
+                        <Typography>{data.Description}</Typography>
+                    </TableCell>
                 </TableRow>
 
+                {/* Available time */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">ช่วงเวลาที่รับบริการได้</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">ช่วงเวลาที่รับบริการได้</Typography>
+                    </TableCell>
                     <TableCell>
                         <Typography>
                             {data.IsAnytimeAvailable
@@ -59,8 +84,11 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                 </TableRow>
 
+                {/* Requester information */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">ร้องขอโดย</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">ร้องขอโดย</Typography>
+                    </TableCell>
                     <TableCell>
                         <Typography>
                             {`${data.User?.FirstName} ${data.User?.LastName} - ${data.User?.CompanyName} (${data.User?.EmployeeID})`}
@@ -68,8 +96,11 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                 </TableRow>
 
+                {/* Contact information */}
                 <TableRow>
-                    <TableCell><Typography className="title-list">ข้อมูลการติดต่อ</Typography></TableCell>
+                    <TableCell>
+                        <Typography className="title-list">ข้อมูลการติดต่อ</Typography>
+                    </TableCell>
                     <TableCell>
                         <Typography>
                             <FontAwesomeIcon icon={faPhone} style={{ paddingRight: '8px' }} />

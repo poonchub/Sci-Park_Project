@@ -6,9 +6,11 @@ interface RequestImagesProps {
     apiUrl: string;
 }
 
+// Display images responsively based on the number of images provided
 const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     const count = images.length;
 
+    // Display 1 image full width
     if (count === 1) {
         return (
             <Grid2 size={{ xs: 12, md: 12 }} sx={{ alignItems: "center" }}>
@@ -21,6 +23,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
         );
     }
 
+    // Display 2 images side by side
     if (count === 2) {
         return (
             <>
@@ -42,6 +45,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
         );
     }
 
+    // Display 3 images with 1 large and 2 stacked
     if (count === 3) {
         return (
             <>
@@ -70,6 +74,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
         );
     }
 
+    // For 4 or more images, use a grid layout
     return (
         <ImageList cols={3} gap={12} sx={{ width: '100%' }}>
             {images.map((img, i) => (

@@ -1,13 +1,14 @@
-import { Step, StepIconProps, StepLabel, Stepper, styled } from "@mui/material"
-
+import { Step, StepIconProps, StepLabel, Stepper, styled } from "@mui/material";
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowsSpin, faBan, faCheck, faExclamation, faFile, faFlagCheckered, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+// Stepper component rendering the steps with dynamic icons
 function StepperComponent(props: { activeStep: number; steps: string[]; }) {
     const { activeStep, steps } = props
 
+    // Step connector with custom gradient styling
     const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
         [`&.${stepConnectorClasses.alternativeLabel}`]: {
             top: 22,
@@ -34,6 +35,7 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
         },
     }));
 
+    // Styled step icon with dynamic background
     const ColorlibStepIconRoot = styled('div')<{
         ownerState: { completed?: boolean; active?: boolean };
     }>(({ theme }) => ({
@@ -67,12 +69,12 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
         ],
     }));
 
+    // Mapping step names to FontAwesome icons
     function ColorlibStepIcon(props: StepIconProps) {
         const { active, completed, className } = props;
     
         const stepIndex = props.icon as string;
     
-        // แม็ปหมายเลขสถานะเป็น icon
         const icons: { [key: string]: IconDefinition } = {
             "Creating Request": faFile,
             "Pending": faHourglassHalf,

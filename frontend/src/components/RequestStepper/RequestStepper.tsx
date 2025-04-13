@@ -8,8 +8,9 @@ interface RequestStepperProps {
     requestStatusID: number;
 }
 
+// The RequestStepper component displays a stepper based on the status of the maintenance request
 const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, requestStatusID }) => {
-
+    // Define the status flow groups based on request outcome
     const statusFlowMap: {
         [key: string]: string[];
     } = {
@@ -18,12 +19,14 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
         Failed: ["Creating Request", "Pending", "Approved", "In Progress", "Failed"]
     };
 
+    // Determine the status group based on the request status name
     const getStatusGroup = (statusName: string): keyof typeof statusFlowMap => {
         if (statusName === "Rejected") return "Rejected";
         if (statusName === "Failed") return "Failed";
         return "Normal";
     };
 
+    // Filter the steps based on the current status and status flow group
     const filteredSteps = useMemo(() => {
         const currentStatus = requestStatuses.find(s => s.ID === requestStatusID);
         if (!currentStatus) return [];
@@ -34,16 +37,19 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
         const steps = requestStatuses.filter(s => flow.includes(s.Name || ""));
         steps.sort((a, b) => flow.indexOf(a.Name || "") - flow.indexOf(b.Name || ""));
 
+        // Add "Creating Request" at the beginning of the flow if it is part of the status flow
         return flow.includes("Creating Request")
             ? [{ ID: -1, Name: "Creating Request" }, ...steps]
             : steps;
     }, [requestStatuses, requestStatusID]);
 
+    // Determine the active step based on the current request status ID
     const activeStep = useMemo(() => {
         if (!requestStatusID) return 0;
         return filteredSteps.findIndex(s => s.ID === requestStatusID);
     }, [filteredSteps, requestStatusID]);
 
+    // Render the StepperComponent with the filtered steps
     return (
         <Card sx={{
             width: '100%',

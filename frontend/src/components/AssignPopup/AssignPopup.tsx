@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-    Dialog, DialogTitle, DialogContent, DialogActions,
+    Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
     Typography, Button, MenuItem, InputAdornment,
-    Grid2
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
 import { UserInterface } from "../../interfaces/IUser";
 import { Select } from '../Select/Select';
@@ -41,25 +41,31 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
 }) => {
     return (
         <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
-            <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>มอบหมายงานซ่อม</DialogTitle>
+            {/* Dialog title */}
+            <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
+                มอบหมายงานซ่อม
+            </DialogTitle>
+
             <DialogContent sx={{ minWidth: 500 }}>
                 <Grid2 container spacing={1}>
+                    {/* Display location and request details */}
                     <Grid2 size={{ xs: 10, md: 12 }}>
                         <Typography sx={{ fontWeight: 600 }}>
                             {requestSelected.Area?.Name === 'บริเวณอื่นๆ'
                                 ? requestSelected.AreaDetail
                                 : `${requestSelected.Area?.Name || "-"} ชั้น ${requestSelected.Room?.Floor?.Number || "-"} ห้อง ${requestSelected.Room?.RoomNumber || "-"}`}
                         </Typography>
-                        <Typography sx={{ color: '#6D6E70'}}>
+                        <Typography sx={{ color: '#6D6E70' }}>
                             {requestSelected.Description || "ไม่มีรายละเอียด"}
                         </Typography>
                     </Grid2>
 
+                    {/* Show maintenance type with icon and color */}
                     {requestSelected.MaintenanceType?.TypeName && (() => {
-                        const typeName = requestSelected.MaintenanceType?.TypeName;
+                        const typeName = requestSelected.MaintenanceType.TypeName;
                         const maintenanceKey = typeName as keyof typeof maintenanceTypeConfig;
                         const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
-                            color: "#000", colorLite: "#ddd", icon: faQuestionCircle
+                            color: "#000", colorLite: "#ddd", icon: faQuestionCircle,
                         };
 
                         return (
@@ -73,7 +79,8 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                                     gap: 1,
                                     color,
                                     alignItems: 'center',
-                                }}>
+                                }}
+                            >
                                 <FontAwesomeIcon icon={icon} />
                                 <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                                     {typeName}
@@ -82,8 +89,11 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                         );
                     })()}
 
+                    {/* Operator select dropdown */}
                     <Grid2 size={{ xs: 10, md: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 500, mt: 2 }}>ผู้รับผิดชอบงาน</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500, mt: 2 }}>
+                            ผู้รับผิดชอบงาน
+                        </Typography>
                         <Select
                             value={selectedOperator ?? 0}
                             onChange={(e) => setSelectedOperator(Number(e.target.value))}
@@ -106,6 +116,8 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                     </Grid2>
                 </Grid2>
             </DialogContent>
+
+            {/* Confirm/Cancel buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button variant='text' onClick={onClose}>ยกเลิก</Button>
                 <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
@@ -113,4 +125,5 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
         </Dialog>
     );
 };
+
 export default AssignPopup;
