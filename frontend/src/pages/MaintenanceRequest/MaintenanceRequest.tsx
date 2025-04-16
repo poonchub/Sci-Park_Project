@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import "./MaintenanceRequest.css"
-import { Box, Button, Card, CardContent, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
+import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
@@ -20,11 +20,12 @@ import { faQuestionCircle, faBullseye, faMagnifyingGlass, faXmark } from "@forta
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
 import { SearchOff } from "@mui/icons-material"
-import ApexChart from "../../components/ApexChart/ApexChart"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
 import handleAction from "../../utils/handleAction"
 import { statusConfig } from "../../constants/statusConfig"
+import ApexLineChart from "../../components/ApexLineChart/ApexLineChart"
+import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -191,8 +192,8 @@ function MaintenanceRequest() {
                                 setOpenConfirmRejected(true)
                                 setRequestSelected(Number(item.id))
                             }}
-                            sx={{ 
-                                minWidth: '0px', 
+                            sx={{
+                                minWidth: '0px',
                                 px: '6px',
                             }}
                         >
@@ -334,6 +335,8 @@ function MaintenanceRequest() {
             />
 
             <Grid2 container spacing={3}>
+
+                {/* Header Section */}
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         รายการแจ้งซ่อม
@@ -347,52 +350,7 @@ function MaintenanceRequest() {
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
 
                     {/* Status Section */}
-                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={3} className='status-section'>
-                        {
-                            requestStatuses.map((item, index) => {
-                                const statusKey = item.Name as keyof typeof statusConfig;
-                                const { color, icon } = statusConfig[statusKey] ?? { color: "#000", icon: faQuestionCircle };
-
-                                return (
-                                    <Grid2 size={{ xs: 10, md: 4 }} key={index}>
-                                        <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
-                                            <CardContent className="status-card-content">
-                                                <Grid2 size={{ xs: 10, md: 12 }}>
-                                                    <Typography variant="body1" sx={{
-                                                        fontWeight: 500,
-                                                        fontSize: 16
-                                                    }}>{item.Name}</Typography>
-                                                    <Typography variant="body1" sx={{
-                                                        fontWeight: 600,
-                                                        fontSize: 20
-                                                    }}>{`${countRequestStatus?.[item.Name || "Unknown"] ?? 0} รายการ`}</Typography>
-                                                </Grid2>
-                                                <Grid2 size={{ xs: 10, md: 8 }} sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Box sx={{
-                                                        borderRadius: '50%',
-                                                        bgcolor: color,
-                                                        border: 1,
-                                                        aspectRatio: '1/1',
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        width: 55,
-                                                        color: '#fff'
-                                                    }}>
-                                                        <FontAwesomeIcon icon={icon} size="2xl" />
-                                                    </Box>
-                                                </Grid2>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid2>
-                                )
-                            })
-                        }
-                    </Grid2>
+                    <RequestStatusCards countRequestStatus={countRequestStatus || {}} />
 
                     {/* Filters Section */}
                     <Grid2 container
@@ -463,7 +421,7 @@ function MaintenanceRequest() {
                     <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3 }}>
                         <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexChart data={maintenanceRequests} height={160} />
+                        <ApexLineChart data={maintenanceRequests} height={160} />
                     </Card>
                 </Grid2>
 
@@ -492,6 +450,10 @@ function MaintenanceRequest() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
+                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                },
                             }}
                             slots={{
                                 noRowsOverlay: () => (
@@ -511,6 +473,16 @@ function MaintenanceRequest() {
                                         </Typography>
                                     </Box>
                                 ),
+                            }}
+                            slotProps={{
+                                baseCheckbox: {
+                                    sx: {
+                                        color: 'gray',
+                                        '&.Mui-checked': {
+                                            color: '#F26522',
+                                        },
+                                    },
+                                },
                             }}
                         />
                     </Card>

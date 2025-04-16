@@ -435,6 +435,20 @@ function AssignWork() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
+                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                },
+                            }}
+                            slotProps={{
+                                baseCheckbox: {
+                                    sx: {
+                                        color: 'gray',
+                                        '&.Mui-checked': {
+                                            color: '#F26522',
+                                        },
+                                    },
+                                },
                             }}
                         />
                     </Card>

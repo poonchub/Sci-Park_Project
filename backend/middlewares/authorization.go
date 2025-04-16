@@ -15,7 +15,7 @@ const (
 	Enterprise = 2
 	Employee   = 3
 	Manager    = 4
-	Operators  = 4  // ผู้ใช้งานที่มีระดับเดียวกับ Manager
+	Operator  = 4  // ผู้ใช้งานที่มีระดับเดียวกับ Manager
 	Admin      = 5
 	SuperAdmin = 6
 )
@@ -81,8 +81,8 @@ func getRoleLevel(role string) int {
 		return Employee
 	case "Manager":
 		return Manager
-	case "Operators":
-		return Operators
+	case "Operator":
+		return Operator
 	case "Outsider":
 		return Outsider
 	default:

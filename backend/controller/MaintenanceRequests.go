@@ -157,6 +157,7 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Maintenance request deleted successfully"})
 }
 
+// GET /maintenance-requests-option
 func GetMaintenanceRequests(c *gin.Context) {
     // รับค่าจาก Query Parameters
     statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))

@@ -3,7 +3,7 @@ import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
 
-function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number }) {
+function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: number }) {
     const { data, height } = props;
 
     // State to store the count of requests per day
@@ -100,4 +100,4 @@ function ApexChart(props: { data: MaintenanceRequestsInterface[], height: number
     );
 }
 
-export default ApexChart;
+export default ApexLineChart;
