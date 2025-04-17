@@ -5,10 +5,10 @@ import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { statusConfig } from "../../constants/statusConfig";
 
 interface Props {
-    countRequestStatus: Record<string, number>;
+    statusCounts: Record<string, number>;
 }
 
-const RequestStatusCards: React.FC<Props> = ({ countRequestStatus }) => {
+const RequestStatusCards: React.FC<Props> = ({ statusCounts }) => {
     const displayStatuses = [
         "Pending",
         "Approved",
@@ -23,11 +23,11 @@ const RequestStatusCards: React.FC<Props> = ({ countRequestStatus }) => {
         if (status === "Unsuccessful") {
             const failedStatuses = ["Rejected", "Failed", "Cancelled"];
             count = failedStatuses.reduce(
-                (sum, key) => sum + (countRequestStatus?.[key] ?? 0),
+                (sum, key) => sum + (statusCounts?.[key] ?? 0),
                 0
             );
         } else {
-            count = countRequestStatus?.[status] ?? 0;
+            count = statusCounts?.[status] ?? 0;
         }
 
         const { color, icon } = statusConfig[status as keyof typeof statusConfig] ?? {

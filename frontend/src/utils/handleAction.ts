@@ -4,7 +4,7 @@ import { CreateManagerApproval, UpdateMaintenanceRequestByID } from "../services
 
 interface handleActionProps {
     userID: number | undefined;
-    requestSelected: number | undefined;
+    selectedRequest: number | undefined;
     setAlerts: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
     refreshRequestData: () => void;
     setOpenConfirmApproved: (v: boolean) => void;
@@ -16,14 +16,14 @@ const handleAction = async (
     message: string,
     {
         userID,
-        requestSelected,
+        selectedRequest,
         setAlerts,
         refreshRequestData,
         setOpenConfirmApproved,
         setOpenConfirmRejected,
     }: handleActionProps
 ) => {
-    if (!userID || !requestSelected) {
+    if (!userID || !selectedRequest) {
         setAlerts((prev) => [...prev, { type: "error", message: "Invalid data" }]);
         return;
     }
@@ -32,7 +32,7 @@ const handleAction = async (
         const managerApp: ManagerApprovalsInterface
             = {
             UserID: userID,
-            RequestID: requestSelected,
+            RequestID: selectedRequest,
             RequestStatusID: statusID,
         };
 
@@ -44,7 +44,7 @@ const handleAction = async (
         if (!resApproval || resApproval.error)
             throw new Error(resApproval?.error || "Failed to create manager approval");
 
-        const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected);
+        const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest);
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status");
 

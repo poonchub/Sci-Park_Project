@@ -1,30 +1,22 @@
-import { useEffect, useState } from 'react';
-import ReactApexChart from 'react-apexcharts';
-import { ApexOptions } from 'apexcharts';
-import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
+import dayjs, { Dayjs } from "dayjs";
+import { useEffect, useState } from "react";
+import ReactApexChart from "react-apexcharts";
+import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
+import { ApexOptions } from "apexcharts";
 
-function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: number }) {
-    const { data, height } = props;
+function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: number, selectedDate?: Dayjs | null }) {
+    const { data, height, selectedDate } = props;
 
-    // State to store the count of requests per day
     const [countRequests, setCountRequest] = useState<Record<string, number>>({});
-    // State to store chart data and options
     const [state, setState] = useState<{
-        series: { name: string; data: number[] }[]; // Data for the chart
-        options: ApexOptions; // Configuration for the chart
+        series: { name: string; data: number[] }[];
+        options: ApexOptions;
     }>({
         series: [{ name: 'Requests', data: [] }],
         options: {
-            chart: {
-                height: height,
-                type: 'area' as 'area',
-            },
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth'
-            },
+            chart: { height, type: 'area' },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth' },
             xaxis: {
                 type: 'category',
                 categories: [],
@@ -37,6 +29,7 @@ function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: nu
                 }
             },
             yaxis: {
+                min: 0,
                 labels: {
                     style: {
                         colors: 'text.primary',
@@ -45,59 +38,65 @@ function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: nu
                     }
                 }
             },
-            tooltip: {
-                x: {
-                    format: 'dd/MM/yy'
-                },
-            },
         },
     });
 
-    // Calculate the number of requests per day
     useEffect(() => {
-        const countR = data.reduce((acc, item) => {
-            const date = item.CreatedAt?.slice(0, 10) || "Unknown";
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
+        const countR: Record<string, number> = {};
 
-        // Sort the requests by date
-        const sortedCountR = Object.entries(countR)
-            .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
-            .reduce((acc, [date, value]) => {
-                acc[date] = value;
+        data.forEach(item => {
+            const createdDate = dayjs(item.CreatedAt);
+
+            let key = '';
+            if (dayjs(selectedDate).isValid()) {
+                // แบบรายวัน
+                key = createdDate.format('YYYY-MM-DD');
+            } else {
+                // แบบรายเดือน
+                key = createdDate.format('YYYY-MM');
+            }
+
+            countR[key] = (countR[key] || 0) + 1;
+        });
+
+        const sortedCount = Object.entries(countR)
+            .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
                 return acc;
             }, {} as Record<string, number>);
 
-        // Update the state with the sorted data
-        setCountRequest(sortedCountR);
-    }, [data]);
+        setCountRequest(sortedCount);
+    }, [data, selectedDate]);
 
-    // Update chart state based on the request counts
     useEffect(() => {
         const categories = Object.keys(countRequests);
         const dataSeries = categories.map(date => countRequests[date]);
-
-        // Format the dates for the x-axis labels
+    
+        // ตรวจสอบว่า key เป็นแบบวันหรือเดือน
+        const isDaily = categories[0]?.length === 10; // YYYY-MM-DD
+    
         const formattedCategories = categories.map(date => {
-            const parsedDate = new Date(date);
-            return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(parsedDate);
+            const d = dayjs(date);
+            return isDaily
+                ? d.format('D')       // รายวัน: แสดงวันที่ (เช่น "1", "2")
+                : d.format('MMM');    // รายเดือน: แสดงชื่อเดือน (เช่น "Jan")
         });
-
-        // Update the chart state with new categories and series data
-        setState(prevState => ({
-            ...prevState,
+    
+        setState(prev => ({
+            ...prev,
             series: [{ name: 'Requests', data: dataSeries }],
-            options: { ...prevState.options, xaxis: { categories: formattedCategories } },
+            options: {
+                ...prev.options,
+                xaxis: { ...prev.options.xaxis, categories: formattedCategories }
+            }
         }));
-    }, [countRequests]);
+    }, [countRequests, selectedDate]);    
 
     return (
         <div>
-            {/* Render the chart */}
             <ReactApexChart options={state.options} series={state.series} type="area" height={height} />
         </div>
     );
 }
-
 export default ApexLineChart;

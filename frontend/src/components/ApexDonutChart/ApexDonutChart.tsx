@@ -11,17 +11,19 @@ import {
     useTheme,
     Avatar,
 } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig';
 
 interface Props {
-    data: Record<string, number>; // category: count
+    data: Record<string, { total: number; completed: number; completedPercentage: number }>
     height?: number;
+    completed: number;
 }
 
-const COLORS = ['#3B00B9', '#C800D1', '#F5005B', '#FFA500', '#A0A0A0'];
-
-function ApexDonutChart({ data, height = 260 }: Props) {
+function ApexDonutChart({ data, height = 220, completed }: Props) {
     const theme = useTheme();
-    const total = Object.values(data).reduce((a, b) => a + b, 0);
+
+    console.log(completed)
 
     const [state, setState] = useState<{
         series: number[];
@@ -33,7 +35,6 @@ function ApexDonutChart({ data, height = 260 }: Props) {
                 type: 'donut',
             },
             labels: [],
-            colors: COLORS,
             legend: {
                 show: false,
             },
@@ -42,57 +43,101 @@ function ApexDonutChart({ data, height = 260 }: Props) {
             },
             plotOptions: {
                 pie: {
-                  donut: {
-                    size: '75%', // ปรับขนาดรูตรงกลาง
-                    labels: {
-                      show: true,
-                      name: {
-                        show: true,
-                        fontSize: '16px',
-                        fontWeight: 400,
-                        color: theme.palette.text.secondary,
-                        offsetY: 20,
-                      },
-                      value: {
-                        show: true,
-                        fontSize: '24px',
-                        fontWeight: 600,
-                        color: theme.palette.text.primary,
-                        offsetY: -10,
-                        formatter: () => '84%',
-                      },
-                      total: {
-                        show: true,
-                        label: 'success',
-                        fontSize: '16px',
-                        color: 'text.secondary',
-                        formatter: (): string => {
-                          const total = state.series.reduce((a, b) => a + b, 0);
-                          const success = state.series[0] ?? 0; // สมมุติว่าชิ้นแรกคือ success
-                          return `${Math.round((success / total) * 100)}%`;
+                    donut: {
+                        size: '65%', // ปรับขนาดรูตรงกลาง
+                        labels: {
+                            show: true,
+                            name: {
+                                show: true,
+                                fontSize: '16px',
+                                fontWeight: 400,
+                                color: theme.palette.text.secondary,
+                                offsetY: 20,
+                            },
+                            value: {
+                                show: true,
+                                fontSize: '24px',
+                                fontFamily: 'Noto Sans Thai, sans-serif',
+                                fontWeight: 700,
+                                color: theme.palette.text.primary,
+                                offsetY: -20,
+                            },
+                            total: {
+                                show: true,
+                                showAlways: true,
+                                label: 'Completed',
+                                fontSize: '16px',
+                                fontFamily: 'Noto Sans Thai, sans-serif',
+                                fontWeight: 500,
+                                color: 'text.secondary',
+                                formatter: (): string => {
+                                    return `${completed}%`; // Use the completed prop as the default label
+                                },
+                            },
                         },
-                      },
                     },
-                  },
                 },
-              }              
+            },
+            tooltip: {
+                custom: ({ seriesIndex, w }) => {
+                    const label = w.config.labels[seriesIndex]; // Get the label name from seriesIndex
+                    const completedPercentage = data[label]?.completedPercentage || 0;
+                    return `
+                        <div style="padding: 10px; font-size: 14px; color: white;">
+                            <strong>${label}</strong><br/>
+                            Completed: ${completedPercentage}%
+                        </div>
+                    `;
+                },
+            },
         },
     });
 
     useEffect(() => {
         const labels = Object.keys(data);
-        const series = labels.map((label) => data[label]);
-
+        const series = labels.map((label) => data[label].total);
+        const colors = labels.map((label) => maintenanceTypeConfig[label].color);
+    
         setState((prev) => ({
             ...prev,
             series,
             options: {
                 ...prev.options,
                 labels,
+                colors,
+                plotOptions: {
+                    ...prev.options.plotOptions,
+                    pie: {
+                        ...prev.options.plotOptions?.pie,
+                        donut: {
+                            ...prev.options.plotOptions?.pie?.donut,
+                            labels: {
+                                ...prev.options.plotOptions?.pie?.donut?.labels,
+                                total: {
+                                    ...prev.options.plotOptions?.pie?.donut?.labels?.total,
+                                    formatter: () => `${completed}%`,
+                                },
+                            },
+                        },
+                    },
+                },
+                tooltip: {
+                    ...prev.options.tooltip,
+                    custom: ({ seriesIndex, w }) => {
+                        const label = w.config.labels?.[seriesIndex] ?? '';
+                        const completedPercentage = data[label]?.completedPercentage ?? 0;
+                        return `
+                            <div style="padding: 10px; font-size: 14px; color: white;">
+                                <strong>${label}</strong><br/>
+                                Completed: ${completedPercentage}%
+                            </div>
+                        `;
+                    },
+                },
             },
         }));
-    }, [data]);
-
+    }, [data, completed]);        
+    
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
@@ -110,8 +155,7 @@ function ApexDonutChart({ data, height = 260 }: Props) {
                 </Box>
 
                 <Stack spacing={1.5} mt={2}>
-                    {Object.entries(data).map(([label, value], idx) => {
-                        const percent = total ? (value / total) * 100 : 0;
+                    {Object.entries(data).map(([label, value]) => {
                         return (
                             <Box key={label}>
                                 <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -119,27 +163,30 @@ function ApexDonutChart({ data, height = 260 }: Props) {
                                         <Avatar
                                             variant="rounded"
                                             sx={{
-                                                bgcolor: COLORS[idx % COLORS.length],
-                                                width: 14,
-                                                height: 14,
+                                                bgcolor: 'transparent',
+                                                width: 24,
+                                                height: 24,
+                                                color: maintenanceTypeConfig[label].color,
                                             }}
-                                        />
+                                        >
+                                            <FontAwesomeIcon icon={maintenanceTypeConfig[label].icon} size="xs" />
+                                        </Avatar>
                                         <Typography variant="body2">{label}</Typography>
                                     </Stack>
                                     <Typography variant="body2" fontWeight={500}>
-                                        {value} รายการ
+                                        {value.total} รายการ
                                     </Typography>
                                 </Stack>
                                 <LinearProgress
                                     variant="determinate"
-                                    value={percent}
+                                    value={value.total}
                                     sx={{
                                         mt: 0.5,
                                         height: 6,
                                         borderRadius: 5,
                                         backgroundColor: '#eee',
                                         '& .MuiLinearProgress-bar': {
-                                            backgroundColor: COLORS[idx % COLORS.length],
+                                            backgroundColor: maintenanceTypeConfig[label].color,
                                         },
                                     }}
                                 />

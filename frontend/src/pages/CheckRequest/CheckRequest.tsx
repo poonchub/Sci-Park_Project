@@ -96,7 +96,7 @@ function CheckRequest() {
 	const handleClick = (statusID: number, message: string) => {
 		handleAction(statusID, message, {
 			userID: maintenanceRequest?.UserID,
-			requestSelected: maintenanceRequest?.ID,
+			selectedRequest: maintenanceRequest?.ID,
 			setAlerts,
 			refreshRequestData: getMaintenanceRequest,
 			setOpenConfirmApproved,
