@@ -2,7 +2,7 @@ import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
 import { CreateManagerApproval, UpdateMaintenanceRequestByID } from "../services/http";
 
-interface handleActionProps {
+interface handleActionApprovalProps {
     userID: number | undefined;
     selectedRequest: number | undefined;
     setAlerts: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
@@ -11,7 +11,7 @@ interface handleActionProps {
     setOpenConfirmRejected: (v: boolean) => void;
 }
 
-const handleAction = async (
+const handleActionApproval = async (
     statusID: number,
     message: string,
     {
@@ -21,7 +21,7 @@ const handleAction = async (
         refreshRequestData,
         setOpenConfirmApproved,
         setOpenConfirmRejected,
-    }: handleActionProps
+    }: handleActionApprovalProps
 ) => {
     if (!userID || !selectedRequest) {
         setAlerts((prev) => [...prev, { type: "error", message: "Invalid data" }]);
@@ -61,4 +61,4 @@ const handleAction = async (
         setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
     }
 };
-export default handleAction
+export default handleActionApproval;

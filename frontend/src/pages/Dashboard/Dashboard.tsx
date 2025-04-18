@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AlertGroup from '../../components/AlertGroup/AlertGroup';
 import { Box, Button, Card, Grid2, Typography } from '@mui/material';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
-import handleAction from '../../utils/handleAction';
+import handleAction from '../../utils/handleActionApproval';
 import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from '../../services/http';
 import { UserInterface } from '../../interfaces/IUser';
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';

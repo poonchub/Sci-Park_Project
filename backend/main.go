@@ -90,7 +90,6 @@ func main() {
 		protected.POST("/manager-approval", controller.CreateManagerApproval)
 
 		// MaintenanceTasks
-		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
 		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
 	}
 
@@ -106,7 +105,10 @@ func main() {
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
 	{	
-
+		// MaintenanceTasks
+		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
+		protected.PATCH("/maintenance-task/:id", controller.UpdateMaintenanceTaskByID)
+		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token

@@ -16,16 +16,16 @@ import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faBullseye, faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
 import { CalendarMonth, SearchOff } from "@mui/icons-material"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
-import handleAction from "../../utils/handleAction"
 import { statusConfig } from "../../constants/statusConfig"
 import ApexLineChart from "../../components/ApexLineChart/ApexLineChart"
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards"
+import handleActionApproval from "../../utils/handleActionApproval"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -273,7 +273,7 @@ function MaintenanceRequest() {
     };
 
     const handleClick = (statusID: number, message: string) => {
-        handleAction(statusID, message, {
+        handleActionApproval(statusID, message, {
             userID: user?.ID,
             selectedRequest,
             setAlerts,
@@ -359,7 +359,7 @@ function MaintenanceRequest() {
 
                     {/* Filters Section */}
                     <Grid2 container
-                        spacing={2}
+                        spacing={1}
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
                         sx={{
@@ -379,7 +379,7 @@ function MaintenanceRequest() {
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
                                             </InputAdornment>
                                         ),
                                     }
@@ -406,7 +406,7 @@ function MaintenanceRequest() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faBullseye} size="xl" />
+                                            <FontAwesomeIcon icon={faChartSimple} size="lg" />
                                         </InputAdornment>
                                     }
                                 >
@@ -425,22 +425,24 @@ function MaintenanceRequest() {
                             <Button onClick={handleClearFillter}
                                 sx={{
                                     minWidth: 0,
+                                    width: '100%',
                                     height: '45px',
                                     borderRadius: '10px',
                                     border: '1px solid rgb(109, 110, 112, 0.4)',
                                     "&:hover": {
-                                        boxShadow: 'none'
-                                        
+                                        boxShadow: 'none',
+                                        borderColor: 'primary.main',
+                                        backgroundColor: 'transparent'
                                     },
                                 }}
-                            >ล้าง</Button>
+                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
                         </Grid2>
                     </Grid2>
                 </Grid2>
 
                 {/* Chart Section */}
                 <Grid2 size={{ xs: 10, md: 5 }} >
-                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3 }}>
+                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
                         <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
                         <ApexLineChart data={maintenanceRequests} height={160} selectedDate={selectedDate} />

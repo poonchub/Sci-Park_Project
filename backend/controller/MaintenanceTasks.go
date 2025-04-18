@@ -49,9 +49,9 @@ func CreateMaintenanceTask(c *gin.Context) {
 	}
 
 	tsk := entity.MaintenanceTask{
-		Description: task.Description,
-		UserID: task.UserID,
-		RequestID: task.RequestID,
+		Description:     task.Description,
+		UserID:          task.UserID,
+		RequestID:       task.RequestID,
 		RequestStatusID: uint(RequestStatusID),
 	}
 
@@ -67,92 +67,150 @@ func CreateMaintenanceTask(c *gin.Context) {
 
 // GET maintenance-tasks-option-id
 func GetMaintenanceTasksByOperatorID(c *gin.Context) {
-    // รับค่าจาก Query Parameters
-    operatorID, _ := strconv.Atoi(c.DefaultQuery("operator", "0"))
-    maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
-    createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
+	// รับค่าจาก Query Parameters
+	operatorID, _ := strconv.Atoi(c.DefaultQuery("operator", "0"))
+    statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
+	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
+	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
 
-    page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-    limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-    // ตรวจสอบค่าที่ส่งมา
-    if page < 1 {
-        page = 1
-    }
-    if limit < 1 {
-        limit = 10
-    }
-    offset := (page - 1) * limit
+	// ตรวจสอบค่าที่ส่งมา
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
 
-    // ดึงข้อมูลแบบมีเงื่อนไข
-    var maintenanceTasks []entity.MaintenanceTask
-    db := config.DB()
+	// ดึงข้อมูลแบบมีเงื่อนไข
+	var maintenanceTasks []entity.MaintenanceTask
+	db := config.DB()
+	db = db.Joins("JOIN maintenance_requests ON maintenance_requests.id = maintenance_tasks.request_id")
 
-    if operatorID > 0 {
-        db = db.Where("user_id = ?", operatorID)
-    }
+	if operatorID > 0 {
+		db = db.Where("maintenance_tasks.user_id = ?", operatorID)
+	}
 
-    if maintenanceTypeID > 0 {
-        db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
-    }
+    if statusID > 0 {
+		db = db.Where("maintenance_tasks.request_status_id = ?", statusID)
+	}
 
-    var startOfDay time.Time
-    var endOfDay time.Time
+	if maintenanceTypeID > 0 {
+		db = db.Where("maintenance_requests.maintenance_type_id = ?", maintenanceTypeID)
+	}
 
-    // คำนวณเวลาเริ่มต้นและสิ้นสุดของวันที่ที่ต้องการค้นหา
-    if createdAt != "" {
-        // แปลงวันที่ที่รับมาให้เป็นเวลาที่เขตเวลา Asia/Bangkok
-        loc, _ := time.LoadLocation("Asia/Bangkok")
-        parsedTime, err := time.ParseInLocation("2006-01-02", createdAt, loc)
-        if err != nil {
-            fmt.Println("Error parsing time:", err)
-            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
-            return
-        }
+	var startOfDay time.Time
+	var endOfDay time.Time
 
-        // กำหนดเวลาเริ่มต้น (00:00) และสิ้นสุด (23:59)
-        startOfDay = parsedTime
-        endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
+	// คำนวณเวลาเริ่มต้นและสิ้นสุดของวันที่ที่ต้องการค้นหา
+	if createdAt != "" {
+		// แปลงวันที่ที่รับมาให้เป็นเวลาที่เขตเวลา Asia/Bangkok
+		loc, _ := time.LoadLocation("Asia/Bangkok")
+		parsedTime, err := time.ParseInLocation("2006-01-02", createdAt, loc)
+		if err != nil {
+			fmt.Println("Error parsing time:", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+			return
+		}
 
-        // ใช้ timestamp สำหรับการเปรียบเทียบ
-        db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
-    }
+		// กำหนดเวลาเริ่มต้น (00:00) และสิ้นสุด (23:59)
+		startOfDay = parsedTime
+		endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
 
-    // ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-    query := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType")
+		// ใช้ timestamp สำหรับการเปรียบเทียบ
+		db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+	}
 
-    // ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
-    if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {
-        fmt.Println("Error:", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
-        return
-    }
+	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
+	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor")
 
-    // ✅ นับจำนวนทั้งหมดแยกออกจาก Query หลัก
-    var total int64
-    countQuery := config.DB().Model(&entity.MaintenanceTask{})
+	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
+	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {
+		fmt.Println("Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
 
-    if operatorID > 0 {
-        countQuery = countQuery.Where("user_id = ?", operatorID)
-    }
+	// ✅ นับจำนวนทั้งหมดแยกออกจาก Query หลัก
+	var total int64
+	countQuery := config.DB().Model(&entity.MaintenanceTask{})
+	countQuery = countQuery.Joins("JOIN maintenance_requests ON maintenance_requests.id = maintenance_tasks.request_id")
 
-    if maintenanceTypeID > 0 {
-        countQuery = countQuery.Where("maintenance_type_id = ?", maintenanceTypeID)
-    }
+	if operatorID > 0 {
+		countQuery = countQuery.Where("maintenance_tasks.user_id = ?", operatorID)
+	}
 
-    if createdAt != "" {
-        // ใช้ timestamp ในการนับจำนวน
-        countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
-    }
+    if statusID > 0 {
+		countQuery = countQuery.Where("maintenance_tasks.request_status_id = ?", statusID)
+	}
 
-    countQuery.Count(&total)
+	if maintenanceTypeID > 0 {
+		countQuery = countQuery.Where("maintenance_requests.maintenance_type_id = ?", maintenanceTypeID)
+	}
 
-    // ✅ ส่ง JSON Response
-    c.JSON(http.StatusOK, gin.H{
-        "data":       maintenanceTasks,
-        "page":       page,
-        "limit":      limit,
-        "total":      total,
-        "totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
-    })
+	if createdAt != "" {
+		// ใช้ timestamp ในการนับจำนวน
+		countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+	}
+
+	countQuery.Count(&total)
+
+	// ✅ ส่ง JSON Response
+	c.JSON(http.StatusOK, gin.H{
+		"data":       maintenanceTasks,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
+	})
+}
+
+// PATCH /maintenance-task/:id
+func UpdateMaintenanceTaskByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	var task entity.MaintenanceTask
+
+	db := config.DB()
+	result := db.First(&task, ID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	result = db.Save(&task)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}
+
+// DELETE /maintenance-task/:id
+func DeleteMaintenanceTaskByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	db := config.DB()
+
+	var task entity.MaintenanceTask
+	if err := db.Where("id = ?", ID).First(&task).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Maintenance task not found"})
+		return
+	}
+
+	if err := db.Where("id = ?", ID).Delete(&entity.MaintenanceTask{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Maintenance task"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Maintenance task deleted successfully"})
 }

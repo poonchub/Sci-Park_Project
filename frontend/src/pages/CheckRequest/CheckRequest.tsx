@@ -21,7 +21,7 @@ import RequestImages from "../../components/RequestImages/RequestImages";
 
 import dateFormat from "../../utils/dateFormat";
 import handleAssignWork from "../../utils/handleAssignWork";
-import handleAction from "../../utils/handleAction";
+import handleAction from "../../utils/handleActionApproval";
 
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 

@@ -142,7 +142,7 @@ function ApexDonutChart({ data, height = 220, completed }: Props) {
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                    การแจ้งซ่อมของเดือนนี้
+                    ประเภทงานซ่อม
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
