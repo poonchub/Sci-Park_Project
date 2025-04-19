@@ -34,17 +34,17 @@ const theme = createTheme({
         },
         divider: "#6D6E70", // step-border
 
-        blue: '#08aff1',
+        customBlue: '#08aff1',
     },
     typography: {
-        fontFamily: '"Noto Sans Thai", sans-serif',        
+        fontFamily: '"Noto Sans Thai", sans-serif',
     },
     components: {
         MuiButton: {
             styleOverrides: {
                 root: {
                     borderRadius: 4,
-                    padding: "4px 16px",
+                    padding: "4px 12px",
                     textTransform: "none",
                     fontSize: 14,
                     margin: 'none',
@@ -52,7 +52,7 @@ const theme = createTheme({
                     lineHeight: 1.4,
                     fontWeight: 600,
                     "&:hover": {
-                        boxShadow: "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12)",
+                        boxShadow: "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 2px 4px 1px rgba(0, 0, 0, 0.12)",
                         fontWeight: 600
                     },
                 },
@@ -65,7 +65,7 @@ const theme = createTheme({
                     boxShadow: 'none',
                     color: "#FFFFFF",
                     "&:hover": {
-                        backgroundColor: "#dd591c",
+                        backgroundColor: "#F26522",
                     },
                 },
                 outlined: {
@@ -79,21 +79,21 @@ const theme = createTheme({
             },
             variants: [
                 {
-                  props: { variant: 'containedBlue' },
-                  style: {
-                    backgroundColor: '#08aff1',
-                    color: '#fff',
-                  },
+                    props: { variant: 'containedBlue' },
+                    style: {
+                        backgroundColor: '#08aff1',
+                        color: '#fff',
+                    },
                 },
                 {
                     props: { variant: 'outlinedCancel' },
                     style: {
-                      border: '1px solid #FF3B30',
-                      color: '#FF3B30',
-                      '&:hover': {
-                        backgroundColor: '#FF3B30',
-                        color: '#fff',
-                      },
+                        border: '1px solid #FF3B30',
+                        color: '#FF3B30',
+                        '&:hover': {
+                            backgroundColor: '#FF3B30',
+                            color: '#fff',
+                        },
                     },
                 },
             ],
@@ -114,6 +114,19 @@ const theme = createTheme({
                     boxShadow: "rgba(0, 0, 0, 0.25) 0px 2px 4px", // shadow-light
                 },
             },
+        },
+        MuiTypography: {
+            variants: [
+                {
+                    props: { variant: 'textButtonClassic' },
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        marginLeft: 6,
+                        lineHeight: 1.5
+                    },
+                },
+            ],
         },
     },
 });

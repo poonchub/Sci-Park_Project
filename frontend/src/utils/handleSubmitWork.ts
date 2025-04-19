@@ -8,7 +8,7 @@ interface AlertMessage {
 }
 
 interface HandleSubmitWorkProps {
-    selectedTask: MaintenanceTasksInterface;
+    selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
     refreshTaskData: () => void;
     setOpenPopupSubmit: React.Dispatch<React.SetStateAction<boolean>>;

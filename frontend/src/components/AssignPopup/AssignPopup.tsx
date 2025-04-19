@@ -4,7 +4,7 @@ import {
     Typography, Button, MenuItem, InputAdornment,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faUserTie } from '@fortawesome/free-solid-svg-icons';
 
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
 import { UserInterface } from "../../interfaces/IUser";
@@ -101,7 +101,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                             fullWidth
                             startAdornment={
                                 <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                    <FontAwesomeIcon icon={faUser} size="lg" />
+                                    <FontAwesomeIcon icon={faUserTie} size="lg" />
                                 </InputAdornment>
                             }
                             sx={{ mt: 1 }}
@@ -109,7 +109,7 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
                             <MenuItem value={0}><em>{'-- เลือกผู้ดำเนินการ --'}</em></MenuItem>
                             {operators.map((item) => (
                                 <MenuItem key={item.ID} value={item.ID}>
-                                    {`${item.ID} ${item.FirstName} ${item.LastName}`}
+                                    {`${item.EmployeeID} ${item.FirstName} ${item.LastName}`}
                                 </MenuItem>
                             ))}
                         </Select>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Grid2, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faPaperPlane, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import './CheckRequest.css';
 
@@ -24,6 +24,9 @@ import handleAssignWork from "../../utils/handleAssignWork";
 import handleAction from "../../utils/handleActionApproval";
 
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
+import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
+import handleSubmitWork from "../../utils/handleSubmitWork";
+import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
 
 function CheckRequest() {
 	// Request data
@@ -35,17 +38,22 @@ function CheckRequest() {
 	const [operators, setOperators] = useState<UserInterface[]>([]);
 
 	// UI state
-	const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 	const [openPopupAssign, setOpenPopupAssign] = useState(false);
 	const [selectedOperator, setSelectedOperator] = useState(0);
 	const [openConfirmApproved, setOpenConfirmApproved] = useState(false);
 	const [openConfirmRejected, setOpenConfirmRejected] = useState(false);
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
 	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
+	const [files, setFiles] = useState<File[]>([]);
+	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
 	const navigate = useNavigate();
 
-	const isOperator = localStorage.getItem('role') === 'Operator' || 'Admin'
+	const isOperator = localStorage.getItem('role') === 'Operator'
+	const isAssigned = maintenanceRequest?.RequestStatus?.Name === 'Assigned'
+	const isInProgress = maintenanceRequest?.RequestStatus?.Name === 'In Progress'
+	const isCompleted = maintenanceRequest?.RequestStatus?.Name === 'Completed'
 
 	// Fetch request by ID
 	const getMaintenanceRequest = async () => {
@@ -93,6 +101,25 @@ function CheckRequest() {
 			setAlerts,
 			refreshRequestData: getMaintenanceRequest,
 			setOpenPopupAssign,
+		});
+	};
+
+	// Handle sumitting task to an operator
+	const onClickSubmit = () => {
+		if (!maintenanceRequest) {
+			setAlerts((prev) => [
+				...prev,
+				{ type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }
+			]);
+			return;
+		}
+
+		handleSubmitWork({
+			selectedTask: maintenanceRequest.MaintenanceTask,
+			setAlerts,
+			refreshTaskData: getMaintenanceRequest,
+			setOpenPopupSubmit,
+			files
 		});
 	};
 
@@ -158,6 +185,16 @@ function CheckRequest() {
 				maintenanceTypeConfig={maintenanceTypeConfig}
 			/>
 
+			{/* Popup for submiting work */}
+			<SubmitPopup
+				open={openPopupSubmit}
+				onClose={() => setOpenPopupSubmit(false)}
+				onConfirm={onClickSubmit}
+				setAlerts={setAlerts}
+				files={files}
+				onChange={setFiles}
+			/>
+
 			{/* Confirmation dialog for approval */}
 			<ConfirmDialog
 				open={openConfirmApproved}
@@ -203,8 +240,8 @@ function CheckRequest() {
 				</Grid2>
 				<Grid2 container size={{ xs: 12, md: 2 }} sx={{ justifyContent: "flex-end" }}>
 					<Button variant="outlined" onClick={handleBack}>
-						<FontAwesomeIcon icon={faAngleLeft} size="lg" style={{ marginRight: '4px' }} />
-						<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 500 }}>ย้อนกลับ</Typography>
+						<FontAwesomeIcon icon={faAngleLeft} size="lg" />
+						<Typography variant="textButtonClassic">ย้อนกลับ</Typography>
 					</Button>
 				</Grid2>
 
@@ -242,45 +279,10 @@ function CheckRequest() {
 				<Card className="data-card" sx={{ width: '100%', borderRadius: 2 }}>
 					<CardContent>
 						<Grid2 container spacing={3} sx={{ px: 6, py: 2 }}>
-							<Grid2 size={{ xs: 12, md: 4 }}>
-								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 500 }}>
+							<Grid2 size={{ xs: 12, md: 12 }}>
+								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
 									ข้อมูลการแจ้งซ่อม
 								</Typography>
-							</Grid2>
-
-							<Grid2 container size={{ xs: 12, md: 8 }}
-								sx={{
-									justifyContent: "flex-end",
-								}}
-							>
-								{
-									isOperator && <Box>
-										<Button
-											variant="containedBlue"
-											onClick={() => {
-												setOpenConfirmAccepted(true)
-											}}
-											sx={{ mr: 0.8 }}
-										>
-											<FontAwesomeIcon icon={faTools} />
-											<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 600 }}>เริ่มงานซ่อม</Typography>
-										</Button>
-										<Button
-											variant="outlinedCancel"
-											onClick={() => {
-												setOpenConfirmCancelled(true)
-											}}
-											sx={{
-												minWidth: '0px',
-												px: '6px',
-											}}
-										>
-											<FontAwesomeIcon icon={faXmark} size="lg" />
-											<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 600 }}>ยกเลิกงานซ่อม</Typography>
-										</Button>
-									</Box>
-								}
-
 							</Grid2>
 
 							<Grid2 size={{ xs: 12, md: 6 }}>
@@ -288,16 +290,88 @@ function CheckRequest() {
 							</Grid2>
 
 							<Grid2 container size={{ xs: 12, md: 6 }} direction="column">
-								<Typography className="title-list" variant="body1" sx={{ pt: 1 }}>
-									ภาพประกอบ
-								</Typography>
-								<Grid2 container size={{ xs: 12, md: 12 }}>
-									{maintenanceRequest?.MaintenanceImages && (
-										<RequestImages
-											images={maintenanceRequest.MaintenanceImages}
-											apiUrl={apiUrl}
-										/>
-									)}
+								<Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+									<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
+										การดำเนินงาน
+									</Typography>
+									<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
+										<TaskInfoTable data={maintenanceRequest?.MaintenanceTask}/>
+									</Box>
+								</Grid2>
+
+								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1}>
+									<Typography className="title-list" variant="body1" sx={{ width: '100%' }}>
+										ภาพประกอบ
+									</Typography>
+									{
+										maintenanceRequest?.MaintenanceImages && isCompleted ? (
+											<RequestImages
+												images={maintenanceRequest?.MaintenanceTask?.HandoverImages || []}
+												apiUrl={apiUrl}
+											/>
+										) : maintenanceRequest?.MaintenanceImages && (
+											<RequestImages
+												images={maintenanceRequest?.MaintenanceImages}
+												apiUrl={apiUrl}
+											/>
+										)
+
+									}
+								</Grid2>
+								<Grid2 container size={{ xs: 12, md: 12 }}
+									sx={{
+										justifyContent: "flex-end",
+									}}
+								>
+									{
+										isOperator && !isCompleted && <Box>
+											<Button
+												variant="outlinedCancel"
+												onClick={() => {
+													setOpenConfirmCancelled(true)
+												}}
+												sx={{
+													minWidth: '0px',
+													px: '6px',
+													color: 'gray',
+													borderColor: 'gray',
+													'&:hover': {
+														borderColor: '#FF3B30',
+													}
+												}}
+											>
+												<FontAwesomeIcon icon={faXmark} size="lg" />
+												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
+											</Button>
+											{
+												isAssigned ? (
+													<Button
+														variant="containedBlue"
+														onClick={() => {
+															setOpenConfirmAccepted(true)
+														}}
+														sx={{ ml: 0.8 }}
+													>
+														<FontAwesomeIcon icon={faTools} />
+														<Typography variant="textButtonClassic">เริ่มงาน</Typography>
+													</Button>
+												) : isInProgress ? (
+													<Button
+														variant="containedBlue"
+														onClick={() => {
+															setOpenPopupSubmit(true)
+														}}
+														sx={{ ml: 0.8 }}
+													>
+														<FontAwesomeIcon icon={faPaperPlane} />
+														<Typography variant="textButtonClassic">ส่งงาน</Typography>
+													</Button>
+												) : (
+													<></>
+												)
+											}
+										</Box>
+									}
 								</Grid2>
 							</Grid2>
 						</Grid2>

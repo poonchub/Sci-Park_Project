@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
     Button,
+    Typography,
+    Box,
 } from '@mui/material';
-import { MaintenanceTasksInterface } from '../../interfaces/IMaintenanceTasks';
 import ImageUploader from '../ImageUploader/ImageUploader';
 
 interface SubmitPopupProps {
     open: boolean;
     onClose: () => void;
     onConfirm: () => void;
-    selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<{ type: "warning" | "error" | "success"; message: string }[]>>;
     files: File[];
     onChange: (files: File[]) => void;
@@ -20,13 +20,10 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
     open,
     onClose,
     onConfirm,
-    selectedTask,
     setAlerts,
     files,
     onChange,
 }) => {
-
-    const request = selectedTask?.MaintenanceRequest
 
     return (
         <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
@@ -36,6 +33,11 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
             </DialogTitle>
 
             <DialogContent sx={{ minWidth: 500 }}>
+                <Box display={'flex'}>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>แนบภาพประกอบ</Typography>
+                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
+                </Box>
+                
                 <Grid2 container spacing={1}>
                     <ImageUploader
                         value={files}
