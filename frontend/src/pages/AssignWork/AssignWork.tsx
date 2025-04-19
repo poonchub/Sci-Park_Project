@@ -3,7 +3,7 @@ import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBullseye, faMagnifyingGlass, faQuestionCircle, } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faQuestionCircle, faToolbox, } from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { UserInterface } from "../../interfaces/IUser";
 
@@ -17,7 +17,7 @@ import { Select } from "../../components/Select/Select";
 import './AssignWork.css';
 import { AreasInterface } from "../../interfaces/IAreas";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
-import { SearchOff } from "@mui/icons-material";
+import { CalendarMonth, SearchOff } from "@mui/icons-material";
 import dateFormat from "../../utils/dateFormat";
 import handleAssignWork from "../../utils/handleAssignWork";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -131,14 +131,14 @@ function AssignWork() {
             field: 'MaintenanceType',
             headerName: 'ประเภทงานซ่อม',
             type: 'string',
-            flex: 1.2,
+            flex: 1.4,
             // editable: true,
             renderCell: (params) => {
                 const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
                 const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                 const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-                
+
 
                 return (
                     <Box sx={{
@@ -170,7 +170,7 @@ function AssignWork() {
             field: 'Assigned',
             headerName: 'จัดการ',
             type: 'string',
-            flex: 1.4,
+            flex: 1.2,
             // editable: true,
             renderCell: (item) => {
                 console.log(item.row)
@@ -216,7 +216,7 @@ function AssignWork() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ตรวจสอบ
+                            ดูรายละเอียด
                         </Button>
                     </Link>
 
@@ -362,6 +362,9 @@ function AssignWork() {
                                     format="DD/MM/YYYY"
                                     value={selectedDate}
                                     onChange={(newValue) => setSelectedDate(newValue)}
+                                    slots={{
+                                        openPickerIcon: CalendarMonth,
+                                    }}
                                 />
                             </LocalizationProvider>
                         </Grid2>
@@ -373,7 +376,7 @@ function AssignWork() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faBullseye} size="lg" />
+                                            <FontAwesomeIcon icon={faToolbox} size="lg" />
                                         </InputAdornment>
                                     }
                                 >
@@ -435,6 +438,20 @@ function AssignWork() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
+                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                },
+                            }}
+                            slotProps={{
+                                baseCheckbox: {
+                                    sx: {
+                                        color: 'gray',
+                                        '&.Mui-checked': {
+                                            color: '#F26522',
+                                        },
+                                    },
+                                },
                             }}
                         />
                     </Card>

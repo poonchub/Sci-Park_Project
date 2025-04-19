@@ -10,13 +10,15 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 
 // Icons for each drawer item
 const ICONS = [
 	<DashboardOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	<ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	<HandymanOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	<ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />
+	<AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	<ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
 ];
 
 // Props interface for the SideDrawer component

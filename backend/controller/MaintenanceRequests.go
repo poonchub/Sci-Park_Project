@@ -94,7 +94,7 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		Description:        request.Description,
 		StartTime:          request.StartTime,
 		EndTime:            request.EndTime,
-		OtherTypeDetail: 	request.OtherTypeDetail,
+		OtherTypeDetail:    request.OtherTypeDetail,
 		UserID:             request.UserID,
 		RoomID:             request.RoomID,
 		RequestStatusID:    uint(RequestStatusID),
@@ -157,93 +157,149 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Maintenance request deleted successfully"})
 }
 
+// GET /maintenance-requests-option
 func GetMaintenanceRequests(c *gin.Context) {
-    // รับค่าจาก Query Parameters
-    statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
-    maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
-    createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
+	// รับค่าจาก Query Parameters
+	statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
+	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
+	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
 
-    page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-    limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-    // ตรวจสอบค่าที่ส่งมา
-    if page < 1 {
-        page = 1
-    }
-    if limit < 1 {
-        limit = 10
-    }
-    offset := (page - 1) * limit
+	// ตรวจสอบค่าที่ส่งมา
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
 
-    // ดึงข้อมูลแบบมีเงื่อนไข
-    var maintenanceRequests []entity.MaintenanceRequest
-    db := config.DB()
+	// ดึงข้อมูลแบบมีเงื่อนไข
+	var maintenanceRequests []entity.MaintenanceRequest
+	db := config.DB()
 
-    if statusID > 0 {
-        db = db.Where("request_status_id = ?", statusID)
-    }
+	if statusID > 0 {
+		db = db.Where("request_status_id = ?", statusID)
+	}
 
-    if maintenanceTypeID > 0 {
-        db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
-    }
+	if maintenanceTypeID > 0 {
+		db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
+	}
 
-    var startOfDay time.Time
-    var endOfDay time.Time
+	var startOfDay time.Time
+	var endOfDay time.Time
 
-    // คำนวณเวลาเริ่มต้นและสิ้นสุดของวันที่ที่ต้องการค้นหา
-    if createdAt != "" {
-        // แปลงวันที่ที่รับมาให้เป็นเวลาที่เขตเวลา Asia/Bangkok
-        loc, _ := time.LoadLocation("Asia/Bangkok")
-        parsedTime, err := time.ParseInLocation("2006-01-02", createdAt, loc)
-        if err != nil {
-            fmt.Println("Error parsing time:", err)
-            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
-            return
-        }
+	// คำนวณเวลาเริ่มต้นและสิ้นสุดของวันที่ที่ต้องการค้นหา
+	if createdAt != "" {
+		loc, _ := time.LoadLocation("Asia/Bangkok")
 
-        // กำหนดเวลาเริ่มต้น (00:00) และสิ้นสุด (23:59)
-        startOfDay = parsedTime
-        endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
+		if len(createdAt) == 10 {
+			// Format: YYYY-MM-DD
+			parsedTime, err := time.ParseInLocation("2006-01-02", createdAt, loc)
+			if err != nil {
+				fmt.Println("Error parsing date:", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+				return
+			}
 
-        // ใช้ timestamp สำหรับการเปรียบเทียบ
-        db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
-    }
+			startOfDay = parsedTime
+			endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
 
-    // ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-    query := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType")
+		} else if len(createdAt) == 7 {
+			// Format: YYYY-MM → filter ทั้งเดือน
+			parsedTime, err := time.ParseInLocation("2006-01", createdAt, loc)
+			if err != nil {
+				fmt.Println("Error parsing month:", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid month format"})
+				return
+			}
 
-    // ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
-    if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceRequests).Error; err != nil {
-        fmt.Println("Error:", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
-        return
-    }
+			// เริ่มต้นวันที่ 1 ของเดือนนั้น
+			startOfDay = time.Date(parsedTime.Year(), parsedTime.Month(), 1, 0, 0, 0, 0, loc)
 
-    // ✅ นับจำนวนทั้งหมดแยกออกจาก Query หลัก
-    var total int64
-    countQuery := config.DB().Model(&entity.MaintenanceRequest{})
+			// คำนวณวันสุดท้ายของเดือนนั้น
+			endOfDay = startOfDay.AddDate(0, 1, 0).Add(-time.Second)
 
-    if statusID > 0 {
-        countQuery = countQuery.Where("request_status_id = ?", statusID)
-    }
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date string length"})
+			return
+		}
 
-    if maintenanceTypeID > 0 {
-        countQuery = countQuery.Where("maintenance_type_id = ?", maintenanceTypeID)
-    }
+		// Apply to query
+		db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+	}
 
-    if createdAt != "" {
-        // ใช้ timestamp ในการนับจำนวน
-        countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
-    }
+	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
+	query := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").Preload("RequestStatus").Preload("Area").Preload("MaintenanceType")
 
-    countQuery.Count(&total)
+	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
+	if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceRequests).Error; err != nil {
+		fmt.Println("Error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
 
-    // ✅ ส่ง JSON Response
-    c.JSON(http.StatusOK, gin.H{
-        "data":       maintenanceRequests,
-        "page":       page,
-        "limit":      limit,
-        "total":      total,
-        "totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
-    })
+	// ✅ นับจำนวนทั้งหมดแยกออกจาก Query หลัก
+	var total int64
+	countQuery := config.DB().Model(&entity.MaintenanceRequest{})
+
+	if statusID > 0 {
+		countQuery = countQuery.Where("request_status_id = ?", statusID)
+	}
+
+	if maintenanceTypeID > 0 {
+		countQuery = countQuery.Where("maintenance_type_id = ?", maintenanceTypeID)
+	}
+
+	if createdAt != "" {
+		countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+	}
+
+	countQuery.Count(&total)
+
+	var statusCounts []struct {
+		StatusID   uint   `json:"status_id"`
+		StatusName string `json:"status_name"`
+		Count      int    `json:"count"`
+	}
+
+	// สร้าง JOIN clause แบบ dynamic เพื่อใช้ใน LEFT JOIN
+	joinClause := `
+		LEFT JOIN maintenance_requests
+		ON maintenance_requests.request_status_id = request_statuses.id
+	`
+
+	if maintenanceTypeID > 0 {
+		joinClause += fmt.Sprintf(" AND maintenance_requests.maintenance_type_id = %d", maintenanceTypeID)
+	}
+	if createdAt != "" {
+		joinClause += fmt.Sprintf(
+			" AND maintenance_requests.created_at >= '%s' AND maintenance_requests.created_at <= '%s'",
+			startOfDay.Format("2006-01-02 15:04:05"),
+			endOfDay.Format("2006-01-02 15:04:05"),
+		)
+	}
+
+	statusCountQuery := config.DB().Table("request_statuses").
+		Select(`
+			request_statuses.id as status_id,
+			request_statuses.name as status_name,
+			COALESCE(COUNT(maintenance_requests.id), 0) as count
+		`).
+		Joins(joinClause).
+		Group("request_statuses.id, request_statuses.name")
+
+	statusCountQuery.Scan(&statusCounts)
+
+	// ✅ ส่ง JSON Response
+	c.JSON(http.StatusOK, gin.H{
+		"data":         maintenanceRequests,
+		"page":         page,
+		"limit":        limit,
+		"total":        total,
+		"totalPages":   (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
+		"statusCounts": statusCounts,
+	})
 }

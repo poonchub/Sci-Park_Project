@@ -14,15 +14,17 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
     const statusFlowMap: {
         [key: string]: string[];
     } = {
-        Normal: ["Creating Request", "Pending", "Approved", "In Progress", "Completed"],
+        Normal: ["Creating Request", "Pending", "Approved", "Assigned", "In Progress", "Completed"],
         Rejected: ["Creating Request", "Pending", "Rejected", "In Progress", "Completed"],
-        Failed: ["Creating Request", "Pending", "Approved", "In Progress", "Failed"]
+        Failed: ["Creating Request", "Pending", "Approved", "In Progress", "Failed"],
+        Cancelled: ["Cancelled"]
     };
 
     // Determine the status group based on the request status name
     const getStatusGroup = (statusName: string): keyof typeof statusFlowMap => {
         if (statusName === "Rejected") return "Rejected";
         if (statusName === "Failed") return "Failed";
+        if (statusName === "Cancelled") return "Cancelled";
         return "Normal";
     };
 

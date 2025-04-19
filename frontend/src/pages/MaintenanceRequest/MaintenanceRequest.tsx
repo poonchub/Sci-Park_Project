@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import "./MaintenanceRequest.css"
-import { Box, Button, Card, CardContent, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
+import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
 import { LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
@@ -16,15 +16,16 @@ import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faBullseye, faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
-import { SearchOff } from "@mui/icons-material"
-import ApexChart from "../../components/ApexChart/ApexChart"
+import { CalendarMonth, SearchOff } from "@mui/icons-material"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
-import handleAction from "../../utils/handleAction"
 import { statusConfig } from "../../constants/statusConfig"
+import ApexLineChart from "../../components/ApexLineChart/ApexLineChart"
+import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards"
+import handleActionApproval from "../../utils/handleActionApproval"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -32,18 +33,18 @@ function MaintenanceRequest() {
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
 
-    const [countRequestStatus, setCountRequestStatus] = useState<Record<string, number>>()
+    const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [searchText, setSearchText] = useState('')
     const [selectedStatus, setSelectedStatus] = useState(0)
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
     const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
-    const [requestSelected, setRequestSelected] = useState(0)
+    const [selectedRequest, setSelectedRequest] = useState(0)
 
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
@@ -179,7 +180,7 @@ function MaintenanceRequest() {
                             variant="containedBlue"
                             onClick={() => {
                                 setOpenConfirmApproved(true)
-                                setRequestSelected(Number(item.id))
+                                setSelectedRequest(Number(item.id))
                             }}
                             sx={{ mr: 0.5 }}
                         >
@@ -189,10 +190,10 @@ function MaintenanceRequest() {
                             variant="outlinedCancel"
                             onClick={() => {
                                 setOpenConfirmRejected(true)
-                                setRequestSelected(Number(item.id))
+                                setSelectedRequest(Number(item.id))
                             }}
-                            sx={{ 
-                                minWidth: '0px', 
+                            sx={{
+                                minWidth: '0px',
                                 px: '6px',
                             }}
                         >
@@ -220,7 +221,7 @@ function MaintenanceRequest() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ตรวจสอบ
+                            ดูรายละเอียด
                         </Button>
                     </Link>
 
@@ -257,6 +258,14 @@ function MaintenanceRequest() {
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
+
+                // ใช้ reduce เพื่อจัดรูปแบบข้อมูล statusCounts
+                const formattedStatusCounts = res.statusCounts.reduce((acc: any, item: any) => {
+                    acc[item.status_name] = item.count;
+                    return acc;
+                }, {} as Record<string, number>);
+
+                setStatusCounts(formattedStatusCounts);
             }
         } catch (error) {
             console.error("Error fetching request maintenance requests:", error);
@@ -264,15 +273,21 @@ function MaintenanceRequest() {
     };
 
     const handleClick = (statusID: number, message: string) => {
-        handleAction(statusID, message, {
+        handleActionApproval(statusID, message, {
             userID: user?.ID,
-            requestSelected,
+            selectedRequest,
             setAlerts,
             refreshRequestData: getMaintenanceRequests,
             setOpenConfirmApproved,
             setOpenConfirmRejected,
         });
     };
+
+    const handleClearFillter = () => {
+        setSelectedDate(null);
+        setSearchText('');
+        setSelectedStatus(0)
+    }
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = request.ID ? Number(request.ID) : null;
@@ -296,15 +311,6 @@ function MaintenanceRequest() {
         getMaintenanceRequests()
         getUser()
     }, []);
-
-    useEffect(() => {
-        const countStatus = maintenanceRequests.reduce<Record<string, number>>((acc, item) => {
-            const status = item.RequestStatus?.Name || "Unknown";
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {});
-        setCountRequestStatus(countStatus)
-    }, [maintenanceRequests])
 
     useEffect(() => {
         getMaintenanceRequests()
@@ -334,6 +340,8 @@ function MaintenanceRequest() {
             />
 
             <Grid2 container spacing={3}>
+
+                {/* Header Section */}
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         รายการแจ้งซ่อม
@@ -347,63 +355,18 @@ function MaintenanceRequest() {
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
 
                     {/* Status Section */}
-                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={3} className='status-section'>
-                        {
-                            requestStatuses.map((item, index) => {
-                                const statusKey = item.Name as keyof typeof statusConfig;
-                                const { color, icon } = statusConfig[statusKey] ?? { color: "#000", icon: faQuestionCircle };
-
-                                return (
-                                    <Grid2 size={{ xs: 10, md: 4 }} key={index}>
-                                        <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
-                                            <CardContent className="status-card-content">
-                                                <Grid2 size={{ xs: 10, md: 12 }}>
-                                                    <Typography variant="body1" sx={{
-                                                        fontWeight: 500,
-                                                        fontSize: 16
-                                                    }}>{item.Name}</Typography>
-                                                    <Typography variant="body1" sx={{
-                                                        fontWeight: 600,
-                                                        fontSize: 20
-                                                    }}>{`${countRequestStatus?.[item.Name || "Unknown"] ?? 0} รายการ`}</Typography>
-                                                </Grid2>
-                                                <Grid2 size={{ xs: 10, md: 8 }} sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Box sx={{
-                                                        borderRadius: '50%',
-                                                        bgcolor: color,
-                                                        border: 1,
-                                                        aspectRatio: '1/1',
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        width: 55,
-                                                        color: '#fff'
-                                                    }}>
-                                                        <FontAwesomeIcon icon={icon} size="2xl" />
-                                                    </Box>
-                                                </Grid2>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid2>
-                                )
-                            })
-                        }
-                    </Grid2>
+                    <RequestStatusCards statusCounts={statusCounts || {}} />
 
                     {/* Filters Section */}
                     <Grid2 container
-                        spacing={2}
+                        spacing={1}
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
                         sx={{
                             alignItems: "flex-end",
                             height: 'auto'
                         }}>
-                        <Grid2 size={{ xs: 10, md: 6 }}>
+                        <Grid2 size={{ xs: 10, md: 5 }}>
                             <TextField
                                 fullWidth
                                 className="search-box"
@@ -416,7 +379,7 @@ function MaintenanceRequest() {
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
                                             </InputAdornment>
                                         ),
                                     }
@@ -429,6 +392,9 @@ function MaintenanceRequest() {
                                     format="DD/MM/YYYY"
                                     value={selectedDate}
                                     onChange={(newValue) => setSelectedDate(newValue)}
+                                    slots={{
+                                        openPickerIcon: CalendarMonth,
+                                    }}
                                 />
                             </LocalizationProvider>
                         </Grid2>
@@ -440,7 +406,7 @@ function MaintenanceRequest() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faBullseye} size="xl" />
+                                            <FontAwesomeIcon icon={faChartSimple} size="lg" />
                                         </InputAdornment>
                                     }
                                 >
@@ -455,15 +421,31 @@ function MaintenanceRequest() {
                                 </Select>
                             </FormControl>
                         </Grid2>
+                        <Grid2 size={{ xs: 10, md: 1 }}>
+                            <Button onClick={handleClearFillter}
+                                sx={{
+                                    minWidth: 0,
+                                    width: '100%',
+                                    height: '45px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                    "&:hover": {
+                                        boxShadow: 'none',
+                                        borderColor: 'primary.main',
+                                        backgroundColor: 'transparent'
+                                    },
+                                }}
+                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                        </Grid2>
                     </Grid2>
                 </Grid2>
 
                 {/* Chart Section */}
                 <Grid2 size={{ xs: 10, md: 5 }} >
-                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3 }}>
+                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
                         <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexChart data={maintenanceRequests} height={160} />
+                        <ApexLineChart data={maintenanceRequests} height={160} selectedDate={selectedDate} />
                     </Card>
                 </Grid2>
 
@@ -492,6 +474,10 @@ function MaintenanceRequest() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
+                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                                    outline: "none",
+                                    boxShadow: "none",
+                                },
                             }}
                             slots={{
                                 noRowsOverlay: () => (
@@ -511,6 +497,16 @@ function MaintenanceRequest() {
                                         </Typography>
                                     </Box>
                                 ),
+                            }}
+                            slotProps={{
+                                baseCheckbox: {
+                                    sx: {
+                                        color: 'gray',
+                                        '&.Mui-checked': {
+                                            color: '#F26522',
+                                        },
+                                    },
+                                },
                             }}
                         />
                     </Card>

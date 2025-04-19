@@ -50,7 +50,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </DialogContent>
 
             {/* Action buttons */}
-            <DialogActions>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={() => setOpenConfirm(false)}>ยกเลิก</Button>
                 <Button
                     onClick={() => {

@@ -8,6 +8,7 @@ import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMa
 import AssignWork from "../pages/AssignWork/AssignWork";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import Dashboard from "../pages/Dashboard/Dashboard";
+import AcceptWork from "../pages/AcceptWork/AcceptWork";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -41,6 +42,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/dashboard",
 				element: <Dashboard/>
+			},
+			{
+				path: "/accept-work",
+				element: <AcceptWork/>
 			},
 		]
 	}

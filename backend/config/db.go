@@ -52,6 +52,7 @@ func SetupDatabase() {
 		&entity.Gender{},
 		&entity.Floor{},
 		&entity.Area{},
+		&entity.HandoverImage{},
 	)
 
 	if err != nil {
@@ -105,11 +106,13 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RequestStatus
 	requestStatuses := []entity.RequestStatus{
 		{Name: "Pending"}, 
-		{Name: "Approved"}, 
+		{Name: "Approved"},
 		{Name: "Rejected"},
+		{Name: "Assigned"},
 		{Name: "In Progress"}, 
 		{Name: "Completed"}, 
 		{Name: "Failed"},
+		{Name: "Cancelled"},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})

@@ -48,7 +48,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             ยังไม่ได้มอบหมาย
                         </Typography>
                     ) : (
-                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 16 }}>
                             {name}
                         </Typography>
                     )}
@@ -58,7 +58,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                         <>
                             {/* Approve button */}
                             <Button
-                                variant="contained"
+                                variant="containedBlue"
                                 onClick={onApprove}
                                 sx={{ backgroundColor: '#08aff1', mr: 0.5 }}
                             >
@@ -66,7 +66,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             </Button>
                             {/* Reject button */}
                             <Button
-                                variant="outlined"
+                                variant="outlinedCancel"
                                 onClick={onReject}
                                 sx={{
                                     minWidth: '0px',
@@ -104,7 +104,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
                 {/* Icon displaying an avatar or role-related icon */}
                 <Grid2
-                    size={{ xs: 10, md: 8 }}
+                    size={{ xs: 10, md: 6 }}
                     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                     <Box

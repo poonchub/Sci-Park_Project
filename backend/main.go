@@ -103,9 +103,15 @@ func main() {
 
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Operators)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
 	{	
+		// MaintenanceTasks
+		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
+		protected.PATCH("/maintenance-task/:id", controller.UpdateMaintenanceTaskByID)
+		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)
 
+		// HondoverImages
+		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token

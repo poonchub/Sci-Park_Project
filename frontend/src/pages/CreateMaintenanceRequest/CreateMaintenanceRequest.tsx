@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./CreateMaintenanceRequest.css"
 
-import { Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUserById } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
@@ -19,6 +19,7 @@ import StepperComponent from "../../components/Stepper/Stepper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
+import ImageUploader from "../../components/ImageUploader/ImageUploader";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -32,7 +33,7 @@ function CreateMaintenanceRequestPage() {
     const [selectedRoomtype, setSelectedRoomtype] = useState(0)
     const [selectedFloor, setSelectedFloor] = useState(0)
 
-    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         AreaDetail: "",
@@ -51,10 +52,6 @@ function CreateMaintenanceRequestPage() {
     const [onEdit, setOnEdit] = useState(false);
 
     const [files, setFiles] = useState<File[]>([]);
-
-    const isValidImage = (file: File) => {
-        return file.type.startsWith("image/");
-    };
 
     const getUser = async () => {
         try {
@@ -167,7 +164,6 @@ function CreateMaintenanceRequestPage() {
         };
 
         try {
-            console.log(requestPayload)
             const resRequest = await CreateMaintenanceRequest(requestPayload);
 
             if (!resRequest) {
@@ -204,31 +200,6 @@ function CreateMaintenanceRequestPage() {
 
     const handleSetAlert = (type: 'success' | 'error' | 'warning', message: string) => {
         setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
-    };
-
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        let droppedFiles = Array.from(event.dataTransfer.files).filter(isValidImage);
-
-        if (droppedFiles.length > 3) {
-            droppedFiles = droppedFiles.slice(0, 3);
-            setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]);
-        }
-
-        setFiles(droppedFiles);
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            let selectedFiles = Array.from(event.target.files).filter(isValidImage);
-
-            if (selectedFiles.length > 3) {
-                selectedFiles = selectedFiles.slice(0, 3);
-                setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]);
-            }
-
-            setFiles(selectedFiles);
-        }
     };
 
     const handleSelectedFilter = (value: number, selectName: string) => {
@@ -584,7 +555,7 @@ function CreateMaintenanceRequestPage() {
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        value={`${user?.FirstName} ${user?.LastName}`}
+                                        value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
                                         slotProps={{
                                             input: {
                                                 startAdornment: (
@@ -638,7 +609,7 @@ function CreateMaintenanceRequestPage() {
                                             onClick={() => setOnEdit(!onEdit)}
                                             sx={{
                                                 display: onEdit ? 'none' : '',
-                                                
+
                                             }}>
                                             <FontAwesomeIcon icon={faPencil} size="lg" />
                                             <Typography sx={{ fontSize: 14, ml: 0.6 }}>แก้ไข</Typography>
@@ -647,45 +618,22 @@ function CreateMaintenanceRequestPage() {
                                 </Grid2>
 
                                 <Grid2 size={{ xs: 6, md: 12 }}>
-                                    <Typography variant="body1" className="title-field">ภาพประกอบ</Typography>
-                                    {/* Preview Images */}
-                                    <Grid2 container spacing={2} sx={{ mt: 2 }}>
-                                        {files.map((file, index) => {
-                                            const imageUrl = URL.createObjectURL(file);
-                                            return (
-                                                <Grid2 key={index} size={{ xs: 6, md: 4 }}>
-                                                    <img src={imageUrl} alt={`preview-${index}`} width="100%" style={{ borderRadius: 8 }} />
-                                                </Grid2>
-                                            );
-                                        })}
-                                    </Grid2>
+                                    <Box display={'flex'}>
+                                        <Typography variant="body1" className="title-field">ภาพประกอบ</Typography>
+                                        <Typography variant="body1"
+                                            sx={{
+                                                ml: 0.5,
+                                                color: 'gray'
+                                            }}
+                                        >(สูงสุด 3 ไฟล์)</Typography>
+                                    </Box>
 
-                                    {/* Drop Zone */}
-                                    <Grid2
-                                        size={{ xs: 6, md: 12 }}
-                                        sx={{
-                                            border: "2px dashed #0094DE",
-                                            borderRadius: 2,
-                                            p: 1.8,
-                                            textAlign: "center",
-                                            cursor: "pointer",
-                                            backgroundColor: "#F4FBFF",
-                                        }}
-                                        onDragOver={(event) => event.preventDefault()}
-                                        onDrop={handleDrop}
-                                    >
-                                        <Typography>ลากและวางไฟล์ที่นี่ หรือ</Typography>
-                                        <Button variant="contained" component="label">
-                                            คลิกเลือกไฟล์
-                                            <input
-                                                accept="image/*"
-                                                type="file"
-                                                multiple
-                                                hidden
-                                                onChange={handleFileChange}
-                                            />
-                                        </Button>
-                                    </Grid2>
+                                    <ImageUploader
+                                        value={files}
+                                        onChange={setFiles}
+                                        setAlerts={setAlerts}
+                                        maxFiles={3}
+                                    />
                                 </Grid2>
                             </Grid2>
 

@@ -1,5 +1,5 @@
 // Define possible user roles in the system
-export type Role = 'Manager' | 'Outsider' | 'Admin' | 'SuperAdmin';
+export type Role = 'Manager' | 'Outsider' | 'Admin' | 'SuperAdmin' | 'Operator';
 
 // Type definition for navigation items in the drawer
 type NavItem = {
@@ -25,6 +25,7 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         { path: '/dashboard', name: 'แดชบอร์ด', roles: ['Outsider', 'Admin', 'SuperAdmin'] },
         { path: '/maintenance-request', name: 'รายการแจ้งซ่อม', roles: ['Admin'] },
         { path: '/assign-work', name: 'มอบหมายงานซ่อม', roles: ['Admin'] },
+        { path: '/accept-work', name: 'งานของฉัน', roles: ['Operator', 'Admin', 'SuperAdmin'] },
         { path: '/manage-user', name: 'จัดการผู้ใช้งาน', roles: ['Admin', 'SuperAdmin'] },
         { path: '/add-user', name: 'เพิ่มผู้ใช้', roles: ['SuperAdmin'] },
         { path: '/outsider-maintenance-request', name: 'แจ้งซ่อมภายนอก', roles: ['Outsider'] },
@@ -41,14 +42,17 @@ export const getDrawerItemsBySection = (sectionKey: string, role: Role): NavItem
 export const getCurrentSectionKey = (pathname: string): string => {
     const map: Record<string, string> = {
         '/dashboard': 'maintenance',
-        '/booking-room': 'booking',
+        '/create-maintenance-request': 'maintenance',
         '/maintenance-request': 'maintenance',
         '/assign-work': 'maintenance',
+        '/accept-work': 'maintenance',
         '/check-requests': 'maintenance',
         '/manage-user': 'maintenance',
         '/add-user': 'maintenance',
         '/outsider-maintenance-request': 'maintenance',
         '/test-popup': 'maintenance',
+
+        '/booking-room': 'booking',
     };
 
     return map[Object.keys(map).find(key => pathname.startsWith(key)) || ''] || 'home'; // Return the section key
