@@ -29,10 +29,11 @@ func ResetPasswordController(c *gin.Context) {
 
 	// ตรวจสอบว่า Email มีในระบบหรือไม่
 	var user entity.User
-	if err := db.Where("email = ?", payload.Email).First(&user).Error; err != nil {
+	if err := db.Where("LOWER(email) = LOWER(?)", payload.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบอีเมลในระบบ"})
 		return
 	}
+	
 
 	// สร้าง UUID และตั้งค่าเวลาหมดอายุ 5 นาที
 	resetToken, err := Generate6DigitToken(db)
@@ -192,7 +193,7 @@ body := fmt.Sprintf(`
 													<table class="heading_block block-3" width="100%%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad">
-																<h1 style="margin: 0; color: #000000; direction: ltr; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 38px; font-weight: 700; letter-spacing: normal; line-height: 120%%; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 45.6px;">OPT รีเซ็ตรหัสผ่านของคุณ</h1>
+																<h1 style="margin: 0; color: #000000; direction: ltr; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 38px; font-weight: 700; letter-spacing: normal; line-height: 120%%; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 45.6px;">OTP รีเซ็ตรหัสผ่านของคุณ</h1>
 															</td>
 														</tr>
 													</table>
@@ -485,11 +486,10 @@ func Generate6DigitToken(db *gorm.DB) (string, error) {
 
 
 
-// ValidateResetTokenController ตรวจสอบว่า UUID ถูกต้องและยังไม่หมดอายุ
 func ValidateResetTokenController(c *gin.Context) {
 	type RequestPayload struct {
 		Token string `json:"token" binding:"required"`
-		Email string `json:"email" binding:"required,email"` // รับ email เพิ่ม
+		Email string `json:"email" binding:"required,email"`
 	}
 
 	var payload RequestPayload
@@ -500,38 +500,40 @@ func ValidateResetTokenController(c *gin.Context) {
 
 	db := config.DB()
 
-	// ตรวจสอบว่า Token มีในระบบและยังไม่หมดอายุ
 	var user entity.User
-	if err := db.Where("reset_token = ? AND email = ?", payload.Token, payload.Email).First(&user).Error; err != nil {
+	// โหลด Role มาด้วย
+	if err := db.Preload("Role").Where("reset_token = ? AND LOWER(email) = LOWER(?)", payload.Token, payload.Email).First(&user).Error; err != nil { 
 		c.JSON(http.StatusNotFound, gin.H{"error": "โทเค็นหรืออีเมลไม่ถูกต้องหรือหมดอายุ"})
 		return
 	}
+	
 
-	// ตรวจสอบเวลาหมดอายุ
 	if time.Now().After(user.ResetTokenExpiry) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "โทเค็นหมดอายุแล้ว"})
 		return
 	}
 
-	// สร้าง JWT Token
+	// ดึง role name จาก FK
+	roleStr := user.Role.Name
+
 	jwtWrapper := services.JwtWrapper{
-		SecretKey:       config.GetSecretKey(), // ใช้คีย์จาก config
+		SecretKey:       config.GetSecretKey(),
 		Issuer:          "AuthService",
 		ExpirationHours: 24,
 	}
 
-	role := "admin"
-	// สร้าง Token โดยส่งทั้ง email และ role
-	tokenString, err := jwtWrapper.GenerateToken(user.Email, role) // ส่งทั้ง email และ role
+	tokenString, err := jwtWrapper.GenerateToken(user.Email, roleStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Could not generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างโทเค็นได้"})
 		return
 	}
 
-	// ส่ง Response กลับ พร้อม JWT Token และ Employee ID
 	c.JSON(http.StatusOK, gin.H{
 		"message": "โทเค็นถูกต้อง",
-		"token":     tokenString, // JWT Token ที่ส่งกลับ
-		"id":      user.ID,     // ส่ง ID ของ Employee กลับไป
+		"token":   tokenString,
+		"id":      user.ID,
+		"role":    roleStr,
 	})
 }
+
+

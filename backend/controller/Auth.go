@@ -27,10 +27,10 @@ func UserLogin(c *gin.Context) {
 	var user entity.User
 
 	// ค้นหา User จาก Email และโหลด Role
-	if err := db.Preload("Role").Where("email = ?", loginData.Email).First(&user).Error; err != nil {
+	if err := db.Preload("Role").Where("LOWER(email) = LOWER(?)", loginData.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"Error": "Incorrect email or password"})
 		return
-	}
+	}	
 
 	// ตรวจสอบรหัสผ่าน
 	if !config.CheckPasswordHash([]byte(loginData.Password), []byte(user.Password)) {
