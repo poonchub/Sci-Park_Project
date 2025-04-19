@@ -14,13 +14,11 @@ import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceReque
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
-import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
-import MailOutlineOutlinedIcon from '@mui/icons-material/MailOutlineOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
-import SuccessAlert from "../../components/Alert/SuccessAlert";
-import ErrorAlert from "../../components/Alert/ErrorAlert";
-import WarningAlert from "../../components/Alert/WarningAlert";
+import StepperComponent from "../../components/Stepper/Stepper";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
+import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -33,18 +31,22 @@ function CreateMaintenanceRequestPage() {
 
     const [selectedRoomtype, setSelectedRoomtype] = useState(0)
     const [selectedFloor, setSelectedFloor] = useState(0)
-    // const [isAllTime, setIsAllTime] = useState(true)
 
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
+        AreaDetail: "",
+        IsAnytimeAvailable: false,
         Description: "",
         StartTime: "",
         EndTime: "",
+        OtherTypeDetail: "",
         RoomID: 0,
         AreaID: 1,
         MaintenanceTypeID: 0,
     });
+
+    const steps = ["Creating Request", "Pending", "Approved", "In Progress", "Completed"];
 
     const [onEdit, setOnEdit] = useState(false);
 
@@ -121,60 +123,88 @@ function CreateMaintenanceRequestPage() {
     }
 
     const handleSelectChange = (event: SelectChangeEvent<unknown>) => {
-        const { name, value } = event.target as { name: string; value: string }; // 👈 กำหนด type ของ target
+        const { name, value } = event.target as { name: string; value: string };
+
         setFormData((prev) => ({
-            ...(prev ?? {}),
-            [name]: value, // 👈 รับรองว่าเป็น string แน่นอน
+            ...prev,
+            [name]: value,
         }));
+
+        if (name == 'MaintenanceTypeID') {
+            setFormData((prev) => ({
+                ...prev,
+                ['OtherTypeDetail']: '',
+            }));
+        }
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = event.target;
+
         setFormData((prev) => ({
-            ...(prev ?? {}),
+            ...prev,
             [name]: type === "checkbox" ? checked : value,
         }));
     };
 
     const handleSubmit = async () => {
-        formData.UserID = user?.ID
-        formData.RequestStatusID = 1
-        formData.StartTime = `0001-01-01T${formData.StartTime}:00Z`
-        formData.EndTime = `0001-01-01T${formData.EndTime}:00Z`
+        if (!user?.ID) {
+            handleSetAlert('error', "User not found");
+            return;
+        }
+
+        if (files.length === 0) {
+            handleSetAlert('warning', "No images uploaded");
+            return;
+        }
+
+        const requestPayload = {
+            ...formData,
+            AreaID: Number(formData.AreaID),
+            UserID: user.ID,
+            StartTime: formData.IsAnytimeAvailable ? undefined : `0001-01-01T${formData.StartTime}:00Z`,
+            EndTime: formData.IsAnytimeAvailable ? undefined : `0001-01-01T${formData.EndTime}:00Z`,
+        };
 
         try {
-            const resRequest = await CreateMaintenanceRequest(formData)
-            if (resRequest) {
+            console.log(requestPayload)
+            const resRequest = await CreateMaintenanceRequest(requestPayload);
+
+            if (!resRequest) {
+                handleSetAlert('error', resRequest?.Error || "Failed to create request");
+                return;
+            }
+
+            if (files.length > 0) {
                 const formDataFile = new FormData();
-                formDataFile.append("userID", String(user?.ID));
+                formDataFile.append("userID", String(user.ID));
                 formDataFile.append("requestID", resRequest.data.ID);
 
-                // เพิ่มไฟล์ทั้งหมดลงใน formData
-                for (let i = 0; i < files.length; i++) {
-                    formDataFile.append("files", files[i]); // ใช้ key "file" ให้ตรงกับ API
-                }
+                files.forEach(file => formDataFile.append("files", file));
 
-                for (let pair of formDataFile.entries()) {
-                    console.log("📤 FormData:", pair[0], pair[1]);
-                }
+                console.log("📤 FormData:", Array.from(formDataFile.entries()));
 
-                const resImage = await CreateMaintenanceImages(formDataFile)
-                if (resImage) {
-                    setAlerts([...alerts, { type: 'success', message: "Maintenance request sumitted successfully" }]);
-                    setTimeout(() => {
-                        location.href = "/maintenance-request";
-                    }, 1800)
+                const resImage = await CreateMaintenanceImages(formDataFile);
+                if (!resImage) {
+                    handleSetAlert('error', resImage?.Error || "Failed to upload images");
+                    return;
                 }
-                else {
-                    setAlerts([...alerts, { type: 'error', message: resImage?.Error || "failed!" }]);
-                }
-            } else {
-                setAlerts([...alerts, { type: 'error', message: resRequest?.Error || "failed!" }]);
             }
-        } catch (error) {
 
+            handleSetAlert('success', "Maintenance request submitted successfully");
+            setTimeout(() => {
+                location.href = "/maintenance-request";
+            }, 1800);
+
+        } catch (error) {
+            console.error("🚨 Error submitting request:", error);
+            handleSetAlert('error', "An unexpected error occurred");
         }
-    }
+    };
+
+    const handleSetAlert = (type: 'success' | 'error' | 'warning', message: string) => {
+        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+    };
 
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -182,7 +212,7 @@ function CreateMaintenanceRequestPage() {
 
         if (droppedFiles.length > 3) {
             droppedFiles = droppedFiles.slice(0, 3);
-            setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]); 
+            setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]);
         }
 
         setFiles(droppedFiles);
@@ -194,7 +224,7 @@ function CreateMaintenanceRequestPage() {
 
             if (selectedFiles.length > 3) {
                 selectedFiles = selectedFiles.slice(0, 3);
-                setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]); 
+                setAlerts([...alerts, { type: 'warning', message: "You can upload up tp 3 files." }]);
             }
 
             setFiles(selectedFiles);
@@ -213,17 +243,20 @@ function CreateMaintenanceRequestPage() {
         }
     }
 
-    const handleResetData = () => {
+    const handleResetData = (ignore: string = '') => {
         setFormData({
             Description: "",
+            IsAnytimeAvailable: false,
             StartTime: "",
             EndTime: "",
+            OtherTypeDetail: "",
             RoomID: 0,
-            AreaID: 1,
+            AreaID: ignore === 'AreaID' ? formData.AreaID : 1,
             MaintenanceTypeID: 0,
         })
         setSelectedFloor(0)
         setSelectedRoomtype(0)
+        setFiles([])
     }
 
     const filteredRooms = rooms.filter((room) => {
@@ -241,55 +274,50 @@ function CreateMaintenanceRequestPage() {
         getMaintenanceTypes()
     }, [])
 
+    useEffect(() => {
+        handleResetData('AreaID')
+    }, [formData.AreaID])
+
+    useEffect(() => {
+        if (formData.IsAnytimeAvailable === true) {
+            setFormData({
+                ...formData,
+                StartTime: '',
+                EndTime: ''
+            })
+        }
+    }, [formData.IsAnytimeAvailable])
+
     return (
         <div className="create-maintenance-request-page">
             {/* Show Alerts */}
-            {alerts.map((alert, index) => {
-                return (
-                    <React.Fragment key={index}>
-                        {alert.type === 'success' && (
-                            <SuccessAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={Number(index)}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'error' && (
-                            <ErrorAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'warning' && (
-                            <WarningAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                    </React.Fragment>
-                );
-            })}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-            {/* Header Section */}
             <Grid2 container spacing={2}>
+
+                {/* Header Section */}
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
-                    <Typography variant="h6" className="title">
+                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         เขียนคำร้องแจ้งซ่อม
                     </Typography>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end" }}>
-                    <Link to="/maintenance-request">
-                        <Button variant="outlined">ย้อนกลับ</Button>
+                    <Link to="/maintenance-request" style={{ textAlign: 'center' }}>
+                        <Button variant="outlined" >
+                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                            <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
+                        </Button>
                     </Link>
                 </Grid2>
 
+                <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
+                    <CardContent sx={{ p: '16px 24px' }}>
+                        <StepperComponent activeStep={0} steps={steps} />
+                    </CardContent>
+                </Card>
+
                 {/* Form Card Section */}
-                <Card className="status-card" sx={{ width: '100%' }}>
+                <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
                     <CardContent>
                         <Grid2 container
                             component="form"
@@ -299,6 +327,7 @@ function CreateMaintenanceRequestPage() {
                         >
                             {/* Left Section (Form Inputs) */}
                             <Grid2 container size={{ xs: 6, md: 6 }} spacing={3}>
+
                                 {/* Area Selection */}
                                 <Grid2 size={{ xs: 6, md: 12 }}>
                                     <Typography variant="body1" className="title-field">บริเวณที่ต้องการแจ้งซ่อม</Typography>
@@ -312,7 +341,14 @@ function CreateMaintenanceRequestPage() {
                                             {
                                                 areas.map((item, index) => {
                                                     return (
-                                                        <FormControlLabel key={index} value={item.ID} control={<Radio />} label={item.Name} />
+                                                        <FormControlLabel
+                                                            key={index}
+                                                            value={item.ID}
+                                                            control={
+                                                                <Radio sx={{ color: '#6D6E70' }} />
+                                                            }
+                                                            label={item.Name}
+                                                        />
                                                     )
                                                 })
                                             }
@@ -321,79 +357,106 @@ function CreateMaintenanceRequestPage() {
                                     </FormControl>
                                 </Grid2>
 
-                                {/* Room Type Selection */}
-                                <Grid2 size={{ xs: 6, md: 12 }}>
-                                    <Typography variant="body1" className="title-field">ประเภทห้อง</Typography>
-                                    <FormControl fullWidth>
-                                        <Select
-                                            displayEmpty
-                                            defaultValue={0}
-                                            value={selectedRoomtype}
-                                            onChange={(e) => handleSelectedFilter(Number(e.target.value), 'roomtype')}
-                                        >
-                                            <MenuItem value={0}>
-                                                <em>{'-- เลือกประเภทห้อง --'}</em>
-                                            </MenuItem>
-                                            {
-                                                roomTypes.map((item, index) => {
-                                                    return (
-                                                        <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
-                                                    )
-                                                })
-                                            }
-                                        </Select>
-                                    </FormControl>
-                                </Grid2>
+                                {
+                                    formData.AreaID == 2 ? (
+                                        <>
+                                            {/* Area Detail Input */}
+                                            <Grid2 size={{ xs: 6, md: 12 }}>
+                                                <TextField
+                                                    multiline
+                                                    rows={2}
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    name="AreaDetail"
+                                                    value={formData.AreaDetail}
+                                                    onChange={handleInputChange}
+                                                    placeholder="ระบุบริเวณที่ต้องการแจ้งซ่อม"
+                                                    slotProps={{
+                                                        input: {
+                                                            className: "custom-input"
+                                                        }
+                                                    }}
+                                                />
+                                            </Grid2>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* Room Type Selection */}
+                                            <Grid2 size={{ xs: 6, md: 12 }}>
+                                                <Typography variant="body1" className="title-field">ประเภทห้อง</Typography>
+                                                <FormControl fullWidth>
+                                                    <Select
+                                                        displayEmpty
+                                                        defaultValue={0}
+                                                        value={selectedRoomtype}
+                                                        onChange={(e) => handleSelectedFilter(Number(e.target.value), 'roomtype')}
+                                                    >
+                                                        <MenuItem value={0}>
+                                                            <em>{'-- เลือกประเภทห้อง --'}</em>
+                                                        </MenuItem>
+                                                        {
+                                                            roomTypes.map((item, index) => {
+                                                                return (
+                                                                    <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
+                                                                )
+                                                            })
+                                                        }
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid2>
 
-                                {/* Floor Number Selection */}
-                                <Grid2 size={{ xs: 6, md: 6 }}>
-                                    <Typography variant="body1" className="title-field">ตำแหน่ง/ชั้น</Typography>
-                                    <FormControl fullWidth>
-                                        <Select
-                                            displayEmpty
-                                            defaultValue={""}
-                                            value={selectedRoomtype === 0 ? 0 : selectedFloor}
-                                            disabled={selectedRoomtype === 0}
-                                            onChange={(e) => handleSelectedFilter(Number(e.target.value), 'floorNumber')}
-                                        >
-                                            <MenuItem value={0}>
-                                                <em>{'-- เลือกตำแหน่งหรือชั้น --'}</em>
-                                            </MenuItem>
-                                            {
-                                                floors.map((item, index) => {
-                                                    return (
-                                                        <MenuItem key={index} value={item.ID}>{`ชั้น ${item.Number}`}</MenuItem>
-                                                    )
-                                                })
-                                            }
-                                        </Select>
-                                    </FormControl>
-                                </Grid2>
+                                            {/* Floor Number Selection */}
+                                            <Grid2 size={{ xs: 6, md: 6 }}>
+                                                <Typography variant="body1" className="title-field">ตำแหน่ง/ชั้น</Typography>
+                                                <FormControl fullWidth>
+                                                    <Select
+                                                        displayEmpty
+                                                        defaultValue={""}
+                                                        value={selectedRoomtype === 0 ? 0 : selectedFloor}
+                                                        disabled={selectedRoomtype === 0}
+                                                        onChange={(e) => handleSelectedFilter(Number(e.target.value), 'floorNumber')}
+                                                    >
+                                                        <MenuItem value={0}>
+                                                            <em>{'-- เลือกตำแหน่งหรือชั้น --'}</em>
+                                                        </MenuItem>
+                                                        {
+                                                            floors.map((item, index) => {
+                                                                return (
+                                                                    <MenuItem key={index} value={item.ID}>{`ชั้น ${item.Number}`}</MenuItem>
+                                                                )
+                                                            })
+                                                        }
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid2>
 
-                                {/* Room Number Selection */}
-                                <Grid2 size={{ xs: 6, md: 6 }}>
-                                    <Typography variant="body1" className="title-field">หมายเลขห้อง</Typography>
-                                    <FormControl fullWidth>
-                                        <Select
-                                            name="RoomID"
-                                            value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
-                                            onChange={handleSelectChange}
-                                            displayEmpty
-                                            disabled={selectedFloor === 0 || selectedRoomtype === 0}
-                                        >
-                                            <MenuItem value={0}>
-                                                <em>{'-- เลือกหมายเลขห้อง --'}</em>
-                                            </MenuItem>
-                                            {
-                                                filteredRooms.map((item, index) => {
-                                                    return (
-                                                        <MenuItem key={index} value={item.ID}>{item.RoomNumber}</MenuItem>
-                                                    )
-                                                })
-                                            }
-                                        </Select>
-                                    </FormControl>
-                                </Grid2>
+                                            {/* Room Number Selection */}
+                                            <Grid2 size={{ xs: 6, md: 6 }}>
+                                                <Typography variant="body1" className="title-field">หมายเลขห้อง</Typography>
+                                                <FormControl fullWidth>
+                                                    <Select
+                                                        name="RoomID"
+                                                        value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
+                                                        onChange={handleSelectChange}
+                                                        displayEmpty
+                                                        disabled={selectedFloor === 0 || selectedRoomtype === 0}
+                                                    >
+                                                        <MenuItem value={0}>
+                                                            <em>{'-- เลือกหมายเลขห้อง --'}</em>
+                                                        </MenuItem>
+                                                        {
+                                                            filteredRooms.map((item, index) => {
+                                                                return (
+                                                                    <MenuItem key={index} value={item.ID}>{item.RoomNumber}</MenuItem>
+                                                                )
+                                                            })
+                                                        }
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid2>
+                                        </>
+                                    )
+                                }
 
                                 {/* Maintenance Type Selection */}
                                 <Grid2 size={{ xs: 6, md: 12 }}>
@@ -417,6 +480,33 @@ function CreateMaintenanceRequestPage() {
                                             }
                                         </Select>
                                     </FormControl>
+                                    {
+                                        formData.MaintenanceTypeID == 6 ? (
+                                            <>
+                                                {/* OtherType Detail Input */}
+                                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                                    <TextField
+                                                        multiline
+                                                        rows={2}
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        name="OtherTypeDetail"
+                                                        value={formData.OtherTypeDetail}
+                                                        onChange={handleInputChange}
+                                                        placeholder="ระบุประเภทปัญหา"
+                                                        slotProps={{
+                                                            input: {
+                                                                className: "custom-input"
+                                                            }
+                                                        }}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                </Grid2>
+                                            </>
+                                        ) : (
+                                            <></>
+                                        )
+                                    }
                                 </Grid2>
 
                                 {/* Description Input */}
@@ -447,8 +537,10 @@ function CreateMaintenanceRequestPage() {
                                         <FormGroup>
                                             <FormControlLabel
                                                 control={<Checkbox
-                                                    checked
-
+                                                    name="IsAnytimeAvailable"
+                                                    checked={formData.IsAnytimeAvailable}
+                                                    onChange={handleInputChange}
+                                                    sx={{ color: '#6D6E70' }}
                                                 />}
                                                 label="ทุกช่วงเวลา"
                                             />
@@ -466,11 +558,10 @@ function CreateMaintenanceRequestPage() {
                                                 fullWidth
                                                 value={formData.StartTime}
                                                 onChange={handleInputChange}
+                                                disabled={formData.IsAnytimeAvailable}
                                             />
                                         </Grid2>
-
                                         <Typography variant="body1">ถึง</Typography>
-
                                         <Grid2 size={{ xs: 6, md: 5.5 }}>
                                             <TextField
                                                 name="EndTime"
@@ -478,7 +569,7 @@ function CreateMaintenanceRequestPage() {
                                                 fullWidth
                                                 value={formData.EndTime}
                                                 onChange={handleInputChange}
-                                                inputProps={{ step: 600 }}
+                                                disabled={formData.IsAnytimeAvailable}
                                             />
                                         </Grid2>
                                     </Grid2>
@@ -490,7 +581,20 @@ function CreateMaintenanceRequestPage() {
 
                                 <Grid2 size={{ xs: 6, md: 12 }}>
                                     <Typography variant="body1" className="title-field">ผู้เขียนคำร้อง</Typography>
-                                    <TextField fullWidth variant="outlined" value={`${user?.FirstName} ${user?.LastName}`} />
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        value={`${user?.FirstName} ${user?.LastName}`}
+                                        slotProps={{
+                                            input: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                        <FontAwesomeIcon icon={faUser} size="lg" />
+                                                    </InputAdornment>
+                                                ),
+                                            }
+                                        }}
+                                    />
                                 </Grid2>
 
                                 <Grid2 size={{ xs: 6, md: 12 }}>
@@ -505,8 +609,8 @@ function CreateMaintenanceRequestPage() {
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <PhoneOutlinedIcon />
+                                                        <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                            <FontAwesomeIcon icon={faPhone} size="lg" />
                                                         </InputAdornment>
                                                     ),
                                                 }
@@ -520,8 +624,8 @@ function CreateMaintenanceRequestPage() {
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <MailOutlineOutlinedIcon />
+                                                        <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                            <FontAwesomeIcon icon={faEnvelope} size="lg" />
                                                         </InputAdornment>
                                                     ),
                                                 }
@@ -530,18 +634,14 @@ function CreateMaintenanceRequestPage() {
                                     </Grid2>
                                     <Grid2 container size={{ xs: 6, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
                                         <Button
-                                            variant="contained"
-
+                                            variant="containedBlue"
                                             onClick={() => setOnEdit(!onEdit)}
                                             sx={{
-                                                background: "#08aff1",
                                                 display: onEdit ? 'none' : '',
-                                                "&:hover": {
-                                                    backgroundColor: "#08A0DC"
-                                                }
+                                                
                                             }}>
-                                            <EditOutlinedIcon />
-                                            {"แก้ไข"}
+                                            <FontAwesomeIcon icon={faPencil} size="lg" />
+                                            <Typography sx={{ fontSize: 14, ml: 0.6 }}>แก้ไข</Typography>
                                         </Button>
                                     </Grid2>
                                 </Grid2>
@@ -591,7 +691,7 @@ function CreateMaintenanceRequestPage() {
 
                             {/* Buttom Section */}
                             <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                <Button onClick={handleResetData}>รีเซ็ตข้อมูล</Button>
+                                <Button onClick={() => handleResetData()}>รีเซ็ตข้อมูล</Button>
                                 <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
                                     <IosShareOutlinedIcon />
                                     {"ส่งคำร้องแจ้งซ่อม"}
@@ -601,7 +701,7 @@ function CreateMaintenanceRequestPage() {
                     </CardContent>
                 </Card>
             </Grid2>
-        </div>
+        </div >
     )
 }
 export default CreateMaintenanceRequestPage

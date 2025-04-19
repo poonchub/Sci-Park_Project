@@ -1,0 +1,34 @@
+.check-requests-page {
+    .card {
+        display: flex;
+        .card-content{
+            display: flex;
+            align-items: center;
+            padding: 0;
+            width: 100%;
+        }
+    }
+
+    .filter-section {
+        .search-box {
+            margin: 0 !important;
+        }
+    }
+
+    .MuiTextField-root {
+        margin-bottom: 0 !important;
+        width: 100% !important;
+    }
+
+    .css-c2i0tp-MuiCardContent-root:last-child, .css-1rbiwpz-MuiCardContent-root:last-child {
+        padding-bottom: 16px;
+    }
+
+    .data-card .title-list{
+        font-weight: 500;
+    }
+
+    .css-1r5z1p1-MuiTableCell-root{
+        padding: 12px;
+    }
+}

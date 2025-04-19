@@ -1,5 +1,6 @@
 export const apiUrl = "http://localhost:8000";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
+import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
@@ -407,26 +408,26 @@ async function GetMaintenanceTypes() {
 }
 
 // MaintenanceRequests
-// async function GetMaintenanceRequests() {
-//     const requestOptions = {
-//         method: "GET",
-//         headers: {
-//             "Content-Type": "application/json",
-//             "Authorization": `Bearer ${localStorage.getItem("token")}`,
-//         },
-//     };
+async function ListMaintenanceRequests() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
 
-//     let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
-//         .then((res) => {
-//             if (res.status == 200) {
-//                 return res.json();
-//             } else {
-//                 return false;
-//             }
-//         });
+    let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
 
-//     return res;
-// }
+    return res;
+}
 async function GetMaintenanceRequests(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
     const requestOptions = {
         method: "GET",
@@ -447,7 +448,7 @@ async function GetMaintenanceRequests(statusID: number, page: number, limit: num
 
     return res;
 }
-async function GetMaintenanceRequestID(customerid: Number) {
+async function GetMaintenanceRequestByID(id: Number) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -456,7 +457,7 @@ async function GetMaintenanceRequestID(customerid: Number) {
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-request/${customerid}`, requestOptions).then(
+    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions).then(
         (res) => {
             if (res.status == 200) {
                 return res.json();
@@ -479,6 +480,7 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-request`, requestOptions).then((res) => {
+        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -642,6 +644,28 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
 }
 
 // MaintenanceTasks
+async function GetMaintenanceTask(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    const userID = localStorage.getItem('userId')
+
+    let res = await fetch(`${apiUrl}/maintenance-tasks-option-id?page=${page}&status=${statusID}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&operator=${4}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
     const requestOptions = {
         method: "POST",
@@ -655,6 +679,46 @@ async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
     let res = await fetch(`${apiUrl}/maintenance-task`, requestOptions).then((res) => {
         console.log(res)
         if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+async function UpdateMaintenanceTaskByID(data: MaintenanceTasksInterface, id: Number | undefined) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function DeleteMaintenanceTaskByID(bookingID: number | undefined) {
+    const requestOptions = {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-task/${bookingID}`, requestOptions).then((res) => {
+        if (res.status == 200) {
             return res.json();
         } else {
             return false;
@@ -695,8 +759,9 @@ export {
     GetMaintenanceTypes,
 
     // MaintenanceRequests
+    ListMaintenanceRequests,
     GetMaintenanceRequests,
-    GetMaintenanceRequestID,
+    GetMaintenanceRequestByID,
     CreateMaintenanceRequest,
     UpdateMaintenanceRequestByID,
     DeleteMaintenanceRequestByID,
@@ -717,7 +782,10 @@ export {
     CreateManagerApproval,
 
     // MaintenanceTasks
+    GetMaintenanceTask,
     CreateMaintenanceTask,
+    UpdateMaintenanceTaskByID,
+    DeleteMaintenanceTaskByID,
 
 }
 

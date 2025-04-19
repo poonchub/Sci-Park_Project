@@ -1,0 +1,588 @@
+import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { TextField } from "../../components/TextField/TextField";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBullseye, faMagnifyingGlass, faQuestionCircle, faXmark, } from "@fortawesome/free-solid-svg-icons";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+
+import { GridColDef } from '@mui/x-data-grid';
+import { GetMaintenanceTask, GetMaintenanceTypes } from "../../services/http";
+import { DatePicker } from "../../components/DatePicker/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { Select } from "../../components/Select/Select";
+
+import './AcceptWork.css';
+import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
+import dateFormat from "../../utils/dateFormat";
+import AlertGroup from "../../components/AlertGroup/AlertGroup";
+import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
+import { Link } from "react-router-dom";
+import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import handleActionAcception from "../../utils/handleActionAcception";
+import timeFormat from "../../utils/timeFormat";
+import MaintenanceTaskTable from "../../components/MaintenanceTaskTable/MaintenanceTaskTable";
+
+function AcceptWork() {
+
+	const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([])
+	const [pendingMaintenanceTasks, setPendingMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
+	const [inProgressMaintenanceTasks, setInProgressMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
+	const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>()
+
+	const [searchText, setSearchText] = useState('')
+	const [selectedType, setSelectedType] = useState(0)
+	const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
+
+	const [pagePending, setPagePending] = useState(0);
+	const [limitPending, setLimitPending] = useState(10);
+	const [totalPending, setTotalPending] = useState(0);
+
+	const [pageInProgress, setPageInProgress] = useState(0);
+	const [limitInProgress, setLimitInProgress] = useState(10);
+	const [totalInProgress, setTotalInProgress] = useState(0);
+
+	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
+	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+
+	const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+
+	const pendingColumns: GridColDef<(typeof pendingMaintenanceTasks)[number]>[] = [
+		{
+			field: 'ID',
+			headerName: 'ID',
+			flex: 0.5,
+			renderCell: (params) => {
+				return params.row.MaintenanceRequest?.ID
+			}
+		},
+		{
+			field: 'CreatedAt',
+			headerName: 'วันที่ได้รับมอบ',
+			type: 'string',
+			flex: 1,
+			// editable: true,
+			renderCell: (params) => {
+				const date = dateFormat(params.row.CreatedAt || '')
+				const time = timeFormat(params.row.CreatedAt || '')
+				return (
+					<Box >
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%"
+							}}
+						>{date}</Typography>
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%",
+								color: 'gray'
+							}}
+						>{time}</Typography>
+					</Box>
+				)
+			}
+		},
+		{
+			field: 'Description',
+			headerName: 'รายละเอียด',
+			type: 'string',
+			flex: 1.8,
+			// editable: true,
+			renderCell: (params) => {
+				const requests = params.row.MaintenanceRequest
+				const areaID = requests?.Area?.ID
+				const areaDetail = requests?.AreaDetail
+				const roomtype = requests?.Room?.RoomType?.TypeName
+				const roomNum = requests?.Room?.RoomNumber
+				const roomFloor = requests?.Room?.Floor?.Number
+
+				const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า"
+				const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+				const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+
+				return (
+					<Box >
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%"
+							}}
+						>
+							{
+								areaID === 2 ? (
+									`${areaDetail}`
+								) : (
+									`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
+								)
+							}
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%",
+								color: '#6D6E70'
+							}}
+						>
+							{requests?.Description}
+						</Typography>
+						<Box sx={{
+							bgcolor: colorLite,
+							borderRadius: 10,
+							px: 1.5,
+							py: 0.5,
+							display: 'inline-flex',
+							gap: 1,
+							color: color,
+							alignItems: 'center',
+							mt: 1
+						}}>
+							<FontAwesomeIcon icon={icon} />
+							<Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+								{typeName}
+							</Typography>
+						</Box>
+					</Box>
+				)
+			},
+		},
+		{
+			field: 'Accept',
+			headerName: 'จัดการ',
+			type: 'string',
+			flex: 1.4,
+			// editable: true,
+			renderCell: (item) => {
+				return item.row.RequestStatus?.Name === 'Assigned' ? (
+					<Box>
+						<Button
+							variant="containedBlue"
+							onClick={() => {
+								setOpenConfirmAccepted(true)
+								setSelectedTask(item.row)
+							}}
+							sx={{ mr: 0.5 }}
+						>
+							ดำเนินการ
+						</Button>
+						<Button
+							variant="outlinedCancel"
+							onClick={() => {
+								setOpenConfirmCancelled(true)
+								setSelectedTask(item.row)
+							}}
+							sx={{
+								minWidth: '0px',
+								px: '6px',
+							}}
+						>
+							<FontAwesomeIcon icon={faXmark} size="xl" />
+						</Button>
+					</Box>
+				) : (
+					<></>
+				)
+			},
+		},
+		{
+			field: 'Check',
+			headerName: '',
+			type: 'string',
+			flex: 1,
+			// editable: true,
+			renderCell: (item) => {
+				const requestID = String(item.row.MaintenanceRequest?.ID)
+				return (
+					<Link to="/check-requests" >
+						<Button
+							variant="contained"
+							color="primary"
+							size="small"
+							onClick={() => localStorage.setItem('requestID', requestID)}
+						>
+							ตรวจสอบ
+						</Button>
+					</Link>
+
+				)
+			}
+		},
+	];
+
+	const inProgressColumns: GridColDef<(typeof inProgressMaintenanceTasks)[number]>[] = [
+		{
+			field: 'ID',
+			headerName: 'ID',
+			flex: 0.5,
+			renderCell: (params) => {
+				return params.row.MaintenanceRequest?.ID
+			}
+		},
+		{
+			field: 'UpdatedAt',
+			headerName: 'วันที่รับงาน',
+			type: 'string',
+			flex: 1,
+			// editable: true,
+			renderCell: (params) => {
+				const date = dateFormat(params.row.CreatedAt || '')
+				const time = timeFormat(params.row.CreatedAt || '')
+				return (
+					<Box >
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%"
+							}}
+						>{date}</Typography>
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%",
+								color: 'gray'
+							}}
+						>{time}</Typography>
+					</Box>
+				)
+			}
+		},
+		{
+			field: 'Description',
+			headerName: 'รายละเอียด',
+			type: 'string',
+			flex: 1.8,
+			// editable: true,
+			renderCell: (params) => {
+				const requests = params.row.MaintenanceRequest
+				const areaID = requests?.Area?.ID
+				const areaDetail = requests?.AreaDetail
+				const roomtype = requests?.Room?.RoomType?.TypeName
+				const roomNum = requests?.Room?.RoomNumber
+				const roomFloor = requests?.Room?.Floor?.Number
+
+				const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า"
+				const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+				const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+
+				return (
+					<Box >
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%"
+							}}
+						>
+							{
+								areaID === 2 ? (
+									`${areaDetail}`
+								) : (
+									`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
+								)
+							}
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: 14,
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "100%",
+								color: '#6D6E70'
+							}}
+						>
+							{requests?.Description}
+						</Typography>
+						<Box sx={{
+							bgcolor: colorLite,
+							borderRadius: 10,
+							px: 1.5,
+							py: 0.5,
+							display: 'inline-flex',
+							gap: 1,
+							color: color,
+							alignItems: 'center',
+							mt: 1
+						}}>
+							<FontAwesomeIcon icon={icon} />
+							<Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+								{typeName}
+							</Typography>
+						</Box>
+					</Box>
+				)
+			},
+		},
+		{
+			field: 'Check',
+			headerName: '',
+			type: 'string',
+			flex: 1,
+			// editable: true,
+			renderCell: (item) => {
+				const requestID = String(item.row.MaintenanceRequest?.ID)
+				return (
+					<Link to="/check-requests" >
+						<Button
+							variant="contained"
+							color="primary"
+							size="small"
+							onClick={() => localStorage.setItem('requestID', requestID)}
+						>
+							ตรวจสอบ
+						</Button>
+					</Link>
+
+				)
+			}
+		},
+	];
+
+	const getMaintenanceTypes = async () => {
+		try {
+			const res = await GetMaintenanceTypes();
+			if (res) {
+				setMaintenanceTypes(res);
+			}
+		} catch (error) {
+			console.error("Error fetching maintenance types:", error);
+		}
+	};
+
+	const getPendingMaintenanceTasks = async () => {
+		try {
+			const res = await GetMaintenanceTask(4, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			if (res) {
+				console.log(res.data)
+				setPendingMaintenanceTasks(res.data);
+				setTotalPending(res.total);
+			}
+		} catch (error) {
+			console.error("Error fetching request maintenance requests:", error);
+		}
+	};
+
+	const getInProgressMaintenanceTasks = async () => {
+		try {
+			const res = await GetMaintenanceTask(5, pageInProgress, limitInProgress, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			if (res) {
+				setInProgressMaintenanceTasks(res.data);
+				setTotalInProgress(res.total);
+			}
+		} catch (error) {
+			console.error("Error fetching request maintenance requests:", error);
+		}
+	};
+
+	const handleClick = (statusID: number, message: string) => {
+		handleActionAcception(statusID, message, {
+			selectedTask,
+			setAlerts,
+			refreshPendingTaskData: getPendingMaintenanceTasks,
+			refreshInProgressTaskData: getInProgressMaintenanceTasks,
+			setOpenConfirmAccepted,
+			setOpenConfirmCancelled,
+		});
+	};
+
+	const filteredPendingTasks = pendingMaintenanceTasks.filter((item) => {
+		const request = item.MaintenanceRequest
+		const requestId = request?.ID ? Number(request.ID) : null;
+		const firstName = request?.User?.FirstName?.toLowerCase() || "";
+		const lastName = request?.User?.LastName?.toLowerCase() || "";
+
+		const matchText =
+			!searchText ||
+			requestId === Number(searchText) ||
+			firstName.includes(searchText.toLowerCase()) ||
+			lastName.includes(searchText.toLowerCase())
+
+		// คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+		return matchText
+	});
+
+	const filteredInProgressTasks = inProgressMaintenanceTasks.filter((item) => {
+		const request = item.MaintenanceRequest
+		const requestId = request?.ID ? Number(request.ID) : null;
+		const firstName = request?.User?.FirstName?.toLowerCase() || "";
+		const lastName = request?.User?.LastName?.toLowerCase() || "";
+
+		const matchText =
+			!searchText ||
+			requestId === Number(searchText) ||
+			firstName.includes(searchText.toLowerCase()) ||
+			lastName.includes(searchText.toLowerCase())
+
+		// คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+		return matchText
+	});
+
+	useEffect(() => {
+		getMaintenanceTypes();
+		getPendingMaintenanceTasks()
+		getInProgressMaintenanceTasks()
+	}, []);
+
+	useEffect(() => {
+		getPendingMaintenanceTasks()
+	}, [pagePending, limitPending, selectedType, selectedDate])
+
+	useEffect(() => {
+		getInProgressMaintenanceTasks()
+	}, [pageInProgress, limitInProgress, selectedType, selectedDate])
+
+	return (
+		<div className="assign-work-page">
+			{/* Show Alerts */}
+			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
+
+			{/* Accepted Confirm */}
+			<ConfirmDialog
+				open={openConfirmAccepted}
+				setOpenConfirm={setOpenConfirmAccepted}
+				handleFunction={() => handleClick(5, "Acception successful")}
+				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			{/* Cancelled Confirm */}
+			<ConfirmDialog
+				open={openConfirmCancelled}
+				setOpenConfirm={setOpenConfirmCancelled}
+				handleFunction={() => handleClick(8, "Cancellation successful")}
+				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			<Grid2
+				container
+				spacing={3}
+				sx={{
+					// height: '100%',
+				}}
+			>
+				<Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
+					<Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+						งานของฉัน
+					</Typography>
+				</Grid2>
+				<Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
+
+					{/* Filters Section */}
+					<Grid2 container
+						spacing={1}
+						className='filter-section'
+						size={{ xs: 10, md: 12 }}
+						sx={{
+							alignItems: "flex-end",
+							height: 'auto'
+						}}>
+						<Grid2 size={{ xs: 10, md: 6 }}>
+							<TextField
+								fullWidth
+								className="search-box"
+								variant="outlined"
+								placeholder="ค้นหา"
+								margin="none"
+								value={searchText}
+								onChange={(e) => setSearchText(e.target.value)}
+								slotProps={{
+									input: {
+										startAdornment: (
+											<InputAdornment position="start" sx={{ px: 0.5 }}>
+												<FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+											</InputAdornment>
+										),
+									}
+								}}
+							/>
+						</Grid2>
+						<Grid2 size={{ xs: 10, md: 3 }}>
+							<LocalizationProvider dateAdapter={AdapterDayjs}>
+								<DatePicker
+									format="DD/MM/YYYY"
+									value={selectedDate}
+									onChange={(newValue) => setSelectedDate(newValue)}
+								/>
+							</LocalizationProvider>
+						</Grid2>
+						<Grid2 size={{ xs: 10, md: 3 }}>
+							<FormControl fullWidth>
+								<Select
+									value={selectedType}
+									onChange={(e) => setSelectedType(Number(e.target.value))}
+									displayEmpty
+									startAdornment={
+										<InputAdornment position="start" sx={{ pl: 0.5 }}>
+											<FontAwesomeIcon icon={faBullseye} size="lg" />
+										</InputAdornment>
+									}
+								>
+									<MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
+									{
+										maintenanceTypes.map((item, index) => {
+											return (
+												<MenuItem key={index} value={index + 1}>{item.TypeName}</MenuItem>
+											)
+										})
+									}
+								</Select>
+							</FormControl>
+						</Grid2>
+					</Grid2>
+				</Grid2>
+
+				{/* Data Table */}
+				<Grid2 container size={{ xs: 12, md: 12 }} >
+					<Grid2 size={{ xs: 12, md: 7 }} >
+						<MaintenanceTaskTable
+							title="รอดำเนินการ"
+							rows={filteredPendingTasks}
+							columns={pendingColumns}
+							rowCount={totalPending}
+							page={pagePending}
+							limit={limitPending}
+							onPageChange={(p) => setPagePending(p + 1)}
+							onLimitChange={setLimitPending}
+						/>
+					</Grid2>
+					<Grid2 size={{ xs: 12, md: 5 }} >
+						<MaintenanceTaskTable
+							title="กำลังดำเนินการ"
+							rows={filteredInProgressTasks}
+							columns={inProgressColumns}
+							rowCount={totalInProgress}
+							page={pageInProgress}
+							limit={limitInProgress}
+							onPageChange={(p) => setPageInProgress(p + 1)}
+							onLimitChange={setLimitInProgress}
+						/>
+					</Grid2>
+				</Grid2>
+			</Grid2>
+		</div>
+	)
+}
+export default AcceptWork;
