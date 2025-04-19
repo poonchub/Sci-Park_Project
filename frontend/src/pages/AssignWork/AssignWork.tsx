@@ -1,13 +1,13 @@
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faQuestionCircle, faToolbox, } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faMagnifyingGlass, faQuestionCircle, faRotateRight, faToolbox, faUserTie, } from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { UserInterface } from "../../interfaces/IUser";
 
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { GetMaintenanceRequests, GetMaintenanceTypes, GetOperators } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
@@ -17,13 +17,14 @@ import { Select } from "../../components/Select/Select";
 import './AssignWork.css';
 import { AreasInterface } from "../../interfaces/IAreas";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
-import { CalendarMonth, SearchOff } from "@mui/icons-material";
+import { CalendarMonth } from "@mui/icons-material";
 import dateFormat from "../../utils/dateFormat";
 import handleAssignWork from "../../utils/handleAssignWork";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import AssignPopup from "../../components/AssignPopup/AssignPopup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import { Link } from "react-router-dom";
+import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 
 function AssignWork() {
     const [operators, setOperators] = useState<UserInterface[]>([])
@@ -43,7 +44,7 @@ function AssignWork() {
     const [openPopupAssign, setOpenPopupAssign] = useState(false)
     const [requestSelected, setRequestSelected] = useState<MaintenanceRequestsInterface>({})
 
-    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
@@ -79,7 +80,7 @@ function AssignWork() {
             field: 'Description',
             headerName: 'รายละเอียด',
             type: 'string',
-            flex: 1.8,
+            flex: 1.6,
             // editable: true,
             renderCell: (params) => {
                 const areaID = params.row.Area?.ID
@@ -168,7 +169,7 @@ function AssignWork() {
         },
         {
             field: 'Assigned',
-            headerName: 'จัดการ',
+            headerName: 'การมอบหมายงาน',
             type: 'string',
             flex: 1.2,
             // editable: true,
@@ -192,7 +193,8 @@ function AssignWork() {
                                 }
                             }}
                         >
-                            มอบหมายงาน
+                            <FontAwesomeIcon icon={faUserTie} />
+                            <Typography variant="textButtonClassic" >มอบหมาย</Typography>
                         </Button>
                     </Box>
                 ) : (
@@ -204,7 +206,7 @@ function AssignWork() {
             field: 'Check',
             headerName: '',
             type: 'string',
-            flex: 1,
+            flex: 1.2,
             // editable: true,
             renderCell: (item) => {
                 const requestID = String(item.row.ID)
@@ -216,7 +218,8 @@ function AssignWork() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ดูรายละเอียด
+                            <FontAwesomeIcon icon={faEye} />
+                            <Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
                         </Button>
                     </Link>
 
@@ -269,6 +272,12 @@ function AssignWork() {
         });
     };
 
+    const handleClearFillter = () => {
+        setSelectedDate(null);
+        setSearchText('');
+        setSelectedType(0)
+    }
+
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = request.ID ? Number(request.ID) : null;
         const firstName = request.User?.FirstName?.toLowerCase() || "";
@@ -316,145 +325,107 @@ function AssignWork() {
             <Grid2
                 container
                 spacing={3}
-                sx={{
-                    // height: '100%',
-                }}
             >
                 <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         มอบหมายงานซ่อม
                     </Typography>
                 </Grid2>
-                <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
 
-                    {/* Filters Section */}
-                    <Grid2 container
-                        spacing={2}
-                        className='filter-section'
-                        size={{ xs: 10, md: 12 }}
-                        sx={{
-                            alignItems: "flex-end",
-                            height: 'auto'
-                        }}>
-                        <Grid2 size={{ xs: 10, md: 6 }}>
-                            <TextField
-                                fullWidth
-                                className="search-box"
-                                variant="outlined"
-                                placeholder="ค้นหา"
-                                margin="none"
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
-                                            </InputAdornment>
-                                        ),
-                                    }
+                {/* Filters Section */}
+                <Grid2 container
+                    spacing={1}
+                    className='filter-section'
+                    size={{ xs: 10, md: 12 }}
+                    sx={{
+                        alignItems: "flex-end",
+                        height: 'auto'
+                    }}>
+                    <Grid2 size={{ xs: 10, md: 6 }}>
+                        <TextField
+                            fullWidth
+                            className="search-box"
+                            variant="outlined"
+                            placeholder="ค้นหา"
+                            margin="none"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                        </InputAdornment>
+                                    ),
+                                }
+                            }}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 10, md: 2.5 }}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                format="DD/MM/YYYY"
+                                value={selectedDate}
+                                onChange={(newValue) => setSelectedDate(newValue)}
+                                slots={{
+                                    openPickerIcon: CalendarMonth,
                                 }}
                             />
-                        </Grid2>
-                        <Grid2 size={{ xs: 10, md: 3 }}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    format="DD/MM/YYYY"
-                                    value={selectedDate}
-                                    onChange={(newValue) => setSelectedDate(newValue)}
-                                    slots={{
-                                        openPickerIcon: CalendarMonth,
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Grid2>
-                        <Grid2 size={{ xs: 10, md: 3 }}>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectedType}
-                                    onChange={(e) => setSelectedType(Number(e.target.value))}
-                                    displayEmpty
-                                    startAdornment={
-                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faToolbox} size="lg" />
-                                        </InputAdornment>
-                                    }
-                                >
-                                    <MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
-                                    {
-                                        maintenanceTypes.map((item, index) => {
-                                            return (
-                                                <MenuItem key={index} value={index + 1}>{item.TypeName}</MenuItem>
-                                            )
-                                        })
-                                    }
-                                </Select>
-                            </FormControl>
-                        </Grid2>
+                        </LocalizationProvider>
+                    </Grid2>
+                    <Grid2 size={{ xs: 10, md: 2.5 }}>
+                        <FormControl fullWidth>
+                            <Select
+                                value={selectedType}
+                                onChange={(e) => setSelectedType(Number(e.target.value))}
+                                displayEmpty
+                                startAdornment={
+                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                        <FontAwesomeIcon icon={faToolbox} size="lg" />
+                                    </InputAdornment>
+                                }
+                            >
+                                <MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
+                                {
+                                    maintenanceTypes.map((item, index) => {
+                                        return (
+                                            <MenuItem key={index} value={index + 1}>{item.TypeName}</MenuItem>
+                                        )
+                                    })
+                                }
+                            </Select>
+                        </FormControl>
+                    </Grid2>
+                    <Grid2 size={{ xs: 10, md: 1 }}>
+                        <Button onClick={handleClearFillter}
+                            sx={{
+                                minWidth: 0,
+                                width: '100%',
+                                height: '45px',
+                                borderRadius: '10px',
+                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                "&:hover": {
+                                    boxShadow: 'none',
+                                    borderColor: 'primary.main',
+                                    backgroundColor: 'transparent'
+                                },
+                            }}
+                        ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
                     </Grid2>
                 </Grid2>
 
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        <DataGrid
-                            rows={filteredRequests}
-                            columns={columns}
-                            pageSizeOptions={[5, 10, 20, 50]}
-                            getRowId={(row) => String(row.ID)}
-                            paginationMode="server"
-                            rowCount={total}
-                            checkboxSelection
-                            disableRowSelectionOnClick
-                            disableColumnResize={false}
-                            slots={{
-                                noRowsOverlay: () => (
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: '100%',
-                                            color: 'gray',
-                                        }}
-                                    >
-                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            ไม่พบงานซ่อมที่ต้องมอบหมาย
-                                        </Typography>
-                                    </Box>
-                                ),
-                            }}
-                            initialState={{
-                                pagination: {
-                                    paginationModel: { page, pageSize: limit },
-                                },
-                            }}
-                            onPaginationModelChange={(params) => {
-                                setPage(params.page + 1);
-                                setLimit(params.pageSize);
-                            }}
-                            sx={{
-                                width: "100%",
-                                borderRadius: 2,
-                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                                    outline: "none",
-                                    boxShadow: "none",
-                                },
-                            }}
-                            slotProps={{
-                                baseCheckbox: {
-                                    sx: {
-                                        color: 'gray',
-                                        '&.Mui-checked': {
-                                            color: '#F26522',
-                                        },
-                                    },
-                                },
-                            }}
-                        />
-                    </Card>
+                    <CustomDataGrid
+                        rows={filteredRequests}
+                        columns={columns}
+                        rowCount={total}
+                        page={page}
+                        limit={limit}
+                        onPageChange={setPage}
+                        onLimitChange={setLimit}
+                        noDataText="ไม่พบงานซ่อมที่ต้องมอบหมาย"
+                    />
                 </Grid2>
             </Grid2>
         </div>

@@ -9,7 +9,7 @@ declare module '@mui/material/Button' {
 
 declare module "@mui/material/styles" {
     interface PaletteOptions {
-        blue?: string
+        customBlue?: string
     }
 
     interface TypeBackground {
@@ -17,3 +17,10 @@ declare module "@mui/material/styles" {
         secondary?: string;
       }
 }
+
+declare module "@mui/material/Typography" {
+    interface TypographyPropsVariantOverrides {
+        textButtonClassic: true;
+    }
+  }
+  

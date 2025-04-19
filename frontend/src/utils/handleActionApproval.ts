@@ -2,10 +2,15 @@ import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
 import { CreateManagerApproval, UpdateMaintenanceRequestByID } from "../services/http";
 
+interface AlertMessage {
+    type: "error" | "warning" | "success";
+    message: string;
+}
+
 interface handleActionApprovalProps {
     userID: number | undefined;
     selectedRequest: number | undefined;
-    setAlerts: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
+    setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
     refreshRequestData: () => void;
     setOpenConfirmApproved: (v: boolean) => void;
     setOpenConfirmRejected: (v: boolean) => void;

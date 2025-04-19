@@ -19,16 +19,48 @@ export const SECTIONS = [
 const DRAWER_ITEMS: Record<string, NavItem[]> = {
     home: [], // No drawer items for 'home'
     booking: [
-        { path: '/booking-room', name: 'ระบบจองห้อง', roles: ['Outsider', 'Admin', 'SuperAdmin'] },
+        { 
+            path: '/booking-room', 
+            name: 'ระบบจองห้อง', 
+            roles: ['Outsider', 'Admin', 'SuperAdmin'] 
+        },
     ],
     maintenance: [
-        { path: '/dashboard', name: 'แดชบอร์ด', roles: ['Outsider', 'Admin', 'SuperAdmin'] },
-        { path: '/maintenance-request', name: 'รายการแจ้งซ่อม', roles: ['Admin'] },
-        { path: '/assign-work', name: 'มอบหมายงานซ่อม', roles: ['Admin'] },
-        { path: '/accept-work', name: 'งานของฉัน', roles: ['Operator', 'Admin', 'SuperAdmin'] },
-        { path: '/manage-user', name: 'จัดการผู้ใช้งาน', roles: ['Admin', 'SuperAdmin'] },
-        { path: '/add-user', name: 'เพิ่มผู้ใช้', roles: ['SuperAdmin'] },
-        { path: '/outsider-maintenance-request', name: 'แจ้งซ่อมภายนอก', roles: ['Outsider'] },
+        { 
+            path: '/dashboard', 
+            name: 'แดชบอร์ด', 
+            roles: ['Outsider', 'Admin', 'SuperAdmin'] 
+        },
+        { 
+            path: '/maintenance-request', 
+            name: 'รายการแจ้งซ่อม', 
+            roles: [ 'Outsider', 'Admin', 'Manager', 'Operator', 'SuperAdmin'] 
+        },
+        { 
+            path: '/assign-work', 
+            name: 'มอบหมายงานซ่อม', 
+            roles: ['Admin', 'Manager'] 
+        },
+        { 
+            path: '/accept-work', 
+            name: 'งานของฉัน', 
+            roles: ['Operator'] 
+        },
+        { 
+            path: '/manage-user', 
+            name: 'จัดการผู้ใช้งาน', 
+            roles: ['Admin', 'SuperAdmin'] 
+        },
+        { 
+            path: '/add-user', 
+            name: 'เพิ่มผู้ใช้', 
+            roles: ['SuperAdmin'] 
+        },
+        { 
+            path: '/outsider-maintenance-request', 
+            name: 'แจ้งซ่อมภายนอก', 
+            roles: ['Outsider'] 
+        },
     ]
 };
 
@@ -41,6 +73,7 @@ export const getDrawerItemsBySection = (sectionKey: string, role: Role): NavItem
 // Map the current URL to the appropriate section key
 export const getCurrentSectionKey = (pathname: string): string => {
     const map: Record<string, string> = {
+        // Maintenance
         '/dashboard': 'maintenance',
         '/create-maintenance-request': 'maintenance',
         '/maintenance-request': 'maintenance',
@@ -52,6 +85,7 @@ export const getCurrentSectionKey = (pathname: string): string => {
         '/outsider-maintenance-request': 'maintenance',
         '/test-popup': 'maintenance',
 
+        // Booking
         '/booking-room': 'booking',
     };
 

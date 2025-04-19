@@ -8,7 +8,7 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
 import { GetMaintenanceRequests, GetRequestStatuses, GetUserById } from "../../services/http"
 
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
 import { UserInterface } from "../../interfaces/IUser"
 import { TextField } from "../../components/TextField/TextField"
@@ -16,16 +16,17 @@ import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faFileLines, faCheckDouble, faEye, faCheckCircle, faBan } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
-import { CalendarMonth, SearchOff } from "@mui/icons-material"
+import { CalendarMonth } from "@mui/icons-material"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
 import { statusConfig } from "../../constants/statusConfig"
 import ApexLineChart from "../../components/ApexLineChart/ApexLineChart"
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards"
 import handleActionApproval from "../../utils/handleActionApproval"
+import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
 
 function MaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -46,7 +47,7 @@ function MaintenanceRequest() {
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [selectedRequest, setSelectedRequest] = useState(0)
 
-    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
@@ -169,7 +170,7 @@ function MaintenanceRequest() {
         },
         {
             field: 'Approved',
-            headerName: 'จัดการ',
+            headerName: 'การอนุมัติงาน',
             type: 'string',
             flex: 1.4,
             // editable: true,
@@ -184,7 +185,8 @@ function MaintenanceRequest() {
                             }}
                             sx={{ mr: 0.5 }}
                         >
-                            อนุมัติ
+                            <FontAwesomeIcon icon={faCheckDouble} />
+                            <Typography variant="textButtonClassic" >อนุมัติ</Typography>
                         </Button>
                         <Button
                             variant="outlinedCancel"
@@ -200,8 +202,16 @@ function MaintenanceRequest() {
                             <FontAwesomeIcon icon={faXmark} size="xl" />
                         </Button>
                     </Box>
+                ) : item.row.RequestStatus?.Name === 'Rejected' ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
+                        <FontAwesomeIcon icon={faBan} style={{ color: '#dc3545' }} />
+                        <Typography variant="textButtonClassic" >ถูกปฎิเสธ</Typography>
+                    </Box>
                 ) : (
-                    <></>
+                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
+                        <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#28a745' }} />
+                        <Typography variant="textButtonClassic" >ผ่านอนุมัติแล้ว</Typography>
+                    </Box>
                 )
             },
         },
@@ -221,7 +231,8 @@ function MaintenanceRequest() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ดูรายละเอียด
+                            <FontAwesomeIcon icon={faEye} />
+                            <Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
                         </Button>
                     </Link>
 
@@ -349,7 +360,10 @@ function MaintenanceRequest() {
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
                     <Link to="/create-maintenance-request">
-                        <Button variant="containedBlue" >เขียนคำร้องแจ้งซ่อม</Button>
+                        <Button variant="containedBlue" >
+                            <FontAwesomeIcon icon={faFileLines} size="lg" />
+                            <Typography variant="textButtonClassic" >เขียนคำร้อง</Typography>
+                        </Button>
                     </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
@@ -451,65 +465,16 @@ function MaintenanceRequest() {
 
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        <DataGrid
-                            rows={filteredRequests}
-                            columns={columns}
-                            pageSizeOptions={[5, 10, 20, 50]}
-                            getRowId={(row) => String(row.ID)}
-                            paginationMode="server"
-                            initialState={{
-                                pagination: {
-                                    paginationModel: { page, pageSize: limit },
-                                },
-                            }}
-                            rowCount={total}
-                            checkboxSelection
-                            disableRowSelectionOnClick
-                            onPaginationModelChange={(params) => {
-                                setPage(params.page + 1);
-                                setLimit(params.pageSize);
-                            }}
-                            disableColumnResize={false}
-                            sx={{
-                                width: "100%",
-                                borderRadius: 2,
-                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                                    outline: "none",
-                                    boxShadow: "none",
-                                },
-                            }}
-                            slots={{
-                                noRowsOverlay: () => (
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: '100%',
-                                            color: 'gray',
-                                        }}
-                                    >
-                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            ไม่พบข้อมูลงานแจ้งซ่อม
-                                        </Typography>
-                                    </Box>
-                                ),
-                            }}
-                            slotProps={{
-                                baseCheckbox: {
-                                    sx: {
-                                        color: 'gray',
-                                        '&.Mui-checked': {
-                                            color: '#F26522',
-                                        },
-                                    },
-                                },
-                            }}
-                        />
-                    </Card>
+                    <CustomDataGrid
+                        rows={filteredRequests}
+                        columns={columns}
+                        rowCount={total}
+                        page={page}
+                        limit={limit}
+                        onPageChange={setPage}
+                        onLimitChange={setLimit}
+                        noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                    />
                 </Grid2>
             </Grid2>
         </div>

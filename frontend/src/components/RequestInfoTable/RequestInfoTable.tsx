@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import dateFormat from "../../utils/dateFormat";
 import phoneFormat from "../../utils/phoneFormat";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
+import timeFormat from "../../utils/timeFormat";
 
 interface RequestInfoTableProps {
     data: MaintenanceRequestsInterface | undefined;
@@ -33,7 +34,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`${dateFormat(data.CreatedAt || '')}, ${data.CreatedAt?.slice(11, 16)} น.`}
+                            {`${dateFormat(data.CreatedAt || '')}, ${timeFormat(data.CreatedAt || '')}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -103,12 +104,10 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            <FontAwesomeIcon icon={faPhone} style={{ paddingRight: '8px' }} />
-                            {phoneFormat(data.User?.Phone || '')}
+                            {`โทรศัพท์: ${phoneFormat(data.User?.Phone || '')}`}
                         </Typography>
                         <Typography>
-                            <FontAwesomeIcon icon={faEnvelope} style={{ paddingRight: '8px' }} />
-                            {data.User?.Email}
+                            {`อีเมล: ${data.User?.Email}`}
                         </Typography>
                     </TableCell>
                 </TableRow>

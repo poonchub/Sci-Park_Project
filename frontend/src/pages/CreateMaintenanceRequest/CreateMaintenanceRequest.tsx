@@ -14,10 +14,9 @@ import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceReque
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
-import IosShareOutlinedIcon from '@mui/icons-material/IosShareOutlined';
 import StepperComponent from "../../components/Stepper/Stepper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faEnvelope, faPencil, faPhone, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faEnvelope, faPencil, faPhone, faRotateRight, faUpload, faUserTie } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ImageUploader from "../../components/ImageUploader/ImageUploader";
 
@@ -560,7 +559,7 @@ function CreateMaintenanceRequestPage() {
                                             input: {
                                                 startAdornment: (
                                                     <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                        <FontAwesomeIcon icon={faUser} size="lg" />
+                                                        <FontAwesomeIcon icon={faUserTie} size="lg" />
                                                     </InputAdornment>
                                                 ),
                                             }
@@ -611,8 +610,8 @@ function CreateMaintenanceRequestPage() {
                                                 display: onEdit ? 'none' : '',
 
                                             }}>
-                                            <FontAwesomeIcon icon={faPencil} size="lg" />
-                                            <Typography sx={{ fontSize: 14, ml: 0.6 }}>แก้ไข</Typography>
+                                            <FontAwesomeIcon icon={faPencil} />
+                                            <Typography variant="textButtonClassic" >แก้ไขข้อมูล</Typography>
                                         </Button>
                                     </Grid2>
                                 </Grid2>
@@ -639,10 +638,13 @@ function CreateMaintenanceRequestPage() {
 
                             {/* Buttom Section */}
                             <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                <Button onClick={() => handleResetData()}>รีเซ็ตข้อมูล</Button>
+                                <Button onClick={() => handleResetData()}>
+                                    <FontAwesomeIcon icon={faRotateRight} />
+                                    <Typography variant="textButtonClassic" >รีเซ็ตข้อมูล</Typography>
+                                </Button>
                                 <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
-                                    <IosShareOutlinedIcon />
-                                    {"ส่งคำร้องแจ้งซ่อม"}
+                                    <FontAwesomeIcon icon={faUpload} />
+                                    <Typography variant="textButtonClassic" >คลิกเลือกไฟล์</Typography>
                                 </Button>
                             </Grid2>
                         </Grid2>

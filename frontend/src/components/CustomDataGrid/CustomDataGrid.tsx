@@ -1,0 +1,101 @@
+import React from 'react';
+import {
+    DataGrid,
+    GridColDef,
+    GridPaginationModel,
+} from '@mui/x-data-grid';
+import { Card, Box, Typography } from '@mui/material';
+import { SearchOff } from '@mui/icons-material';
+
+interface CustomDataGridProps {
+    rows: any[];
+    columns: GridColDef[];
+    rowCount: number;
+    page: number;
+    limit: number;
+    onPageChange: (page: number) => void;
+    onLimitChange: (limit: number) => void;
+    noDataText?: string;
+}
+
+const CustomDataGrid: React.FC<CustomDataGridProps> = ({
+    rows,
+    columns,
+    rowCount,
+    page,
+    limit,
+    onPageChange,
+    onLimitChange,
+    noDataText = 'ไม่มีข้อมูล',
+}) => {
+    const EmptyOverlay = () => (
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'gray',
+            }}
+        >
+            <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
+            <Typography variant="body1" sx={{ mt: 1, fontSize: 14 }}>
+                {noDataText}
+            </Typography>
+        </Box>
+    );
+
+    return (
+        <Card sx={{ height: '100%', borderRadius: 2 }}>
+            <DataGrid
+                rows={rows}
+                columns={columns}
+                getRowId={(row) => String(row.ID)}
+                getRowHeight={() => 'auto'}
+                pageSizeOptions={[5, 10, 20, 50]}
+                paginationMode="server"
+                rowCount={rowCount}
+                checkboxSelection
+                disableRowSelectionOnClick
+                disableColumnResize={false}
+                slots={{
+                    noRowsOverlay: EmptyOverlay,
+                    noResultsOverlay: EmptyOverlay,
+                }}
+                initialState={{
+                    pagination: {
+                        paginationModel: { page, pageSize: limit },
+                    },
+                }}
+                onPaginationModelChange={(params: GridPaginationModel) => {
+                    onPageChange(params.page);
+                    onLimitChange(params.pageSize);
+                }}
+                sx={{
+                    width: '100%',
+                    borderRadius: 2,
+                    '& .MuiDataGrid-cell': {
+                        py: 2,
+                    },
+                    '& .MuiDataGrid-cellCheckbox': {
+                        alignItems: 'flex-start !important',
+                        pt: 0.4,
+                    },
+                }}
+                slotProps={{
+                    baseCheckbox: {
+                        sx: {
+                            color: 'gray',
+                            '&.Mui-checked': {
+                                color: '#F26522',
+                            },
+                        },
+                    },
+                }}
+            />
+        </Card>
+    );
+};
+
+export default CustomDataGrid;

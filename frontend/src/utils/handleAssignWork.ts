@@ -2,10 +2,15 @@ import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { CreateMaintenanceTask, UpdateMaintenanceRequestByID } from "../services/http";
 
+interface AlertMessage {
+    type: "error" | "warning" | "success";
+    message: string;
+}
+
 interface HandleAssignWorkProps {
     selectedOperator: number | null;
     requestSelected: MaintenanceRequestsInterface | null;
-    setAlerts: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
+    setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
     refreshRequestData: () => void;
     setOpenPopupAssign: React.Dispatch<React.SetStateAction<boolean>>;
 }

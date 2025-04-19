@@ -1,5 +1,7 @@
 import React from "react";
 import { Typography, Button, Grid2 } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -49,22 +51,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     return (
         <>
-            {/* Preview Images */}
-            <Grid2 container spacing={2} sx={{ mt: 2 }}>
-                {value.map((file, index) => {
-                    const imageUrl = URL.createObjectURL(file);
-                    return (
-                        <Grid2 key={index} size={{ xs: 6, md: 4 }}>
-                            <img
-                                src={imageUrl}
-                                alt={`preview-${index}`}
-                                width="100%"
-                                style={{ borderRadius: 8 }}
-                            />
-                        </Grid2>
-                    );
-                })}
-            </Grid2>
 
             {/* Drop Zone */}
             <Grid2
@@ -75,14 +61,33 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     p: 1.8,
                     textAlign: "center",
                     backgroundColor: "#F4FBFF",
-                    mt: 2,
                 }}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={handleDrop}
             >
-                <Typography>ลากและวางไฟล์ที่นี่ หรือ</Typography>
+                {/* Preview Images */}
+                {value.length != 0 &&
+                    <Grid2 container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
+                        {value.map((file, index) => {
+                            const imageUrl = URL.createObjectURL(file);
+                            return (
+                                <Grid2 key={index} size={{ xs: 6, md: 4 }}>
+                                    <img
+                                        src={imageUrl}
+                                        alt={`preview-${index}`}
+                                        width="100%"
+                                        style={{ borderRadius: 8 }}
+                                    />
+                                </Grid2>
+                            );
+                        })}
+                    </Grid2>
+                }
+
+                <Typography sx={{ mb: 0.5, fontSize: 14 }}>ลากและวางไฟล์ที่นี่ หรือ</Typography>
                 <Button variant="contained" component="label">
-                    คลิกเลือกไฟล์
+                    <FontAwesomeIcon icon={faImage} size="lg" />
+                    <Typography variant="textButtonClassic" >คลิกเลือกไฟล์</Typography>
                     <input
                         accept="image/*"
                         type="file"

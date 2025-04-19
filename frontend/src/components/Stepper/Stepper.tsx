@@ -21,7 +21,7 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
         },
         [`&.${stepConnectorClasses.completed}`]: {
             [`& .${stepConnectorClasses.line}`]: {
-                background: 'rgb(255, 141, 71)',
+                background: 'rgb(255, 154, 91)',
             },
         },
         [`& .${stepConnectorClasses.line}`]: {
@@ -63,7 +63,7 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
             {
                 props: ({ ownerState }) => ownerState.completed,
                 style: {
-                    background: 'rgb(255, 141, 71)',
+                    background: 'rgb(255, 154, 91)',
                 },
             },
         ],
