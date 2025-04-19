@@ -12,4 +12,5 @@ type MaintenanceTask struct {
     MaintenanceRequest MaintenanceRequest `gorm:"foreignKey:RequestID"`
     RequestStatusID uint      
     RequestStatus   RequestStatus `gorm:"foreignKey:RequestStatusID"`
+    HandoverImages []HandoverImage `gorm:"foreignKey:TaskID"`
 }

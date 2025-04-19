@@ -52,6 +52,7 @@ func SetupDatabase() {
 		&entity.Gender{},
 		&entity.Floor{},
 		&entity.Area{},
+		&entity.HandoverImage{},
 	)
 
 	if err != nil {

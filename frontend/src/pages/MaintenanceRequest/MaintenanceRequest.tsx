@@ -221,7 +221,7 @@ function MaintenanceRequest() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ตรวจสอบ
+                            ดูรายละเอียด
                         </Button>
                     </Link>
 

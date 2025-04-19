@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
@@ -23,6 +23,8 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleActionAcception from "../../utils/handleActionAcception";
 import timeFormat from "../../utils/timeFormat";
 import MaintenanceTaskTable from "../../components/MaintenanceTaskTable/MaintenanceTaskTable";
+import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
+import handleSubmitWork from "../../utils/handleSubmitWork";
 
 function AcceptWork() {
 
@@ -45,8 +47,10 @@ function AcceptWork() {
 
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
 	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
 
-	const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+	const [files, setFiles] = useState<File[]>([]);
 
 	const pendingColumns: GridColDef<(typeof pendingMaintenanceTasks)[number]>[] = [
 		{
@@ -161,10 +165,10 @@ function AcceptWork() {
 			},
 		},
 		{
-			field: 'Accept',
+			field: 'Acception',
 			headerName: 'จัดการ',
 			type: 'string',
-			flex: 1.4,
+			flex: 1.2,
 			// editable: true,
 			renderCell: (item) => {
 				return item.row.RequestStatus?.Name === 'Assigned' ? (
@@ -177,7 +181,7 @@ function AcceptWork() {
 							}}
 							sx={{ mr: 0.5 }}
 						>
-							ดำเนินการ
+							เริ่มงาน
 						</Button>
 						<Button
 							variant="outlinedCancel"
@@ -210,11 +214,9 @@ function AcceptWork() {
 					<Link to="/check-requests" >
 						<Button
 							variant="contained"
-							color="primary"
-							size="small"
 							onClick={() => localStorage.setItem('requestID', requestID)}
 						>
-							ตรวจสอบ
+							ดูรายละเอียด
 						</Button>
 					</Link>
 
@@ -336,6 +338,44 @@ function AcceptWork() {
 			},
 		},
 		{
+			field: 'Acception',
+			headerName: 'จัดการ',
+			type: 'string',
+			flex: 1.2,
+			// editable: true,
+			renderCell: (item) => {
+				return item.row.RequestStatus?.Name === 'In Progress' ? (
+					<Box>
+						<Button
+							variant="containedBlue"
+							onClick={() => {
+								setOpenPopupSubmit(true)
+								setSelectedTask(item.row)
+							}}
+							sx={{ mr: 0.5 }}
+						>
+							ส่งงาน
+						</Button>
+						<Button
+							variant="outlinedCancel"
+							onClick={() => {
+								setOpenConfirmCancelled(true)
+								setSelectedTask(item.row)
+							}}
+							sx={{
+								minWidth: '0px',
+								px: '6px',
+							}}
+						>
+							<FontAwesomeIcon icon={faXmark} size="xl" />
+						</Button>
+					</Box>
+				) : (
+					<></>
+				)
+			},
+		},
+		{
 			field: 'Check',
 			headerName: '',
 			type: 'string',
@@ -347,11 +387,9 @@ function AcceptWork() {
 					<Link to="/check-requests" >
 						<Button
 							variant="contained"
-							color="primary"
-							size="small"
 							onClick={() => localStorage.setItem('requestID', requestID)}
 						>
-							ตรวจสอบ
+							ดูรายละเอียด
 						</Button>
 					</Link>
 
@@ -375,7 +413,6 @@ function AcceptWork() {
 		try {
 			const res = await GetMaintenanceTask(4, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
 			if (res) {
-				console.log(res.data)
 				setPendingMaintenanceTasks(res.data);
 				setTotalPending(res.total);
 			}
@@ -406,6 +443,25 @@ function AcceptWork() {
 			setOpenConfirmCancelled,
 		});
 	};
+
+	const onClickAssign = () => {
+		if (!selectedTask) {
+			setAlerts((prev) => [
+				...prev,
+				{ type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }
+			]);
+			return;
+		}
+	
+		handleSubmitWork({
+			selectedTask,
+			setAlerts,
+			refreshTaskData: getInProgressMaintenanceTasks,
+			setOpenPopupSubmit,
+			files
+		});
+	};
+	
 
 	const filteredPendingTasks = pendingMaintenanceTasks.filter((item) => {
 		const request = item.MaintenanceRequest
@@ -457,6 +513,17 @@ function AcceptWork() {
 		<div className="assign-work-page">
 			{/* Show Alerts */}
 			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
+
+			{/* Submit Popup */}
+			<SubmitPopup
+				open={openPopupSubmit}
+				onClose={() => setOpenPopupSubmit(false)}
+				onConfirm={onClickAssign}
+				selectedTask={selectedTask}
+				setAlerts={setAlerts}
+				files={files}
+				onChange={setFiles}
+			/>
 
 			{/* Accepted Confirm */}
 			<ConfirmDialog
@@ -556,7 +623,7 @@ function AcceptWork() {
 
 				{/* Data Table */}
 				<Grid2 container size={{ xs: 12, md: 12 }} >
-					<Grid2 size={{ xs: 12, md: 7 }} >
+					<Grid2 size={{ xs: 12, md: 6 }} >
 						<MaintenanceTaskTable
 							title="รอดำเนินการ"
 							rows={filteredPendingTasks}
@@ -568,7 +635,7 @@ function AcceptWork() {
 							onLimitChange={setLimitPending}
 						/>
 					</Grid2>
-					<Grid2 size={{ xs: 12, md: 5 }} >
+					<Grid2 size={{ xs: 12, md: 6 }} >
 						<MaintenanceTaskTable
 							title="กำลังดำเนินการ"
 							rows={filteredInProgressTasks}

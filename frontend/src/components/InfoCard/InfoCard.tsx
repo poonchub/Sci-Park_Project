@@ -48,7 +48,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             ยังไม่ได้มอบหมาย
                         </Typography>
                     ) : (
-                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 16 }}>
                             {name}
                         </Typography>
                     )}
@@ -58,7 +58,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                         <>
                             {/* Approve button */}
                             <Button
-                                variant="contained"
+                                variant="containedBlue"
                                 onClick={onApprove}
                                 sx={{ backgroundColor: '#08aff1', mr: 0.5 }}
                             >

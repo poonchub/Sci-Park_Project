@@ -2,9 +2,14 @@ import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
 
+interface Alert {
+    type: "warning" | "error" | "success";
+    message: string;
+}
+
 interface handleActionAcceptionProps {
     selectedTask?: MaintenanceTasksInterface;
-    setAlerts: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
+    setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
     refreshPendingTaskData: () => void;
     refreshInProgressTaskData: () => void;
     setOpenConfirmAccepted: (v: boolean) => void;

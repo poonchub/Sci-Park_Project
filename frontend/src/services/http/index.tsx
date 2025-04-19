@@ -728,6 +728,29 @@ async function DeleteMaintenanceTaskByID(bookingID: number | undefined) {
     return res;
 }
 
+// HandoverImages
+async function CreateHandoverImages(data: FormData) {
+    const requestOptions = {
+        method: "POST",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/handover-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -787,6 +810,8 @@ export {
     UpdateMaintenanceTaskByID,
     DeleteMaintenanceTaskByID,
 
+    // HandoverImages
+    CreateHandoverImages,
 }
 
 

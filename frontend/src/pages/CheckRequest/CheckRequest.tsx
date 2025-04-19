@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Button, Card, CardContent, Grid2, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Grid2, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import './CheckRequest.css';
 
@@ -40,8 +40,12 @@ function CheckRequest() {
 	const [selectedOperator, setSelectedOperator] = useState(0);
 	const [openConfirmApproved, setOpenConfirmApproved] = useState(false);
 	const [openConfirmRejected, setOpenConfirmRejected] = useState(false);
+	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
+	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
 
 	const navigate = useNavigate();
+
+	const isOperator = localStorage.getItem('role') === 'Operator' || 'Admin'
 
 	// Fetch request by ID
 	const getMaintenanceRequest = async () => {
@@ -172,6 +176,24 @@ function CheckRequest() {
 				message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 			/>
 
+			{/* Confirmation dialog for acception */}
+			<ConfirmDialog
+				open={openConfirmAccepted}
+				setOpenConfirm={setOpenConfirmAccepted}
+				handleFunction={() => handleClick(5, "Acception successful")}
+				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			{/* Confirmation dialog for cancellation */}
+			<ConfirmDialog
+				open={openConfirmCancelled}
+				setOpenConfirm={setOpenConfirmCancelled}
+				handleFunction={() => handleClick(8, "Cancellation successful")}
+				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
 			{/* Header section with title and back button */}
 			<Grid2 container spacing={2}>
 				<Grid2 className="title-box" size={{ xs: 12, md: 10 }}>
@@ -181,8 +203,8 @@ function CheckRequest() {
 				</Grid2>
 				<Grid2 container size={{ xs: 12, md: 2 }} sx={{ justifyContent: "flex-end" }}>
 					<Button variant="outlined" onClick={handleBack}>
-						<FontAwesomeIcon icon={faAngleLeft} size="lg" />
-						<Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
+						<FontAwesomeIcon icon={faAngleLeft} size="lg" style={{ marginRight: '4px' }} />
+						<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 500 }}>ย้อนกลับ</Typography>
 					</Button>
 				</Grid2>
 
@@ -220,10 +242,45 @@ function CheckRequest() {
 				<Card className="data-card" sx={{ width: '100%', borderRadius: 2 }}>
 					<CardContent>
 						<Grid2 container spacing={3} sx={{ px: 6, py: 2 }}>
-							<Grid2 size={{ xs: 12, md: 12 }}>
+							<Grid2 size={{ xs: 12, md: 4 }}>
 								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 500 }}>
 									ข้อมูลการแจ้งซ่อม
 								</Typography>
+							</Grid2>
+
+							<Grid2 container size={{ xs: 12, md: 8 }}
+								sx={{
+									justifyContent: "flex-end",
+								}}
+							>
+								{
+									isOperator && <Box>
+										<Button
+											variant="containedBlue"
+											onClick={() => {
+												setOpenConfirmAccepted(true)
+											}}
+											sx={{ mr: 0.8 }}
+										>
+											<FontAwesomeIcon icon={faTools} />
+											<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 600 }}>เริ่มงานซ่อม</Typography>
+										</Button>
+										<Button
+											variant="outlinedCancel"
+											onClick={() => {
+												setOpenConfirmCancelled(true)
+											}}
+											sx={{
+												minWidth: '0px',
+												px: '6px',
+											}}
+										>
+											<FontAwesomeIcon icon={faXmark} size="lg" />
+											<Typography sx={{ fontSize: 14, ml: 0.6, fontWeight: 600 }}>ยกเลิกงานซ่อม</Typography>
+										</Button>
+									</Box>
+								}
+
 							</Grid2>
 
 							<Grid2 size={{ xs: 12, md: 6 }}>

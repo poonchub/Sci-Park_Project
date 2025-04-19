@@ -131,7 +131,7 @@ function AssignWork() {
             field: 'MaintenanceType',
             headerName: 'ประเภทงานซ่อม',
             type: 'string',
-            flex: 1.2,
+            flex: 1.4,
             // editable: true,
             renderCell: (params) => {
                 const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
@@ -170,7 +170,7 @@ function AssignWork() {
             field: 'Assigned',
             headerName: 'จัดการ',
             type: 'string',
-            flex: 1.4,
+            flex: 1.2,
             // editable: true,
             renderCell: (item) => {
                 console.log(item.row)
@@ -216,7 +216,7 @@ function AssignWork() {
                             size="small"
                             onClick={() => localStorage.setItem('requestID', requestID)}
                         >
-                            ตรวจสอบ
+                            ดูรายละเอียด
                         </Button>
                     </Link>
 
