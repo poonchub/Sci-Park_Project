@@ -3,13 +3,17 @@ import { faAward, faUserTie, faMagnifyingGlass } from "@fortawesome/free-solid-s
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Import ListUsers service 
 import { UserInterface } from "../../interfaces/IUser";
 import { PackagesInterface } from "../../interfaces/IPackages";
 import { RolesInterface } from "../../interfaces/IRoles";
 import { SearchOff } from "@mui/icons-material";
+import SuccessAlert from '../../components/Alert/SuccessAlert';
+import ErrorAlert from '../../components/Alert/ErrorAlert';
+import WarningAlert from '../../components/Alert/WarningAlert';
+import InfoAlert from '../../components/Alert/InfoAlert';
 import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
 
@@ -26,6 +30,7 @@ function ManageUsers() {
     const [searchText, setSearchText] = useState('');
     const [debouncedSearchText, setDebouncedSearchText] = useState('');
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
     // Columns definition
     const columns: GridColDef[] = [
@@ -198,12 +203,37 @@ function ManageUsers() {
 
     return (
         <div className="manage-users-page">
+            {alerts.map((alert, index) => (
+                <React.Fragment key={index}>
+                    {alert.type === 'success' && (
+                        <SuccessAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                    )}
+                    {alert.type === 'error' && (
+                        <ErrorAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                    )}
+                    {alert.type === 'warning' && (
+                        <WarningAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                    )}
+                    {alert.type === 'info' && (
+                        <InfoAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                    )}
+                </React.Fragment>
+            ))}
+            
             <Grid2 container spacing={3}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        จัดการผู้ใช้งาน
-                    </Typography>
+                    <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
                 </Grid2>
+                
+                {selectedUserId !== null && (
+                    <EditUserPopup
+                        userId={selectedUserId}
+                        open={openPopup}
+                        onClose={handleClosePopup}
+                        setAlerts={setAlerts} // ✅ Pass down alerts handler
+                    />
+                )}
+            
 
                 <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
                     {/* Filters Section */}

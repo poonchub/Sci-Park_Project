@@ -307,25 +307,41 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
               <Grid container spacing={2}>
                 {/* Gender Dropdown */}
                 <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="body1" className="title-field">เพศ</Typography>
-                  <FormControl fullWidth error={!!errors.gender}>
-                    <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือกเพศ</InputLabel>
-                    <Controller
-                      name="GenderID"
-                      control={control}
-                      defaultValue=""
-                      rules={{ required: 'กรุณาเลือกเพศ' }}
-                      render={({ field }) => (
-                        <Select {...field} label="กรุณาเลือกเพศ">
-                          {genders.map((gender) => (
-                            <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
-                          ))}
-                        </Select>
-                      )}
-                    />
-                    <FormHelperText>{String(errors.Gender?.message)}</FormHelperText>
-                  </FormControl>
-                </Grid>
+  <Typography variant="body1" className="title-field">เพศ</Typography>
+  <FormControl fullWidth error={!!errors.GenderID}>
+    <Controller
+      name="GenderID"
+      control={control}
+      defaultValue=""
+      rules={{ required: 'กรุณาเลือกเพศ' }}
+      render={({ field }) => (
+        <Select
+          {...field}
+          displayEmpty
+        >
+          <MenuItem value="">
+            <em>-- กรุณาเลือกเพศ --</em>
+          </MenuItem>
+
+          {genders.length === 0 ? (
+            <MenuItem value="-1" disabled>
+              <em>ไม่พบข้อมูลเพศ</em>
+            </MenuItem>
+          ) : (
+            genders.map((gender) => (
+              <MenuItem key={gender.ID} value={gender.ID}>
+                {gender.Name}
+              </MenuItem>
+            ))
+          )}
+        </Select>
+      )}
+    />
+    <FormHelperText>{String(errors.GenderID?.message)}</FormHelperText>
+  </FormControl>
+</Grid>
+
+
                 <Grid size={{ xs: 12, sm: 3 }}>
                   <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
                   <Controller
@@ -428,28 +444,44 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
             </Grid>
 
             {/* Role Dropdown (previously Radio Buttons) */}
-            {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
-              <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
-              <FormControl fullWidth error={!!errors.role}>
-                <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก ตำแหน่ง</InputLabel>
-                <Controller
-                  name="RoleID"
-                  control={control}
-                  defaultValue={2}
+            {userType === 'internal' && (
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                <FormControl fullWidth error={!!errors.RoleID}>
+                  <Controller
+                    name="RoleID"
+                    control={control}
+                    defaultValue={1} // ถ้าอยากให้บังคับเลือกเอง ให้เปลี่ยนเป็น ""
+                    rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        displayEmpty
 
-                  rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
-                  render={({ field }) => (
-                    <Select {...field} label="กรุณาเลือก ตำแหน่ง">
-                      {roles.map((role) => (
-                        <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-                <FormHelperText>{String(errors.Role?.message)}</FormHelperText>
-              </FormControl>
-            </Grid>
-            }
+                      >
+                        <MenuItem value="">
+                          <em>-- กรุณาเลือกตำแหน่ง --</em>
+                        </MenuItem>
+
+                        {roles.length === 0 ? (
+                          <MenuItem value={-1} disabled>
+                            <em>ไม่พบข้อมูลตำแหน่ง</em>
+                          </MenuItem>
+                        ) : (
+                          roles.map((role) => (
+                            <MenuItem key={role.ID} value={role.ID}>
+                              {role.Name}
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    )}
+                  />
+                  <FormHelperText>{String(errors.RoleID?.message)}</FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
+
 
             {/* EmployeeID Field */}
             {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
@@ -481,38 +513,52 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 )}
               />
             </Grid>
-              }
+            }
 
 
             {/* Package Dropdown */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
-              <FormControl fullWidth error={!!errors.package}>
-                <InputLabel sx={{ color: '#6D6E70' }}>สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)</InputLabel>
+              <FormControl fullWidth error={!!errors.UserPackageID}>
+
                 <Controller
                   name="UserPackageID"
                   control={control}
                   defaultValue=""
-
                   render={({ field }) => (
-                    <Select {...field} label="สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
-                      {packages.map((pkg) => (
-                        <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
-                      ))}
+                    <Select
+                      {...field}
+                      displayEmpty
+
+                    >
+                      <MenuItem value="">
+                        <em>-- กรุณาเลือกสิทธิพิเศษ(หากไม่มีไม่จำเป็นต้องเลือก) --</em>
+                      </MenuItem>
+
+                      {packages.length === 0 ? (
+                        <MenuItem value={-1} disabled>
+                          <em>ไม่พบสิทธิพิเศษ</em>
+                        </MenuItem>
+                      ) : (
+                        packages.map((pkg) => (
+                          <MenuItem key={pkg.ID} value={pkg.ID}>
+                            {pkg.PackageName}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   )}
                 />
-                <FormHelperText>{String(errors.Package?.message)}</FormHelperText>
+                <FormHelperText>{String(errors.UserPackageID?.message)}</FormHelperText>
               </FormControl>
             </Grid>
 
+
             {/* Submit Button */}
-            <Grid size={{ xs: 12 }} className="submit-button-container">
-                            {/* ปุ่ม Reset */}
-                            <Button
+            <Grid size={{ xs: 12 }} spacing={2} className="submit-button-container" sx={{ justifyContent: "flex-end", mt: 1 }}>
+              {/* ปุ่ม Reset */}
+              <Button
                 type="reset"
-                variant="outlined"
-                color="secondary"
                 sx={{ marginRight: 2 }}
                 onClick={() => { reset(); setProfileImage(""); }} // เรียกใช้ reset() เพื่อรีเซ็ตฟอร์ม
               >
@@ -522,7 +568,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 เพิ่มผู้ใช้งาน
               </Button>
 
-              
+
             </Grid>
 
           </Grid>

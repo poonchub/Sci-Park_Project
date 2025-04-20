@@ -1,6 +1,11 @@
-.manage-user-page{
+.manage-users-page{
     .MuiTextField-root {
         margin-bottom: 0 !important;
         width: 100% !important;
+    }
+    
+    .title-field{
+        font-weight: 600;
+        margin-bottom: 8px;
     }
 }
