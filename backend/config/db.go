@@ -95,8 +95,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Area
 	areas := []entity.Area{
-		{Name: "ห้องประชุม/ห้องทำงาน"}, 
-		{Name: "บริเวณอื่นๆ"},
+		{Name: "Top room F11"}, 
+		{Name: "Outside behind green bin"},
 	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
@@ -105,13 +105,11 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RequestStatus
 	requestStatuses := []entity.RequestStatus{
 		{Name: "Pending"}, 
-		{Name: "Approved"},
+		{Name: "Approved"}, 
 		{Name: "Rejected"},
-		{Name: "Assigned"},
 		{Name: "In Progress"}, 
 		{Name: "Completed"}, 
 		{Name: "Failed"},
-		{Name: "Cancelled"},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
@@ -255,12 +253,10 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล MaintenanceTypes
 	maintenanceTypes := []entity.MaintenanceType{
-		{TypeName: "งานไฟฟ้า"},
-		{TypeName: "งานเครื่องปรับอากาศ"},
-		{TypeName: "งานอินเทอร์เน็ต"},
-		{TypeName: "งานประปา"},
-		{TypeName: "งานโครงสร้าง"},
-		{TypeName: "งานอื่นๆ"},
+		{TypeName: "งานไฟฟ้า",},
+		{TypeName: "งานเครื่องใช้ไฟฟ้า",},
+		{TypeName: "งานเฟอร์นิเจอร์",},
+		{TypeName: "งานประปา",},
 	}
 	for _, mt := range maintenanceTypes {
 		db.FirstOrCreate(&mt, entity.MaintenanceType{TypeName: mt.TypeName})

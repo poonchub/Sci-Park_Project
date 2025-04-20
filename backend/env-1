@@ -1,6 +1,0 @@
-JWT_SECRET_KEY=ASbdsfyj7434Tjdyhdf89dflkku54
-
-EMAIL_USER=tepsirihopital@gmail.com
-EMAIL_PASSWORD=hchhoehgfpjvvwkl
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587

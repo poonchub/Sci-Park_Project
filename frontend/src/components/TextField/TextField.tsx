@@ -1,39 +1,31 @@
 import { styled, TextField as MuiTextField } from "@mui/material";
 
-// Custom styled TextField component
 export const TextField = styled(MuiTextField)(() => ({
     backgroundColor: "#fff",
     borderRadius: "10px",
 
-    // Custom styling for input
     "& .custom-input": {
-        padding: "10px",
+        padding: "10px",          // เพิ่ม padding ด้านใน
         height: "auto !important",
     },
 
-    // Outlined input root styles
     "& .MuiOutlinedInput-root": {
         borderRadius: "10px",
         border: "none",
         height: '45px',
 
-        // Default border styling
         "& fieldset": {
-            borderColor: "rgba(109, 110, 112, 0.4)",
-            borderWidth: "1px",
+            borderColor: "rgba(109, 110, 112, 0.4)", // สีขอบปกติ
+            borderWidth: "1px", // กำหนดความหนาของขอบ
         },
-
-        // Hover effect on border
         "&:hover fieldset": {
-            borderColor: "rgb(242, 101, 34)",
+            borderColor: "rgb(242, 101, 34)", // สีขอบเมื่อ hover
             
-            borderWidth: "1px",
+            borderWidth: "1px", // ขยายเมื่อ hover
         },
-
-        // Focus effect on border
         "&.Mui-focused fieldset": {
-            borderColor: "rgb(242, 101, 34)",
-            borderWidth: "2px",
+            borderColor: "rgb(242, 101, 34)", // สีขอบเมื่อ focused
+            borderWidth: "2px", // ขยายเมื่อ focused
         },
     },
 

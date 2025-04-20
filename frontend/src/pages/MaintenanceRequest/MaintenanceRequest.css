@@ -1,10 +1,11 @@
-.maintenance-request-page {
+.maintenance-request {
     .status-section {
         .status-card {
+            display: flex;
+            align-items: center;
+
             .status-card-content{
                 padding: 0;
-                display: flex;
-                align-items: center;
             }
         }
     }

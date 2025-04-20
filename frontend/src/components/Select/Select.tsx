@@ -1,7 +1,6 @@
 import { styled } from "@mui/material";
 import { Select as MuiSelect } from "@mui/material";
 
-// Styled Select component with custom border and focus effects
 export const Select = styled(MuiSelect)(() => ({
     backgroundColor: "#fff",
     borderRadius: "10px",
@@ -9,14 +8,12 @@ export const Select = styled(MuiSelect)(() => ({
     textAlign: 'center',
     height: '45px',
     "& .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgb(109, 110, 112, 0.4)",
+        borderColor: "rgb(109, 110, 112, 0.4)", // สีขอบปกติ
     },
-    // Border color on hover
     "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#F26522",
+        borderColor: "#F26522", // สีขอบเมื่อ hover
     },
-    // Border color when focused
     "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#F26522",
+        borderColor: "#F26522", // สีขอบเมื่อ focused
     },
 }));

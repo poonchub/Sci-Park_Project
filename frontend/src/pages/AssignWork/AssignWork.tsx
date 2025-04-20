@@ -1,15 +1,15 @@
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Card, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faQuestionCircle, faToolbox, } from "@fortawesome/free-solid-svg-icons";
+import { faBolt, faBullseye, faCouch, faFaucet, faMagnifyingGlass, faQuestionCircle, faTv, faUser } from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { UserInterface } from "../../interfaces/IUser";
 
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
-import { GetMaintenanceRequests, GetMaintenanceTypes, GetOperators } from "../../services/http";
+import { CreateMaintenanceTask, GetMaintenanceRequests, GetMaintenanceTypes, GetOperators, UpdateMaintenanceRequestByID } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
@@ -17,13 +17,11 @@ import { Select } from "../../components/Select/Select";
 import './AssignWork.css';
 import { AreasInterface } from "../../interfaces/IAreas";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
-import { CalendarMonth, SearchOff } from "@mui/icons-material";
-import dateFormat from "../../utils/dateFormat";
-import handleAssignWork from "../../utils/handleAssignWork";
-import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import AssignPopup from "../../components/AssignPopup/AssignPopup";
-import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
-import { Link } from "react-router-dom";
+import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
+import SuccessAlert from "../../components/Alert/SuccessAlert";
+import ErrorAlert from "../../components/Alert/ErrorAlert";
+import WarningAlert from "../../components/Alert/WarningAlert";
+import { AssignmentLate, SearchOff } from "@mui/icons-material";
 
 function AssignWork() {
     const [operators, setOperators] = useState<UserInterface[]>([])
@@ -44,6 +42,13 @@ function AssignWork() {
     const [requestSelected, setRequestSelected] = useState<MaintenanceRequestsInterface>({})
 
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+
+    const maintenanceTypeConfig = {
+        "งานไฟฟ้า": { color: "#FFA500", colorLite: "rgb(255, 241, 217)", icon: faBolt },
+        "งานเครื่องใช้ไฟฟ้า": { color: "#6F42C1", colorLite: "rgb(213, 191, 255)", icon: faTv },
+        "งานเฟอร์นิเจอร์": { color: "#8B4513", colorLite: "rgb(255, 221, 196)", icon: faCouch },
+        "งานประปา": { color: "rgb(0, 162, 255)", colorLite: "rgb(205, 242, 255)", icon: faFaucet },
+    };
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
@@ -82,8 +87,6 @@ function AssignWork() {
             flex: 1.8,
             // editable: true,
             renderCell: (params) => {
-                const areaID = params.row.Area?.ID
-                const AreaDetail = params.row.AreaDetail
                 const roomtype = params.row.Room?.RoomType?.TypeName
                 const roomNum = params.row.Room?.RoomNumber
                 const roomFloor = params.row.Room?.Floor?.Number
@@ -100,16 +103,10 @@ function AssignWork() {
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
-                                maxWidth: "100%"
+                                maxWidth: "100%" // ✅ ป้องกันขยายเกิน
                             }}
                         >
-                            {
-                                areaID === 2 ? (
-                                    `${AreaDetail}`
-                                ) : (
-                                    `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-                                )
-                            }
+                            {`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                         </Typography>
                         <Typography
                             sx={{
@@ -137,8 +134,6 @@ function AssignWork() {
                 const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
                 const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                 const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
-
-
 
                 return (
                     <Box sx={{
@@ -202,26 +197,19 @@ function AssignWork() {
         },
         {
             field: 'Check',
-            headerName: '',
+            headerName: 'action',
             type: 'string',
             flex: 1,
             // editable: true,
-            renderCell: (item) => {
-                const requestID = String(item.row.ID)
-                return (
-                    <Link to="/check-requests" >
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            onClick={() => localStorage.setItem('requestID', requestID)}
-                        >
-                            ตรวจสอบ
-                        </Button>
-                    </Link>
-
-                )
-            }
+            renderCell: () => (
+                <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                >
+                    ตรวจสอบ
+                </Button>
+            ),
         },
     ];
 
@@ -259,15 +247,45 @@ function AssignWork() {
         }
     };
 
-    const onClickAssign = () => {
-        handleAssignWork({
-            selectedOperator,
-            requestSelected,
-            setAlerts,
-            refreshRequestData: getMaintenanceRequests,
-            setOpenPopupAssign,
-        });
+    const handleAssignWork = async () => {
+        if (!selectedOperator || !requestSelected?.ID) {
+            setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
+            return;
+        }
+
+        try {
+            const task: MaintenanceTasksInterface = {
+                UserID: selectedOperator,
+                RequestID: requestSelected.ID
+            };
+
+            const request: MaintenanceRequestsInterface = {
+                RequestStatusID: 4
+            };
+
+            const resAssign = await CreateMaintenanceTask(task);
+            if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to assign work");
+
+            const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected.ID);
+            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request");
+
+            setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
+
+            setTimeout(() => {
+                getMaintenanceRequests()
+                setOpenPopupAssign(false)
+            }, 1200)
+
+        } catch (error) {
+            console.error("API Error:", error);
+            const errMessage = (error as Error).message || "Unknown error!";
+            setAlerts((prev) => [...prev, { type: 'error', message: errMessage }]);
+        }
     };
+
+    const dateFormat = (date: string) => {
+        return `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}`
+    }
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = request.ID ? Number(request.ID) : null;
@@ -299,24 +317,119 @@ function AssignWork() {
     return (
         <div className="assign-work-page">
             {/* Show Alerts */}
-            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+            {alerts.map((alert, index) => {
+                return (
+                    <React.Fragment key={index}>
+                        {alert.type === 'success' && (
+                            <SuccessAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={Number(index)}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'error' && (
+                            <ErrorAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                        {alert.type === 'warning' && (
+                            <WarningAlert
+                                message={alert.message}
+                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                                index={index}
+                                totalAlerts={alerts.length}
+                            />
+                        )}
+                    </React.Fragment>
+                );
+            })}
 
             {/* Assign Popup */}
-            <AssignPopup
+            <Dialog
                 open={openPopupAssign}
                 onClose={() => setOpenPopupAssign(false)}
-                onConfirm={onClickAssign}
-                requestSelected={requestSelected}
-                selectedOperator={selectedOperator}
-                setSelectedOperator={setSelectedOperator}
-                operators={operators}
-                maintenanceTypeConfig={maintenanceTypeConfig}
-            />
+                sx={{ zIndex: 999 }}
+            >
+                <DialogTitle>มอบหมายงานซ่อม</DialogTitle>
+                <DialogContent sx={{ minWidth: 500 }}>
+                    <Grid2 container size={{ xs: 10, md: 12 }} spacing={1}>
+                        <Grid2 size={{ xs: 10, md: 12 }}>
+                            <Typography sx={{ fontWeight: 600 }}>
+                                {`${requestSelected.Area?.Name || "-"} ชั้น ${requestSelected.Room?.Floor?.Number || "-"} ห้อง ${requestSelected.Room?.RoomNumber || "-"}`}
+                            </Typography>
+                            <Typography>
+                                {requestSelected.Description || "ไม่มีรายละเอียด"}
+                            </Typography>
+                        </Grid2>
+                        {
+                            requestSelected.MaintenanceType?.TypeName && ((() => {
+                                const typeName = requestSelected.MaintenanceType?.TypeName || "งานไฟฟ้า"
+                                const maintenanceKey = requestSelected.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                                const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-            <Grid2
-                container
-                spacing={3}
-                sx={{
+                                return (
+                                    <Grid2
+                                        sx={{
+                                            bgcolor: colorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: 'flex',
+                                            gap: 1,
+                                            color: color,
+                                            alignItems: 'center',
+                                        }}>
+                                        <FontAwesomeIcon icon={icon} />
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                            {typeName}
+                                        </Typography>
+                                    </Grid2>
+                                );
+                            })()
+                            )
+                        }
+                        <Grid2 size={{ xs: 10, md: 12 }}>
+                            <Typography variant="body1" >ผู้รับผิดชอบงาน</Typography>
+                            <Select
+                                value={selectedOperator}
+                                onChange={(e) => setSelectedOperator(Number(e.target.value))}
+                                displayEmpty
+                                startAdornment={
+                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                        <FontAwesomeIcon icon={faUser} size="lg" />
+                                    </InputAdornment>
+                                }
+                            >
+                                <MenuItem value={0}><em>{'-- เลือกผู้ดำเนินการ --'}</em></MenuItem>
+                                {
+                                    operators.map((item, index) => {
+                                        return (
+                                            <MenuItem key={index} value={index + 1}>{`${item.ID} ${item.FirstName} ${item.LastName}`}</MenuItem>
+                                        )
+                                    })
+                                }
+                            </Select>
+                        </Grid2>
+                    </Grid2>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenPopupAssign(false)}>
+                        ยกเลิก
+                    </Button>
+                    <Button variant="contained" onClick={handleAssignWork}>
+                        ยืนยัน
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Grid2 
+                container 
+                spacing={3} 
+                sx={{ 
                     // height: '100%',
                 }}
             >
@@ -362,9 +475,6 @@ function AssignWork() {
                                     format="DD/MM/YYYY"
                                     value={selectedDate}
                                     onChange={(newValue) => setSelectedDate(newValue)}
-                                    slots={{
-                                        openPickerIcon: CalendarMonth,
-                                    }}
                                 />
                             </LocalizationProvider>
                         </Grid2>
@@ -376,9 +486,10 @@ function AssignWork() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faToolbox} size="lg" />
+                                            <FontAwesomeIcon icon={faBullseye} size="lg" />
                                         </InputAdornment>
                                     }
+                                    
                                 >
                                     <MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
                                     {
@@ -438,20 +549,6 @@ function AssignWork() {
                             sx={{
                                 width: "100%",
                                 borderRadius: 2,
-                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                                    outline: "none",
-                                    boxShadow: "none",
-                                },
-                            }}
-                            slotProps={{
-                                baseCheckbox: {
-                                    sx: {
-                                        color: 'gray',
-                                        '&.Mui-checked': {
-                                            color: '#F26522',
-                                        },
-                                    },
-                                },
                             }}
                         />
                     </Card>
