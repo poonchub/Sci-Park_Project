@@ -6,9 +6,16 @@ import { statusConfig } from "../../constants/statusConfig";
 
 interface Props {
     statusCounts: Record<string, number>;
+    size?: {
+        xs?: number;
+        sm?: number;
+        md?: number;
+        lg?: number;
+        xl?: number;
+    };
 }
 
-const RequestStatusCards: React.FC<Props> = ({ statusCounts }) => {
+const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
     const displayStatuses = [
         "Pending",
         "Approved",
@@ -39,44 +46,51 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts }) => {
     });
 
     return (
-        <Grid2 container spacing={3} className="status-section">
-            {statusCards.map((item, index) => (
-                <Grid2 size={{ xs: 10, md: 4 }} key={index}>
-                    <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
-                        <CardContent className="status-card-content">
-                            <Grid2 size={{ xs: 10, md: 12 }}>
-                                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
-                                    {item.name}
-                                </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>
-                                    {item.count} รายการ
-                                </Typography>
-                            </Grid2>
-                            <Grid2
-                                size={{ xs: 10, md: 8 }}
-                                sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+        statusCards.map((item, index) => (
+            <Grid2 key={index}
+                size={{
+                    xs: size?.xs || 12,
+                    sm: size?.sm,
+                    md: size?.md || 4,
+                    lg: size?.lg,
+                    xl: size?.xl,
+                }}
+                className='status-section'
+            >
+                <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
+                    <CardContent className="status-card-content">
+                        <Grid2 size={{ xs: 10, md: 12 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
+                                {item.name}
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>
+                                {item.count} รายการ
+                            </Typography>
+                        </Grid2>
+                        <Grid2
+                            size={{ xs: 10, md: 8 }}
+                            sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                            <Box
+                                sx={{
+                                    borderRadius: "50%",
+                                    bgcolor: item.color,
+                                    border: 1,
+                                    aspectRatio: "1/1",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 55,
+                                    color: "#fff"
+                                }}
                             >
-                                <Box
-                                    sx={{
-                                        borderRadius: "50%",
-                                        bgcolor: item.color,
-                                        border: 1,
-                                        aspectRatio: "1/1",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        width: 55,
-                                        color: "#fff"
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={item.icon} size="2xl" />
-                                </Box>
-                            </Grid2>
-                        </CardContent>
-                    </Card>
-                </Grid2>
-            ))}
-        </Grid2>
+                                <FontAwesomeIcon icon={item.icon} size="2xl" />
+                            </Box>
+                        </Grid2>
+                    </CardContent>
+                </Card>
+            </Grid2>
+        ))
     );
 };
 

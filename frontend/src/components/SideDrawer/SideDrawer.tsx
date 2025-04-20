@@ -2,7 +2,7 @@ import {
 	IconButton, List, ListItem, ListItemButton,
 	ListItemIcon, ListItemText
 } from '@mui/material';
-import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { ArticleOutlined, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useTheme, styled } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
 import { Drawer } from '../Drawer/Drawer';
@@ -11,15 +11,19 @@ import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
+import { JSX } from 'react';
 
 // Icons for each drawer item
-const ICONS = [
-	<DashboardOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	<ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	<HandymanOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	<AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	<ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
-];
+const ICON_MAP: Record<string, JSX.Element> = {
+	'/dashboard': <DashboardOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/all-maintenance-request': <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/my-maintenance-request': <ArticleOutlined sx={{ color: 'text.secondary' }} />,
+	'/assign-work': <AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/accept-work': <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/manage-user': <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/add-user': <AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/booking-room': <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
+};
 
 // Props interface for the SideDrawer component
 interface SideDrawerProps {
@@ -54,7 +58,7 @@ export default function SideDrawer({ open, onClose, drawerItems, currentPath }: 
 
 			{/* List of drawer items */}
 			<List>
-				{drawerItems.map((page, index) => (
+				{drawerItems.map((page) => (
 					// List item for each page link
 					<ListItem key={page.path} disablePadding sx={{ display: 'block' }}>
 						{/* Link component for navigation */}
@@ -69,9 +73,9 @@ export default function SideDrawer({ open, onClose, drawerItems, currentPath }: 
 								}}
 							>
 								{/* Icon for each drawer item */}
-								<ListItemIcon sx={{ mr: open ? 3 : 'auto', justifyContent: 'center' }}>
+								<ListItemIcon sx={{ mr: open ? 1 : 'auto', justifyContent: 'center' }}>
 									{/* Dynamically render icons based on the item index */}
-									{ICONS[index] || <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />}
+									{ICON_MAP[page.path] || <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />}
 								</ListItemIcon>
 
 								{/* Text for each drawer item */}

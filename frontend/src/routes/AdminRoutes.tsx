@@ -2,13 +2,14 @@ import { RouteObject } from "react-router-dom";
 
 import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
-import MaintenanceRequest from "../pages/MaintenanceRequest/MaintenanceRequest";
 import Home from "../pages/Home/Home";
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 import AssignWork from "../pages/AssignWork/AssignWork";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import AcceptWork from "../pages/AcceptWork/AcceptWork";
+import AllMaintenanceRequest from "../pages/AllMaintenanceRequest/AllMaintenanceRequest";
+import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -24,8 +25,12 @@ const AdminRoutes = (): RouteObject => {
 				element: <BookingRoom/>
 			},
 			{
-				path: "/maintenance-request",
-				element: <MaintenanceRequest/>
+				path: "/all-maintenance-request",
+				element: <AllMaintenanceRequest/>
+			},
+			{
+				path: "/my-maintenance-request",
+				element: <MyMaintenanceRequest/>
 			},
 			{
 				path: "/create-maintenance-request",
