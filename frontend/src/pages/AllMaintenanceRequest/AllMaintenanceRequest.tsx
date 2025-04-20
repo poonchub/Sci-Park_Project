@@ -16,7 +16,7 @@ import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
 import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faFileLines, faCheckDouble, faEye, faCheckCircle, faBan } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faFileLines, faCheckDouble, faEye, faCheckCircle, faBan, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
 import { CalendarMonth } from "@mui/icons-material"
@@ -28,6 +28,7 @@ import RequestStatusCards from "../../components/RequestStatusCards/RequestStatu
 import handleActionApproval from "../../utils/handleActionApproval"
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
 import timeFormat from "../../utils/timeFormat"
+import { isAdmin, isSupervisor } from "../../routes"
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -202,7 +203,7 @@ function AllMaintenanceRequest() {
             flex: 1.4,
             // editable: true,
             renderCell: (item) => {
-                return item.row.RequestStatus?.Name === 'Pending' ? (
+                return item.row.RequestStatus?.Name === 'Pending' && (isSupervisor || isAdmin) ? (
                     <Box>
                         <Button
                             variant="containedBlue"
@@ -233,6 +234,11 @@ function AllMaintenanceRequest() {
                     <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
                         <FontAwesomeIcon icon={faBan} style={{ color: '#dc3545' }} />
                         <Typography variant="textButtonClassic" >ถูกปฎิเสธ</Typography>
+                    </Box>
+                ) : item.row.RequestStatus?.Name === 'Pending' ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
+                        <FontAwesomeIcon icon={faHourglassHalf} style={{ color: '#ffc107' }} />
+                        <Typography variant="textButtonClassic" >รอการอนุมัติ</Typography>
                     </Box>
                 ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>

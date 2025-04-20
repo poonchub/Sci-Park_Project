@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Button, Box, Grid2 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { isAdmin, isCoordinator, isSupervisor } from '../../routes';
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
@@ -12,6 +13,7 @@ interface InfoCardProps {
     onApprove?: () => void; // Callback for approving (optional)
     onReject?: () => void; // Callback for rejecting (optional)
     onAssign?: () => void; // Callback for assigning (optional)
+    status?: string
 }
 
 // InfoCard component definition
@@ -22,11 +24,12 @@ const InfoCard: React.FC<InfoCardProps> = ({
     time,
     onApprove,
     onReject,
-    onAssign
+    onAssign,
+    status,
 }) => {
-    const role = localStorage.getItem('role');
-    const isSupervisor = role === 'Supervisor' || role === 'Admin';
-    const isCoordinator = role === 'Coordinator' || role === 'Admin';
+
+    const isApprovedBtnOn = time == null && type === 'approved' && (isSupervisor || isAdmin)
+    const isAssignedBtnOn = time == null && type === 'assigned' && (isCoordinator || isAdmin) && status === 'Approved'
 
     return (
         // Card layout wrapped inside Grid2 for responsiveness
@@ -59,7 +62,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                         )}
 
                         {/* Handle actions (approve, reject, assign) based on the 'time' value */}
-                        {time == null && type === 'approved' && isSupervisor ? (
+                        { isApprovedBtnOn ? (
                             <>
                                 {/* Approve button */}
                                 <Button
@@ -83,7 +86,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                                     <FontAwesomeIcon icon={faXmark} size="xl" />
                                 </Button>
                             </>
-                        ) : time == null && type === 'assigned' && isCoordinator ? (
+                        ) : isAssignedBtnOn ? (
                             // Assign button for unassigned tasks
                             <Button
                                 onClick={onAssign}

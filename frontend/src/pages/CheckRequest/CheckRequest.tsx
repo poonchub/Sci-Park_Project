@@ -27,6 +27,7 @@ import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
+import { isOperator } from "../../routes";
 
 function CheckRequest() {
 	// Request data
@@ -50,7 +51,6 @@ function CheckRequest() {
 
 	const navigate = useNavigate();
 
-	const isOperator = localStorage.getItem('role') === 'Operator'
 	const isAssigned = maintenanceRequest?.RequestStatus?.Name === 'Assigned'
 	const isInProgress = maintenanceRequest?.RequestStatus?.Name === 'In Progress'
 	const isCompleted = maintenanceRequest?.RequestStatus?.Name === 'Completed'
@@ -263,6 +263,7 @@ function CheckRequest() {
 							time={approvalTime}
 							onApprove={() => setOpenConfirmApproved(true)}
 							onReject={() => setOpenConfirmRejected(true)}
+							status={maintenanceRequest.RequestStatus?.Name}
 						/>
 
 						<InfoCard
@@ -271,6 +272,7 @@ function CheckRequest() {
 							name={operatorName}
 							time={assignTime}
 							onAssign={() => setOpenPopupAssign(true)}
+							status={maintenanceRequest.RequestStatus?.Name}
 						/>
 					</>
 				)}

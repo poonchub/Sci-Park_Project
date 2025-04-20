@@ -173,7 +173,7 @@ func GetUserByID(c *gin.Context) {
 	var user entity.User
 	db := config.DB()
 	// ค้นหาผู้ใช้จากฐานข้อมูลโดยใช้ id
-	if err := db.First(&user, id).Error; err != nil {
+	if err := db.Preload("Role").First(&user, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
@@ -228,7 +228,7 @@ func ListOperators(c *gin.Context) {
 
 	db := config.DB()
 
-	operatorRoleID := 6
+	operatorRoleID := 3
 
 	if err := db.Where("role_id = ?", operatorRoleID).Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

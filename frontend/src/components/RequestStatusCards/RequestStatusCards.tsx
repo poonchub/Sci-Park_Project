@@ -57,7 +57,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                 }}
                 className='status-section'
             >
-                <Card className="status-card" sx={{ height: "auto", borderRadius: 2, px: 2.5, py: 2 }}>
+                <Card className="status-card" sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2 }}>
                     <CardContent className="status-card-content">
                         <Grid2 size={{ xs: 10, md: 12 }}>
                             <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
