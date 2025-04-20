@@ -4,6 +4,15 @@ import LoginRoutes from "./LoginRoutes";
 import OutsiderRoutes from "./OutsiderRoutes";
 import SuperAdminRoutes from "./SuperAminRoutes";
 import OperatorRoutes from "./OperatorRoutes";
+
+export const role = localStorage.getItem('role')
+export const isAdmin = role === 'Admin'
+export const isSupervisor = role === 'Supervisor'
+export const isCoordinator = role === 'Coordinator'
+export const isOperator = role === 'Operator'
+export const isInternalUser = role === 'Internal User'
+export const isExternalUser = role === 'External User'
+
 function ConfigRoutes() {
   const isLoggedIn = localStorage.getItem("isLogin") === "true"; // ตรวจสอบสถานะการเข้าสู่ระบบ
   const role = localStorage.getItem("role"); // รับค่าบทบาทจาก localStorage

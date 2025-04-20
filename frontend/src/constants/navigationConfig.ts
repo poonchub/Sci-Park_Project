@@ -1,5 +1,5 @@
 // Define possible user roles in the system
-export type Role = 'Manager' | 'Outsider' | 'Admin' | 'SuperAdmin' | 'Operator';
+export type Role = 'External User' | 'Internal User' | 'Operator' | 'Coordinator' | 'Supervisor' | 'Admin';
 
 // Type definition for navigation items in the drawer
 type NavItem = {
@@ -19,47 +19,47 @@ export const SECTIONS = [
 const DRAWER_ITEMS: Record<string, NavItem[]> = {
     home: [], // No drawer items for 'home'
     booking: [
-        { 
-            path: '/booking-room', 
-            name: 'ระบบจองห้อง', 
-            roles: ['Outsider', 'Admin', 'SuperAdmin'] 
+        {
+            path: '/booking-room',
+            name: 'ระบบจองห้อง',
+            roles: ['External User', 'Internal User', 'Operator', 'Coordinator', 'Supervisor', 'Admin']
         },
     ],
     maintenance: [
-        { 
-            path: '/dashboard', 
-            name: 'แดชบอร์ด', 
-            roles: [ 'Admin', 'SuperAdmin'] 
+        {
+            path: '/dashboard',
+            name: 'แดชบอร์ด',
+            roles: ['Coordinator', 'Admin']
         },
-        { 
-            path: '/all-maintenance-request', 
-            name: 'จัดการแจ้งซ่อม', 
-            roles: [ 'Admin', 'SuperAdmin'] 
+        {
+            path: '/all-maintenance-request',
+            name: 'จัดการแจ้งซ่อม',
+            roles: ['Coordinator', 'Admin']
         },
-        { 
-            path: '/my-maintenance-request', 
-            name: 'การแจ้งซ่อมของฉัน', 
-            roles: ['Outsider', 'Operator', 'Manager', 'Admin', 'SuperAdmin'] 
+        {
+            path: '/my-maintenance-request',
+            name: 'การแจ้งซ่อมของฉัน',
+            roles: ['External User', 'Internal User', 'Operator', 'Coordinator', 'Supervisor', 'Admin']
         },
-        { 
-            path: '/assign-work', 
-            name: 'มอบหมายงานซ่อม', 
-            roles: ['Admin', 'Manager'] 
+        {
+            path: '/assign-work',
+            name: 'มอบหมายงานซ่อม',
+            roles: ['Coordinator', 'Admin']
         },
-        { 
-            path: '/accept-work', 
-            name: 'งานของฉัน', 
-            roles: ['Operator'] 
+        {
+            path: '/accept-work',
+            name: 'งานของฉัน',
+            roles: ['Operator']
         },
-        { 
-            path: '/manage-user', 
-            name: 'จัดการผู้ใช้งาน', 
-            roles: ['Admin', 'SuperAdmin'] 
+        {
+            path: '/manage-user',
+            name: 'จัดการผู้ใช้งาน',
+            roles: ['Coordinator', 'Admin']
         },
-        { 
-            path: '/add-user', 
-            name: 'เพิ่มผู้ใช้', 
-            roles: ['SuperAdmin'] 
+        {
+            path: '/add-user',
+            name: 'เพิ่มผู้ใช้',
+            roles: ['Coordinator', 'Admin']
         },
     ]
 };
