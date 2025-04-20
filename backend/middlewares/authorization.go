@@ -11,13 +11,12 @@ import (
 
 // Role levels for comparison
 const (
-	Outsider   = 1
-	Enterprise = 2
-	Employee   = 3
-	Manager    = 4
-	Operator  = 4  // ผู้ใช้งานที่มีระดับเดียวกับ Manager
+	ExternalUser   = 1
+	InternalUser = 2
+	Operator   = 3
+	Coordinator    = 4
+	Supervisor  = 4
 	Admin      = 5
-	SuperAdmin = 6
 )
 
 // Authorization เป็นฟังก์ชั่นตรวจเช็ค JWT และตรวจสอบบทบาท (role) ตามระดับ
@@ -71,20 +70,18 @@ func Authorizes(roleLevel int) gin.HandlerFunc {
 // ฟังก์ชั่นสำหรับแปลง role string เป็นระดับ
 func getRoleLevel(role string) int {
 	switch role {
-	case "SuperAdmin":
-		return SuperAdmin
 	case "Admin":
 		return Admin
-	case "Enterprise":
-		return Enterprise
-	case "Employee":
-		return Employee
-	case "Manager":
-		return Manager
+	case "Supervisor":
+		return Supervisor
+	case "Coordinator":
+		return Coordinator
 	case "Operator":
 		return Operator
-	case "Outsider":
-		return Outsider
+	case "Internal User":
+		return InternalUser
+	case "External User":
+		return ExternalUser
 	default:
 		return 0 // ถ้า role ไม่ถูกกำหนดให้กลับ 0
 	}

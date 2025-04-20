@@ -16,7 +16,7 @@ function ConfigRoutes() {
       case "Admin":
         routes = [AdminRoutes()]; // เมื่อบทบาทเป็น Admin ให้ใช้เส้นทางของ Admin
         break;
-      case "Outsider":
+      case "External User":
         routes = [OutsiderRoutes()]; // เมื่อบทบาทเป็น Outsider ให้ใช้เส้นทางของ Outsider
         break;
       case "SuperAdmin":

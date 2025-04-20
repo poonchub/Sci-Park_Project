@@ -20,7 +20,7 @@ interface Props {
     completed: number;
 }
 
-function ApexDonutChart({ data, height = 220, completed }: Props) {
+function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
     const theme = useTheme();
 
     console.log(completed)
@@ -199,4 +199,4 @@ function ApexDonutChart({ data, height = 220, completed }: Props) {
     );
 }
 
-export default ApexDonutChart;
+export default MaintenanceTypeDonutChart;

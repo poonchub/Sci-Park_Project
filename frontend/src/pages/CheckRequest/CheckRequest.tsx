@@ -290,16 +290,18 @@ function CheckRequest() {
 							</Grid2>
 
 							<Grid2 container size={{ xs: 12, md: 6 }} direction="column">
-								<Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
-									<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
-										การดำเนินงาน
-									</Typography>
-									<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
-										<TaskInfoTable data={maintenanceRequest?.MaintenanceTask}/>
-									</Box>
-								</Grid2>
+								{
+									maintenanceRequest?.RequestStatus?.Name === 'Assigned' && <Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+										<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
+											การดำเนินงาน
+										</Typography>
+										<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
+											<TaskInfoTable data={maintenanceRequest?.MaintenanceTask} />
+										</Box>
+									</Grid2>
+								}
 
-								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1}>
+								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: maintenanceRequest?.RequestStatus?.Name === 'Assigned' ? 0 : 1.2 }}>
 									<Typography className="title-list" variant="body1" sx={{ width: '100%' }}>
 										ภาพประกอบ
 									</Typography>

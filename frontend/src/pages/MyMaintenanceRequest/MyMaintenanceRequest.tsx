@@ -1,38 +1,32 @@
-import { Link } from "react-router-dom"
-import "./MaintenanceRequest.css"
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material"
-import { LocalizationProvider } from "@mui/x-date-pickers"
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import { useEffect, useState } from "react"
-import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
+import { faChartSimple, faEye, faFileLines, faMagnifyingGlass, faQuestionCircle, faRotateRight } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Box, Button, FormControl, Grid2, InputAdornment, MenuItem, Typography } from '@mui/material'
+import { Link } from 'react-router-dom'
+import RequestStatusCards from '../../components/RequestStatusCards/RequestStatusCards'
+import { useEffect, useState } from 'react'
 
-import { GetMaintenanceRequests, GetRequestStatuses, GetUserById } from "../../services/http"
+import './MyMaintenanceRequest.css'
+import { GetMaintenanceRequests, GetRequestStatuses } from '../../services/http'
+import dayjs from 'dayjs'
+import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests'
+import { TextField } from '../../components/TextField/TextField'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from '../../components/DatePicker/DatePicker'
+import { CalendarMonth } from '@mui/icons-material'
+import { Select } from '../../components/Select/Select'
+import { RequestStatusesInterface } from '../../interfaces/IRequestStatuses'
+import CustomDataGrid from '../../components/CustomDataGrid/CustomDataGrid'
+import { GridColDef } from '@mui/x-data-grid'
+import dateFormat from '../../utils/dateFormat'
+import { AreasInterface } from '../../interfaces/IAreas'
+import { statusConfig } from '../../constants/statusConfig'
+import timeFormat from '../../utils/timeFormat'
 
-import { GridColDef } from '@mui/x-data-grid';
-import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
-import { UserInterface } from "../../interfaces/IUser"
-import { TextField } from "../../components/TextField/TextField"
-import { Select } from "../../components/Select/Select"
-import { DatePicker } from "../../components/DatePicker/DatePicker"
-import { AreasInterface } from "../../interfaces/IAreas"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faFileLines, faCheckDouble, faEye, faCheckCircle, faBan } from "@fortawesome/free-solid-svg-icons";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
-import dayjs from "dayjs"
-import { CalendarMonth } from "@mui/icons-material"
-import AlertGroup from "../../components/AlertGroup/AlertGroup"
-import dateFormat from "../../utils/dateFormat"
-import { statusConfig } from "../../constants/statusConfig"
-import ApexLineChart from "../../components/ApexLineChart/ApexLineChart"
-import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards"
-import handleActionApproval from "../../utils/handleActionApproval"
-import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
+function MyMaintenanceRequest() {
 
-function MaintenanceRequest() {
-    const [user, setUser] = useState<UserInterface>()
-
-    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [searchText, setSearchText] = useState('')
@@ -43,12 +37,6 @@ function MaintenanceRequest() {
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
-    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
-    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
-    const [selectedRequest, setSelectedRequest] = useState(0)
-
-    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
-
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
             field: 'ID',
@@ -56,20 +44,38 @@ function MaintenanceRequest() {
             flex: 0.5
         },
         {
-            field: 'User',
-            headerName: 'ผู้แจ้งซ่อม',
-            description: 'This column has a value getter and is not sortable.',
-            sortable: false,
-            flex: 1.2,
-            valueGetter: (params: UserInterface) => `${params.FirstName || ''} ${params.LastName || ''}`,
-        },
-        {
             field: 'CreatedAt',
-            headerName: 'วันที่',
+            headerName: 'วันที่แจ้งซ่อม',
             type: 'string',
             flex: 1,
             // editable: true,
-            valueGetter: (params) => dateFormat(params),
+            renderCell: (params) => {
+                const date = dateFormat(params.row.CreatedAt || '')
+                const time = timeFormat(params.row.CreatedAt || '')
+                return (
+                    <Box >
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%"
+                            }}
+                        >{date}</Typography>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
+                                color: 'gray'
+                            }}
+                        >{time}</Typography>
+                    </Box>
+                )
+            }
         },
         {
             field: 'Area',
@@ -169,53 +175,6 @@ function MaintenanceRequest() {
             },
         },
         {
-            field: 'Approved',
-            headerName: 'การอนุมัติงาน',
-            type: 'string',
-            flex: 1.4,
-            // editable: true,
-            renderCell: (item) => {
-                return item.row.RequestStatus?.Name === 'Pending' ? (
-                    <Box>
-                        <Button
-                            variant="containedBlue"
-                            onClick={() => {
-                                setOpenConfirmApproved(true)
-                                setSelectedRequest(Number(item.id))
-                            }}
-                            sx={{ mr: 0.5 }}
-                        >
-                            <FontAwesomeIcon icon={faCheckDouble} />
-                            <Typography variant="textButtonClassic" >อนุมัติ</Typography>
-                        </Button>
-                        <Button
-                            variant="outlinedCancel"
-                            onClick={() => {
-                                setOpenConfirmRejected(true)
-                                setSelectedRequest(Number(item.id))
-                            }}
-                            sx={{
-                                minWidth: '0px',
-                                px: '6px',
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faXmark} size="xl" />
-                        </Button>
-                    </Box>
-                ) : item.row.RequestStatus?.Name === 'Rejected' ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
-                        <FontAwesomeIcon icon={faBan} style={{ color: '#dc3545' }} />
-                        <Typography variant="textButtonClassic" >ถูกปฎิเสธ</Typography>
-                    </Box>
-                ) : (
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
-                        <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#28a745' }} />
-                        <Typography variant="textButtonClassic" >ผ่านอนุมัติแล้ว</Typography>
-                    </Box>
-                )
-            },
-        },
-        {
             field: 'Check',
             headerName: '',
             type: 'string',
@@ -241,31 +200,10 @@ function MaintenanceRequest() {
         },
     ];
 
-    const getUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem('userId')));
-            if (res) {
-                setUser(res);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    }
-
-    const getRequestStatuses = async () => {
-        try {
-            const res = await GetRequestStatuses();
-            if (res) {
-                setRequestStatuses(res);
-            }
-        } catch (error) {
-            console.error("Error fetching request statuses:", error);
-        }
-    };
-
     const getMaintenanceRequests = async () => {
         try {
-            const res = await GetMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+            const userId = localStorage.getItem('userId')
+            const res = await GetMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "", Number(userId));
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
@@ -283,15 +221,15 @@ function MaintenanceRequest() {
         }
     };
 
-    const handleClick = (statusID: number, message: string) => {
-        handleActionApproval(statusID, message, {
-            userID: user?.ID,
-            selectedRequest,
-            setAlerts,
-            refreshRequestData: getMaintenanceRequests,
-            setOpenConfirmApproved,
-            setOpenConfirmRejected,
-        });
+    const getRequestStatuses = async () => {
+        try {
+            const res = await GetRequestStatuses();
+            if (res) {
+                setRequestStatuses(res);
+            }
+        } catch (error) {
+            console.error("Error fetching request statuses:", error);
+        }
     };
 
     const handleClearFillter = () => {
@@ -318,46 +256,24 @@ function MaintenanceRequest() {
     });
 
     useEffect(() => {
-        getRequestStatuses();
         getMaintenanceRequests()
-        getUser()
-    }, []);
+        getRequestStatuses()
+    }, [])
 
     useEffect(() => {
         getMaintenanceRequests()
     }, [page, limit, selectedStatus, selectedDate])
 
     return (
-        <div className="maintenance-request-page">
-            {/* Show Alerts */}
-            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
-
-            {/* Approved Confirm */}
-            <ConfirmDialog
-                open={openConfirmApproved}
-                setOpenConfirm={setOpenConfirmApproved}
-                handleFunction={() => handleClick(2, "Approval successful")}
-                title="ยืนยันการอนุมัติงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
-
-            {/* Rejected Confirm */}
-            <ConfirmDialog
-                open={openConfirmRejected}
-                setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClick(3, "Rejection successful")}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
-
+        <div className="my-maintenance-request-page">
             <Grid2 container spacing={3}>
-
                 {/* Header Section */}
                 <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        รายการแจ้งซ่อม
+                        การแจ้งซ่อมของฉัน
                     </Typography>
                 </Grid2>
+
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
                     <Link to="/create-maintenance-request">
                         <Button variant="containedBlue" >
@@ -366,10 +282,11 @@ function MaintenanceRequest() {
                         </Button>
                     </Link>
                 </Grid2>
-                <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
+
+                <Grid2 container size={{ xs: 12, md: 12 }} spacing={2}>
 
                     {/* Status Section */}
-                    <RequestStatusCards statusCounts={statusCounts || {}} />
+                    <RequestStatusCards statusCounts={statusCounts || {}} size={{ xs: 10, md: 2 }} />
 
                     {/* Filters Section */}
                     <Grid2 container
@@ -452,15 +369,7 @@ function MaintenanceRequest() {
                             ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
                         </Grid2>
                     </Grid2>
-                </Grid2>
 
-                {/* Chart Section */}
-                <Grid2 size={{ xs: 10, md: 5 }} >
-                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
-                        <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexLineChart data={maintenanceRequests} height={160} selectedDate={selectedDate} />
-                    </Card>
                 </Grid2>
 
                 {/* Data Table */}
@@ -480,4 +389,4 @@ function MaintenanceRequest() {
         </div>
     )
 }
-export default MaintenanceRequest
+export default MyMaintenanceRequest

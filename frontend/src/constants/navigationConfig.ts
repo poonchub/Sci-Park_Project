@@ -29,12 +29,17 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         { 
             path: '/dashboard', 
             name: 'แดชบอร์ด', 
-            roles: ['Outsider', 'Admin', 'SuperAdmin'] 
+            roles: [ 'Admin', 'SuperAdmin'] 
         },
         { 
-            path: '/maintenance-request', 
-            name: 'รายการแจ้งซ่อม', 
-            roles: [ 'Outsider', 'Admin', 'Manager', 'Operator', 'SuperAdmin'] 
+            path: '/all-maintenance-request', 
+            name: 'จัดการแจ้งซ่อม', 
+            roles: [ 'Admin', 'SuperAdmin'] 
+        },
+        { 
+            path: '/my-maintenance-request', 
+            name: 'การแจ้งซ่อมของฉัน', 
+            roles: ['Outsider', 'Operator', 'Manager', 'Admin', 'SuperAdmin'] 
         },
         { 
             path: '/assign-work', 
@@ -56,11 +61,6 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             name: 'เพิ่มผู้ใช้', 
             roles: ['SuperAdmin'] 
         },
-        { 
-            path: '/outsider-maintenance-request', 
-            name: 'แจ้งซ่อมภายนอก', 
-            roles: ['Outsider'] 
-        },
     ]
 };
 
@@ -76,7 +76,8 @@ export const getCurrentSectionKey = (pathname: string): string => {
         // Maintenance
         '/dashboard': 'maintenance',
         '/create-maintenance-request': 'maintenance',
-        '/maintenance-request': 'maintenance',
+        '/all-maintenance-request': 'maintenance',
+        '/my-maintenance-request': 'maintenance',
         '/assign-work': 'maintenance',
         '/accept-work': 'maintenance',
         '/check-requests': 'maintenance',

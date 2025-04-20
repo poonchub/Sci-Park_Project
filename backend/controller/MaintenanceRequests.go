@@ -45,6 +45,40 @@ func GetMaintenanceRequestByID(c *gin.Context) {
 	c.JSON(http.StatusOK, request)
 }
 
+// GET /maintenance-request-user/:id
+func GetMaintenanceRequestByUserID(c *gin.Context) {
+	userID := c.Param("id")
+	var requests []entity.MaintenanceRequest
+
+	db := config.DB()
+	results := db.
+		Preload("User").
+		Preload("Room.Floor").
+		Preload("Room.RoomType").
+		Preload("RequestStatus").
+		Preload("Area").
+		Preload("MaintenanceType").
+		Preload("ManagerApproval.User").
+		Preload("MaintenanceTask.User").
+		Preload("MaintenanceTask.HandoverImages").
+		Preload("MaintenanceTask.RequestStatus").
+		Preload("MaintenanceImages").
+		Where("user_id = ?", userID).
+		Find(&requests)
+
+	if results.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": results.Error.Error()})
+		return
+	}
+
+	if len(requests) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{})
+		return
+	}
+
+	c.JSON(http.StatusOK, requests)
+}
+
 // POST /maintenance-request
 func CreateMaintenanceRequest(c *gin.Context) {
 
@@ -163,6 +197,7 @@ func GetMaintenanceRequests(c *gin.Context) {
 	statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
 	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
+	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -187,6 +222,10 @@ func GetMaintenanceRequests(c *gin.Context) {
 	if maintenanceTypeID > 0 {
 		db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
 	}
+
+	if userID > 0 {
+		db = db.Where("user_id = ?", userID)
+	}	
 
 	var startOfDay time.Time
 	var endOfDay time.Time
@@ -257,6 +296,10 @@ func GetMaintenanceRequests(c *gin.Context) {
 		countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
 	}
 
+	if userID > 0 {
+		countQuery = countQuery.Where("user_id = ?", userID)
+	}	
+
 	countQuery.Count(&total)
 
 	var statusCounts []struct {
@@ -281,6 +324,10 @@ func GetMaintenanceRequests(c *gin.Context) {
 			endOfDay.Format("2006-01-02 15:04:05"),
 		)
 	}
+
+	if userID > 0 {
+		joinClause += fmt.Sprintf(" AND maintenance_requests.user_id = %d", userID)
+	}	
 
 	statusCountQuery := config.DB().Table("request_statuses").
 		Select(`

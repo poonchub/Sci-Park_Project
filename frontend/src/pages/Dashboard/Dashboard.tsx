@@ -10,7 +10,7 @@ import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceReque
 import "./DashBoard.css"
 import ApexLineChart from '../../components/ApexLineChart/ApexLineChart';
 import RequestStatusCards from '../../components/RequestStatusCards/RequestStatusCards';
-import ApexDonutChart from '../../components/ApexDonutChart/ApexDonutChart';
+import ApexDonutChart from '../../components/MaintenanceTypeDonutChart/MaintenanceTypeDonutChart';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '../../components/DatePicker/DatePicker';

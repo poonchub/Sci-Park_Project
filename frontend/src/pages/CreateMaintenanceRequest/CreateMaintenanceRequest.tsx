@@ -188,7 +188,7 @@ function CreateMaintenanceRequestPage() {
 
             handleSetAlert('success', "Maintenance request submitted successfully");
             setTimeout(() => {
-                location.href = "/maintenance-request";
+                location.href = "/my-maintenance-request";
             }, 1800);
 
         } catch (error) {
@@ -272,7 +272,7 @@ function CreateMaintenanceRequestPage() {
                     </Typography>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end" }}>
-                    <Link to="/maintenance-request" style={{ textAlign: 'center' }}>
+                    <Link to="/my-maintenance-request" style={{ textAlign: 'center' }}>
                         <Button variant="outlined" >
                             <FontAwesomeIcon icon={faAngleLeft} size="lg" />
                             <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
@@ -644,7 +644,7 @@ function CreateMaintenanceRequestPage() {
                                 </Button>
                                 <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
                                     <FontAwesomeIcon icon={faUpload} />
-                                    <Typography variant="textButtonClassic" >คลิกเลือกไฟล์</Typography>
+                                    <Typography variant="textButtonClassic" >ส่งคำร้อง</Typography>
                                 </Button>
                             </Grid2>
                         </Grid2>
