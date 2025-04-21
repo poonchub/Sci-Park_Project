@@ -14,7 +14,6 @@ const (
 	ExternalUser   = 1
 	InternalUser = 2
 	Operator   = 3
-	Coordinator    = 4
 	Supervisor  = 4
 	Admin      = 5
 )
@@ -74,8 +73,6 @@ func getRoleLevel(role string) int {
 		return Admin
 	case "Supervisor":
 		return Supervisor
-	case "Coordinator":
-		return Coordinator
 	case "Operator":
 		return Operator
 	case "Internal User":
