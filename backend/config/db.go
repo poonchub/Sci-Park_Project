@@ -107,12 +107,10 @@ func SeedDatabase() {
 	requestStatuses := []entity.RequestStatus{
 		{Name: "Pending"}, 
 		{Name: "Approved"},
-		{Name: "Rejected"},
-		{Name: "Assigned"},
 		{Name: "In Progress"}, 
 		{Name: "Completed"}, 
-		{Name: "Failed"},
-		{Name: "Cancelled"},
+		{Name: "Re-requested"}, 
+		{Name: "Unsuccessful"},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})

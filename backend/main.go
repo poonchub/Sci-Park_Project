@@ -110,12 +110,6 @@ func main() {
 		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Coordinator)) // ✅ Middleware ตรวจสอบ Token
-	{	
-		// Users
-		
-	}
-
 	protected.Use(middlewares.Authorizes(middlewares.Supervisor)) // ✅ Middleware ตรวจสอบ Token
 	{	
 
