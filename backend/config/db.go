@@ -254,17 +254,36 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Packages
 	packages := []entity.Package{
+		
+		{
+			PackageName: "Empty", 
+			MeetingRoomLimit: 0, 
+			TrainingRoomLimit: 0, 
+			MultiFunctionRoomLimit: 0,
+		},
 		{
 			PackageName: "Silver", 
-			MeetingRoomLimit: 10, 
+			MeetingRoomLimit: 2, 
 			TrainingRoomLimit: 5, 
 			MultiFunctionRoomLimit: 3,
 		},
 		{
 			PackageName: "Gold", 
-			MeetingRoomLimit: 20, 
+			MeetingRoomLimit: 5, 
 			TrainingRoomLimit: 10, 
 			MultiFunctionRoomLimit: 5,
+		},
+		{
+			PackageName: "Platinum", 
+			MeetingRoomLimit: 7, 
+			TrainingRoomLimit: 12, 
+			MultiFunctionRoomLimit: 7,
+		},
+		{
+			PackageName: "Diamond", 
+			MeetingRoomLimit: 10, 
+			TrainingRoomLimit: 15, 
+			MultiFunctionRoomLimit: 19,
 		},
 	}
 	for _, pkg := range packages {
