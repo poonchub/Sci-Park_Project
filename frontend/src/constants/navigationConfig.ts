@@ -13,6 +13,7 @@ export const SECTIONS = [
     { key: 'home', path: '/', name: 'หน้าหลัก' },
     { key: 'booking', path: '/booking-room', name: 'จองห้อง' },
     { key: 'maintenance', path: '/dashboard', name: 'แจ้งซ่อม' },
+    { key: 'manageuser', path: '/manage-user', name: 'จัดการผู้ใช้' },
 ];
 
 // Drawer items categorized by section and filtered by user roles
@@ -60,6 +61,18 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             path: '/add-user',
             name: 'เพิ่มผู้ใช้',
             roles: ['Coordinator', 'Admin']
+        },
+    ],
+    manageuser: [
+        {
+            path: '/manage-user',
+            name: 'จัดการผู้ใช้งาน',
+            roles: ['Admin']
+        },
+        {
+            path: '/add-user',
+            name: 'เพิ่มผู้ใช้',
+            roles: ['Admin']
         },
     ]
 };

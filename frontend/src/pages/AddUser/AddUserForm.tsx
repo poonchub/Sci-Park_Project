@@ -332,7 +332,12 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                     name="Phone"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกหมายเลขโทรศัพท์' }}
+                    rules={{ required: 'กรุณากรอกหมายเลขโทรศัพท์' ,
+                      pattern: {
+                        value: /^0[0-9]{9}$/,  // เริ่มต้นด้วย 0 และตามด้วยตัวเลข 9 ตัว
+                        message: 'หมายเลขโทรศัพท์ต้องเริ่มต้นด้วย 0 และมีทั้งหมด 10 หลัก'
+                      }
+                    }}
                     render={({ field }) => (
                       <TextField
                         {...field}
@@ -461,8 +466,8 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 rules={{
                   required: 'กรุณากรอกรหัสพนักงาน',
                   pattern: {
-                    value: /^[A-Z]{1}[0-9]{5}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
-                    message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง ขึ้นต้นด้วยพิมพ์ใหญ่ ตามด้วยตัวเลข 5 ตัว'
+                    value: /^[0-9]{6}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
+                    message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง มีตัวเลข 6 ตัว'
                   }
                 }}
                 render={({ field }) => (

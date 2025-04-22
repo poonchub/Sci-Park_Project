@@ -10,6 +10,8 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import AcceptWork from "../pages/AcceptWork/AcceptWork";
 import AllMaintenanceRequest from "../pages/AllMaintenanceRequest/AllMaintenanceRequest";
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
+import AddUserForm from "../pages/AddUser/AddUserForm";
+import ManageUsers from "../pages/ManageUsers/ManageUsers";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -52,6 +54,14 @@ const AdminRoutes = (): RouteObject => {
 				path: "/accept-work",
 				element: <AcceptWork/>
 			},
+			{
+                path: "/add-user",
+                element: <AddUserForm/>
+            },
+            {
+                path: "/manage-user",
+                element: <ManageUsers/>
+            },
 		]
 	}
 }
