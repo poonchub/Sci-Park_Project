@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';   
 import {
   Typography,
   Dialog,
@@ -8,7 +8,11 @@ import {
   Button,
   MenuItem,
   FormControl,
+  SelectChangeEvent,
+  FormHelperText,
+
 } from '@mui/material';
+import { useForm, Controller, set } from 'react-hook-form';  // Import useForm and Controller
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import { TextField } from "../../components/TextField/TextField";
@@ -18,6 +22,10 @@ import { RolesInterface } from '../../interfaces/IRoles';
 import { GendersInterface } from '../../interfaces/IGenders';
 import { PackagesInterface } from '../../interfaces/IPackages';
 import Grid from '@mui/material/Grid2'; // Grid version 2
+import SuccessAlert from '../../components/Alert/SuccessAlert';
+import ErrorAlert from '../../components/Alert/ErrorAlert';
+import WarningAlert from '../../components/Alert/WarningAlert';
+import InfoAlert from '../../components/Alert/InfoAlert';
 import {
   GetUserById,
   UpdateUserbyID,
@@ -31,14 +39,18 @@ interface EditUserPopupProps {
   userId: number;
   open: boolean;
   onClose: () => void;
-  setAlerts?: React.Dispatch<React.SetStateAction<{ type: string; message: string }[]>>;
 }
 
-const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose, setAlerts }) => {
+const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) => {
+  const { control, handleSubmit, formState: { errors }, setValue } = useForm();
   const [user, setUser] = useState<UserInterface | null>(null);
   const [roles, setRoles] = useState<RolesInterface[]>([]);
+  const [selectedRole, setSelectedRole] = useState<number | null>(null);
+  const [selectedGender, setSelectedGender] = useState<number | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
+  const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +58,19 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose, se
         if (userId > 0) {
           const userData = await GetUserById(userId);
           setUser(userData);
+          setValue('FirstName', userData.FirstName);
+          setValue('LastName', userData.LastName);
+          setValue('Email', userData.Email);
+          setValue('Phone', userData.Phone);
+          setValue('EmployeeID', userData.EmployeeID);
+          setValue('CompanyName', userData.CompanyName);
+          setValue('GenderID', userData.GenderID);
+          setValue('RoleID', userData.RoleID);
+          setValue('UserPackageID', userData.UserPackageID);
         }
+        setSelectedRole(user?.RoleID ?? null);
+        setSelectedGender(user?.GenderID ?? null);
+        setSelectedPackage(user?.UserPackageID ?? null);
 
         const [roleData, genderData, packageData] = await Promise.all([
           ListRoles(),
@@ -57,9 +81,10 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose, se
         setRoles(roleData);
         setGenders(genderData);
         setPackages(packageData);
+
       } catch (error) {
         console.error('Error loading user data:', error);
-        setAlerts?.(prev => [
+        setAlerts(prev => [
           ...prev,
           { type: 'error', message: 'Failed to load user data. Please try again.' },
         ]);
@@ -67,59 +92,58 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose, se
     };
 
     fetchData();
-  }, [userId, setAlerts]);
+  }, [userId, setValue]);
 
-  const handleSave = async () => {
-    if (!user) return;
-
+  const handleSave = async (data: any) => {
     const formDataToSend = {
-      UserID: user.ID,
-      FirstName: user.FirstName || '',
-      LastName: user.LastName || '',
-      Email: user.Email || '',
-      Phone: user.Phone || '',
-      CompanyName: user.CompanyName || '',
-      EmployeeID: user.EmployeeID || '',
-      GenderID: Number(user.GenderID) || 0,
-      RoleID: Number(user.RoleID) || 0,
-      UserPackageID: Number(user.UserPackageID),
-      Password: user.Password || '',
-      BusinessDetail: user.BusinessDetail || '',
+      UserID: user?.ID,
+      FirstName: data.FirstName,
+      LastName: data.LastName,
+      Email: data.Email,
+      Phone: data.Phone,
+      CompanyName: data.CompanyName,
+      EmployeeID: data.EmployeeID,
+      GenderID: Number(selectedGender),
+      RoleID: Number(selectedRole),
+      UserPackageID: Number(selectedPackage),
     };
+
+    console.log('Form data to send:', formDataToSend);
 
     try {
       const response = await UpdateUserbyID(formDataToSend);
-
       if (response?.status === 'success') {
-        setAlerts?.(prev => [
+        setAlerts(prev => [
           ...prev,
           { type: 'success', message: 'User information updated successfully.' },
         ]);
-
         setTimeout(() => {
           onClose();
-        }, 800);
+        }, 2000);
       } else {
-        setAlerts?.(prev => [
+        setAlerts(prev => [
           ...prev,
           { type: 'error', message: response?.message || 'Failed to update user information.' },
         ]);
       }
     } catch (error) {
       console.error('Update error:', error);
-      setAlerts?.(prev => [
+      setAlerts(prev => [
         ...prev,
         { type: 'error', message: 'An unexpected error occurred. Please try again later.' },
       ]);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
-    if (user && e.target.name) {
-      setUser({
-        ...user,
-        [e.target.name]: e.target.value,
-      });
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<unknown>) => {
+    if ('target' in e) {
+      const { name, value } = e.target;
+      if (user && name) {
+        setUser({
+          ...user,
+          [name]: value,
+        });
+      }
     }
   };
 
@@ -136,133 +160,238 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose, se
 
       <DialogContent>
         {user && (
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">ชื่อ</Typography>
-              <TextField name="FirstName" value={user.FirstName} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">นามสกุล</Typography>
-              <TextField name="LastName" value={user.LastName} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">อีเมล</Typography>
-              <TextField name="Email" value={user.Email} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">หมายเลขโทรศัพท์</Typography>
-              <TextField name="Phone" value={user.Phone} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
-              <TextField name="CompanyName" value={user.CompanyName} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
-              <TextField name="EmployeeID" value={user.EmployeeID} onChange={handleChange} fullWidth margin="normal" />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth margin="normal">
-                <Typography variant="body1" className="title-field">เพศ</Typography>
-                <Select
-                  labelId="gender-label"
-                  name="GenderID"
-                  value={user.GenderID ?? ""}
-                  onChange={handleChange}
-                  displayEmpty
-                >
-                  <MenuItem value="">
-                    <em>-- กรุณาเลือกเพศ --</em>
-                  </MenuItem>
-                  {genders.map((gender) => (
-                    <MenuItem key={gender.ID} value={gender.ID}>
-                      {gender.Name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth margin="normal">
-                <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
-                <Select
-                  labelId="role-label"
-                  name="RoleID"
-                  value={user.RoleID ?? ""}
-                  onChange={handleChange}
-                  displayEmpty
-                >
-                  <MenuItem value="">
-                    <em>-- กรุณาเลือกตำแหน่ง --</em>
-                  </MenuItem>
-                  {roles.map((role) => (
-                    <MenuItem key={role.ID} value={role.ID}>
-                      {role.Name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth margin="normal">
-                <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
-                <Select
-                  labelId="package-label"
-                  name="UserPackageID"
-                  value={user.UserPackageID ?? 0}
-                  onChange={handleChange}
-                  displayEmpty
-                >
-                  <MenuItem value={0}>
-                    <em>-- ไม่พบสิทธิพิเศษ --</em>
-                  </MenuItem>
-                  {packages.length === 0 ? (
-                    <MenuItem value={-1} disabled>
-                      <em>ไม่พบสิทธิพิเศษ</em>
-                    </MenuItem>
-                  ) : (
-                    packages.map((pkg) => (
-                      <MenuItem key={pkg.ID} value={pkg.ID}>
-                        {pkg.PackageName}
-                      </MenuItem>
-                    ))
+          <form onSubmit={handleSubmit(handleSave)}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">ชื่อ</Typography>
+                <Controller
+                  name="FirstName"
+                  control={control}
+                  defaultValue={user.FirstName}
+                  rules={{ required: 'กรุณากรอกชื่อ (ไม่มีคำนำหน้า)' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      error={!!errors.FirstName}
+                      helperText={String(errors.FirstName?.message) || ''}
+                    />
                   )}
-                </Select>
-              </FormControl>
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">นามสกุล</Typography>
+                <Controller
+                  name="LastName"
+                  control={control}
+                  defaultValue={user.LastName}
+                  rules={{ required: 'กรุณากรอกนามสกุล' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      error={!!errors.LastName}
+                      helperText={String(errors.LastName?.message) || ''}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">อีเมล</Typography>
+                <Controller
+                  name="Email"
+                  control={control}
+                  defaultValue={user.Email}
+                  rules={{
+                    required: 'กรุณากรอกอีเมล',
+                    pattern: {
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      message: 'กรุณากรอกอีเมลที่ถูกต้อง'
+                    }
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      error={!!errors.Email}
+                      helperText={String(errors.Email?.message) || ''}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
+                <Controller
+                  name="EmployeeID"
+                  control={control}
+                  defaultValue={user.EmployeeID}
+                  rules={{
+                    required: 'กรุณากรอกรหัสพนักงาน',
+                    pattern: {
+                      value: /^[0-9]{6}$/, 
+                      message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง มีตัวเลข 6 ตัว'
+                    }
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      error={!!errors.EmployeeID}
+                      helperText={String(errors.EmployeeID?.message) || ''}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
+                <Controller
+                  name="Phone"
+                  control={control}
+                  defaultValue={user.Phone}
+                  rules={{
+                    required: 'กรุณากรอกหมายเลขโทรศัพท์',
+                    pattern: {
+                      value: /^0[0-9]{9}$/,
+                      message: 'หมายเลขโทรศัพท์ต้องเริ่มต้นด้วย 0 และมีทั้งหมด 10 หลัก'
+                    }
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      margin="normal"
+                      error={!!errors.Phone}
+                      helperText={String(errors.Phone?.message) || ''}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
+                <TextField
+                  name="CompanyName"
+                  value={user.CompanyName}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth margin="normal" error={!!errors.GenderID}>
+                  <Typography variant="body1" className="title-field">เพศ</Typography>
+                  <Select
+                    labelId="gender-label"
+                    name="GenderID"
+                    value={selectedGender ?? user.GenderID}
+                    onChange={(e) => setSelectedGender(Number(e.target.value))}
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>-- กรุณาเลือกเพศ --</em>
+                    </MenuItem>
+                    {genders.map((gender) => (
+                      <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
+                    ))}
+                  </Select>
+                  {errors.GenderID && <FormHelperText>{String(errors.GenderID.message)}</FormHelperText>}
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth margin="normal" error={!!errors.RoleID}>
+                  <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                  <Select
+                    labelId="role-label"
+                    name="RoleID"
+                    value={selectedRole ?? user.RoleID} 
+                    onChange={(e) => setSelectedRole(Number(e.target.value))}
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>-- กรุณาเลือก ตำแหน่ง --</em>
+                    </MenuItem>
+                    {roles.map((role) => (
+                      <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
+                    ))}
+                  </Select>
+                  {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth margin="normal">
+                  <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
+                  <Select
+                    labelId="package-label"
+                    name="UserPackageID"
+                    value={selectedPackage ?? user.UserPackageID ?? 0} // Default to 0 if no package is selected
+                    onChange={(e) => setSelectedPackage(Number(e.target.value))}
+                    displayEmpty
+                  >
+                    <MenuItem value={0}><em>-- ไม่มี สิทธิพิเศษ --</em></MenuItem>
+                    {packages.map((pkg) => (
+                      <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
-          </Grid>
+
+            <DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <Button onClick={onClose} color="secondary">ยกเลิก</Button>
+              <Button type="submit" variant="contained" startIcon={<SaveIcon />}>บันทึก</Button>
+            </DialogActions>
+          </form>
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} color="secondary">
-          ยกเลิก
-        </Button>
-
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          startIcon={<SaveIcon />}
-          sx={{
-            backgroundColor: '#ff6f00',
-            color: '#fff',
-            fontWeight: 'bold',
-            '&:hover': {
-              backgroundColor: '#e65c00',
-            },
-          }}
-        >
-          บันทึก
-        </Button>
-      </DialogActions>
+      {/* Show alert here */}
+      {alerts.length > 0 && (
+        <div>
+          {alerts.map((alert, index) => (
+            <React.Fragment key={index}>
+              {alert.type === 'success' && (
+                <SuccessAlert
+                  message={alert.message}
+                  onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                  index={index}
+                  totalAlerts={alerts.length}
+                />
+              )}
+              {alert.type === 'error' && (
+                <ErrorAlert
+                  message={alert.message}
+                  onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                  index={index}
+                  totalAlerts={alerts.length}
+                />
+              )}
+              {alert.type === 'warning' && (
+                <WarningAlert
+                  message={alert.message}
+                  onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                  index={index}
+                  totalAlerts={alerts.length}
+                />
+              )}
+              {alert.type === 'info' && (
+                <InfoAlert
+                  message={alert.message}
+                  onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                  index={index}
+                  totalAlerts={alerts.length}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
     </Dialog>
   );
 };

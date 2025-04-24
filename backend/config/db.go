@@ -52,6 +52,7 @@ func SetupDatabase() {
 		&entity.Gender{},
 		&entity.Floor{},
 		&entity.Area{},
+		&entity.HandoverImage{},
 	)
 
 	if err != nil {
@@ -76,12 +77,12 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Role
 	roles := []entity.Role{
-		{Name: "Employee"}, 
-		{Name: "Outsider"}, 
-		{Name: "Manager"}, 
+		{Name: "External User"}, 
+		{Name: "Internal User"}, 
+		{Name: "Operator"}, 
+		{Name: "Coordinator"},
+		{Name: "Supervisor"},
 		{Name: "Admin"},
-		{Name: "SuperAdmin"},
-		{Name: "Operator"},
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
@@ -95,8 +96,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Area
 	areas := []entity.Area{
-		{Name: "Top room F11"}, 
-		{Name: "Outside behind green bin"},
+		{Name: "ห้องประชุม/ห้องทำงาน"}, 
+		{Name: "บริเวณอื่นๆ"},
 	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
@@ -105,11 +106,11 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RequestStatus
 	requestStatuses := []entity.RequestStatus{
 		{Name: "Pending"}, 
-		{Name: "Approved"}, 
-		{Name: "Rejected"},
+		{Name: "Approved"},
 		{Name: "In Progress"}, 
 		{Name: "Completed"}, 
-		{Name: "Failed"},
+		{Name: "Re-requested"}, 
+		{Name: "Unsuccessful"},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
@@ -139,22 +140,83 @@ func SeedDatabase() {
 			CompanyName: "TechCorp", 
 			BusinessDetail: "Tech Solutions", 
 			FirstName: "John",
-			EmployeeID: "EMP001", 
+			EmployeeID: "EMP000", 
 			LastName: "Doe", 
 			Email: "admin@gmail.com", 
 			Password: "123456", 
-			Phone: "123456789", 
+			Phone: "1234567890", 
+			ProfilePath: "/profiles/john.jpg", 
+			RoleID: 6, GenderID: 1,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "John",
+			EmployeeID: "EMP001", 
+			LastName: "Doe", 
+			Email: "supervisor@gmail.com", 
+			Password: "123456", 
+			Phone: "1234567890", 
+			ProfilePath: "/profiles/john.jpg", 
+			RoleID: 5, GenderID: 1,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "John",
+			EmployeeID: "EMP002", 
+			LastName: "Doe", 
+			Email: "coordinator@gmail.com", 
+			Password: "123456", 
+			Phone: "1234567890", 
 			ProfilePath: "/profiles/john.jpg", 
 			RoleID: 4, GenderID: 1,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Jaya", 
+			EmployeeID: "EMP003", 
+			LastName: "Kunlee", 
+			Email: "operator1@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323221", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 3, GenderID: 2,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Martin",
+			EmployeeID: "EMP004",  
+			LastName: "Ninja", 
+			Email: "operator2@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323222", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 3, GenderID: 2,
+		},
+		{
+			CompanyName: "TechCorp", 
+			BusinessDetail: "Tech Solutions", 
+			FirstName: "Connan", 
+			EmployeeID: "EMP005", 
+			LastName: "Gun", 
+			Email: "operator3@gmail.com", 
+			Password: "123456", 
+			Phone: "1232323223", 
+			ProfilePath: "/profiles/alice.jpg", 
+			RoleID: 3, GenderID: 2,
 		},
 		{
 			CompanyName: "MediCare", 
 			BusinessDetail: "Healthcare Services", 
 			FirstName: "Alice", 
+			EmployeeID: "EMP006", 
 			LastName: "Smith", 
-			Email: "outsider@gmail.com", 
+			Email: "internaluser@gmail.com", 
 			Password: "123456", 
-			Phone: "987654321", 
+			Phone: "9876543210", 
 			ProfilePath: "/profiles/alice.jpg", 
 			RoleID: 2, GenderID: 2,
 		},
@@ -164,45 +226,13 @@ func SeedDatabase() {
 			FirstName: "Jaydee", 
 			EmployeeID: "EMP002",
 			LastName: "Somkom", 
-			Email: "superadmin@gmail.com", 
+			Email: "externaluser@gmail.com", 
 			Password: "123456", 
-			Phone: "1232323", 
+			Phone: "1232323111", 
 			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 5, GenderID: 2,
+			RoleID: 1, GenderID: 2,
 		},
-		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Jaya", 
-			LastName: "Kunlee", 
-			Email: "operator1@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 6, GenderID: 2,
-		},
-		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Martin", 
-			LastName: "Ninja", 
-			Email: "operator2@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 6, GenderID: 2,
-		},
-		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Connan", 
-			LastName: "Gun", 
-			Email: "operator3@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 6, GenderID: 2,
-		},
+		
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)
@@ -224,17 +254,36 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Packages
 	packages := []entity.Package{
+		
+		{
+			PackageName: "Empty", 
+			MeetingRoomLimit: 0, 
+			TrainingRoomLimit: 0, 
+			MultiFunctionRoomLimit: 0,
+		},
 		{
 			PackageName: "Silver", 
-			MeetingRoomLimit: 10, 
+			MeetingRoomLimit: 2, 
 			TrainingRoomLimit: 5, 
 			MultiFunctionRoomLimit: 3,
 		},
 		{
 			PackageName: "Gold", 
-			MeetingRoomLimit: 20, 
+			MeetingRoomLimit: 5, 
 			TrainingRoomLimit: 10, 
 			MultiFunctionRoomLimit: 5,
+		},
+		{
+			PackageName: "Platinum", 
+			MeetingRoomLimit: 7, 
+			TrainingRoomLimit: 12, 
+			MultiFunctionRoomLimit: 7,
+		},
+		{
+			PackageName: "Diamond", 
+			MeetingRoomLimit: 10, 
+			TrainingRoomLimit: 15, 
+			MultiFunctionRoomLimit: 19,
 		},
 	}
 	for _, pkg := range packages {
@@ -253,10 +302,12 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล MaintenanceTypes
 	maintenanceTypes := []entity.MaintenanceType{
-		{TypeName: "งานไฟฟ้า",},
-		{TypeName: "งานเครื่องใช้ไฟฟ้า",},
-		{TypeName: "งานเฟอร์นิเจอร์",},
-		{TypeName: "งานประปา",},
+		{TypeName: "งานไฟฟ้า"},
+		{TypeName: "งานเครื่องปรับอากาศ"},
+		{TypeName: "งานอินเทอร์เน็ต"},
+		{TypeName: "งานประปา"},
+		{TypeName: "งานโครงสร้าง"},
+		{TypeName: "งานอื่นๆ"},
 	}
 	for _, mt := range maintenanceTypes {
 		db.FirstOrCreate(&mt, entity.MaintenanceType{TypeName: mt.TypeName})

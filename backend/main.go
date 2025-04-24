@@ -21,6 +21,8 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
+	r.Static("/images", "./images")
+
 	// 🌍 Public API (ไม่ต้องใช้ Token)
 	public := r.Group("/")
 	{
@@ -35,7 +37,7 @@ func main() {
 
 	// 🔒 Protected API (ต้องใช้ Token)
 	protected := r.Group("/")
-	protected.Use(middlewares.Authorizes(middlewares.Outsider)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.ExternalUser)) // ✅ Middleware ตรวจสอบ Token
 	{
 		// protected.GET("/users", controller.GetAllUsers)
 
@@ -61,6 +63,7 @@ func main() {
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
 		protected.GET("/maintenance-request/:id", controller.GetMaintenanceRequestByID)
+		protected.GET("/maintenance-request-user/:id", controller.GetMaintenanceRequestByUserID)
 		protected.POST("/maintenance-request", controller.CreateMaintenanceRequest)
 		protected.PATCH("/maintenance-request/:id", controller.UpdateMaintenanceRequestByID)
 		protected.DELETE("/maintenance-request/:id", controller.DeleteMaintenanceRequestByID)
@@ -91,22 +94,23 @@ func main() {
 		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Enterprise)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.InternalUser)) // ✅ Middleware ตรวจสอบ Token
 	{	
 
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Employee)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
 	{	
+		// MaintenanceTasks
+		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
+		protected.PATCH("/maintenance-task/:id", controller.UpdateMaintenanceTaskByID)
+		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)
 
+		// HondoverImages
+		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Operators)) // ✅ Middleware ตรวจสอบ Token
-	{	
-
-	}
-
-	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.Supervisor)) // ✅ Middleware ตรวจสอบ Token
 	{	
 
 	}
@@ -117,12 +121,6 @@ func main() {
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		protected.GET("/users", controller.ListUsers)
 
-	}
-
-	protected.Use(middlewares.Authorizes(middlewares.SuperAdmin)) // ✅ Middleware ตรวจสอบ Token
-	{	
-		// Users
-		
 	}
 
 	// 🌍 Root Route

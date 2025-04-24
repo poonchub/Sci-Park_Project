@@ -109,9 +109,21 @@
   justify-content: flex-end; /* จัดให้ปุ่มชิดขวา */
 }
 
+.add-user button[type="submit"] {
 
+  background-color: #ff6f00;
+  color: white;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
 
+.add-user button[type="reset"] {
 
+  background-color: #ffffff;
+  color: rgb(45, 213, 255);
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
 
 .add-user button[type="submit"]:hover {
   background-color: #e65c00;

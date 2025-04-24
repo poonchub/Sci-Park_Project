@@ -138,9 +138,19 @@ function ManageUsers() {
         setOpenPopup(true);
       };
     
+      useEffect(() => {
+        if (selectedUserId === null) {
+          // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
+          getUsers();  // ดึงข้อมูลผู้ใช้งานใหม่
+        }
+      }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+      
       const handleClosePopup = () => {
         setOpenPopup(false);
-        setSelectedUserId(null);
+        setSelectedUserId(null); // รีเซ็ต selectedUserId เมื่อปิด pop-up
+        setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
+        setPage(1);         // รีเซ็ตไปยังหน้าที่ 1
+        console.log(alerts); // Log message when popup is closed
       };
 
     // Fetch users from the API
@@ -201,6 +211,7 @@ function ManageUsers() {
         handleSearch();
     }, [debouncedSearchText]);
 
+
     return (
         <div className="manage-users-page">
             {alerts.map((alert, index) => (
@@ -224,16 +235,6 @@ function ManageUsers() {
                 <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
                     <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
                 </Grid2>
-                
-                {selectedUserId !== null && (
-                    <EditUserPopup
-                        userId={selectedUserId}
-                        open={openPopup}
-                        onClose={handleClosePopup}
-                        setAlerts={setAlerts} // ✅ Pass down alerts handler
-                    />
-                )}
-            
 
                 <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
                     {/* Filters Section */}
