@@ -16,12 +16,15 @@ type User struct {
     Password        string
     Phone           string
     ProfilePath     string
+    IsEmployee      bool
     
     UserPackageID   *uint
     RoleID          uint 
     Role            Role     `gorm:"foreignKey:RoleID"`
     GenderID        uint
     Gender          Gender   `gorm:"foreignKey:GenderID"`
+    RequestTypeID   uint
+    RequestType     RequestType `gorm:"foreignKey:RequestTypeID"`
 
     ResetToken       string
     ResetTokenExpiry time.Time

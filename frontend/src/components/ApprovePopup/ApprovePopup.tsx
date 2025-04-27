@@ -18,7 +18,7 @@ interface MaintenanceTypeConfig {
     };
 }
 
-interface AssignPopupProps {
+interface ApprovePopupProps {
     open: boolean;
     onClose: () => void;
     onConfirm: () => void;
@@ -29,7 +29,7 @@ interface AssignPopupProps {
     maintenanceTypeConfig: MaintenanceTypeConfig;
 }
 
-const AssignPopup: React.FC<AssignPopupProps> = ({
+const ApprovePopup: React.FC<ApprovePopupProps> = ({
     open,
     onClose,
     onConfirm,
@@ -126,4 +126,4 @@ const AssignPopup: React.FC<AssignPopupProps> = ({
     );
 };
 
-export default AssignPopup;
+export default ApprovePopup;

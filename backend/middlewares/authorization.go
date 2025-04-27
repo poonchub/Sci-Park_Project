@@ -11,11 +11,10 @@ import (
 
 // Role levels for comparison
 const (
-	ExternalUser   = 1
-	InternalUser = 2
-	Operator   = 3
-	Supervisor  = 4
-	Admin      = 5
+	User   		= 1
+	Operator   	= 3
+	DevManager  = 4
+	Admin      	= 5
 )
 
 // Authorization เป็นฟังก์ชั่นตรวจเช็ค JWT และตรวจสอบบทบาท (role) ตามระดับ
@@ -71,14 +70,12 @@ func getRoleLevel(role string) int {
 	switch role {
 	case "Admin":
 		return Admin
-	case "Supervisor":
-		return Supervisor
+	case "DevManager":
+		return DevManager
 	case "Operator":
 		return Operator
-	case "Internal User":
-		return InternalUser
-	case "External User":
-		return ExternalUser
+	case "User":
+		return User
 	default:
 		return 0 // ถ้า role ไม่ถูกกำหนดให้กลับ 0
 	}

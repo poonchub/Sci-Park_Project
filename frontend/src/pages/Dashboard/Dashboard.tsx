@@ -262,19 +262,6 @@ function Dashboard() {
         }
     };
 
-    const handleClick = (statusID: number, message: string) => {
-        handleAction(statusID, message, {
-            userID: user?.ID,
-            selectedRequest,
-            setAlerts,
-            refreshRequestData: getMaintenanceRequests,
-            setOpenConfirmApproved,
-            setOpenConfirmRejected,
-        });
-    };
-
-    console.log(maintenanceTypes)
-
     useEffect(() => {
         getMaintenanceRequests()
         getUser()
@@ -357,22 +344,22 @@ function Dashboard() {
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             {/* Approved Confirm */}
-            <ConfirmDialog
+            {/* <ConfirmDialog
                 open={openConfirmApproved}
                 setOpenConfirm={setOpenConfirmApproved}
                 handleFunction={() => handleClick(2, "Approval successful")}
                 title="ยืนยันการอนุมัติงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
+            /> */}
 
             {/* Rejected Confirm */}
-            <ConfirmDialog
+            {/* <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
                 handleFunction={() => handleClick(3, "Rejection successful")}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
+            /> */}
 
             <Grid2 container spacing={3}>
 

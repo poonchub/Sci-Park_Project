@@ -428,7 +428,13 @@ async function ListMaintenanceRequests() {
 
     return res;
 }
-async function GetMaintenanceRequests(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined, userId?: number | undefined) {
+async function GetMaintenanceRequestsForUser(
+    statusID: number, 
+    page: number, 
+    limit: number, 
+    createdAt?: string | undefined, 
+    userId?: number | undefined
+) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -437,7 +443,35 @@ async function GetMaintenanceRequests(statusID: number, page: number, limit: num
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests-option?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&userId=${userId}`, requestOptions)
+    let res = await fetch(`${apiUrl}/maintenance-requests-option-for-user?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function GetMaintenanceRequestsForAdmin(
+    statusID: number, 
+    page: number, 
+    limit: number, 
+    maintenanceType: number, 
+    createdAt?: string | undefined, 
+    requestType?: string | undefined, 
+    userId?: number | undefined
+) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-requests-option-for-admin?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&userId=${userId}&requestType=${requestType}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -783,7 +817,8 @@ export {
 
     // MaintenanceRequests
     ListMaintenanceRequests,
-    GetMaintenanceRequests,
+    GetMaintenanceRequestsForUser,
+    GetMaintenanceRequestsForAdmin,
     GetMaintenanceRequestByID,
     CreateMaintenanceRequest,
     UpdateMaintenanceRequestByID,

@@ -53,6 +53,7 @@ func SetupDatabase() {
 		&entity.Floor{},
 		&entity.Area{},
 		&entity.HandoverImage{},
+		&entity.RequestType{},
 	)
 
 	if err != nil {
@@ -68,7 +69,7 @@ func SetupDatabase() {
 func SeedDatabase() {
 	// 🔹 ข้อมูล Gender
 	genders := []entity.Gender{
-		{Name: "Male"}, 
+		{Name: "Male"},
 		{Name: "Female"},
 	}
 	for _, gender := range genders {
@@ -77,15 +78,23 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Role
 	roles := []entity.Role{
-		{Name: "External User"}, 
-		{Name: "Internal User"}, 
-		{Name: "Operator"}, 
-		{Name: "Coordinator"},
-		{Name: "Supervisor"},
+		{Name: "User"},
+		{Name: "Operator"},
+		{Name: "DevManager"},
 		{Name: "Admin"},
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
+	}
+
+	// 🔹 ข้อมูล RequestType
+	requestTypes := []entity.RequestType{
+		{TypeName: "Internal"},
+		{TypeName: "External"},
+		{TypeName: "Both"},
+	}
+	for _, requestType := range requestTypes {
+		db.FirstOrCreate(&requestType, entity.RequestType{TypeName: requestType.TypeName})
 	}
 
 	// 🔹 ข้อมูล Floor
@@ -96,21 +105,46 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Area
 	areas := []entity.Area{
-		{Name: "ห้องประชุม/ห้องทำงาน"}, 
+		{Name: "ห้องประชุม/ห้องทำงาน"},
 		{Name: "บริเวณอื่นๆ"},
 	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
 	}
 
-	// 🔹 ข้อมูล RequestStatus
 	requestStatuses := []entity.RequestStatus{
-		{Name: "Pending"}, 
-		{Name: "Approved"},
-		{Name: "In Progress"}, 
-		{Name: "Completed"}, 
-		{Name: "Re-requested"}, 
-		{Name: "Unsuccessful"},
+		{
+			Name:        "Creating", // Request is being created
+			Description: "The request is in the process of being created.",
+		},
+		{
+			Name:        "Pending", // Waiting for action
+			Description: "The request is awaiting approval or further action from the responsible party.",
+		},
+		{
+			Name:        "Approved", // Approved
+			Description: "The request has been approved and is ready for processing.",
+		},
+		{
+			Name:        "In Progress", // In Progress
+			Description: "The request is currently being worked on (repair or maintenance ongoing).",
+		},
+		{
+			Name:        "Waiting for Review", // Waiting for review
+			Description: "The task is completed and is awaiting review from the requester.",
+		},
+		{
+			Name:        "Completed", // Completed
+			Description: "The request is completed and has been confirmed by the requester.",
+		},
+		{
+			Name:        "Rework Requested", // Rework requested
+			Description: "The requester has asked for additional work or corrections to be made.",
+		},
+		{
+			Name:        "Unsuccessful", // Unsuccessful
+			Description: "The maintenance was unsuccessful and could not be completed.",
+		},
 	}
 	for _, status := range requestStatuses {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
@@ -118,7 +152,7 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล RoomStatus
 	roomStatuses := []entity.RoomStatus{
-		{StatusName: "Reserved"}, 
+		{StatusName: "Reserved"},
 		{StatusName: "Not Reserved"},
 	}
 	for _, status := range roomStatuses {
@@ -137,102 +171,146 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล Users
 	users := []entity.User{
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "John",
-			EmployeeID: "EMP000", 
-			LastName: "Doe", 
-			Email: "admin@gmail.com", 
-			Password: "123456", 
-			Phone: "1234567890", 
-			ProfilePath: "/profiles/john.jpg", 
-			RoleID: 6, GenderID: 1,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Admin",
+			EmployeeID:     "EMP000",
+			LastName:       "Admin",
+			Email:          "admin@gmail.com",
+			Password:       "123456",
+			Phone:          "1234567890",
+			ProfilePath:    "/profiles/Admin.jpg",
+			RoleID:         4,
+			GenderID:       1,
+			IsEmployee:     true,
+			RequestTypeID:  3,
 		},
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "John",
-			EmployeeID: "EMP001", 
-			LastName: "Doe", 
-			Email: "supervisor@gmail.com", 
-			Password: "123456", 
-			Phone: "1234567890", 
-			ProfilePath: "/profiles/john.jpg", 
-			RoleID: 5, GenderID: 1,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "John",
+			EmployeeID:     "EMP001",
+			LastName:       "Doe",
+			Email:          "devmanager1@gmail.com",
+			Password:       "123456",
+			Phone:          "1234567890",
+			ProfilePath:    "/profiles/john.jpg",
+			RoleID:         3,
+			GenderID:       1,
+			IsEmployee:     true,
+			RequestTypeID:  1,
 		},
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "John",
-			EmployeeID: "EMP002", 
-			LastName: "Doe", 
-			Email: "coordinator@gmail.com", 
-			Password: "123456", 
-			Phone: "1234567890", 
-			ProfilePath: "/profiles/john.jpg", 
-			RoleID: 4, GenderID: 1,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Pink",
+			EmployeeID:     "EMP002",
+			LastName:       "Demand",
+			Email:          "devmanager2@gmail.com",
+			Password:       "123456",
+			Phone:          "1234567890",
+			ProfilePath:    "/profiles/Pink.jpg",
+			RoleID:         3,
+			GenderID:       1,
+			IsEmployee:     true,
+			RequestTypeID:  2,
 		},
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Jaya", 
-			EmployeeID: "EMP003", 
-			LastName: "Kunlee", 
-			Email: "operator1@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323221", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 3, GenderID: 2,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Jaya",
+			EmployeeID:     "EMP003",
+			LastName:       "Kunlee",
+			Email:          "operator1@gmail.com",
+			Password:       "123456",
+			Phone:          "1232323221",
+			ProfilePath:    "/profiles/Jaya.jpg",
+			RoleID:         2,
+			GenderID:       2,
+			IsEmployee:     true,
 		},
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Martin",
-			EmployeeID: "EMP004",  
-			LastName: "Ninja", 
-			Email: "operator2@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323222", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 3, GenderID: 2,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Martin",
+			EmployeeID:     "EMP004",
+			LastName:       "Ninja",
+			Email:          "operator2@gmail.com",
+			Password:       "123456",
+			Phone:          "1232323222",
+			ProfilePath:    "/profiles/Martin.jpg",
+			RoleID:         2,
+			GenderID:       2,
+			IsEmployee:     true,
 		},
 		{
-			CompanyName: "TechCorp", 
-			BusinessDetail: "Tech Solutions", 
-			FirstName: "Connan", 
-			EmployeeID: "EMP005", 
-			LastName: "Gun", 
-			Email: "operator3@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323223", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 3, GenderID: 2,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Connan",
+			EmployeeID:     "EMP005",
+			LastName:       "Gun",
+			Email:          "operator3@gmail.com",
+			Password:       "123456",
+			Phone:          "1232323223",
+			ProfilePath:    "/profiles/Connan.jpg",
+			RoleID:         2,
+			GenderID:       2,
+			IsEmployee:     true,
 		},
 		{
-			CompanyName: "MediCare", 
-			BusinessDetail: "Healthcare Services", 
-			FirstName: "Alice", 
-			EmployeeID: "EMP006", 
-			LastName: "Smith", 
-			Email: "internaluser@gmail.com", 
-			Password: "123456", 
-			Phone: "9876543210", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 2, GenderID: 2,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Alice",
+			EmployeeID:     "EMP006",
+			LastName:       "Smith",
+			Email:          "internaluser1@gmail.com",
+			Password:       "123456",
+			Phone:          "9876543210",
+			ProfilePath:    "/profiles/alice.jpg",
+			RoleID:         1,
+			GenderID:       2,
+			IsEmployee:     true,
 		},
 		{
-			CompanyName: "NO COM", 
-			BusinessDetail: "NO Business", 
-			FirstName: "Jaydee", 
-			EmployeeID: "EMP002",
-			LastName: "Somkom", 
-			Email: "externaluser@gmail.com", 
-			Password: "123456", 
-			Phone: "1232323111", 
-			ProfilePath: "/profiles/alice.jpg", 
-			RoleID: 1, GenderID: 2,
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Vangard",
+			EmployeeID:     "EMP007",
+			LastName:       "Fala",
+			Email:          "internaluser2@gmail.com",
+			Password:       "123456",
+			Phone:          "9876543210",
+			ProfilePath:    "/profiles/vangard.jpg",
+			RoleID:         1,
+			GenderID:       1,
+			IsEmployee:     true,
 		},
-		
+		{
+			CompanyName:    "MediCare",
+			BusinessDetail: "Healthcare Services",
+			FirstName:      "Jaydee",
+			LastName:       "Somkom",
+			Email:          "externaluser1@gmail.com",
+			Password:       "123456",
+			Phone:          "1232323111",
+			ProfilePath:    "/profiles/Jaydee.jpg",
+			RoleID:         1,
+			GenderID:       2,
+			IsEmployee:     false,
+		},
+		{
+			CompanyName:    "Global Innovations Hub",
+			BusinessDetail: "Technology Solutions",
+			FirstName:      "Emily",
+			LastName:       "Johnson",
+			Email:          "externaluser2@gmail.com",
+			Password:       "123456",
+			Phone:          "9876543211",
+			ProfilePath:    "/profiles/Emily.jpg",
+			RoleID:         1,
+			GenderID:       1,
+			IsEmployee:     false,
+		},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)
@@ -254,35 +332,35 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Packages
 	packages := []entity.Package{
-		
+
 		{
-			PackageName: "Empty", 
-			MeetingRoomLimit: 0, 
-			TrainingRoomLimit: 0, 
+			PackageName:            "Empty",
+			MeetingRoomLimit:       0,
+			TrainingRoomLimit:      0,
 			MultiFunctionRoomLimit: 0,
 		},
 		{
-			PackageName: "Silver", 
-			MeetingRoomLimit: 2, 
-			TrainingRoomLimit: 5, 
+			PackageName:            "Silver",
+			MeetingRoomLimit:       2,
+			TrainingRoomLimit:      5,
 			MultiFunctionRoomLimit: 3,
 		},
 		{
-			PackageName: "Gold", 
-			MeetingRoomLimit: 5, 
-			TrainingRoomLimit: 10, 
+			PackageName:            "Gold",
+			MeetingRoomLimit:       5,
+			TrainingRoomLimit:      10,
 			MultiFunctionRoomLimit: 5,
 		},
 		{
-			PackageName: "Platinum", 
-			MeetingRoomLimit: 7, 
-			TrainingRoomLimit: 12, 
+			PackageName:            "Platinum",
+			MeetingRoomLimit:       7,
+			TrainingRoomLimit:      12,
 			MultiFunctionRoomLimit: 7,
 		},
 		{
-			PackageName: "Diamond", 
-			MeetingRoomLimit: 10, 
-			TrainingRoomLimit: 15, 
+			PackageName:            "Diamond",
+			MeetingRoomLimit:       10,
+			TrainingRoomLimit:      15,
 			MultiFunctionRoomLimit: 19,
 		},
 	}
@@ -292,10 +370,10 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล UserPackage
 	userPackage := entity.UserPackage{
-		UserID: &users[0].ID, 
-		PackageID: packages[0].ID, 
-		MeetingRoomUsed: 2, 
-		TrainingRoomUsed: 1, 
+		UserID:                &users[0].ID,
+		PackageID:             packages[0].ID,
+		MeetingRoomUsed:       2,
+		TrainingRoomUsed:      1,
 		MultiFunctionRoomUsed: 0,
 	}
 	db.FirstOrCreate(&userPackage)
@@ -316,40 +394,68 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล MaintenanceRequest
 	startTime, _ := time.Parse("15:04:05", "15:00:00")
 	endTime, _ := time.Parse("15:04:05", "18:00:00")
-	maintenanceRequest := entity.MaintenanceRequest{
-		Description: "Fix the AC", 
-		StartTime: startTime,
-		EndTime: endTime,
-		UserID: users[0].ID, 
-		RoomID: rooms[0].ID, 
-		RequestStatusID: 1,
-		AreaID: 1,
-		MaintenanceTypeID: 1,
+	maintenanceRequests := []entity.MaintenanceRequest{
+		{
+			Description:       "Fix the AC",
+			StartTime:         startTime,
+			EndTime:           endTime,
+			UserID:            6,
+			RoomID:            1,
+			RequestStatusID:   2,
+			AreaID:            1,
+			MaintenanceTypeID: 1,
+		},
+		{
+			Description:       "Fix the AC",
+			StartTime:         startTime,
+			EndTime:           endTime,
+			UserID:            9,
+			RoomID:            2,
+			RequestStatusID:   4,
+			AreaID:            1,
+			MaintenanceTypeID: 3,
+		},
+		{
+			Description:       "Fix the AC",
+			StartTime:         startTime,
+			EndTime:           endTime,
+			UserID:            7,
+			RoomID:            3,
+			RequestStatusID:   2,
+			AreaID:            1,
+			MaintenanceTypeID: 2,
+		},
 	}
-	db.FirstOrCreate(&maintenanceRequest)
+	for _, mr := range maintenanceRequests {
+		db.FirstOrCreate(&mr, entity.MaintenanceRequest{
+			Description: mr.Description,
+			StartTime:   mr.StartTime,
+			EndTime:     mr.EndTime,
+			UserID:      mr.UserID,
+			RoomID:      mr.RoomID,
+		})
+	}
+
+	// 🔹 ข้อมูล ManagerApproval
+	managerApproval := entity.ManagerApproval{
+		UserID: 3,
+		RequestID: 2,
+		RequestStatusID: 3,
+	}
+	db.FirstOrCreate(&managerApproval)
 
 	// 🔹 ข้อมูล MaintenanceTask
 	maintenanceTask := entity.MaintenanceTask{
-		Description: "Repairing air conditioning", 
-		UserID: users[1].ID, 
-		RequestID: maintenanceRequest.ID, 
+		UserID:          5,
+		RequestID:       2,
 		RequestStatusID: 4,
 	} // In Progress
 	db.FirstOrCreate(&maintenanceTask)
 
-	// 🔹 ข้อมูล Inspection
-	inspection := entity.Inspection{
-		Description: "Routine safety check", 
-		UserID: users[1].ID, RequestID: 
-		maintenanceRequest.ID, 
-		RequestStatusID: 5,
-	} // Completed
-	db.FirstOrCreate(&inspection)
-
 	// 🔹 ข้อมูล MaintenanceImage
 	maintenanceImage := entity.MaintenanceImage{
-		FilePath: "/images/ac_repair.jpg", 
-		RequestID: maintenanceRequest.ID,
+		FilePath:  "/images/ac_repair.jpg",
+		RequestID: 1,
 	}
 	db.FirstOrCreate(&maintenanceImage)
 

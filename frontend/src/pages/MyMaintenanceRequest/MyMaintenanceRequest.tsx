@@ -6,7 +6,7 @@ import RequestStatusCards from '../../components/RequestStatusCards/RequestStatu
 import { useEffect, useState } from 'react'
 
 import './MyMaintenanceRequest.css'
-import { GetMaintenanceRequests, GetRequestStatuses } from '../../services/http'
+import { GetMaintenanceRequestsForUser, GetRequestStatuses } from '../../services/http'
 import dayjs from 'dayjs'
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests'
 import { TextField } from '../../components/TextField/TextField'
@@ -203,7 +203,7 @@ function MyMaintenanceRequest() {
     const getMaintenanceRequests = async () => {
         try {
             const userId = localStorage.getItem('userId')
-            const res = await GetMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "", Number(userId));
+            const res = await GetMaintenanceRequestsForUser(selectedStatus, page, limit, selectedDate ? selectedDate.format('YYYY-MM-DD') : "", Number(userId));
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);

@@ -1,5 +1,5 @@
 // Define possible user roles in the system
-export type Role = 'External User' | 'Internal User' | 'Operator' | 'Coordinator' | 'Supervisor' | 'Admin';
+export type Role = 'User' | 'Operator' | 'DevManager' | 'Admin';
 
 // Type definition for navigation items in the drawer
 type NavItem = {
@@ -23,29 +23,29 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/booking-room',
             name: 'ระบบจองห้อง',
-            roles: ['External User', 'Internal User', 'Operator', 'Coordinator', 'Supervisor', 'Admin']
+            roles: ['User', 'Operator', 'DevManager', 'Admin']
         },
     ],
     maintenance: [
         {
             path: '/dashboard',
             name: 'แดชบอร์ด',
-            roles: ['Coordinator', 'Admin']
+            roles: ['DevManager', 'Admin']
         },
         {
             path: '/all-maintenance-request',
             name: 'จัดการแจ้งซ่อม',
-            roles: ['Coordinator', 'Admin']
+            roles: ['DevManager', 'Admin']
         },
         {
             path: '/my-maintenance-request',
             name: 'การแจ้งซ่อมของฉัน',
-            roles: ['External User', 'Internal User', 'Operator', 'Coordinator', 'Supervisor', 'Admin']
+            roles: ['User', 'Operator', 'DevManager', 'Admin']
         },
         {
             path: '/assign-work',
             name: 'มอบหมายงานซ่อม',
-            roles: ['Coordinator', 'Admin']
+            roles: ['DevManager', 'Admin']
         },
         {
             path: '/accept-work',
@@ -55,12 +55,12 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/manage-user',
             name: 'จัดการผู้ใช้งาน',
-            roles: ['Coordinator', 'Admin']
+            roles: ['DevManager', 'Admin']
         },
         {
             path: '/add-user',
             name: 'เพิ่มผู้ใช้',
-            roles: ['Coordinator', 'Admin']
+            roles: ['DevManager', 'Admin']
         },
     ],
     manageuser: [
