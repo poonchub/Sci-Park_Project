@@ -1,3 +1,5 @@
+import { RequestTypeInterface } from "./IRequestTypes";
+
 export interface UserInterface {
     ID?: number;
     EmployeeID?: string;
@@ -16,7 +18,9 @@ export interface UserInterface {
     Password?: string;
     Profile_Image?: File;
     Token?: string;
-
+    IsEmployee?:    boolean;
+    RequestTypeID?: number;
+    RequestType?:   RequestTypeInterface;
 
     UserNameCombined?: string;
 }

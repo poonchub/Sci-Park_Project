@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Button, Box, Grid2 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { isAdmin, isCoordinator, isSupervisor } from '../../routes';
+import { isAdmin, isDevManager } from '../../routes';
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
@@ -28,8 +28,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
     status,
 }) => {
 
-    const isApprovedBtnOn = time == null && type === 'approved' && (isSupervisor || isAdmin)
-    const isAssignedBtnOn = time == null && type === 'assigned' && (isCoordinator || isAdmin) && status === 'Approved'
+    const isApprovedBtnOn = time == null && type === 'approved' && (isDevManager || isAdmin)
 
     return (
         // Card layout wrapped inside Grid2 for responsiveness
@@ -86,22 +85,6 @@ const InfoCard: React.FC<InfoCardProps> = ({
                                     <FontAwesomeIcon icon={faXmark} size="xl" />
                                 </Button>
                             </>
-                        ) : isAssignedBtnOn ? (
-                            // Assign button for unassigned tasks
-                            <Button
-                                onClick={onAssign}
-                                sx={{
-                                    bgcolor: '#08aff1',
-                                    color: '#fff',
-                                    fontSize: '14px',
-                                    border: '1px solid #08aff1',
-                                    '&:hover': {
-                                        borderColor: 'transparent'
-                                    }
-                                }}
-                            >
-                                มอบหมายงาน
-                            </Button>
                         ) : (
                             // Display the time when the task has been either approved or assigned
                             <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: '#6D6E70' }}>

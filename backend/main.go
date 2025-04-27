@@ -37,7 +37,7 @@ func main() {
 
 	// 🔒 Protected API (ต้องใช้ Token)
 	protected := r.Group("/")
-	protected.Use(middlewares.Authorizes(middlewares.ExternalUser)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.User)) // ✅ Middleware ตรวจสอบ Token
 	{
 		// protected.GET("/users", controller.GetAllUsers)
 
@@ -67,7 +67,7 @@ func main() {
 		protected.POST("/maintenance-request", controller.CreateMaintenanceRequest)
 		protected.PATCH("/maintenance-request/:id", controller.UpdateMaintenanceRequestByID)
 		protected.DELETE("/maintenance-request/:id", controller.DeleteMaintenanceRequestByID)
-		protected.GET("/maintenance-requests-option", controller.GetMaintenanceRequests)
+		protected.GET("/maintenance-requests-option-for-user", controller.GetMaintenanceRequestsForUser)
 
 		// MaintenanceTypes
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
@@ -94,11 +94,6 @@ func main() {
 		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.InternalUser)) // ✅ Middleware ตรวจสอบ Token
-	{	
-
-	}
-
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		// MaintenanceTasks
@@ -110,9 +105,9 @@ func main() {
 		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Supervisor)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.DevManager)) // ✅ Middleware ตรวจสอบ Token
 	{	
-
+		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

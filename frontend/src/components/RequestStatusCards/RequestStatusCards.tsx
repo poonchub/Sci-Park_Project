@@ -19,30 +19,32 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
     const displayStatuses = [
         "Pending",
         "Approved",
-        "Assigned",
         "In Progress",
+        "Waiting for Review",
         "Completed",
         "Unsuccessful"
     ];
 
     const statusCards = displayStatuses.map((status) => {
-        let count = 0;
-        if (status === "Unsuccessful") {
-            const failedStatuses = ["Rejected", "Failed", "Cancelled"];
-            count = failedStatuses.reduce(
-                (sum, key) => sum + (statusCounts?.[key] ?? 0),
-                0
-            );
-        } else {
-            count = statusCounts?.[status] ?? 0;
-        }
+        let count = statusCounts?.[status] ?? 0;
+        // if (status === "Unsuccessful") {
+        //     const failedStatuses = ["Rejected", "Failed", "Cancelled"];
+        //     count = failedStatuses.reduce(
+        //         (sum, key) => sum + (statusCounts?.[key] ?? 0),
+        //         0
+        //     );
+        // } else {
+            
+        // }
 
-        const { color, icon } = statusConfig[status as keyof typeof statusConfig] ?? {
-            color: "#000",
-            icon: faQuestionCircle
+        const statusKey = status as keyof typeof statusConfig
+        const { color, colorLite, icon } = statusConfig[statusKey] ?? { 
+            color: "#000", 
+            colorLite: "#000", 
+            icon: faQuestionCircle 
         };
 
-        return { name: status, count, color, icon };
+        return { name: status, count, color, colorLite, icon };
     });
 
     return (
@@ -74,14 +76,14 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                             <Box
                                 sx={{
                                     borderRadius: "50%",
-                                    bgcolor: item.color,
+                                    bgcolor: item.colorLite,
                                     border: 1,
                                     aspectRatio: "1/1",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     width: 55,
-                                    color: "#fff"
+                                    color: item.color,
                                 }}
                             >
                                 <FontAwesomeIcon icon={item.icon} size="2xl" />

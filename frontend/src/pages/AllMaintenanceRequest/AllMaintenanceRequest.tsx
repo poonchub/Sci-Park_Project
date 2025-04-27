@@ -6,7 +6,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
-import { GetMaintenanceRequests, GetRequestStatuses, GetUserById } from "../../services/http"
+import { GetMaintenanceRequestsForAdmin, GetOperators, GetRequestStatuses, GetUserById } from "../../services/http"
 
 import { GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
@@ -14,9 +14,8 @@ import { UserInterface } from "../../interfaces/IUser"
 import { TextField } from "../../components/TextField/TextField"
 import { Select } from "../../components/Select/Select"
 import { DatePicker } from "../../components/DatePicker/DatePicker"
-import { AreasInterface } from "../../interfaces/IAreas"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faFileLines, faCheckDouble, faEye, faCheckCircle, faBan, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faMagnifyingGlass, faXmark, faChartSimple, faRotateRight, faCheckDouble, faEye, faCheckCircle, faBan } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
 import dayjs from "dayjs"
 import { CalendarMonth } from "@mui/icons-material"
@@ -28,11 +27,13 @@ import RequestStatusCards from "../../components/RequestStatusCards/RequestStatu
 import handleActionApproval from "../../utils/handleActionApproval"
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
 import timeFormat from "../../utils/timeFormat"
-import { isAdmin, isSupervisor } from "../../routes"
+import { isAdmin, isDevManager } from "../../routes"
+import ApprovePopup from "../../components/ApprovePopup/ApprovePopup"
+import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig"
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
-
+    const [operators, setOperators] = useState<UserInterface[]>([])
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
 
@@ -40,21 +41,25 @@ function AllMaintenanceRequest() {
     const [searchText, setSearchText] = useState('')
     const [selectedStatus, setSelectedStatus] = useState(0)
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
+    const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({})
+    const [selectedOperator, setSelectedOperator] = useState(0)
 
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
+    const [monthlyCounts, setMonthlyCounts] = useState()
 
-    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
+    const [openPopupApproved, setOpenPopupApproved] = useState(false)
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
-    const [selectedRequest, setSelectedRequest] = useState(0)
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+
+    console.log(monthlyCounts)
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
             field: 'ID',
-            headerName: 'ID',
+            headerName: 'หมายเลข',
             flex: 0.5
         },
         {
@@ -100,80 +105,24 @@ function AllMaintenanceRequest() {
             }
         },
         {
-            field: 'Area',
-            headerName: 'บริเวณที่แจ้งซ่อม',
-            type: 'string',
-            flex: 1.2,
-            // editable: true,
-            valueGetter: (params: AreasInterface) => params.Name,
-        },
-        {
-            field: 'Description',
-            headerName: 'รายละเอียด',
-            type: 'string',
-            flex: 1.8,
-            // editable: true,
-            renderCell: (params) => {
-                const areaID = params.row.Area?.ID
-                const AreaDetail = params.row.AreaDetail
-                const roomtype = params.row.Room?.RoomType?.TypeName
-                const roomNum = params.row.Room?.RoomNumber
-                const roomFloor = params.row.Room?.Floor?.Number
-                return (
-                    <Box sx={{
-                        display: 'flex',
-                        height: '100%',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                    }}>
-                        <Typography
-                            sx={{
-                                fontSize: 14,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: "100%"
-                            }}
-                        >
-                            {
-                                areaID === 2 ? (
-                                    `${AreaDetail}`
-                                ) : (
-                                    `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-                                )
-                            }
-                        </Typography>
-                        <Typography
-                            sx={{
-                                fontSize: 14,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: "100%",
-                                color: '#6D6E70'
-                            }}
-                        >
-                            {params.row.Description}
-                        </Typography>
-                    </Box>
-                )
-            },
-        },
-        {
             field: 'RequestStatus',
             headerName: 'สถานะ',
             type: 'string',
-            flex: 1.2,
+            flex: 1,
             // editable: true,
             renderCell: (params) => {
                 const statusName = params.row.RequestStatus?.Name || "Pending"
                 const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
-                const { color, colorLite, icon } = statusConfig[statusKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+                const { color, colorLite, icon } = statusConfig[statusKey] ?? { 
+                    color: "#000", 
+                    colorLite: "#000", 
+                    icon: faQuestionCircle 
+                };
 
                 return (
                     <Box sx={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: 'flex-start',
                         height: '100%'
                     }}>
                         <Box sx={{
@@ -197,19 +146,88 @@ function AllMaintenanceRequest() {
             },
         },
         {
+            field: 'Description',
+            headerName: 'รายละเอียด',
+            type: 'string',
+            flex: 1.8,
+            // editable: true,
+            renderCell: (params) => {
+                const description = params.row.Description
+                const areaID = params.row.Area?.ID
+                const areaDetail = params.row.AreaDetail
+                const roomtype = params.row.Room?.RoomType?.TypeName
+                const roomNum = params.row.Room?.RoomNumber
+                const roomFloor = params.row.Room?.Floor?.Number
+
+                const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
+                const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+
+                return (
+                    <Box >
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%"
+                            }}
+                        >
+                            {
+                                areaID === 2 ? (
+                                    `${areaDetail}`
+                                ) : (
+                                    `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
+                                )
+                            }
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "100%",
+                                color: '#6D6E70'
+                            }}
+                        >
+                            {description}
+                        </Typography>
+                        <Box sx={{
+                            bgcolor: colorLite,
+                            borderRadius: 10,
+                            px: 1.5,
+                            py: 0.5,
+                            display: 'inline-flex',
+                            gap: 1,
+                            color: color,
+                            alignItems: 'center',
+                            mt: 1
+                        }}>
+                            <FontAwesomeIcon icon={icon} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                {typeName}
+                            </Typography>
+                        </Box>
+                    </Box>
+                )
+            },
+        },
+        {
             field: 'Approved',
             headerName: 'การอนุมัติงาน',
             type: 'string',
-            flex: 1.4,
+            flex: 1,
             // editable: true,
             renderCell: (item) => {
-                return item.row.RequestStatus?.Name === 'Pending' && (isSupervisor || isAdmin) ? (
+                return item.row.RequestStatus?.Name === 'Pending' && (isDevManager || isAdmin) ? (
                     <Box>
                         <Button
                             variant="containedBlue"
                             onClick={() => {
-                                setOpenConfirmApproved(true)
-                                setSelectedRequest(Number(item.id))
+                                setOpenPopupApproved(true)
+                                setSelectedRequest(item.row)
                             }}
                             sx={{ mr: 0.5 }}
                         >
@@ -220,7 +238,7 @@ function AllMaintenanceRequest() {
                             variant="outlinedCancel"
                             onClick={() => {
                                 setOpenConfirmRejected(true)
-                                setSelectedRequest(Number(item.id))
+                                setSelectedRequest(item.row)
                             }}
                             sx={{
                                 minWidth: '0px',
@@ -230,15 +248,10 @@ function AllMaintenanceRequest() {
                             <FontAwesomeIcon icon={faXmark} size="xl" />
                         </Button>
                     </Box>
-                ) : item.row.RequestStatus?.Name === 'Rejected' ? (
+                ) : item.row.RequestStatus?.Name === 'Unsuccessful' ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
                         <FontAwesomeIcon icon={faBan} style={{ color: '#dc3545' }} />
                         <Typography variant="textButtonClassic" >ถูกปฎิเสธ</Typography>
-                    </Box>
-                ) : item.row.RequestStatus?.Name === 'Pending' ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
-                        <FontAwesomeIcon icon={faHourglassHalf} style={{ color: '#ffc107' }} />
-                        <Typography variant="textButtonClassic" >รอการอนุมัติ</Typography>
                     </Box>
                 ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', px: 1 }}>
@@ -285,6 +298,17 @@ function AllMaintenanceRequest() {
         }
     }
 
+    const getOperators = async () => {
+        try {
+            const res = await GetOperators();
+            if (res) {
+                setOperators(res);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    }
+
     const getRequestStatuses = async () => {
         try {
             const res = await GetRequestStatuses();
@@ -298,10 +322,12 @@ function AllMaintenanceRequest() {
 
     const getMaintenanceRequests = async () => {
         try {
-            const res = await GetMaintenanceRequests(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+            const reqType = user?.RequestType?.TypeName || ''
+            const res = await GetMaintenanceRequestsForAdmin(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "", reqType);
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
+                setMonthlyCounts(res.monthlyCounts)
 
                 // ใช้ reduce เพื่อจัดรูปแบบข้อมูล statusCounts
                 const formattedStatusCounts = res.statusCounts.reduce((acc: any, item: any) => {
@@ -316,14 +342,17 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const handleClick = (statusID: number, message: string) => {
-        handleActionApproval(statusID, message, {
+    const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+        const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+        handleActionApproval(statusID, {
             userID: user?.ID,
             selectedRequest,
+            selectedOperator,
             setAlerts,
             refreshRequestData: getMaintenanceRequests,
-            setOpenConfirmApproved,
+            setOpenPopupApproved,
             setOpenConfirmRejected,
+            actionType,
         });
     };
 
@@ -337,48 +366,59 @@ function AllMaintenanceRequest() {
         const requestId = request.ID ? Number(request.ID) : null;
         const firstName = request.User?.FirstName?.toLowerCase() || "";
         const lastName = request.User?.LastName?.toLowerCase() || "";
-        const areaName = request.Area?.Name?.toLowerCase() || "";
+        const roomType = (request.Room?.RoomType?.TypeName ?? "").toLowerCase() || "";
 
         const matchText =
             !searchText ||
             requestId === Number(searchText) ||
             firstName.includes(searchText.toLowerCase()) ||
             lastName.includes(searchText.toLowerCase()) ||
-            areaName.includes(searchText.toLowerCase());
+            roomType.includes(searchText.toLowerCase());
 
         // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
         return matchText
     });
 
     useEffect(() => {
-        getRequestStatuses();
-        getMaintenanceRequests()
-        getUser()
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getUser(), getRequestStatuses(), getOperators()]);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
-        getMaintenanceRequests()
-    }, [page, limit, selectedStatus, selectedDate])
+        if (user && requestStatuses) {
+            getMaintenanceRequests();
+        }
+    }, [user, page, limit, selectedStatus, selectedDate])
 
     return (
         <div className="all-maintenance-request-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-            {/* Approved Confirm */}
-            <ConfirmDialog
-                open={openConfirmApproved}
-                setOpenConfirm={setOpenConfirmApproved}
-                handleFunction={() => handleClick(2, "Approval successful")}
-                title="ยืนยันการอนุมัติงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            {/* Approve Popup */}
+            <ApprovePopup
+                open={openPopupApproved}
+                onClose={() => setOpenPopupApproved(false)}
+                onConfirm={() => handleClickApprove("Approved", "approve")}
+                requestSelected={selectedRequest}
+                selectedOperator={selectedOperator}
+                setSelectedOperator={setSelectedOperator}
+                operators={operators}
+                maintenanceTypeConfig={maintenanceTypeConfig}
             />
 
             {/* Rejected Confirm */}
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClick(3, "Rejection successful")}
+                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             />
@@ -386,18 +426,10 @@ function AllMaintenanceRequest() {
             <Grid2 container spacing={3}>
 
                 {/* Header Section */}
-                <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
+                <Grid2 className='title-box' size={{ xs: 12, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         รายการแจ้งซ่อม
                     </Typography>
-                </Grid2>
-                <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
-                    <Link to="/create-maintenance-request">
-                        <Button variant="containedBlue" >
-                            <FontAwesomeIcon icon={faFileLines} size="lg" />
-                            <Typography variant="textButtonClassic" >เขียนคำร้อง</Typography>
-                        </Button>
-                    </Link>
                 </Grid2>
                 <Grid2 container size={{ xs: 10, md: 7 }} spacing={3}>
 

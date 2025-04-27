@@ -24,9 +24,11 @@ function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: nu
                     style: {
                         colors: 'text.primary',
                         fontSize: '14px',
-                        fontFamily: 'Noto Sans Thai, sans-serif'
-                    }
-                }
+                        fontFamily: 'Noto Sans Thai, sans-serif',
+                    },
+                    offsetY: 7,
+                },
+                range: 5,
             },
             yaxis: {
                 min: 0,
@@ -35,8 +37,12 @@ function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: nu
                         colors: 'text.primary',
                         fontSize: '14px',
                         fontFamily: 'Noto Sans Thai, sans-serif'
-                    }
-                }
+                    },
+                    offsetX: -9,
+                },
+                tickAmount: undefined,
+                forceNiceScale: true,
+                decimalsInFloat: 0,
             },
         },
     });
@@ -79,8 +85,8 @@ function ApexLineChart(props: { data: MaintenanceRequestsInterface[], height: nu
         const formattedCategories = categories.map(date => {
             const d = dayjs(date);
             return isDaily
-                ? d.format('D')       // รายวัน: แสดงวันที่ (เช่น "1", "2")
-                : d.format('MMM');    // รายเดือน: แสดงชื่อเดือน (เช่น "Jan")
+                ? d.format('D MMM')       // รายวัน: แสดงวันที่ (เช่น "1", "2")
+                : d.format('MMM YYYY');    // รายเดือน: แสดงชื่อเดือน (เช่น "Jan")
         });
     
         setState(prev => ({

@@ -13,21 +13,20 @@ import { UserInterface } from "../../interfaces/IUser";
 
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import RequestInfoTable from "../../components/RequestInfoTable/RequestInfoTable";
-import AssignPopup from "../../components/AssignPopup/AssignPopup";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import InfoCard from "../../components/InfoCard/InfoCard";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import RequestImages from "../../components/RequestImages/RequestImages";
 
 import dateFormat from "../../utils/dateFormat";
-import handleAssignWork from "../../utils/handleAssignWork";
-import handleAction from "../../utils/handleActionApproval";
 
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
 import { isOperator } from "../../routes";
+import handleActionApproval from "../../utils/handleActionApproval";
+import ApprovePopup from "../../components/ApprovePopup/ApprovePopup";
 
 function CheckRequest() {
 	// Request data
@@ -39,13 +38,13 @@ function CheckRequest() {
 	const [operators, setOperators] = useState<UserInterface[]>([]);
 
 	// UI state
-	const [openPopupAssign, setOpenPopupAssign] = useState(false);
 	const [selectedOperator, setSelectedOperator] = useState(0);
-	const [openConfirmApproved, setOpenConfirmApproved] = useState(false);
-	const [openConfirmRejected, setOpenConfirmRejected] = useState(false);
+	const [openPopupApproved, setOpenPopupApproved] = useState(false)
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
 	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
-	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
+
 	const [files, setFiles] = useState<File[]>([]);
 	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
@@ -93,16 +92,6 @@ function CheckRequest() {
 		}
 	};
 
-	// Handle assigning task to an operator
-	const onClickAssign = () => {
-		handleAssignWork({
-			selectedOperator,
-			requestSelected: maintenanceRequest || {},
-			setAlerts,
-			refreshRequestData: getMaintenanceRequest,
-			setOpenPopupAssign,
-		});
-	};
 
 	// Handle sumitting task to an operator
 	const onClickSubmit = () => {
@@ -124,16 +113,22 @@ function CheckRequest() {
 	};
 
 	// Handle approval or rejection
-	const handleClick = (statusID: number, message: string) => {
-		handleAction(statusID, message, {
-			userID: maintenanceRequest?.UserID,
-			selectedRequest: maintenanceRequest?.ID,
-			setAlerts,
-			refreshRequestData: getMaintenanceRequest,
-			setOpenConfirmApproved,
-			setOpenConfirmRejected,
-		});
-	};
+	const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+
+		const userID = localStorage.getItem('userId')
+        const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+
+        handleActionApproval(statusID, {
+            userID: Number(userID),
+            selectedRequest: maintenanceRequest || {},
+            selectedOperator,
+            setAlerts,
+            refreshRequestData: getMaintenanceRequest,
+            setOpenPopupApproved,
+            setOpenConfirmRejected,
+            actionType,
+        });
+    };
 
 	// Handle back navigation
 	const handleBack = () => {
@@ -173,17 +168,6 @@ function CheckRequest() {
 			{/* Alert messages */}
 			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-			{/* Popup for assigning work */}
-			<AssignPopup
-				open={openPopupAssign}
-				onClose={() => setOpenPopupAssign(false)}
-				onConfirm={onClickAssign}
-				requestSelected={maintenanceRequest || {}}
-				selectedOperator={selectedOperator}
-				setSelectedOperator={setSelectedOperator}
-				operators={operators}
-				maintenanceTypeConfig={maintenanceTypeConfig}
-			/>
 
 			{/* Popup for submiting work */}
 			<SubmitPopup
@@ -195,41 +179,26 @@ function CheckRequest() {
 				onChange={setFiles}
 			/>
 
-			{/* Confirmation dialog for approval */}
-			<ConfirmDialog
-				open={openConfirmApproved}
-				setOpenConfirm={setOpenConfirmApproved}
-				handleFunction={() => handleClick(2, "Approval successful")}
-				title="ยืนยันการอนุมัติงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-			/>
+			{/* Approve Popup */}
+            <ApprovePopup
+                open={openPopupApproved}
+                onClose={() => setOpenPopupApproved(false)}
+                onConfirm={() => handleClickApprove("Approved", "approve")}
+                requestSelected={maintenanceRequest || {}}
+                selectedOperator={selectedOperator}
+                setSelectedOperator={setSelectedOperator}
+                operators={operators}
+                maintenanceTypeConfig={maintenanceTypeConfig}
+            />
 
-			{/* Confirmation dialog for rejection */}
-			<ConfirmDialog
-				open={openConfirmRejected}
-				setOpenConfirm={setOpenConfirmRejected}
-				handleFunction={() => handleClick(3, "Rejection successful")}
-				title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-			/>
-
-			{/* Confirmation dialog for acception */}
-			<ConfirmDialog
-				open={openConfirmAccepted}
-				setOpenConfirm={setOpenConfirmAccepted}
-				handleFunction={() => handleClick(5, "Acception successful")}
-				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-			/>
-
-			{/* Confirmation dialog for cancellation */}
-			<ConfirmDialog
-				open={openConfirmCancelled}
-				setOpenConfirm={setOpenConfirmCancelled}
-				handleFunction={() => handleClick(8, "Cancellation successful")}
-				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-			/>
+            {/* Rejected Confirm */}
+            <ConfirmDialog
+                open={openConfirmRejected}
+                setOpenConfirm={setOpenConfirmRejected}
+                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
+                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+            />
 
 			{/* Header section with title and back button */}
 			<Grid2 container spacing={2}>
@@ -261,7 +230,7 @@ function CheckRequest() {
 							title="ผู้อนุมัติ"
 							name={managerName}
 							time={approvalTime}
-							onApprove={() => setOpenConfirmApproved(true)}
+							onApprove={() => setOpenPopupApproved(true)}
 							onReject={() => setOpenConfirmRejected(true)}
 							status={maintenanceRequest.RequestStatus?.Name}
 						/>
@@ -271,7 +240,6 @@ function CheckRequest() {
 							title="ผู้รับผิดชอบ"
 							name={operatorName}
 							time={assignTime}
-							onAssign={() => setOpenPopupAssign(true)}
 							status={maintenanceRequest.RequestStatus?.Name}
 						/>
 					</>

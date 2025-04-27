@@ -173,7 +173,7 @@ func GetUserByID(c *gin.Context) {
 	var user entity.User
 	db := config.DB()
 	// ค้นหาผู้ใช้จากฐานข้อมูลโดยใช้ id
-	if err := db.Preload("Role").First(&user, id).Error; err != nil {
+	if err := db.Preload("Role").Preload("RequestType").First(&user, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
