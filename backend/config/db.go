@@ -80,7 +80,7 @@ func SeedDatabase() {
 	roles := []entity.Role{
 		{Name: "User"},
 		{Name: "Operator"},
-		{Name: "DevManager"},
+		{Name: "Manager"},
 		{Name: "Admin"},
 	}
 	for _, role := range roles {

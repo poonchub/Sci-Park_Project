@@ -41,9 +41,8 @@ func CreateMaintenanceTask(c *gin.Context) {
 		return
 	}
 
-	var RequestStatusID = 4
 	var status entity.RequestStatus
-	if err := db.First(&status, RequestStatusID).Error; err != nil {
+	if err := db.First(&status, task.RequestStatusID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "request status not found"})
 		return
 	}
@@ -52,7 +51,7 @@ func CreateMaintenanceTask(c *gin.Context) {
 		Description:     task.Description,
 		UserID:          task.UserID,
 		RequestID:       task.RequestID,
-		RequestStatusID: uint(RequestStatusID),
+		RequestStatusID: task.RequestStatusID,
 	}
 
 	if err := db.FirstOrCreate(&tsk, entity.MaintenanceTask{

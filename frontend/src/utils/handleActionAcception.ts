@@ -18,7 +18,6 @@ interface handleActionAcceptionProps {
 
 const handleActionAcception = async (
     statusID: number,
-    message: string,
     {
         selectedTask,
         setAlerts,
@@ -26,7 +25,8 @@ const handleActionAcception = async (
         refreshInProgressTaskData,
         setOpenConfirmAccepted,
         setOpenConfirmCancelled,
-    }: handleActionAcceptionProps
+        actionType
+    }: handleActionAcceptionProps & { actionType: "accept" | "cancel" }
 ) => {
     if (!selectedTask) {
         setAlerts((prev) => [...prev, { type: "error", message: "Invalid data" }]);
@@ -50,9 +50,12 @@ const handleActionAcception = async (
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status");
 
-        setAlerts((prev) => [...prev, { type: "success", message }]);
-
         setTimeout(() => {
+            setAlerts((prev) => [
+                ...prev,
+                { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" }
+            ]);
+
             refreshPendingTaskData();
             refreshInProgressTaskData();
             setOpenConfirmAccepted(false);

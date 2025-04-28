@@ -27,7 +27,7 @@ import RequestStatusCards from "../../components/RequestStatusCards/RequestStatu
 import handleActionApproval from "../../utils/handleActionApproval"
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
 import timeFormat from "../../utils/timeFormat"
-import { isAdmin, isDevManager } from "../../routes"
+import { isAdmin, isManager } from "../../routes"
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup"
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig"
 
@@ -221,7 +221,7 @@ function AllMaintenanceRequest() {
             flex: 1,
             // editable: true,
             renderCell: (item) => {
-                return item.row.RequestStatus?.Name === 'Pending' && (isDevManager || isAdmin) ? (
+                return item.row.RequestStatus?.Name === 'Pending' && (isManager || isAdmin) ? (
                     <Box>
                         <Button
                             variant="containedBlue"

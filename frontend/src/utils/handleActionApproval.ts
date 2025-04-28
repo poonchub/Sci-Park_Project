@@ -58,6 +58,10 @@ const handleActionApproval = async (
             RequestStatusID: statusID,
         };
 
+        console.log(managerApp)
+        console.log(task)
+        console.log(task)
+
         const resApproval = await CreateManagerApproval(managerApp);
         if (!resApproval || resApproval.error)
             throw new Error(resApproval?.error || "Failed to create manager approval");

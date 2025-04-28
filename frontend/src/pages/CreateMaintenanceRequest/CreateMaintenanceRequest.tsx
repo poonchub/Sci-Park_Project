@@ -46,7 +46,7 @@ function CreateMaintenanceRequestPage() {
         MaintenanceTypeID: 0,
     });
 
-    const steps = ["Creating Request", "Pending", "Approved", "In Progress", "Completed"];
+    const steps = ["Creating", "In Process", "Waiting for Review", "Completed"];
 
     const [onEdit, setOnEdit] = useState(false);
 

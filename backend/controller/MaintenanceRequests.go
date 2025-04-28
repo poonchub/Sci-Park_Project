@@ -103,7 +103,7 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		return
 	}
 
-	var RequestStatusID = 1
+	var RequestStatusID = 2
 	var status entity.RequestStatus
 	if err := db.First(&status, RequestStatusID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "request status not found"})

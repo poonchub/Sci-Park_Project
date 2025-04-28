@@ -8,7 +8,7 @@ import ManagerRoutes from "./ManagerRoutes";
 
 export const role = localStorage.getItem('role')
 export const isAdmin = role === 'Admin'
-export const isDevManager = role === 'DevManager'
+export const isManager = role === 'Manager'
 export const isOperator = role === 'Operator'
 
 function ConfigRoutes() {

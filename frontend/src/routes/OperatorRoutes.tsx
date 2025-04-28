@@ -4,6 +4,7 @@ import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import Home from "../pages/Home/Home";
 import AcceptWork from "../pages/AcceptWork/AcceptWork";
+import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 
 
 
@@ -24,6 +25,10 @@ const OperatorRoutes = (): RouteObject => {
                 path: "/accept-work",
                 element: <AcceptWork/>
             },
+            {
+				path: "/my-maintenance-request",
+				element: <MyMaintenanceRequest/>
+			},
         ]
     }
 }

@@ -50,10 +50,6 @@ function CheckRequest() {
 
 	const navigate = useNavigate();
 
-	const isAssigned = maintenanceRequest?.RequestStatus?.Name === 'Assigned'
-	const isInProgress = maintenanceRequest?.RequestStatus?.Name === 'In Progress'
-	const isCompleted = maintenanceRequest?.RequestStatus?.Name === 'Completed'
-
 	// Fetch request by ID
 	const getMaintenanceRequest = async () => {
 		try {
@@ -276,7 +272,7 @@ function CheckRequest() {
 										ภาพประกอบ
 									</Typography>
 									{
-										maintenanceRequest?.MaintenanceImages && isCompleted ? (
+										maintenanceRequest?.MaintenanceImages ? (
 											<RequestImages
 												images={maintenanceRequest?.MaintenanceTask?.HandoverImages || []}
 												apiUrl={apiUrl}
@@ -296,7 +292,7 @@ function CheckRequest() {
 									}}
 								>
 									{
-										isOperator && !isCompleted && <Box>
+										isOperator && <Box>
 											<Button
 												variant="outlinedCancel"
 												onClick={() => {
@@ -315,7 +311,7 @@ function CheckRequest() {
 												<FontAwesomeIcon icon={faXmark} size="lg" />
 												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
 											</Button>
-											{
+											{/* {
 												isAssigned ? (
 													<Button
 														variant="containedBlue"
@@ -341,7 +337,7 @@ function CheckRequest() {
 												) : (
 													<></>
 												)
-											}
+											} */}
 										</Box>
 									}
 								</Grid2>

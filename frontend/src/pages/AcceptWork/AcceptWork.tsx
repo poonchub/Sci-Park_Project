@@ -7,7 +7,7 @@ import { faEye, faMagnifyingGlass, faPaperPlane, faQuestionCircle, faRotateRight
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import { GridColDef } from '@mui/x-data-grid';
-import { GetMaintenanceTask, GetMaintenanceTypes } from "../../services/http";
+import { GetMaintenanceTask, GetMaintenanceTypes, GetRequestStatuses } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
@@ -26,6 +26,7 @@ import MaintenanceTaskTable from "../../components/MaintenanceTaskTable/Maintena
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import { CalendarMonth } from "@mui/icons-material";
+import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 
 function AcceptWork() {
 
@@ -33,6 +34,7 @@ function AcceptWork() {
 	const [pendingMaintenanceTasks, setPendingMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
 	const [inProgressMaintenanceTasks, setInProgressMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
 	const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>()
+	const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
 
 	const [searchText, setSearchText] = useState('')
 	const [selectedType, setSelectedType] = useState(0)
@@ -52,6 +54,8 @@ function AcceptWork() {
 
 	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 	const [files, setFiles] = useState<File[]>([]);
+
+	console.log(pendingMaintenanceTasks)
 
 	const pendingColumns: GridColDef<(typeof pendingMaintenanceTasks)[number]>[] = [
 		{
@@ -172,7 +176,7 @@ function AcceptWork() {
 			flex: 1.2,
 			// editable: true,
 			renderCell: (item) => {
-				return item.row.RequestStatus?.Name === 'Assigned' ? (
+				return item.row.RequestStatus?.Name === 'Approved' ? (
 					<Box>
 						<Button
 							variant="containedBlue"
@@ -416,8 +420,9 @@ function AcceptWork() {
 
 	const getPendingMaintenanceTasks = async () => {
 		try {
-			const res = await GetMaintenanceTask(4, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			const res = await GetMaintenanceTask(3, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
 			if (res) {
+				console.log("adadadadadad", res)
 				setPendingMaintenanceTasks(res.data);
 				setTotalPending(res.total);
 			}
@@ -428,7 +433,7 @@ function AcceptWork() {
 
 	const getInProgressMaintenanceTasks = async () => {
 		try {
-			const res = await GetMaintenanceTask(5, pageInProgress, limitInProgress, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			const res = await GetMaintenanceTask(4, pageInProgress, limitInProgress, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
 			if (res) {
 				setInProgressMaintenanceTasks(res.data);
 				setTotalInProgress(res.total);
@@ -438,14 +443,28 @@ function AcceptWork() {
 		}
 	};
 
-	const handleClick = (statusID: number, message: string) => {
-		handleActionAcception(statusID, message, {
+	const getRequestStatuses = async () => {
+		try {
+			const res = await GetRequestStatuses();
+			if (res) {
+				setRequestStatuses(res);
+			}
+		} catch (error) {
+			console.error("Error fetching request statuses:", error);
+		}
+	};
+
+	const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel") => {
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+
+		handleActionAcception(statusID, {
 			selectedTask,
 			setAlerts,
 			refreshPendingTaskData: getPendingMaintenanceTasks,
 			refreshInProgressTaskData: getInProgressMaintenanceTasks,
 			setOpenConfirmAccepted,
 			setOpenConfirmCancelled,
+			actionType,
 		});
 	};
 
@@ -457,8 +476,9 @@ function AcceptWork() {
 			]);
 			return;
 		}
+		const statusID = requestStatuses?.find(item => item.Name === "Waiting for Review")?.ID || 0;
 
-		handleSubmitWork({
+		handleSubmitWork(statusID, {
 			selectedTask,
 			setAlerts,
 			refreshTaskData: getInProgressMaintenanceTasks,
@@ -468,10 +488,10 @@ function AcceptWork() {
 	};
 
 	const handleClearFillter = () => {
-        setSelectedDate(null);
-        setSearchText('');
-        setSelectedType(0)
-    }
+		setSelectedDate(null);
+		setSearchText('');
+		setSelectedType(0)
+	}
 
 	const filteredPendingTasks = pendingMaintenanceTasks.filter((item) => {
 		const request = item.MaintenanceRequest
@@ -506,9 +526,21 @@ function AcceptWork() {
 	});
 
 	useEffect(() => {
-		getMaintenanceTypes();
-		getPendingMaintenanceTasks()
-		getInProgressMaintenanceTasks()
+
+		const fetchInitialData = async () => {
+			try {
+				await Promise.all([
+					getMaintenanceTypes(),
+					getPendingMaintenanceTasks(),
+					getInProgressMaintenanceTasks(),
+					getRequestStatuses()
+				]);
+			} catch (error) {
+				console.error("Error fetching initial data:", error);
+			}
+		};
+
+		fetchInitialData();
 	}, []);
 
 	useEffect(() => {
@@ -538,7 +570,7 @@ function AcceptWork() {
 			<ConfirmDialog
 				open={openConfirmAccepted}
 				setOpenConfirm={setOpenConfirmAccepted}
-				handleFunction={() => handleClick(5, "Acception successful")}
+				handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
 				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
 				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 			/>
@@ -547,7 +579,7 @@ function AcceptWork() {
 			<ConfirmDialog
 				open={openConfirmCancelled}
 				setOpenConfirm={setOpenConfirmCancelled}
-				handleFunction={() => handleClick(8, "Cancellation successful")}
+				handleFunction={() => handleClickAcceptWork("Unsuccessful", "cancel")}
 				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
 				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 			/>

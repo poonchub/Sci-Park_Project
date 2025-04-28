@@ -689,7 +689,7 @@ async function GetMaintenanceTask(statusID: number, page: number, limit: number,
 
     const userID = localStorage.getItem('userId')
 
-    let res = await fetch(`${apiUrl}/maintenance-tasks-option-id?page=${page}&status=${statusID}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&operator=${userID}`, requestOptions)
+    let res = await fetch(`${apiUrl}/maintenance-tasks-option-id?page=${page}&status=${statusID}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt || ''}&operator=${userID}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();

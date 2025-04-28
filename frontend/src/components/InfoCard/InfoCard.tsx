@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Button, Box, Grid2 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { isAdmin, isDevManager } from '../../routes';
+import { isAdmin, isManager } from '../../routes';
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
@@ -28,7 +28,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
     status,
 }) => {
 
-    const isApprovedBtnOn = time == null && type === 'approved' && (isDevManager || isAdmin)
+    const isApprovedBtnOn = time == null && type === 'approved' && (isManager || isAdmin)
 
     return (
         // Card layout wrapped inside Grid2 for responsiveness

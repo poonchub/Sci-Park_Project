@@ -228,7 +228,7 @@ func ListOperators(c *gin.Context) {
 
 	db := config.DB()
 
-	operatorRoleID := 3
+	operatorRoleID := 2
 
 	if err := db.Where("role_id = ?", operatorRoleID).Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

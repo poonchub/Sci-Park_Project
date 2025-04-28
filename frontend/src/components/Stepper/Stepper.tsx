@@ -76,15 +76,13 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
         const stepIndex = props.icon as string;
     
         const icons: { [key: string]: IconDefinition } = {
-            "Creating Request": faFile,
+            "Creating": faFile,
             "Pending": faHourglassHalf,
             "Approved": faCheck,
-            "Assigned": faClipboardCheck,
             "In Progress": faArrowsSpin,
+            "Waiting for Review": faClipboardCheck,
             "Completed": faFlagCheckered,
-            "Rejected": faBan,
-            "Failed": faExclamation,
-            "Cancelled": faCircleXmark
+            "Unsuccessful": faCircleXmark
         };        
         
         const icon = icons[stepIndex] || faFile;

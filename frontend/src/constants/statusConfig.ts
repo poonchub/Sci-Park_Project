@@ -1,6 +1,6 @@
 // Importing necessary FontAwesome icons
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faArrowsSpin, faCheck, faCircleXmark, faClipboardCheck, faFlagCheckered, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsSpin, faCheck, faCircleXmark, faClipboardCheck, faFlagCheckered, faHourglassHalf, faRedo } from "@fortawesome/free-solid-svg-icons";
 
 // Interface defining the configuration for each status type
 export interface StatusConfig {
@@ -40,5 +40,10 @@ export const statusConfig: Record<string, StatusConfig> = {
         color: "#DC3545",
         colorLite: "rgb(255, 211, 216)",
         icon: faCircleXmark
+    },
+    "Rework Requested": {
+        color: "#FFA500",
+        colorLite: "rgb(255, 224, 178)",
+        icon: faRedo
     },
 };
