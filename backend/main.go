@@ -116,6 +116,9 @@ func main() {
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		protected.GET("/users", controller.ListUsers)
 
+		// Rooms
+		protected.GET("/listset-room", controller.ListSetRooms)
+
 	}
 
 	// 🌍 Root Route

@@ -14,6 +14,7 @@ export const SECTIONS = [
     { key: 'booking', path: '/booking-room', name: 'จองห้อง' },
     { key: 'maintenance', path: '/dashboard', name: 'แจ้งซ่อม' },
     { key: 'manageuser', path: '/manage-user', name: 'จัดการผู้ใช้' },
+    { key: 'manageroom', path: '/manage-room', name: 'จัดการห้อง' },
 ];
 
 // Drawer items categorized by section and filtered by user roles
@@ -52,16 +53,6 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             name: 'งานของฉัน',
             roles: ['Operator']
         },
-        {
-            path: '/manage-user',
-            name: 'จัดการผู้ใช้งาน',
-            roles: ['DevManager', 'Admin']
-        },
-        {
-            path: '/add-user',
-            name: 'เพิ่มผู้ใช้',
-            roles: ['DevManager', 'Admin']
-        },
     ],
     manageuser: [
         {
@@ -74,6 +65,14 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             name: 'เพิ่มผู้ใช้',
             roles: ['Admin']
         },
+    ],
+    manageroom: [
+        {
+            path: '/manage-room',
+            name: 'จัดการผู้ใช้งาน',
+            roles: ['Admin']
+        },
+        
     ]
 };
 
@@ -94,13 +93,20 @@ export const getCurrentSectionKey = (pathname: string): string => {
         '/assign-work': 'maintenance',
         '/accept-work': 'maintenance',
         '/check-requests': 'maintenance',
-        '/manage-user': 'maintenance',
-        '/add-user': 'maintenance',
         '/outsider-maintenance-request': 'maintenance',
         '/test-popup': 'maintenance',
 
         // Booking
         '/booking-room': 'booking',
+
+        // User Management
+        '/manage-user': 'manageuser',
+        '/add-user': 'manageuser',
+
+        // Room Management
+        '/manage-room': 'manageroom',
+
+
     };
 
     return map[Object.keys(map).find(key => pathname.startsWith(key)) || ''] || 'home'; // Return the section key

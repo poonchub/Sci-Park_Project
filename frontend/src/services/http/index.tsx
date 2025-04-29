@@ -792,6 +792,42 @@ async function CreateHandoverImages(data: FormData) {
     return res;
 }
 
+async function ListSetRooms(data: QuarryInterface) {
+    // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
+    const params = new URLSearchParams();
+
+    // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
+    if (data.floor && data.floor > 0) params.append("floor", String(data.floor));  // กรองตาม floor
+    if (data.roomType && data.roomType > 0) params.append("room_type", String(data.roomType));  // กรองตาม room_type
+    if (data.roomStatus && data.roomStatus > 0) params.append("room_status", String(data.roomStatus));  // กรองตาม room_status
+    params.append("page", String(data.page));  // แปลง page เป็น string
+    params.append("limit", String(data.limit));  // แปลง limit เป็น string
+
+    // ถ้า isEmployee มีค่า (true/false) ให้เพิ่มลงใน query string
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,  // การส่ง token เพื่อให้สิทธิการเข้าถึง
+        },
+    };
+
+    // ใช้ fetch กับ URL ที่ประกอบไปด้วย query parameters
+    let res = await fetch(`${apiUrl}/listset-room?${params.toString()}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json();  // ถ้าสถานะเป็น 200 OK ให้ return ข้อมูล JSON
+            } else {
+                return false;  // ถ้ามีข้อผิดพลาดใน API
+            }
+        });
+
+    return res;
+}
+
+
+
 
 export {
     // RequestStatuses
@@ -855,6 +891,7 @@ export {
 
     // HandoverImages
     CreateHandoverImages,
+    ListSetRooms,
 }
 
 
