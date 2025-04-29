@@ -9,7 +9,7 @@ import { UserInterface } from "../../interfaces/IUser";
 
 import { GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
-import { GetMaintenanceRequests, GetMaintenanceTypes, GetOperators } from "../../services/http";
+import { GetMaintenanceRequestsForAdmin, GetMaintenanceTypes, GetOperators } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
@@ -21,7 +21,7 @@ import { CalendarMonth } from "@mui/icons-material";
 import dateFormat from "../../utils/dateFormat";
 import handleAssignWork from "../../utils/handleAssignWork";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import AssignPopup from "../../components/AssignPopup/AssignPopup";
+import AssignPopup from "../../components/ApprovePopup/ApprovePopup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import { Link } from "react-router-dom";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
@@ -252,7 +252,7 @@ function AssignWork() {
 
     const getMaintenanceRequests = async () => {
         try {
-            const res = await GetMaintenanceRequests(2, page, limit, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+            const res = await GetMaintenanceRequestsForAdmin(2, page, limit, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
