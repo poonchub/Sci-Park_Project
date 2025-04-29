@@ -23,6 +23,7 @@ function ManageUsers() {
     const [selectpackage, setSelectPackage] = useState(0);
     const [roles, setRoles] = useState<RolesInterface[]>([]);
     const [selectrole, setSelectRole] = useState(0);
+    const [isEmployee, setIsEmployee] = useState<boolean | undefined>(undefined); 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
@@ -111,6 +112,8 @@ function ManageUsers() {
     const handleSearch = () => {
         let filteredUsers = users;
 
+        console.log(selectrole, selectpackage, isEmployee);
+
         // การกรองข้อมูลจากคำค้นหาผ่าน searchText
         if (searchText !== '') {
             filteredUsers = filteredUsers.filter((user) =>
@@ -161,6 +164,7 @@ function ManageUsers() {
                 packageID: selectpackage,
                 page: page,
                 limit: limit,
+                isemployee: isEmployee,
             });  // Call the API to get users data
             if (res) {
                 setUsers(res.data);  // Set the fetched users to state
@@ -205,7 +209,7 @@ function ManageUsers() {
         getUsers();  // ดึงข้อมูลเมื่อหน้าโหลด
         getPackages();
         getRoles();
-    }, [selectrole, selectpackage, page, limit]);
+    }, [selectrole, selectpackage,isEmployee, page, limit]);
 
     useEffect(() => {
         handleSearch();
@@ -258,7 +262,7 @@ function ManageUsers() {
                                 fullWidth
                                 className="search-box"
                                 variant="outlined"
-                                placeholder="ค้นหา"
+                                placeholder="ค้นหา (รหัสพนักงาน หรือ ชื่อผู้ใช้งาน หรือ อีเมล)"
                                 margin="none"
                                 value={searchText}
                                 onChange={(e) => {
@@ -277,7 +281,7 @@ function ManageUsers() {
                             />
                         </Grid2>
 
-                        <Grid2 size={{ xs: 10, md: 3 }}>
+                        <Grid2 size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectrole}
@@ -303,7 +307,34 @@ function ManageUsers() {
                             </FormControl>
                         </Grid2>
 
-                        <Grid2 size={{ xs: 10, md: 3 }}>
+                        <Grid2 size={{ xs: 10, md: 2 }}>
+    <FormControl fullWidth>
+        <Select
+            value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
+            onChange={(e) => {
+                // แปลงค่า value เป็น boolean หรือ undefined
+                setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
+                handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+            }}
+            displayEmpty
+            startAdornment={
+                <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                    <FontAwesomeIcon icon={faUserTie} size="xl" />
+                </InputAdornment>
+            }
+            sx={{ borderRadius: 2 }}
+        >
+            <MenuItem value="undefined">{'ไม่เลือก'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
+            <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
+            <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
+        </Select>
+    </FormControl>
+</Grid2>
+
+
+
+
+                        <Grid2 size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectpackage}

@@ -3,4 +3,5 @@ export interface QuarryInterface {
     packageID?: number;
     page?: number;
     limit?: number;
+    isemployee?: boolean;
 }

@@ -89,6 +89,9 @@ async function ListUsers(data: QuarryInterface) {
     if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
     params.append("page", String(data.page));  // แปลง page เป็น string
     params.append("limit", String(data.limit));  // แปลง limit เป็น string
+    if (data.isemployee!== undefined) {
+        params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
+    }
 
     const requestOptions = {
         method: "GET",
@@ -123,8 +126,10 @@ async function CreateUser(data: any) {
     formData.append("email", data.Email || "");
     formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
-    formData.append("role_id", data.RoleID.toString());
+    formData.append("role_id", (data.RoleID ?? 1).toString());
     formData.append("employee_id", data.EmployeeID || "");
+    formData.append("is_employee", data.IsEmployee || "");
+
 
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
@@ -139,10 +144,13 @@ async function CreateUser(data: any) {
         },
     };
 
+    
+
 
         
     try {
         // Send FormData with requestOptions
+        
         const response = await axios.post(`${apiUrl}/create-user`, formData, requestOptions);
 
         // Handle the response and return a custom object
