@@ -342,7 +342,11 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+    const handleClickApprove = (
+        statusName: "Approved" | "Unsuccessful", 
+        actionType: "approve" | "reject",
+        note?: string
+    ) => {
         const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
         handleActionApproval(statusID, {
             userID: user?.ID,
@@ -353,6 +357,7 @@ function AllMaintenanceRequest() {
             setOpenPopupApproved,
             setOpenConfirmRejected,
             actionType,
+            note
         });
     };
 
@@ -418,9 +423,10 @@ function AllMaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
+                handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                showNoteField
             />
 
             <Grid2 container spacing={3}>

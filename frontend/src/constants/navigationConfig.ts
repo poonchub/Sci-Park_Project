@@ -1,5 +1,5 @@
 // Define possible user roles in the system
-export type Role = 'User' | 'Operator' | 'DevManager' | 'Admin';
+export type Role = 'User' | 'Operator' | 'Manager' | 'Admin';
 
 // Type definition for navigation items in the drawer
 type NavItem = {
@@ -8,12 +8,46 @@ type NavItem = {
     roles: Role[]; // Roles that can access this item
 };
 
+
+const DEFAULT_PATHS_BY_ROLE: Record<Role, Record<string, string>> = {
+    User: {
+        maintenance: '/my-maintenance-request',
+        booking: '/booking-room',
+        manageuser: '',
+    },
+    Operator: {
+        maintenance: '/accept-work',
+        booking: '/booking-room',
+        manageuser: '',
+    },
+    Manager: {
+        maintenance: '/dashboard',
+        booking: '/booking-room',
+        manageuser: '/manage-user',
+    },
+    Admin: {
+        maintenance: '/dashboard',
+        booking: '/booking-room',
+        manageuser: '/manage-user',
+    },
+};
+
+const getDefaultPathForSection = (sectionKey: string, role: Role): string => {
+    return DEFAULT_PATHS_BY_ROLE[role]?.[sectionKey] || '/';
+};
+
 // Main sections of the app with key, path, and display name
+const getRoleFromStorage = (): Role => {
+    const raw = localStorage.getItem("role");
+    const validRoles: Role[] = ['User', 'Operator', 'Manager', 'Admin'];
+    return validRoles.includes(raw as Role) ? (raw as Role) : 'User';
+};
+const role = getRoleFromStorage();
 export const SECTIONS = [
     { key: 'home', path: '/', name: 'หน้าหลัก' },
-    { key: 'booking', path: '/booking-room', name: 'จองห้อง' },
-    { key: 'maintenance', path: '/dashboard', name: 'แจ้งซ่อม' },
-    { key: 'manageuser', path: '/manage-user', name: 'จัดการผู้ใช้' },
+    { key: 'booking', path: getDefaultPathForSection('booking', role), name: 'จองห้อง' },
+    { key: 'maintenance', path: getDefaultPathForSection('maintenance', role), name: 'แจ้งซ่อม' },
+    { key: 'manageuser', path: getDefaultPathForSection('manageuser', role), name: 'จัดการผู้ใช้' },
 ];
 
 // Drawer items categorized by section and filtered by user roles
@@ -23,29 +57,29 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/booking-room',
             name: 'ระบบจองห้อง',
-            roles: ['User', 'Operator', 'DevManager', 'Admin']
+            roles: ['User', 'Operator', 'Manager', 'Admin']
         },
     ],
     maintenance: [
         {
             path: '/dashboard',
             name: 'แดชบอร์ด',
-            roles: ['DevManager', 'Admin']
+            roles: ['Manager', 'Admin']
         },
         {
             path: '/all-maintenance-request',
             name: 'จัดการแจ้งซ่อม',
-            roles: ['DevManager', 'Admin']
+            roles: ['Manager', 'Admin']
         },
         {
             path: '/my-maintenance-request',
             name: 'การแจ้งซ่อมของฉัน',
-            roles: ['User', 'Operator', 'DevManager', 'Admin']
+            roles: ['User', 'Operator', 'Manager', 'Admin']
         },
         {
             path: '/assign-work',
             name: 'มอบหมายงานซ่อม',
-            roles: ['DevManager', 'Admin']
+            roles: ['Manager', 'Admin']
         },
         {
             path: '/accept-work',
@@ -55,12 +89,12 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/manage-user',
             name: 'จัดการผู้ใช้งาน',
-            roles: ['DevManager', 'Admin']
+            roles: ['Manager', 'Admin']
         },
         {
             path: '/add-user',
             name: 'เพิ่มผู้ใช้',
-            roles: ['DevManager', 'Admin']
+            roles: ['Manager', 'Admin']
         },
     ],
     manageuser: [

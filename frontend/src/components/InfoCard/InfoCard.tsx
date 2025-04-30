@@ -12,7 +12,6 @@ interface InfoCardProps {
     time: string | null; // Time related to the action (approval, assignment), can be null
     onApprove?: () => void; // Callback for approving (optional)
     onReject?: () => void; // Callback for rejecting (optional)
-    onAssign?: () => void; // Callback for assigning (optional)
     status?: string
 }
 
@@ -24,11 +23,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
     time,
     onApprove,
     onReject,
-    onAssign,
     status,
 }) => {
 
-    const isApprovedBtnOn = time == null && type === 'approved' && (isManager || isAdmin)
+    const isApprovedBtnOn = type === 'approved' && (isManager || isAdmin) && status === "Pending"
 
     return (
         // Card layout wrapped inside Grid2 for responsiveness

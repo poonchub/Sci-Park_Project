@@ -10,6 +10,9 @@ interface RequestImagesProps {
 const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     const count = images.length;
 
+    console.log(images)
+    console.log(`${apiUrl}/${images[0]}`)
+
     // Display 1 image full width
     if (count === 1) {
         return (

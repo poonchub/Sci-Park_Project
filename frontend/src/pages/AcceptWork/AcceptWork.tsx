@@ -454,7 +454,11 @@ function AcceptWork() {
 		}
 	};
 
-	const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel") => {
+	const handleClickAcceptWork = (
+		statusName: "In Progress" | "Unsuccessful", 
+		actionType: "accept" | "cancel",
+		note?: string
+	) => {
 		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
 
 		handleActionAcception(statusID, {
@@ -465,6 +469,7 @@ function AcceptWork() {
 			setOpenConfirmAccepted,
 			setOpenConfirmCancelled,
 			actionType,
+			note
 		});
 	};
 
@@ -579,9 +584,10 @@ function AcceptWork() {
 			<ConfirmDialog
 				open={openConfirmCancelled}
 				setOpenConfirm={setOpenConfirmCancelled}
-				handleFunction={() => handleClickAcceptWork("Unsuccessful", "cancel")}
+				handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
 				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
 				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
 			/>
 
 			<Grid2

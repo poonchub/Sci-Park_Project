@@ -6,7 +6,7 @@ import { faAngleLeft, faPaperPlane, faTools, faXmark } from "@fortawesome/free-s
 
 import './CheckRequest.css';
 
-import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses } from "../../services/http";
+import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, UpdateMaintenanceRequestByID } from "../../services/http";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { UserInterface } from "../../interfaces/IUser";
@@ -40,7 +40,7 @@ function CheckRequest() {
 	// UI state
 	const [selectedOperator, setSelectedOperator] = useState(0);
 	const [openPopupApproved, setOpenPopupApproved] = useState(false)
-    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+	const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
 	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
@@ -99,32 +99,65 @@ function CheckRequest() {
 			return;
 		}
 
-		handleSubmitWork({
-			selectedTask: maintenanceRequest.MaintenanceTask,
-			setAlerts,
-			refreshTaskData: getMaintenanceRequest,
-			setOpenPopupSubmit,
-			files
-		});
+		// handleSubmitWork({
+		// 	selectedTask: maintenanceRequest.MaintenanceTask,
+		// 	setAlerts,
+		// 	refreshTaskData: getMaintenanceRequest,
+		// 	setOpenPopupSubmit,
+		// 	files
+		// });
 	};
 
 	// Handle approval or rejection
-	const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+	const handleClickApprove = (
+		statusName: "Approved" | "Unsuccessful",
+		actionType: "approve" | "reject",
+		note?: string
+	) => {
 
 		const userID = localStorage.getItem('userId')
-        const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
 
-        handleActionApproval(statusID, {
-            userID: Number(userID),
-            selectedRequest: maintenanceRequest || {},
-            selectedOperator,
-            setAlerts,
-            refreshRequestData: getMaintenanceRequest,
-            setOpenPopupApproved,
-            setOpenConfirmRejected,
-            actionType,
-        });
-    };
+		handleActionApproval(statusID, {
+			userID: Number(userID),
+			selectedRequest: maintenanceRequest || {},
+			selectedOperator,
+			setAlerts,
+			refreshRequestData: getMaintenanceRequest,
+			setOpenPopupApproved,
+			setOpenConfirmRejected,
+			actionType,
+			note,
+		});
+	};
+
+	const handleClickCancel = async () => {
+		try {
+			const statusID = requestStatuses?.find(item => item.Name === "Unsuccessful")?.ID || 0;
+
+			const request: MaintenanceRequestsInterface = {
+				RequestStatusID: statusID,
+			};
+
+			const resRequest = await UpdateMaintenanceRequestByID(request, maintenanceRequest?.ID);
+			if (!resRequest || resRequest.error)
+				throw new Error(resRequest?.error || "Failed to update request status");
+
+			setTimeout(() => {
+				setAlerts((prev) => [
+					...prev,
+					{ type: "success", message: "Cancellation successful" }
+				]);
+
+				getMaintenanceRequest();
+				setOpenConfirmCancelled(false);
+			}, 500);
+		} catch (error) {
+			console.error("API Error:", error);
+			const errMessage = (error as Error).message || "Unknown error!";
+			setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
+		}
+	}
 
 	// Handle back navigation
 	const handleBack = () => {
@@ -152,6 +185,15 @@ function CheckRequest() {
 		? dateFormat(maintenanceTask.CreatedAt)
 		: null;
 
+	const userID = Number(localStorage.getItem("userId"))
+	const isOwnRequest = maintenanceRequest?.UserID === userID
+	const isOwnTask = maintenanceTask?.UserID === userID
+	
+	const RequestStatus = maintenanceRequest?.RequestStatus?.Name
+	const isPending = RequestStatus === 'Pending'
+	const isApproved = RequestStatus === 'Approved'
+	const isInProgress = RequestStatus === 'In Progress'
+
 	// Load all necessary data on mount
 	useEffect(() => {
 		getMaintenanceRequest();
@@ -176,25 +218,36 @@ function CheckRequest() {
 			/>
 
 			{/* Approve Popup */}
-            <ApprovePopup
-                open={openPopupApproved}
-                onClose={() => setOpenPopupApproved(false)}
-                onConfirm={() => handleClickApprove("Approved", "approve")}
-                requestSelected={maintenanceRequest || {}}
-                selectedOperator={selectedOperator}
-                setSelectedOperator={setSelectedOperator}
-                operators={operators}
-                maintenanceTypeConfig={maintenanceTypeConfig}
-            />
+			<ApprovePopup
+				open={openPopupApproved}
+				onClose={() => setOpenPopupApproved(false)}
+				onConfirm={() => handleClickApprove("Approved", "approve")}
+				requestSelected={maintenanceRequest || {}}
+				selectedOperator={selectedOperator}
+				setSelectedOperator={setSelectedOperator}
+				operators={operators}
+				maintenanceTypeConfig={maintenanceTypeConfig}
+			/>
 
-            {/* Rejected Confirm */}
-            <ConfirmDialog
-                open={openConfirmRejected}
-                setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
+			{/* Rejected Confirm */}
+			<ConfirmDialog
+				open={openConfirmRejected}
+				setOpenConfirm={setOpenConfirmRejected}
+				handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
+				title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+			/>
+
+			{/* Cancellation Confirm */}
+			<ConfirmDialog
+				open={openConfirmCancelled}
+				setOpenConfirm={setOpenConfirmCancelled}
+				handleFunction={() => handleClickCancel()}
+				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+			/>
 
 			{/* Header section with title and back button */}
 			<Grid2 container spacing={2}>
@@ -274,16 +327,12 @@ function CheckRequest() {
 									{
 										maintenanceRequest?.MaintenanceImages ? (
 											<RequestImages
-												images={maintenanceRequest?.MaintenanceTask?.HandoverImages || []}
-												apiUrl={apiUrl}
-											/>
-										) : maintenanceRequest?.MaintenanceImages && (
-											<RequestImages
 												images={maintenanceRequest?.MaintenanceImages}
 												apiUrl={apiUrl}
 											/>
+										) : (
+											<></>
 										)
-
 									}
 								</Grid2>
 								<Grid2 container size={{ xs: 12, md: 12 }}
@@ -292,7 +341,7 @@ function CheckRequest() {
 									}}
 								>
 									{
-										isOperator && <Box>
+										isOperator && isApproved && isInProgress && <Box>
 											<Button
 												variant="outlinedCancel"
 												onClick={() => {
@@ -311,8 +360,8 @@ function CheckRequest() {
 												<FontAwesomeIcon icon={faXmark} size="lg" />
 												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
 											</Button>
-											{/* {
-												isAssigned ? (
+											{
+												isApproved ? (
 													<Button
 														variant="containedBlue"
 														onClick={() => {
@@ -337,8 +386,32 @@ function CheckRequest() {
 												) : (
 													<></>
 												)
-											} */}
+											}
 										</Box>
+									}
+									{
+										isPending && isOwnRequest ? (
+											<Button
+												variant="outlinedCancel"
+												onClick={() => {
+													setOpenConfirmCancelled(true)
+												}}
+												sx={{
+													minWidth: '0px',
+													px: '6px',
+													color: 'gray',
+													borderColor: 'gray',
+													'&:hover': {
+														borderColor: '#FF3B30',
+													}
+												}}
+											>
+												<FontAwesomeIcon icon={faXmark} size="lg" />
+												<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
+											</Button>
+										) : (
+											<></>
+										)
 									}
 								</Grid2>
 							</Grid2>

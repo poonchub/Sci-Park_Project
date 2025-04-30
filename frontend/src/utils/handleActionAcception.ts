@@ -14,6 +14,7 @@ interface handleActionAcceptionProps {
     refreshInProgressTaskData: () => void;
     setOpenConfirmAccepted: (v: boolean) => void;
     setOpenConfirmCancelled: (v: boolean) => void;
+    note?: string;
 }
 
 const handleActionAcception = async (
@@ -25,7 +26,8 @@ const handleActionAcception = async (
         refreshInProgressTaskData,
         setOpenConfirmAccepted,
         setOpenConfirmCancelled,
-        actionType
+        actionType,
+        note
     }: handleActionAcceptionProps & { actionType: "accept" | "cancel" }
 ) => {
     if (!selectedTask) {
@@ -35,7 +37,8 @@ const handleActionAcception = async (
 
     try {
         const task: MaintenanceTasksInterface = {
-            RequestStatusID: statusID
+            RequestStatusID: statusID,
+            Description: note || "",
         };
 
         const request: MaintenanceRequestsInterface = {

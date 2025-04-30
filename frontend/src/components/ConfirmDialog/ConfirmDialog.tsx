@@ -8,13 +8,16 @@ import {
     DialogContentText,
     DialogTitle
 } from "@mui/material";
+import { TextField } from "../TextField/TextField";
+import { useState } from "react";
 
 interface ConfirmDialogProps {
     open: boolean;
     setOpenConfirm: React.Dispatch<React.SetStateAction<boolean>>;
-    handleFunction: () => void;
+    handleFunction: (note?: string) => void;
     title: string;
     message: string;
+    showNoteField?: boolean;
 }
 
 // Reusable confirmation dialog component
@@ -23,8 +26,22 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     setOpenConfirm,
     handleFunction,
     title,
-    message
+    message,
+    showNoteField
 }) => {
+
+    const [note, setNote] = useState("");
+
+    const handleConfirm = () => {
+        if (showNoteField && note.trim() === "") {
+            alert("กรุณาระบุเหตุผลในการปฏิเสธ");
+            return;
+        }
+        handleFunction(note);
+        setOpenConfirm(false);
+        setNote("");
+    };
+
     return (
         <Dialog open={open} onClose={() => setOpenConfirm(false)} sx={{ zIndex: 999 }}>
             {/* Dialog title with warning icon */}
@@ -47,6 +64,16 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         {m}
                     </DialogContentText>
                 ))}
+
+                {showNoteField && (
+                    <TextField
+                        fullWidth
+                        placeholder="ป้อนเหตุผล"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        sx={{ mt: 2 }}
+                    />
+                )}
             </DialogContent>
 
             {/* Action buttons */}
@@ -54,7 +81,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 <Button onClick={() => setOpenConfirm(false)}>ยกเลิก</Button>
                 <Button
                     onClick={() => {
-                        handleFunction();
+                        handleConfirm();
                         setOpenConfirm(false);
                     }}
                     variant="contained"
