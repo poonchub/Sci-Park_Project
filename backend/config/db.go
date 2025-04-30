@@ -334,7 +334,7 @@ func SeedDatabase() {
 	packages := []entity.Package{
 
 		{
-			PackageName:            "Empty",
+			PackageName:            "None",
 			MeetingRoomLimit:       0,
 			TrainingRoomLimit:      0,
 			MultiFunctionRoomLimit: 0,
