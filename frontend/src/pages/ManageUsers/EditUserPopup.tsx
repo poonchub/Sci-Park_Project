@@ -70,7 +70,6 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('UserPackageID', userData.UserPackageID);
           setIsEmployee(userData.IsEmployee);
 
-          console.log('User data:', userData);
 
         }
         setSelectedRole(user?.RoleID ?? null);

@@ -6,6 +6,7 @@ export interface RoomsInterface {
     RoomNumber?:    string;
     Capacity?:      number;
     RoomStatusID?:  number;
+    RoomStatus?:    string;
     FloorID?:       number;
     Floor?:         FloorsInterface
     RoomTypeID?:    number;

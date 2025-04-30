@@ -1,8 +1,9 @@
-import { Box, Button, Card, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { faAward, faUserTie, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { faAward, faUserTie, faMagnifyingGlass,faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAddressBook } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Import ListUsers service 
@@ -23,7 +24,7 @@ function ManageUsers() {
     const [selectpackage, setSelectPackage] = useState(0);
     const [roles, setRoles] = useState<RolesInterface[]>([]);
     const [selectrole, setSelectRole] = useState(0);
-    const [isEmployee, setIsEmployee] = useState<boolean | undefined>(undefined); 
+    const [isEmployee, setIsEmployee] = useState<boolean | undefined>(undefined);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
@@ -105,14 +106,18 @@ function ManageUsers() {
                 </Box>
             ),
         }
-        
+
     ];
+
+    const handleClearFillter = () => {
+        window.location.reload();
+
+    }
 
     // ฟังก์ชันค้นหาข้อมูล
     const handleSearch = () => {
         let filteredUsers = users;
 
-        console.log(selectrole, selectpackage, isEmployee);
 
         // การกรองข้อมูลจากคำค้นหาผ่าน searchText
         if (searchText !== '') {
@@ -139,22 +144,25 @@ function ManageUsers() {
     const handleOpenPopup = (userId: number) => {
         setSelectedUserId(userId);
         setOpenPopup(true);
-      };
-    
-      useEffect(() => {
+    };
+
+    useEffect(() => {
         if (selectedUserId === null) {
-          // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
-          getUsers();  // ดึงข้อมูลผู้ใช้งานใหม่
+            // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
+            getUsers();  // ดึงข้อมูลผู้ใช้งานใหม่
         }
-      }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
-      
-      const handleClosePopup = () => {
+    }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+
+    const handleClosePopup = () => {
         setOpenPopup(false);
+        setSelectPackage(0);  // รีเซ็ต selectpackage เมื่อปิด pop-up
+        setSelectRole(0);  // รีเซ็ต selectrole เมื่อปิด pop-up
+        
         setSelectedUserId(null); // รีเซ็ต selectedUserId เมื่อปิด pop-up
         setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
         setPage(1);         // รีเซ็ตไปยังหน้าที่ 1
-        console.log(alerts); // Log message when popup is closed
-      };
+
+    };
 
     // Fetch users from the API
     const getUsers = async () => {
@@ -209,7 +217,7 @@ function ManageUsers() {
         getUsers();  // ดึงข้อมูลเมื่อหน้าโหลด
         getPackages();
         getRoles();
-    }, [selectrole, selectpackage,isEmployee, page, limit]);
+    }, [selectrole, selectpackage, isEmployee, page, limit]);
 
     useEffect(() => {
         handleSearch();
@@ -234,21 +242,21 @@ function ManageUsers() {
                     )}
                 </React.Fragment>
             ))}
-            
+
             <Grid2 container spacing={3}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
                     <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
                 </Grid2>
-                
+
                 {selectedUserId !== null && (
                     <EditUserPopup
                         userId={selectedUserId}
                         open={openPopup}
                         onClose={handleClosePopup}
-                        
+
                     />
                 )}
-            
+
 
                 <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
                     {/* Filters Section */}
@@ -257,7 +265,7 @@ function ManageUsers() {
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
                         sx={{ alignItems: "flex-end", height: 'auto' }}>
-                        <Grid2 size={{ xs: 10, md: 6 }}>
+                        <Grid2 size={{ xs: 10, md: 5 }}>
                             <TextField
                                 fullWidth
                                 className="search-box"
@@ -274,6 +282,7 @@ function ManageUsers() {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
                                                 <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+
                                             </InputAdornment>
                                         ),
                                     }
@@ -292,7 +301,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faUserTie} size="xl" />
+                                            <FontAwesomeIcon icon={faAddressBook} size="xl" />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -308,28 +317,30 @@ function ManageUsers() {
                         </Grid2>
 
                         <Grid2 size={{ xs: 10, md: 2 }}>
-    <FormControl fullWidth>
-        <Select
-            value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
-            onChange={(e) => {
-                // แปลงค่า value เป็น boolean หรือ undefined
-                setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
-                handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
-            }}
-            displayEmpty
-            startAdornment={
-                <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                    <FontAwesomeIcon icon={faUserTie} size="xl" />
-                </InputAdornment>
-            }
-            sx={{ borderRadius: 2 }}
-        >
-            <MenuItem value="undefined">{'ไม่เลือก'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
-            <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
-            <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
-        </Select>
-    </FormControl>
-</Grid2>
+                            <FormControl fullWidth>
+                                <Select
+                                    value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
+                                    onChange={(e) => {
+                                        // แปลงค่า value เป็น boolean หรือ undefined
+                                        setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
+                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                    }}
+                                    displayEmpty
+                                    startAdornment={
+                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                            <FontAwesomeIcon icon={faUserTie} size="xl" />
+                                        </InputAdornment>
+                                    }
+                                    sx={{ borderRadius: 2 }}
+                                >
+                                    <MenuItem value="undefined">{'ไม่เลือก'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
+                                    <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
+                                    <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
+                                </Select>
+                            </FormControl>
+                        </Grid2>
+
+ 
 
 
 
@@ -358,6 +369,23 @@ function ManageUsers() {
                                     }
                                 </Select>
                             </FormControl>
+                        </Grid2>
+
+                        <Grid2 size={{ xs: 10, md: 1 }}>
+                            <Button onClick={handleClearFillter}
+                                sx={{
+                                    minWidth: 0,
+                                    width: '100%',
+                                    height: '45px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                    "&:hover": {
+                                        boxShadow: 'none',
+                                        borderColor: 'primary.main',
+                                        backgroundColor: 'transparent'
+                                    },
+                                }}
+                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
                         </Grid2>
 
                     </Grid2>
@@ -413,13 +441,13 @@ function ManageUsers() {
                 </Grid2>
 
                 {/* Pop-up */}
-      {selectedUserId !== null && (
-        <EditUserPopup
-          userId={selectedUserId}
-          open={openPopup}
-          onClose={handleClosePopup}
-        />
-      )}
+                {selectedUserId !== null && (
+                    <EditUserPopup
+                        userId={selectedUserId}
+                        open={openPopup}
+                        onClose={handleClosePopup}
+                    />
+                )}
 
             </Grid2>
         </div>

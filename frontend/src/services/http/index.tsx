@@ -371,6 +371,28 @@ async function GetRoomTypes() {
     return res;
 }
 
+// RoomTypes
+async function GetRoomStatus() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-status`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 // Floors
 async function GetFloors() {
     const requestOptions = {
@@ -852,6 +874,9 @@ export {
 
     // RoomTypes
     GetRoomTypes,
+
+    // RoomStatus
+    GetRoomStatus,
 
     // Floors
     GetFloors,
