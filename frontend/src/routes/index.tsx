@@ -23,7 +23,7 @@ function ConfigRoutes() {
       case "Admin":
         routes = [AdminRoutes()]; // เมื่อบทบาทเป็น Admin ให้ใช้เส้นทางของ Admin
         break;
-      case "DevManager":
+      case "Manager":
         routes = [ManagerRoutes()]; // เมื่อบทบาทเป็น Admin ให้ใช้เส้นทางของ Admin
         break;
       case "Operator":

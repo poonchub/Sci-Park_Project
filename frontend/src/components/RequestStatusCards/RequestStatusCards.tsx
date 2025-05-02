@@ -20,7 +20,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
         "Pending",
         "Approved",
         "In Progress",
-        "Waiting for Review",
+        "Waiting For Review",
         "Completed",
         "Unsuccessful"
     ];

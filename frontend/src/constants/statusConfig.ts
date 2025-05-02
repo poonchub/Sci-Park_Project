@@ -26,7 +26,7 @@ export const statusConfig: Record<string, StatusConfig> = {
         colorLite: "rgb(202, 227, 255)",
         icon: faArrowsSpin
     },
-    "Waiting for Review": {
+    "Waiting For Review": {
         color: "#17A2B8",
         colorLite: "rgb(208, 242, 255)",
         icon: faClipboardCheck

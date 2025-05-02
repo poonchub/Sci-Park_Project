@@ -420,7 +420,7 @@ function Dashboard() {
                     </Grid2>
                 </Grid2>
 
-                {/* Chart Circle Section */}
+                {/* Chart Donut Section */}
                 <Grid2 size={{ xs: 10, md: 4 }} >
                     <ApexDonutChart data={groupedData} completed={completedPercentage} />
                 </Grid2>
@@ -428,63 +428,7 @@ function Dashboard() {
                 {/* Data Table */}
                 <Grid2 size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        <DataGrid
-                            rows={filteredRequest}
-                            columns={columns}
-                            pageSizeOptions={[5, 10, 20, 50]}
-                            getRowId={(row) => String(row.ID)}
-                            paginationMode="server"
-                            initialState={{
-                                pagination: {
-                                    // paginationModel: { page, pageSize: limit },
-                                },
-                            }}
-                            // rowCount={total}
-                            checkboxSelection
-                            disableRowSelectionOnClick
-                            onPaginationModelChange={(params) => {
-                                // setPage(params.page + 1);
-                                // setLimit(params.pageSize);
-                            }}
-                            disableColumnResize={false}
-                            sx={{
-                                width: "100%",
-                                borderRadius: 2,
-                                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                                    outline: "none",
-                                    boxShadow: "none",
-                                },
-                            }}
-                            slots={{
-                                noRowsOverlay: () => (
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: '100%',
-                                            color: 'gray',
-                                        }}
-                                    >
-                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            ไม่พบข้อมูลงานแจ้งซ่อม
-                                        </Typography>
-                                    </Box>
-                                ),
-                            }}
-                            slotProps={{
-                                baseCheckbox: {
-                                    sx: {
-                                        color: 'gray',
-                                        '&.Mui-checked': {
-                                            color: '#F26522',
-                                        },
-                                    },
-                                },
-                            }}
-                        />
+                        
                     </Card>
                 </Grid2>
             </Grid2>

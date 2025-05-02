@@ -184,7 +184,7 @@ function AcceptWork() {
 								setOpenConfirmAccepted(true)
 								setSelectedTask(item.row)
 							}}
-							sx={{ mr: 0.5 }}
+							sx={{ mr: 0.8 }}
 						>
 							<FontAwesomeIcon icon={faTools} />
 							<Typography variant="textButtonClassic" >เริ่มงาน</Typography>
@@ -359,7 +359,7 @@ function AcceptWork() {
 								setOpenPopupSubmit(true)
 								setSelectedTask(item.row)
 							}}
-							sx={{ mr: 0.5 }}
+							sx={{ mr: 0.8 }}
 						>
 							<FontAwesomeIcon icon={faPaperPlane} />
 							<Typography variant="textButtonClassic" >ส่งงาน</Typography>
@@ -481,7 +481,7 @@ function AcceptWork() {
 			]);
 			return;
 		}
-		const statusID = requestStatuses?.find(item => item.Name === "Waiting for Review")?.ID || 0;
+		const statusID = requestStatuses?.find(item => item.Name === "Waiting For Review")?.ID || 0;
 
 		handleSubmitWork(statusID, {
 			selectedTask,

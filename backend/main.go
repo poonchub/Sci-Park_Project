@@ -105,7 +105,7 @@ func main() {
 		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.DevManager)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
 	}

@@ -10,9 +10,6 @@ interface RequestImagesProps {
 const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     const count = images.length;
 
-    console.log(images)
-    console.log(`${apiUrl}/${images[0]}`)
-
     // Display 1 image full width
     if (count === 1) {
         return (
@@ -20,7 +17,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
                 <img
                     src={`${apiUrl}/${images[0].FilePath}`}
                     alt="image"
-                    style={{ width: '100%', borderRadius: 8 }}
+                    style={{ width: '100%', borderRadius: 8, maxHeight: '300px' }}
                 />
             </Grid2>
         );
@@ -29,7 +26,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     // Display 2 images side by side
     if (count === 2) {
         return (
-            <>
+            <Grid2 container spacing={1} size={{ xs: 12, md: 12 }}>
                 <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
                     <img
                         src={`${apiUrl}/${images[0].FilePath}`}
@@ -44,7 +41,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
                         style={{ width: '100%', borderRadius: 8 }}
                     />
                 </Grid2>
-            </>
+            </Grid2>
         );
     }
 

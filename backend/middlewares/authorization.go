@@ -13,7 +13,7 @@ import (
 const (
 	User   		= 1
 	Operator   	= 3
-	DevManager  = 4
+	Manager  = 4
 	Admin      	= 5
 )
 
@@ -70,8 +70,8 @@ func getRoleLevel(role string) int {
 	switch role {
 	case "Admin":
 		return Admin
-	case "DevManager":
-		return DevManager
+	case "Manager":
+		return Manager
 	case "Operator":
 		return Operator
 	case "User":

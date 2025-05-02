@@ -25,7 +25,7 @@ const handleSubmitWork = async (
         files
     }: HandleSubmitWorkProps
 ) => {
-    if (!selectedTask?.ID) {
+    if (!selectedTask?.ID || !statusID) {
         setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
         return;
     }
@@ -67,9 +67,9 @@ const handleSubmitWork = async (
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request");
 
-        setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
-
         setTimeout(() => {
+            setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
+
             refreshTaskData();
             setOpenPopupSubmit(false);
         }, 500);

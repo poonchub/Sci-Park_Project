@@ -1,8 +1,7 @@
 import React from 'react';
-import { Card, CardContent, Typography, Button, Box, Grid2 } from '@mui/material';
+import { Card, CardContent, Typography, Box, Grid2 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { isAdmin, isManager } from '../../routes';
+import { faUserTie } from '@fortawesome/free-solid-svg-icons';
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
@@ -21,13 +20,8 @@ const InfoCard: React.FC<InfoCardProps> = ({
     title,
     name,
     time,
-    onApprove,
-    onReject,
     status,
 }) => {
-
-    const isApprovedBtnOn = type === 'approved' && (isManager || isAdmin) && status === "Pending"
-
     return (
         // Card layout wrapped inside Grid2 for responsiveness
         <Grid2 size={{ xs: 10, md: 2 }}>
@@ -53,42 +47,16 @@ const InfoCard: React.FC<InfoCardProps> = ({
                                 ยังไม่ได้มอบหมาย
                             </Typography>
                         ) : (
-                            <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 16 }}>
-                                {name}
-                            </Typography>
+                            <>
+                                <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 16 }}>
+                                    {name}
+                                </Typography>
+                                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: '#6D6E70' }}>
+                                    {time}
+                                </Typography>
+                            </>
                         )}
 
-                        {/* Handle actions (approve, reject, assign) based on the 'time' value */}
-                        { isApprovedBtnOn ? (
-                            <>
-                                {/* Approve button */}
-                                <Button
-                                    variant="containedBlue"
-                                    onClick={onApprove}
-                                    sx={{ backgroundColor: '#08aff1', mr: 0.5 }}
-                                >
-                                    อนุมัติ
-                                </Button>
-                                {/* Reject button */}
-                                <Button
-                                    variant="outlinedCancel"
-                                    onClick={onReject}
-                                    sx={{
-                                        minWidth: '0px',
-                                        px: '6px',
-                                        color: '#FF3B30',
-                                        borderColor: '#FF3B30'
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faXmark} size="xl" />
-                                </Button>
-                            </>
-                        ) : (
-                            // Display the time when the task has been either approved or assigned
-                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: '#6D6E70' }}>
-                                {time}
-                            </Typography>
-                        )}
                     </Grid2>
 
                     {/* Icon displaying an avatar or role-related icon */}

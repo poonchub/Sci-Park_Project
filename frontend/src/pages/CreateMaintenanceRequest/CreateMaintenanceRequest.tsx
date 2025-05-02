@@ -618,7 +618,7 @@ function CreateMaintenanceRequestPage() {
 
                                 <Grid2 size={{ xs: 6, md: 12 }}>
                                     <Box display={'flex'}>
-                                        <Typography variant="body1" className="title-field">ภาพประกอบ</Typography>
+                                        <Typography variant="body1" className="title-field">ภาพประกอบการแจ้งซ่อม</Typography>
                                         <Typography variant="body1"
                                             sx={{
                                                 ml: 0.5,

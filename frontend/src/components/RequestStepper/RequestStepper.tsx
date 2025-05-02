@@ -10,12 +10,13 @@ interface RequestStepperProps {
 }
 
 const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, requestStatusID }) => {
+
     // 1. กำหนด status flow ตาม role
     const statusFlow = useMemo(() => {
         if (isAdmin || isManager) {
-            return ["Creating", "Pending", "Approved", "In Progress", "Waiting for Review", "Completed"];
+            return ["Creating", "Pending", "Approved", "In Progress", "Waiting For Review", "Completed"];
         } else {
-            return ["Creating", "In Process", "Waiting for Review", "Completed"];
+            return ["Creating", "In Process", "Waiting For Review", "Completed"];
         }
     }, [isAdmin, isManager]);
 

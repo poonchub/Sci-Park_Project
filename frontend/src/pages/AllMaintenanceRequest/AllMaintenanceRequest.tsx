@@ -54,8 +54,6 @@ function AllMaintenanceRequest() {
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
-    console.log(monthlyCounts)
-
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
             field: 'ID',
@@ -229,7 +227,7 @@ function AllMaintenanceRequest() {
                                 setOpenPopupApproved(true)
                                 setSelectedRequest(item.row)
                             }}
-                            sx={{ mr: 0.5 }}
+                            sx={{ mr: 0.8 }}
                         >
                             <FontAwesomeIcon icon={faCheckDouble} />
                             <Typography variant="textButtonClassic" >อนุมัติ</Typography>
