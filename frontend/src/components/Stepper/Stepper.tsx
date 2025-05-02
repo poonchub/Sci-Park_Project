@@ -1,7 +1,7 @@
 import { Step, StepIconProps, StepLabel, Stepper, styled } from "@mui/material";
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faArrowsSpin, faBan, faCheck, faCircleXmark, faClipboardCheck, faExclamation, faFile, faFlagCheckered, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsSpin, faCheck, faCircleXmark, faClipboardCheck, faFile, faFlagCheckered, faHourglassHalf, faRedo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Stepper component rendering the steps with dynamic icons
@@ -82,7 +82,8 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
             "In Progress": faArrowsSpin,
             "Waiting for Review": faClipboardCheck,
             "Completed": faFlagCheckered,
-            "Unsuccessful": faCircleXmark
+            "Unsuccessful": faCircleXmark,
+            "Rework Requested": faRedo,
         };        
         
         const icon = icons[stepIndex] || faFile;

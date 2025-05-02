@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Grid2, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faPaperPlane, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import './CheckRequest.css';
 
@@ -28,6 +28,9 @@ import { isAdmin, isManager, isOperator } from "../../routes";
 import handleActionApproval from "../../utils/handleActionApproval";
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup";
 import handleActionAcception from "../../utils/handleActionAcception";
+import handleActionInspection from "../../utils/handleActionInspection";
+import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
+import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 
 function CheckRequest() {
 	// Request data
@@ -46,8 +49,11 @@ function CheckRequest() {
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
 	const [openConfirmCancelledFromOwnRequest, setOpenConfirmCancelledFromOwnRequest] = useState<boolean>(false);
 	const [openConfirmCancelledFromManager, setOpenConfirmCancelledFromManager] = useState<boolean>(false);
+	const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
+	const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
 
-	const [files, setFiles] = useState<File[]>([]);
+	const [requestfiles, setRequestFiles] = useState<File[]>([]);
+	const [submitfiles, setSubmitFiles] = useState<File[]>([]);
 	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
 	const navigate = useNavigate();
@@ -83,6 +89,7 @@ function CheckRequest() {
 	const isApproved = RequestStatus === 'Approved'
 	const isInProgress = RequestStatus === 'In Progress'
 	const isWaitingForReview = RequestStatus === 'Waiting For Review'
+	const isRework = RequestStatus === 'Rework Requested'
 
 	const isNotApproved = maintenanceRequest?.ManagerApproval === null
 
@@ -142,7 +149,7 @@ function CheckRequest() {
 			setAlerts,
 			refreshTaskData: getMaintenanceRequest,
 			setOpenPopupSubmit,
-			files
+			files: submitfiles
 		});
 	};
 
@@ -153,7 +160,6 @@ function CheckRequest() {
 		note?: string
 	) => {
 
-		const userID = localStorage.getItem('userId')
 		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
 
 		handleActionApproval(statusID, {
@@ -184,6 +190,26 @@ function CheckRequest() {
 			setOpenConfirmCancelled: setOpenConfirmCancelledFromManager,
 			actionType,
 			note
+		});
+	};
+
+	const handleClickInspection = (
+		statusName: "Completed" | "Rework Requested",
+		actionType: "confirm" | "rework",
+		note?: string
+	) => {
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+
+		handleActionInspection(statusID, {
+			userID,
+			selectedRequest: maintenanceRequest,
+			setAlerts,
+			refreshMaintenanceData: getMaintenanceRequest,
+			setOpenConfirmInspection,
+			setOpenConfirmRework,
+			actionType,
+			note,
+			files: requestfiles
 		});
 	};
 
@@ -221,12 +247,34 @@ function CheckRequest() {
 		navigate(-1);
 	};
 
+	const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
+		return await Promise.all(
+			images.map(async (img, index) => {
+				const url = apiUrl + '/' +img.FilePath;
+				const response = await fetch(url);
+				const blob = await response.blob();
+				const fileType = blob.type || "image/jpeg";
+				const fileName = img.FilePath?.split("/").pop() || `image${index + 1}.jpg`;
+				return new File([blob], fileName, { type: fileType });
+			})
+		);
+	}
+
 	// Load all necessary data on mount
 	useEffect(() => {
 		getMaintenanceRequest();
 		getRequestStatuses();
 		getOperators();
 	}, []);
+
+	useEffect(() => {
+		const fetchFiles = async () => {
+			const fileList = await convertPathsToFiles(maintenanceImages || []);
+			setRequestFiles(fileList);
+		};
+	
+		fetchFiles();
+	}, [maintenanceImages]);
 
 	return (
 		<div className="check-requests-page">
@@ -240,8 +288,8 @@ function CheckRequest() {
 				onClose={() => setOpenPopupSubmit(false)}
 				onConfirm={onClickSubmit}
 				setAlerts={setAlerts}
-				files={files}
-				onChange={setFiles}
+				files={submitfiles}
+				onChange={setSubmitFiles}
 			/>
 
 			{/* Cancellation From OwnRequest Confirm */}
@@ -292,6 +340,28 @@ function CheckRequest() {
 				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
 				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 				showNoteField
+			/>
+
+			{/* Inspection Confirm */}
+			<ConfirmDialog
+				open={openConfirmInspection}
+				setOpenConfirm={setOpenConfirmInspection}
+				handleFunction={() => handleClickInspection("Completed", "confirm")}
+				title="ยืนยันการตรวจรับงาน"
+				message="คุณแน่ใจหรือไม่ว่าต้องการตรวจรับงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			{/* Rework Confirm */}
+			<ReworkPopup
+				open={openConfirmRework}
+				setOpenConfirm={setOpenConfirmRework}
+				handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
+				setAlerts={setAlerts}
+				title="ยืนยันการขอซ่อมซ้ำ"
+				message="คุณแน่ใจหรือไม่ว่าต้องการขอซ่อมซ้ำงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+				files={requestfiles}
+				onChangeFiles={setRequestFiles}
 			/>
 
 			{/* Header section with title and back button */}
@@ -362,7 +432,7 @@ function CheckRequest() {
 												การดำเนินงาน
 											</Typography>
 											<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
-												<TaskInfoTable data={maintenanceRequest?.MaintenanceTask} />
+												<TaskInfoTable data={maintenanceRequest} />
 											</Box>
 										</Grid2>
 									)
@@ -370,7 +440,7 @@ function CheckRequest() {
 
 								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
 									{
-										taskImages && taskImages.length !== 0 ? (
+										taskImages && taskImages.length !== 0 && !isRework ? (
 											<Box>
 												<Typography className="title-list" variant="body1" sx={{ width: '100%', mb: 1 }}>
 													ภาพประกอบการส่งมอบ
@@ -380,7 +450,7 @@ function CheckRequest() {
 													apiUrl={apiUrl}
 												/>
 											</Box>
-										) : maintenanceImages && maintenanceImages?.length !== 0 ? (
+										) : (maintenanceImages && maintenanceImages?.length !== 0) ? (
 											<Box>
 												<Typography className="title-list" variant="body1" sx={{ width: '100%', mb: 1 }}>
 													ภาพประกอบการแจ้งซ่อม
@@ -440,37 +510,71 @@ function CheckRequest() {
 										)
 									}
 
-									<Grid2 container size={{ xs: 12, md: 12 }}
-										sx={{
-											justifyContent: "flex-end",
-										}}
-									>
-										{
-											(isPending && isOwnRequest) ? (
-												<Button
-													variant="outlinedCancel"
-													onClick={() => {
-														setOpenConfirmCancelledFromOwnRequest(true)
-													}}
-													sx={{
-														minWidth: '0px',
-														px: '6px',
-														'&:hover': {
-															borderColor: '#FF3B30',
-														}
-													}}
-												>
-													<FontAwesomeIcon icon={faXmark} size="lg" />
-													<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
-												</Button>
-											) : (
-												<></>
-											)
-										}
-									</Grid2>
+									{
+										(isOwnRequest || isAdmin || isManager) &&
+										<Grid2 container size={{ xs: 12, md: 12 }}
+											sx={{
+												justifyContent: "flex-end",
+											}}
+										>
+											{
+												isOwnRequest && isPending ? (
+													<Button
+														variant="outlinedCancel"
+														onClick={() => {
+															setOpenConfirmCancelledFromOwnRequest(true)
+														}}
+														sx={{
+															minWidth: '0px',
+															px: '6px',
+															'&:hover': {
+																borderColor: '#FF3B30',
+															}
+														}}
+													>
+														<FontAwesomeIcon icon={faXmark} size="lg" />
+														<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
+													</Button>
+												) : isWaitingForReview ? (
+													<Box>
+														<Button
+															variant="outlinedCancel"
+															onClick={() => {
+																setOpenConfirmRework(true)
+															}}
+															sx={{
+																minWidth: '0px',
+																px: '6px',
+																'&:hover': {
+																	borderColor: '#FF3B30',
+																}
+															}}
+														>
+															<FontAwesomeIcon icon={faRepeat} />
+															<Typography variant="textButtonClassic" >ขอซ่อมซ้ำ</Typography>
+														</Button>
+
+														<Button
+															variant="containedBlue"
+															onClick={() => {
+																setOpenConfirmInspection(true)
+															}}
+															sx={{ ml: 0.8 }}
+														>
+															<FontAwesomeIcon icon={faTools} />
+															<Typography variant="textButtonClassic">ยืนยันการตรวจรับ</Typography>
+														</Button>
+
+													</Box>
+												) : (
+													<></>
+												)
+											}
+										</Grid2>
+									}
 
 									{
-										(isApproved || isInProgress) && isOperator && isOwnTask && <Box>
+										(isApproved || isInProgress || isRework) && isOperator && isOwnTask && <Box>
 											<Button
 												variant="outlinedCancel"
 												onClick={() => {
@@ -489,8 +593,9 @@ function CheckRequest() {
 												<FontAwesomeIcon icon={faXmark} size="lg" />
 												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
 											</Button>
+
 											{
-												isApproved ? (
+												isApproved || isRework ? (
 													<Button
 														variant="containedBlue"
 														onClick={() => {

@@ -30,4 +30,5 @@ type MaintenanceRequest struct {
 
     ManagerApproval     *ManagerApproval `gorm:"foreignKey:RequestID"`
     MaintenanceTask     *MaintenanceTask `gorm:"foreignKey:RequestID"`
+    Inspection          *Inspection      `gorm:"foreignKey:RequestID"`
 }

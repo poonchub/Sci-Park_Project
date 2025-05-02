@@ -13,12 +13,31 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
 
     // 1. กำหนด status flow ตาม role
     const statusFlow = useMemo(() => {
+        const baseFlowAdmin = ["Creating", "Pending", "Approved"];
+        const baseFlowUser = ["Creating"];
+
+        const includeRework = requestStatuses.find(
+            s => s.ID === requestStatusID && s.Name === "Rework Requested"
+        ) !== undefined;
+
         if (isAdmin || isManager) {
-            return ["Creating", "Pending", "Approved", "In Progress", "Waiting For Review", "Completed"];
+            return [
+                ...baseFlowAdmin,
+                ...(includeRework ? ["Rework Requested"] : []),
+                "In Progress",
+                "Waiting For Review",
+                "Completed"
+            ];
         } else {
-            return ["Creating", "In Process", "Waiting For Review", "Completed"];
+            return [
+                ...baseFlowUser,
+                ...(includeRework ? ["Rework Requested"] : []),
+                "In Process",
+                "Waiting For Review",
+                "Completed"
+            ];
         }
-    }, [isAdmin, isManager]);
+    }, [isAdmin, isManager, requestStatuses, requestStatusID]);
 
     const unsuccessfulFlow = ["Unsuccessful"];
 

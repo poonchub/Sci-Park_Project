@@ -1,6 +1,4 @@
 import { Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
-import { faPhone, faEnvelope } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import dateFormat from "../../utils/dateFormat";
 import phoneFormat from "../../utils/phoneFormat";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
@@ -34,7 +32,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`${dateFormat(data.CreatedAt || '')}, ${timeFormat(data.CreatedAt || '')}`}
+                            {`${dateFormat(data.UpdatedAt || '')}, ${timeFormat(data.UpdatedAt || '')}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -111,6 +109,22 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                         </Typography>
                     </TableCell>
                 </TableRow>
+
+                {/* Rework Description information */}
+                {
+                    data.Inspection?.Description &&
+                    <TableRow>
+                        <TableCell>
+                            <Typography className="title-list">หมายเหตุการขอซ่อมซ้ำ</Typography>
+                        </TableCell>
+                        <TableCell>
+                            <Typography>
+                                {data.Inspection?.Description}
+                            </Typography>
+                        </TableCell>
+                    </TableRow>
+                }
+
             </TableBody>
         </Table>
     );

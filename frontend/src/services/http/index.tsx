@@ -1,4 +1,5 @@
 export const apiUrl = "http://localhost:8000";
+import { InspectionsInterface } from "../../interfaces/IInspections";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
@@ -587,6 +588,26 @@ async function CreateMaintenanceImages(data: FormData) {
 
     return res;
 }
+async function UpdateMaintenanceImages(data: FormData) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 
 // Genders
 async function ListGenders() {
@@ -678,7 +699,7 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
 }
 
 // MaintenanceTasks
-async function GetMaintenanceTask(statusID: number, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
+async function GetMaintenanceTask(statusID: string, page: number, limit: number, maintenanceType: number, createdAt: string | undefined) {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -742,7 +763,7 @@ async function UpdateMaintenanceTaskByID(data: MaintenanceTasksInterface, id: Nu
 
     return res;
 }
-async function DeleteMaintenanceTaskByID(bookingID: number | undefined) {
+async function DeleteMaintenanceTaskByID(taskID: number | undefined) {
     const requestOptions = {
         method: "DELETE",
         headers: {
@@ -751,7 +772,7 @@ async function DeleteMaintenanceTaskByID(bookingID: number | undefined) {
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-task/${bookingID}`, requestOptions).then((res) => {
+    let res = await fetch(`${apiUrl}/maintenance-task/${taskID}`, requestOptions).then((res) => {
         if (res.status == 200) {
             return res.json();
         } else {
@@ -773,6 +794,68 @@ async function CreateHandoverImages(data: FormData) {
     };
 
     let res = await fetch(`${apiUrl}/handover-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+async function UpdateHandoverImages(data: FormData) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/handover-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+async function DeleteHandoverImagesByTaskID(taskID: number | undefined) {
+    const requestOptions = {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/handover-images/${taskID}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+// Inspections
+async function CreateInspection(data: InspectionsInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/inspection`, requestOptions).then((res) => {
         console.log(res)
         if (res.status == 201) {
             return res.json();
@@ -826,6 +909,7 @@ export {
 
     // MaintenanceImages
     CreateMaintenanceImages,
+    UpdateMaintenanceImages,
 
     // Genders
     ListGenders,
@@ -847,6 +931,11 @@ export {
 
     // HandoverImages
     CreateHandoverImages,
+    UpdateHandoverImages,
+    DeleteHandoverImagesByTaskID,
+
+    // Inspections
+    CreateInspection,
 }
 
 

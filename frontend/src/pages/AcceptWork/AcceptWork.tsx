@@ -55,8 +55,6 @@ function AcceptWork() {
 	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 	const [files, setFiles] = useState<File[]>([]);
 
-	console.log(pendingMaintenanceTasks)
-
 	const pendingColumns: GridColDef<(typeof pendingMaintenanceTasks)[number]>[] = [
 		{
 			field: 'ID',
@@ -73,8 +71,8 @@ function AcceptWork() {
 			flex: 1,
 			// editable: true,
 			renderCell: (params) => {
-				const date = dateFormat(params.row.CreatedAt || '')
-				const time = timeFormat(params.row.CreatedAt || '')
+				const date = dateFormat(params.row.UpdatedAt || '')
+				const time = timeFormat(params.row.UpdatedAt || '')
 				return (
 					<Box >
 						<Typography
@@ -176,7 +174,10 @@ function AcceptWork() {
 			flex: 1.2,
 			// editable: true,
 			renderCell: (item) => {
-				return item.row.RequestStatus?.Name === 'Approved' ? (
+				const isApproved = item.row.RequestStatus?.Name === 'Approved'
+				const isRework = item.row.RequestStatus?.Name === 'Rework Requested'
+
+				return isApproved || isRework ? (
 					<Box>
 						<Button
 							variant="containedBlue"
@@ -420,9 +421,12 @@ function AcceptWork() {
 
 	const getPendingMaintenanceTasks = async () => {
 		try {
-			const res = await GetMaintenanceTask(3, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			const PendingID = requestStatuses?.find(item => item.Name === "Approved")?.ID || null;
+			const ReworkID = requestStatuses?.find(item => item.Name === "Rework Requested")?.ID || null;
+			const statusFormat = `${PendingID},${ReworkID}`
+
+			const res = await GetMaintenanceTask(statusFormat, pagePending, limitPending, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
 			if (res) {
-				console.log("adadadadadad", res)
 				setPendingMaintenanceTasks(res.data);
 				setTotalPending(res.total);
 			}
@@ -432,8 +436,9 @@ function AcceptWork() {
 	};
 
 	const getInProgressMaintenanceTasks = async () => {
+		const InProgressID = requestStatuses?.find(item => item.Name === "In Progress")?.ID || null;
 		try {
-			const res = await GetMaintenanceTask(4, pageInProgress, limitInProgress, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+			const res = await GetMaintenanceTask(String(InProgressID), pageInProgress, limitInProgress, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
 			if (res) {
 				setInProgressMaintenanceTasks(res.data);
 				setTotalInProgress(res.total);
@@ -455,7 +460,7 @@ function AcceptWork() {
 	};
 
 	const handleClickAcceptWork = (
-		statusName: "In Progress" | "Unsuccessful", 
+		statusName: "In Progress" | "Unsuccessful",
 		actionType: "accept" | "cancel",
 		note?: string
 	) => {
@@ -536,8 +541,6 @@ function AcceptWork() {
 			try {
 				await Promise.all([
 					getMaintenanceTypes(),
-					getPendingMaintenanceTasks(),
-					getInProgressMaintenanceTasks(),
 					getRequestStatuses()
 				]);
 			} catch (error) {
@@ -547,6 +550,11 @@ function AcceptWork() {
 
 		fetchInitialData();
 	}, []);
+
+	useEffect(() => {
+		getPendingMaintenanceTasks()
+		getInProgressMaintenanceTasks()
+	}, [requestStatuses])
 
 	useEffect(() => {
 		getPendingMaintenanceTasks()

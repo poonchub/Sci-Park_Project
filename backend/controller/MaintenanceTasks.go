@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"sci-park_web-application/config"
@@ -68,9 +69,19 @@ func CreateMaintenanceTask(c *gin.Context) {
 func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	// รับค่าจาก Query Parameters
 	operatorID, _ := strconv.Atoi(c.DefaultQuery("operator", "0"))
-    statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
 	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
+
+	// รับหลายค่า statusID แบบ comma-separated เช่น ?status=1,2
+	statusStr := c.DefaultQuery("status", "")
+	var statusIDs []int
+	if statusStr != "" {
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -93,9 +104,9 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		db = db.Where("maintenance_tasks.user_id = ?", operatorID)
 	}
 
-    if statusID > 0 {
-		db = db.Where("maintenance_tasks.request_status_id = ?", statusID)
-	}
+	if len(statusIDs) > 0 {
+		db = db.Where("maintenance_tasks.request_status_id IN ?", statusIDs)
+	}	
 
 	if maintenanceTypeID > 0 {
 		db = db.Where("maintenance_requests.maintenance_type_id = ?", maintenanceTypeID)
@@ -142,9 +153,9 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		countQuery = countQuery.Where("maintenance_tasks.user_id = ?", operatorID)
 	}
 
-    if statusID > 0 {
-		countQuery = countQuery.Where("maintenance_tasks.request_status_id = ?", statusID)
-	}
+	if len(statusIDs) > 0 {
+		countQuery = countQuery.Where("maintenance_tasks.request_status_id IN ?", statusIDs)
+	}	
 
 	if maintenanceTypeID > 0 {
 		countQuery = countQuery.Where("maintenance_requests.maintenance_type_id = ?", maintenanceTypeID)

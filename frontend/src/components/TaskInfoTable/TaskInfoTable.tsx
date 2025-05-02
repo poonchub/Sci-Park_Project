@@ -1,18 +1,20 @@
 import { Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import phoneFormat from "../../utils/phoneFormat";
-import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
+import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 
 interface TaskInfoTableProps {
-    data: MaintenanceTasksInterface | undefined;
+    data: MaintenanceRequestsInterface | undefined;
 }
 
 // Display detailed information of a maintenance request in a table format
 const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
     if (!data) return null;
 
-    const isCompleted = data.RequestStatus?.Name === 'Completed'
+    const status = data.RequestStatus?.Name
+    const isWaitingForReview = status === 'Waiting For Review'
+    const isCompleted = status === 'Completed'
 
     return (
         <Table>
@@ -46,12 +48,23 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                 </TableRow>
 
                 {/* Completed information */}
-                { isCompleted && <TableRow>
+                { (isCompleted || isWaitingForReview) && <TableRow>
                     <TableCell>
                         <Typography className="title-list">เสร็จสิ้นเมื่อ</Typography>
                     </TableCell>
                     <TableCell>
-                        <Typography>{`${dateFormat(data.UpdatedAt || '')}, ${timeFormat(data.UpdatedAt || '')}`}</Typography>
+                        <Typography>{`${dateFormat(data.MaintenanceTask?.UpdatedAt || '')}, ${timeFormat(data.MaintenanceTask?.UpdatedAt || '')}`}</Typography>
+                    </TableCell>
+                </TableRow>}
+
+                {/* Inspection information */}
+                { (isCompleted) && <TableRow>
+                    <TableCell>
+                        <Typography className="title-list">ตรวจรับโดย</Typography>
+                    </TableCell>
+                    <TableCell>
+                        <Typography>{`${data.Inspection?.User?.FirstName} ${data.Inspection?.User?.LastName}`}</Typography>
+                        <Typography>{`${dateFormat(data.Inspection?.CreatedAt || '')}, ${timeFormat(data.Inspection?.CreatedAt || '')}`}</Typography>
                     </TableCell>
                 </TableRow>}
             </TableBody>
