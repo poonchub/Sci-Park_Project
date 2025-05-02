@@ -53,6 +53,9 @@ func main() {
 		// RoomTypes
 		protected.GET("/room-types", controller.ListRoomTypes)
 
+		// RoomStatuses
+		protected.GET("/room-status", controller.ListRoomStatus)
+
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
 		protected.GET("/user/:id", controller.GetUserByID)
@@ -123,6 +126,9 @@ func main() {
 		// Users
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		protected.GET("/users", controller.ListUsers)
+
+		// Rooms
+		protected.GET("/listset-room", controller.ListSetRooms)
 
 	}
 

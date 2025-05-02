@@ -18,6 +18,7 @@ function AdminNavbar() {
 				<NavLink to="/booking-room" className={({ isActive }) => (isActive ? "link active" : "link")}>จองห้องประชุม</NavLink>
 				<NavLink to="/maintenance-request" className={({ isActive: navLinkIsActive }) => (navLinkIsActive || isActive ? "link active" : "link")}>แจ้งซ่อม</NavLink>
 				<NavLink to="/manage-user" className={({ isActive: navLinkIsActive }) => (navLinkIsActive || isActive ? "link active" : "link")}>จัดการผู้ใช้</NavLink>
+				<NavLink to="/manage-room" className={({ isActive: navLinkIsActive }) => (navLinkIsActive || isActive ? "link active" : "link")}>จัดการห้อง</NavLink>
 			</div>
 			<div className="login-box">
 				<div className="name">{`${fname} ${lname}`}</div>

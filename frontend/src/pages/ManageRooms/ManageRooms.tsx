@@ -1,30 +1,35 @@
+
+
 import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { faAward, faUserTie, faMagnifyingGlass,faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import {  faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAddressBook } from "@fortawesome/free-solid-svg-icons";
+import { faLayerGroup ,faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Import ListUsers service 
-import { UserInterface } from "../../interfaces/IUser";
-import { PackagesInterface } from "../../interfaces/IPackages";
-import { RolesInterface } from "../../interfaces/IRoles";
+import { ListSetRooms, GetRoomTypes, GetRoomStatus, GetFloors } from "../../services/http";  // Import ListUsers service 
+import { RoomsInterface } from "../../interfaces/IRooms";
+import { FloorsInterface } from "../../interfaces/IFloors";
+import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
+import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { SearchOff } from "@mui/icons-material";
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
-import EditUserPopup from "./EditUserPopup";
-import './ManageUsers.css';
+import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
 
-function ManageUsers() {
-    const [users, setUsers] = useState<UserInterface[]>([]);
-    const [packages, setPackages] = useState<PackagesInterface[]>([]);
-    const [selectpackage, setSelectPackage] = useState(0);
-    const [roles, setRoles] = useState<RolesInterface[]>([]);
-    const [selectrole, setSelectRole] = useState(0);
-    const [isEmployee, setIsEmployee] = useState<boolean | undefined>(undefined);
+
+
+function ManageRooms() {
+    const [rooms, setRooms] = useState<RoomsInterface[]>([])
+    const [floors, setFloors] = useState<FloorsInterface[]>([]);
+    const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([]);
+    const [roomStatus, setRoomStatus] = useState<RoomStatusInterface[]>([]);
+    const [selectRoomType, setSelectRoomType] = useState(0);
+    const [selectRoomStatus, setSelectRoomStatus] = useState(0);
+    const [selectFloor, setSelectFloors] = useState(0);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
@@ -42,39 +47,68 @@ function ManageUsers() {
             flex: 0.5,
         },
         {
-            field: 'EmployeeID',
-            headerName: 'รหัสพนักงาน',
+            field: 'RoomNumber',
+            headerName: 'เลขที่ห้อง',
             type: 'string',
             flex: 1,
-            valueGetter: (params: UserInterface) => params || '-',  // Default value if EmployeeID is missing
+            valueGetter: (params: RoomsInterface) => params || '-',  // Default value if EmployeeID is missing
         },
         {
-            field: 'UserNameCombined',
-            headerName: 'ผู้ใช้งาน',
-            sortable: false,
-            flex: 1.2,
-            valueGetter: (params: UserInterface) => params || '-', // ใช้ UserNameCombined จาก JSON
-        },
-        {
-            field: 'Email',
-            headerName: 'อีเมล',
+            field: 'RoomType',
+            headerName: 'ประเภทห้อง',
             type: 'string',
             flex: 1,
-            valueGetter: (params: UserInterface) => params || '-',
+            valueGetter: (params: RoomsInterface) => params || '-',
         },
         {
-            field: 'Role',
-            headerName: 'ตำแหน่ง',
-            type: 'string',
-            flex: 1.2,
-            valueGetter: (params: UserInterface) => params || '-',  // Default value if Role is missing
+            field: 'RoomStatus', // Field name from the data
+            headerName: 'สถานะห้อง', // Header for the column
+            sortable: false,  // Prevent sorting on this column
+            flex: 1.2,  // Make the column flexible
+            valueGetter: (params: RoomsInterface) => params.RoomStatus || '-', // Default value if RoomStatus is missing
+            renderCell: (params) => {
+                const statusName = params.row.RoomStatus || "Not Reserved";  // Default to "Not Reserved" if not found
+                const statusKey = params.row.RoomStatus as keyof typeof roomStatusConfig;
+                const { color, colorLite, icon } = roomStatusConfig[statusKey] ?? { 
+                    color: "#000", 
+                    colorLite: "#000", 
+                    icon: faCircleXmark 
+                };
+            
+                return (
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',  // Vertically center the content
+                        justifyContent: 'left', // Horizontally center the content
+                        height: '100%'  // Ensure the cell height is fully utilized
+                    }}>
+                        <Box sx={{
+                            bgcolor: colorLite,
+                            borderRadius: 10,
+                            px: 1.5,
+                            py: 0.5,
+                            display: 'flex',
+                            gap: 1,
+                            color: color,
+                            alignItems: 'center',
+                        }}>
+                            <FontAwesomeIcon icon={icon} />
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                {statusName}
+                            </Typography>
+                        </Box>
+                    </Box>
+                );
+            },
+            
         },
+        
         {
-            field: 'PackageName',
-            headerName: 'สิทธิพิเศษ',
+            field: 'Capacity',
+            headerName: 'ความจุห้อง (คน)',
             type: 'string',
             flex: 1.2,
-            valueGetter: (params: PackagesInterface) => params || '-',
+            valueGetter: (params: RoomsInterface) => params || '-',  // Default value if Role is missing
         },
         {
             field: 'assigned',
@@ -109,36 +143,27 @@ function ManageUsers() {
 
     ];
 
-    const handleClearFillter = () => {
-        window.location.reload();
-
-    }
-
     // ฟังก์ชันค้นหาข้อมูล
     const handleSearch = () => {
-        let filteredUsers = users;
-
+        let filteredRoom = rooms;
 
         // การกรองข้อมูลจากคำค้นหาผ่าน searchText
         if (searchText !== '') {
-            filteredUsers = filteredUsers.filter((user) =>
-                (user.UserNameCombined && user.UserNameCombined.toLowerCase().includes(searchText.toLowerCase())) ||
-                (user.EmployeeID && user.EmployeeID.toLowerCase().includes(searchText.toLowerCase())) ||
-                (user.Email && user.Email.toLowerCase().includes(searchText.toLowerCase()))
-            );
+            filteredRoom = filteredRoom.filter((room) =>
+                (room.RoomNumber && room.RoomNumber.toLowerCase().includes(searchText.toLowerCase())));
         }
 
         // การกรองข้อมูลตามตำแหน่ง (role) หากเลือกตำแหน่ง
-        if (selectrole !== 0) {
-            filteredUsers = filteredUsers.filter((user) => user.RoleID === selectrole);
+        if (selectFloor !== 0) {
+            filteredRoom = filteredRoom.filter((floor) => floor.FloorID === selectFloor);
         }
 
         // การกรองข้อมูลตามสิทธิพิเศษ (package) หากเลือกสิทธิพิเศษ
-        if (selectpackage !== 0) {
-            filteredUsers = filteredUsers.filter((user) => user.UserPackageID === selectpackage);
+        if (selectRoomType !== 0) {
+            filteredRoom = filteredRoom.filter((roomtype) => roomtype.RoomTypeID === selectRoomType);
         }
 
-        setUsers(filteredUsers);  // กำหนดผลลัพธ์ที่กรองแล้ว
+        setRooms(filteredRoom);  // กำหนดผลลัพธ์ที่กรองแล้ว
     };
 
     const handleOpenPopup = (userId: number) => {
@@ -147,35 +172,74 @@ function ManageUsers() {
     };
 
     useEffect(() => {
-        if (selectedUserId === null) {
+        Listrooms();  // ดึงข้อมูลผู้ใช้งานใหม่
+        if (rooms === null || []) {
             // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
-            getUsers();  // ดึงข้อมูลผู้ใช้งานใหม่
+            FecthFloors();  // ดึงข้อมูลชั้น
+            FecthRoomTypes();  // ดึงข้อมูลประเภทห้อง
+            FecthRoomStatus();  // ดึงข้อมูลสถานะห้อง
+
         }
     }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
 
+    const FecthFloors = async () => {
+        try {
+            const res = await GetFloors();  // ดึงข้อมูลชั้นจาก API
+            if (res) {
+                setFloors(res);  // กำหนดข้อมูลชั้นที่ดึงมา
+                console.log(res); // Log the fetched data
+            }
+        } catch (error) {
+            console.error("Error fetching floors:", error);
+        }
+    }
+    const FecthRoomTypes = async () => {
+        try {
+            const res = await GetRoomTypes();  // ดึงข้อมูลประเภทห้องจาก API
+            if (res) {
+                setRoomTypes(res);  // กำหนดข้อมูลประเภทห้องที่ดึงมา
+                console.log(res); // Log the fetched data
+            }
+        } catch (error) {
+            console.error("Error fetching room types:", error);
+        }
+    }
+    const FecthRoomStatus = async () => {
+        try {
+            const res = await GetRoomStatus();  // ดึงข้อมูลสถานะห้องจาก API
+            if (res) {
+                setRoomStatus(res);  // กำหนดข้อมูลสถานะห้องที่ดึงมา
+                console.log(res); // Log the fetched data
+            }
+        } catch (error) {
+            console.error("Error fetching room status:", error);
+        }
+    }
+
+
+
+
     const handleClosePopup = () => {
         setOpenPopup(false);
-        setSelectPackage(0);  // รีเซ็ต selectpackage เมื่อปิด pop-up
-        setSelectRole(0);  // รีเซ็ต selectrole เมื่อปิด pop-up
-        
         setSelectedUserId(null); // รีเซ็ต selectedUserId เมื่อปิด pop-up
         setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
         setPage(1);         // รีเซ็ตไปยังหน้าที่ 1
-
+        console.log(alerts); // Log message when popup is closed
     };
 
     // Fetch users from the API
-    const getUsers = async () => {
+    const Listrooms = async () => {
         try {
-            const res = await ListUsers({
-                roleID: selectrole,
-                packageID: selectpackage,
+            const res = await ListSetRooms({
+                floor: selectFloor,
+                roomType: selectRoomType,
                 page: page,
                 limit: limit,
-                isemployee: isEmployee,
+                roomStatus: selectRoomStatus,
             });  // Call the API to get users data
             if (res) {
-                setUsers(res.data);  // Set the fetched users to state
+                setRooms(res.data);  // Set the fetched users to state
+                console.log(res.data); // Log the fetched data
                 setTotal(res.total);  // Set the total number of users
             }
         } catch (error) {
@@ -183,27 +247,7 @@ function ManageUsers() {
         }
     };
 
-    const getPackages = async () => {
-        try {
-            const res = await ListPackages();  // Call the API to get users data
-            if (res) {
-                setPackages(res);  // Set the fetched users to state
-            }
-        } catch (error) {
-            console.error("Error fetching package:", error);
-        }
-    };
 
-    const getRoles = async () => {
-        try {
-            const res = await ListRoles();  // Call the API to get users data
-            if (res) {
-                setRoles(res);  // Set the fetched users to state
-            }
-        } catch (error) {
-            console.error("Error fetching role:", error);
-        }
-    };
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -214,14 +258,21 @@ function ManageUsers() {
     }, [searchText]);
 
     useEffect(() => {
-        getUsers();  // ดึงข้อมูลเมื่อหน้าโหลด
-        getPackages();
-        getRoles();
-    }, [selectrole, selectpackage, isEmployee, page, limit]);
+        Listrooms();  // Call the function to fetch users when the component mounts
+    }, [selectFloor, selectRoomStatus, selectRoomType, page, limit]);
 
     useEffect(() => {
         handleSearch();
     }, [debouncedSearchText]);
+
+    const handleClearFillter = () => {
+        setSelectRoomType(0);  // Reset the selected role to 0 (default value)
+        setSelectRoomStatus(0);  // Reset the selected package to 0 (default value)
+        setSelectFloors(0);  // Reset the selected floor to 0 (default value)
+        setSearchText('');  // Clear the search text
+        setPage(1);         // Reset to page 1
+        Listrooms();  // Call the function to fetch users when the component mounts
+    }
 
 
     return (
@@ -245,21 +296,12 @@ function ManageUsers() {
 
             <Grid2 container spacing={3}>
                 <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
+                    <Typography variant="h6" className="title">จัดการห้อง</Typography>
                 </Grid2>
-
-                {selectedUserId !== null && (
-                    <EditUserPopup
-                        userId={selectedUserId}
-                        open={openPopup}
-                        onClose={handleClosePopup}
-
-                    />
-                )}
 
 
                 <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
-                    {/* Filters Section */}
+
                     <Grid2 container
                         spacing={2}
                         className='filter-section'
@@ -270,19 +312,18 @@ function ManageUsers() {
                                 fullWidth
                                 className="search-box"
                                 variant="outlined"
-                                placeholder="ค้นหา (รหัสพนักงาน หรือ ชื่อผู้ใช้งาน หรือ อีเมล)"
+                                placeholder="ค้นหา (เลขที่ห้อง)"
                                 margin="none"
                                 value={searchText}
                                 onChange={(e) => {
                                     setSearchText(e.target.value);  // set ค่าของ searchText
-                                    handleSearch();  // เรียกฟังก์ชันค้นหา
+                                    //handleSearch();  // เรียกฟังก์ชันค้นหา
                                 }}
                                 slotProps={{
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
                                                 <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
-
                                             </InputAdornment>
                                         ),
                                     }
@@ -293,23 +334,23 @@ function ManageUsers() {
                         <Grid2 size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
-                                    value={selectrole}
+                                    value={selectFloor}
                                     onChange={(e) => {
-                                        setSelectRole(Number(e.target.value));  // อัปเดต selectrole
+                                        setSelectFloors(Number(e.target.value));  // อัปเดต selectrole
                                         handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
                                     }}
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faAddressBook} size="xl" />
+                                            <FontAwesomeIcon icon={faLayerGroup} size="xl" />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกตำแหน่ง'}</MenuItem>
+                                    <MenuItem value={0}>{'ทุกชั้น'}</MenuItem>
                                     {
-                                        roles.length > 0 ? roles.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}>{item.Name}</MenuItem>
+                                        floors.length > 0 ? floors.map((item, index) => (
+                                            <MenuItem key={index} value={item.ID}>{item.ID}</MenuItem>
                                         )) : null
                                     }
                                 </Select>
@@ -319,52 +360,51 @@ function ManageUsers() {
                         <Grid2 size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
-                                    value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
+                                    value={selectRoomType}
                                     onChange={(e) => {
-                                        // แปลงค่า value เป็น boolean หรือ undefined
-                                        setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
+                                        setSelectRoomType(Number(e.target.value));  // อัปเดต selectrole
                                         handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
                                     }}
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faUserTie} size="xl" />
+                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value="undefined">{'ไม่เลือก'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
-                                    <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
-                                    <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
+                                    <MenuItem value={0}>{'ทุกประเภท'}</MenuItem>
+                                    {
+                                        roomTypes.length > 0 ? roomTypes.map((item, index) => (
+                                            <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
+                                        )) : null
+                                    }
                                 </Select>
                             </FormControl>
                         </Grid2>
 
- 
-
-
-
+                        
 
                         <Grid2 size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
-                                    value={selectpackage}
+                                    value={selectRoomStatus}
                                     onChange={(e) => {
-                                        setSelectPackage(Number(e.target.value));  // อัปเดต selectpackage
+                                        setSelectRoomStatus(Number(e.target.value));  // อัปเดต selectrole
                                         handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
                                     }}
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faAward} size="xl" />
+                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกสิทธิพิเศษ'}</MenuItem>
+                                    <MenuItem value={0}>{'ทุกสถานะ'}</MenuItem>
                                     {
-                                        packages.length > 0 ? packages.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}>{item.PackageName}</MenuItem>
+                                        roomStatus.length > 0 ? roomStatus.map((item, index) => (
+                                            <MenuItem key={index} value={item.ID}>{item.StatusName}</MenuItem>
                                         )) : null
                                     }
                                 </Select>
@@ -372,21 +412,21 @@ function ManageUsers() {
                         </Grid2>
 
                         <Grid2 size={{ xs: 10, md: 1 }}>
-                            <Button onClick={handleClearFillter}
-                                sx={{
-                                    minWidth: 0,
-                                    width: '100%',
-                                    height: '45px',
-                                    borderRadius: '10px',
-                                    border: '1px solid rgb(109, 110, 112, 0.4)',
-                                    "&:hover": {
-                                        boxShadow: 'none',
-                                        borderColor: 'primary.main',
-                                        backgroundColor: 'transparent'
-                                    },
-                                }}
-                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                        </Grid2>
+                                                <Button onClick={handleClearFillter}
+                                                    sx={{
+                                                        minWidth: 0,
+                                                        width: '100%',
+                                                        height: '45px',
+                                                        borderRadius: '10px',
+                                                        border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                        "&:hover": {
+                                                            boxShadow: 'none',
+                                                            borderColor: 'primary.main',
+                                                            backgroundColor: 'transparent'
+                                                        },
+                                                    }}
+                                                ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                                            </Grid2>
 
                     </Grid2>
                 </Grid2>
@@ -394,7 +434,7 @@ function ManageUsers() {
                 <Grid2 size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
                         <DataGrid
-                            rows={users}  // Use the users data fetched from the API
+                            rows={rooms}  // Use the users data fetched from the API
                             columns={columns}  // Columns to display in the data grid
                             pageSizeOptions={[5, 10, 20]}  // Options for page size
                             getRowId={(row) => String(row.ID)}  // Set the row ID to be the unique 'ID' value
@@ -441,17 +481,11 @@ function ManageUsers() {
                 </Grid2>
 
                 {/* Pop-up */}
-                {selectedUserId !== null && (
-                    <EditUserPopup
-                        userId={selectedUserId}
-                        open={openPopup}
-                        onClose={handleClosePopup}
-                    />
-                )}
+
 
             </Grid2>
         </div>
     );
 }
 
-export default ManageUsers;
+export default ManageRooms;

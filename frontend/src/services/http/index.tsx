@@ -90,6 +90,9 @@ async function ListUsers(data: QuarryInterface) {
     if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
     params.append("page", String(data.page));  // แปลง page เป็น string
     params.append("limit", String(data.limit));  // แปลง limit เป็น string
+    if (data.isemployee!== undefined) {
+        params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
+    }
 
     const requestOptions = {
         method: "GET",
@@ -124,8 +127,10 @@ async function CreateUser(data: any) {
     formData.append("email", data.Email || "");
     formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
-    formData.append("role_id", data.RoleID.toString());
+    formData.append("role_id", (data.RoleID ?? 1).toString());
     formData.append("employee_id", data.EmployeeID || "");
+    formData.append("is_employee", data.IsEmployee || "");
+
 
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
@@ -140,10 +145,13 @@ async function CreateUser(data: any) {
         },
     };
 
+    
+
 
         
     try {
         // Send FormData with requestOptions
+        
         const response = await axios.post(`${apiUrl}/create-user`, formData, requestOptions);
 
         // Handle the response and return a custom object
@@ -353,6 +361,28 @@ async function GetRoomTypes() {
     };
 
     let res = await fetch(`${apiUrl}/room-types`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+// RoomTypes
+async function GetRoomStatus() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-status`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -867,6 +897,42 @@ async function CreateInspection(data: InspectionsInterface) {
     return res;
 }
 
+async function ListSetRooms(data: QuarryInterface) {
+    // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
+    const params = new URLSearchParams();
+
+    // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
+    if (data.floor && data.floor > 0) params.append("floor", String(data.floor));  // กรองตาม floor
+    if (data.roomType && data.roomType > 0) params.append("room_type", String(data.roomType));  // กรองตาม room_type
+    if (data.roomStatus && data.roomStatus > 0) params.append("room_status", String(data.roomStatus));  // กรองตาม room_status
+    params.append("page", String(data.page));  // แปลง page เป็น string
+    params.append("limit", String(data.limit));  // แปลง limit เป็น string
+
+    // ถ้า isEmployee มีค่า (true/false) ให้เพิ่มลงใน query string
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,  // การส่ง token เพื่อให้สิทธิการเข้าถึง
+        },
+    };
+
+    // ใช้ fetch กับ URL ที่ประกอบไปด้วย query parameters
+    let res = await fetch(`${apiUrl}/listset-room?${params.toString()}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json();  // ถ้าสถานะเป็น 200 OK ให้ return ข้อมูล JSON
+            } else {
+                return false;  // ถ้ามีข้อผิดพลาดใน API
+            }
+        });
+
+    return res;
+}
+
+
+
 
 export {
     // RequestStatuses
@@ -891,6 +957,9 @@ export {
 
     // RoomTypes
     GetRoomTypes,
+
+    // RoomStatus
+    GetRoomStatus,
 
     // Floors
     GetFloors,
@@ -936,6 +1005,9 @@ export {
 
     // Inspections
     CreateInspection,
+  
+    ListSetRooms,
+
 }
 
 

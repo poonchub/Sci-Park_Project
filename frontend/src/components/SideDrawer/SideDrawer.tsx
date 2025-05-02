@@ -11,6 +11,7 @@ import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
+import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import { JSX } from 'react';
 
 // Icons for each drawer item
@@ -23,6 +24,7 @@ const ICON_MAP: Record<string, JSX.Element> = {
 	'/manage-user': <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/add-user': <AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/booking-room': <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/manage-room': <AddBusinessIcon  sx={{ color: 'text.secondary' }} />,
 };
 
 // Props interface for the SideDrawer component

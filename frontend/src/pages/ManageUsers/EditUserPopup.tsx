@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';   
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import {
   Typography,
   Dialog,
@@ -50,6 +50,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
+  const [isemployee, setIsEmployee] = useState<boolean | undefined>(undefined);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
 
   useEffect(() => {
@@ -67,10 +68,15 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('GenderID', userData.GenderID);
           setValue('RoleID', userData.RoleID);
           setValue('UserPackageID', userData.UserPackageID);
+          setIsEmployee(userData.IsEmployee);
+
+
         }
         setSelectedRole(user?.RoleID ?? null);
         setSelectedGender(user?.GenderID ?? null);
         setSelectedPackage(user?.UserPackageID ?? null);
+
+
 
         const [roleData, genderData, packageData] = await Promise.all([
           ListRoles(),
@@ -102,6 +108,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       Email: data.Email,
       Phone: data.Phone,
       CompanyName: data.CompanyName,
+      BusinessDetail: data.BusinessDetail,
       EmployeeID: data.EmployeeID,
       GenderID: Number(selectedGender),
       RoleID: Number(selectedRole),
@@ -167,7 +174,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                 <Controller
                   name="FirstName"
                   control={control}
-                  defaultValue={user.FirstName}
+                  defaultValue={user.FirstName || ''}
                   rules={{ required: 'กรุณากรอกชื่อ (ไม่มีคำนำหน้า)' }}
                   render={({ field }) => (
                     <TextField
@@ -185,14 +192,14 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                 <Controller
                   name="LastName"
                   control={control}
-                  defaultValue={user.LastName}
+                  defaultValue={user.LastName || ''}
                   rules={{ required: 'กรุณากรอกนามสกุล' }}
                   render={({ field }) => (
                     <TextField
                       {...field}
                       fullWidth
                       error={!!errors.LastName}
-                      helperText={String(errors.LastName?.message) || ''}
+                      helperText={String('กรุณากรอกนามสกุล') || ''}
                     />
                   )}
                 />
@@ -222,29 +229,34 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
-                <Controller
-                  name="EmployeeID"
-                  control={control}
-                  defaultValue={user.EmployeeID}
-                  rules={{
-                    required: 'กรุณากรอกรหัสพนักงาน',
-                    pattern: {
-                      value: /^[0-9]{6}$/, 
-                      message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง มีตัวเลข 6 ตัว'
-                    }
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      error={!!errors.EmployeeID}
-                      helperText={String(errors.EmployeeID?.message) || ''}
+
+              {isemployee === true && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
+                    <Controller
+                      name="EmployeeID"
+                      control={control}
+                      defaultValue={user.EmployeeID}
+                      rules={{
+                        required: 'กรุณากรอกรหัสพนักงาน',
+                        pattern: {
+                          value: /^[0-9]{6}$/,
+                          message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง มีตัวเลข 6 ตัว'
+                        }
+                      }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          error={!!errors.EmployeeID}
+                          helperText={String(errors.EmployeeID?.message) || ''}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
+                  </Grid>
+                </>
+              )}
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
@@ -263,7 +275,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     <TextField
                       {...field}
                       fullWidth
-                      margin="normal"
+
                       error={!!errors.Phone}
                       helperText={String(errors.Phone?.message) || ''}
                     />
@@ -271,19 +283,51 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
-                <TextField
-                  name="CompanyName"
-                  value={user.CompanyName}
-                  onChange={handleChange}
-                  fullWidth
-                  margin="normal"
-                />
-              </Grid>
+              {isemployee === false && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
+                    <Controller
+                      name="CompanyName"
+                      control={control}
+                      defaultValue={user.CompanyName || ''}  // ตั้งค่า defaultValue เป็นชื่อบริษัท
+                      rules={{ required: 'กรุณากรอกชื่อบริษัท' }} // เพิ่มข้อกำหนดให้กรอกชื่อบริษัท
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          error={!!errors.CompanyName}
+                          helperText={String(errors.CompanyName?.message) || 'กรุณากรอกชื่อบริษัท'}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
+                    <Controller
+                      name="BusinessDetail"
+                      control={control}
+                      defaultValue={user.BusinessDetail || ''} // ตั้งค่า defaultValue เป็นคำอธิบายธุรกิจ
+                      rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }} // เพิ่มข้อกำหนดให้กรอกคำอธิบายธุรกิจ
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          error={!!errors.BusinessDetail}  // ใช้ errors จาก react-hook-form เพื่อตรวจสอบข้อผิดพลาด
+                          helperText={String(errors.BusinessDetail?.message) || 'กรุณากรอกคำอธิบายธุรกิจ'}  // ข้อความช่วยเหลือ
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                </>
+              )}
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth margin="normal" error={!!errors.GenderID}>
+                <FormControl fullWidth error={!!errors.GenderID}>
                   <Typography variant="body1" className="title-field">เพศ</Typography>
                   <Select
                     labelId="gender-label"
@@ -298,34 +342,39 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     {genders.map((gender) => (
                       <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
                     ))}
+
                   </Select>
                   {errors.GenderID && <FormHelperText>{String(errors.GenderID.message)}</FormHelperText>}
                 </FormControl>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth margin="normal" error={!!errors.RoleID}>
-                  <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
-                  <Select
-                    labelId="role-label"
-                    name="RoleID"
-                    value={selectedRole ?? user.RoleID} 
-                    onChange={(e) => setSelectedRole(Number(e.target.value))}
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      <em>-- กรุณาเลือก ตำแหน่ง --</em>
-                    </MenuItem>
-                    {roles.map((role) => (
-                      <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
-                    ))}
-                  </Select>
-                  {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
-                </FormControl>
-              </Grid>
+              {isemployee === true && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth error={!!errors.RoleID}>
+                      <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                      <Select
+                        labelId="role-label"
+                        name="RoleID"
+                        value={selectedRole ?? user.RoleID}
+                        onChange={(e) => setSelectedRole(Number(e.target.value))}
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <em>-- กรุณาเลือก ตำแหน่ง --</em>
+                        </MenuItem>
+                        {roles.map((role) => (
+                          <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
+                        ))}
+                      </Select>
+                      {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
+                    </FormControl>
+                  </Grid>
+                </>
+              )}
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth >
                   <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
                   <Select
                     labelId="package-label"

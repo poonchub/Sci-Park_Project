@@ -28,6 +28,20 @@ func CreateUser(c *gin.Context) {
 	user.Phone = c.PostForm("phone")
 	user.EmployeeID = c.PostForm("employee_id")
 
+
+	isEmployeeStr := c.PostForm("is_employee")
+
+
+	if isEmployeeStr == "true" {
+		user.IsEmployee = true
+	} else if isEmployeeStr == "false" {
+		user.IsEmployee = false
+	} else {
+		// กำหนดค่าเริ่มต้นหรือจับกรณีผิดพลาด (เช่น ไม่มีการเลือก)
+		user.IsEmployee = false  // หรือ true ตามกรณี
+	}
+
+
 	// Default UserPackageID to 1 if not provided
 	packageIDStr := c.PostForm("package_id")
 	if packageIDStr == "" {
@@ -90,8 +104,7 @@ func CreateUser(c *gin.Context) {
 	}
 	user.Password = string(hashedPassword)
 
-	// รับไฟล์ภาพโปรไฟล์จาก form-data (ไฟล์เป็น optional)
-	var filePath string
+
 	file, err := c.FormFile("profile_image") // 'profile_image' คือชื่อฟิลด์ในฟอร์ม
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
@@ -108,7 +121,9 @@ func CreateUser(c *gin.Context) {
 
     	// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
     	filePath := path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
-		
+		if filePath != "" {
+			user.ProfilePath = filePath
+		}
 
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -118,9 +133,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// ตั้งค่า path ของไฟล์ที่บันทึก (ถ้ามี)
-	if filePath != "" {
-		user.ProfilePath = filePath
-	}
+	
 
 	// บันทึกข้อมูลผู้ใช้ใหม่ในฐานข้อมูล
 	if err := config.DB().Create(&user).Error; err != nil {
@@ -249,6 +262,18 @@ func ListUsers(c *gin.Context) {
     page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
     limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
+    // รับค่า IsEmployee (true หรือ false) จาก Query Parameters
+    isEmployeeStr := c.DefaultQuery("isemployee", "") // ถ้าไม่มีค่า จะเป็นค่าว่าง
+    var isEmployee *bool // ใช้ pointer เพื่อให้ค่าเป็น nil ถ้าไม่ได้รับค่า
+
+    if isEmployeeStr != "" {
+        // ถ้าได้รับค่า 'true' หรือ 'false' มา ให้แปลงเป็น boolean
+        isEmployeeBool, err := strconv.ParseBool(isEmployeeStr)
+        if err == nil {
+            isEmployee = &isEmployeeBool
+        }
+    }
+
     // ตรวจสอบค่าที่ส่งมา
     if page < 1 {
         page = 1
@@ -267,19 +292,23 @@ func ListUsers(c *gin.Context) {
     }
 
     if packageID > 0 {
-        // ใช้ Joins เพื่อค้นหาจาก UserPackage แทนที่จะใช้ user_package_id ใน User
         db = db.Joins("JOIN user_packages ON user_packages.user_id = users.id").
             Where("user_packages.package_id = ?", packageID)
     }
 
-		// ดึงข้อมูลผู้ใช้จากฐานข้อมูล
-	query := db.Preload("UserPackages").Preload("UserPackages.Package").Preload("Role")
+    // การกรองตาม IsEmployee (ถ้ามีค่า)
+    if isEmployee != nil {
+        db = db.Where("is_employee = ?", *isEmployee)
+    }
 
-	// แก้ไขการ ORDER โดยใช้ `users.created_at` เพื่อระบุคอลัมน์ที่มาจากตาราง `users`
-	if err := query.Order("users.created_at DESC").Limit(limit).Offset(offset).Find(&users).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
-		return
-	}
+    // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
+    query := db.Preload("UserPackages").Preload("UserPackages.Package").Preload("Role")
+
+    // แก้ไขการ ORDER โดยใช้ `users.created_at` เพื่อระบุคอลัมน์ที่มาจากตาราง `users`
+    if err := query.Order("users.created_at DESC").Limit(limit).Offset(offset).Find(&users).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+        return
+    }
 
     // คำนวณจำนวนทั้งหมดแยกออกจาก Query หลัก
     var total int64
@@ -292,6 +321,10 @@ func ListUsers(c *gin.Context) {
     if packageID > 0 {
         countQuery = countQuery.Joins("JOIN user_packages ON user_packages.user_id = users.id").
             Where("user_packages.package_id = ?", packageID)
+    }
+
+    if isEmployee != nil {
+        countQuery = countQuery.Where("is_employee = ?", *isEmployee)
     }
 
     countQuery.Count(&total)
@@ -313,6 +346,7 @@ func ListUsers(c *gin.Context) {
             "UserPackageID":  user.UserPackageID,
             "RoleID":         user.RoleID,
             "Role":           user.Role.Name,
+            "IsEmployee":     user.IsEmployee,
             "EmployeeID":     user.EmployeeID,
             "UserNameCombined": user.FirstName + " " + user.LastName,
         }
@@ -334,6 +368,7 @@ func ListUsers(c *gin.Context) {
         "totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
     })
 }
+
 
 
 // รับข้อมูลจาก form-data
@@ -409,21 +444,49 @@ func UpdateUserByID(c *gin.Context) {
 	}
 
 
-    // หากมีการเปลี่ยนแปลง PackageID, อัปเดต UserPackage
-    if updateUserData.PackageID != 0 {
-        var userPackage entity.UserPackage
-        if err := config.DB().Where("user_id = ?", user.ID).First(&userPackage).Error; err != nil {
-            c.JSON(http.StatusNotFound, gin.H{"error": "UserPackage not found"})
-            return
+
+    // หากมีการเปลี่ยนแปลง PackageID, อัปเดต UserPackage หรือสร้างใหม่ถ้าไม่มี
+if updateUserData.PackageID != 0 {
+    var userPackage entity.UserPackage
+    err := config.DB().Where("user_id = ?", user.ID).First(&userPackage).Error
+
+    // หากไม่พบ UserPackage ที่มีอยู่, สร้าง UserPackage ใหม่
+    if err != nil {
+        // สร้าง UserPackage ใหม่
+        userPackage = entity.UserPackage{
+            UserID:    &user.ID,          // เชื่อมโยงกับ User
+            PackageID: updateUserData.PackageID, // เชื่อมโยงกับ Package ที่ได้รับจากฟอร์ม
         }
 
-        // อัปเดต PackageID ใน UserPackage
+        // บันทึกข้อมูล UserPackage ใหม่
+        if err := config.DB().Create(&userPackage).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user package"})
+            return
+        }
+    } else {
+        // ถ้ามี UserPackage อยู่แล้ว, อัปเดต PackageID
         userPackage.PackageID = updateUserData.PackageID
         if err := config.DB().Save(&userPackage).Error; err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user package"})
             return
         }
     }
+
+    // อัปเดต User ด้วย UserPackageID ที่ถูกเชื่อมโยง
+    user.UserPackageID = &userPackage.ID
+}
+
+// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล
+if err := config.DB().Save(&user).Error; err != nil {
+    c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+    return
+}
+
+c.JSON(http.StatusOK, gin.H{
+    "message": "User updated successfully",
+    "data": user,
+})
+
 
 		// หากมีการเปลี่ยนแปลงโปรไฟล์, ลบไฟล์โปรไฟล์เก่า
 	if updateUserData.ProfileCheck != "" {

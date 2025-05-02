@@ -61,9 +61,11 @@ export default function AppBarMenu({
 
 				{/* Logo */}
 				<Box>
-					<img src="/images/logo.png" alt="logo" style={{ height: '30px' }} />
-				</Box>
-
+					<img src="/images/RSP2.png" alt="logo" style={{ height: '30px' }} />
+					
+				</Box> <h4>&nbsp;RSP Northeast 2</h4>
+			
+				{/* Title */}
 				{/* Navigation buttons for each section */}
 				<Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex', gap: '10px', justifyContent: 'center' } }}>
 					{sections.map((page) => {

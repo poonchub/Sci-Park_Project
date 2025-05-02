@@ -86,6 +86,8 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             name: 'งานของฉัน',
             roles: ['Operator']
         },
+    ],
+    manageuser: [
         {
             path: '/manage-user',
             name: 'จัดการผู้ใช้งาน',
@@ -97,17 +99,13 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             roles: ['Manager', 'Admin']
         },
     ],
-    manageuser: [
+    manageroom: [
         {
-            path: '/manage-user',
+            path: '/manage-room',
             name: 'จัดการผู้ใช้งาน',
             roles: ['Admin']
         },
-        {
-            path: '/add-user',
-            name: 'เพิ่มผู้ใช้',
-            roles: ['Admin']
-        },
+        
     ]
 };
 
@@ -128,13 +126,20 @@ export const getCurrentSectionKey = (pathname: string): string => {
         '/assign-work': 'maintenance',
         '/accept-work': 'maintenance',
         '/check-requests': 'maintenance',
-        '/manage-user': 'maintenance',
-        '/add-user': 'maintenance',
         '/outsider-maintenance-request': 'maintenance',
         '/test-popup': 'maintenance',
 
         // Booking
         '/booking-room': 'booking',
+
+        // User Management
+        '/manage-user': 'manageuser',
+        '/add-user': 'manageuser',
+
+        // Room Management
+        '/manage-room': 'manageroom',
+
+
     };
 
     return map[Object.keys(map).find(key => pathname.startsWith(key)) || ''] || 'home'; // Return the section key

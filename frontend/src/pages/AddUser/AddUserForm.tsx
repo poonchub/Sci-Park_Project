@@ -76,9 +76,9 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
     const formData = {
       ...data,
       Profile_Image: file,  // Adding the profile image data to the form data
-      ...(userType === "external" && { RoleID: 2 }) // Conditionally add RoleID if userType is "external"
-    };
+      IsEmployee: userType === "internal" ? "true" : "false",  // Set IsEmployee based on userType
 
+    };
 
     // Call CreateUser function to send data
 
@@ -91,6 +91,10 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
           ...prevAlerts,
           { type: 'success', message: response.message },
         ]);
+
+        reset(); // Reset form data to initial state
+        setFile(null);  // Reset file state
+        setProfileImage(null);  // Reset profile image state
       } else {
         setAlerts((prevAlerts) => [
           ...prevAlerts,
@@ -171,7 +175,13 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                   row
                   name="userType"
                   value={userType}
-                  onChange={(e) => setUserType(e.target.value)} // Set the value of the selected radio button
+                  onChange={(e) => {
+                    setUserType(e.target.value);  // Set the value of the selected radio button
+                    reset();  // Reset form data to initial state
+                    setFile(null);  // Reset file state
+                    setProfileImage(null);  // Reset profile image state
+                    console.log("User Type:::", userType);
+                  }}
                 >
                   <FormControlLabel
                     value="internal"
@@ -186,6 +196,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 </RadioGroup>
               </FormControl>
             </Grid>
+
 
 
             {/* Profile Image and Button */}
@@ -332,7 +343,8 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                     name="Phone"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกหมายเลขโทรศัพท์' ,
+                    rules={{
+                      required: 'กรุณากรอกหมายเลขโทรศัพท์',
                       pattern: {
                         value: /^0[0-9]{9}$/,  // เริ่มต้นด้วย 0 และตามด้วยตัวเลข 9 ตัว
                         message: 'หมายเลขโทรศัพท์ต้องเริ่มต้นด้วย 0 และมีทั้งหมด 10 หลัก'
@@ -440,7 +452,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 <Controller
                   name="RoleID"
                   control={control}
-                  defaultValue={2}
+                  defaultValue={1}
 
                   rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
                   render={({ field }) => (
@@ -486,7 +498,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 )}
               />
             </Grid>
-              }
+            }
 
 
             {/* Package Dropdown */}
@@ -513,8 +525,8 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
 
             {/* Submit Button */}
             <Grid size={{ xs: 12 }} className="submit-button-container">
-                            {/* ปุ่ม Reset */}
-                            <Button
+              {/* ปุ่ม Reset */}
+              <Button
                 type="reset"
                 variant="outlined"
                 color="secondary"
@@ -527,7 +539,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
                 เพิ่มผู้ใช้งาน
               </Button>
 
-              
+
             </Grid>
 
           </Grid>

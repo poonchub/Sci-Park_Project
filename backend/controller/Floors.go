@@ -10,11 +10,25 @@ import (
 
 // GET /floors
 func ListFloors(c *gin.Context) {
-	var floor []entity.Floor
+    var floors []entity.Floor
 
-	db := config.DB()
+    db := config.DB()
 
-	db.Find(&floor)
+    // ดึงข้อมูลจากฐานข้อมูล
+    if err := db.Find(&floors).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch floors"})
+        return
+    }
 
-	c.JSON(http.StatusOK, &floor)
+    // สร้างแผนที่ข้อมูลที่ต้องการส่งกลับ (แค่ ID และ Number)
+    var result []map[string]interface{}
+    for _, floor := range floors {
+        result = append(result, map[string]interface{}{
+            "ID":     floor.ID,
+            "Number": floor.Number,
+        })
+    }
+
+    // ส่งผลลัพธ์กลับในรูปแบบ JSON
+    c.JSON(http.StatusOK, result)
 }
