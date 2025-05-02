@@ -34,7 +34,20 @@ func GetMaintenanceRequestByID(c *gin.Context) {
 	var request entity.MaintenanceRequest
 
 	db := config.DB()
-	results := db.Preload("User").Preload("Room.Floor").Preload(("Room.RoomType")).Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Preload("ManagerApproval.User").Preload("MaintenanceTask.User").Preload("MaintenanceTask.HandoverImages").Preload("MaintenanceTask.RequestStatus").Preload("MaintenanceImages").First(&request, ID)
+	results := db.
+		Preload("User").
+		Preload("Room.Floor").
+		Preload("Room.RoomType").
+		Preload("RequestStatus").
+		Preload("Area").
+		Preload("MaintenanceType").
+		Preload("ManagerApproval.User").
+		Preload("MaintenanceTask.User").
+		Preload("MaintenanceTask.HandoverImages").
+		Preload("MaintenanceTask.RequestStatus").
+		Preload("MaintenanceImages").
+		Preload("Inspection.User").
+		First(&request, ID)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
@@ -64,6 +77,7 @@ func GetMaintenanceRequestByUserID(c *gin.Context) {
 		Preload("MaintenanceTask.HandoverImages").
 		Preload("MaintenanceTask.RequestStatus").
 		Preload("MaintenanceImages").
+		Preload("Inspection").
 		Where("user_id = ?", userID).
 		Find(&requests)
 
@@ -103,7 +117,7 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		return
 	}
 
-	var RequestStatusID = 1
+	var RequestStatusID = 2
 	var status entity.RequestStatus
 	if err := db.First(&status, RequestStatusID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "request status not found"})
@@ -203,8 +217,14 @@ func GetMaintenanceRequestsForUser(c *gin.Context) {
 	page, limit, offset := getPagination(c)
 	var maintenanceRequests []entity.MaintenanceRequest
 
-	if err := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").
-		Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Order("maintenance_requests.created_at DESC").
+	if err := db.
+		Preload("User").
+		Preload("Room.Floor").
+		Preload("Room.RoomType").
+		Preload("RequestStatus").
+		Preload("Area").
+		Preload("MaintenanceType").
+		Order("maintenance_requests.created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&maintenanceRequests).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
@@ -236,8 +256,14 @@ func GetMaintenanceRequestsForAdmin(c *gin.Context) {
 	page, limit, offset := getPagination(c)
 	var maintenanceRequests []entity.MaintenanceRequest
 
-	if err := db.Preload("User").Preload("Room.Floor").Preload("Room.RoomType").
-		Preload("RequestStatus").Preload("Area").Preload("MaintenanceType").Order("maintenance_requests.created_at DESC").
+	if err := db.
+		Preload("User").
+		Preload("Room.Floor").
+		Preload("Room.RoomType").
+		Preload("RequestStatus").
+		Preload("Area").
+		Preload("MaintenanceType").
+		Order("maintenance_requests.created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&maintenanceRequests).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})

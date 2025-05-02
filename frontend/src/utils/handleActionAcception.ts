@@ -10,23 +10,27 @@ interface Alert {
 interface handleActionAcceptionProps {
     selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-    refreshPendingTaskData: () => void;
-    refreshInProgressTaskData: () => void;
+    refreshMaintenanceData?: () => void;
+    refreshPendingTaskData?: () => void;
+    refreshInProgressTaskData?: () => void;
     setOpenConfirmAccepted: (v: boolean) => void;
     setOpenConfirmCancelled: (v: boolean) => void;
+    note?: string;
 }
 
 const handleActionAcception = async (
     statusID: number,
-    message: string,
     {
         selectedTask,
         setAlerts,
+        refreshMaintenanceData,
         refreshPendingTaskData,
         refreshInProgressTaskData,
         setOpenConfirmAccepted,
         setOpenConfirmCancelled,
-    }: handleActionAcceptionProps
+        actionType,
+        note
+    }: handleActionAcceptionProps & { actionType: "accept" | "cancel" }
 ) => {
     if (!selectedTask) {
         setAlerts((prev) => [...prev, { type: "error", message: "Invalid data" }]);
@@ -35,7 +39,8 @@ const handleActionAcception = async (
 
     try {
         const task: MaintenanceTasksInterface = {
-            RequestStatusID: statusID
+            RequestStatusID: statusID,
+            Description: note || "",
         };
 
         const request: MaintenanceRequestsInterface = {
@@ -46,15 +51,25 @@ const handleActionAcception = async (
         if (!resTask || resTask.error)
             throw new Error(resTask?.error || "Failed to update maintenance task");
 
-        const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.MaintenanceRequest?.ID);
+        const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status");
 
-        setAlerts((prev) => [...prev, { type: "success", message }]);
-
         setTimeout(() => {
-            refreshPendingTaskData();
-            refreshInProgressTaskData();
+            setAlerts((prev) => [
+                ...prev,
+                { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" }
+            ]);
+
+            if (refreshPendingTaskData && refreshInProgressTaskData) {
+                refreshPendingTaskData();
+                refreshInProgressTaskData();
+            }
+
+            if (refreshMaintenanceData){
+                refreshMaintenanceData();
+            }
+
             setOpenConfirmAccepted(false);
             setOpenConfirmCancelled(false);
         }, 500);

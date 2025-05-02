@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Grid2, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faPaperPlane, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import './CheckRequest.css';
 
-import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses } from "../../services/http";
+import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, UpdateMaintenanceRequestByID } from "../../services/http";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { UserInterface } from "../../interfaces/IUser";
@@ -24,9 +24,13 @@ import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
-import { isOperator } from "../../routes";
+import { isAdmin, isManager, isOperator } from "../../routes";
 import handleActionApproval from "../../utils/handleActionApproval";
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup";
+import handleActionAcception from "../../utils/handleActionAcception";
+import handleActionInspection from "../../utils/handleActionInspection";
+import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
+import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 
 function CheckRequest() {
 	// Request data
@@ -40,19 +44,54 @@ function CheckRequest() {
 	// UI state
 	const [selectedOperator, setSelectedOperator] = useState(0);
 	const [openPopupApproved, setOpenPopupApproved] = useState(false)
-    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+	const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
 	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
-	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+	const [openConfirmCancelledFromOwnRequest, setOpenConfirmCancelledFromOwnRequest] = useState<boolean>(false);
+	const [openConfirmCancelledFromManager, setOpenConfirmCancelledFromManager] = useState<boolean>(false);
+	const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
+	const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
 
-	const [files, setFiles] = useState<File[]>([]);
+	const [requestfiles, setRequestFiles] = useState<File[]>([]);
+	const [submitfiles, setSubmitFiles] = useState<File[]>([]);
 	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
 	const navigate = useNavigate();
 
-	const isAssigned = maintenanceRequest?.RequestStatus?.Name === 'Assigned'
-	const isInProgress = maintenanceRequest?.RequestStatus?.Name === 'In Progress'
-	const isCompleted = maintenanceRequest?.RequestStatus?.Name === 'Completed'
+	// Extract info for cards
+	const managerApproval = maintenanceRequest?.ManagerApproval;
+	const maintenanceTask = maintenanceRequest?.MaintenanceTask;
+	const maintenanceImages = maintenanceRequest?.MaintenanceImages;
+	const taskImages = maintenanceTask?.HandoverImages;
+
+	const managerName = managerApproval
+		? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
+		: null;
+
+	const operatorName = maintenanceTask
+		? `${maintenanceTask.User?.FirstName} ${maintenanceTask.User?.LastName}`
+		: null;
+
+	const approvalTime = managerApproval?.CreatedAt
+		? dateFormat(managerApproval.CreatedAt)
+		: null;
+
+	const assignTime = maintenanceTask?.CreatedAt
+		? dateFormat(maintenanceTask.CreatedAt)
+		: null;
+
+	const userID = Number(localStorage.getItem("userId"))
+	const isOwnRequest = maintenanceRequest?.UserID === userID
+	const isOwnTask = maintenanceTask?.UserID === userID
+
+	const RequestStatus = maintenanceRequest?.RequestStatus?.Name
+	const isPending = RequestStatus === 'Pending'
+	const isApproved = RequestStatus === 'Approved'
+	const isInProgress = RequestStatus === 'In Progress'
+	const isWaitingForReview = RequestStatus === 'Waiting For Review'
+	const isRework = RequestStatus === 'Rework Requested'
+
+	const isNotApproved = maintenanceRequest?.ManagerApproval === null
 
 	// Fetch request by ID
 	const getMaintenanceRequest = async () => {
@@ -103,32 +142,104 @@ function CheckRequest() {
 			return;
 		}
 
-		handleSubmitWork({
+		const statusID = requestStatuses?.find(item => item.Name === "Waiting For Review")?.ID || 0;
+		handleSubmitWork(
+			statusID, {
 			selectedTask: maintenanceRequest.MaintenanceTask,
 			setAlerts,
 			refreshTaskData: getMaintenanceRequest,
 			setOpenPopupSubmit,
-			files
+			files: submitfiles
 		});
 	};
 
 	// Handle approval or rejection
-	const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+	const handleClickApprove = (
+		statusName: "Approved" | "Unsuccessful",
+		actionType: "approve" | "reject",
+		note?: string
+	) => {
 
-		const userID = localStorage.getItem('userId')
-        const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
 
-        handleActionApproval(statusID, {
-            userID: Number(userID),
-            selectedRequest: maintenanceRequest || {},
-            selectedOperator,
-            setAlerts,
-            refreshRequestData: getMaintenanceRequest,
-            setOpenPopupApproved,
-            setOpenConfirmRejected,
-            actionType,
-        });
-    };
+		handleActionApproval(statusID, {
+			userID: Number(userID),
+			selectedRequest: maintenanceRequest || {},
+			selectedOperator,
+			setAlerts,
+			refreshRequestData: getMaintenanceRequest,
+			setOpenPopupApproved,
+			setOpenConfirmRejected,
+			actionType,
+			note,
+		});
+	};
+
+	const handleClickAcceptWork = (
+		statusName: "In Progress" | "Unsuccessful",
+		actionType: "accept" | "cancel",
+		note?: string
+	) => {
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+
+		handleActionAcception(statusID, {
+			selectedTask: maintenanceTask,
+			setAlerts,
+			refreshMaintenanceData: getMaintenanceRequest,
+			setOpenConfirmAccepted,
+			setOpenConfirmCancelled: setOpenConfirmCancelledFromManager,
+			actionType,
+			note
+		});
+	};
+
+	const handleClickInspection = (
+		statusName: "Completed" | "Rework Requested",
+		actionType: "confirm" | "rework",
+		note?: string
+	) => {
+		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+
+		handleActionInspection(statusID, {
+			userID,
+			selectedRequest: maintenanceRequest,
+			setAlerts,
+			refreshMaintenanceData: getMaintenanceRequest,
+			setOpenConfirmInspection,
+			setOpenConfirmRework,
+			actionType,
+			note,
+			files: requestfiles
+		});
+	};
+
+	const handleClickCancel = async () => {
+		try {
+			const statusID = requestStatuses?.find(item => item.Name === "Unsuccessful")?.ID || 0;
+
+			const request: MaintenanceRequestsInterface = {
+				RequestStatusID: statusID,
+			};
+
+			const resRequest = await UpdateMaintenanceRequestByID(request, maintenanceRequest?.ID);
+			if (!resRequest || resRequest.error)
+				throw new Error(resRequest?.error || "Failed to update request status");
+
+			setTimeout(() => {
+				setAlerts((prev) => [
+					...prev,
+					{ type: "success", message: "Cancellation successful" }
+				]);
+
+				getMaintenanceRequest();
+				setOpenConfirmCancelledFromOwnRequest(false);
+			}, 500);
+		} catch (error) {
+			console.error("API Error:", error);
+			const errMessage = (error as Error).message || "Unknown error!";
+			setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
+		}
+	}
 
 	// Handle back navigation
 	const handleBack = () => {
@@ -136,25 +247,18 @@ function CheckRequest() {
 		navigate(-1);
 	};
 
-	// Extract info for cards
-	const managerApproval = maintenanceRequest?.ManagerApproval;
-	const maintenanceTask = maintenanceRequest?.MaintenanceTask;
-
-	const managerName = managerApproval
-		? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
-		: null;
-
-	const operatorName = maintenanceTask
-		? `${maintenanceTask.User?.FirstName} ${maintenanceTask.User?.LastName}`
-		: null;
-
-	const approvalTime = managerApproval?.CreatedAt
-		? dateFormat(managerApproval.CreatedAt)
-		: null;
-
-	const assignTime = maintenanceTask?.CreatedAt
-		? dateFormat(maintenanceTask.CreatedAt)
-		: null;
+	const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
+		return await Promise.all(
+			images.map(async (img, index) => {
+				const url = apiUrl + '/' +img.FilePath;
+				const response = await fetch(url);
+				const blob = await response.blob();
+				const fileType = blob.type || "image/jpeg";
+				const fileName = img.FilePath?.split("/").pop() || `image${index + 1}.jpg`;
+				return new File([blob], fileName, { type: fileType });
+			})
+		);
+	}
 
 	// Load all necessary data on mount
 	useEffect(() => {
@@ -162,6 +266,15 @@ function CheckRequest() {
 		getRequestStatuses();
 		getOperators();
 	}, []);
+
+	useEffect(() => {
+		const fetchFiles = async () => {
+			const fileList = await convertPathsToFiles(maintenanceImages || []);
+			setRequestFiles(fileList);
+		};
+	
+		fetchFiles();
+	}, [maintenanceImages]);
 
 	return (
 		<div className="check-requests-page">
@@ -175,30 +288,81 @@ function CheckRequest() {
 				onClose={() => setOpenPopupSubmit(false)}
 				onConfirm={onClickSubmit}
 				setAlerts={setAlerts}
-				files={files}
-				onChange={setFiles}
+				files={submitfiles}
+				onChange={setSubmitFiles}
+			/>
+
+			{/* Cancellation From OwnRequest Confirm */}
+			<ConfirmDialog
+				open={openConfirmCancelledFromOwnRequest}
+				setOpenConfirm={setOpenConfirmCancelledFromOwnRequest}
+				handleFunction={() => handleClickCancel()}
+				title="ยืนยันการยกเลิกคำร้อง"
+				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำร้องนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 			/>
 
 			{/* Approve Popup */}
-            <ApprovePopup
-                open={openPopupApproved}
-                onClose={() => setOpenPopupApproved(false)}
-                onConfirm={() => handleClickApprove("Approved", "approve")}
-                requestSelected={maintenanceRequest || {}}
-                selectedOperator={selectedOperator}
-                setSelectedOperator={setSelectedOperator}
-                operators={operators}
-                maintenanceTypeConfig={maintenanceTypeConfig}
-            />
+			<ApprovePopup
+				open={openPopupApproved}
+				onClose={() => setOpenPopupApproved(false)}
+				onConfirm={() => handleClickApprove("Approved", "approve")}
+				requestSelected={maintenanceRequest || {}}
+				selectedOperator={selectedOperator}
+				setSelectedOperator={setSelectedOperator}
+				operators={operators}
+				maintenanceTypeConfig={maintenanceTypeConfig}
+			/>
 
-            {/* Rejected Confirm */}
-            <ConfirmDialog
-                open={openConfirmRejected}
-                setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            />
+			{/* Rejected Confirm */}
+			<ConfirmDialog
+				open={openConfirmRejected}
+				setOpenConfirm={setOpenConfirmRejected}
+				handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
+				title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+			/>
+
+			{/* Accepted Confirm */}
+			<ConfirmDialog
+				open={openConfirmAccepted}
+				setOpenConfirm={setOpenConfirmAccepted}
+				handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
+				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			{/* Cancellation From Manager Confirm */}
+			<ConfirmDialog
+				open={openConfirmCancelledFromManager}
+				setOpenConfirm={setOpenConfirmCancelledFromManager}
+				handleFunction={() => handleClickCancel()}
+				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
+				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+			/>
+
+			{/* Inspection Confirm */}
+			<ConfirmDialog
+				open={openConfirmInspection}
+				setOpenConfirm={setOpenConfirmInspection}
+				handleFunction={() => handleClickInspection("Completed", "confirm")}
+				title="ยืนยันการตรวจรับงาน"
+				message="คุณแน่ใจหรือไม่ว่าต้องการตรวจรับงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+			/>
+
+			{/* Rework Confirm */}
+			<ReworkPopup
+				open={openConfirmRework}
+				setOpenConfirm={setOpenConfirmRework}
+				handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
+				setAlerts={setAlerts}
+				title="ยืนยันการขอซ่อมซ้ำ"
+				message="คุณแน่ใจหรือไม่ว่าต้องการขอซ่อมซ้ำงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+				showNoteField
+				files={requestfiles}
+				onChangeFiles={setRequestFiles}
+			/>
 
 			{/* Header section with title and back button */}
 			<Grid2 container spacing={2}>
@@ -230,8 +394,6 @@ function CheckRequest() {
 							title="ผู้อนุมัติ"
 							name={managerName}
 							time={approvalTime}
-							onApprove={() => setOpenPopupApproved(true)}
-							onReject={() => setOpenConfirmRejected(true)}
 							status={maintenanceRequest.RequestStatus?.Name}
 						/>
 
@@ -253,6 +415,7 @@ function CheckRequest() {
 								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
 									ข้อมูลการแจ้งซ่อม
 								</Typography>
+
 							</Grid2>
 
 							<Grid2 size={{ xs: 12, md: 6 }}>
@@ -261,46 +424,161 @@ function CheckRequest() {
 
 							<Grid2 container size={{ xs: 12, md: 6 }} direction="column">
 								{
-									maintenanceRequest?.RequestStatus?.Name === 'Assigned' && <Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
-										<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
-											การดำเนินงาน
-										</Typography>
-										<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
-											<TaskInfoTable data={maintenanceRequest?.MaintenanceTask} />
-										</Box>
-									</Grid2>
+									isNotApproved ? (
+										<></>
+									) : (
+										<Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+											<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
+												การดำเนินงาน
+											</Typography>
+											<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
+												<TaskInfoTable data={maintenanceRequest} />
+											</Box>
+										</Grid2>
+									)
 								}
 
-								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: maintenanceRequest?.RequestStatus?.Name === 'Assigned' ? 0 : 1.2 }}>
-									<Typography className="title-list" variant="body1" sx={{ width: '100%' }}>
-										ภาพประกอบ
-									</Typography>
+								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
 									{
-										maintenanceRequest?.MaintenanceImages && isCompleted ? (
-											<RequestImages
-												images={maintenanceRequest?.MaintenanceTask?.HandoverImages || []}
-												apiUrl={apiUrl}
-											/>
-										) : maintenanceRequest?.MaintenanceImages && (
-											<RequestImages
-												images={maintenanceRequest?.MaintenanceImages}
-												apiUrl={apiUrl}
-											/>
+										taskImages && taskImages.length !== 0 && !isRework ? (
+											<Box>
+												<Typography className="title-list" variant="body1" sx={{ width: '100%', mb: 1 }}>
+													ภาพประกอบการส่งมอบ
+												</Typography>
+												<RequestImages
+													images={maintenanceTask?.HandoverImages ?? []}
+													apiUrl={apiUrl}
+												/>
+											</Box>
+										) : (maintenanceImages && maintenanceImages?.length !== 0) ? (
+											<Box>
+												<Typography className="title-list" variant="body1" sx={{ width: '100%', mb: 1 }}>
+													ภาพประกอบการแจ้งซ่อม
+												</Typography>
+												<RequestImages
+													images={maintenanceImages ?? []}
+													apiUrl={apiUrl}
+												/>
+											</Box>
+										) : (
+											<></>
 										)
-
 									}
+
 								</Grid2>
 								<Grid2 container size={{ xs: 12, md: 12 }}
 									sx={{
 										justifyContent: "flex-end",
 									}}
 								>
+									{/* Handle actions (approve, reject, assign) based on the 'time' value */}
 									{
-										isOperator && !isCompleted && <Box>
+										isPending && (isAdmin || isManager) ? (
+											<Box>
+												{/* Reject button */}
+												<Button
+													variant="outlinedCancel"
+													onClick={() => setOpenConfirmRejected(true)}
+													sx={{
+														minWidth: '0px',
+														px: '6px',
+														color: 'gray',
+														borderColor: 'gray',
+														'&:hover': {
+															borderColor: '#FF3B30',
+														}
+													}}
+												>
+													<FontAwesomeIcon icon={faXmark} size="lg" />
+													<Typography variant="textButtonClassic" >ปฏิเสธคำร้อง</Typography>
+												</Button>
+
+												{/* Approve button */}
+												<Button
+													variant="containedBlue"
+													onClick={() => setOpenPopupApproved(true)}
+													sx={{ ml: 0.8 }}
+												>
+													<FontAwesomeIcon icon={faTools} />
+													<Typography variant="textButtonClassic">อนุมัติคำร้อง</Typography>
+												</Button>
+
+
+											</Box>
+										) : (
+											<></>
+										)
+									}
+
+									{
+										(isOwnRequest || isAdmin || isManager) &&
+										<Grid2 container size={{ xs: 12, md: 12 }}
+											sx={{
+												justifyContent: "flex-end",
+											}}
+										>
+											{
+												isOwnRequest && isPending ? (
+													<Button
+														variant="outlinedCancel"
+														onClick={() => {
+															setOpenConfirmCancelledFromOwnRequest(true)
+														}}
+														sx={{
+															minWidth: '0px',
+															px: '6px',
+															'&:hover': {
+																borderColor: '#FF3B30',
+															}
+														}}
+													>
+														<FontAwesomeIcon icon={faXmark} size="lg" />
+														<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
+													</Button>
+												) : isWaitingForReview ? (
+													<Box>
+														<Button
+															variant="outlinedCancel"
+															onClick={() => {
+																setOpenConfirmRework(true)
+															}}
+															sx={{
+																minWidth: '0px',
+																px: '6px',
+																'&:hover': {
+																	borderColor: '#FF3B30',
+																}
+															}}
+														>
+															<FontAwesomeIcon icon={faRepeat} />
+															<Typography variant="textButtonClassic" >ขอซ่อมซ้ำ</Typography>
+														</Button>
+
+														<Button
+															variant="containedBlue"
+															onClick={() => {
+																setOpenConfirmInspection(true)
+															}}
+															sx={{ ml: 0.8 }}
+														>
+															<FontAwesomeIcon icon={faTools} />
+															<Typography variant="textButtonClassic">ยืนยันการตรวจรับ</Typography>
+														</Button>
+
+													</Box>
+												) : (
+													<></>
+												)
+											}
+										</Grid2>
+									}
+
+									{
+										(isApproved || isInProgress || isRework) && isOperator && isOwnTask && <Box>
 											<Button
 												variant="outlinedCancel"
 												onClick={() => {
-													setOpenConfirmCancelled(true)
+													setOpenConfirmCancelledFromManager(true)
 												}}
 												sx={{
 													minWidth: '0px',
@@ -315,8 +593,9 @@ function CheckRequest() {
 												<FontAwesomeIcon icon={faXmark} size="lg" />
 												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
 											</Button>
+
 											{
-												isAssigned ? (
+												isApproved || isRework ? (
 													<Button
 														variant="containedBlue"
 														onClick={() => {
@@ -337,6 +616,16 @@ function CheckRequest() {
 													>
 														<FontAwesomeIcon icon={faPaperPlane} />
 														<Typography variant="textButtonClassic">ส่งงาน</Typography>
+													</Button>
+												) : isWaitingForReview ? (
+													<Button
+														variant="containedBlue"
+														onClick={() => {
+															setOpenPopupSubmit(true)
+														}}
+													>
+														<FontAwesomeIcon icon={faPaperPlane} />
+														<Typography variant="textButtonClassic" >ส่งงาน</Typography>
 													</Button>
 												) : (
 													<></>

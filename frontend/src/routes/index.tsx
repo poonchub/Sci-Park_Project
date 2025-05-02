@@ -8,7 +8,7 @@ import ManagerRoutes from "./ManagerRoutes";
 
 export const role = localStorage.getItem('role')
 export const isAdmin = role === 'Admin'
-export const isDevManager = role === 'DevManager'
+export const isManager = role === 'Manager'
 export const isOperator = role === 'Operator'
 
 function ConfigRoutes() {
@@ -23,7 +23,7 @@ function ConfigRoutes() {
       case "Admin":
         routes = [AdminRoutes()]; // เมื่อบทบาทเป็น Admin ให้ใช้เส้นทางของ Admin
         break;
-      case "DevManager":
+      case "Manager":
         routes = [ManagerRoutes()]; // เมื่อบทบาทเป็น Admin ให้ใช้เส้นทางของ Admin
         break;
       case "Operator":

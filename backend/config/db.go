@@ -80,7 +80,7 @@ func SeedDatabase() {
 	roles := []entity.Role{
 		{Name: "User"},
 		{Name: "Operator"},
-		{Name: "DevManager"},
+		{Name: "Manager"},
 		{Name: "Admin"},
 	}
 	for _, role := range roles {
@@ -130,7 +130,7 @@ func SeedDatabase() {
 			Description: "The request is currently being worked on (repair or maintenance ongoing).",
 		},
 		{
-			Name:        "Waiting for Review", // Waiting for review
+			Name:        "Waiting For Review", // Waiting for review
 			Description: "The task is completed and is awaiting review from the requester.",
 		},
 		{
@@ -191,7 +191,7 @@ func SeedDatabase() {
 			FirstName:      "John",
 			EmployeeID:     "EMP001",
 			LastName:       "Doe",
-			Email:          "devmanager1@gmail.com",
+			Email:          "manager1@gmail.com",
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "/profiles/john.jpg",
@@ -206,7 +206,7 @@ func SeedDatabase() {
 			FirstName:      "Pink",
 			EmployeeID:     "EMP002",
 			LastName:       "Demand",
-			Email:          "devmanager2@gmail.com",
+			Email:          "manager2@gmail.com",
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "/profiles/Pink.jpg",

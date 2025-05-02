@@ -1,4 +1,5 @@
 import { AreasInterface } from "./IAreas";
+import { InspectionsInterface } from "./IInspections";
 import { MaintenaceImagesInterface } from "./IMaintenaceImages";
 import { MaintenanceTasksInterface } from "./IMaintenanceTasks";
 import { MaintenanceTypesInteface } from "./IMaintenanceTypes";
@@ -10,6 +11,7 @@ import { UserInterface } from "./IUser";
 export interface MaintenanceRequestsInterface {
     ID?:            number;
     CreatedAt?:     string;
+    UpdatedAt?:     string;
     AreaDetail?:    string;
     IsAnytimeAvailable?:    boolean;
     Description?:   string;
@@ -29,5 +31,6 @@ export interface MaintenanceRequestsInterface {
 
     ManagerApproval?:   ManagerApprovalsInterface;
     MaintenanceTask?:   MaintenanceTasksInterface;
+    Inspection?:        InspectionsInterface;
     MaintenanceImages?:  MaintenaceImagesInterface[];
 }

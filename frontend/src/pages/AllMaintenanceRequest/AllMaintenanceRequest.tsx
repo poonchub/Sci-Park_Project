@@ -27,7 +27,7 @@ import RequestStatusCards from "../../components/RequestStatusCards/RequestStatu
 import handleActionApproval from "../../utils/handleActionApproval"
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid"
 import timeFormat from "../../utils/timeFormat"
-import { isAdmin, isDevManager } from "../../routes"
+import { isAdmin, isManager } from "../../routes"
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup"
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig"
 
@@ -53,8 +53,6 @@ function AllMaintenanceRequest() {
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
-
-    console.log(monthlyCounts)
 
     const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
         {
@@ -221,7 +219,7 @@ function AllMaintenanceRequest() {
             flex: 1,
             // editable: true,
             renderCell: (item) => {
-                return item.row.RequestStatus?.Name === 'Pending' && (isDevManager || isAdmin) ? (
+                return item.row.RequestStatus?.Name === 'Pending' && (isManager || isAdmin) ? (
                     <Box>
                         <Button
                             variant="containedBlue"
@@ -229,7 +227,7 @@ function AllMaintenanceRequest() {
                                 setOpenPopupApproved(true)
                                 setSelectedRequest(item.row)
                             }}
-                            sx={{ mr: 0.5 }}
+                            sx={{ mr: 0.8 }}
                         >
                             <FontAwesomeIcon icon={faCheckDouble} />
                             <Typography variant="textButtonClassic" >อนุมัติ</Typography>
@@ -342,7 +340,11 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject") => {
+    const handleClickApprove = (
+        statusName: "Approved" | "Unsuccessful", 
+        actionType: "approve" | "reject",
+        note?: string
+    ) => {
         const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
         handleActionApproval(statusID, {
             userID: user?.ID,
@@ -353,6 +355,7 @@ function AllMaintenanceRequest() {
             setOpenPopupApproved,
             setOpenConfirmRejected,
             actionType,
+            note
         });
     };
 
@@ -418,9 +421,10 @@ function AllMaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClickApprove("Unsuccessful", "reject")}
+                handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                showNoteField
             />
 
             <Grid2 container spacing={3}>

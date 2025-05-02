@@ -23,8 +23,6 @@ interface Props {
 function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
     const theme = useTheme();
 
-    console.log(completed)
-
     const [state, setState] = useState<{
         series: number[];
         options: ApexOptions;

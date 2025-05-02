@@ -15,14 +15,17 @@ interface HandleSubmitWorkProps {
     files: File[];
 }
 
-const handleSubmitWork = async ({
-    selectedTask,
-    setAlerts,
-    refreshTaskData,
-    setOpenPopupSubmit,
-    files
-}: HandleSubmitWorkProps) => {
-    if (!selectedTask?.ID) {
+const handleSubmitWork = async (
+    statusID: number,
+    {
+        selectedTask,
+        setAlerts,
+        refreshTaskData,
+        setOpenPopupSubmit,
+        files
+    }: HandleSubmitWorkProps
+) => {
+    if (!selectedTask?.ID || !statusID) {
         setAlerts((prev) => [...prev, { type: 'error', message: "Invalid data" }]);
         return;
     }
@@ -51,22 +54,22 @@ const handleSubmitWork = async ({
         }
 
         const task: MaintenanceTasksInterface = {
-            RequestStatusID: 6
+            RequestStatusID: statusID
         };
 
         const request: MaintenanceRequestsInterface = {
-            RequestStatusID: 6
+            RequestStatusID: statusID
         };
 
-        const resAssign = await UpdateMaintenanceTaskByID(task ,selectedTask.ID);
+        const resAssign = await UpdateMaintenanceTaskByID(task, selectedTask.ID);
         if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to update task");
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request");
 
-        setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
-
         setTimeout(() => {
+            setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
+
             refreshTaskData();
             setOpenPopupSubmit(false);
         }, 500);

@@ -76,6 +76,7 @@ func main() {
 		protected.GET("/maintenance-types", controller.ListMaintenanceTypes)
 
 		// MaintenanceImages
+		protected.PATCH("/maintenance-images", controller.UpdateMaintenanceImages)
 		protected.POST("/maintenance-images", controller.CreateMaintenanceImages)
 
 		// Floors
@@ -95,6 +96,13 @@ func main() {
 
 		// MaintenanceTasks
 		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
+
+		// Inspections
+		protected.POST("/inspection", controller.CreateInspection)
+
+		// HandoverImages
+		protected.PATCH("/handover-images", controller.UpdateHandoverImages)
+		protected.DELETE("/handover-images/:id", controller.DeleteHandoverImagesByTaskID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -108,7 +116,7 @@ func main() {
 		protected.POST("/handover-images", controller.CreateHandoverImages)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.DevManager)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
 	}

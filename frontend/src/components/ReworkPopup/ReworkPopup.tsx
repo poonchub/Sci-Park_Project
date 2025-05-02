@@ -1,42 +1,48 @@
 import { faCircleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+    Box,
     Button,
     Dialog,
     DialogActions,
     DialogContent,
     DialogContentText,
-    DialogTitle
+    DialogTitle,
+    Grid2,
+    Typography
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
 import { useState } from "react";
+import ImageUploader from "../ImageUploader/ImageUploader";
 
-interface ConfirmDialogProps {
+interface ReworkPopupProps {
     open: boolean;
     setOpenConfirm: React.Dispatch<React.SetStateAction<boolean>>;
     handleFunction: (note?: string) => void;
+    setAlerts: React.Dispatch<React.SetStateAction<{ type: "warning" | "error" | "success"; message: string }[]>>;
     title: string;
     message: string;
     showNoteField?: boolean;
+    files: File[];
+    onChangeFiles: (files: File[]) => void;
 }
 
 // Reusable confirmation dialog component
-const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+const ReworkPopup: React.FC<ReworkPopupProps> = ({
     open,
     setOpenConfirm,
     handleFunction,
+    setAlerts,
     title,
     message,
-    showNoteField
+    showNoteField,
+    files,
+    onChangeFiles,
 }) => {
 
     const [note, setNote] = useState("");
 
     const handleConfirm = () => {
-        if (showNoteField && note.trim() === "") {
-            alert("กรุณาระบุเหตุผลในการปฏิเสธ");
-            return;
-        }
         handleFunction(note);
         setOpenConfirm(false);
         setNote("");
@@ -74,6 +80,20 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         sx={{ mt: 2 }}
                     />
                 )}
+
+                <Box display={'flex'}>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>แนบภาพประกอบ</Typography>
+                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
+                </Box>
+
+                <Grid2 container spacing={1}>
+                    <ImageUploader
+                        value={files}
+                        onChange={onChangeFiles}
+                        setAlerts={setAlerts}
+                        maxFiles={3}
+                    />
+                </Grid2>
             </DialogContent>
 
             {/* Action buttons */}
@@ -94,4 +114,4 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     );
 };
 
-export default ConfirmDialog;
+export default ReworkPopup;

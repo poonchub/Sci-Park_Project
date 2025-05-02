@@ -8,7 +8,7 @@ interface AlertMessage {
     message: string;
 }
 
-interface handleActionApprovalProps {
+interface handleActionCancelProps {
     userID: number | undefined;
     selectedRequest: MaintenanceRequestsInterface | null;
     selectedOperator: number;
@@ -19,7 +19,7 @@ interface handleActionApprovalProps {
     note?: string;
 }
 
-const handleActionApproval = async (
+const handleActionCancel = async (
     statusID: number,
     {
         userID,
@@ -31,7 +31,7 @@ const handleActionApproval = async (
         setOpenConfirmRejected,
         actionType,
         note
-    }: handleActionApprovalProps & { actionType: "approve" | "reject" }
+    }: handleActionCancelProps & { actionType: "approve" | "reject" }
 ) => {
     if (!userID || !selectedRequest) {
         setAlerts((prev) => [...prev, { type: "error", message: "Invalid data" }]);
@@ -92,4 +92,4 @@ const handleActionApproval = async (
     }
 };
 
-export default handleActionApproval;
+export default handleActionCancel;
