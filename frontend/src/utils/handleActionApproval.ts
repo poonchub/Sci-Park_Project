@@ -41,7 +41,12 @@ const handleActionApproval = async (
     if (actionType === "approve" && !selectedOperator) {
         setAlerts((prev) => [...prev, { type: "warning", message: "Please select an operator before approving." }]);
         return;
-    }    
+    }
+
+    if (actionType === "reject" && (!note || note.trim() === "")) {
+        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a description before reject requested." }]);
+        return;
+    }
 
     try {
         const managerApp: ManagerApprovalsInterface = {

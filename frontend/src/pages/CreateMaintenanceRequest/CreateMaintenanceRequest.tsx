@@ -3,7 +3,7 @@ import "./CreateMaintenanceRequest.css"
 
 import { Box, Button, Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, Grid2, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRooms, GetRoomTypes, GetUserById } from "../../services/http";
+import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
@@ -19,6 +19,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faEnvelope, faPencil, faPhone, faRotateRight, faUpload, faUserTie } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ImageUploader from "../../components/ImageUploader/ImageUploader";
+import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
+import RequestStepper from "../../components/RequestStepper/RequestStepper";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -28,6 +30,7 @@ function CreateMaintenanceRequestPage() {
     const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([])
     const [floors, setFloors] = useState<FloorsInterface[]>([])
     const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([])
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
 
     const [selectedRoomtype, setSelectedRoomtype] = useState(0)
     const [selectedFloor, setSelectedFloor] = useState(0)
@@ -46,7 +49,7 @@ function CreateMaintenanceRequestPage() {
         MaintenanceTypeID: 0,
     });
 
-    const steps = ["Creating", "In Process", "Waiting for Review", "Completed"];
+    const steps = ["Created", "In Process", "Waiting for Review", "Completed"];
 
     const [onEdit, setOnEdit] = useState(false);
 
@@ -117,6 +120,18 @@ function CreateMaintenanceRequestPage() {
             console.error("Error fetching maintenance types:", error);
         }
     }
+
+    // Fetch all statuses for the stepper
+    const getRequestStatuses = async () => {
+        try {
+            const res = await GetRequestStatuses();
+            if (res) {
+                setRequestStatuses(res);
+            }
+        } catch (error) {
+            console.error("Error fetching request statuses:", error);
+        }
+    };
 
     const handleSelectChange = (event: SelectChangeEvent<unknown>) => {
         const { name, value } = event.target as { name: string; value: string };
@@ -242,6 +257,7 @@ function CreateMaintenanceRequestPage() {
         getRoomTypes()
         getFloors()
         getMaintenanceTypes()
+        getRequestStatuses()
     }, [])
 
     useEffect(() => {
@@ -280,11 +296,13 @@ function CreateMaintenanceRequestPage() {
                     </Link>
                 </Grid2>
 
-                <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
-                    <CardContent sx={{ p: '16px 24px' }}>
-                        <StepperComponent activeStep={0} steps={steps} />
-                    </CardContent>
-                </Card>
+                {/* Stepper showing request progress */}
+                <Grid2 size={{ xs: 12, md: 12 }}>
+                    <RequestStepper
+                        requestStatuses={requestStatuses}
+                        requestStatusID={0}
+                    />
+                </Grid2>
 
                 {/* Form Card Section */}
                 <Card className="status-card" sx={{ width: '100%', borderRadius: 2 }}>
@@ -637,15 +655,25 @@ function CreateMaintenanceRequestPage() {
                             </Grid2>
 
                             {/* Buttom Section */}
-                            <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                <Button onClick={() => handleResetData()}>
-                                    <FontAwesomeIcon icon={faRotateRight} />
-                                    <Typography variant="textButtonClassic" >รีเซ็ตข้อมูล</Typography>
-                                </Button>
-                                <Button variant="contained" sx={{ px: 4, py: 1 }} onClick={handleSubmit}>
-                                    <FontAwesomeIcon icon={faUpload} />
-                                    <Typography variant="textButtonClassic" >ส่งคำร้อง</Typography>
-                                </Button>
+                            <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
+                                <Box sx={{ gap: 1 ,display: 'flex' }}>
+                                    <Button 
+                                        variant="outlined" 
+                                        sx={{ minHeight: '37px' }}
+                                        onClick={() => handleResetData()}
+                                    >
+                                        <FontAwesomeIcon icon={faRotateRight} />
+                                        <Typography variant="textButtonClassic" >รีเซ็ตข้อมูล</Typography>
+                                    </Button>
+                                    <Button 
+                                        variant="contained" 
+                                        sx={{ px: 4, py: 1 }} 
+                                        onClick={handleSubmit}
+                                    >
+                                        <FontAwesomeIcon icon={faUpload} />
+                                        <Typography variant="textButtonClassic" >ส่งคำร้อง</Typography>
+                                    </Button>
+                                </Box>
                             </Grid2>
                         </Grid2>
                     </CardContent>

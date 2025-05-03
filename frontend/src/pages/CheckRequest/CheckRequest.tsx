@@ -31,6 +31,7 @@ import handleActionAcception from "../../utils/handleActionAcception";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
+import timeFormat from "../../utils/timeFormat";
 
 function CheckRequest() {
 	// Request data
@@ -72,13 +73,32 @@ function CheckRequest() {
 		? `${maintenanceTask.User?.FirstName} ${maintenanceTask.User?.LastName}`
 		: null;
 
-	const approvalTime = managerApproval?.CreatedAt
+	const approvalDate = managerApproval?.CreatedAt
 		? dateFormat(managerApproval.CreatedAt)
 		: null;
 
-	const assignTime = maintenanceTask?.CreatedAt
+	const assignDate = maintenanceTask?.CreatedAt
 		? dateFormat(maintenanceTask.CreatedAt)
 		: null;
+
+	const cancellerName = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
+		(
+			maintenanceTask?.Description ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}` :
+				managerApproval?.Description ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}` :
+					`${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
+		) : ""
+
+	const cancelDescription = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
+		(
+			maintenanceTask?.Description ? maintenanceTask?.Description :
+				managerApproval?.Description ? managerApproval.Description : "ยกเลิกคำร้องโดยผู้เขียน"
+		) : ""
+
+	const cancelDate = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
+		(
+			maintenanceTask?.Description ? dateFormat(maintenanceTask?.UpdatedAt || '') :
+				managerApproval?.Description ? dateFormat(managerApproval?.UpdatedAt || '') : dateFormat(maintenanceRequest?.UpdatedAt || '')
+		) : ""
 
 	const userID = Number(localStorage.getItem("userId"))
 	const isOwnRequest = maintenanceRequest?.UserID === userID
@@ -90,6 +110,7 @@ function CheckRequest() {
 	const isInProgress = RequestStatus === 'In Progress'
 	const isWaitingForReview = RequestStatus === 'Waiting For Review'
 	const isRework = RequestStatus === 'Rework Requested'
+	const isUnsuccessful = RequestStatus === 'Unsuccessful'
 
 	const isNotApproved = maintenanceRequest?.ManagerApproval === null
 
@@ -250,7 +271,7 @@ function CheckRequest() {
 	const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
 		return await Promise.all(
 			images.map(async (img, index) => {
-				const url = apiUrl + '/' +img.FilePath;
+				const url = apiUrl + '/' + img.FilePath;
 				const response = await fetch(url);
 				const blob = await response.blob();
 				const fileType = blob.type || "image/jpeg";
@@ -272,7 +293,7 @@ function CheckRequest() {
 			const fileList = await convertPathsToFiles(maintenanceImages || []);
 			setRequestFiles(fileList);
 		};
-	
+
 		fetchFiles();
 	}, [maintenanceImages]);
 
@@ -336,7 +357,7 @@ function CheckRequest() {
 			<ConfirmDialog
 				open={openConfirmCancelledFromManager}
 				setOpenConfirm={setOpenConfirmCancelledFromManager}
-				handleFunction={() => handleClickCancel()}
+				handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
 				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
 				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
 				showNoteField
@@ -379,7 +400,7 @@ function CheckRequest() {
 				</Grid2>
 
 				{/* Stepper showing request progress */}
-				<Grid2 size={{ xs: 12, md: 8 }}>
+				<Grid2 size={{ xs: 12, md: isUnsuccessful ? 10 : 8 }}>
 					<RequestStepper
 						requestStatuses={requestStatuses}
 						requestStatusID={requestStatusID}
@@ -387,25 +408,32 @@ function CheckRequest() {
 				</Grid2>
 
 				{/* Info cards for approval and assignment */}
-				{maintenanceRequest && (
-					<>
-						<InfoCard
-							type="approved"
-							title="ผู้อนุมัติ"
-							name={managerName}
-							time={approvalTime}
-							status={maintenanceRequest.RequestStatus?.Name}
-						/>
+				{
+					maintenanceRequest && !isUnsuccessful ? (
+						<>
+							<InfoCard
+								type="approved"
+								title="ผู้อนุมัติ"
+								name={managerName}
+								date={approvalDate}
+							/>
 
+							<InfoCard
+								type="assigned"
+								title="ผู้รับผิดชอบ"
+								name={operatorName}
+								date={assignDate}
+							/>
+						</>
+					) : (
 						<InfoCard
-							type="assigned"
-							title="ผู้รับผิดชอบ"
-							name={operatorName}
-							time={assignTime}
-							status={maintenanceRequest.RequestStatus?.Name}
+							type="unsuccessful"
+							title="ผู้ยกเลิก"
+							name={cancellerName}
+							date={cancelDate}
 						/>
-					</>
-				)}
+					)
+				}
 
 				{/* Main data section */}
 				<Card className="data-card" sx={{ width: '100%', borderRadius: 2 }}>
@@ -466,123 +494,20 @@ function CheckRequest() {
 									}
 
 								</Grid2>
-								<Grid2 container size={{ xs: 12, md: 12 }}
-									sx={{
-										justifyContent: "flex-end",
-									}}
-								>
-									{/* Handle actions (approve, reject, assign) based on the 'time' value */}
-									{
-										isPending && (isAdmin || isManager) ? (
-											<Box>
-												{/* Reject button */}
-												<Button
-													variant="outlinedCancel"
-													onClick={() => setOpenConfirmRejected(true)}
-													sx={{
-														minWidth: '0px',
-														px: '6px',
-														color: 'gray',
-														borderColor: 'gray',
-														'&:hover': {
-															borderColor: '#FF3B30',
-														}
-													}}
-												>
-													<FontAwesomeIcon icon={faXmark} size="lg" />
-													<Typography variant="textButtonClassic" >ปฏิเสธคำร้อง</Typography>
-												</Button>
+							</Grid2>
 
-												{/* Approve button */}
-												<Button
-													variant="containedBlue"
-													onClick={() => setOpenPopupApproved(true)}
-													sx={{ ml: 0.8 }}
-												>
-													<FontAwesomeIcon icon={faTools} />
-													<Typography variant="textButtonClassic">อนุมัติคำร้อง</Typography>
-												</Button>
-
-
-											</Box>
-										) : (
-											<></>
-										)
-									}
-
-									{
-										(isOwnRequest || isAdmin || isManager) &&
-										<Grid2 container size={{ xs: 12, md: 12 }}
-											sx={{
-												justifyContent: "flex-end",
-											}}
-										>
-											{
-												isOwnRequest && isPending ? (
-													<Button
-														variant="outlinedCancel"
-														onClick={() => {
-															setOpenConfirmCancelledFromOwnRequest(true)
-														}}
-														sx={{
-															minWidth: '0px',
-															px: '6px',
-															'&:hover': {
-																borderColor: '#FF3B30',
-															}
-														}}
-													>
-														<FontAwesomeIcon icon={faXmark} size="lg" />
-														<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
-													</Button>
-												) : isWaitingForReview ? (
-													<Box>
-														<Button
-															variant="outlinedCancel"
-															onClick={() => {
-																setOpenConfirmRework(true)
-															}}
-															sx={{
-																minWidth: '0px',
-																px: '6px',
-																'&:hover': {
-																	borderColor: '#FF3B30',
-																}
-															}}
-														>
-															<FontAwesomeIcon icon={faRepeat} />
-															<Typography variant="textButtonClassic" >ขอซ่อมซ้ำ</Typography>
-														</Button>
-
-														<Button
-															variant="containedBlue"
-															onClick={() => {
-																setOpenConfirmInspection(true)
-															}}
-															sx={{ ml: 0.8 }}
-														>
-															<FontAwesomeIcon icon={faTools} />
-															<Typography variant="textButtonClassic">ยืนยันการตรวจรับ</Typography>
-														</Button>
-
-													</Box>
-												) : (
-													<></>
-												)
-											}
-										</Grid2>
-									}
-
-									{
-										(isApproved || isInProgress || isRework) && isOperator && isOwnTask && <Box>
+							<Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
+								{
+									isPending && (isAdmin || isManager) ? (
+										<Box sx={{ gap: 1, display: 'flex' }}>
+											{/* Reject button */}
 											<Button
 												variant="outlinedCancel"
-												onClick={() => {
-													setOpenConfirmCancelledFromManager(true)
-												}}
+												onClick={() => setOpenConfirmRejected(true)}
 												sx={{
 													minWidth: '0px',
-													px: '6px',
+													px: '8px',
+													py: 1,
 													color: 'gray',
 													borderColor: 'gray',
 													'&:hover': {
@@ -591,49 +516,133 @@ function CheckRequest() {
 												}}
 											>
 												<FontAwesomeIcon icon={faXmark} size="lg" />
-												<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
+												<Typography variant="textButtonClassic" >ปฏิเสธคำร้อง</Typography>
 											</Button>
 
-											{
-												isApproved || isRework ? (
+											{/* Approve button */}
+											<Button
+												variant="containedBlue"
+												onClick={() => setOpenPopupApproved(true)}
+												sx={{ px: 4, py: 1 }}
+											>
+												<FontAwesomeIcon icon={faTools} />
+												<Typography variant="textButtonClassic">อนุมัติคำร้อง</Typography>
+											</Button>
+
+
+										</Box>
+									) : (
+										<></>
+									)
+								}
+
+								{
+									(isOwnRequest || isAdmin || isManager) &&
+									<Grid2 container size={{ xs: 12, md: 12 }}
+										sx={{
+											justifyContent: "flex-end",
+										}}
+									>
+										{
+											isOwnRequest && isPending ? (
+												<Button
+													variant="outlinedCancel"
+													onClick={() => {
+														setOpenConfirmCancelledFromOwnRequest(true)
+													}}
+													sx={{
+														minWidth: '0px',
+														px: 4,
+														py: 1,
+														'&:hover': {
+															borderColor: '#FF3B30',
+														}
+													}}
+												>
+													<FontAwesomeIcon icon={faXmark} size="lg" />
+													<Typography variant="textButtonClassic" >ยกเลิกคำร้อง</Typography>
+												</Button>
+											) : isWaitingForReview ? (
+												<Box sx={{ gap: 1, display: 'flex' }}>
 													<Button
-														variant="containedBlue"
+														variant="outlined"
 														onClick={() => {
-															setOpenConfirmAccepted(true)
+															setOpenConfirmRework(true)
 														}}
-														sx={{ ml: 0.8 }}
+													>
+														<FontAwesomeIcon icon={faRepeat} />
+														<Typography variant="textButtonClassic" >ขอซ่อมซ้ำ</Typography>
+													</Button>
+
+													<Button
+														variant="contained"
+														onClick={() => {
+															setOpenConfirmInspection(true)
+														}}
+														sx={{ px: 4, py: 1 }}
 													>
 														<FontAwesomeIcon icon={faTools} />
-														<Typography variant="textButtonClassic">เริ่มงาน</Typography>
+														<Typography variant="textButtonClassic">ยืนยันการตรวจรับ</Typography>
 													</Button>
-												) : isInProgress ? (
-													<Button
-														variant="containedBlue"
-														onClick={() => {
-															setOpenPopupSubmit(true)
-														}}
-														sx={{ ml: 0.8 }}
-													>
-														<FontAwesomeIcon icon={faPaperPlane} />
-														<Typography variant="textButtonClassic">ส่งงาน</Typography>
-													</Button>
-												) : isWaitingForReview ? (
-													<Button
-														variant="containedBlue"
-														onClick={() => {
-															setOpenPopupSubmit(true)
-														}}
-													>
-														<FontAwesomeIcon icon={faPaperPlane} />
-														<Typography variant="textButtonClassic" >ส่งงาน</Typography>
-													</Button>
-												) : (
-													<></>
-												)
-											}
-										</Box>
-									}
-								</Grid2>
+
+												</Box>
+											) : (
+												<></>
+											)
+										}
+									</Grid2>
+								}
+
+								{
+									(isApproved || isInProgress || isRework) && isOperator && isOwnTask && <Box sx={{ gap: 1, display: 'flex' }}>
+										<Button
+											variant="outlinedCancel"
+											onClick={() => {
+												setOpenConfirmCancelledFromManager(true)
+											}}
+											sx={{
+												minWidth: '0px',
+												px: '8px',
+												py: 1,
+												color: 'gray',
+												borderColor: 'gray',
+												'&:hover': {
+													borderColor: '#FF3B30',
+												}
+											}}
+										>
+											<FontAwesomeIcon icon={faXmark} size="lg" />
+											<Typography variant="textButtonClassic" >ยกเลิกงาน</Typography>
+										</Button>
+
+										{
+											isApproved || isRework ? (
+												<Button
+													variant="containedBlue"
+													onClick={() => {
+														setOpenConfirmAccepted(true)
+													}}
+													sx={{ px: 4, py: 1 }}
+												>
+													<FontAwesomeIcon icon={faTools} />
+													<Typography variant="textButtonClassic">เริ่มงาน</Typography>
+												</Button>
+											) : isInProgress || isWaitingForReview ? (
+												<Button
+													variant="containedBlue"
+													onClick={() => {
+														setOpenPopupSubmit(true)
+													}}
+												>
+													<FontAwesomeIcon icon={faPaperPlane} />
+													<Typography variant="textButtonClassic">ส่งงาน</Typography>
+												</Button>
+											) : (
+												<></>
+											)
+										}
+									</Box>
+								}
 							</Grid2>
 						</Grid2>
 					</CardContent>

@@ -1,6 +1,6 @@
 import { faChartSimple, faEye, faFileLines, faMagnifyingGlass, faQuestionCircle, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Box, Button, FormControl, Grid2, InputAdornment, MenuItem, Typography } from '@mui/material'
+import { Avatar, Box, Button, Card, FormControl, Grid2, InputAdornment, LinearProgress, MenuItem, Stack, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
 import RequestStatusCards from '../../components/RequestStatusCards/RequestStatusCards'
 import { useEffect, useState } from 'react'
@@ -22,6 +22,7 @@ import dateFormat from '../../utils/dateFormat'
 import { AreasInterface } from '../../interfaces/IAreas'
 import { statusConfig } from '../../constants/statusConfig'
 import timeFormat from '../../utils/timeFormat'
+import RequestStatusStack from '../../components/RequestStatusStack/RequestStatusStack'
 
 function MyMaintenanceRequest() {
 
@@ -285,19 +286,28 @@ function MyMaintenanceRequest() {
 
                 <Grid2 container size={{ xs: 12, md: 12 }} spacing={2}>
 
-                    {/* Status Section */}
-                    <RequestStatusCards statusCounts={statusCounts || {}} size={{ xs: 10, md: 2 }} />
+                    {/* Count Status Section */}
+                    <Grid2 container
+                        spacing={1}
+                        className='filter-section'
+                        size={{ xs: 12, md: 12 }}
+                        sx={{
+                            height: 'auto'
+                        }}
+                    >
+                        <RequestStatusStack statusCounts={statusCounts}/>
+                    </Grid2>
 
                     {/* Filters Section */}
                     <Grid2 container
                         spacing={1}
                         className='filter-section'
-                        size={{ xs: 10, md: 12 }}
+                        size={{ xs: 12, md: 12 }}
                         sx={{
-                            alignItems: "flex-end",
                             height: 'auto'
-                        }}>
-                        <Grid2 size={{ xs: 10, md: 5 }}>
+                        }}
+                    >
+                        <Grid2 size={{ xs: 10, md: 6 }}>
                             <TextField
                                 fullWidth
                                 className="search-box"
@@ -317,7 +327,7 @@ function MyMaintenanceRequest() {
                                 }}
                             />
                         </Grid2>
-                        <Grid2 size={{ xs: 10, md: 3 }}>
+                        <Grid2 size={{ xs: 10, md: 2.5 }}>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     format="DD/MM/YYYY"
@@ -329,7 +339,7 @@ function MyMaintenanceRequest() {
                                 />
                             </LocalizationProvider>
                         </Grid2>
-                        <Grid2 size={{ xs: 10, md: 3 }}>
+                        <Grid2 size={{ xs: 10, md: 2.5 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectedStatus}
@@ -369,7 +379,6 @@ function MyMaintenanceRequest() {
                             ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
                         </Grid2>
                     </Grid2>
-
                 </Grid2>
 
                 {/* Data Table */}

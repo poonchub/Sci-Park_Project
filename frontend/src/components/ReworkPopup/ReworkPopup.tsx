@@ -77,7 +77,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                         placeholder="ป้อนเหตุผล"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        sx={{ mt: 2 }}
+                        sx={{ mt: 2, mb: 2 }}
                     />
                 )}
 

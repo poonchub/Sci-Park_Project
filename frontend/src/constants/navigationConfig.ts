@@ -16,7 +16,7 @@ const DEFAULT_PATHS_BY_ROLE: Record<Role, Record<string, string>> = {
         manageuser: '',
     },
     Operator: {
-        maintenance: '/accept-work',
+        maintenance: '/my-maintenance-request',
         booking: '/booking-room',
         manageuser: '',
     },

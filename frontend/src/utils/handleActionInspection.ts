@@ -38,7 +38,7 @@ const handleActionInspection = async (
         return;
     }
 
-    if (actionType === "rework" && !note) {
+    if (actionType === "rework" && (!note || note.trim() === "")) {
         setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a description before rework requested." }]);
         return;
     }

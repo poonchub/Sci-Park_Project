@@ -12,6 +12,16 @@ interface RequestInfoTableProps {
 const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
     if (!data) return null;
 
+    const task = data.MaintenanceTask
+    const approval = data.ManagerApproval
+
+
+    const unsuccessfulDescription = data?.RequestStatus?.Name === 'Unsuccessful' ?
+		(
+			task?.Description ? task?.Description :
+            approval?.Description ? approval.Description : "ยกเลิกคำร้องโดยผู้เขียน"
+		) : null
+
     return (
         <Table>
             <TableBody>
@@ -120,6 +130,21 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                         <TableCell>
                             <Typography>
                                 {data.Inspection?.Description}
+                            </Typography>
+                        </TableCell>
+                    </TableRow>
+                }
+
+                {/* Unsuccessful Description information */}
+                {
+                    unsuccessfulDescription &&
+                    <TableRow>
+                        <TableCell>
+                            <Typography className="title-list">หมายเหตุการยกเลิก</Typography>
+                        </TableCell>
+                        <TableCell>
+                            <Typography>
+                                {unsuccessfulDescription}
                             </Typography>
                         </TableCell>
                     </TableRow>

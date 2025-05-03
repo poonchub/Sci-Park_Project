@@ -5,13 +5,20 @@ import { faUserTie } from '@fortawesome/free-solid-svg-icons';
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
-    type: 'approved' | 'assigned'; // Determines if the card is for 'approved' or 'assigned'
+    type: 'approved' | 'assigned' | 'unsuccessful'; // Determines if the card is for 'approved' or 'assigned'
     title: string; // Title of the card
     name: string | null; // Name of the person, can be null
-    time: string | null; // Time related to the action (approval, assignment), can be null
+    date: string | null; // Time related to the action (approval, assignment), can be null
+    description?: string | null;
     onApprove?: () => void; // Callback for approving (optional)
     onReject?: () => void; // Callback for rejecting (optional)
-    status?: string
+    size?: {
+        xs?: number;
+        sm?: number;
+        md?: number;
+        lg?: number;
+        xl?: number;
+    };
 }
 
 // InfoCard component definition
@@ -19,17 +26,23 @@ const InfoCard: React.FC<InfoCardProps> = ({
     type,
     title,
     name,
-    time,
-    status,
+    date,
+    size
 }) => {
     return (
         // Card layout wrapped inside Grid2 for responsiveness
-        <Grid2 size={{ xs: 10, md: 2 }}>
+        <Grid2 size={{
+            xs: size?.xs || 12,
+            sm: size?.sm,
+            md: size?.md || 2,
+            lg: size?.lg,
+            xl: size?.xl,
+        }}>
             <Card
                 className="card"
-                sx={{ width: '100%', borderRadius: 2, px: 2.5, py: 2, minHeight: '100%' }}
+                sx={{ width: '100%', borderRadius: 2, px: 2.4, py: 1, minHeight: '100%' }}
             >
-                <CardContent className="card-content" sx={{ pt: 3 }}>
+                <CardContent className='card-content'>
 
                     {/* Title of the card */}
                     <Grid2 size={{ xs: 10, md: 12 }}>
@@ -52,11 +65,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
                                     {name}
                                 </Typography>
                                 <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: '#6D6E70' }}>
-                                    {time}
+                                    {date}
                                 </Typography>
                             </>
                         )}
-
                     </Grid2>
 
                     {/* Icon displaying an avatar or role-related icon */}
@@ -81,6 +93,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             <FontAwesomeIcon icon={faUserTie} size="2xl" />
                         </Box>
                     </Grid2>
+
                 </CardContent>
             </Card>
         </Grid2>

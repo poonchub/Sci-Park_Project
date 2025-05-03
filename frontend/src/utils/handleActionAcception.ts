@@ -37,6 +37,11 @@ const handleActionAcception = async (
         return;
     }
 
+    if (actionType === "cancel" && (!note || note.trim() === "")) {
+        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a description before cancel requested." }]);
+        return;
+    }
+
     try {
         const task: MaintenanceTasksInterface = {
             RequestStatusID: statusID,

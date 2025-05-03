@@ -409,7 +409,7 @@ function Dashboard() {
                                             slots={{
                                                 openPickerIcon: CalendarMonth,
                                             }}
-                                            format="MMMM YYYY"
+                                            format="MM/YYYY"
                                             sx={{ width: 100 }}
                                         />
                                     </LocalizationProvider>
