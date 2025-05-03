@@ -114,8 +114,8 @@ func SeedDatabase() {
 
 	requestStatuses := []entity.RequestStatus{
 		{
-			Name:        "Creating", // Request is being created
-			Description: "The request is in the process of being created.",
+			Name:        "Created",
+			Description: "The maintenance request has been initiated and is awaiting further action.",
 		},
 		{
 			Name:        "Pending", // Waiting for action
@@ -438,8 +438,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล ManagerApproval
 	managerApproval := entity.ManagerApproval{
-		UserID: 3,
-		RequestID: 2,
+		UserID:          3,
+		RequestID:       2,
 		RequestStatusID: 3,
 	}
 	db.FirstOrCreate(&managerApproval)

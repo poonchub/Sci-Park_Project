@@ -33,10 +33,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     const [note, setNote] = useState("");
 
     const handleConfirm = () => {
-        if (showNoteField && note.trim() === "") {
-            alert("กรุณาระบุเหตุผลในการปฏิเสธ");
-            return;
-        }
         handleFunction(note);
         setOpenConfirm(false);
         setNote("");

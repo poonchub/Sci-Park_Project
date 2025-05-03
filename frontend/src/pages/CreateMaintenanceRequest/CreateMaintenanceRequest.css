@@ -7,4 +7,9 @@
     .css-c2i0tp-MuiCardContent-root:last-child {
         padding-bottom: 16px;
     }
+
+    .css-c2i0tp-MuiCardContent-root:last-child, .css-1rbiwpz-MuiCardContent-root:last-child {
+        padding-bottom: 16px;
+    }
+
 }

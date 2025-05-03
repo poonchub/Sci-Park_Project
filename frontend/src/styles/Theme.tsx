@@ -90,6 +90,7 @@ const theme = createTheme({
                     style: {
                         border: '1px solid #FF3B30',
                         color: '#FF3B30',
+                        maxHeight: '37px',
                         '&:hover': {
                             backgroundColor: '#FF3B30',
                             color: '#fff',

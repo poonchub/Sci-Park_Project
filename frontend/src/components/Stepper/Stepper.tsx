@@ -77,6 +77,7 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
     
         const icons: { [key: string]: IconDefinition } = {
             "Creating": faFile,
+            "Created": faFile,
             "Pending": faHourglassHalf,
             "Approved": faCheck,
             "In Progress": faArrowsSpin,

@@ -27,15 +27,13 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
 
     const statusCards = displayStatuses.map((status) => {
         let count = statusCounts?.[status] ?? 0;
-        // if (status === "Unsuccessful") {
-        //     const failedStatuses = ["Rejected", "Failed", "Cancelled"];
-        //     count = failedStatuses.reduce(
-        //         (sum, key) => sum + (statusCounts?.[key] ?? 0),
-        //         0
-        //     );
-        // } else {
-            
-        // }
+        if (status === "Approved") {
+            const approveStatuses = ["Approved", "Rework Requested"];
+            count = approveStatuses.reduce(
+                (sum, key) => sum + (statusCounts?.[key] ?? 0),
+                0
+            );
+        }
 
         const statusKey = status as keyof typeof statusConfig
         const { color, colorLite, icon } = statusConfig[statusKey] ?? { 

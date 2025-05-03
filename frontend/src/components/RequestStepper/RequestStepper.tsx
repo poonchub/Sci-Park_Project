@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@mui/material";
 import StepperComponent from "../Stepper/Stepper";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
-import { isAdmin, isManager } from "../../routes";
+import { isAdmin, isManager, isOperator } from "../../routes";
 
 interface RequestStepperProps {
     requestStatuses: RequestStatusesInterface[];
@@ -11,16 +11,21 @@ interface RequestStepperProps {
 
 const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, requestStatusID }) => {
 
+    const displayName = (statusName: string, isCreating: boolean): string => {
+        if (isCreating && statusName === "Created") return "Creating";
+        return statusName;
+    };
+
     // 1. กำหนด status flow ตาม role
     const statusFlow = useMemo(() => {
-        const baseFlowAdmin = ["Creating", "Pending", "Approved"];
-        const baseFlowUser = ["Creating"];
+        const baseFlowAdmin = ["Created", "Pending", "Approved"];
+        const baseFlowUser = ["Created"];
 
         const includeRework = requestStatuses.find(
             s => s.ID === requestStatusID && s.Name === "Rework Requested"
         ) !== undefined;
 
-        if (isAdmin || isManager) {
+        if (isAdmin || isManager || isOperator) {
             return [
                 ...baseFlowAdmin,
                 ...(includeRework ? ["Rework Requested"] : []),
@@ -37,7 +42,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 "Completed"
             ];
         }
-    }, [isAdmin, isManager, requestStatuses, requestStatusID]);
+    }, [isAdmin, isManager, isOperator, requestStatuses, requestStatusID]);
 
     const unsuccessfulFlow = ["Unsuccessful"];
 
@@ -48,45 +53,57 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
 
     // 2. ปรับสถานะให้เหมาะกับ role
     const filteredSteps = useMemo(() => {
+        const isCreating = requestStatusID === 0;
+    
+        // ถ้าไม่เจอ status ปกติ แต่เป็น Creating ก็ยังไปต่อได้
         const currentStatus = requestStatuses.find(s => s.ID === requestStatusID);
-        if (!currentStatus) return [];
-
-        const group = getStatusGroup(currentStatus.Name || "");
-
+        if (!currentStatus && !isCreating) return [];
+    
+        const group = getStatusGroup(currentStatus?.Name || "");
+    
         if (group === "Unsuccessful") {
-            // ถ้า Unsuccessful ก็ return เฉพาะ Unsuccessful
-            return requestStatuses.filter(s => unsuccessfulFlow.includes(s.Name || ""));
+            return requestStatuses
+                .filter(s => unsuccessfulFlow.includes(s.Name || ""))
+                .map(s => ({
+                    ...s,
+                    Name: displayName(s.Name || "", isCreating)
+                }));
         }
-
-        if (isAdmin || isManager) {
-            // Admin / Manager: แสดงตามจริง
-            const steps = requestStatuses.filter(s => statusFlow.includes(s.Name || ""));
-            steps.sort((a, b) => statusFlow.indexOf(a.Name || "") - statusFlow.indexOf(b.Name || ""));
+    
+        if (isAdmin || isManager || isOperator) {
+            const steps = requestStatuses
+                .filter(s => statusFlow.includes(s.Name || ""))
+                .sort((a, b) => statusFlow.indexOf(a.Name || "") - statusFlow.indexOf(b.Name || ""))
+                .map(s => ({
+                    ...s,
+                    Name: displayName(s.Name || "", isCreating)
+                }));
             return steps;
         } else {
-            // อื่นๆ: รวม Pending, Approved, In Progress เป็น "In Process"
             const steps: { ID: number; Name: string }[] = [];
-
+    
             for (const status of statusFlow) {
                 if (status === "In Process") {
                     const inProcessStatuses = requestStatuses.filter(s =>
                         ["Pending", "Approved", "In Progress"].includes(s.Name || "")
                     );
                     if (inProcessStatuses.length > 0) {
-                        // สร้าง step ใหม่ "In Process"
                         steps.push({ ID: -1, Name: "In Process" });
                     }
                 } else {
                     const match = requestStatuses.find(s => s.Name === status);
                     if (match) {
-                        steps.push({ ID: match.ID || 0, Name: match.Name! });
+                        steps.push({
+                            ID: match.ID || 0,
+                            Name: displayName(match.Name || "", isCreating)
+                        });
                     }
                 }
             }
-
+    
             return steps;
         }
-    }, [requestStatuses, requestStatusID, statusFlow, isAdmin, isManager]);
+    }, [requestStatuses, requestStatusID, statusFlow, isAdmin, isManager, isOperator]);    
 
     // 3. หา active step
     const activeStep = useMemo(() => {
@@ -95,7 +112,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
         const currentStatus = requestStatuses.find(s => s.ID === requestStatusID);
         if (!currentStatus) return 0;
 
-        if (isAdmin || isManager) {
+        if (isAdmin || isManager || isOperator) {
             return filteredSteps.findIndex(s => s.ID === requestStatusID);
         } else {
             // ถ้าเป็น user role อื่นๆ, ถ้าอยู่ใน Pending/Approved/In Progress ให้นับเป็น In Process
@@ -105,7 +122,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 return filteredSteps.findIndex(s => s.ID === requestStatusID);
             }
         }
-    }, [filteredSteps, requestStatuses, requestStatusID, isAdmin, isManager]);
+    }, [filteredSteps, requestStatuses, requestStatusID, isAdmin, isManager, isOperator]);
 
     return (
         <Card sx={{
