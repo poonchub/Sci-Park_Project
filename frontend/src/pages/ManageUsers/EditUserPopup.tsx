@@ -123,7 +123,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       GenderID: Number(selectedGender),
       RoleID: Number(selectedRole),
       UserPackageID: Number(selectedPackage),
-      RequestTypeID: Number(selectedRequestType),
+      RequestTypeID: Number(selectedRequestType) || 1,
     };
 
     console.log('Form data to send:', formDataToSend);
