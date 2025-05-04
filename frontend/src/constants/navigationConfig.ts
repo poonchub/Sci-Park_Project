@@ -77,11 +77,6 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
             roles: ['User', 'Operator', 'Manager', 'Admin']
         },
         {
-            path: '/assign-work',
-            name: 'มอบหมายงานซ่อม',
-            roles: ['Manager', 'Admin']
-        },
-        {
             path: '/accept-work',
             name: 'งานของฉัน',
             roles: ['Operator']

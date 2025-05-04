@@ -3,11 +3,12 @@ import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typo
 import { Controller, useForm } from 'react-hook-form';
 import Grid from '@mui/material/Grid2'; // Grid version 2
 import './AddUserForm.css';  // Import the updated CSS
-import { ListRoles, ListGenders, ListPackages, CreateUser } from '../../services/http';  // Assuming these are your API functions
+import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes } from '../../services/http';  // Assuming these are your API functions
 import { GendersInterface } from '../../interfaces/IGenders';
 import { RolesInterface } from '../../interfaces/IRoles';
 import { PackagesInterface } from '../../interfaces/IPackages';
 import { UserInterface } from '../../interfaces/IUser';
+import { RequestTypeInterface } from '../../interfaces/IRequestTypes';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -19,9 +20,10 @@ import { TextField } from "../../components/TextField/TextField";
 type AddUserFormProps = {};
 
 const AddUserForm: React.FC<AddUserFormProps> = () => {
-  const { control, handleSubmit, reset, formState: { errors } } = useForm();
+  const { control, handleSubmit, reset, formState: { errors }, watch } = useForm();
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [roles, setRoles] = useState<RolesInterface[]>([]);
+  const [requiredTypes, setRequiredTypes] = useState<RequestTypeInterface[]>([]); // เก็บประเภทที่ต้องการ
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
   const [file, setFile] = useState<File | null>(null);  // เก็บไฟล์เดียว
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -29,6 +31,8 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
   // Fetch data when component mounts
   const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
   const [userType, setUserType] = useState<string>('internal');
+
+  const roleID = watch('RoleID');  // Watching RoleID value
 
   const handleClickShowPassword = () => {
     setShowPassword((prev) => !prev); // เปลี่ยนสถานะการแสดงรหัสผ่าน
@@ -64,9 +68,13 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
       const genderData = await ListGenders();
       const roleData = await ListRoles();
       const packageData = await ListPackages();
+      const requiredTypeData = await ListRequestTypes();  // Assuming you have a function to fetch request types
+
       setGenders(genderData);
       setRoles(roleData);
       setPackages(packageData);
+      setRequiredTypes(requiredTypeData);
+
     };
     fetchData();
   }, []);
@@ -444,29 +452,54 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
               </Grid>
             </Grid>
 
-            {/* Role Dropdown (previously Radio Buttons) */}
-            {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
-              <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
-              <FormControl fullWidth error={!!errors.role}>
-                <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก ตำแหน่ง</InputLabel>
-                <Controller
-                  name="RoleID"
-                  control={control}
-                  defaultValue={1}
+            {/* Role Dropdown */}
+            {userType === 'internal' && (
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                <FormControl fullWidth error={!!errors.role}>
+                  <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก ตำแหน่ง</InputLabel>
+                  <Controller
+                    name="RoleID"
+                    control={control}
+                    defaultValue={1}
+                    rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
+                    render={({ field }) => (
+                      <Select {...field} label="กรุณาเลือก ตำแหน่ง">
+                        {roles.map((role) => (
+                          <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                  />
+                  <FormHelperText>{String(errors.Role?.message)}</FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
 
-                  rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
-                  render={({ field }) => (
-                    <Select {...field} label="กรุณาเลือก ตำแหน่ง">
-                      {roles.map((role) => (
-                        <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-                <FormHelperText>{String(errors.Role?.message)}</FormHelperText>
-              </FormControl>
-            </Grid>
-            }
+            {/* Conditional Rendering for Manager (RoleID === 3) */}
+            {userType === 'internal' && roleID === 3 && (
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="body1" className="title-field">จัดการ</Typography>
+                <FormControl fullWidth error={!!errors.RequestTypeID}>
+                  <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก จัดการ</InputLabel>
+                  <Controller
+                    name="RequestTypeID"
+                    control={control}
+                    defaultValue={0}
+                    rules={{ required: 'กรุณาเลือก จัดการ' }}
+                    render={({ field }) => (
+                      <Select {...field} label="กรุณากรอก จัดการ">
+                        {requiredTypes.map((requiredType) => (
+                          <MenuItem key={requiredType.ID} value={requiredType.ID}>{requiredType.TypeName}</MenuItem>
+                        ))}
+                      </Select>
+                    )}
+                  />
+                  <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
+
 
             {/* EmployeeID Field */}
             {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
@@ -502,7 +535,7 @@ const AddUserForm: React.FC<AddUserFormProps> = () => {
 
 
             {/* Package Dropdown */}
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
               <FormControl fullWidth error={!!errors.package}>
                 <InputLabel sx={{ color: '#6D6E70' }}>สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)</InputLabel>

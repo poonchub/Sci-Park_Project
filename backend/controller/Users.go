@@ -28,6 +28,8 @@ func CreateUser(c *gin.Context) {
 	user.Phone = c.PostForm("phone")
 	user.EmployeeID = c.PostForm("employee_id")
 
+	
+
 
 	isEmployeeStr := c.PostForm("is_employee")
 
@@ -40,6 +42,14 @@ func CreateUser(c *gin.Context) {
 		// กำหนดค่าเริ่มต้นหรือจับกรณีผิดพลาด (เช่น ไม่มีการเลือก)
 		user.IsEmployee = false  // หรือ true ตามกรณี
 	}
+
+	requestTypeIDStr := c.PostForm("request_type_id")
+	requestTypeID, err := strconv.Atoi(requestTypeIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request_type_id"})
+		return
+	}
+	user.RequestTypeID = uint(requestTypeID)
 
 
 	// Default UserPackageID to 1 if not provided
@@ -349,6 +359,7 @@ func ListUsers(c *gin.Context) {
             "IsEmployee":     user.IsEmployee,
             "EmployeeID":     user.EmployeeID,
             "UserNameCombined": user.FirstName + " " + user.LastName,
+			"RequestTypeID": user.RequestTypeID,
         }
 
         // ดึงข้อมูล PackageName จาก UserPackage ที่ Preload มา
@@ -386,6 +397,7 @@ func UpdateUserByID(c *gin.Context) {
         GenderID       uint   `form:"gender_id"`
         PackageID      uint   `form:"package_id"`
         ProfileCheck   string `form:"profile_check"` // สำหรับรับโปรไฟล์ภาพจาก form-data
+		RequestTypeID   uint   `form:"request_type_id"`
     }
 
     // Bind form-data ที่รับมา
@@ -432,6 +444,9 @@ func UpdateUserByID(c *gin.Context) {
     if updateUserData.GenderID != 0 {
         user.GenderID = updateUserData.GenderID
     }
+	if updateUserData.RequestTypeID != 0 {
+		user.RequestTypeID = updateUserData.RequestTypeID
+	}
 		// หากมีการเปลี่ยนแปลงรหัสผ่าน
 	if updateUserData.Password != "" {
 		// แฮชรหัสผ่านใหม่

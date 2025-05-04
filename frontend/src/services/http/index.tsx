@@ -130,6 +130,7 @@ async function CreateUser(data: any) {
     formData.append("role_id", (data.RoleID ?? 1).toString());
     formData.append("employee_id", data.EmployeeID || "");
     formData.append("is_employee", data.IsEmployee || "");
+    formData.append("request_type_id", data.RequestTypeID.toString() || "");
 
 
     if (data.Profile_Image) {
@@ -206,6 +207,7 @@ async function UpdateUserbyID(data: any) {
     formData.append("role_id", data.RoleID.toString());
     formData.append("employee_id", data.EmployeeID || "");
     formData.append("profile_check", data.ImageCheck || "");
+    formData.append("request_type_id", data.RequestTypeID.toString() || "1");
 
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
@@ -683,6 +685,27 @@ async function ListRoles() {
     return res;
 }
 
+async function ListRequestTypes() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/request-types`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 // Packages
 async function ListPackages() {
     const requestOptions = {
@@ -960,6 +983,9 @@ export {
 
     // RoomStatus
     GetRoomStatus,
+
+    // RequestTypes
+    ListRequestTypes,
 
     // Floors
     GetFloors,

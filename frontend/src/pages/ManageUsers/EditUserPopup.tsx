@@ -21,6 +21,7 @@ import { UserInterface } from '../../interfaces/IUser';
 import { RolesInterface } from '../../interfaces/IRoles';
 import { GendersInterface } from '../../interfaces/IGenders';
 import { PackagesInterface } from '../../interfaces/IPackages';
+import { RequestTypeInterface } from '../../interfaces/IRequestTypes';
 import Grid from '@mui/material/Grid2'; // Grid version 2
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
@@ -31,7 +32,8 @@ import {
   UpdateUserbyID,
   ListRoles,
   ListGenders,
-  ListPackages
+  ListPackages,
+  ListRequestTypes
 } from '../../services/http';
 import '../AddUser/AddUserForm.css';
 
@@ -42,16 +44,20 @@ interface EditUserPopupProps {
 }
 
 const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) => {
-  const { control, handleSubmit, formState: { errors }, setValue } = useForm();
+  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm();
   const [user, setUser] = useState<UserInterface | null>(null);
   const [roles, setRoles] = useState<RolesInterface[]>([]);
   const [selectedRole, setSelectedRole] = useState<number | null>(null);
+  const [requiredTypes, setRequiredTypes] = useState<RequestTypeInterface[]>([]); // State for required types
+  const [selectedRequestType, setSelectedRequestType] = useState<number | null>(null);
   const [selectedGender, setSelectedGender] = useState<number | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
   const [isemployee, setIsEmployee] = useState<boolean | undefined>(undefined);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
+
+  const roleID = watch("RoleID");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,25 +74,29 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('GenderID', userData.GenderID);
           setValue('RoleID', userData.RoleID);
           setValue('UserPackageID', userData.UserPackageID);
+          setValue('RequestTypeID', userData.RequestTypeID);
           setIsEmployee(userData.IsEmployee);
 
 
         }
+        setSelectedRequestType(user?.RequestTypeID ?? null);
         setSelectedRole(user?.RoleID ?? null);
         setSelectedGender(user?.GenderID ?? null);
         setSelectedPackage(user?.UserPackageID ?? null);
 
 
 
-        const [roleData, genderData, packageData] = await Promise.all([
+        const [roleData, genderData, packageData, requiredTypeData] = await Promise.all([
           ListRoles(),
           ListGenders(),
           ListPackages(),
+          ListRequestTypes(),
         ]);
 
         setRoles(roleData);
         setGenders(genderData);
         setPackages(packageData);
+        setRequiredTypes(requiredTypeData);
 
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -113,6 +123,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       GenderID: Number(selectedGender),
       RoleID: Number(selectedRole),
       UserPackageID: Number(selectedPackage),
+      RequestTypeID: Number(selectedRequestType),
     };
 
     console.log('Form data to send:', formDataToSend);
@@ -336,7 +347,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     onChange={(e) => setSelectedGender(Number(e.target.value))}
                     displayEmpty
                   >
-                    <MenuItem value="">
+                    <MenuItem value={0}>
                       <em>-- กรุณาเลือกเพศ --</em>
                     </MenuItem>
                     {genders.map((gender) => (
@@ -360,7 +371,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                         onChange={(e) => setSelectedRole(Number(e.target.value))}
                         displayEmpty
                       >
-                        <MenuItem value="">
+                        <MenuItem value={0}>
                           <em>-- กรุณาเลือก ตำแหน่ง --</em>
                         </MenuItem>
                         {roles.map((role) => (
@@ -370,7 +381,32 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                       {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
                     </FormControl>
                   </Grid>
+
+                  {roleID === 3 && (
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <FormControl fullWidth error={!!errors.RequestTypeID}>
+          <Typography variant="body1" className="title-field">จัดการ</Typography>
+          <Select
+            labelId="request-type-label"
+            name="RequestTypeID"
+            value={selectedRequestType ?? user.RequestTypeID} // Optional: Modify value based on condition
+            onChange={(e) => setSelectedRequestType(Number(e.target.value))}
+            displayEmpty
+          >
+            <MenuItem value={0}>
+              <em>-- กรุณาเลือก จัดการ --</em>
+            </MenuItem>
+            {requiredTypes.map((requiredType) => (
+              <MenuItem key={requiredType.ID} value={requiredType.ID}>{requiredType.TypeName}</MenuItem>
+            ))}
+          </Select>
+          {errors.RequestTypeID && <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>}
+        </FormControl>
+      </Grid>
+    )}
                 </>
+
+
               )}
 
               <Grid size={{ xs: 12, sm: 6 }}>

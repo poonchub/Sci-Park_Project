@@ -91,11 +91,15 @@ func main() {
 		// Packages
 		protected.GET("/packages",controller.ListPackages)
 
+		// RequestTypes
+		protected.GET("/request-types",controller.ListRequestType)
+
 		// ManagerApprovals
 		protected.POST("/manager-approval", controller.CreateManagerApproval)
 
 		// MaintenanceTasks
 		protected.POST("/maintenance-task", controller.CreateMaintenanceTask)
+		protected.PATCH("/maintenance-task/:id", controller.UpdateMaintenanceTaskByID)
 
 		// Inspections
 		protected.POST("/inspection", controller.CreateInspection)
@@ -109,7 +113,7 @@ func main() {
 	{	
 		// MaintenanceTasks
 		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
-		protected.PATCH("/maintenance-task/:id", controller.UpdateMaintenanceTaskByID)
+		
 		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)
 
 		// HondoverImages
