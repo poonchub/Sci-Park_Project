@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
-import Grid from '@mui/material/Grid2'; // Grid version 2
-import './AddUserForm.css';  // Import the updated CSS
-import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes } from '../../services/http';  // Assuming these are your API functions
-import { GendersInterface } from '../../interfaces/IGenders';
-import { RolesInterface } from '../../interfaces/IRoles';
-import { PackagesInterface } from '../../interfaces/IPackages';
-import { UserInterface } from '../../interfaces/IUser';
-import { RequestTypeInterface } from '../../interfaces/IRequestTypes';
+import '../AddUser/AddUserForm.css';  // Import the updated CSS
+import { GetRoomTypes } from '../../services/http';  // Assuming these are your API functions
+
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -16,67 +11,53 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
+import Grid from '@mui/material/Grid2'; // Grid version 2
 
 
-const AddUserForm: React.FC = () => {
-  const { control, handleSubmit, reset, formState: { errors }, watch } = useForm();
-  const [genders, setGenders] = useState<GendersInterface[]>([]);
-  const [roles, setRoles] = useState<RolesInterface[]>([]);
-  const [requiredTypes, setRequiredTypes] = useState<RequestTypeInterface[]>([]); // เก็บประเภทที่ต้องการ
-  const [packages, setPackages] = useState<PackagesInterface[]>([]);
-  const [file, setFile] = useState<File | null>(null);  // เก็บไฟล์เดียว
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+const AddRoomForm: React.FC = () => {
+
+  const [rooms, setRooms] = useState<RoomsInterface[]>([])
+  const [floors, setFloors] = useState<FloorsInterface[]>([]);
+  const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([]);
+  const [selectRoomType, setSelectRoomType] = useState(0);
+  const [selectFloor, setSelectFloors] = useState(0);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
-  // Fetch data when component mounts
-  const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
-  const [userType, setUserType] = useState<string>('internal');
-
-  const roleID = watch('RoleID');  // Watching RoleID value
-
-  const handleClickShowPassword = () => {
-    setShowPassword((prev) => !prev); // เปลี่ยนสถานะการแสดงรหัสผ่าน
-  };
-
-
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      let selectedFiles = Array.from(event.target.files).filter(isValidImage);
-
-      // ตรวจสอบว่าเลือกไฟล์ได้แค่ 1 ไฟล์
-      if (selectedFiles.length > 1) {
-        selectedFiles = selectedFiles.slice(0, 1);
-        alert("สามารถเลือกได้แค่ 1 ไฟล์เท่านั้น");
-      }
-
-      // แปลงไฟล์เป็น Base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);  // เก็บ Base64 string ของรูปภาพ
-      };
-
-      if (selectedFiles[0]) {
-        reader.readAsDataURL(selectedFiles[0]);
-        setFile(selectedFiles[0]);  // เก็บไฟล์เดียว
-      }
-    }
-  };
-
+  const { control, handleSubmit, reset, formState: { errors }, watch } = useForm();
+  
   useEffect(() => {
-    const fetchData = async () => {
-      const genderData = await ListGenders();
-      const roleData = await ListRoles();
-      const packageData = await ListPackages();
-      const requiredTypeData = await ListRequestTypes();  // Assuming you have a function to fetch request types
+          Listrooms();  // ดึงข้อมูลผู้ใช้งานใหม่
+          if (rooms === null || []) {
+              // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
+              FecthFloors();  // ดึงข้อมูลชั้น
+              FecthRoomTypes();  // ดึงข้อมูลประเภทห้อง
+  
+          }
+      }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+  
+      const FecthFloors = async () => {
+          try {
+              const res = await GetFloors();  // ดึงข้อมูลชั้นจาก API
+              if (res) {
+                  setFloors(res);  // กำหนดข้อมูลชั้นที่ดึงมา
+                  console.log(res); // Log the fetched data
+              }
+          } catch (error) {
+              console.error("Error fetching floors:", error);
+          }
+      }
+      const FecthRoomTypes = async () => {
+          try {
+              const res = await GetRoomTypes();  // ดึงข้อมูลประเภทห้องจาก API
+              if (res) {
+                  setRoomTypes(res);  // กำหนดข้อมูลประเภทห้องที่ดึงมา
+                  console.log(res); // Log the fetched data
+              }
+          } catch (error) {
+              console.error("Error fetching room types:", error);
+          }
+      }
 
-      setGenders(genderData);
-      setRoles(roleData);
-      setPackages(packageData);
-      setRequiredTypes(requiredTypeData);
-
-    };
-    fetchData();
-  }, []);
 
   const onSubmit = async (data: UserInterface) => {
 
@@ -119,9 +100,6 @@ const AddUserForm: React.FC = () => {
   };
 
 
-
-  const isValidImage = (file: File) => {
-    return file.type.startsWith("image/");
   };
 
 
@@ -165,7 +143,7 @@ const AddUserForm: React.FC = () => {
         className="title"
         style={{ marginBottom: '20px', marginTop: '10px' }}
       >
-        เพิ่มผู้ใช้งาน
+        เพิ่มห้องใหม่
       </Typography>
 
       <div className="add-user">
@@ -204,18 +182,6 @@ const AddUserForm: React.FC = () => {
               </FormControl>
             </Grid>
 
-
-
-            {/* Profile Image and Button */}
-            <Grid size={{ xs: 12, sm: 6 }} container direction="column" justifyContent="center" alignItems="center" textAlign="center">
-              {/* แสดงภาพโปรไฟล์ */}
-              <Avatar sx={{ width: 150, height: 150 }} src={profileImage || ''} />
-
-              {/* ปุ่มเลือกไฟล์ */}
-              <Button variant="outlined" component="label" className="upload-button" sx={{ marginTop: 2 }}>
-                เพิ่มรูปภาพ
-                <input type="file" hidden onChange={handleFileChange} />
-              </Button>
             </Grid>
 
 
@@ -581,4 +547,4 @@ const AddUserForm: React.FC = () => {
   );
 };
 
-export default AddUserForm;
+export default AddRoomForm;

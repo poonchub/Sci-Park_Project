@@ -133,6 +133,16 @@ func main() {
 
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)
+		protected.POST("/create-room", controller.CreateRoom)
+		protected.PATCH("/update-room/:id", controller.UpdateRoom)
+		
+		// Floors
+		protected.POST("/create-floor", controller.CreateFloor)
+		protected.PATCH("/update-floor/:id", controller.UpdateFloor)
+
+		// RoomTypes
+		protected.POST("/create-room-type", controller.CreateRoomType)
+		protected.PATCH("/update-room-type/:id", controller.UpdateRoomType)
 
 	}
 

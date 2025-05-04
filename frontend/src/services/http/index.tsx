@@ -5,7 +5,10 @@ import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
+import { RoomsInterface } from "../../interfaces/IRooms";
 import axios from 'axios';
+import { FloorsInterface } from "../../interfaces/IFloors";
+import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 
 
 // ฟังก์ชันสำหรับการ Login
@@ -352,7 +355,99 @@ async function GetRooms() {
     return res;
 }
 
+async function CreateRoom(roomData:RoomsInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(roomData)
+    };
+
+    let res = await fetch(`${apiUrl}/create-room`, requestOptions)
+        .then((res) => {
+            if (res.status === 201) {
+                return res.json(); // Success: Return the created room data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+async function UpdateRoom(roomData:RoomsInterface) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(roomData)
+    };
+
+    let res = await fetch(`${apiUrl}/update-room/${roomData.ID}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json(); // Success: Return the updated room data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+
+
 // RoomTypes
+async function CreateRoomType(roomTypeData:RoomtypesInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(roomTypeData)
+    };
+
+    let res = await fetch(`${apiUrl}/create-room-type`, requestOptions)
+        .then((res) => {
+            if (res.status === 201) {
+                return res.json(); // Success: Return the created room type data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+async function UpdateRoomType(roomTypeData:RoomtypesInterface) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(roomTypeData)
+    };
+
+    let res = await fetch(`${apiUrl}/update-room-type/${roomTypeData.ID}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json(); // Success: Return the updated room type data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+
+
 async function GetRoomTypes() {
     const requestOptions = {
         method: "GET",
@@ -417,6 +512,52 @@ async function GetFloors() {
 
     return res;
 }
+
+async function CreateFloor(floorData: FloorsInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(floorData)
+    };
+
+    let res = await fetch(`${apiUrl}/create-floor`, requestOptions)
+        .then((res) => {
+            if (res.status === 201) {
+                return res.json(); // Success: Return the created floor data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+async function UpdateFloor(floorData: FloorsInterface) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(floorData)
+    };
+
+    let res = await fetch(`${apiUrl}/update-floor/${floorData.ID}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json(); // Success: Return the updated floor data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
+
 
 // MaintenanceTypes
 async function GetMaintenanceTypes() {
@@ -977,9 +1118,13 @@ export {
 
     // Rooms
     GetRooms,
+    CreateRoom,
+    UpdateRoom,
 
     // RoomTypes
     GetRoomTypes,
+    CreateRoomType,
+    UpdateRoomType,
 
     // RoomStatus
     GetRoomStatus,
@@ -989,6 +1134,8 @@ export {
 
     // Floors
     GetFloors,
+    CreateFloor,
+    UpdateFloor,
 
     // MaintenanceTypes
     GetMaintenanceTypes,

@@ -5,6 +5,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"github.com/gin-gonic/gin"
+
 )
 
 // ListRole - ฟังก์ชันสำหรับดึงข้อมูลทั้งหมดจาก Role
@@ -31,3 +32,4 @@ func ListRequestType(c *gin.Context) {
 	// ส่งข้อมูลที่แปลงแล้วกลับเป็น JSON
 	c.JSON(http.StatusOK, result)
 }
+

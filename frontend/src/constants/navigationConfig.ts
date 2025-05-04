@@ -29,6 +29,7 @@ const DEFAULT_PATHS_BY_ROLE: Record<Role, Record<string, string>> = {
         maintenance: '/dashboard',
         booking: '/booking-room',
         manageuser: '/manage-user',
+        manageroom: '/manage-room',
     },
 };
 
@@ -48,6 +49,8 @@ export const SECTIONS = [
     { key: 'booking', path: getDefaultPathForSection('booking', role), name: 'จองห้อง' },
     { key: 'maintenance', path: getDefaultPathForSection('maintenance', role), name: 'แจ้งซ่อม' },
     { key: 'manageuser', path: getDefaultPathForSection('manageuser', role), name: 'จัดการผู้ใช้' },
+    { key: 'manageroom', path: getDefaultPathForSection('manageroom', role), name: 'จัดการห้อง' },
+
 ];
 
 // Drawer items categorized by section and filtered by user roles

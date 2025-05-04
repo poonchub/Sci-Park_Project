@@ -6,7 +6,106 @@ import (
 	"sci-park_web-application/entity"
 	"strconv"
 	"github.com/gin-gonic/gin"
+    "fmt"
 )
+
+func CreateRoom(c *gin.Context) {
+	var room entity.Room
+    db := config.DB()
+
+	// Bind JSON จาก request body
+	if err := c.ShouldBindJSON(&room); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// ตรวจสอบว่า RoomNumber ซ้ำในฐานข้อมูลหรือไม่
+	var existingRoom entity.Room
+	if err := db.Where("room_number = ?", room.RoomNumber).First(&existingRoom).Error; err == nil {
+		// ถ้าพบห้องที่มี RoomNumber ซ้ำ
+		c.JSON(http.StatusConflict, gin.H{"error": "RoomNumber already exists"})
+		return
+	}
+
+	// ตรวจสอบข้อมูลที่ต้องการ
+	if room.RoomNumber == "" || room.Capacity == 0 || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+		return
+	}
+
+	// บันทึกห้องใหม่ลงในฐานข้อมูล
+	if err := db.Create(&room).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Unable to create room: %v", err)})
+		return
+	}
+
+	// ส่ง response กลับเมื่อห้องถูกสร้างสำเร็จ
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Room created successfully",
+		"room":    room,
+	})
+}
+
+func UpdateRoom(c *gin.Context) {
+    var room entity.Room
+    db := config.DB()
+
+    // รับ RoomID จาก URL
+    roomID := c.Param("id")
+
+    // Bind JSON จาก request body
+    if err := c.ShouldBindJSON(&room); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // ตรวจสอบว่า RoomNumber ซ้ำในฐานข้อมูลหรือไม่
+    var existingRoom entity.Room
+    if err := db.Where("room_number = ? AND id != ?", room.RoomNumber, roomID).First(&existingRoom).Error; err == nil {
+        // ถ้าพบห้องที่มี RoomNumber ซ้ำ
+        c.JSON(http.StatusConflict, gin.H{"error": "RoomNumber already exists"})
+        return
+    }
+
+    // ตรวจสอบข้อมูลที่ต้องการ
+    if room.RoomNumber == "" || room.Capacity == 0 || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+        return
+    }
+
+    // หาห้องที่ต้องการอัพเดท
+    if err := db.Where("id = ?", roomID).First(&existingRoom).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+        return
+    }
+
+    // อัปเดตห้องด้วยค่าจาก JSON request ที่รับมา
+    if err := db.Model(&existingRoom).Updates(entity.Room{
+        RoomNumber:   room.RoomNumber,
+        Capacity:     room.Capacity,
+        RoomStatusID: room.RoomStatusID,
+        FloorID:      room.FloorID,
+        RoomTypeID:   room.RoomTypeID,
+    }).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Unable to update room: %v", err)})
+        return
+    }
+
+    // ส่ง response กลับเมื่ออัพเดทห้องสำเร็จ
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Room updated successfully",
+        "room": gin.H{
+            "ID":          existingRoom.ID,
+            "RoomNumber":  existingRoom.RoomNumber,
+            "Capacity":    existingRoom.Capacity,
+            "RoomStatusID": existingRoom.RoomStatusID,
+            "FloorID":     existingRoom.FloorID,
+            "RoomTypeID":  existingRoom.RoomTypeID,
+        },
+    })
+}
+
+
 
 // GET /rooms
 func ListRooms(c *gin.Context) {
