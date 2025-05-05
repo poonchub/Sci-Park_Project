@@ -1,9 +1,11 @@
 import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
-import { faAward, faUserTie, faMagnifyingGlass,faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass,faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined';
+import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAddressBook } from "@fortawesome/free-solid-svg-icons";
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Import ListUsers service 
@@ -301,7 +303,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faAddressBook} size="xl" />
+                                            <PeopleOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -328,12 +330,12 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faUserTie} size="xl" />
+                                            <BadgeOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value="undefined">{'ไม่เลือก'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
+                                    <MenuItem value="undefined">{'ทั้งหมด'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
                                     <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
                                     <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
                                 </Select>
@@ -356,7 +358,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faAward} size="xl" />
+                                            <LocalActivityOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}

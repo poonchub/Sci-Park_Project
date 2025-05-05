@@ -100,7 +100,12 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
     manageroom: [
         {
             path: '/manage-room',
-            name: 'จัดการผู้ใช้งาน',
+            name: 'จัดการห้อง',
+            roles: ['Admin']
+        },
+        {
+            path: '/add-room',
+            name: 'เพิ่มห้อง',
             roles: ['Admin']
         },
         
@@ -136,6 +141,7 @@ export const getCurrentSectionKey = (pathname: string): string => {
 
         // Room Management
         '/manage-room': 'manageroom',
+        '/add-room': 'manageroom',
 
 
     };

@@ -57,7 +57,7 @@ const InfoAlert: React.FC<InfoAlertProps> = ({ message, onClose, index, totalAle
         left: '100%', // Start from the right side of the screen
         transform: 'translateX(-50%)',
         width: '35%',
-        zIndex: 1000 + totalAlerts - index, // Dynamic zIndex to ensure the last alert is on top
+        zIndex: 1350 + totalAlerts - index, // Dynamic zIndex to ensure the last alert is on top
         backgroundColor: 'white', // Background color
         color: 'black', // Text color
         padding: '12px',

@@ -4,7 +4,7 @@ import { RoomtypesInterface } from "./IRoomTypes";
 export interface RoomsInterface {
     ID?:            number;
     RoomNumber?:    string;
-    Capacity?:      number;
+    Capacity?:      Number;
     RoomStatusID?:  number;
     RoomStatus?:    string;
     FloorID?:       number;

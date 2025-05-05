@@ -9,9 +9,12 @@ import { Drawer } from '../Drawer/Drawer';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
-import AddBusinessIcon from '@mui/icons-material/AddBusiness';
+import AutoAwesomeMosaicOutlinedIcon from '@mui/icons-material/AutoAwesomeMosaicOutlined';
+import DashboardCustomizeOutlinedIcon from '@mui/icons-material/DashboardCustomizeOutlined';
+
 import { JSX } from 'react';
 
 // Icons for each drawer item
@@ -22,9 +25,10 @@ const ICON_MAP: Record<string, JSX.Element> = {
 	'/assign-work': <AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/accept-work': <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/manage-user': <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	'/add-user': <AssignmentIndOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/add-user': <PersonAddAltOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/booking-room': <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
-	'/manage-room': <AddBusinessIcon  sx={{ color: 'text.secondary' }} />,
+	'/manage-room': <AutoAwesomeMosaicOutlinedIcon  sx={{ color: 'text.secondary' }} />,
+	'/add-room': <DashboardCustomizeOutlinedIcon  sx={{ color: 'text.secondary' }} />,
 };
 
 // Props interface for the SideDrawer component

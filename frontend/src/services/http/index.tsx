@@ -367,7 +367,7 @@ async function CreateRoom(roomData:RoomsInterface) {
 
     let res = await fetch(`${apiUrl}/create-room`, requestOptions)
         .then((res) => {
-            if (res.status === 201) {
+            if (res) {
                 return res.json(); // Success: Return the created room data
             } else {
                 return false; // Failure
@@ -414,7 +414,7 @@ async function CreateRoomType(roomTypeData:RoomtypesInterface) {
 
     let res = await fetch(`${apiUrl}/create-room-type`, requestOptions)
         .then((res) => {
-            if (res.status === 201) {
+            if (res) {
                 return res.json(); // Success: Return the created room type data
             } else {
                 return false; // Failure
@@ -525,7 +525,7 @@ async function CreateFloor(floorData: FloorsInterface) {
 
     let res = await fetch(`${apiUrl}/create-floor`, requestOptions)
         .then((res) => {
-            if (res.status === 201) {
+            if (res) {
                 return res.json(); // Success: Return the created floor data
             } else {
                 return false; // Failure

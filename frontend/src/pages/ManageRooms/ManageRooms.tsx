@@ -5,7 +5,9 @@ import {  faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-i
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLayerGroup ,faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import PublishedWithChangesOutlinedIcon from '@mui/icons-material/PublishedWithChangesOutlined';
+import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ListSetRooms, GetRoomTypes, GetRoomStatus, GetFloors } from "../../services/http";  // Import ListUsers service 
@@ -19,6 +21,7 @@ import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 
 
 
@@ -342,7 +345,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faLayerGroup} size="xl" />
+                                            <LayersOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -368,7 +371,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                            <VerticalSplitOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -396,7 +399,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                            <PublishedWithChangesOutlinedIcon/>
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
