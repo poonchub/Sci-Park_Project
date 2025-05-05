@@ -49,7 +49,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
         statusCards.map((item, index) => (
             <Grid2 key={index}
                 size={{
-                    xs: size?.xs || 12,
+                    xs: size?.xs || 6,
                     sm: size?.sm,
                     md: size?.md || 4,
                     lg: size?.lg,
