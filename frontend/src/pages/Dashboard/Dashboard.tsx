@@ -400,7 +400,11 @@ function Dashboard() {
                                         {`${filteredRequest.length} รายการ`}
                                     </Typography>
                                 </Grid2>
-                                <Grid2 size={{ xs: 10, md: 3 }} >
+                                <Grid2 container size={{ xs: 10, md: 3 }} 
+                                    sx={{ 
+                                        justifyContent: 'flex-end'
+                                    }}
+                                >
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                                         <DatePicker
                                             views={['year', 'month']}
@@ -410,7 +414,7 @@ function Dashboard() {
                                                 openPickerIcon: CalendarMonth,
                                             }}
                                             format="MM/YYYY"
-                                            sx={{ width: 100 }}
+                                            sx={{ minWidth: "100px", maxWidth: "200px" }}
                                         />
                                     </LocalizationProvider>
                                 </Grid2>
