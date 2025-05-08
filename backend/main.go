@@ -82,6 +82,9 @@ func main() {
 		// Floors
 		protected.GET("/floors", controller.ListFloors)
 
+		// Room
+		protected.GET("/room/:id", controller.GetRoomByID)
+
 		// Genders
 		protected.GET("/genders",controller.ListGenders)
 

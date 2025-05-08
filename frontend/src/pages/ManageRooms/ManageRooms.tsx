@@ -22,7 +22,7 @@ import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
-
+import EditRoomPopup from './EditRoomPopup';
 
 
 function ManageRooms() {
@@ -38,8 +38,8 @@ function ManageRooms() {
     const [total, setTotal] = useState(0);
     const [openPopup, setOpenPopup] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [selectedRoomID, setSelectedRoomID] = useState<number | null>(null);
     const [debouncedSearchText, setDebouncedSearchText] = useState('');
-    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
     // Columns definition
@@ -169,10 +169,10 @@ function ManageRooms() {
         setRooms(filteredRoom);  // กำหนดผลลัพธ์ที่กรองแล้ว
     };
 
-    const handleOpenPopup = (userId: number) => {
-        setSelectedUserId(userId);
-        setOpenPopup(true);
-    };
+    const handleOpenPopup = (roomID: number) => {
+        setSelectedRoomID(roomID);  // ตั้งค่า selectedRoomID ให้กับห้องที่ต้องการแก้ไข
+        setOpenPopup(true);  // เปิด Pop-up
+      };
 
     useEffect(() => {
         Listrooms();  // ดึงข้อมูลผู้ใช้งานใหม่
@@ -183,7 +183,7 @@ function ManageRooms() {
             FecthRoomStatus();  // ดึงข้อมูลสถานะห้อง
 
         }
-    }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+    }, []);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
 
     const FecthFloors = async () => {
         try {
@@ -223,12 +223,18 @@ function ManageRooms() {
 
 
     const handleClosePopup = () => {
-        setOpenPopup(false);
-        setSelectedUserId(null); // รีเซ็ต selectedUserId เมื่อปิด pop-up
+        setOpenPopup(false);  // ปิด Pop-up
+        setSelectedRoomID(null); // รีเซ็ต selectedRoomID
         setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
-        setPage(1);         // รีเซ็ตไปยังหน้าที่ 1
+        setSelectRoomType(0);  // รีเซ็ตการเลือกประเภทห้อง
+        setSelectRoomStatus(0);  // รีเซ็ตการเลือกสถานะห้อง
+        setSelectFloors(0);  // รีเซ็ตการเลือกชั้น
+        setPage(1);  // รีเซ็ตหน้าเป็นหน้าที่ 1
+        setLimit(10);  // รีเซ็ตจำนวนหน้าที่แสดงเป็นค่าเริ่มต้น
+        Listrooms();  // เรียกฟังก์ชันดึงข้อมูลใหม่
         console.log(alerts); // Log message when popup is closed
     };
+    
 
     // Fetch users from the API
     const Listrooms = async () => {
@@ -249,6 +255,8 @@ function ManageRooms() {
             console.error("Error fetching users:", error);
         }
     };
+
+
 
 
 
@@ -483,7 +491,14 @@ function ManageRooms() {
                     </Card>
                 </Grid2>
 
-                {/* Pop-up */}
+                {/* Pop-up for editing room */}
+      {openPopup && selectedRoomID !== null && (
+        <EditRoomPopup
+          roomID={selectedRoomID}  // Pass the selected room ID to the popup
+          open={openPopup}
+          onClose={handleClosePopup}
+        />
+      )}
 
 
             </Grid2>

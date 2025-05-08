@@ -93,6 +93,7 @@ func UpdateRoom(c *gin.Context) {
 
     // ส่ง response กลับเมื่ออัพเดทห้องสำเร็จ
     c.JSON(http.StatusOK, gin.H{
+        "status":  "success",
         "message": "Room updated successfully",
         "room": gin.H{
             "ID":          existingRoom.ID,
@@ -210,3 +211,33 @@ func ListSetRooms(c *gin.Context) {
         "totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
     })
 }
+
+// GET /room/:id 
+func GetRoomByID(c *gin.Context) {
+    // รับ RoomID จาก URL
+    roomID := c.Param("id")
+    
+    // สร้างตัวแปรสำหรับเก็บข้อมูลห้อง
+    var room entity.Room
+    
+    // เชื่อมต่อกับฐานข้อมูล
+    db := config.DB()
+
+    // ค้นหาห้องจากฐานข้อมูลโดยใช้ RoomID
+    if err := db.Where("id = ?", roomID).Preload("Floor").Preload("RoomType").Preload("RoomStatus").First(&room).Error; err != nil {
+        // หากไม่พบห้องที่ตรงกับ ID ที่ให้มา
+        c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+        return
+    }
+
+    // ส่งข้อมูลห้องกลับมาในรูปแบบที่ต้องการ โดยไม่มี "message" และ "data"
+    c.JSON(http.StatusOK, gin.H{
+        "ID":           room.ID,
+        "RoomNumber":   room.RoomNumber,
+        "Capacity":     room.Capacity,
+        "RoomStatusID": room.RoomStatusID,
+        "FloorID":      room.FloorID,
+        "RoomTypeID":   room.RoomTypeID,
+    })
+}
+

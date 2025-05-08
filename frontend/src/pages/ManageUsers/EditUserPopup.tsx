@@ -77,12 +77,12 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('RequestTypeID', userData.RequestTypeID);
           setIsEmployee(userData.IsEmployee);
 
+          setSelectedGender(userData.GenderID ?? null);
+          setSelectedRole(userData.RoleID ?? null);
+          setSelectedPackage(userData.UserPackageID ?? null);
+          setSelectedRequestType(userData.RequestTypeID ?? null);
 
         }
-        setSelectedRequestType(user?.RequestTypeID ?? null);
-        setSelectedRole(user?.RoleID ?? null);
-        setSelectedGender(user?.GenderID ?? null);
-        setSelectedPackage(user?.UserPackageID ?? null);
 
 
 
@@ -127,6 +127,30 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
     };
 
     console.log('Form data to send:', formDataToSend);
+
+    if(formDataToSend.RoleID === 0) {
+      setAlerts(prev => [
+        ...prev,
+        { type: 'warning', message: 'Please select a role.' },
+      ]);
+      return; 
+    }
+    if(formDataToSend.GenderID === 0) { 
+      setAlerts(prev => [
+        ...prev,
+        { type: 'warning', message  : 'Please select a gender.' },
+      ]);
+      return;
+    }
+
+    if(formDataToSend.RoleID === 3 && formDataToSend.RequestTypeID === 0) {
+      setAlerts(prev => [
+        ...prev,
+        { type: 'warning', message: 'Please select a request type.' },
+      ]);
+      return; 
+    }       
+      
 
     try {
       const response = await UpdateUserbyID(formDataToSend);
@@ -382,13 +406,14 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     </FormControl>
                   </Grid>
 
-                  {roleID === 3 && (
+                  {(roleID || selectedRole) === 3 && (
       <Grid size={{ xs: 12, sm: 6 }}>
         <FormControl fullWidth error={!!errors.RequestTypeID}>
           <Typography variant="body1" className="title-field">จัดการ</Typography>
           <Select
             labelId="request-type-label"
             name="RequestTypeID"
+            defaultValue={1}
             value={selectedRequestType ?? user.RequestTypeID} // Optional: Modify value based on condition
             onChange={(e) => setSelectedRequestType(Number(e.target.value))}
             displayEmpty

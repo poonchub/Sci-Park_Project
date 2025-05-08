@@ -9,6 +9,7 @@ import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 import Grid from '@mui/material/Grid2';  // Grid version 2
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
+import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 import AddFloorDialog from './FloorPopup'; // Import the new FloorPopup component
 import AddRoomTypeDialogProps from './RoomTypePopup'; // Import the new RoomTypePopup component
 import { RoomsInterface } from '../../interfaces/IRooms';
@@ -139,7 +140,7 @@ const AddRoomForm: React.FC = () => {
                   },
                 }}
               >
-                เพิ่มชั้นใหม่ <LayersOutlinedIcon />
+                เพิ่มชั้นใหม่&nbsp; <LayersOutlinedIcon />
               </Button>
             </Grid>
 
@@ -182,7 +183,7 @@ const AddRoomForm: React.FC = () => {
                   },
                 }}
               >
-                เพิ่มประเภทห้อง <LayersOutlinedIcon />
+                เพิ่มประเภทห้อง&nbsp; <VerticalSplitOutlinedIcon />
               </Button>
             </Grid>
 

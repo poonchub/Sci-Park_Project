@@ -389,7 +389,7 @@ async function UpdateRoom(roomData:RoomsInterface) {
 
     let res = await fetch(`${apiUrl}/update-room/${roomData.ID}`, requestOptions)
         .then((res) => {
-            if (res.status === 200) {
+            if (res) {
                 return res.json(); // Success: Return the updated room data
             } else {
                 return false; // Failure
@@ -398,6 +398,28 @@ async function UpdateRoom(roomData:RoomsInterface) {
 
     return res;
 }
+
+async function GetRoomByID(id:number) {
+    const requestOptions = {   
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };      
+
+    let res = await fetch(`${apiUrl}/room/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 
 
 
@@ -1120,6 +1142,7 @@ export {
     GetRooms,
     CreateRoom,
     UpdateRoom,
+    GetRoomByID,
 
     // RoomTypes
     GetRoomTypes,
