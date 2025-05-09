@@ -59,21 +59,7 @@ function RequestStatusStack({ statusCounts }: Props) {
                                     {value} รายการ
                                 </Typography>
                             </Stack>
-                            <LinearProgress
-                                variant="determinate"
-                                value={value}
-                                sx={{
-                                    mt: 0.8,
-                                    height: 6,
-                                    borderRadius: 5,
-                                    backgroundColor: '#eee',
-                                    '& .MuiLinearProgress-bar': {
-                                        backgroundColor: statusConfig[label].color,
-                                    },
-                                }}
-                            />
                         </Card>
-
                     </Grid2>
                 );
             })}

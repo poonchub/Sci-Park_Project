@@ -54,7 +54,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
             {/* Drop Zone */}
             <Grid2
-                size={{ xs: 6, md: 12 }}
+                size={{ xs: 12, md: 12 }}
                 sx={{
                     border: "2px dashed #0094DE",
                     borderRadius: 2,

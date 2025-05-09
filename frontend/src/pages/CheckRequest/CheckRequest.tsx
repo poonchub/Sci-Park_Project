@@ -387,12 +387,12 @@ function CheckRequest() {
 
 			{/* Header section with title and back button */}
 			<Grid2 container spacing={2}>
-				<Grid2 className="title-box" size={{ xs: 12, md: 10 }}>
+				<Grid2 className="title-box" size={{ xs: 5, md: 5 }}>
 					<Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
 						ตรวจสอบคำร้องแจ้งซ่อม
 					</Typography>
 				</Grid2>
-				<Grid2 container size={{ xs: 12, md: 2 }} sx={{ justifyContent: "flex-end" }}>
+				<Grid2 container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
 					<Button variant="outlined" onClick={handleBack}>
 						<FontAwesomeIcon icon={faAngleLeft} size="lg" />
 						<Typography variant="textButtonClassic">ย้อนกลับ</Typography>
@@ -400,7 +400,7 @@ function CheckRequest() {
 				</Grid2>
 
 				{/* Stepper showing request progress */}
-				<Grid2 size={{ xs: 12, md: isUnsuccessful ? 10 : 8 }}>
+				<Grid2 size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
 					<RequestStepper
 						requestStatuses={requestStatuses}
 						requestStatusID={requestStatusID}
@@ -438,7 +438,20 @@ function CheckRequest() {
 				{/* Main data section */}
 				<Card className="data-card" sx={{ width: '100%', borderRadius: 2 }}>
 					<CardContent>
-						<Grid2 container spacing={3} sx={{ px: 6, py: 2 }}>
+						<Grid2 container 
+							spacing={{
+                                xs: 3
+                            }}
+							sx={{ 
+								px: {
+                                    xs: 2,
+                                    md: 6
+                                }, 
+                                py: {
+                                    xs: 1,
+                                    md: 4
+                                },
+							}}>
 							<Grid2 size={{ xs: 12, md: 12 }}>
 								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
 									ข้อมูลการแจ้งซ่อม
@@ -496,7 +509,7 @@ function CheckRequest() {
 								</Grid2>
 							</Grid2>
 
-							<Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
+							<Grid2 container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
 								{
 									isPending && (isAdmin || isManager) ? (
 										<Box sx={{ gap: 1, display: 'flex' }}>

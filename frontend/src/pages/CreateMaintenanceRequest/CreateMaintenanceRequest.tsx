@@ -282,12 +282,12 @@ function CreateMaintenanceRequestPage() {
             <Grid2 container spacing={2}>
 
                 {/* Header Section */}
-                <Grid2 className='title-box' size={{ xs: 10, md: 10 }}>
+                <Grid2 className='title-box' size={{ sm: 5, md: 5 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         เขียนคำร้องแจ้งซ่อม
                     </Typography>
                 </Grid2>
-                <Grid2 container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end" }}>
+                <Grid2 container size={{ sm: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                     <Link to="/my-maintenance-request" style={{ textAlign: 'center' }}>
                         <Button variant="outlined" >
                             <FontAwesomeIcon icon={faAngleLeft} size="lg" />
@@ -309,15 +309,27 @@ function CreateMaintenanceRequestPage() {
                     <CardContent>
                         <Grid2 container
                             component="form"
-                            spacing={8}
-                            sx={{ px: 6, py: 4, alignItems: "flex-start" }}
+                            spacing={{
+                                xs: 3,
+                                md: 8
+                            }}
+                            sx={{ 
+                                px: {
+                                    xs: 2,
+                                    md: 6
+                                }, 
+                                py: {
+                                    xs: 1,
+                                    md: 4
+                                }, 
+                            alignItems: "flex-start" }}
                             onSubmit={handleSubmit}
                         >
                             {/* Left Section (Form Inputs) */}
-                            <Grid2 container size={{ xs: 6, md: 6 }} spacing={3}>
+                            <Grid2 container size={{ xs: 12, md: 6 }} spacing={3}>
 
                                 {/* Area Selection */}
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" className="title-field">บริเวณที่ต้องการแจ้งซ่อม</Typography>
                                     <FormControl>
                                         <RadioGroup
@@ -349,7 +361,7 @@ function CreateMaintenanceRequestPage() {
                                     formData.AreaID == 2 ? (
                                         <>
                                             {/* Area Detail Input */}
-                                            <Grid2 size={{ xs: 6, md: 12 }}>
+                                            <Grid2 size={{ xs: 12, md: 12 }}>
                                                 <TextField
                                                     multiline
                                                     rows={2}
@@ -370,7 +382,7 @@ function CreateMaintenanceRequestPage() {
                                     ) : (
                                         <>
                                             {/* Room Type Selection */}
-                                            <Grid2 size={{ xs: 6, md: 12 }}>
+                                            <Grid2 size={{ xs: 12, md: 12 }}>
                                                 <Typography variant="body1" className="title-field">ประเภทห้อง</Typography>
                                                 <FormControl fullWidth>
                                                     <Select
@@ -447,7 +459,7 @@ function CreateMaintenanceRequestPage() {
                                 }
 
                                 {/* Maintenance Type Selection */}
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" className="title-field">ประเภทปัญหา</Typography>
                                     <FormControl fullWidth>
                                         <Select
@@ -472,7 +484,7 @@ function CreateMaintenanceRequestPage() {
                                         formData.MaintenanceTypeID == 6 ? (
                                             <>
                                                 {/* OtherType Detail Input */}
-                                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                                <Grid2 size={{ xs: 12, md: 12 }}>
                                                     <TextField
                                                         multiline
                                                         rows={2}
@@ -498,7 +510,7 @@ function CreateMaintenanceRequestPage() {
                                 </Grid2>
 
                                 {/* Description Input */}
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" className="title-field">รายละเอียด</Typography>
                                     <TextField
                                         multiline
@@ -518,10 +530,10 @@ function CreateMaintenanceRequestPage() {
                                 </Grid2>
 
                                 {/* Time Input */}
-                                <Grid2 container size={{ xs: 6, md: 12 }} spacing={0}>
+                                <Grid2 container size={{ xs: 12, md: 12 }} spacing={0}>
                                     <Typography variant="body1" className="title-field">ช่วงเวลาที่รับบริการได้</Typography>
 
-                                    <Grid2 size={{ xs: 6, md: 12 }}>
+                                    <Grid2 size={{ xs: 12, md: 12 }}>
                                         <FormGroup>
                                             <FormControlLabel
                                                 control={<Checkbox
@@ -535,11 +547,11 @@ function CreateMaintenanceRequestPage() {
                                         </FormGroup>
                                     </Grid2>
 
-                                    <Grid2 container size={{ xs: 6, md: 12 }} sx={{
+                                    <Grid2 container size={{ xs: 12, md: 12 }} sx={{
                                         justifyContent: "space-between",
                                         alignItems: "center",
                                     }}>
-                                        <Grid2 size={{ xs: 6, md: 5.5 }}>
+                                        <Grid2 size={{ xs: 5.5, md: 5.5 }}>
                                             <TextField
                                                 name="StartTime"
                                                 type="time"
@@ -550,7 +562,7 @@ function CreateMaintenanceRequestPage() {
                                             />
                                         </Grid2>
                                         <Typography variant="body1">ถึง</Typography>
-                                        <Grid2 size={{ xs: 6, md: 5.5 }}>
+                                        <Grid2 size={{ xs: 5.5, md: 5.5 }}>
                                             <TextField
                                                 name="EndTime"
                                                 type="time"
@@ -565,9 +577,9 @@ function CreateMaintenanceRequestPage() {
                             </Grid2>
 
                             {/* Right Section (User Info & Upload) */}
-                            <Grid2 container size={{ xs: 6, md: 6 }} spacing={3}>
+                            <Grid2 container size={{ xs: 12, md: 6 }} spacing={3}>
 
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" className="title-field">ผู้เขียนคำร้อง</Typography>
                                     <TextField
                                         fullWidth
@@ -585,7 +597,7 @@ function CreateMaintenanceRequestPage() {
                                     />
                                 </Grid2>
 
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" className="title-field">ข้อมูลการติดต่อ</Typography>
                                     <Grid2 container spacing={1}>
 
@@ -620,7 +632,7 @@ function CreateMaintenanceRequestPage() {
                                             }}
                                         />
                                     </Grid2>
-                                    <Grid2 container size={{ xs: 6, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
+                                    <Grid2 container size={{ xs: 12, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
                                         <Button
                                             variant="containedBlue"
                                             onClick={() => setOnEdit(!onEdit)}
@@ -634,7 +646,7 @@ function CreateMaintenanceRequestPage() {
                                     </Grid2>
                                 </Grid2>
 
-                                <Grid2 size={{ xs: 6, md: 12 }}>
+                                <Grid2 size={{ xs: 12, md: 12 }}>
                                     <Box display={'flex'}>
                                         <Typography variant="body1" className="title-field">ภาพประกอบการแจ้งซ่อม</Typography>
                                         <Typography variant="body1"
@@ -655,7 +667,7 @@ function CreateMaintenanceRequestPage() {
                             </Grid2>
 
                             {/* Buttom Section */}
-                            <Grid2 container size={{ xs: 6, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
+                            <Grid2 container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
                                 <Box sx={{ gap: 1 ,display: 'flex' }}>
                                     <Button 
                                         variant="outlined" 
