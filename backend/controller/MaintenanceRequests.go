@@ -273,6 +273,14 @@ func GetMaintenanceRequestsForAdmin(c *gin.Context) {
 	total := countMaintenanceRequests(db)
 	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
+	createdAt := c.DefaultQuery("createdAt", "")
+
+	var counts interface{}
+    if len(createdAt) == 7 { // If createdAt is in the format YYYY-MM
+        counts = fetchDailyCounts(start, end, userID, maintenanceTypeID)
+    } else {
+        counts = fetchMonthlyCounts(start, end, userID, maintenanceTypeID)
+    }
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":         maintenanceRequests,
@@ -281,7 +289,7 @@ func GetMaintenanceRequestsForAdmin(c *gin.Context) {
 		"total":        total,
 		"totalPages":   (total + int64(limit) - 1) / int64(limit),
 		"statusCounts": fetchStatusCounts(start, end, userID, maintenanceTypeID),
-		"monthlyCounts":  fetchMonthlyCounts(start, end, userID, 0),
+		"counts":       counts,
 	})
 }
 
@@ -406,6 +414,39 @@ func fetchStatusCounts(start, end time.Time, userID, maintenanceTypeID int) []st
 
 	return statusCounts
 }
+
+func fetchDailyCounts(start, end time.Time, userID, maintenanceTypeID int) []struct {
+	Day   string `json:"day"`
+	Count int    `json:"count"`
+} {
+	var dailyCounts []struct {
+		Day   string `json:"day"`
+		Count int    `json:"count"`
+	}
+
+	db := config.DB().Model(&entity.MaintenanceRequest{})
+
+	if !start.IsZero() && !end.IsZero() {
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
+	}
+	if userID > 0 {
+		db = db.Where("user_id = ?", userID)
+	}
+	if maintenanceTypeID > 0 {
+		db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
+	}
+
+	db.Select(`
+			STRFTIME('%Y-%m-%d', created_at) AS day,
+			COUNT(id) AS count
+		`).
+		Group("day").
+		Order("day ASC").
+		Scan(&dailyCounts)
+
+	return dailyCounts
+}
+
 
 func fetchMonthlyCounts(start, end time.Time, userID, maintenanceTypeID int) []struct {
 	Month string `json:"month"`

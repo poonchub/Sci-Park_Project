@@ -12,7 +12,7 @@ import { UserInterface } from "../../interfaces/IUser"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle, faXmark, faCheckDouble, faEye, faCheckCircle, faBan } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog"
-import dayjs from "dayjs"
+import dayjs, { Dayjs } from "dayjs"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
 import dateFormat from "../../utils/dateFormat"
 import { statusConfig } from "../../constants/statusConfig"
@@ -35,14 +35,14 @@ function AllMaintenanceRequest() {
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [searchText, setSearchText] = useState('')
     const [selectedStatus, setSelectedStatus] = useState(0)
-    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs())
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({})
     const [selectedOperator, setSelectedOperator] = useState(0)
 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
-    const [monthlyCounts, setMonthlyCounts] = useState()
+    const [counts, setCounts] = useState()
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false)
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
@@ -316,11 +316,11 @@ function AllMaintenanceRequest() {
     const getMaintenanceRequests = async () => {
         try {
             const reqType = user?.RequestType?.TypeName || ''
-            const res = await GetMaintenanceRequestsForAdmin(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM-DD') : "", reqType);
+            const res = await GetMaintenanceRequestsForAdmin(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM') : "", reqType);
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);
-                setMonthlyCounts(res.monthlyCounts)
+                setCounts(res.counts)
 
                 // ใช้ reduce เพื่อจัดรูปแบบข้อมูล statusCounts
                 const formattedStatusCounts = res.statusCounts.reduce((acc: any, item: any) => {
@@ -459,7 +459,7 @@ function AllMaintenanceRequest() {
                     <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
                         <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexLineChart data={maintenanceRequests} height={160} selectedDate={selectedDate} />
+                        <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
                     </Card>
                 </Grid2>
 

@@ -33,14 +33,14 @@ const InfoCard: React.FC<InfoCardProps> = ({
         // Card layout wrapped inside Grid2 for responsiveness
         <Grid2 size={{
             xs: size?.xs || 12,
-            sm: size?.sm,
-            md: size?.md || 2,
-            lg: size?.lg,
+            sm: size?.sm || 6,
+            md: size?.md || 6,
+            lg: size?.lg || 2,
             xl: size?.xl,
         }}>
             <Card
                 className="card"
-                sx={{ width: '100%', borderRadius: 2, px: 2.4, py: 1, minHeight: '100%' }}
+                sx={{ width: '100%', borderRadius: 2, px: 2.4, py: 1.6, minHeight: '100%' }}
             >
                 <CardContent className='card-content'>
 
@@ -74,7 +74,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                     {/* Icon displaying an avatar or role-related icon */}
                     <Grid2
                         size={{ xs: 10, md: 6 }}
-                        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
                     >
                         <Box
                             sx={{

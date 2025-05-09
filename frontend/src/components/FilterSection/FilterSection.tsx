@@ -39,6 +39,7 @@ const FilterSection = ({
     handleClearFilter,
     requestStatuses,
 }: Props) => {
+
     return (
         <Grid2
             container
@@ -75,7 +76,8 @@ const FilterSection = ({
             <Grid2 size={{ xs: 3 }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
-                        format="DD/MM/YYYY"
+                        views={['year', 'month']}
+                        format="MM/YYYY"
                         value={selectedDate}
                         onChange={(newValue) => setSelectedDate(newValue)}
                         slots={{

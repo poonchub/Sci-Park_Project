@@ -241,7 +241,6 @@ function Dashboard() {
 
     const getMaintenanceRequests = async () => {
         try {
-
             const res = await ListMaintenanceRequests();
             if (res) {
                 setMaintenanceRequests(res);
