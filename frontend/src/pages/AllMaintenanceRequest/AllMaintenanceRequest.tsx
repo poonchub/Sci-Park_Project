@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import "./AllMaintenanceRequest.css"
-import { Box, Button, Card, Grid2, Typography } from "@mui/material"
+import { Box, Button, Card, Grid, Typography } from "@mui/material"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
@@ -422,10 +422,10 @@ function AllMaintenanceRequest() {
                 showNoteField
             />
 
-            <Grid2 container spacing={3}>
+            <Grid container spacing={3}>
 
                 {/* Header Section */}
-                <Grid2 className='title-box' size={{ xs: 12, md: 12 }}>
+                <Grid className='title-box' size={{ xs: 12, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{
                         fontWeight: 700,
                         fontSize: {
@@ -434,8 +434,8 @@ function AllMaintenanceRequest() {
                     }}>
                         รายการแจ้งซ่อม
                     </Typography>
-                </Grid2>
-                <Grid2 container size={{ md: 12, lg: 7 }} spacing={3}>
+                </Grid>
+                <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
 
                     {/* Status Section */}
                     <RequestStatusCards statusCounts={statusCounts || {}} />
@@ -452,16 +452,16 @@ function AllMaintenanceRequest() {
                         handleClearFilter={handleClearFillter}
                         requestStatuses={requestStatuses}
                     />
-                </Grid2>
+                </Grid>
 
                 {/* Chart Section */}
-                <Grid2 size={{ xs: 12, lg: 5 }} >
+                <Grid size={{ xs: 12, lg: 5 }} >
                     <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
                         <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
                         <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
                         <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
                     </Card>
-                </Grid2>
+                </Grid>
 
                 {/* Filters Section size md */}
                 <FilterSection
@@ -477,7 +477,7 @@ function AllMaintenanceRequest() {
                 />
 
                 {/* Data Table */}
-                <Grid2 size={{ xs: 12, md: 12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                     <CustomDataGrid
                         rows={filteredRequests}
                         columns={columns}
@@ -488,8 +488,8 @@ function AllMaintenanceRequest() {
                         onLimitChange={setLimit}
                         noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
                     />
-                </Grid2>
-            </Grid2>
+                </Grid>
+            </Grid>
         </div>
     )
 }

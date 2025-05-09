@@ -1,4 +1,4 @@
-import { Box, Button, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
@@ -218,7 +218,7 @@ function AcceptWork() {
 			renderCell: (item) => {
 				const requestID = String(item.row.MaintenanceRequest?.ID)
 				return (
-					<Link to="/check-requests" >
+					<Link to="/maintenance/check-requests" >
 						<Button
 							variant="contained"
 							onClick={() => localStorage.setItem('requestID', requestID)}
@@ -393,7 +393,7 @@ function AcceptWork() {
 			renderCell: (item) => {
 				const requestID = String(item.row.MaintenanceRequest?.ID)
 				return (
-					<Link to="/check-requests" >
+					<Link to="/maintenance/check-requests" >
 						<Button
 							variant="contained"
 							onClick={() => localStorage.setItem('requestID', requestID)}
@@ -598,18 +598,18 @@ function AcceptWork() {
 				showNoteField
 			/>
 
-			<Grid2
+			<Grid
 				container
 				spacing={3}
 			>
-				<Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
+				<Grid className='title-box' size={{ xs: 10, md: 12 }}>
 					<Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
 						งานของฉัน
 					</Typography>
-				</Grid2>
+				</Grid>
 
 				{/* Filters Section */}
-				<Grid2 container
+				<Grid container
 					spacing={1}
 					className='filter-section'
 					size={{ xs: 10, md: 12 }}
@@ -617,7 +617,7 @@ function AcceptWork() {
 						alignItems: "flex-end",
 						height: 'auto'
 					}}>
-					<Grid2 size={{ xs: 10, md: 6 }}>
+					<Grid size={{ xs: 10, md: 6 }}>
 						<TextField
 							fullWidth
 							className="search-box"
@@ -636,8 +636,8 @@ function AcceptWork() {
 								}
 							}}
 						/>
-					</Grid2>
-					<Grid2 size={{ xs: 10, md: 2.5 }}>
+					</Grid>
+					<Grid size={{ xs: 10, md: 2.5 }}>
 						<LocalizationProvider dateAdapter={AdapterDayjs}>
 							<DatePicker
 								format="DD/MM/YYYY"
@@ -648,8 +648,8 @@ function AcceptWork() {
 								}}
 							/>
 						</LocalizationProvider>
-					</Grid2>
-					<Grid2 size={{ xs: 10, md: 2.5 }}>
+					</Grid>
+					<Grid size={{ xs: 10, md: 2.5 }}>
 						<FormControl fullWidth>
 							<Select
 								value={selectedType}
@@ -671,8 +671,8 @@ function AcceptWork() {
 								}
 							</Select>
 						</FormControl>
-					</Grid2>
-					<Grid2 size={{ xs: 10, md: 1 }}>
+					</Grid>
+					<Grid size={{ xs: 10, md: 1 }}>
 						<Button onClick={handleClearFillter}
 							sx={{
 								minWidth: 0,
@@ -687,12 +687,12 @@ function AcceptWork() {
 								},
 							}}
 						><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-					</Grid2>
-				</Grid2>
+					</Grid>
+				</Grid>
 
 				{/* Data Table */}
-				<Grid2 container size={{ xs: 12, md: 12 }} spacing={1}>
-					<Grid2 size={{ xs: 12, md: 6 }} >
+				<Grid container size={{ xs: 12, md: 12 }} spacing={1}>
+					<Grid size={{ xs: 12, md: 6 }} >
 						<MaintenanceTaskTable
 							title="รอดำเนินการ"
 							rows={filteredPendingTasks}
@@ -704,8 +704,8 @@ function AcceptWork() {
 							onLimitChange={setLimitPending}
 							noData={'ไม่พบงานที่รอดำเนินการ'}
 						/>
-					</Grid2>
-					<Grid2 size={{ xs: 12, md: 6 }} >
+					</Grid>
+					<Grid size={{ xs: 12, md: 6 }} >
 						<MaintenanceTaskTable
 							title="กำลังดำเนินการ"
 							rows={filteredInProgressTasks}
@@ -717,9 +717,9 @@ function AcceptWork() {
 							onLimitChange={setLimitInProgress}
 							noData={'ไม่พบการที่กำลังดำเนินการ'}
 						/>
-					</Grid2>
-				</Grid2>
-			</Grid2>
+					</Grid>
+				</Grid>
+			</Grid>
 		</div>
 	)
 }

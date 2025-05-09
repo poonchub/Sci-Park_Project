@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { faMagnifyingGlass,faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -245,10 +245,10 @@ function ManageUsers() {
                 </React.Fragment>
             ))}
 
-            <Grid2 container spacing={3}>
-                <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
+            <Grid container spacing={3}>
+                <Grid className='title-box' size={{ xs: 10, md: 12 }}>
                     <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
-                </Grid2>
+                </Grid>
 
                 {selectedUserId !== null && (
                     <EditUserPopup
@@ -260,14 +260,14 @@ function ManageUsers() {
                 )}
 
 
-                <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
+                <Grid container size={{ xs: 10, md: 12 }} spacing={3}>
                     {/* Filters Section */}
-                    <Grid2 container
+                    <Grid container
                         spacing={2}
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
                         sx={{ alignItems: "flex-end", height: 'auto' }}>
-                        <Grid2 size={{ xs: 10, md: 5 }}>
+                        <Grid size={{ xs: 10, md: 5 }}>
                             <TextField
                                 fullWidth
                                 className="search-box"
@@ -290,9 +290,9 @@ function ManageUsers() {
                                     }
                                 }}
                             />
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectrole}
@@ -316,9 +316,9 @@ function ManageUsers() {
                                     }
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
@@ -340,14 +340,14 @@ function ManageUsers() {
                                     <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
  
 
 
 
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectpackage}
@@ -371,9 +371,9 @@ function ManageUsers() {
                                     }
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 1 }}>
+                        <Grid size={{ xs: 10, md: 1 }}>
                             <Button onClick={handleClearFillter}
                                 sx={{
                                     minWidth: 0,
@@ -388,12 +388,12 @@ function ManageUsers() {
                                     },
                                 }}
                             ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                        </Grid2>
+                        </Grid>
 
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
 
-                <Grid2 size={{ xs: 12, md: 12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
                         <DataGrid
                             rows={users}  // Use the users data fetched from the API
@@ -440,7 +440,7 @@ function ManageUsers() {
 
                         />
                     </Card>
-                </Grid2>
+                </Grid>
 
                 {/* Pop-up */}
                 {selectedUserId !== null && (
@@ -451,7 +451,7 @@ function ManageUsers() {
                     />
                 )}
 
-            </Grid2>
+            </Grid>
         </div>
     );
 }

@@ -3,7 +3,7 @@ import {
     MenuItem,
     FormControl,
     Button,
-    Grid2,
+    Grid,
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -41,7 +41,7 @@ const FilterSection = ({
 }: Props) => {
 
     return (
-        <Grid2
+        <Grid
             container
             spacing={1}
             className="filter-section"
@@ -52,7 +52,7 @@ const FilterSection = ({
                 display,
             }}
         >
-            <Grid2 size={{ xs: 5 }}>
+            <Grid size={{ xs: 5 }}>
                 <TextField
                     fullWidth
                     className="search-box"
@@ -71,9 +71,9 @@ const FilterSection = ({
                         },
                     }}
                 />
-            </Grid2>
+            </Grid>
 
-            <Grid2 size={{ xs: 3 }}>
+            <Grid size={{ xs: 3 }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                         views={['year', 'month']}
@@ -85,9 +85,9 @@ const FilterSection = ({
                         }}
                     />
                 </LocalizationProvider>
-            </Grid2>
+            </Grid>
 
-            <Grid2 size={{ xs: 3 }}>
+            <Grid size={{ xs: 3 }}>
                 <FormControl fullWidth>
                     <Select
                         value={selectedStatus}
@@ -107,9 +107,9 @@ const FilterSection = ({
                         ))}
                     </Select>
                 </FormControl>
-            </Grid2>
+            </Grid>
 
-            <Grid2 size={{ xs: 1 }}>
+            <Grid size={{ xs: 1 }}>
                 <Button
                     onClick={handleClearFilter}
                     sx={{
@@ -127,8 +127,8 @@ const FilterSection = ({
                 >
                     <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
                 </Button>
-            </Grid2>
-        </Grid2>
+            </Grid>
+        </Grid>
     );
 };
 

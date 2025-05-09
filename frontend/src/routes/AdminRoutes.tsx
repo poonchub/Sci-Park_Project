@@ -21,7 +21,7 @@ const AdminRoutes = (): RouteObject => {
 		element: <WindowsLayout />,
 		children: [
 			{
-				path: "/",
+				path: "/home",
 				element: <Home/>
 			},
 			{
@@ -29,31 +29,27 @@ const AdminRoutes = (): RouteObject => {
 				element: <BookingRoom/>
 			},
 			{
-				path: "/all-maintenance-request",
+				path: "/maintenance/all-maintenance-request",
 				element: <AllMaintenanceRequest/>
 			},
 			{
-				path: "/my-maintenance-request",
+				path: "/maintenance/my-maintenance-request",
 				element: <MyMaintenanceRequest/>
 			},
 			{
-				path: "/create-maintenance-request",
+				path: "/maintenance/create-maintenance-request",
 				element: <CreateMaintenanceRequest/>
 			},
 			{
-				path: "/assign-work",
-				element: <AssignWork/>
-			},
-			{
-				path: "/check-requests",
+				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
 			},
 			{
-				path: "/dashboard",
+				path: "/maintenance/dashboard",
 				element: <Dashboard/>
 			},
 			{
-				path: "/accept-work",
+				path: "/maintenance/accept-work",
 				element: <AcceptWork/>
 			},
 			{

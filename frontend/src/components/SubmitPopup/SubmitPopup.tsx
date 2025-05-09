@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-    Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
+    Dialog, DialogTitle, DialogContent, DialogActions,
     Button,
     Typography,
     Box,
+    Grid,
 } from '@mui/material';
 import ImageUploader from '../ImageUploader/ImageUploader';
 
@@ -38,14 +39,14 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
                     <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
                 </Box>
                 
-                <Grid2 container spacing={1}>
+                <Grid container spacing={1}>
                     <ImageUploader
                         value={files}
                         onChange={onChange}
                         setAlerts={setAlerts}
                         maxFiles={3}
                     />
-                </Grid2>
+                </Grid>
             </DialogContent>
 
             {/* Confirm/Cancel buttons */}

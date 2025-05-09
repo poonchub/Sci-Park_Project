@@ -8,7 +8,7 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    Grid2,
+    Grid,
     Typography
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
@@ -86,14 +86,14 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                     <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
                 </Box>
 
-                <Grid2 container spacing={1}>
+                <Grid container spacing={1}>
                     <ImageUploader
                         value={files}
                         onChange={onChangeFiles}
                         setAlerts={setAlerts}
                         maxFiles={3}
                     />
-                </Grid2>
+                </Grid>
             </DialogContent>
 
             {/* Action buttons */}

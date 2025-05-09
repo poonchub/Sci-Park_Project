@@ -95,7 +95,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
         const labels = Object.keys(data);
         const series = labels.map((label) => data[label].total);
         const colors = labels.map((label) => maintenanceTypeConfig[label].color);
-    
+
         setState((prev) => ({
             ...prev,
             series,
@@ -134,8 +134,8 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 },
             },
         }));
-    }, [data, completed]);        
-    
+    }, [data, completed]);
+
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
@@ -144,12 +144,16 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
-                    <ReactApexChart
-                        options={state.options}
-                        series={state.series}
-                        type="donut"
-                        height={height}
-                    />
+                    {state.series.length > 0 ? (
+                        <ReactApexChart
+                            options={state.options}
+                            series={state.series}
+                            type="donut"
+                            height={height}
+                        />
+                    ) : (
+                        <Typography color="text.secondary">กำลังโหลดข้อมูล...</Typography>
+                    )}
                 </Box>
 
                 <Stack spacing={1.5} mt={2}>
