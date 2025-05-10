@@ -84,13 +84,13 @@ const NAVIGATION: Navigation = [
 		title: 'Management',
 	},
 	{
-		segment: 'reports',
-		title: 'Reports',
+		segment: 'room',
+		title: 'Room',
 		icon: <BarChartIcon />,
 		children: [
 			{
-				segment: 'sales',
-				title: 'Sales',
+				segment: 'manage-room',
+				title: 'Manage Room',
 				icon: <DescriptionIcon />,
 			},
 			{
@@ -134,9 +134,11 @@ const accessibleSegments: Record<Role, string[]> = {
 		'dashboard',
 		'booking-room',
 		'maintenance',
+		'room',
 
 		'all-maintenance-request',
-		'my-maintenance-request'
+		'my-maintenance-request',
+		'manage-room'
 	],
 	Manager: [
 		'home',
@@ -151,6 +153,7 @@ const accessibleSegments: Record<Role, string[]> = {
 		'home',
 		'booking-room',
 		'maintenance',
+		'room',
 
 		'my-maintenance-request',
 		'accept-work'],

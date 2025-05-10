@@ -61,11 +61,11 @@ const AdminRoutes = (): RouteObject => {
                 element: <ManageUsers/>
             },
 			{
-                path: "/manage-room",
+                path: "/room/manage-room",
                 element: <ManageRooms/>
             },
 			{
-				path: "/add-room",
+				path: "/room/add-room",
 				element: <AddRoomForm/>
 			},
 

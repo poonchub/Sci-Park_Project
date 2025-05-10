@@ -2,7 +2,6 @@ import { styled, TextField as MuiTextField } from "@mui/material";
 
 // Custom styled TextField component
 export const TextField = styled(MuiTextField)(() => ({
-    backgroundColor: "#fff",
     borderRadius: "10px",
 
     // Custom styling for input
