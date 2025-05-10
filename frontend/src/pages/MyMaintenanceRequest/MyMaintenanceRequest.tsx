@@ -23,6 +23,7 @@ import { AreasInterface } from '../../interfaces/IAreas'
 import { statusConfig } from '../../constants/statusConfig'
 import timeFormat from '../../utils/timeFormat'
 import RequestStatusStack from '../../components/RequestStatusStack/RequestStatusStack'
+import FilterSection from '../../components/FilterSection/FilterSection'
 
 function MyMaintenanceRequest() {
 
@@ -269,13 +270,13 @@ function MyMaintenanceRequest() {
         <div className="my-maintenance-request-page">
             <Grid container spacing={3}>
                 {/* Header Section */}
-                <Grid className='title-box' size={{ xs: 10, md: 10 }}>
+                <Grid className='title-box' size={{ xs: 5, sm: 5 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         การแจ้งซ่อมของฉัน
                     </Typography>
                 </Grid>
 
-                <Grid container size={{ xs: 10, md: 2 }} sx={{ justifyContent: "flex-end", }}>
+                <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end", }}>
                     <Link to="/maintenance/create-maintenance-request">
                         <Button variant="containedBlue" >
                             <FontAwesomeIcon icon={faFileLines} size="lg" />
@@ -295,90 +296,20 @@ function MyMaintenanceRequest() {
                             height: 'auto'
                         }}
                     >
-                        <RequestStatusStack statusCounts={statusCounts}/>
+                        <RequestStatusStack statusCounts={statusCounts} />
                     </Grid>
 
                     {/* Filters Section */}
-                    <Grid container
-                        spacing={1}
-                        className='filter-section'
-                        size={{ xs: 12, md: 12 }}
-                        sx={{
-                            height: 'auto'
-                        }}
-                    >
-                        <Grid size={{ xs: 10, md: 6 }}>
-                            <TextField
-                                fullWidth
-                                className="search-box"
-                                variant="outlined"
-                                placeholder="ค้นหา"
-                                margin="none"
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
-                                            </InputAdornment>
-                                        ),
-                                    }
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 10, md: 2.5 }}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    format="DD/MM/YYYY"
-                                    value={selectedDate}
-                                    onChange={(newValue) => setSelectedDate(newValue)}
-                                    slots={{
-                                        openPickerIcon: CalendarMonth,
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
-                        <Grid size={{ xs: 10, md: 2.5 }}>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(Number(e.target.value))}
-                                    displayEmpty
-                                    startAdornment={
-                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <FontAwesomeIcon icon={faChartSimple} size="lg" />
-                                        </InputAdornment>
-                                    }
-                                >
-                                    <MenuItem value={0}>{'ทุกสถานะ'}</MenuItem>
-                                    {
-                                        requestStatuses.map((item, index) => {
-                                            return (
-                                                <MenuItem key={index} value={index + 1}>{item.Name}</MenuItem>
-                                            )
-                                        })
-                                    }
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid size={{ xs: 10, md: 1 }}>
-                            <Button onClick={handleClearFillter}
-                                sx={{
-                                    minWidth: 0,
-                                    width: '100%',
-                                    height: '45px',
-                                    borderRadius: '10px',
-                                    border: '1px solid rgb(109, 110, 112, 0.4)',
-                                    "&:hover": {
-                                        boxShadow: 'none',
-                                        borderColor: 'primary.main',
-                                        backgroundColor: 'transparent'
-                                    },
-                                }}
-                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                        </Grid>
-                    </Grid>
+                    <FilterSection
+                        searchText={searchText}
+                        setSearchText={setSearchText}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        selectedStatus={selectedStatus}
+                        setSelectedStatus={setSelectedStatus}
+                        handleClearFilter={handleClearFillter}
+                        requestStatuses={requestStatuses}
+                    />
                 </Grid>
 
                 {/* Data Table */}

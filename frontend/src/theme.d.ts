@@ -1,4 +1,12 @@
 import '@mui/material/Button';
+import '@mui/material/styles';
+
+declare module '@mui/system' {
+  interface BreakpointOverrides {
+    sm650: true;
+    md1000: true;
+  }
+}
 
 declare module '@mui/material/Button' {
     interface ButtonPropsVariantOverrides {

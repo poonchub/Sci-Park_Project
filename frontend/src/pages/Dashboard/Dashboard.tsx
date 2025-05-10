@@ -24,6 +24,7 @@ import { statusConfig } from '../../constants/statusConfig';
 import { faQuestionCircle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
+import RequestStatusStackForAdmin from '../../components/RequestStatusStackForAdmin/RequestStatusStackForAdmin';
 
 function Dashboard() {
 
@@ -365,18 +366,22 @@ function Dashboard() {
             <Grid container spacing={3}>
 
                 {/* Header Section */}
-                <Grid className='title-box' size={{ xs: 10, md: 12 }}>
+                <Grid className='title-box' size={{ xs: 12, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         แดชบอร์ด
                     </Typography>
                 </Grid>
 
-                <Grid container size={{ xs: 10, md: 8 }} spacing={3}>
+                <Grid container size={{ md: 12, lg: 8 }} spacing={3}>
                     {/* Status Section */}
-                    <RequestStatusCards statusCounts={countRequestStatus || {}} />
+                    <RequestStatusCards 
+                        statusCounts={countRequestStatus || {}} 
+                    />
+
+                    <RequestStatusStackForAdmin statusCounts={countRequestStatus || {}} />
 
                     {/* Chart Line Section */}
-                    <Grid size={{ xs: 10, md: 12 }} >
+                    <Grid size={{ xs: 12, md: 12 }} >
                         <Card sx={{
                             bgcolor: "secondary.main",
                             borderRadius: 2,
@@ -388,12 +393,12 @@ function Dashboard() {
                             flexDirection: 'column'
                         }}>
                             <Grid container
-                                size={{ xs: 10, md: 12 }}
+                                size={{ xs: 12, md: 12 }}
                                 sx={{
                                     alignItems: 'center'
                                 }}
                             >
-                                <Grid size={{ xs: 10, md: 9 }} >
+                                <Grid size={{ xs: 7.5, md: 9 }} >
                                     <Typography variant="subtitle1" color="text.main" fontWeight={600}>
                                         รายการแจ้งซ่อมรายเดือน
                                     </Typography>
@@ -401,9 +406,10 @@ function Dashboard() {
                                         {`${filteredRequest.length} รายการ`}
                                     </Typography>
                                 </Grid>
-                                <Grid container size={{ xs: 10, md: 3 }} 
+                                <Grid container size={{ xs: 4.5, md: 3 }} 
                                     sx={{ 
-                                        justifyContent: 'flex-end'
+                                        justifyContent: 'flex-end',
+                                        mb: 1
                                     }}
                                 >
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -426,7 +432,7 @@ function Dashboard() {
                 </Grid>
 
                 {/* Chart Donut Section */}
-                <Grid size={{ xs: 10, md: 4 }} >
+                <Grid size={{ xs: 12, lg: 4 }} >
                     <ApexDonutChart data={groupedData} completed={completedPercentage} />
                 </Grid>
 

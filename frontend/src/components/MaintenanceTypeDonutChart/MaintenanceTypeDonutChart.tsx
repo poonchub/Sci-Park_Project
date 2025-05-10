@@ -8,7 +8,6 @@ import {
     Stack,
     Box,
     LinearProgress,
-    useTheme,
     Avatar,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,7 +20,6 @@ interface Props {
 }
 
 function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
-    const theme = useTheme();
 
     const [state, setState] = useState<{
         series: number[];
@@ -49,7 +47,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 show: true,
                                 fontSize: '16px',
                                 fontWeight: 400,
-                                color: theme.palette.text.secondary,
                                 offsetY: 20,
                             },
                             value: {
@@ -57,7 +54,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '24px',
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 700,
-                                color: theme.palette.text.primary,
                                 offsetY: -20,
                             },
                             total: {
@@ -67,7 +63,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '16px',
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 500,
-                                color: 'text.secondary',
                                 formatter: (): string => {
                                     return `${completed}%`; // Use the completed prop as the default label
                                 },

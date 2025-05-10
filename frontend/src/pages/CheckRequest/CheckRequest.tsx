@@ -31,7 +31,6 @@ import handleActionAcception from "../../utils/handleActionAcception";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
-import timeFormat from "../../utils/timeFormat";
 
 function CheckRequest() {
 	// Request data
@@ -86,12 +85,6 @@ function CheckRequest() {
 			maintenanceTask?.Description ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}` :
 				managerApproval?.Description ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}` :
 					`${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
-		) : ""
-
-	const cancelDescription = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
-		(
-			maintenanceTask?.Description ? maintenanceTask?.Description :
-				managerApproval?.Description ? managerApproval.Description : "ยกเลิกคำร้องโดยผู้เขียน"
 		) : ""
 
 	const cancelDate = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?

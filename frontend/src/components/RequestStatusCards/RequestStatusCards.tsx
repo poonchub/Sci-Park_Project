@@ -36,10 +36,10 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
         }
 
         const statusKey = status as keyof typeof statusConfig
-        const { color, colorLite, icon } = statusConfig[statusKey] ?? { 
-            color: "#000", 
-            colorLite: "#000", 
-            icon: faQuestionCircle 
+        const { color, colorLite, icon } = statusConfig[statusKey] ?? {
+            color: "#000",
+            colorLite: "#000",
+            icon: faQuestionCircle
         };
 
         return { name: status, count, color, colorLite, icon };
@@ -49,17 +49,31 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
         statusCards.map((item, index) => (
             <Grid key={index}
                 size={{
-                    xs: size?.xs || 6,
-                    sm: size?.sm,
+                    xs: size?.xs || 12,
+                    sm: size?.sm || 6,
                     md: size?.md || 4,
                     lg: size?.lg,
                     xl: size?.xl,
                 }}
                 className='status-section'
+                sx={{
+                    display: {
+                        xs: 'none',
+                        md: 'Grid',
+                    }
+                }}
             >
                 <Card className="status-card" sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2 }}>
-                    <CardContent className="status-card-content">
-                        <Grid size={{ xs: 10, md: 12 }}>
+                    <CardContent className="status-card-content" sx={{ height: '100%' }}>
+                        <Grid size={{ xs: 10, md: 12 }}
+                            container
+                            direction="column"
+                            sx={{
+                                height: '100%',
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                            }}
+                        >
                             <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
                                 {item.name}
                             </Typography>
@@ -68,8 +82,8 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                             </Typography>
                         </Grid>
                         <Grid
-                            size={{ xs: 10, md: 8 }}
-                            sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                            size={{ xs: 10, md: 4 }}
+                            sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}
                         >
                             <Box
                                 sx={{
@@ -81,6 +95,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                                     alignItems: "center",
                                     justifyContent: "center",
                                     width: 55,
+                                    height: 55,
                                     color: item.color,
                                 }}
                             >

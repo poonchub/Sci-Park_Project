@@ -14,7 +14,6 @@ import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceReque
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
-import StepperComponent from "../../components/Stepper/Stepper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faEnvelope, faPencil, faPhone, faRotateRight, faUpload, faUserTie } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -48,8 +47,6 @@ function CreateMaintenanceRequestPage() {
         AreaID: 1,
         MaintenanceTypeID: 0,
     });
-
-    const steps = ["Created", "In Process", "Waiting for Review", "Completed"];
 
     const [onEdit, setOnEdit] = useState(false);
 

@@ -17,7 +17,7 @@ import { CalendarMonth } from "@mui/icons-material";
 
 
 type Props = {
-    display: { [key: string]: string };
+    display?: { [key: string]: string };
     searchText: string;
     setSearchText: (val: string) => void;
     selectedDate: any;
@@ -52,7 +52,7 @@ const FilterSection = ({
                 display,
             }}
         >
-            <Grid size={{ xs: 5 }}>
+            <Grid size={{ xs: 12, sm: 5 }}>
                 <TextField
                     fullWidth
                     className="search-box"
@@ -73,7 +73,7 @@ const FilterSection = ({
                 />
             </Grid>
 
-            <Grid size={{ xs: 3 }}>
+            <Grid size={{ xs: 5, sm: 3 }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                         views={['year', 'month']}
@@ -87,7 +87,7 @@ const FilterSection = ({
                 </LocalizationProvider>
             </Grid>
 
-            <Grid size={{ xs: 3 }}>
+            <Grid size={{ xs: 5, sm: 3 }}>
                 <FormControl fullWidth>
                     <Select
                         value={selectedStatus}
@@ -109,7 +109,7 @@ const FilterSection = ({
                 </FormControl>
             </Grid>
 
-            <Grid size={{ xs: 1 }}>
+            <Grid size={{ xs: 2, sm: 1 }}>
                 <Button
                     onClick={handleClearFilter}
                     sx={{

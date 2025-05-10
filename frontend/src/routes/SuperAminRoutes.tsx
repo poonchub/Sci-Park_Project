@@ -12,17 +12,24 @@ const SuperAdminRoutes = (): RouteObject => {
         children: [
             {
                 path: "/",
-                element: <Home/>
+                element: <Home />
             },
             {
                 path: "/add-user",
-                element: <AddUserForm/>
+                element: <AddUserForm />
             },
             {
                 path: "/manage-user",
-                element: <ManageUsers/>
+                element: <ManageUsers />
             },
-
+            {
+				path: "",
+				element: <Home/>
+			},
+            {
+                path: "*",
+                element: <Home />
+            },
         ]
     }
 }

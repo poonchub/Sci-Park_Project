@@ -612,12 +612,12 @@ function AcceptWork() {
 				<Grid container
 					spacing={1}
 					className='filter-section'
-					size={{ xs: 10, md: 12 }}
+					size={{ xs: 12 }}
 					sx={{
 						alignItems: "flex-end",
 						height: 'auto'
 					}}>
-					<Grid size={{ xs: 10, md: 6 }}>
+					<Grid size={{ xs: 12, sm: 5 }}>
 						<TextField
 							fullWidth
 							className="search-box"
@@ -637,7 +637,7 @@ function AcceptWork() {
 							}}
 						/>
 					</Grid>
-					<Grid size={{ xs: 10, md: 2.5 }}>
+					<Grid size={{ xs: 5, sm: 3 }}>
 						<LocalizationProvider dateAdapter={AdapterDayjs}>
 							<DatePicker
 								format="DD/MM/YYYY"
@@ -649,7 +649,7 @@ function AcceptWork() {
 							/>
 						</LocalizationProvider>
 					</Grid>
-					<Grid size={{ xs: 10, md: 2.5 }}>
+					<Grid size={{ xs: 5, sm: 3 }}>
 						<FormControl fullWidth>
 							<Select
 								value={selectedType}
@@ -672,7 +672,7 @@ function AcceptWork() {
 							</Select>
 						</FormControl>
 					</Grid>
-					<Grid size={{ xs: 10, md: 1 }}>
+					<Grid size={{ xs: 2, sm: 1 }}>
 						<Button onClick={handleClearFillter}
 							sx={{
 								minWidth: 0,

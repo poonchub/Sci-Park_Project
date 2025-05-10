@@ -25,6 +25,7 @@ import { isAdmin, isManager } from "../../routes"
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup"
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig"
 import FilterSection from "../../components/FilterSection/FilterSection"
+import RequestStatusStackForAdmin from "../../components/RequestStatusStackForAdmin/RequestStatusStackForAdmin"
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
@@ -439,6 +440,8 @@ function AllMaintenanceRequest() {
 
                     {/* Status Section */}
                     <RequestStatusCards statusCounts={statusCounts || {}} />
+
+                    <RequestStatusStackForAdmin statusCounts={statusCounts || {}} />
 
                     {/* Filters Section size lg */}
                     <FilterSection

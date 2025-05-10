@@ -1,38 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
 
 import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
 
-import AppBarMenu from '../components/AppBarMenu/AppBarMenu';
-import SideDrawer from '../components/SideDrawer/SideDrawer';
 import Footer from '../components/Footer/Footer';
 
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import LayersIcon from '@mui/icons-material/Layers';
 
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
-import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
-import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
-import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
-import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
-import { ArticleOutlined, ChevronLeft, ChevronRight, HomeOutlined } from '@mui/icons-material';
+import { AssignmentIndOutlined, FactCheckOutlined, HandymanOutlined, HomeOutlined, HomeRepairServiceOutlined, MeetingRoomOutlined } from '@mui/icons-material';
 
 
 import {
-	SECTIONS,
-	getDrawerItemsBySection,
-	getCurrentSectionKey,
 	Role
 } from '../constants/navigationConfig';
-
-import { drawerWidth } from '../components/Drawer/Drawer';
 
 const NAVIGATION: Navigation = [
 	{
@@ -47,12 +32,12 @@ const NAVIGATION: Navigation = [
 	{
 		segment: 'booking-room',
 		title: 'Booking Room',
-		icon: <HomeOutlined />,
+		icon: <MeetingRoomOutlined />,
 	},
 	{
 		segment: 'maintenance',
 		title: 'Maintenance',
-		icon: <BarChartIcon />,
+		icon: <HandymanOutlined />,
 		children: [
 			{
 				segment: 'dashboard',
@@ -62,17 +47,17 @@ const NAVIGATION: Navigation = [
 			{
 				segment: 'all-maintenance-request',
 				title: 'All Request',
-				icon: <ChecklistOutlinedIcon />,
+				icon: <FactCheckOutlined />,
 			},
 			{
 				segment: 'my-maintenance-request',
 				title: 'My Request',
-				icon: <ArticleOutlined />,
+				icon: <AssignmentIndOutlined />,
 			},
 			{
 				segment: 'accept-work',
 				title: 'My Work',
-				icon: <ArticleOutlined />,
+				icon: <HomeRepairServiceOutlined />,
 			},
 		],
 	},
@@ -109,7 +94,7 @@ const NAVIGATION: Navigation = [
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, DashboardLayout, Navigation, NavigationItem, Router, Session } from '@toolpad/core';
-import theme from '../styles/Theme';
+import { useTheme } from '@mui/material';
 
 function useToolpadRouter(): Router {
 	const location = useLocation();
@@ -187,6 +172,7 @@ function getNavigationByRole(role: Role): Navigation {
 
 const WindowsLayout: React.FC = (props: any) => {
 	const { window } = props;
+	const theme = useTheme();
 
 	const router = useToolpadRouter();
 
@@ -204,7 +190,6 @@ const WindowsLayout: React.FC = (props: any) => {
 			const res = await GetUserById(Number(userId));
 			if (res) {
 				setUser(res);
-				console.log("User:", res);
 			}
 		} catch (error) {
 			console.error("Error fetching user:", error);
@@ -217,6 +202,7 @@ const WindowsLayout: React.FC = (props: any) => {
 	}, []);
 
 	const navigation = getNavigationByRole(role);
+	const navigateUrl = useNavigate();
 
 	const [session, setSession] = React.useState<Session | null>(null);
 
@@ -235,6 +221,9 @@ const WindowsLayout: React.FC = (props: any) => {
 			},
 			signOut: () => {
 				setSession(null);
+				localStorage.clear()
+				localStorage.setItem("isLogin", "false");
+				navigateUrl("/login");
 			},
 		};
 	}, [user]);
@@ -275,7 +264,7 @@ const WindowsLayout: React.FC = (props: any) => {
 				>
 					<Outlet />
 				</Box>
-				<Footer/>
+				<Footer />
 			</DashboardLayout>
 		</AppProvider>
 	);

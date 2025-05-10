@@ -4,10 +4,17 @@ import { statusConfig } from "../../constants/statusConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface Props {
-    statusCounts: Record<string, number>
+    statusCounts: Record<string, number>;
+    size?: {
+        xs?: number;
+        sm?: number;
+        md?: number;
+        lg?: number;
+        xl?: number;
+    };
 }
 
-function RequestStatusStack({ statusCounts }: Props) {
+function RequestStatusStack({ statusCounts, size }: Props) {
 
     const mergedStatusCounts = useMemo(() => {
         const result: Record<string, number> = {};
@@ -38,9 +45,15 @@ function RequestStatusStack({ statusCounts }: Props) {
         <Grid container spacing={1.4} size={{ xs: 12, md: 12 }}>
             {Object.entries(mergedStatusCounts).map(([label, value]) => {
                 return (
-                    <Grid size={{ xs: 12, md: 3 }} key={label}>
-                        <Card sx={{ px: 2, py: 1.8 }}>
-                            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Grid size={{
+                        xs: size?.xs || 12,
+                        sm: size?.sm,
+                        md: size?.md || 6,
+                        lg: size?.lg || 3,
+                        xl: size?.xl,
+                    }} key={label}>
+                        <Card sx={{ px: 2, py: 1.8, height: '100%' }}>
+                            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                 <Stack direction="row" spacing={1.5} alignItems="center">
                                     <Avatar
                                         variant="rounded"
@@ -55,7 +68,7 @@ function RequestStatusStack({ statusCounts }: Props) {
                                     </Avatar>
                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
                                 </Stack>
-                                <Typography variant="body2" fontWeight={500}>
+                                <Typography variant="body2" fontWeight={500} sx={{ textAlign: 'end'}}>
                                     {value} รายการ
                                 </Typography>
                             </Stack>

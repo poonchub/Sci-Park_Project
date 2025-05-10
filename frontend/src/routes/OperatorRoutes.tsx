@@ -37,6 +37,14 @@ const OperatorRoutes = (): RouteObject => {
 				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
 			},
+            {
+				path: "",
+				element: <Home/>
+			},
+            {
+				path: "*",
+				element: <Home/>
+			},
         ]
     }
 }
