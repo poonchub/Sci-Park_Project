@@ -3,7 +3,6 @@ import { Select as MuiSelect } from "@mui/material";
 
 // Styled Select component with custom border and focus effects
 export const Select = styled(MuiSelect)(() => ({
-    backgroundColor: "#fff",
     borderRadius: "10px",
     border: '1px',
     textAlign: 'center',

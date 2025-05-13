@@ -7,7 +7,6 @@ import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMa
 import AssignWork from "../pages/AssignWork/AssignWork";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import Dashboard from "../pages/Dashboard/Dashboard";
-import AcceptWork from "../pages/AcceptWork/AcceptWork";
 import AllMaintenanceRequest from "../pages/AllMaintenanceRequest/AllMaintenanceRequest";
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 import AddUserForm from "../pages/AddUser/AddUserForm";
@@ -20,43 +19,51 @@ const ManagerRoutes = (): RouteObject => {
         children: [
             {
                 path: "/",
-                element: <Home/>
+                element: <Home />
             },
             {
                 path: "/booking-room",
-                element: <BookingRoom/>
+                element: <BookingRoom />
             },
             {
                 path: "/all-maintenance-request",
-                element: <AllMaintenanceRequest/>
+                element: <AllMaintenanceRequest />
             },
             {
                 path: "/my-maintenance-request",
-                element: <MyMaintenanceRequest/>
+                element: <MyMaintenanceRequest />
             },
             {
                 path: "/create-maintenance-request",
-                element: <CreateMaintenanceRequest/>
+                element: <CreateMaintenanceRequest />
             },
             {
                 path: "/assign-work",
-                element: <AssignWork/>
+                element: <AssignWork />
             },
             {
                 path: "/check-requests",
-                element: <CheckRequests/>
+                element: <CheckRequests />
             },
             {
                 path: "/dashboard",
-                element: <Dashboard/>
+                element: <Dashboard />
             },
             {
                 path: "/add-user",
-                element: <AddUserForm/>
+                element: <AddUserForm />
             },
             {
                 path: "/manage-user",
-                element: <ManageUsers/>
+                element: <ManageUsers />
+            },
+            {
+				path: "",
+				element: <Home/>
+			},
+            {
+                path: "*",
+                element: <Home />
             },
         ]
     }

@@ -1,6 +1,21 @@
 import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
+    colorSchemes: { light: true, dark: true },
+	cssVariables: {
+		colorSchemeSelector: 'class',
+	},
+	breakpoints: {
+		values: {
+			xs: 0,
+			sm: 600,
+            sm650: 650,
+			md: 900,
+            md1000: 1000,
+			lg: 1200,
+			xl: 1536,
+		},
+	},
     palette: {
         // สีหลักของระบบ
         primary: {
@@ -18,7 +33,7 @@ const theme = createTheme({
         },
         text: {
             primary: "#000000", // text-primary
-            secondary: "#FFFFFF", // text-secondary,
+            secondary: "#6D6E70", // text-secondary,
         },
         info: {
             main: "#08aff1", // text-link
@@ -32,7 +47,7 @@ const theme = createTheme({
         success: {
             main: "#F26522", // step-border-success
         },
-        divider: "#6D6E70", // step-border
+        divider: "#e0e0e0", // step-border
 
         customBlue: '#08aff1',
     },
@@ -112,7 +127,7 @@ const theme = createTheme({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    boxShadow: "rgba(0, 0, 0, 0.25) 0px 2px 4px", // shadow-light
+                    
                 },
             },
         },

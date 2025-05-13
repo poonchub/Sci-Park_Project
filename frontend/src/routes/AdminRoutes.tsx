@@ -4,7 +4,6 @@ import WindowsLayout from "../layouts/WindowsLayout";
 import BookingRoom from "../pages/BookingRoom/BookingRoom";
 import Home from "../pages/Home/Home";
 import CreateMaintenanceRequest from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
-import AssignWork from "../pages/AssignWork/AssignWork";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import AcceptWork from "../pages/AcceptWork/AcceptWork";
@@ -21,7 +20,7 @@ const AdminRoutes = (): RouteObject => {
 		element: <WindowsLayout />,
 		children: [
 			{
-				path: "/",
+				path: "/home",
 				element: <Home/>
 			},
 			{
@@ -29,31 +28,27 @@ const AdminRoutes = (): RouteObject => {
 				element: <BookingRoom/>
 			},
 			{
-				path: "/all-maintenance-request",
+				path: "/maintenance/all-maintenance-request",
 				element: <AllMaintenanceRequest/>
 			},
 			{
-				path: "/my-maintenance-request",
+				path: "/maintenance/my-maintenance-request",
 				element: <MyMaintenanceRequest/>
 			},
 			{
-				path: "/create-maintenance-request",
+				path: "/maintenance/create-maintenance-request",
 				element: <CreateMaintenanceRequest/>
 			},
 			{
-				path: "/assign-work",
-				element: <AssignWork/>
-			},
-			{
-				path: "/check-requests",
+				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
 			},
 			{
-				path: "/dashboard",
+				path: "/maintenance/dashboard",
 				element: <Dashboard/>
 			},
 			{
-				path: "/accept-work",
+				path: "/maintenance/accept-work",
 				element: <AcceptWork/>
 			},
 			{
@@ -65,15 +60,21 @@ const AdminRoutes = (): RouteObject => {
                 element: <ManageUsers/>
             },
 			{
-                path: "/manage-room",
+                path: "/room/manage-room",
                 element: <ManageRooms/>
             },
 			{
-				path: "/add-room",
+				path: "/room/add-room",
 				element: <AddRoomForm/>
 			},
-
-
+			{
+				path: "",
+				element: <Home/>
+			},
+			{
+				path: "*",
+				element: <Home/>
+			},
 		]
 	}
 }

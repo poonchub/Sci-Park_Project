@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Grid2 } from '@mui/material';
+import { Card, CardContent, Typography, Box, Grid } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie } from '@fortawesome/free-solid-svg-icons';
 
@@ -31,7 +31,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
 }) => {
     return (
         // Card layout wrapped inside Grid2 for responsiveness
-        <Grid2 size={{
+        <Grid size={{
             xs: size?.xs || 12,
             sm: size?.sm || 6,
             md: size?.md || 6,
@@ -45,7 +45,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
                 <CardContent className='card-content'>
 
                     {/* Title of the card */}
-                    <Grid2 size={{ xs: 10, md: 12 }}>
+                    <Grid size={{ xs: 10, md: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
                             {title}
                         </Typography>
@@ -69,10 +69,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
                                 </Typography>
                             </>
                         )}
-                    </Grid2>
+                    </Grid>
 
                     {/* Icon displaying an avatar or role-related icon */}
-                    <Grid2
+                    <Grid
                         size={{ xs: 10, md: 6 }}
                         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
                     >
@@ -92,11 +92,11 @@ const InfoCard: React.FC<InfoCardProps> = ({
                             {/* Icon representing the role or user */}
                             <FontAwesomeIcon icon={faUserTie} size="2xl" />
                         </Box>
-                    </Grid2>
+                    </Grid>
 
                 </CardContent>
             </Card>
-        </Grid2>
+        </Grid>
     );
 }
 

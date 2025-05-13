@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, CardContent, Grid2, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Grid, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -31,7 +31,6 @@ import handleActionAcception from "../../utils/handleActionAcception";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
-import timeFormat from "../../utils/timeFormat";
 
 function CheckRequest() {
 	// Request data
@@ -86,12 +85,6 @@ function CheckRequest() {
 			maintenanceTask?.Description ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}` :
 				managerApproval?.Description ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}` :
 					`${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
-		) : ""
-
-	const cancelDescription = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
-		(
-			maintenanceTask?.Description ? maintenanceTask?.Description :
-				managerApproval?.Description ? managerApproval.Description : "ยกเลิกคำร้องโดยผู้เขียน"
 		) : ""
 
 	const cancelDate = maintenanceRequest?.RequestStatus?.Name === 'Unsuccessful' ?
@@ -386,26 +379,26 @@ function CheckRequest() {
 			/>
 
 			{/* Header section with title and back button */}
-			<Grid2 container spacing={2}>
-				<Grid2 className="title-box" size={{ xs: 5, md: 5 }}>
+			<Grid container spacing={2}>
+				<Grid className="title-box" size={{ xs: 5, md: 5 }}>
 					<Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
 						ตรวจสอบคำร้องแจ้งซ่อม
 					</Typography>
-				</Grid2>
-				<Grid2 container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
+				</Grid>
+				<Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
 					<Button variant="outlined" onClick={handleBack}>
 						<FontAwesomeIcon icon={faAngleLeft} size="lg" />
 						<Typography variant="textButtonClassic">ย้อนกลับ</Typography>
 					</Button>
-				</Grid2>
+				</Grid>
 
 				{/* Stepper showing request progress */}
-				<Grid2 size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
+				<Grid size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
 					<RequestStepper
 						requestStatuses={requestStatuses}
 						requestStatusID={requestStatusID}
 					/>
-				</Grid2>
+				</Grid>
 
 				{/* Info cards for approval and assignment */}
 				{
@@ -438,7 +431,7 @@ function CheckRequest() {
 				{/* Main data section */}
 				<Card className="data-card" sx={{ width: '100%', borderRadius: 2 }}>
 					<CardContent>
-						<Grid2 container 
+						<Grid container 
 							spacing={{
                                 xs: 3
                             }}
@@ -452,34 +445,34 @@ function CheckRequest() {
                                     md: 4
                                 },
 							}}>
-							<Grid2 size={{ xs: 12, md: 12 }}>
+							<Grid size={{ xs: 12, md: 12 }}>
 								<Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
 									ข้อมูลการแจ้งซ่อม
 								</Typography>
 
-							</Grid2>
+							</Grid>
 
-							<Grid2 size={{ xs: 12, md: 6 }}>
+							<Grid size={{ xs: 12, md: 6 }}>
 								<RequestInfoTable data={maintenanceRequest} />
-							</Grid2>
+							</Grid>
 
-							<Grid2 container size={{ xs: 12, md: 6 }} direction="column">
+							<Grid container size={{ xs: 12, md: 6 }} direction="column">
 								{
 									isNotApproved ? (
 										<></>
 									) : (
-										<Grid2 size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+										<Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
 											<Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
 												การดำเนินงาน
 											</Typography>
 											<Box sx={{ border: '1px solid #08aff1', borderRadius: 2, px: 2 }}>
 												<TaskInfoTable data={maintenanceRequest} />
 											</Box>
-										</Grid2>
+										</Grid>
 									)
 								}
 
-								<Grid2 container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
+								<Grid container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
 									{
 										taskImages && taskImages.length !== 0 && !isRework ? (
 											<Box>
@@ -506,10 +499,10 @@ function CheckRequest() {
 										)
 									}
 
-								</Grid2>
-							</Grid2>
+								</Grid>
+							</Grid>
 
-							<Grid2 container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
+							<Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
 								{
 									isPending && (isAdmin || isManager) ? (
 										<Box sx={{ gap: 1, display: 'flex' }}>
@@ -551,7 +544,7 @@ function CheckRequest() {
 
 								{
 									(isOwnRequest || isAdmin || isManager) &&
-									<Grid2 container size={{ xs: 12, md: 12 }}
+									<Grid container size={{ xs: 12, md: 12 }}
 										sx={{
 											justifyContent: "flex-end",
 										}}
@@ -603,7 +596,7 @@ function CheckRequest() {
 												<></>
 											)
 										}
-									</Grid2>
+									</Grid>
 								}
 
 								{
@@ -656,11 +649,11 @@ function CheckRequest() {
 										}
 									</Box>
 								}
-							</Grid2>
-						</Grid2>
+							</Grid>
+						</Grid>
 					</CardContent>
 				</Card>
-			</Grid2>
+			</Grid>
 		</div>
 	);
 }

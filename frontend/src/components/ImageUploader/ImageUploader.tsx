@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Button, Grid2 } from "@mui/material";
+import { Typography, Button, Grid } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage } from "@fortawesome/free-solid-svg-icons";
 
@@ -53,7 +53,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         <>
 
             {/* Drop Zone */}
-            <Grid2
+            <Grid
                 size={{ xs: 12, md: 12 }}
                 sx={{
                     border: "2px dashed #0094DE",
@@ -67,21 +67,21 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             >
                 {/* Preview Images */}
                 {value.length != 0 &&
-                    <Grid2 container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
+                    <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
                         {value.map((file, index) => {
                             const imageUrl = URL.createObjectURL(file);
                             return (
-                                <Grid2 key={index} size={{ xs: 6, md: 4 }}>
+                                <Grid key={index} size={{ xs: 6, md: 4 }}>
                                     <img
                                         src={imageUrl}
                                         alt={`preview-${index}`}
                                         width="100%"
                                         style={{ borderRadius: 8 }}
                                     />
-                                </Grid2>
+                                </Grid>
                             );
                         })}
-                    </Grid2>
+                    </Grid>
                 }
 
                 <Typography sx={{ mb: 0.5, fontSize: 14 }}>ลากและวางไฟล์ที่นี่ หรือ</Typography>
@@ -96,7 +96,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                         onChange={handleFileChange}
                     />
                 </Button>
-            </Grid2>
+            </Grid>
         </>
     );
 };

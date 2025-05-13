@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio, Grid } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
-import Grid from '@mui/material/Grid2'; // Grid version 2
 import './AddUserForm.css';  // Import the updated CSS
 import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes } from '../../services/http';  // Assuming these are your API functions
 import { GendersInterface } from '../../interfaces/IGenders';

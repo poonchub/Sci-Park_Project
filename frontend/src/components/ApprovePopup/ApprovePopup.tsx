@@ -1,7 +1,8 @@
 import React from 'react';
 import {
-    Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
+    Dialog, DialogTitle, DialogContent, DialogActions,
     Typography, Button, MenuItem, InputAdornment,
+    Grid,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle, faUserTie } from '@fortawesome/free-solid-svg-icons';
@@ -47,9 +48,9 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
             </DialogTitle>
 
             <DialogContent sx={{ minWidth: 500 }}>
-                <Grid2 container spacing={1}>
+                <Grid container spacing={1}>
                     {/* Display location and request details */}
-                    <Grid2 size={{ xs: 10, md: 12 }}>
+                    <Grid size={{ xs: 10, md: 12 }}>
                         <Typography sx={{ fontWeight: 600 }}>
                             {requestSelected.Area?.Name === 'บริเวณอื่นๆ'
                                 ? requestSelected.AreaDetail
@@ -58,7 +59,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                         <Typography sx={{ color: '#6D6E70' }}>
                             {requestSelected.Description || "ไม่มีรายละเอียด"}
                         </Typography>
-                    </Grid2>
+                    </Grid>
 
                     {/* Show maintenance type with icon and color */}
                     {requestSelected.MaintenanceType?.TypeName && (() => {
@@ -69,7 +70,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                         };
 
                         return (
-                            <Grid2
+                            <Grid
                                 sx={{
                                     bgcolor: colorLite,
                                     borderRadius: 10,
@@ -85,12 +86,12 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                                 <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                                     {typeName}
                                 </Typography>
-                            </Grid2>
+                            </Grid>
                         );
                     })()}
 
                     {/* Operator select dropdown */}
-                    <Grid2 size={{ xs: 10, md: 12 }}>
+                    <Grid size={{ xs: 10, md: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 500, mt: 2 }}>
                             ผู้รับผิดชอบงาน
                         </Typography>
@@ -113,8 +114,8 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                                 </MenuItem>
                             ))}
                         </Select>
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
             </DialogContent>
 
             {/* Confirm/Cancel buttons */}

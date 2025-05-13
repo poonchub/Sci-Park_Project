@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Typography, Divider, Link, IconButton, InputAdornment } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import {  motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import './LoginPage.css'; // ใช้ CSS ที่มีอยู่
 import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
@@ -46,7 +46,7 @@ const LoginPage: React.FC = () => {
         localStorage.setItem("email", response.Email);
 
         setAlerts([...alerts, { type: 'success', message: "Login successful!" }]);  // Add success alert
-      
+
         setLoading(true);  // Start loading
         setTimeout(() => {
           let redirectPath = "/login";
@@ -63,10 +63,10 @@ const LoginPage: React.FC = () => {
     } catch (error: unknown) {
       if (error instanceof Error && (error as any).response) {
         const errorMessage = (error as any).response?.data?.Error || "An error occurred during login.";
-        
+
         setAlerts([...alerts, { type: 'error', message: errorMessage }]);  // Add error alert
       } else {
-        
+
         setAlerts([...alerts, { type: 'error', message: "An error occurred while logging in." }]);  // Add error alert
       }
     }
@@ -113,117 +113,122 @@ const LoginPage: React.FC = () => {
           </React.Fragment>
         );
       })}
-    {loading ? (
-      <Loader />
-    ) : ( 
-    <div className="login-page">
-
-      
-      <motion.div
-        style={{
-
-          top: '50%',
-          right: '5%', // กำหนดระยะจากขอบขวา
-          transform: 'translateY(-50%)', // จัดให้อยู่ตรงกลางแนวตั้ง
-          backgroundColor: 'white',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '8px', // ใช้ค่าที่กำหนดเพียงครั้งเดียว
-          padding: '30px',
-          height: '100%', // ให้สูงเท่ากับขนาดของเนื้อหา
-          minWidth: '300px', // ใช้ค่าเดียว ไม่ต้องกำหนดซ้ำ
-          width: 'auto', // ให้เต็มตามขนาด max-width ที่กำหนด
-          display: 'flex',
-          flexDirection: 'column',
-
-        }}
-        initial={{ opacity: 0, x: '50%' }} // เริ่มจากขวานอกจอ
-        animate={{ opacity: 1, x: '5%' }} // ขยับเข้ามาจากขวา
-        transition={{
-          type: 'spring',
-          stiffness: 40,
-          damping: 30,
-        }}
-      >
-
-        <div className="right-side">
-          <Typography variant="h4" className='sign-in-welcome' >
-            Welcome to
-          </Typography>
-          {RSP && <img src={RSP} alt="RSP" className="sign-in-image" />}
+      {loading ? (
+        <Loader />
+      ) : (
+        <div className="login-page">
 
 
+          <motion.div
+            style={{
 
+              top: '50%',
+              right: '5%', // กำหนดระยะจากขอบขวา
+              transform: 'translateY(-50%)', // จัดให้อยู่ตรงกลางแนวตั้ง
+              backgroundColor: 'white',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              borderRadius: '8px', // ใช้ค่าที่กำหนดเพียงครั้งเดียว
+              padding: '30px',
+              height: '100%', // ให้สูงเท่ากับขนาดของเนื้อหา
+              minWidth: '300px', // ใช้ค่าเดียว ไม่ต้องกำหนดซ้ำ
+              width: 'auto', // ให้เต็มตามขนาด max-width ที่กำหนด
+              display: 'flex',
+              flexDirection: 'column',
 
+            }}
+            initial={{ opacity: 0, x: '50%' }} // เริ่มจากขวานอกจอ
+            animate={{ opacity: 1, x: '5%' }} // ขยับเข้ามาจากขวา
+            transition={{
+              type: 'spring',
+              stiffness: 40,
+              damping: 30,
+            }}
+          >
 
-          <form onSubmit={handleSubmit} >
-            <TextField
-              className='field'
-              fullWidth
-              label="Email"
-              variant="outlined"
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              helperText={showWarning && !email ? "Please enter your email" : ""}
-              slotProps={{
-                inputLabel: {
-                  sx: { color: '#6D6E70' }, // Apply gray color to label
-                  // Apply gray color to label
-                },
-                formHelperText: {
-                  sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
-                },
-              }}
-            />
-            <TextField
-              className="field"
-              fullWidth
-              label="Password"
-              variant="outlined"
-              margin="normal"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              helperText={showWarning && !password ? "Please enter your password" : ""}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
-                        edge="end"
-                      >
-                        {showPassword ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-                inputLabel: {
-                  sx: { color: "#6D6E70" }, // Apply gray color to label
-                },
-                formHelperText: {
-                  sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
-                },
-              }}
-            />
-
-
-            <Button type="submit" fullWidth variant="contained" color="primary" className='sign-in-button'>
-              Sign In
-            </Button>
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" sx={{ color: 'gray', px: 1 }}>
-                OR
+            <div className="right-side">
+              <Typography variant="h4" className='sign-in-welcome' >
+                Welcome to
               </Typography>
-            </Divider>
-            <Link href="/reset-password" className="forgot-link">Forgot Email or Password?</Link>
-          </form>
+              {RSP && <img src={RSP} alt="RSP" className="sign-in-image" />}
+
+              <form onSubmit={handleSubmit} >
+                <TextField
+                  className='field'
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  margin="normal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  helperText={showWarning && !email ? "Please enter your email" : ""}
+                  slotProps={{
+                    input: {
+                      sx: {
+                        color: 'black'
+                      },
+                    },
+                    inputLabel: {
+                      sx: { color: '#6D6E70' }, // Apply gray color to label
+                      // Apply gray color to label
+                    },
+                    formHelperText: {
+                      sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
+                    },
+                  }}
+                />
+                <TextField
+                  className="field"
+                  fullWidth
+                  label="Password"
+                  variant="outlined"
+                  margin="normal"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  helperText={showWarning && !password ? "Please enter your password" : ""}
+                  slotProps={{
+                    input: {
+                      sx: {
+                        color: 'black'
+                      },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleClickShowPassword}
+                            onMouseDown={handleMouseDownPassword}
+                            edge="end"
+                            sx={{ color: 'gray' }}
+                          >
+                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                    inputLabel: {
+                      sx: { color: "#6D6E70" }, // Apply gray color to label
+                    },
+                    formHelperText: {
+                      sx: { color: "red" }, // Apply red color to helper text (MUI v7+)
+                    },
+                  }}
+                />
+
+
+                <Button type="submit" fullWidth variant="contained" color="primary" className='sign-in-button'>
+                  Sign In
+                </Button>
+                <Divider sx={{ my: 2 }}>
+                  <Typography variant="body2" sx={{ color: 'gray', px: 1 }}>
+                    OR
+                  </Typography>
+                </Divider>
+                <Link href="/reset-password" className="forgot-link">Forgot Email or Password?</Link>
+              </form>
+            </div>
+          </motion.div>
+
         </div>
-      </motion.div>
-    
-    </div>
-            )}</div>
+      )}</div>
   );
 };
 

@@ -32,6 +32,14 @@ const OutsiderRoutes = (): RouteObject => {
 				path: "/check-requests",
 				element: <CheckRequests/>
 			},
+			{
+				path: "",
+				element: <Home/>
+			},
+			{
+				path: "*",
+				element: <Home/>
+			},
 		]
 	}
 }

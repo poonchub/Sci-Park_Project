@@ -1,43 +1,188 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
 
 import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
 
-import AppBarMenu from '../components/AppBarMenu/AppBarMenu';
-import SideDrawer from '../components/SideDrawer/SideDrawer';
 import Footer from '../components/Footer/Footer';
 
+import BarChartIcon from '@mui/icons-material/BarChart';
+import DescriptionIcon from '@mui/icons-material/Description';
+import LayersIcon from '@mui/icons-material/Layers';
+
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import { AssignmentIndOutlined, FactCheckOutlined, HandymanOutlined, HomeOutlined, HomeRepairServiceOutlined, MeetingRoomOutlined } from '@mui/icons-material';
+
+
 import {
-	SECTIONS,
-	getDrawerItemsBySection,
-	getCurrentSectionKey,
 	Role
 } from '../constants/navigationConfig';
 
-import { drawerWidth } from '../components/Drawer/Drawer';
+const NAVIGATION: Navigation = [
+	{
+		kind: 'header',
+		title: 'Main items',
+	},
+	{
+		segment: 'home',
+		title: 'Home',
+		icon: <HomeOutlined />,
+	},
+	{
+		segment: 'booking-room',
+		title: 'Booking Room',
+		icon: <MeetingRoomOutlined />,
+	},
+	{
+		segment: 'maintenance',
+		title: 'Maintenance',
+		icon: <HandymanOutlined />,
+		children: [
+			{
+				segment: 'dashboard',
+				title: 'Dashboard',
+				icon: <DashboardOutlinedIcon />,
+			},
+			{
+				segment: 'all-maintenance-request',
+				title: 'All Request',
+				icon: <FactCheckOutlined />,
+			},
+			{
+				segment: 'my-maintenance-request',
+				title: 'My Request',
+				icon: <AssignmentIndOutlined />,
+			},
+			{
+				segment: 'accept-work',
+				title: 'My Work',
+				icon: <HomeRepairServiceOutlined />,
+			},
+		],
+	},
+	{
+		kind: 'divider',
+	},
+	{
+		kind: 'header',
+		title: 'Management',
+	},
+	{
+		segment: 'room',
+		title: 'Room',
+		icon: <BarChartIcon />,
+		children: [
+			{
+				segment: 'manage-room',
+				title: 'Manage Room',
+				icon: <DescriptionIcon />,
+			},
+			{
+				segment: 'traffic',
+				title: 'Traffic',
+				icon: <DescriptionIcon />,
+			},
+		],
+	},
+	{
+		segment: 'integrations',
+		title: 'Integrations',
+		icon: <LayersIcon />,
+	},
+];
 
-const userId = localStorage.getItem("userId");
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AppProvider, DashboardLayout, Navigation, NavigationItem, Router, Session } from '@toolpad/core';
+import { useTheme } from '@mui/material';
 
-const WindowsLayout: React.FC = () => {
+function useToolpadRouter(): Router {
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	return React.useMemo(() => {
+		return {
+			pathname: location.pathname,
+			searchParams: new URLSearchParams(location.search),
+			navigate: (path: string | URL) => navigate(String(path)),
+		};
+	}, [location, navigate]);
+}
+
+function hasSegment(item: NavigationItem): item is { segment: string } {
+	return 'segment' in item;
+}
+
+const accessibleSegments: Record<Role, string[]> = {
+	Admin: [
+		'home',
+		'dashboard',
+		'booking-room',
+		'maintenance',
+		'room',
+
+		'all-maintenance-request',
+		'my-maintenance-request',
+		'manage-room'
+	],
+	Manager: [
+		'home',
+		'dashboard',
+		'booking-room',
+		'maintenance',
+
+		'all-maintenance-request',
+		'my-maintenance-request'
+	],
+	Operator: [
+		'home',
+		'booking-room',
+		'maintenance',
+		'room',
+
+		'my-maintenance-request',
+		'accept-work'],
+	User: [
+		'booking-room',
+		'maintenance',
+
+		'my-maintenance-request'
+	],
+};
+
+function isAllowed(segment: string, role: Role): boolean {
+	const allowed = accessibleSegments[role] || [];
+	return allowed.includes('*') || allowed.includes(segment);
+}
+
+function getNavigationByRole(role: Role): Navigation {
+	return NAVIGATION.filter((item) => {
+		if (item.kind === 'header' || item.kind === 'divider') return true;
+		return hasSegment(item) && isAllowed(item.segment || '', role);
+	}).map((item) => {
+		if ('children' in item && Array.isArray(item.children)) {
+			const filteredChildren = item.children.filter((child) =>
+				hasSegment(child) && isAllowed(child.segment || '', role)
+			);
+			return { ...item, children: filteredChildren };
+		}
+		return item;
+	});
+}
+
+const WindowsLayout: React.FC = (props: any) => {
+	const { window } = props;
+	const theme = useTheme();
+
+	const router = useToolpadRouter();
+
+	const demoWindow = window ? window() : undefined;
+
 	const [user, setUser] = useState<UserInterface>();
 
 	// Role of current user (from localStorage)
 	const role = (localStorage.getItem("role") || 'Guest') as Role;
-
-	// Determine current top-level section based on current URL
-	const currentSectionKey = getCurrentSectionKey(location.pathname);
-
-	// Drawer items for current section and role
-	const pagesDrawer = getDrawerItemsBySection(currentSectionKey, role);
-
-	// AppBar sections (static)
-	const pagesAppbar = SECTIONS;
-
-	// Drawer open/close state
-	const [open, setOpen] = useState(false);
+	const userId = localStorage.getItem("userId");
 
 	// Fetch user data by ID (stored in localStorage)
 	const getUser = async () => {
@@ -45,76 +190,83 @@ const WindowsLayout: React.FC = () => {
 			const res = await GetUserById(Number(userId));
 			if (res) {
 				setUser(res);
-				console.log("User:", res);
 			}
 		} catch (error) {
 			console.error("Error fetching user:", error);
 		}
 	};
 
-	// Open and close drawer handlers
-	const handleDrawerOpen = () => setOpen(true);
-	const handleDrawerClose = () => setOpen(false);
-
 	// Fetch user info on first load
 	useEffect(() => {
 		getUser();
 	}, []);
 
-	return (
-		<Box
-			sx={(theme) => {
-				const closedWidth = {
-					xs: `calc(${theme.spacing(7)} + 1px)`,
-					sm: `calc(${theme.spacing(8)} + 1px)`,
-				};
+	const navigation = getNavigationByRole(role);
+	const navigateUrl = useNavigate();
 
-				return {
-					display: 'flex',
-					flexDirection: 'column',
-					minHeight: '100vh',
-					transition: theme.transitions.create('margin', {
-						easing: theme.transitions.easing.sharp,
-						duration: theme.transitions.duration.standard,
-					}),
-					marginLeft: open ? `${drawerWidth}px` : closedWidth,
-				};
+	const [session, setSession] = React.useState<Session | null>(null);
+
+	const authentication = React.useMemo(() => {
+		return {
+			signIn: () => {
+				if (user) {
+					setSession({
+						user: {
+							name: `${user.FirstName} ${user.LastName}`,
+							email: user.Email,
+							image: user.ProfilePath,
+						},
+					});
+				}
+			},
+			signOut: () => {
+				setSession(null);
+				localStorage.clear()
+				localStorage.setItem("isLogin", "false");
+				navigateUrl("/login");
+			},
+		};
+	}, [user]);
+
+	useEffect(() => {
+		if (user) {
+			setSession({
+				user: {
+					name: `${user.FirstName} ${user.LastName}`,
+					email: user.Email,
+					image: user.ProfilePath,
+				},
+			});
+		}
+	}, [user]);
+
+	return (
+		<AppProvider
+			navigation={navigation}
+			router={router}
+			theme={theme}
+			window={demoWindow}
+			authentication={authentication}
+			session={session}
+			branding={{
+				logo: <img src="/images/RSP2.png" alt="MUI logo" />,
+				title: 'RSP Northeast 2',
+				homeUrl: '/home',
 			}}
 		>
-			<CssBaseline />
-
-			{/* Top AppBar */}
-			<AppBarMenu
-				open={open}
-				onDrawerOpen={handleDrawerOpen}
-				sections={pagesAppbar}
-				user={user}
-			/>
-
-			{/* Left Side Drawer */}
-			<SideDrawer
-				open={open}
-				onClose={handleDrawerClose}
-				drawerItems={pagesDrawer}
-				currentPath={location.pathname}
-			/>
-
-			{/* Main content area */}
-			<Box
-				component="main"
-				sx={{
-					flexGrow: 1,
-					p: 3,
-					pt: 11, // Ensure content is below the AppBar
-					minHeight: '100vh',
-				}}
-			>
-				<Outlet />
-			</Box>
-
-			{/* Bottom Footer */}
-			<Footer />
-		</Box>
+			<DashboardLayout>
+				{/* Main content area */}
+				<Box
+					sx={{
+						p: 3,
+						// minHeight: '100%',
+					}}
+				>
+					<Outlet />
+				</Box>
+				<Footer />
+			</DashboardLayout>
+		</AppProvider>
 	);
 };
 

@@ -14,7 +14,7 @@ const OperatorRoutes = (): RouteObject => {
         element: <WindowsLayout />,
         children: [
             {
-                path: "/",
+                path: "/home",
                 element: <Home/>
             },
             {
@@ -22,20 +22,28 @@ const OperatorRoutes = (): RouteObject => {
                 element: <BookingRoom/>
             },
             {
-                path: "/accept-work",
+                path: "/maintenance/accept-work",
                 element: <AcceptWork/>
             },
             {
-				path: "/my-maintenance-request",
+				path: "/maintenance/my-maintenance-request",
 				element: <MyMaintenanceRequest/>
 			},
             {
-				path: "/create-maintenance-request",
+				path: "/maintenance/create-maintenance-request",
 				element: <CreateMaintenanceRequestPage/>
 			},
             {
-				path: "/check-requests",
+				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
+			},
+            {
+				path: "",
+				element: <Home/>
+			},
+            {
+				path: "*",
+				element: <Home/>
 			},
         ]
     }

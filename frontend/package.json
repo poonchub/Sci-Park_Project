@@ -16,14 +16,15 @@
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
-    "@mui/icons-material": "^6.4.7",
-    "@mui/material": "^6.4.8",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
     "@mui/x-charts": "^7.27.1",
     "@mui/x-data-grid-generator": "^7.27.3",
     "@mui/x-data-grid-pro": "^7.27.3",
     "@mui/x-date-pickers": "^7.27.3",
     "@mui/x-date-pickers-pro": "^7.27.3",
     "@patternfly/react-core": "^6.1.0",
+    "@toolpad/core": "^0.15.0",
     "antd": "^5.24.2",
     "apexcharts": "^4.5.0",
     "axios": "^1.8.3",
@@ -37,7 +38,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",
     "react-loader-spinner": "^6.1.6",
-    "react-router-dom": "^7.2.0"
+    "react-router-dom": "^7.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

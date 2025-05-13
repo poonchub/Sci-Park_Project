@@ -1,4 +1,4 @@
-import { Grid2, ImageList, ImageListItem, Stack } from "@mui/material";
+import { Grid, ImageList, ImageListItem, Stack } from "@mui/material";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 
 interface RequestImagesProps {
@@ -13,35 +13,35 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     // Display 1 image full width
     if (count === 1) {
         return (
-            <Grid2 size={{ xs: 12, md: 12 }} sx={{ alignItems: "center" }}>
+            <Grid size={{ xs: 12, md: 12 }} sx={{ alignItems: "center" }}>
                 <img
                     src={`${apiUrl}/${images[0].FilePath}`}
                     alt="image"
                     style={{ width: '100%', borderRadius: 8, maxHeight: '300px' }}
                 />
-            </Grid2>
+            </Grid>
         );
     }
 
     // Display 2 images side by side
     if (count === 2) {
         return (
-            <Grid2 container spacing={1} size={{ xs: 12, md: 12 }}>
-                <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
+            <Grid container spacing={1} size={{ xs: 12, md: 12 }}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
                     <img
                         src={`${apiUrl}/${images[0].FilePath}`}
                         alt="image1"
                         style={{ width: '100%', borderRadius: 8 }}
                     />
-                </Grid2>
-                <Grid2 size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ alignItems: "center" }}>
                     <img
                         src={`${apiUrl}/${images[1].FilePath}`}
                         alt="image2"
                         style={{ width: '100%', borderRadius: 8 }}
                     />
-                </Grid2>
-            </Grid2>
+                </Grid>
+            </Grid>
         );
     }
 
@@ -49,14 +49,14 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
     if (count === 3) {
         return (
             <>
-                <Grid2 size={{ xs: 12, md: 8 }} sx={{ alignItems: "center" }}>
+                <Grid size={{ xs: 12, md: 8 }} sx={{ alignItems: "center" }}>
                     <img
                         src={`${apiUrl}/${images[0].FilePath}`}
                         alt="image1"
                         style={{ width: '100%', borderRadius: 8 }}
                     />
-                </Grid2>
-                <Grid2 size={{ xs: 12, md: 4 }} sx={{ alignItems: "center" }}>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }} sx={{ alignItems: "center" }}>
                     <Stack spacing={2}>
                         <img
                             src={`${apiUrl}/${images[1].FilePath}`}
@@ -69,7 +69,7 @@ const RequestImages: React.FC<RequestImagesProps> = ({ images, apiUrl }) => {
                             style={{ width: '100%', borderRadius: 8 }}
                         />
                     </Stack>
-                </Grid2>
+                </Grid>
             </>
         );
     }

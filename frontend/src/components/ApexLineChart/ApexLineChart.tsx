@@ -17,8 +17,6 @@ function ApexLineChart(props: {
     const { data, height, selectedDate, counts } = props;
     const [countRequests, setCountRequest] = useState<Record<string, number>>({});
 
-    console.log(counts)
-
     const [state, setState] = useState<{
         series: { name: string; data: number[] }[];
         options: ApexOptions;

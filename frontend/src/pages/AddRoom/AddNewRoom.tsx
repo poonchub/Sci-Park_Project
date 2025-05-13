@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Typography } from '@mui/material';
+import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Typography, Grid } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import '../AddUser/AddUserForm.css';  // Import the updated CSS
 import { GetRoomTypes, GetFloors,CreateRoom } from '../../services/http';  // Assuming these are your API functions
@@ -7,7 +7,6 @@ import { FloorsInterface } from '../../interfaces/IFloors';
 import { RoomtypesInterface } from '../../interfaces/IRoomTypes';
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
-import Grid from '@mui/material/Grid2';  // Grid version 2
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
 import AddFloorDialog from './FloorPopup'; // Import the new FloorPopup component

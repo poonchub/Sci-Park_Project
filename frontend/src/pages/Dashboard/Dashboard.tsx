@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import AlertGroup from '../../components/AlertGroup/AlertGroup';
-import { Box, Button, Card, Grid2, Typography } from '@mui/material';
+import { Box, Button, Card, Grid, Typography } from '@mui/material';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import handleAction from '../../utils/handleActionApproval';
 import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from '../../services/http';
@@ -24,6 +24,7 @@ import { statusConfig } from '../../constants/statusConfig';
 import { faQuestionCircle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Link } from 'react-router-dom';
+import RequestStatusStackForAdmin from '../../components/RequestStatusStackForAdmin/RequestStatusStackForAdmin';
 
 function Dashboard() {
 
@@ -337,6 +338,8 @@ function Dashboard() {
         setGroupedData(grouped);
     }, [maintenanceRequests, selectedDate, maintenanceTypes]);
 
+    
+
     return (
         <div className="dashboard-page">
             {/* Show Alerts */}
@@ -360,21 +363,25 @@ function Dashboard() {
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             /> */}
 
-            <Grid2 container spacing={3}>
+            <Grid container spacing={3}>
 
                 {/* Header Section */}
-                <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
+                <Grid className='title-box' size={{ xs: 12, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         แดชบอร์ด
                     </Typography>
-                </Grid2>
+                </Grid>
 
-                <Grid2 container size={{ xs: 10, md: 8 }} spacing={3}>
+                <Grid container size={{ md: 12, lg: 8 }} spacing={3}>
                     {/* Status Section */}
-                    <RequestStatusCards statusCounts={countRequestStatus || {}} />
+                    <RequestStatusCards 
+                        statusCounts={countRequestStatus || {}} 
+                    />
+
+                    <RequestStatusStackForAdmin statusCounts={countRequestStatus || {}} />
 
                     {/* Chart Line Section */}
-                    <Grid2 size={{ xs: 10, md: 12 }} >
+                    <Grid size={{ xs: 12, md: 12 }} >
                         <Card sx={{
                             bgcolor: "secondary.main",
                             borderRadius: 2,
@@ -385,23 +392,24 @@ function Dashboard() {
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
-                            <Grid2 container
-                                size={{ xs: 10, md: 12 }}
+                            <Grid container
+                                size={{ xs: 12, md: 12 }}
                                 sx={{
                                     alignItems: 'center'
                                 }}
                             >
-                                <Grid2 size={{ xs: 10, md: 9 }} >
+                                <Grid size={{ xs: 7.5, md: 9 }} >
                                     <Typography variant="subtitle1" color="text.main" fontWeight={600}>
                                         รายการแจ้งซ่อมรายเดือน
                                     </Typography>
                                     <Typography variant="h4" fontWeight={800} color="primary">
                                         {`${filteredRequest.length} รายการ`}
                                     </Typography>
-                                </Grid2>
-                                <Grid2 container size={{ xs: 10, md: 3 }} 
+                                </Grid>
+                                <Grid container size={{ xs: 4.5, md: 3 }} 
                                     sx={{ 
-                                        justifyContent: 'flex-end'
+                                        justifyContent: 'flex-end',
+                                        mb: 1
                                     }}
                                 >
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -416,25 +424,25 @@ function Dashboard() {
                                             sx={{ minWidth: "100px", maxWidth: "200px" }}
                                         />
                                     </LocalizationProvider>
-                                </Grid2>
-                            </Grid2>
+                                </Grid>
+                            </Grid>
                             <ApexLineChart data={filteredRequest} height={250} selectedDate={selectedDate} />
                         </Card>
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
 
                 {/* Chart Donut Section */}
-                <Grid2 size={{ xs: 10, md: 4 }} >
+                <Grid size={{ xs: 12, lg: 4 }} >
                     <ApexDonutChart data={groupedData} completed={completedPercentage} />
-                </Grid2>
+                </Grid>
 
                 {/* Data Table */}
-                <Grid2 size={{ xs: 12, md: 12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
                         
                     </Card>
-                </Grid2>
-            </Grid2>
+                </Grid>
+            </Grid>
         </div>
     )
 }

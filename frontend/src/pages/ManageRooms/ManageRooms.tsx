@@ -1,6 +1,6 @@
 
 
-import { Box, Button, Card, FormControl, Grid2, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
 import {  faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -305,20 +305,20 @@ function ManageRooms() {
                 </React.Fragment>
             ))}
 
-            <Grid2 container spacing={3}>
-                <Grid2 className='title-box' size={{ xs: 10, md: 12 }}>
+            <Grid container spacing={3}>
+                <Grid className='title-box' size={{ xs: 10, md: 12 }}>
                     <Typography variant="h6" className="title">จัดการห้อง</Typography>
-                </Grid2>
+                </Grid>
 
 
-                <Grid2 container size={{ xs: 10, md: 12 }} spacing={3}>
+                <Grid container size={{ xs: 10, md: 12 }} spacing={3}>
 
-                    <Grid2 container
+                    <Grid container
                         spacing={2}
                         className='filter-section'
                         size={{ xs: 10, md: 12 }}
                         sx={{ alignItems: "flex-end", height: 'auto' }}>
-                        <Grid2 size={{ xs: 10, md: 5 }}>
+                        <Grid size={{ xs: 10, md: 5 }}>
                             <TextField
                                 fullWidth
                                 className="search-box"
@@ -340,9 +340,9 @@ function ManageRooms() {
                                     }
                                 }}
                             />
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectFloor}
@@ -366,9 +366,9 @@ function ManageRooms() {
                                     }
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectRoomType}
@@ -392,11 +392,11 @@ function ManageRooms() {
                                     }
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
                         
 
-                        <Grid2 size={{ xs: 10, md: 2 }}>
+                        <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectRoomStatus}
@@ -420,9 +420,9 @@ function ManageRooms() {
                                     }
                                 </Select>
                             </FormControl>
-                        </Grid2>
+                        </Grid>
 
-                        <Grid2 size={{ xs: 10, md: 1 }}>
+                        <Grid size={{ xs: 10, md: 1 }}>
                                                 <Button onClick={handleClearFillter}
                                                     sx={{
                                                         minWidth: 0,
@@ -437,12 +437,12 @@ function ManageRooms() {
                                                         },
                                                     }}
                                                 ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                                            </Grid2>
+                                            </Grid>
 
-                    </Grid2>
-                </Grid2>
+                    </Grid>
+                </Grid>
 
-                <Grid2 size={{ xs: 12, md: 12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                     <Card sx={{ width: "100%", borderRadius: 2 }}>
                         <DataGrid
                             rows={rooms}  // Use the users data fetched from the API
@@ -489,7 +489,7 @@ function ManageRooms() {
 
                         />
                     </Card>
-                </Grid2>
+                </Grid>
 
                 {/* Pop-up for editing room */}
       {openPopup && selectedRoomID !== null && (
@@ -501,7 +501,7 @@ function ManageRooms() {
       )}
 
 
-            </Grid2>
+            </Grid>
         </div>
     );
 }

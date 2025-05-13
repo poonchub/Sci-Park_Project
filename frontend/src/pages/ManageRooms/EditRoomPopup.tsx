@@ -10,6 +10,7 @@ import {
   FormControl,
   SelectChangeEvent,
   FormHelperText,
+  Grid,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -20,7 +21,6 @@ import { RoomsInterface } from '../../interfaces/IRooms';
 import { RoomtypesInterface } from '../../interfaces/IRoomTypes';
 import { FloorsInterface } from '../../interfaces/IFloors';
 import { RoomStatusInterface } from '../../interfaces/IRoomStatus';
-import Grid from '@mui/material/Grid2'; // Grid version 2
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';

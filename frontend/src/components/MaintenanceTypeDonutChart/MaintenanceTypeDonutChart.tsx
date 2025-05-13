@@ -8,7 +8,6 @@ import {
     Stack,
     Box,
     LinearProgress,
-    useTheme,
     Avatar,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,7 +20,6 @@ interface Props {
 }
 
 function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
-    const theme = useTheme();
 
     const [state, setState] = useState<{
         series: number[];
@@ -49,7 +47,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 show: true,
                                 fontSize: '16px',
                                 fontWeight: 400,
-                                color: theme.palette.text.secondary,
                                 offsetY: 20,
                             },
                             value: {
@@ -57,7 +54,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '24px',
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 700,
-                                color: theme.palette.text.primary,
                                 offsetY: -20,
                             },
                             total: {
@@ -67,7 +63,6 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '16px',
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 500,
-                                color: 'text.secondary',
                                 formatter: (): string => {
                                     return `${completed}%`; // Use the completed prop as the default label
                                 },
@@ -95,7 +90,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
         const labels = Object.keys(data);
         const series = labels.map((label) => data[label].total);
         const colors = labels.map((label) => maintenanceTypeConfig[label].color);
-    
+
         setState((prev) => ({
             ...prev,
             series,
@@ -134,8 +129,8 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 },
             },
         }));
-    }, [data, completed]);        
-    
+    }, [data, completed]);
+
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
@@ -144,12 +139,16 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
-                    <ReactApexChart
-                        options={state.options}
-                        series={state.series}
-                        type="donut"
-                        height={height}
-                    />
+                    {state.series.length > 0 ? (
+                        <ReactApexChart
+                            options={state.options}
+                            series={state.series}
+                            type="donut"
+                            height={height}
+                        />
+                    ) : (
+                        <Typography color="text.secondary">กำลังโหลดข้อมูล...</Typography>
+                    )}
                 </Box>
 
                 <Stack spacing={1.5} mt={2}>
