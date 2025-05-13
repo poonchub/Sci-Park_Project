@@ -1,58 +1,70 @@
-import { createTheme } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles"; // ใช้ createTheme ใน MUI v7
 
 const theme = createTheme({
-    colorSchemes: { light: true, dark: true },
-	cssVariables: {
-		colorSchemeSelector: 'class',
-	},
-	breakpoints: {
-		values: {
-			xs: 0,
-			sm: 600,
+    cssVariables: {
+        colorSchemeSelector: "class", // ใช้ร่วมกับ body.dark ได้
+    },
+    colorSchemes: {
+        light: {
+            palette: {
+                primary: {
+                    main: "#F26522",
+                    contrastText: "#FFFFFF",
+                    dark: "rgb(194, 78, 25)"
+                },
+                secondary: {
+                    main: "#FFFFFF",
+                    contrastText: ""
+                },
+                background: {
+                    primary: "#fcfcfc",
+                    secondary: "#212121"
+                },
+                text: {
+                    primary: "#000000",
+                    secondary: "#6D6E70"
+                },
+                info: {
+                    main: "#08aff1"
+                },
+                warning: {
+                    main: "#A67436"
+                },
+                error: {
+                    main: "#FF3B30"
+                },
+                success: {
+                    main: "#F26522"
+                },
+                divider: "#e0e0e0",
+                customBlue: "#08aff1"
+            }
+        },
+        dark: {
+            palette: {
+                text: {
+                    primary: "#FFFFFF",
+                    secondary: "#6D6E70"
+                },
+                // secondary: {
+                //     main: "#1e1e1e"
+                // }
+            }
+        }
+    },
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 600,
             sm650: 650,
-			md: 900,
+            md: 900,
             md1000: 1000,
-			lg: 1200,
-			xl: 1536,
-		},
-	},
-    palette: {
-        // สีหลักของระบบ
-        primary: {
-            main: "#F26522", // sut-orange
-            contrastText: "#FFFFFF",
-            dark: "rgb(194, 78, 25)"
-        },
-        secondary: {
-            main: "#FFFFFF", // sut-gold
-            contrastText: "",
-        },
-        background: {
-            primary: '#fcfcfc',
-            secondary: '#212121'
-        },
-        text: {
-            primary: "#000000", // text-primary
-            secondary: "#6D6E70", // text-secondary,
-        },
-        info: {
-            main: "#08aff1", // text-link
-        },
-        warning: {
-            main: "#A67436", // step-active
-        },
-        error: {
-            main: "#FF3B30", // button-cancel-bg
-        },
-        success: {
-            main: "#F26522", // step-border-success
-        },
-        divider: "#e0e0e0", // step-border
-
-        customBlue: '#08aff1',
+            lg: 1200,
+            xl: 1536
+        }
     },
     typography: {
-        fontFamily: '"Noto Sans Thai", sans-serif',
+        fontFamily: '"Noto Sans Thai", sans-serif'
     },
     components: {
         MuiButton: {
@@ -127,7 +139,7 @@ const theme = createTheme({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    
+
                 },
             },
         },

@@ -5,7 +5,7 @@ function Footer() {
         <Box sx={{ 
             bgcolor: 'background.secondary', 
             color: 'text.secondary',
-            py: 3,
+            py: 8,
             px: 5,
             zIndex: 99
         }}
