@@ -6,10 +6,12 @@ import { GetUserById } from '../services/http';
 import { UserInterface } from '../interfaces/IUser';
 
 import Footer from '../components/Footer/Footer';
-
+import AccountBoxOutlinedIcon from '@mui/icons-material/AccountBoxOutlined';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import LayersIcon from '@mui/icons-material/Layers';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import { AssignmentIndOutlined, FactCheckOutlined, HandymanOutlined, HomeOutlined, HomeRepairServiceOutlined, MeetingRoomOutlined } from '@mui/icons-material';
@@ -34,6 +36,7 @@ const NAVIGATION: Navigation = [
 		title: 'Booking Room',
 		icon: <MeetingRoomOutlined />,
 	},
+	
 	{
 		segment: 'maintenance',
 		title: 'Maintenance',
@@ -69,6 +72,36 @@ const NAVIGATION: Navigation = [
 		title: 'Management',
 	},
 	{
+		segment: 'user',
+		title: 'User',
+		icon: <AccountBoxOutlinedIcon />,
+		children: [
+			{
+				segment: 'manage-user',
+				title: 'Manage User',
+				icon: <ManageAccountsOutlinedIcon />,
+			},
+			{
+				segment: 'add-user',
+				title: 'Add User',
+				icon: <PersonAddAltOutlinedIcon />,
+			},
+			{
+				segment: 'traffic',
+				title: 'Traffic',
+				icon: <DescriptionIcon />,
+			},
+		],
+	},
+	{
+		segment: 'integrations',
+		title: 'Integrations',
+		icon: <LayersIcon />,
+	},
+	{
+		kind: 'divider',
+	},
+	{
 		segment: 'room',
 		title: 'Room',
 		icon: <BarChartIcon />,
@@ -89,6 +122,9 @@ const NAVIGATION: Navigation = [
 		segment: 'integrations',
 		title: 'Integrations',
 		icon: <LayersIcon />,
+	},
+	{
+		kind: 'divider',
 	},
 ];
 
@@ -120,10 +156,14 @@ const accessibleSegments: Record<Role, string[]> = {
 		'booking-room',
 		'maintenance',
 		'room',
+		'user',
 
 		'all-maintenance-request',
 		'my-maintenance-request',
-		'manage-room'
+		'manage-room',
+		'manage-user',
+		'add-user',
+
 	],
 	Manager: [
 		'home',

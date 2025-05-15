@@ -52,11 +52,11 @@ const AdminRoutes = (): RouteObject => {
 				element: <AcceptWork/>
 			},
 			{
-                path: "/add-user",
+                path: "/user/add-user",
                 element: <AddUserForm/>
             },
             {
-                path: "/manage-user",
+                path: "/user/manage-user",
                 element: <ManageUsers/>
             },
 			{
