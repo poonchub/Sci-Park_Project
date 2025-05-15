@@ -1,8 +1,8 @@
-import { createTheme } from "@mui/material/styles"; // ใช้ createTheme ใน MUI v7
+import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
     cssVariables: {
-        colorSchemeSelector: "class", // ใช้ร่วมกับ body.dark ได้
+        colorSchemeSelector: "class",
     },
     colorSchemes: {
         light: {
@@ -10,7 +10,7 @@ const theme = createTheme({
                 primary: {
                     main: "#F26522",
                     contrastText: "#FFFFFF",
-                    dark: "rgb(194, 78, 25)"
+                    dark: "rgb(214, 68, 0)"
                 },
                 secondary: {
                     main: "#FFFFFF",
@@ -44,11 +44,11 @@ const theme = createTheme({
             palette: {
                 text: {
                     primary: "#FFFFFF",
-                    secondary: "#6D6E70"
+                    secondary: "rgb(175, 175, 175)"
                 },
-                // secondary: {
-                //     main: "#1e1e1e"
-                // }
+                secondary: {
+                    main: "#121212"
+                }
             }
         }
     },

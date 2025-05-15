@@ -1,7 +1,7 @@
 import { RouteObject, useRoutes } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
 import LoginRoutes from "./LoginRoutes";
-import OutsiderRoutes from "./OutsiderRoutes";
+import OutsiderRoutes from "./UserRoutes";
 import SuperAdminRoutes from "./SuperAminRoutes";
 import OperatorRoutes from "./OperatorRoutes";
 import ManagerRoutes from "./ManagerRoutes";

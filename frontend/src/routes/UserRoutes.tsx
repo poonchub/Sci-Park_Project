@@ -7,13 +7,13 @@ import CreateMaintenanceRequestPage from "../pages/CreateMaintenanceRequest/Crea
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 
-const OutsiderRoutes = (): RouteObject => {
+const UserRoutes = (): RouteObject => {
 	return {
 		path: "/",
 		element: <WindowsLayout />,
 		children: [
 			{
-				path: "/",
+				path: "/home",
 				element: <Home/>
 			},
 			{
@@ -21,15 +21,15 @@ const OutsiderRoutes = (): RouteObject => {
 				element: <BookingRoom/>
 			},
 			{
-				path: "/my-maintenance-request",
+				path: "/maintenance/my-maintenance-request",
 				element: <MyMaintenanceRequest/>
 			},
 			{
-				path: "/create-maintenance-request",
+				path: "/maintenance/create-maintenance-request",
 				element: <CreateMaintenanceRequestPage/>
 			},
 			{
-				path: "/check-requests",
+				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
 			},
 			{
@@ -43,4 +43,4 @@ const OutsiderRoutes = (): RouteObject => {
 		]
 	}
 }
-export default OutsiderRoutes;
+export default UserRoutes;

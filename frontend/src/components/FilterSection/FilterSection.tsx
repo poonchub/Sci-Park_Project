@@ -14,6 +14,7 @@ import { DatePicker } from "../DatePicker/DatePicker";
 import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
+import { isAdmin, isManager } from "../../routes";
 
 
 type Props = {
@@ -22,8 +23,8 @@ type Props = {
     setSearchText: (val: string) => void;
     selectedDate: any;
     setSelectedDate: (val: any) => void;
-    selectedStatus: number;
-    setSelectedStatus: (val: number) => void;
+    selectedStatuses: number[];
+    setSelectedStatuses: (val: number[]) => void;
     handleClearFilter: () => void;
     requestStatuses: RequestStatusesInterface[];
 };
@@ -34,11 +35,19 @@ const FilterSection = ({
     setSearchText,
     selectedDate,
     setSelectedDate,
-    selectedStatus,
-    setSelectedStatus,
+    selectedStatuses,
+    setSelectedStatuses,
     handleClearFilter,
     requestStatuses,
 }: Props) => {
+    const inProcessNames = isAdmin || isManager ? 
+        ["Created"] :
+        ["Created", "Pending", "Approved", "In Progress", "Rework Requested"]
+
+    // สร้าง array ของ ID ที่อยู่ใน in-process จากชื่อ
+    const inProcessIds = requestStatuses
+        .filter(status => inProcessNames.includes(status.Name || ''))
+        .map(status => status.ID!)
 
     return (
         <Grid
@@ -90,22 +99,38 @@ const FilterSection = ({
             <Grid size={{ xs: 5, sm: 3 }}>
                 <FormControl fullWidth>
                     <Select
-                        value={selectedStatus}
-                        onChange={(e) => setSelectedStatus(Number(e.target.value))}
-                        displayEmpty
                         startAdornment={
                             <InputAdornment position="start" sx={{ pl: 0.5 }}>
                                 <FontAwesomeIcon icon={faChartSimple} size="lg" />
                             </InputAdornment>
                         }
+                        value={
+                            selectedStatuses.length === inProcessIds.length &&
+                                inProcessIds.every(id => selectedStatuses.includes(id || 0))
+                                ? "in-process"
+                                : selectedStatuses[0] ?? ""
+                        }
+                        onChange={(event) => {
+                            const value = event.target.value as string | number;
+
+                            if (value === "in-process") {
+                                setSelectedStatuses(inProcessIds);
+                            } else {
+                                setSelectedStatuses([Number(value)]);
+                            }
+                        }}
                     >
                         <MenuItem value={0}>ทุกสถานะ</MenuItem>
-                        {requestStatuses.map((item, index) => (
-                            <MenuItem key={index} value={index + 1}>
-                                {item.Name}
-                            </MenuItem>
-                        ))}
+                        { !(isAdmin || isManager) && <MenuItem value="in-process">In Process</MenuItem>}
+                        {requestStatuses
+                            .filter(status => !inProcessNames.includes(status.Name || ''))
+                            .map((status) => (
+                                <MenuItem key={status.ID} value={status.ID}>
+                                    {status.Name}
+                                </MenuItem>
+                            ))}
                     </Select>
+
                 </FormControl>
             </Grid>
 

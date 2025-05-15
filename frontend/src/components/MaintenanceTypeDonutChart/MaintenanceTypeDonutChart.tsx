@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import {
@@ -19,28 +19,47 @@ interface Props {
     completed: number;
 }
 
-function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
+const getModeFromClass = () => {
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+};
 
-    const [state, setState] = useState<{
-        series: number[];
-        options: ApexOptions;
-    }>({
-        series: [],
-        options: {
-            chart: {
-                type: 'donut',
-            },
-            labels: [],
-            legend: {
-                show: false,
-            },
-            dataLabels: {
-                enabled: false,
-            },
+function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
+    const [mode, setMode] = useState<"light" | "dark">(getModeFromClass());
+
+    const [series, setSeries] = useState<number[]>([]);
+
+    // อัปเดต series จาก data
+    useEffect(() => {
+        const labels = Object.keys(data);
+        const newSeries = labels.map(label => data[label].total);
+        setSeries(newSeries);
+    }, [data]);
+
+    // สังเกต class เปลี่ยน dark/light
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            const currentMode = getModeFromClass();
+            setMode(currentMode);
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        return () => observer.disconnect();
+    }, []);
+
+    // สร้าง options ใหม่เมื่อ mode, data, หรือ completed เปลี่ยน
+    const options: ApexOptions = useMemo(() => {
+        const labels = Object.keys(data);
+        const colors = labels.map(label => maintenanceTypeConfig[label].color);
+
+        return {
+            chart: { type: 'donut' },
+            labels,
+            colors,
+            legend: { show: false },
+            dataLabels: { enabled: false },
             plotOptions: {
                 pie: {
                     donut: {
-                        size: '65%', // ปรับขนาดรูตรงกลาง
+                        size: '65%',
                         labels: {
                             show: true,
                             name: {
@@ -48,6 +67,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '16px',
                                 fontWeight: 400,
                                 offsetY: 20,
+                                color: mode === 'dark' ? '#FFF' : '#000',
                             },
                             value: {
                                 show: true,
@@ -55,6 +75,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 700,
                                 offsetY: -20,
+                                color: mode === 'dark' ? '#FFF' : '#000',
                             },
                             total: {
                                 show: true,
@@ -63,73 +84,41 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                 fontSize: '16px',
                                 fontFamily: 'Noto Sans Thai, sans-serif',
                                 fontWeight: 500,
-                                formatter: (): string => {
-                                    return `${completed}%`; // Use the completed prop as the default label
-                                },
+                                color: mode === 'dark' ? 'rgb(218, 218, 218)' : 'rgb(129, 129, 129)',
+                                formatter: () => `${completed}%`,
                             },
                         },
                     },
                 },
             },
             tooltip: {
+                style: {
+                    fontSize: "14px",
+                    fontFamily: "Noto Sans Thai, sans-serif",
+                    background: 'none'
+                },
+                theme: mode,
                 custom: ({ seriesIndex, w }) => {
-                    const label = w.config.labels[seriesIndex]; // Get the label name from seriesIndex
-                    const completedPercentage = data[label]?.completedPercentage || 0;
+                    const label = w.config.labels?.[seriesIndex] ?? '';
+                    const completedPercentage = data[label]?.completedPercentage ?? 0;
+
                     return `
-                        <div style="padding: 10px; font-size: 14px; color: white;">
-                            <strong>${label}</strong><br/>
-                            Completed: ${completedPercentage}%
+                        <div style="
+                            padding: 10px 16px; 
+                            font-size: 14px; 
+                            font-family: 'Noto Sans Thai', sans-serif;
+                            color: ${mode === "dark" ? "#fff" : "#000"};
+                            background-color: ${mode === "dark" ? "#333" : "#fff"};
+                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                        ">
+                            <div><strong>${label}</strong></div>
+                            <div>Completed: <b>${completedPercentage}</b></div>
                         </div>
                     `;
                 },
             },
-        },
-    });
-
-    useEffect(() => {
-        const labels = Object.keys(data);
-        const series = labels.map((label) => data[label].total);
-        const colors = labels.map((label) => maintenanceTypeConfig[label].color);
-
-        setState((prev) => ({
-            ...prev,
-            series,
-            options: {
-                ...prev.options,
-                labels,
-                colors,
-                plotOptions: {
-                    ...prev.options.plotOptions,
-                    pie: {
-                        ...prev.options.plotOptions?.pie,
-                        donut: {
-                            ...prev.options.plotOptions?.pie?.donut,
-                            labels: {
-                                ...prev.options.plotOptions?.pie?.donut?.labels,
-                                total: {
-                                    ...prev.options.plotOptions?.pie?.donut?.labels?.total,
-                                    formatter: () => `${completed}%`,
-                                },
-                            },
-                        },
-                    },
-                },
-                tooltip: {
-                    ...prev.options.tooltip,
-                    custom: ({ seriesIndex, w }) => {
-                        const label = w.config.labels?.[seriesIndex] ?? '';
-                        const completedPercentage = data[label]?.completedPercentage ?? 0;
-                        return `
-                            <div style="padding: 10px; font-size: 14px; color: white;">
-                                <strong>${label}</strong><br/>
-                                Completed: ${completedPercentage}%
-                            </div>
-                        `;
-                    },
-                },
-            },
-        }));
-    }, [data, completed]);
+        };
+    }, [mode, data, completed]);
 
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
@@ -139,10 +128,11 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
-                    {state.series.length > 0 ? (
+                    {series.length > 0 ? (
                         <ReactApexChart
-                            options={state.options}
-                            series={state.series}
+                            key={mode}
+                            options={options}
+                            series={series}
                             type="donut"
                             height={height}
                         />

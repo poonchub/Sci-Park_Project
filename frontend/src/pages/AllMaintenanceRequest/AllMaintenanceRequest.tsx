@@ -36,7 +36,7 @@ function AllMaintenanceRequest() {
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [searchText, setSearchText] = useState('')
-    const [selectedStatus, setSelectedStatus] = useState(0)
+    const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0])
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs())
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({})
     const [selectedOperator, setSelectedOperator] = useState(0)
@@ -125,7 +125,7 @@ function AllMaintenanceRequest() {
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
                                             maxWidth: "100%",
-                                            color: '#6D6E70'
+                                            color: 'text.secondary'
                                         }}
                                     >
                                         {description}
@@ -176,7 +176,7 @@ function AllMaintenanceRequest() {
                                         <Typography sx={{
                                             fontSize: 13,
                                             pr: 1.5, pt: 0.8,
-                                            color: '#6D6E70'
+                                            color: 'text.secondary'
                                         }}>{date}</Typography>
                                     </Box>
                                 </Grid>
@@ -248,7 +248,7 @@ function AllMaintenanceRequest() {
                     field: 'ID',
                     headerName: 'หมายเลข',
                     flex: 0.5,
-                    align: 'center', 
+                    align: 'center',
                     headerAlign: 'center',
                 },
                 {
@@ -286,7 +286,7 @@ function AllMaintenanceRequest() {
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         maxWidth: "100%",
-                                        color: 'gray'
+                                        color: 'text.secondary'
                                     }}
                                 >{time}</Typography>
                             </Box>
@@ -337,7 +337,7 @@ function AllMaintenanceRequest() {
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         maxWidth: "100%",
-                                        color: '#6D6E70'
+                                        color: 'text.secondary'
                                     }}
                                 >
                                     {description}
@@ -500,25 +500,32 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async () => {
+    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
         try {
-            const reqType = user?.RequestType?.TypeName || ''
-            const res = await GetMaintenanceRequestsForAdmin(selectedStatus, page, limit, 0, selectedDate ? selectedDate.format('YYYY-MM') : "", reqType);
+            const reqType = user?.RequestType?.TypeName || '';
+            const statusFormat = selectedStatuses.join(',')
+            const res = await GetMaintenanceRequestsForAdmin(
+                statusFormat,
+                pageNum,
+                limit,
+                0,
+                selectedDate ? selectedDate.format('YYYY-MM') : '',
+                reqType
+            );
+
             if (res) {
                 setMaintenanceRequests(res.data);
-                setTotal(res.total);
-                setCounts(res.counts)
+                setCounts(res.counts);
+                if (setTotalFlag) setTotal(res.total);
 
-                // ใช้ reduce เพื่อจัดรูปแบบข้อมูล statusCounts
-                const formattedStatusCounts = res.statusCounts.reduce((acc: any, item: any) => {
+                const formatted = res.statusCounts.reduce((acc: any, item: any) => {
                     acc[item.status_name] = item.count;
                     return acc;
-                }, {} as Record<string, number>);
-
-                setStatusCounts(formattedStatusCounts);
+                }, {});
+                setStatusCounts(formatted);
             }
         } catch (error) {
-            console.error("Error fetching request maintenance requests:", error);
+            console.error("Error fetching maintenance requests:", error);
         }
     };
 
@@ -544,7 +551,7 @@ function AllMaintenanceRequest() {
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText('');
-        setSelectedStatus(0)
+        setSelectedStatuses([])
     }
 
     const filteredRequests = maintenanceRequests.filter((request) => {
@@ -578,9 +585,15 @@ function AllMaintenanceRequest() {
 
     useEffect(() => {
         if (user && requestStatuses) {
-            getMaintenanceRequests();
+            getMaintenanceRequests(page)
         }
-    }, [user, page, limit, selectedStatus, selectedDate])
+    }, [page, limit]);
+
+    useEffect(() => {
+        if (user && requestStatuses) {
+            getMaintenanceRequests(1, true);
+        }
+    }, [user, selectedStatuses, selectedDate]);
 
     return (
         <div className="all-maintenance-request-page">
@@ -636,8 +649,8 @@ function AllMaintenanceRequest() {
                         setSearchText={setSearchText}
                         selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
-                        selectedStatus={selectedStatus}
-                        setSelectedStatus={setSelectedStatus}
+                        selectedStatuses={selectedStatuses}
+                        setSelectedStatuses={setSelectedStatuses}
                         handleClearFilter={handleClearFillter}
                         requestStatuses={requestStatuses}
                     />
@@ -659,8 +672,8 @@ function AllMaintenanceRequest() {
                     setSearchText={setSearchText}
                     selectedDate={selectedDate}
                     setSelectedDate={setSelectedDate}
-                    selectedStatus={selectedStatus}
-                    setSelectedStatus={setSelectedStatus}
+                    selectedStatuses={selectedStatuses}
+                    setSelectedStatuses={setSelectedStatuses}
                     handleClearFilter={handleClearFillter}
                     requestStatuses={requestStatuses}
                 />
