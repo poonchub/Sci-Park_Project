@@ -596,7 +596,7 @@ function AllMaintenanceRequest() {
     }, [user, selectedStatuses, selectedDate]);
 
     return (
-        <div className="all-maintenance-request-page">
+        <Box className="all-maintenance-request-page" sx={{ p: 3 }}>
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -692,7 +692,7 @@ function AllMaintenanceRequest() {
                     />
                 </Grid>
             </Grid>
-        </div>
+        </Box>
     )
 }
 export default AllMaintenanceRequest;

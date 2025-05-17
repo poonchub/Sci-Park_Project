@@ -262,7 +262,6 @@ const WindowsLayout: React.FC = (props: any) => {
 				<Box
 					className="content-box"
 					sx={{
-						p: 3,
 						minHeight: '95vh',
 						overflow: 'auto'
 					}}

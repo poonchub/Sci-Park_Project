@@ -444,7 +444,7 @@ function MyMaintenanceRequest() {
     }, [selectedStatuses, selectedDate]);
 
     return (
-        <div className="my-maintenance-request-page">
+        <Box className="my-maintenance-request-page" sx={{ p: 3 }}>
             <Grid container spacing={3}>
                 {/* Header Section */}
                 <Grid className='title-box' size={{ xs: 5, sm: 5 }}>
@@ -503,7 +503,7 @@ function MyMaintenanceRequest() {
                     />
                 </Grid>
             </Grid>
-        </div>
+        </Box>
     )
 }
 export default MyMaintenanceRequest

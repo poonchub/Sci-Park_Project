@@ -565,7 +565,7 @@ function AcceptWork() {
 	}, [pageInProgress, limitInProgress, selectedType, selectedDate])
 
 	return (
-		<div className="assign-work-page">
+		<Box className="assign-work-page" sx={{ p: 3 }}>
 			{/* Show Alerts */}
 			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -720,7 +720,7 @@ function AcceptWork() {
 					</Grid>
 				</Grid>
 			</Grid>
-		</div>
+		</Box>
 	)
 }
 export default AcceptWork;

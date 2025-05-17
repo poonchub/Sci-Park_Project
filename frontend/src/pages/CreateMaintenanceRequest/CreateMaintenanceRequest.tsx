@@ -272,7 +272,7 @@ function CreateMaintenanceRequestPage() {
     }, [formData.IsAnytimeAvailable])
 
     return (
-        <div className="create-maintenance-request-page">
+        <Box className="create-maintenance-request-page" sx={{ p: 3 }}>
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -688,7 +688,7 @@ function CreateMaintenanceRequestPage() {
                     </CardContent>
                 </Card>
             </Grid>
-        </div >
+        </Box >
     )
 }
 export default CreateMaintenanceRequestPage
