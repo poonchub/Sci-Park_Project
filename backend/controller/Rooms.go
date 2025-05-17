@@ -28,7 +28,7 @@ func CreateRoom(c *gin.Context) {
 	}
 
 	// ตรวจสอบข้อมูลที่ต้องการ
-	if room.RoomNumber == "" || room.Capacity == 0 || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
+	if room.RoomNumber == "" || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
 		return
 	}
@@ -68,7 +68,7 @@ func UpdateRoom(c *gin.Context) {
     }
 
     // ตรวจสอบข้อมูลที่ต้องการ
-    if room.RoomNumber == "" || room.Capacity == 0 || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
+    if room.RoomNumber == "" || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
         return
     }
@@ -82,7 +82,6 @@ func UpdateRoom(c *gin.Context) {
     // อัปเดตห้องด้วยค่าจาก JSON request ที่รับมา
     if err := db.Model(&existingRoom).Updates(entity.Room{
         RoomNumber:   room.RoomNumber,
-        Capacity:     room.Capacity,
         RoomStatusID: room.RoomStatusID,
         FloorID:      room.FloorID,
         RoomTypeID:   room.RoomTypeID,
@@ -98,7 +97,6 @@ func UpdateRoom(c *gin.Context) {
         "room": gin.H{
             "ID":          existingRoom.ID,
             "RoomNumber":  existingRoom.RoomNumber,
-            "Capacity":    existingRoom.Capacity,
             "RoomStatusID": existingRoom.RoomStatusID,
             "FloorID":     existingRoom.FloorID,
             "RoomTypeID":  existingRoom.RoomTypeID,
@@ -190,7 +188,6 @@ func ListSetRooms(c *gin.Context) {
         roomResponse := map[string]interface{}{
             "ID":              room.ID,
             "RoomNumber":      room.RoomNumber,
-            "Capacity":        room.Capacity,
             "FloorID":         room.FloorID,
             "RoomTypeID":      room.RoomTypeID,
             "RoomStatusID":    room.RoomStatusID,
@@ -234,7 +231,6 @@ func GetRoomByID(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "ID":           room.ID,
         "RoomNumber":   room.RoomNumber,
-        "Capacity":     room.Capacity,
         "RoomStatusID": room.RoomStatusID,
         "FloorID":      room.FloorID,
         "RoomTypeID":   room.RoomTypeID,

@@ -118,7 +118,7 @@ export default function SciparkHomePage() {
                             >
                                 ยินดีต้อนรับสู่ {organizationInfo.name}
                             </Typography>
-                            <Typography variant="h5" paragraph>
+                            <Typography variant="h5">
                                 {organizationInfo.description}
                             </Typography>
                             <Box sx={{ mt: 4 }}>
