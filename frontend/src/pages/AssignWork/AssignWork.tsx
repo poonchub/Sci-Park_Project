@@ -252,7 +252,7 @@ function AssignWork() {
 
     const getMaintenanceRequests = async () => {
         try {
-            const res = await GetMaintenanceRequestsForAdmin(2, page, limit, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
+            const res = await GetMaintenanceRequestsForAdmin("2", page, limit, selectedType, selectedDate ? selectedDate.format('YYYY-MM-DD') : "");
             if (res) {
                 setMaintenanceRequests(res.data);
                 setTotal(res.total);

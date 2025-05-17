@@ -341,7 +341,7 @@ function Dashboard() {
     
 
     return (
-        <div className="dashboard-page">
+        <Box className="dashboard-page" sx={{ p: 3 }}>
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -443,7 +443,7 @@ function Dashboard() {
                     </Card>
                 </Grid>
             </Grid>
-        </div>
+        </Box>
     )
 }
 export default Dashboard;

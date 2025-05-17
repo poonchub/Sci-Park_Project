@@ -625,7 +625,7 @@ async function ListMaintenanceRequests() {
     return res;
 }
 async function GetMaintenanceRequestsForUser(
-    statusID: number, 
+    statusID: string, 
     page: number, 
     limit: number, 
     createdAt?: string | undefined, 
@@ -651,7 +651,7 @@ async function GetMaintenanceRequestsForUser(
     return res;
 }
 async function GetMaintenanceRequestsForAdmin(
-    statusID: number, 
+    statusID: string, 
     page: number, 
     limit: number, 
     maintenanceType: number, 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"sci-park_web-application/config"
@@ -313,11 +314,20 @@ func parseDateRange(createdAt string) (start, end time.Time, err error) {
 
 func buildBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
 	db := config.DB()
-	statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
 	createdAt := c.DefaultQuery("createdAt", "")
 	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
 	requestType := c.DefaultQuery("requestType", "")
+
+	statusStr := c.DefaultQuery("status", "")
+	var statusIDs []int
+	if statusStr != "" && statusStr != "0" {
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+	}
 
 	var start, end time.Time
 	var err error
@@ -330,8 +340,8 @@ func buildBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
 		db = db.Where("maintenance_requests.created_at BETWEEN ? AND ?", start, end)
 	}
 
-	if statusID > 0 {
-		db = db.Where("request_status_id = ?", statusID)
+	if len(statusIDs) > 0 {
+		db = db.Where("request_status_id IN ?", statusIDs)
 	}
 	if maintenanceTypeID > 0 {
 		db = db.Where("maintenance_type_id = ?", maintenanceTypeID)

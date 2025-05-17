@@ -56,7 +56,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                 pageSizeOptions={[5, 10, 20, 50]}
                 paginationMode="server"
                 rowCount={rowCount}
-                checkboxSelection
+                // checkboxSelection
                 disableRowSelectionOnClick
                 disableColumnResize={false}
                 slots={{
@@ -69,7 +69,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                     },
                 }}
                 onPaginationModelChange={(params: GridPaginationModel) => {
-                    onPageChange(params.page);
+                    onPageChange(params.page+1);
                     onLimitChange(params.pageSize);
                 }}
                 sx={{
@@ -78,9 +78,14 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                     '& .MuiDataGrid-cell': {
                         py: 2,
                     },
-                    '& .MuiDataGrid-cellCheckbox': {
-                        alignItems: 'flex-start !important',
-                        pt: 0.4,
+                    '& .MuiDataGrid-columnHeaders': {
+                        borderBottom: '1px solid rgb(226, 226, 226)',
+                    },
+                    '& .MuiDataGrid-row': {
+                        borderBottom: '1px solid rgb(236, 236, 236)',
+                    },
+                    '& .MuiDataGrid-columnSeparator': {
+                        color: '#e0e0e0',
                     },
                 }}
                 slotProps={{

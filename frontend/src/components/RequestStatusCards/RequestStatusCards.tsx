@@ -74,7 +74,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                                 alignItems: "flex-start",
                             }}
                         >
-                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: 'text.main' }}>
                                 {item.name}
                             </Typography>
                             <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>

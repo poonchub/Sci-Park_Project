@@ -293,13 +293,17 @@ const WindowsLayout: React.FC = (props: any) => {
 				title: 'RSP Northeast 2',
 				homeUrl: '/home',
 			}}
+			
 		>
-			<DashboardLayout>
+			<DashboardLayout 
+				sidebarExpandedWidth={250}
+			>
 				{/* Main content area */}
 				<Box
+					className="content-box"
 					sx={{
-						p: 3,
-						// minHeight: '100%',
+						minHeight: '95vh',
+						overflow: 'auto'
 					}}
 				>
 					<Outlet />

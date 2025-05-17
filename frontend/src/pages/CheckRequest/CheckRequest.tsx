@@ -291,7 +291,7 @@ function CheckRequest() {
 	}, [maintenanceImages]);
 
 	return (
-		<div className="check-requests-page">
+		<Box className="check-requests-page" sx={{ p: 3 }}>
 			{/* Alert messages */}
 			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -654,7 +654,7 @@ function CheckRequest() {
 					</CardContent>
 				</Card>
 			</Grid>
-		</div>
+		</Box>
 	);
 }
 
