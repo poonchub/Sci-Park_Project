@@ -106,8 +106,8 @@ export default function SciparkHomePage() {
                     overflow: 'hidden'
                 }}
             >
-                <Container maxWidth={false}>
-                    <Grid container spacing={4} alignItems="center" paddingX={3}>
+                <Container maxWidth={'xl'}>
+                    <Grid container spacing={4} alignItems="center">
                         <Grid size={{ xs: 12, md: 6 }}>
                             <Typography
                                 component="h1"
@@ -183,7 +183,7 @@ export default function SciparkHomePage() {
             </Box>
 
             {/* Main Content */}
-            <Container maxWidth={false} sx={{ padding: '0px 48px !important' }}>
+            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
                 {/* Quick Access Cards */}
                 <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
                     ระบบหลัก

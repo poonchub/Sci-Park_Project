@@ -131,11 +131,11 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
 
 		// ใช้ timestamp สำหรับการเปรียบเทียบ
-		db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+		db = db.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfDay, endOfDay)
 	}
 
 	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor")
+	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor").Preload("MaintenanceRequest.Inspection.User")
 
 	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
 	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {
@@ -162,8 +162,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	}
 
 	if createdAt != "" {
-		// ใช้ timestamp ในการนับจำนวน
-		countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+		countQuery = countQuery.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfDay, endOfDay)
 	}
 
 	countQuery.Count(&total)

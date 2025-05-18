@@ -13,7 +13,7 @@ function Footer() {
             zIndex: 99
         }}
         >
-            <Container maxWidth={false}>
+            <Container maxWidth={'xl'}>
                 <Grid container spacing={4}>
                     <Grid size={{ xs: 12, md: 4 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

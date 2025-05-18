@@ -64,6 +64,9 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
                 props: ({ ownerState }) => ownerState.completed,
                 style: {
                     background: 'rgb(255, 154, 91)',
+                    ...theme.applyStyles('dark', {
+                        backgroundColor: 'rgb(255, 154, 91)',
+                    }),
                 },
             },
         ],
@@ -72,9 +75,9 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
     // Mapping step names to FontAwesome icons
     function ColorlibStepIcon(props: StepIconProps) {
         const { active, completed, className } = props;
-    
+
         const stepIndex = props.icon as string;
-    
+
         const icons: { [key: string]: IconDefinition } = {
             "Creating": faFile,
             "Created": faFile,
@@ -85,10 +88,10 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
             "Completed": faFlagCheckered,
             "Unsuccessful": faCircleXmark,
             "Rework Requested": faRedo,
-        };        
-        
+        };
+
         const icon = icons[stepIndex] || faFile;
-    
+
         return (
             <ColorlibStepIconRoot ownerState={{ completed, active }} className={className}>
                 <FontAwesomeIcon icon={icon} size="lg" />
@@ -100,9 +103,9 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
         <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />}>
             {steps.map((label, index) => (
                 <Step key={label}>
-                    <StepLabel 
+                    <StepLabel
                         slots={{ stepIcon: () => <ColorlibStepIcon icon={label} active={index == activeStep} completed={index < activeStep} /> }}
-                        sx={{ "& .MuiStepLabel-label": { color: "#6D6E70" } }} 
+                        sx={{ "& .MuiStepLabel-label": { color: "#6D6E70" } }}
                     >{label}</StepLabel>
                 </Step>
             ))}

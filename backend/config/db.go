@@ -506,7 +506,7 @@ func SeedDatabase() {
 		{RoomNumber: "A406", FloorID: 1, RoomStatusID: 1, RoomTypeID: 7},
 	}
 	for _, room := range rooms {
-		db.FirstOrCreate(&room, entity.Room{FloorID: room.FloorID})
+		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
 	}
 
 	// 🔹 ข้อมูล Packages

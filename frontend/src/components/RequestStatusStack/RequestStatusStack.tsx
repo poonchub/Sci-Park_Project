@@ -1,4 +1,4 @@
-import { Avatar, Box, Card, Grid, LinearProgress, Stack, Typography } from "@mui/material";
+import { Avatar, Card, Grid, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { statusConfig } from "../../constants/statusConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

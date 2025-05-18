@@ -13,42 +13,42 @@ export interface StatusConfig {
 export const statusConfig: Record<string, StatusConfig> = {
     "Pending": {
         color: "#ebca0c",
-        colorLite: "rgb(254, 255, 202)",
+        colorLite: "rgba(235, 202, 12, 0.22)",
         icon: faHourglassHalf
     },
     "Approved": {
         color: "#28A745",
-        colorLite: "rgb(203, 255, 215)",
+        colorLite: "rgba(40, 167, 70, 0.2)",
         icon: faCheck
     },
     "In Progress": {
         color: "#007BFF",
-        colorLite: "rgb(202, 227, 255)",
+        colorLite: "rgba(0, 123, 255, 0.18)",
         icon: faArrowsSpin
     },
     "In Process": {
         color: "#007BFF",
-        colorLite: "rgb(202, 227, 255)",
+        colorLite: "rgba(0, 123, 255, 0.18)",
         icon: faArrowsSpin
     },
     "Waiting For Review": {
         color: "#17A2B8",
-        colorLite: "rgb(208, 242, 255)",
+        colorLite: "rgba(23, 163, 184, 0.18)",
         icon: faClipboardCheck
     },
     "Completed": {
-        color: "#6F42C1",
-        colorLite: "rgb(226, 210, 255)",
+        color: "#884af7",
+        colorLite: "rgba(110, 66, 193, 0.18)",
         icon: faFlagCheckered
     },
     "Unsuccessful": {
         color: "#DC3545",
-        colorLite: "rgb(255, 211, 216)",
+        colorLite: "rgba(220, 53, 70, 0.19)",
         icon: faCircleXmark
     },
     "Rework Requested": {
         color: "#FFA500",
-        colorLite: "rgb(255, 224, 178)",
+        colorLite: "rgba(255, 166, 0, 0.21)",
         icon: faRedo
     },
 };

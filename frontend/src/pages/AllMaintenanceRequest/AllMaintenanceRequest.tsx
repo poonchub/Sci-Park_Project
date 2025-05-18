@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import "./AllMaintenanceRequest.css"
-import { Box, Button, Card, Grid, Typography, useMediaQuery } from "@mui/material"
+import { Box, Button, Card, Container, Grid, Typography, useMediaQuery } from "@mui/material"
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
@@ -596,7 +596,7 @@ function AllMaintenanceRequest() {
     }, [user, selectedStatuses, selectedDate]);
 
     return (
-        <Box className="all-maintenance-request-page" sx={{ p: 3 }}>
+        <Box className="all-maintenance-request-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -622,29 +622,53 @@ function AllMaintenanceRequest() {
                 showNoteField
             />
 
-            <Grid container spacing={3}>
+            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
+                <Grid container spacing={3}>
 
-                {/* Header Section */}
-                <Grid className='title-box' size={{ xs: 12, md: 12 }}>
-                    <Typography variant="h5" className="title" sx={{
-                        fontWeight: 700,
-                        fontSize: {
+                    {/* Header Section */}
+                    <Grid className='title-box' size={{ xs: 12, md: 12 }}>
+                        <Typography variant="h5" className="title" sx={{
+                            fontWeight: 700,
+                            fontSize: {
 
-                        }
-                    }}>
-                        รายการแจ้งซ่อม
-                    </Typography>
-                </Grid>
-                <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
+                            }
+                        }}>
+                            รายการแจ้งซ่อม
+                        </Typography>
+                    </Grid>
+                    <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
 
-                    {/* Status Section */}
-                    <RequestStatusCards statusCounts={statusCounts || {}} />
+                        {/* Status Section */}
+                        <RequestStatusCards statusCounts={statusCounts || {}} />
 
-                    <RequestStatusStackForAdmin statusCounts={statusCounts || {}} />
+                        <RequestStatusStackForAdmin statusCounts={statusCounts || {}} />
 
-                    {/* Filters Section size lg */}
+                        {/* Filters Section size lg */}
+                        <FilterSection
+                            display={{ xs: 'none', md: 'none', lg: 'flex' }}
+                            searchText={searchText}
+                            setSearchText={setSearchText}
+                            selectedDate={selectedDate}
+                            setSelectedDate={setSelectedDate}
+                            selectedStatuses={selectedStatuses}
+                            setSelectedStatuses={setSelectedStatuses}
+                            handleClearFilter={handleClearFillter}
+                            requestStatuses={requestStatuses}
+                        />
+                    </Grid>
+
+                    {/* Chart Section */}
+                    <Grid size={{ xs: 12, lg: 5 }} >
+                        <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
+                            <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
+                            <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
+                            <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
+                        </Card>
+                    </Grid>
+
+                    {/* Filters Section size md */}
                     <FilterSection
-                        display={{ xs: 'none', md: 'none', lg: 'flex' }}
+                        display={{ xs: 'flex', lg: 'none' }}
                         searchText={searchText}
                         setSearchText={setSearchText}
                         selectedDate={selectedDate}
@@ -654,44 +678,22 @@ function AllMaintenanceRequest() {
                         handleClearFilter={handleClearFillter}
                         requestStatuses={requestStatuses}
                     />
-                </Grid>
 
-                {/* Chart Section */}
-                <Grid size={{ xs: 12, lg: 5 }} >
-                    <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
-                        <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
-                        <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
-                    </Card>
+                    {/* Data Table */}
+                    <Grid size={{ xs: 12, md: 12 }}>
+                        <CustomDataGrid
+                            rows={filteredRequests}
+                            columns={getColumns()}
+                            rowCount={total}
+                            page={page}
+                            limit={limit}
+                            onPageChange={setPage}
+                            onLimitChange={setLimit}
+                            noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                        />
+                    </Grid>
                 </Grid>
-
-                {/* Filters Section size md */}
-                <FilterSection
-                    display={{ xs: 'flex', lg: 'none' }}
-                    searchText={searchText}
-                    setSearchText={setSearchText}
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                    selectedStatuses={selectedStatuses}
-                    setSelectedStatuses={setSelectedStatuses}
-                    handleClearFilter={handleClearFillter}
-                    requestStatuses={requestStatuses}
-                />
-
-                {/* Data Table */}
-                <Grid size={{ xs: 12, md: 12 }}>
-                    <CustomDataGrid
-                        rows={filteredRequests}
-                        columns={getColumns()}
-                        rowCount={total}
-                        page={page}
-                        limit={limit}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
-                        noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
-                    />
-                </Grid>
-            </Grid>
+            </Container>
         </Box>
     )
 }
