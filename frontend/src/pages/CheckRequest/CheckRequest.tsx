@@ -6,7 +6,7 @@ import { faAngleLeft, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawes
 
 import './CheckRequest.css';
 
-import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, UpdateMaintenanceRequestByID } from "../../services/http";
+import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, socketUrl, UpdateMaintenanceRequestByID } from "../../services/http";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { UserInterface } from "../../interfaces/IUser";
@@ -31,6 +31,8 @@ import handleActionAcception from "../../utils/handleActionAcception";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
+
+import { io } from 'socket.io-client';
 
 function CheckRequest() {
 	// Request data
@@ -165,7 +167,8 @@ function CheckRequest() {
 			setAlerts,
 			refreshTaskData: getMaintenanceRequest,
 			setOpenPopupSubmit,
-			files: submitfiles
+			files: submitfiles,
+			setFiles: setSubmitFiles
 		});
 	};
 
@@ -294,6 +297,19 @@ function CheckRequest() {
 
 		fetchFiles();
 	}, [maintenanceImages]);
+
+	useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            getMaintenanceRequest()
+        });
+
+        return () => {
+            socket.off("maintenance_updated");
+        };
+    }, []);
 
 	return (
 		<Box className="check-requests-page">

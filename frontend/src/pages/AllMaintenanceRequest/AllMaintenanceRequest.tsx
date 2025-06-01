@@ -4,7 +4,7 @@ import { Box, Button, Card, Container, Grid, Typography, useMediaQuery } from "@
 import { useEffect, useState } from "react"
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses"
 
-import { GetMaintenanceRequestsForAdmin, GetOperators, GetRequestStatuses, GetUserById } from "../../services/http"
+import { GetMaintenanceRequestByID, GetMaintenanceRequestsForAdmin, GetOperators, GetRequestStatuses, GetUserById, socketUrl } from "../../services/http"
 
 import { GridColDef } from '@mui/x-data-grid';
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests"
@@ -28,6 +28,8 @@ import FilterSection from "../../components/FilterSection/FilterSection"
 import RequestStatusStackForAdmin from "../../components/RequestStatusStackForAdmin/RequestStatusStackForAdmin"
 import theme from "../../styles/Theme"
 
+import { io } from 'socket.io-client';
+
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>()
     const [operators, setOperators] = useState<UserInterface[]>([])
@@ -44,6 +46,7 @@ function AllMaintenanceRequest() {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
+    const [totalAll, setTotalAll] = useState(0);
     const [counts, setCounts] = useState()
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false)
@@ -516,6 +519,10 @@ function AllMaintenanceRequest() {
             if (res) {
                 setMaintenanceRequests(res.data);
                 setCounts(res.counts);
+
+                const totalCount = res.counts.reduce((sum: number, item: { count: number }) => sum + item.count, 0);
+                setTotalAll(totalCount)
+
                 if (setTotalFlag) setTotal(res.total);
 
                 const formatted = res.statusCounts.reduce((acc: any, item: any) => {
@@ -526,6 +533,31 @@ function AllMaintenanceRequest() {
             }
         } catch (error) {
             console.error("Error fetching maintenance requests:", error);
+        }
+    };
+
+    const getNewMaintenanceRequest = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceRequestByID(ID);
+            if (res) {
+                setMaintenanceRequests(prev => [res, ...prev]);
+                setTotal(prev => prev + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance request:", error);
+        }
+    };
+
+    const getUpdateMaintenanceRequest = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceRequestByID(ID);
+            if (res) {
+                setMaintenanceRequests(prev =>
+                    prev.map(item => item.ID === res.ID ? res : item)
+                );
+            }
+        } catch (error) {
+            console.error("Error updating maintenance request:", error);
         }
     };
 
@@ -540,7 +572,6 @@ function AllMaintenanceRequest() {
             selectedRequest,
             selectedOperator,
             setAlerts,
-            refreshRequestData: getMaintenanceRequests,
             setOpenPopupApproved,
             setOpenConfirmRejected,
             actionType,
@@ -594,6 +625,25 @@ function AllMaintenanceRequest() {
             getMaintenanceRequests(1, true);
         }
     }, [user, selectedStatuses, selectedDate]);
+
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("maintenance_created", (data) => {
+            console.log("📦 New maintenance request:", data);
+            getNewMaintenanceRequest(data.ID)
+        });
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            getUpdateMaintenanceRequest(data.ID)
+        });
+
+        return () => {
+            socket.off("maintenance_created");
+            socket.off("maintenance_updated");
+        };
+    }, []);
 
     return (
         <Box className="all-maintenance-request-page">
@@ -661,7 +711,7 @@ function AllMaintenanceRequest() {
                     <Grid size={{ xs: 12, lg: 5 }} >
                         <Card sx={{ bgcolor: "secondary.main", borderRadius: 2, py: 2, px: 3, height: '100%' }}>
                             <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>รายการแจ้งซ่อม</Typography>
-                            <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${total} รายการ`}</Typography>
+                            <Typography sx={{ fontWeight: 700, fontSize: 24, color: '#F26522' }}>{`${totalAll} รายการ`}</Typography>
                             <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
                         </Card>
                     </Grid>

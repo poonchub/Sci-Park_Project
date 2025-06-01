@@ -10,9 +10,10 @@ interface AlertMessage {
 interface HandleSubmitWorkProps {
     selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
-    refreshTaskData: () => void;
+    refreshTaskData?: () => void;
     setOpenPopupSubmit: React.Dispatch<React.SetStateAction<boolean>>;
     files: File[];
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>;
 }
 
 const handleSubmitWork = async (
@@ -22,7 +23,8 @@ const handleSubmitWork = async (
         setAlerts,
         refreshTaskData,
         setOpenPopupSubmit,
-        files
+        files,
+        setFiles
     }: HandleSubmitWorkProps
 ) => {
     if (!selectedTask?.ID || !statusID) {
@@ -69,8 +71,11 @@ const handleSubmitWork = async (
 
         setTimeout(() => {
             setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
+            setFiles([])
 
-            refreshTaskData();
+            if (refreshTaskData) {
+                refreshTaskData();
+            }
             setOpenPopupSubmit(false);
         }, 500);
 

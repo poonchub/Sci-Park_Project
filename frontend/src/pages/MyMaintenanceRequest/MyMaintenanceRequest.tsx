@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 import './MyMaintenanceRequest.css'
-import { GetMaintenanceRequestsForUser, GetRequestStatuses } from '../../services/http'
+import { GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl } from '../../services/http'
 import dayjs from 'dayjs'
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests'
 import { RequestStatusesInterface } from '../../interfaces/IRequestStatuses'
@@ -18,6 +18,8 @@ import RequestStatusStack from '../../components/RequestStatusStack/RequestStatu
 import FilterSection from '../../components/FilterSection/FilterSection'
 import theme from '../../styles/Theme'
 import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig'
+
+import { io } from 'socket.io-client';
 
 function MyMaintenanceRequest() {
 
@@ -408,6 +410,19 @@ function MyMaintenanceRequest() {
         }
     };
 
+    const getUpdateMaintenanceRequest = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceRequestByID(ID);
+            if (res) {
+                setMaintenanceRequests(prev =>
+                    prev.map(item => item.ID === res.ID ? res : item)
+                );
+            }
+        } catch (error) {
+            console.error("Error updating maintenance request:", error);
+        }
+    };
+
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText('');
@@ -446,6 +461,19 @@ function MyMaintenanceRequest() {
             getMaintenanceRequests(1, true);
         }
     }, [selectedStatuses, selectedDate]);
+
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            getUpdateMaintenanceRequest(data.ID)
+        });
+
+        return () => {
+            socket.off("maintenance_updated");
+        };
+    }, []);
 
     return (
         <Box className="my-maintenance-request-page">

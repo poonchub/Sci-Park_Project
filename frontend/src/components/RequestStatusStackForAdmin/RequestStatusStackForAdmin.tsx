@@ -1,5 +1,5 @@
 import React from "react";
-import { Avatar, Box, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { Avatar, Card, Grid, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { statusConfig } from "../../constants/statusConfig";
@@ -44,8 +44,6 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
 
         return { name: status, count, color, colorLite, icon };
     });
-
-    console.log(statusCards)
 
     return (
         <Grid

@@ -7,7 +7,7 @@ import { faEye, faMagnifyingGlass, faPaperPlane, faQuestionCircle, faRotateRight
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import { GridColDef } from '@mui/x-data-grid';
-import { GetMaintenanceTask, GetMaintenanceTypes, GetRequestStatuses } from "../../services/http";
+import { GetMaintenanceTask, GetMaintenanceTaskByID, GetMaintenanceTypes, GetRequestStatuses, socketUrl } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
@@ -29,6 +29,8 @@ import { CalendarMonth } from "@mui/icons-material";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { useMediaQuery } from "@mui/system";
 import theme from "../../styles/Theme";
+
+import { io } from 'socket.io-client';
 
 interface TabPanelProps {
 	children?: React.ReactNode;
@@ -74,7 +76,7 @@ function AcceptWork() {
 
 	const [searchText, setSearchText] = useState('')
 	const [selectedType, setSelectedType] = useState(0)
-	const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
+	const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
 
 	const [page, setPage] = useState(0);
 	const [limit, setLimit] = useState(10);
@@ -92,8 +94,6 @@ function AcceptWork() {
 	const [isLoadingData, setIsLoadingData] = useState(true)
 
 	const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-	console.log(valueTab)
 
 	const columnVisibilityModel = {
 		Acception: valueTab !== 2,
@@ -535,6 +535,44 @@ function AcceptWork() {
 		}
 	};
 
+	const getNewMaintenanceTask = async (ID: number) => {
+		try {
+			const res = await GetMaintenanceTaskByID(ID);
+			if (res) {
+				setMaintenanceTasks(prev => [res, ...prev]);
+				setTotal(prev => prev + 1);
+			}
+		} catch (error) {
+			console.error("Error fetching maintenance request:", error);
+		}
+	};
+
+	const getUpdatedMaintenanceTask = async (data: MaintenanceTasksInterface) => {
+		try {
+			const res = await GetMaintenanceTaskByID(data.ID || 0);
+			if (res) {
+				console.log(res)
+				const statusName = res.RequestStatus.Name
+				if (statusName === 'Waiting For Review' || statusName === 'In Progress' || statusName === 'Unsuccessful') {
+					setMaintenanceTasks(prev => prev.filter(task => task.ID !== data.ID));
+					setTotal(prev => (prev > 0 ? prev - 1 : 0));
+				}
+				else if (statusName === 'Rework Requested' && valueTab === 0) {
+					setMaintenanceTasks(prev => [res, ...prev]);
+					setTotal(prev => prev + 1);
+				}
+				else {
+					setMaintenanceTasks(prev =>
+						prev.map(item => item.ID === res.ID ? res : item)
+					);
+				}
+			}
+		} catch (error) {
+			console.error("Error fetching maintenance request:", error);
+		}
+
+	};
+
 	const handleClickAcceptWork = (
 		statusName: "In Progress" | "Unsuccessful",
 		actionType: "accept" | "cancel",
@@ -545,7 +583,6 @@ function AcceptWork() {
 		handleActionAcception(statusID, {
 			selectedTask,
 			setAlerts,
-			refreshTaskData: getMaintenanceTasks,
 			setOpenConfirmAccepted,
 			setOpenConfirmCancelled,
 			actionType,
@@ -566,9 +603,9 @@ function AcceptWork() {
 		handleSubmitWork(statusID, {
 			selectedTask,
 			setAlerts,
-			refreshTaskData: getMaintenanceTasks,
 			setOpenPopupSubmit,
-			files
+			files,
+			setFiles,
 		});
 	};
 
@@ -621,6 +658,30 @@ function AcceptWork() {
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setValueTab(newValue);
 	};
+
+	useEffect(() => {
+		const socket = io(socketUrl);
+		const userId = Number(localStorage.getItem('userId'))
+
+		socket.on("task_created", (data) => {
+			console.log("📦 New maintenance task:", data);
+			if (data.UserID === userId && valueTab === 0) {
+				getNewMaintenanceTask(data.ID)
+			}
+		});
+
+		socket.on("task_updated", (data) => {
+			console.log("🔄 Maintenance task updated:", data);
+			if (data.UserID === userId) {
+				getUpdatedMaintenanceTask(data);
+			}
+		});
+
+		return () => {
+			socket.off("task_created");
+			socket.off("task_updated");
+		};
+	}, []);
 
 	return (
 		<Box className="accept-work-page">

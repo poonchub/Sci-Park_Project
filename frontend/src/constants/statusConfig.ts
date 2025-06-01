@@ -17,8 +17,8 @@ export const statusConfig: Record<string, StatusConfig> = {
         icon: faHourglassHalf
     },
     "Approved": {
-        color: "#28A745",
-        colorLite: "rgba(40, 167, 70, 0.2)",
+        color: "#10a605",
+        colorLite: "rgba(0, 255, 60, 0.18)",
         icon: faCheck
     },
     "In Progress": {

@@ -13,7 +13,7 @@ interface handleActionApprovalProps {
     selectedRequest: MaintenanceRequestsInterface | null;
     selectedOperator: number;
     setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
-    refreshRequestData: () => void;
+    refreshRequestData?: () => void;
     setOpenPopupApproved: (v: boolean) => void;
     setOpenConfirmRejected: (v: boolean) => void;
     note?: string;
@@ -86,7 +86,10 @@ const handleActionApproval = async (
                 { type: "success", message: actionType === "approve" ? "Approval successful" : "Rejection successful" }
             ]);
 
-            refreshRequestData();
+            if (refreshRequestData) {
+                refreshRequestData();
+            }
+            
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
         }, 500);

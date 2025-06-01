@@ -27,7 +27,7 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`${data.User?.FirstName} ${data.User?.LastName} - ${data.User?.CompanyName} (${data.User?.EmployeeID})`}
+                            {`${data.MaintenanceTask?.User?.FirstName} ${data.MaintenanceTask?.User?.LastName} - ${data.MaintenanceTask?.User?.CompanyName} (${data.MaintenanceTask?.User?.EmployeeID})`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -39,10 +39,10 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`โทรศัพท์: ${phoneFormat(data.User?.Phone || '')}`}
+                            {`โทรศัพท์: ${phoneFormat(data.MaintenanceTask?.User?.Phone || '')}`}
                         </Typography>
                         <Typography>
-                            {`อีเมล: ${data.User?.Email}`}
+                            {`อีเมล: ${data.MaintenanceTask?.User?.Email}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
