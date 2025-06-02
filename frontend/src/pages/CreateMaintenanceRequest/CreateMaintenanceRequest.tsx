@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "./CreateMaintenanceRequest.css"
 
-import { Box, Button, Card, CardContent, Checkbox, Container, FormControl, FormControlLabel, FormGroup, Grid, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById } from "../../services/http";
+import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById, UpdateUserbyID } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
@@ -15,7 +15,7 @@ import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faEnvelope, faPencil, faPhone, faRotateRight, faUpload, faUserTie } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faEnvelope, faFloppyDisk, faPencil, faPhone, faRotateRight, faUndo, faUpload, faUserTie } from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ImageUploader from "../../components/ImageUploader/ImageUploader";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
@@ -35,6 +35,8 @@ function CreateMaintenanceRequestPage() {
     const [selectedFloor, setSelectedFloor] = useState(0)
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         AreaDetail: "",
@@ -155,7 +157,45 @@ function CreateMaintenanceRequestPage() {
         }));
     };
 
-    const handleSubmit = async () => {
+    const handleUserDataChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = event.target;
+
+        setUser((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
+    };
+
+    const handleUpdateUser = async () => {
+        if (!user?.ID) {
+            handleSetAlert('error', "User not found");
+            return;
+        }
+
+        if (!validateUserData()) return;
+
+        try {
+            const data = {...user, UserID: user.ID}
+            const resUser = await UpdateUserbyID(data);
+
+            if (resUser.status === 'error') {
+                handleSetAlert('error', resUser.message || "Failed to update user");
+                return;
+            }
+
+            handleSetAlert('success', resUser.message);
+            setOnEdit(false)
+        } catch (error) {
+            console.error("🚨 Error update user:", error);
+            handleSetAlert('error', "An unexpected error occurred");
+        }
+
+    }
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!validateForm()) return;
+
         if (!user?.ID) {
             handleSetAlert('error', "User not found");
             return;
@@ -241,6 +281,69 @@ function CreateMaintenanceRequestPage() {
         setFiles([])
     }
 
+    const validateUserData = () => {
+        const newErrors: { [key: string]: string } = {};
+
+        if (!user?.Email?.trim()) {
+            newErrors.Email = "กรุณาป้อนอีเมล";
+        } else {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(user.Email.trim())) {
+                newErrors.Email = "รูปแบบอีเมลไม่ถูกต้อง";
+            }
+        }
+
+        if (!user?.Phone?.trim()) {
+            newErrors.Phone = "กรุณาป้อนหมายเลขโทรศัพท์";
+        } else {
+            const phonePattern = /^0[0-9]{9}$/;
+            if (!phonePattern.test(user.Phone.trim())) {
+                newErrors.Phone = "กรุณากรอกหมายเลขโทรศัพท์ให้ถูกต้อง 10 หลัก";
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const validateForm = () => {
+        const newErrors: { [key: string]: string } = {};
+
+        const otherAreaID = areas?.find(item => item.Name === 'บริเวณอื่น ๆ')?.ID || 0;
+
+        if (!formData.AreaID) {
+            newErrors.AreaID = "กรุณาเลือกบริเวณที่ต้องการแจ้งซ่อม";
+        }
+        else if (formData.AreaID == otherAreaID && !formData.AreaDetail?.trim()) {
+            newErrors.AreaDetail = "กรุณาระบุบริเวณเพิ่มเติม";
+        }
+        else if (formData.AreaID !== otherAreaID && selectedRoomtype == 0) {
+            newErrors.RoomTypeID = "กรุณาระบุประเภทห้อง";
+        }
+        else if (formData.AreaID !== otherAreaID && selectedFloor == 0) {
+            newErrors.FloorID = "กรุณาระบุตำแหน่งหรือชั้น";
+        }
+        else if (formData.AreaID !== otherAreaID && !formData.RoomID) {
+            newErrors.RoomID = "กรุณาเลือกหมายเลขห้อง";
+        }
+        else if (!formData.MaintenanceTypeID) {
+            newErrors.MaintenanceTypeID = "กรุณาเลือกประเภทปัญหา";
+        }
+        else if (formData.MaintenanceTypeID === 6 && !formData.OtherTypeDetail?.trim()) {
+            newErrors.OtherTypeDetail = "กรุณาระบุประเภทปัญหาเพิ่มเติม";
+        }
+        else if (!formData.Description?.trim()) {
+            newErrors.Description = "กรุณาระบุรายละเอียด";
+        }
+        else if (!formData.IsAnytimeAvailable) {
+            if (!formData.StartTime) newErrors.StartTime = "กรุณาระบุเวลาเริ่ม";
+            if (!formData.EndTime) newErrors.EndTime = "กรุณาระบุเวลาสิ้นสุด";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const filteredRooms = rooms.filter((room) => {
         return (
             room.FloorID === selectedFloor && room.RoomTypeID === selectedRoomtype
@@ -259,6 +362,7 @@ function CreateMaintenanceRequestPage() {
 
     useEffect(() => {
         handleResetData('AreaID')
+        setErrors({})
     }, [formData.AreaID])
 
     useEffect(() => {
@@ -370,6 +474,8 @@ function CreateMaintenanceRequestPage() {
                                                         value={formData.AreaDetail}
                                                         onChange={handleInputChange}
                                                         placeholder="ระบุบริเวณที่ต้องการแจ้งซ่อม"
+                                                        error={!!errors.AreaDetail}
+                                                        helperText={errors.AreaDetail}
                                                         slotProps={{
                                                             input: {
                                                                 className: "custom-input"
@@ -383,8 +489,9 @@ function CreateMaintenanceRequestPage() {
                                                 {/* Room Type Selection */}
                                                 <Grid size={{ xs: 12, md: 12 }}>
                                                     <Typography variant="body1" className="title-field">ประเภทห้อง</Typography>
-                                                    <FormControl fullWidth>
+                                                    <FormControl fullWidth error={!!errors.RoomTypeID}>
                                                         <Select
+                                                            name="RoomTypeID"
                                                             displayEmpty
                                                             defaultValue={0}
                                                             value={selectedRoomtype}
@@ -401,14 +508,16 @@ function CreateMaintenanceRequestPage() {
                                                                 })
                                                             }
                                                         </Select>
+                                                        {errors.RoomTypeID && <FormHelperText>{errors.RoomTypeID}</FormHelperText>}
                                                     </FormControl>
                                                 </Grid>
 
                                                 {/* Floor Number Selection */}
                                                 <Grid size={{ xs: 6, md: 6 }}>
                                                     <Typography variant="body1" className="title-field">ตำแหน่ง/ชั้น</Typography>
-                                                    <FormControl fullWidth>
+                                                    <FormControl fullWidth error={!!errors.FloorID}>
                                                         <Select
+                                                            name="FloorNumber"
                                                             displayEmpty
                                                             defaultValue={""}
                                                             value={selectedRoomtype === 0 ? 0 : selectedFloor}
@@ -426,13 +535,14 @@ function CreateMaintenanceRequestPage() {
                                                                 })
                                                             }
                                                         </Select>
+                                                        {errors.FloorID && <FormHelperText>{errors.FloorID}</FormHelperText>}
                                                     </FormControl>
                                                 </Grid>
 
                                                 {/* Room Number Selection */}
-                                                <Grid size={{ xs: 6, md: 6 }}>
+                                                <Grid size={{ xs: 6, md: 6 }} >
                                                     <Typography variant="body1" className="title-field">หมายเลขห้อง</Typography>
-                                                    <FormControl fullWidth>
+                                                    <FormControl fullWidth error={!!errors.RoomID}>
                                                         <Select
                                                             name="RoomID"
                                                             value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
@@ -451,6 +561,7 @@ function CreateMaintenanceRequestPage() {
                                                                 })
                                                             }
                                                         </Select>
+                                                        {errors.RoomID && <FormHelperText>{errors.RoomID}</FormHelperText>}
                                                     </FormControl>
                                                 </Grid>
                                             </>
@@ -460,7 +571,7 @@ function CreateMaintenanceRequestPage() {
                                     {/* Maintenance Type Selection */}
                                     <Grid size={{ xs: 12, md: 12 }}>
                                         <Typography variant="body1" className="title-field">ประเภทปัญหา</Typography>
-                                        <FormControl fullWidth>
+                                        <FormControl fullWidth error={!!errors.MaintenanceTypeID}>
                                             <Select
                                                 name="MaintenanceTypeID"
                                                 value={Number(formData.MaintenanceTypeID)}
@@ -478,6 +589,7 @@ function CreateMaintenanceRequestPage() {
                                                     })
                                                 }
                                             </Select>
+                                            {errors.MaintenanceTypeID && <FormHelperText>{errors.MaintenanceTypeID}</FormHelperText>}
                                         </FormControl>
                                         {
                                             formData.MaintenanceTypeID == 6 ? (
@@ -493,6 +605,8 @@ function CreateMaintenanceRequestPage() {
                                                             value={formData.OtherTypeDetail}
                                                             onChange={handleInputChange}
                                                             placeholder="ระบุประเภทปัญหา"
+                                                            error={!!errors.OtherTypeDetail}
+                                                            helperText={errors.OtherTypeDetail}
                                                             slotProps={{
                                                                 input: {
                                                                     className: "custom-input"
@@ -520,6 +634,8 @@ function CreateMaintenanceRequestPage() {
                                             value={formData.Description}
                                             onChange={handleInputChange}
                                             placeholder="ระบุรายละเอียดงานแจ้งซ่อม"
+                                            error={!!errors.Description}
+                                            helperText={errors.Description}
                                             slotProps={{
                                                 input: {
                                                     className: "custom-input"
@@ -548,7 +664,7 @@ function CreateMaintenanceRequestPage() {
 
                                         <Grid container size={{ xs: 12, md: 12 }} sx={{
                                             justifyContent: "space-between",
-                                            alignItems: "center",
+                                            // alignItems: "center",
                                         }}>
                                             <Grid size={{ xs: 5.5, md: 5.5 }}>
                                                 <TextField
@@ -558,9 +674,11 @@ function CreateMaintenanceRequestPage() {
                                                     value={formData.StartTime}
                                                     onChange={handleInputChange}
                                                     disabled={formData.IsAnytimeAvailable}
+                                                    error={!!errors.StartTime}
+                                                    helperText={errors.StartTime}
                                                 />
                                             </Grid>
-                                            <Typography variant="body1">ถึง</Typography>
+                                            <Typography variant="body1" sx={{ alignItems: 'center', display: 'flex' }}>ถึง</Typography>
                                             <Grid size={{ xs: 5.5, md: 5.5 }}>
                                                 <TextField
                                                     name="EndTime"
@@ -569,6 +687,8 @@ function CreateMaintenanceRequestPage() {
                                                     value={formData.EndTime}
                                                     onChange={handleInputChange}
                                                     disabled={formData.IsAnytimeAvailable}
+                                                    error={!!errors.EndTime}
+                                                    helperText={errors.EndTime}
                                                 />
                                             </Grid>
                                         </Grid>
@@ -586,6 +706,7 @@ function CreateMaintenanceRequestPage() {
                                             value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
                                             slotProps={{
                                                 input: {
+                                                    readOnly: true,
                                                     startAdornment: (
                                                         <InputAdornment position="start" sx={{ mr: 1.6 }}>
                                                             <FontAwesomeIcon icon={faUserTie} size="lg" />
@@ -599,14 +720,17 @@ function CreateMaintenanceRequestPage() {
                                     <Grid size={{ xs: 12, md: 12 }}>
                                         <Typography variant="body1" className="title-field">ข้อมูลการติดต่อ</Typography>
                                         <Grid container spacing={1}>
-
                                             <TextField
+                                                name="Phone"
                                                 fullWidth
                                                 variant="outlined"
-                                                disabled={!onEdit}
                                                 value={user ? user.Phone : ''}
+                                                onChange={handleUserDataChange}
+                                                error={!!errors.Phone}
+                                                helperText={errors.Phone}
                                                 slotProps={{
                                                     input: {
+                                                        readOnly: !onEdit,
                                                         startAdornment: (
                                                             <InputAdornment position="start" sx={{ mr: 1.6 }}>
                                                                 <FontAwesomeIcon icon={faPhone} size="lg" />
@@ -616,12 +740,16 @@ function CreateMaintenanceRequestPage() {
                                                 }}
                                             />
                                             <TextField
+                                                name="Email"
                                                 fullWidth
                                                 variant="outlined"
-                                                disabled={!onEdit}
                                                 value={user ? user.Email : ''}
+                                                onChange={handleUserDataChange}
+                                                error={!!errors.Email}
+                                                helperText={errors.Email}
                                                 slotProps={{
                                                     input: {
+                                                        readOnly: !onEdit,
                                                         startAdornment: (
                                                             <InputAdornment position="start" sx={{ mr: 1.6 }}>
                                                                 <FontAwesomeIcon icon={faEnvelope} size="lg" />
@@ -632,16 +760,37 @@ function CreateMaintenanceRequestPage() {
                                             />
                                         </Grid>
                                         <Grid container size={{ xs: 12, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                            <Button
-                                                variant="containedBlue"
-                                                onClick={() => setOnEdit(!onEdit)}
-                                                sx={{
-                                                    display: onEdit ? 'none' : '',
-
-                                                }}>
-                                                <FontAwesomeIcon icon={faPencil} />
-                                                <Typography variant="textButtonClassic" >แก้ไขข้อมูล</Typography>
-                                            </Button>
+                                            {
+                                                !onEdit ? (
+                                                    <Button
+                                                        variant="containedBlue"
+                                                        onClick={() => setOnEdit(!onEdit)}
+                                                    >
+                                                        <FontAwesomeIcon icon={faPencil} />
+                                                        <Typography variant="textButtonClassic" >แก้ไขข้อมูล</Typography>
+                                                    </Button>
+                                                ) : (
+                                                    <Box sx={{ display: 'flex', gap: 1}}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            onClick={()=> {
+                                                                getUser; 
+                                                                setOnEdit(false);
+                                                            }}
+                                                        >
+                                                            <FontAwesomeIcon icon={	faUndo} />
+                                                            <Typography variant="textButtonClassic" >ยกเลิก</Typography>
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={handleUpdateUser}
+                                                        >
+                                                            <FontAwesomeIcon icon={faFloppyDisk} />
+                                                            <Typography variant="textButtonClassic" >บันทึก</Typography>
+                                                        </Button>
+                                                    </Box>
+                                                )
+                                            }
                                         </Grid>
                                     </Grid>
 
@@ -679,7 +828,7 @@ function CreateMaintenanceRequestPage() {
                                         <Button
                                             variant="contained"
                                             sx={{ px: 4, py: 1 }}
-                                            onClick={handleSubmit}
+                                            type="submit"
                                         >
                                             <FontAwesomeIcon icon={faUpload} />
                                             <Typography variant="textButtonClassic" >ส่งคำร้อง</Typography>

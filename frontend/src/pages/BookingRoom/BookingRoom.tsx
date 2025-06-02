@@ -960,7 +960,7 @@ const BookingRoom = () => {
     );
 
     return (
-        <Container maxWidth={false} sx={{ py: 4 }}>
+        <Container maxWidth={'xl'} sx={{ py: 4 }}>
             <Box sx={{ mb: 4 }}>
                 <Tabs value={tabValue} onChange={handleTabChange} centered>
                     <Tab

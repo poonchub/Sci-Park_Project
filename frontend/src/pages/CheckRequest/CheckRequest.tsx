@@ -165,7 +165,6 @@ function CheckRequest() {
 			statusID, {
 			selectedTask: maintenanceRequest.MaintenanceTask,
 			setAlerts,
-			refreshTaskData: getMaintenanceRequest,
 			setOpenPopupSubmit,
 			files: submitfiles,
 			setFiles: setSubmitFiles
@@ -185,8 +184,8 @@ function CheckRequest() {
 			userID: Number(userID),
 			selectedRequest: maintenanceRequest || {},
 			selectedOperator,
+			setSelectedOperator,
 			setAlerts,
-			refreshRequestData: getMaintenanceRequest,
 			setOpenPopupApproved,
 			setOpenConfirmRejected,
 			actionType,
@@ -204,7 +203,6 @@ function CheckRequest() {
 		handleActionAcception(statusID, {
 			selectedTask: maintenanceTask,
 			setAlerts,
-			refreshMaintenanceData: getMaintenanceRequest,
 			setOpenConfirmAccepted,
 			setOpenConfirmCancelled: setOpenConfirmCancelledFromManager,
 			actionType,
@@ -223,7 +221,6 @@ function CheckRequest() {
 			userID,
 			selectedRequest: maintenanceRequest,
 			setAlerts,
-			refreshMaintenanceData: getMaintenanceRequest,
 			setOpenConfirmInspection,
 			setOpenConfirmRework,
 			actionType,

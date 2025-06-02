@@ -43,7 +43,7 @@ function AllMaintenanceRequest() {
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({})
     const [selectedOperator, setSelectedOperator] = useState(0)
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
     const [totalAll, setTotalAll] = useState(0);
@@ -571,6 +571,7 @@ function AllMaintenanceRequest() {
             userID: user?.ID,
             selectedRequest,
             selectedOperator,
+            setSelectedOperator,
             setAlerts,
             setOpenPopupApproved,
             setOpenConfirmRejected,

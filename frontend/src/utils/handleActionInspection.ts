@@ -12,7 +12,6 @@ interface handleActionInspectionProps {
     userID: number | undefined;
     selectedRequest?: MaintenanceRequestsInterface;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-    refreshMaintenanceData: () => void;
     setOpenConfirmInspection: (v: boolean) => void;
     setOpenConfirmRework: (v: boolean) => void;
     note?: string;
@@ -25,7 +24,6 @@ const handleActionInspection = async (
         userID,
         selectedRequest,
         setAlerts,
-        refreshMaintenanceData,
         setOpenConfirmInspection,
         setOpenConfirmRework,
         actionType,
@@ -110,7 +108,6 @@ const handleActionInspection = async (
                 { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework Requested successful" }
             ]);
 
-            refreshMaintenanceData()
             setOpenConfirmInspection(false);
             setOpenConfirmRework(false);
         }, 500);
