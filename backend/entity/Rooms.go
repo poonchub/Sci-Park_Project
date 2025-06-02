@@ -7,7 +7,6 @@ import (
 type Room struct {
     gorm.Model
     RoomNumber    string
-    Capacity      int  
 
     RoomStatusID  uint     
     RoomStatus    RoomStatus `gorm:"foreignKey:RoomStatusID"`

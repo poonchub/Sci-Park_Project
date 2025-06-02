@@ -54,13 +54,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
             {/* Drop Zone */}
             <Grid
-                size={{ xs: 12, md: 12 }}
+                size={{ xs: 12 }}
                 sx={{
                     border: "2px dashed #0094DE",
                     borderRadius: 2,
                     p: 1.8,
                     textAlign: "center",
-                    backgroundColor: "#F4FBFF",
+                    backgroundColor: "rgba(0, 162, 255, 0.1)",
                 }}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={handleDrop}

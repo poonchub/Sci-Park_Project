@@ -1,11 +1,11 @@
 import { faEye, faFileLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Box, Button, Grid, Typography, useMediaQuery } from '@mui/material'
+import { Box, Button, Container, Grid, Skeleton, Typography, useMediaQuery } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 import './MyMaintenanceRequest.css'
-import { GetMaintenanceRequestsForUser, GetRequestStatuses } from '../../services/http'
+import { GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl } from '../../services/http'
 import dayjs from 'dayjs'
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests'
 import { RequestStatusesInterface } from '../../interfaces/IRequestStatuses'
@@ -18,6 +18,8 @@ import RequestStatusStack from '../../components/RequestStatusStack/RequestStatu
 import FilterSection from '../../components/FilterSection/FilterSection'
 import theme from '../../styles/Theme'
 import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig'
+
+import { io } from 'socket.io-client';
 
 function MyMaintenanceRequest() {
 
@@ -32,6 +34,8 @@ function MyMaintenanceRequest() {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
+
+    const [isLoadingData, setIsLoadingData] = useState(true)
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -369,13 +373,14 @@ function MyMaintenanceRequest() {
 
     const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
         try {
+            setIsLoadingData(true)
             const userId = localStorage.getItem('userId')
             const statusFormat = selectedStatuses.join(',')
             const res = await GetMaintenanceRequestsForUser(
-                statusFormat, 
-                pageNum, 
-                limit, 
-                selectedDate ? selectedDate.format('YYYY-MM-DD') : "", 
+                statusFormat,
+                pageNum,
+                limit,
+                selectedDate ? selectedDate.format('YYYY-MM-DD') : "",
                 Number(userId));
 
             if (res) {
@@ -387,6 +392,7 @@ function MyMaintenanceRequest() {
                     return acc;
                 }, {});
                 setStatusCounts(formatted);
+                setIsLoadingData(false)
             }
         } catch (error) {
             console.error("Error fetching maintenance requests:", error);
@@ -401,6 +407,19 @@ function MyMaintenanceRequest() {
             }
         } catch (error) {
             console.error("Error fetching request statuses:", error);
+        }
+    };
+
+    const getUpdateMaintenanceRequest = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceRequestByID(ID);
+            if (res) {
+                setMaintenanceRequests(prev =>
+                    prev.map(item => item.ID === res.ID ? res : item)
+                );
+            }
+        } catch (error) {
+            console.error("Error updating maintenance request:", error);
         }
     };
 
@@ -443,66 +462,94 @@ function MyMaintenanceRequest() {
         }
     }, [selectedStatuses, selectedDate]);
 
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            getUpdateMaintenanceRequest(data.ID)
+        });
+
+        return () => {
+            socket.off("maintenance_updated");
+        };
+    }, []);
+
     return (
-        <Box className="my-maintenance-request-page" sx={{ p: 3 }}>
-            <Grid container spacing={3}>
-                {/* Header Section */}
-                <Grid className='title-box' size={{ xs: 5, sm: 5 }}>
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        การแจ้งซ่อมของฉัน
-                    </Typography>
-                </Grid>
-
-                <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end", }}>
-                    <Link to="/maintenance/create-maintenance-request">
-                        <Button variant="containedBlue" >
-                            <FontAwesomeIcon icon={faFileLines} size="lg" />
-                            <Typography variant="textButtonClassic" >เขียนคำร้อง</Typography>
-                        </Button>
-                    </Link>
-                </Grid>
-
-                <Grid container size={{ xs: 12, md: 12 }} spacing={2}>
-
-                    {/* Count Status Section */}
-                    <Grid container
-                        spacing={1}
-                        className='filter-section'
-                        size={{ xs: 12, md: 12 }}
-                        sx={{
-                            height: 'auto'
-                        }}
-                    >
-                        <RequestStatusStack statusCounts={statusCounts} />
+        <Box className="my-maintenance-request-page">
+            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
+                <Grid container spacing={3}>
+                    {/* Header Section */}
+                    <Grid className='title-box' size={{ xs: 5, sm: 5 }}>
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                            การแจ้งซ่อมของฉัน
+                        </Typography>
                     </Grid>
 
-                    {/* Filters Section */}
-                    <FilterSection
-                        searchText={searchText}
-                        setSearchText={setSearchText}
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
-                        selectedStatuses={selectedStatuses}
-                        setSelectedStatuses={setSelectedStatuses}
-                        handleClearFilter={handleClearFillter}
-                        requestStatuses={requestStatuses}
-                    />
-                </Grid>
+                    <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end", }}>
+                        <Link to="/maintenance/create-maintenance-request">
+                            <Button variant="containedBlue" >
+                                <FontAwesomeIcon icon={faFileLines} size="lg" />
+                                <Typography variant="textButtonClassic" >เขียนคำร้อง</Typography>
+                            </Button>
+                        </Link>
+                    </Grid>
 
-                {/* Data Table */}
-                <Grid size={{ xs: 12, md: 12 }}>
-                    <CustomDataGrid
-                        rows={filteredRequests}
-                        columns={getColumns()}
-                        rowCount={total}
-                        page={page}
-                        limit={limit}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
-                        noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
-                    />
+                    <Grid container size={{ xs: 12, md: 12 }} spacing={2}>
+
+                        {/* Count Status Section */}
+                        {
+                            isLoadingData ? (
+                                <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
+                            ) : (
+                                <Grid container
+                                    spacing={1}
+                                    className='filter-section'
+                                    size={{ xs: 12, md: 12 }}
+                                    sx={{
+                                        height: 'auto'
+                                    }}
+                                >
+                                    <RequestStatusStack statusCounts={statusCounts} />
+                                </Grid>
+                            )
+                        }
+
+                        {/* Filters Section */}
+                        <FilterSection
+                            searchText={searchText}
+                            setSearchText={setSearchText}
+                            selectedDate={selectedDate}
+                            setSelectedDate={setSelectedDate}
+                            selectedStatuses={selectedStatuses}
+                            setSelectedStatuses={setSelectedStatuses}
+                            handleClearFilter={handleClearFillter}
+                            requestStatuses={requestStatuses}
+                        />
+                    </Grid>
+
+                    {/* Data Table */}
+                    <Grid size={{ xs: 12, md: 12 }}>
+                        {
+                            isLoadingData ? (
+                                <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+                            ) : (
+                                <CustomDataGrid
+                                    rows={filteredRequests}
+                                    columns={getColumns()}
+                                    rowCount={total}
+                                    page={page}
+                                    limit={limit}
+                                    onPageChange={setPage}
+                                    onLimitChange={setLimit}
+                                    noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                                />
+                            )
+                        }
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Container>
+
         </Box>
     )
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import {
     DataGrid,
     GridColDef,
+    GridColumnVisibilityModel,
     GridPaginationModel,
 } from '@mui/x-data-grid';
 import { Card, Box, Typography } from '@mui/material';
@@ -16,6 +17,7 @@ interface CustomDataGridProps {
     onPageChange: (page: number) => void;
     onLimitChange: (limit: number) => void;
     noDataText?: string;
+    columnVisibilityModel?: GridColumnVisibilityModel
 }
 
 const CustomDataGrid: React.FC<CustomDataGridProps> = ({
@@ -27,6 +29,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
     onPageChange,
     onLimitChange,
     noDataText = 'ไม่มีข้อมูล',
+    columnVisibilityModel
 }) => {
     const EmptyOverlay = () => (
         <Box
@@ -57,6 +60,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                 paginationMode="server"
                 rowCount={rowCount}
                 // checkboxSelection
+                columnVisibilityModel={columnVisibilityModel}
                 disableRowSelectionOnClick
                 disableColumnResize={false}
                 slots={{

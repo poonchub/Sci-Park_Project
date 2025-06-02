@@ -10,9 +10,6 @@ interface Alert {
 interface handleActionAcceptionProps {
     selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-    refreshMaintenanceData?: () => void;
-    refreshPendingTaskData?: () => void;
-    refreshInProgressTaskData?: () => void;
     setOpenConfirmAccepted: (v: boolean) => void;
     setOpenConfirmCancelled: (v: boolean) => void;
     note?: string;
@@ -23,9 +20,6 @@ const handleActionAcception = async (
     {
         selectedTask,
         setAlerts,
-        refreshMaintenanceData,
-        refreshPendingTaskData,
-        refreshInProgressTaskData,
         setOpenConfirmAccepted,
         setOpenConfirmCancelled,
         actionType,
@@ -65,15 +59,6 @@ const handleActionAcception = async (
                 ...prev,
                 { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" }
             ]);
-
-            if (refreshPendingTaskData && refreshInProgressTaskData) {
-                refreshPendingTaskData();
-                refreshInProgressTaskData();
-            }
-
-            if (refreshMaintenanceData){
-                refreshMaintenanceData();
-            }
 
             setOpenConfirmAccepted(false);
             setOpenConfirmCancelled(false);

@@ -12,7 +12,6 @@ interface handleActionInspectionProps {
     userID: number | undefined;
     selectedRequest?: MaintenanceRequestsInterface;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-    refreshMaintenanceData: () => void;
     setOpenConfirmInspection: (v: boolean) => void;
     setOpenConfirmRework: (v: boolean) => void;
     note?: string;
@@ -25,7 +24,6 @@ const handleActionInspection = async (
         userID,
         selectedRequest,
         setAlerts,
-        refreshMaintenanceData,
         setOpenConfirmInspection,
         setOpenConfirmRework,
         actionType,
@@ -81,15 +79,20 @@ const handleActionInspection = async (
             RequestStatusID: statusID,
         };
 
+        console.log("inspection: ", inspection)
+        console.log("task: ", task)
+        console.log("request: ", request)
+        console.log("actionType: ", actionType)
+
         const resInspection = await CreateInspection(inspection);
         if (!resInspection || resInspection.error)
             throw new Error(resInspection?.error || "Failed to create inspection");
 
-        if (actionType === "rework") {
-            const resTask = await UpdateMaintenanceTaskByID(task, selectedRequest.MaintenanceTask?.ID);
-            if (!resTask || resTask.error)
-                throw new Error(resTask?.error || "Failed to update maintenance task");
+        const resTask = await UpdateMaintenanceTaskByID(task, selectedRequest.MaintenanceTask?.ID);
+        if (!resTask || resTask.error)
+            throw new Error(resTask?.error || "Failed to update maintenance task");
 
+        if (actionType === "rework") {
             const resImages = await DeleteHandoverImagesByTaskID(selectedRequest.MaintenanceTask?.ID)
             if (!resImages || resImages.error)
                 throw new Error(resImages?.error || "Failed to delete handover images");
@@ -105,7 +108,6 @@ const handleActionInspection = async (
                 { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework Requested successful" }
             ]);
 
-            refreshMaintenanceData()
             setOpenConfirmInspection(false);
             setOpenConfirmRework(false);
         }, 500);

@@ -43,7 +43,13 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
     return (
         <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
             {/* Dialog title */}
-            <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
+            <DialogTitle 
+                sx={{ 
+                    fontWeight: 700, 
+                    color: 'primary.main', 
+                    textAlign: 'center' 
+                }}
+            >
                 มอบหมายงานซ่อม
             </DialogTitle>
 
@@ -56,7 +62,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                                 ? requestSelected.AreaDetail
                                 : `${requestSelected.Area?.Name || "-"} ชั้น ${requestSelected.Room?.Floor?.Number || "-"} ห้อง ${requestSelected.Room?.RoomNumber || "-"}`}
                         </Typography>
-                        <Typography sx={{ color: '#6D6E70' }}>
+                        <Typography sx={{ color: 'text.secondary' }}>
                             {requestSelected.Description || "ไม่มีรายละเอียด"}
                         </Typography>
                     </Grid>
@@ -120,7 +126,18 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
 
             {/* Confirm/Cancel buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant='text' onClick={onClose}>ยกเลิก</Button>
+                <Button variant='text' 
+                    onClick={onClose}
+                    sx={{
+                        color: 'customBlue',
+                        "&:hover": {
+                            background: 'none',
+                            boxShadow: 'none'
+                        }
+                    }}
+                >
+                    ยกเลิก
+                </Button>
                 <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
             </DialogActions>
         </Dialog>

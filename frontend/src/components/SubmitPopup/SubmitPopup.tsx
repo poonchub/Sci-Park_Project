@@ -33,12 +33,12 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
                 ส่งงานซ่อม
             </DialogTitle>
 
-            <DialogContent sx={{ minWidth: 500 }}>
+            <DialogContent sx={{ minWidth: 350 }}>
                 <Box display={'flex'}>
                     <Typography sx={{ fontWeight: 500, mb: 1 }}>แนบภาพประกอบ</Typography>
-                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
+                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'text.secondary' }}>(สูงสุด 3 ไฟล์)</Typography>
                 </Box>
-                
+
                 <Grid container spacing={1}>
                     <ImageUploader
                         value={files}
@@ -51,7 +51,18 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
 
             {/* Confirm/Cancel buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant='text' onClick={onClose}>ยกเลิก</Button>
+                <Button variant='text'
+                    onClick={onClose}
+                    sx={{
+                        color: 'customBlue',
+                        "&:hover": {
+                            background: 'none',
+                            boxShadow: 'none'
+                        }
+                    }}
+                >
+                    ยกเลิก
+                </Button>
                 <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
             </DialogActions>
         </Dialog>

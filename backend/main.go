@@ -115,6 +115,7 @@ func main() {
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		// MaintenanceTasks
+		protected.GET("/maintenance-task/:id", controller.GetMaintenanceTaskByID)
 		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
 		
 		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)

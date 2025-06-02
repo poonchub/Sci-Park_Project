@@ -53,20 +53,19 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
             {/* Dialog title with warning icon */}
             <DialogTitle
                 sx={{
-                    display: 'flex',
-                    gap: 1,
-                    alignItems: 'center',
-                    color: '#f26522'
+                    fontWeight: 700, 
+                    color: 'primary.main',
+                    textAlign: 'center'
                 }}
             >
-                <FontAwesomeIcon icon={faCircleExclamation} size="lg" />
+                <FontAwesomeIcon icon={faCircleExclamation} size="lg" style={{ marginRight: '10px' }} />
                 {title}
             </DialogTitle>
 
             {/* Message content (split into separate lines for readability) */}
             <DialogContent sx={{ minWidth: 500 }}>
                 {message.split(' ').map((m, index) => (
-                    <DialogContentText key={index} sx={{ color: '#000' }}>
+                    <DialogContentText key={index} sx={{ color: 'text.primary' }}>
                         {m}
                     </DialogContentText>
                 ))}
@@ -98,7 +97,16 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
 
             {/* Action buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={() => setOpenConfirm(false)}>ยกเลิก</Button>
+                <Button 
+                    onClick={() => setOpenConfirm(false)}
+                    sx={{
+                        color: 'customBlue',
+                        "&:hover": {
+                            background: 'none',
+                            boxShadow: 'none'
+                        }
+                    }}
+                >ยกเลิก</Button>
                 <Button
                     onClick={() => {
                         handleConfirm();

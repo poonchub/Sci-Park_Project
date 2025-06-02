@@ -12,8 +12,8 @@ interface handleActionApprovalProps {
     userID: number | undefined;
     selectedRequest: MaintenanceRequestsInterface | null;
     selectedOperator: number;
+    setSelectedOperator: React.Dispatch<React.SetStateAction<number>>;
     setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
-    refreshRequestData: () => void;
     setOpenPopupApproved: (v: boolean) => void;
     setOpenConfirmRejected: (v: boolean) => void;
     note?: string;
@@ -25,8 +25,8 @@ const handleActionApproval = async (
         userID,
         selectedRequest,
         selectedOperator,
+        setSelectedOperator,
         setAlerts,
-        refreshRequestData,
         setOpenPopupApproved,
         setOpenConfirmRejected,
         actionType,
@@ -85,8 +85,8 @@ const handleActionApproval = async (
                 ...prev,
                 { type: "success", message: actionType === "approve" ? "Approval successful" : "Rejection successful" }
             ]);
-
-            refreshRequestData();
+            
+            setSelectedOperator(0)
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
         }, 500);

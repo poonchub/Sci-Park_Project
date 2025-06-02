@@ -36,7 +36,18 @@ const NAVIGATION: Navigation = [
 		title: 'Booking Room',
 		icon: <MeetingRoomOutlined />,
 	},
-	
+	{
+		segment: 'maintenance/my-maintenance-request',
+		title: 'Maintenance Request',
+		icon: <AssignmentIndOutlined />,
+	},
+	{
+		kind: 'divider',
+	},
+	{
+		kind: 'header',
+		title: 'Management',
+	},
 	{
 		segment: 'maintenance',
 		title: 'Maintenance',
@@ -53,23 +64,11 @@ const NAVIGATION: Navigation = [
 				icon: <FactCheckOutlined />,
 			},
 			{
-				segment: 'my-maintenance-request',
-				title: 'My Request',
-				icon: <AssignmentIndOutlined />,
-			},
-			{
 				segment: 'accept-work',
 				title: 'My Work',
 				icon: <HomeRepairServiceOutlined />,
 			},
 		],
-	},
-	{
-		kind: 'divider',
-	},
-	{
-		kind: 'header',
-		title: 'Management',
 	},
 	{
 		segment: 'user',
@@ -97,9 +96,6 @@ const NAVIGATION: Navigation = [
 		segment: 'integrations',
 		title: 'Integrations',
 		icon: <LayersIcon />,
-	},
-	{
-		kind: 'divider',
 	},
 	{
 		segment: 'room',
@@ -155,11 +151,11 @@ const accessibleSegments: Record<Role, string[]> = {
 		'dashboard',
 		'booking-room',
 		'maintenance',
+		'maintenance/my-maintenance-request',
 		'room',
 		'user',
 
 		'all-maintenance-request',
-		'my-maintenance-request',
 		'manage-room',
 		'manage-user',
 		'add-user',
@@ -170,23 +166,21 @@ const accessibleSegments: Record<Role, string[]> = {
 		'dashboard',
 		'booking-room',
 		'maintenance',
+		'maintenance/my-maintenance-request',
 
 		'all-maintenance-request',
-		'my-maintenance-request'
 	],
 	Operator: [
 		'home',
 		'booking-room',
 		'maintenance',
+		'maintenance/my-maintenance-request',
 		'room',
 
-		'my-maintenance-request',
 		'accept-work'],
 	User: [
 		'booking-room',
-		'maintenance',
-
-		'my-maintenance-request'
+		'maintenance/my-maintenance-request',
 	],
 };
 
@@ -293,17 +287,18 @@ const WindowsLayout: React.FC = (props: any) => {
 				title: 'RSP Northeast 2',
 				homeUrl: '/home',
 			}}
-			
+
 		>
-			<DashboardLayout 
-				sidebarExpandedWidth={250}
+			<DashboardLayout
+				sidebarExpandedWidth={260}
 			>
 				{/* Main content area */}
 				<Box
 					className="content-box"
 					sx={{
 						minHeight: '95vh',
-						overflow: 'auto'
+						overflow: 'auto',
+						p: 4,
 					}}
 				>
 					<Outlet />
