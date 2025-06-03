@@ -495,7 +495,7 @@ function MyMaintenanceRequest() {
                         </Link>
                     </Grid>
 
-                    <Grid container size={{ xs: 12, md: 12 }} spacing={2}>
+                    <Grid container size={{ xs: 12 }} spacing={2}>
 
                         {/* Count Status Section */}
                         {
@@ -505,7 +505,7 @@ function MyMaintenanceRequest() {
                                 <Grid container
                                     spacing={1}
                                     className='filter-section'
-                                    size={{ xs: 12, md: 12 }}
+                                    size={{ xs: 12 }}
                                     sx={{
                                         height: 'auto'
                                     }}
