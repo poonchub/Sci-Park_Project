@@ -706,6 +706,7 @@ function AllMaintenanceRequest() {
                             handleClearFilter={handleClearFillter}
                             requestStatuses={requestStatuses}
                         />
+
                     </Grid>
 
                     {/* Chart Section */}

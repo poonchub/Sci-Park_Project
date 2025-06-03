@@ -251,6 +251,8 @@ const WindowsLayout: React.FC = (props: any) => {
 							image: user.ProfilePath,
 						},
 					});
+				} else {
+					navigateUrl("/login");
 				}
 			},
 			signOut: () => {
