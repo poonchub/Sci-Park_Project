@@ -1,6 +1,6 @@
 import { Box, Button, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faMagnifyingGlass, faPaperPlane, faQuestionCircle, faRotateRight, faToolbox, faTools, faXmark, } from "@fortawesome/free-solid-svg-icons";
@@ -31,34 +31,7 @@ import { useMediaQuery } from "@mui/system";
 import theme from "../../styles/Theme";
 
 import { io } from 'socket.io-client';
-
-interface TabPanelProps {
-	children?: React.ReactNode;
-	index: number;
-	value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-	const { children, value, index, ...other } = props;
-
-	return (
-		<Grid size={{ xs: 12, md: 12 }} sx={{ display: (value !== index) ? 'none' : '' }}>
-			<div
-				role="tabpanel"
-				id={`full-width-tabpanel-${index}`}
-				aria-labelledby={`full-width-tab-${index}`}
-				{...other}
-			>
-				{value === index && (
-					<Grid>
-						{children}
-					</Grid>
-				)}
-			</div>
-		</Grid>
-
-	);
-}
+import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 
 function a11yProps(index: number) {
 	return {
@@ -94,6 +67,8 @@ function AcceptWork() {
 	const [isLoadingData, setIsLoadingData] = useState(true)
 
 	const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+	const valueTabRef = useRef(valueTab);
 
 	const columnVisibilityModel = {
 		Acception: valueTab !== 2,
@@ -551,20 +526,21 @@ function AcceptWork() {
 		try {
 			const res = await GetMaintenanceTaskByID(data.ID || 0);
 			if (res) {
-				console.log(res)
 				const statusName = res.RequestStatus.Name
-				if (statusName === 'Waiting For Review' || statusName === 'In Progress' || statusName === 'Unsuccessful') {
+
+				if (statusName === 'Waiting For Review' || statusName === 'In Progress' || statusName === 'Unsuccessful' || (statusName === 'Rework Requested' )) {
 					setMaintenanceTasks(prev => prev.filter(task => task.ID !== data.ID));
 					setTotal(prev => (prev > 0 ? prev - 1 : 0));
-				}
-				else if (statusName === 'Rework Requested' && valueTab === 0) {
-					setMaintenanceTasks(prev => [res, ...prev]);
-					setTotal(prev => prev + 1);
 				}
 				else {
 					setMaintenanceTasks(prev =>
 						prev.map(item => item.ID === res.ID ? res : item)
 					);
+				}
+
+				if (statusName === 'Rework Requested' && valueTabRef.current	 === 0) {
+					setMaintenanceTasks(prev => [res, ...prev]);
+					setTotal(prev => prev + 1);
 				}
 			}
 		} catch (error) {
@@ -664,14 +640,12 @@ function AcceptWork() {
 		const userId = Number(localStorage.getItem('userId'))
 
 		socket.on("task_created", (data) => {
-			console.log("📦 New maintenance task:", data);
-			if (data.UserID === userId && valueTab === 0) {
+			if (data.UserID === userId && valueTabRef.current === 0) {
 				getNewMaintenanceTask(data.ID)
 			}
 		});
 
 		socket.on("task_updated", (data) => {
-			console.log("🔄 Maintenance task updated:", data);
 			if (data.UserID === userId) {
 				getUpdatedMaintenanceTask(data);
 			}
@@ -683,6 +657,10 @@ function AcceptWork() {
 		};
 	}, []);
 
+	useEffect(() => {
+		valueTabRef.current = valueTab;
+	}, [valueTab]);
+	
 	return (
 		<Box className="accept-work-page">
 			{/* Show Alerts */}
@@ -831,7 +809,7 @@ function AcceptWork() {
 						>
 							<Tab label="รอดำเนินการ" {...a11yProps(0)} />
 							<Tab label="กำลังดำเนินการ" {...a11yProps(1)} />
-							<Tab label="ดำเนินการเสร็จสิ้น" {...a11yProps(1)} />
+							<Tab label="ดำเนินการเสร็จสิ้น" {...a11yProps(2)} />
 						</Tabs>
 					</Grid>
 					<CustomTabPanel value={valueTab} index={0}>

@@ -1,6 +1,6 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
-import { UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
+import { SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -63,6 +63,11 @@ const handleActionAcception = async (
             setOpenConfirmAccepted(false);
             setOpenConfirmCancelled(false);
         }, 500);
+
+        if (actionType === "cancel") {
+            const resEmail = await SendMaintenanceStatusEmail(selectedTask.RequestID || 0);
+            if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email");
+        }
     } catch (error) {
         console.error("API Error:", error);
         const errMessage = (error as Error).message || "Unknown error!";

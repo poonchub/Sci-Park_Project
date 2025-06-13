@@ -1,7 +1,7 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
-import { CreateMaintenanceTask, CreateManagerApproval, UpdateMaintenanceRequestByID } from "../services/http";
+import { CreateMaintenanceTask, CreateManagerApproval, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID } from "../services/http";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -90,6 +90,12 @@ const handleActionApproval = async (
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
         }, 500);
+
+        if (actionType === "reject") {
+            const resEmail = await SendMaintenanceStatusEmail(selectedRequest.ID || 0);
+            if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email");
+        }
+
     } catch (error) {
         console.error("API Error:", error);
         const errMessage = (error as Error).message || "Unknown error!";

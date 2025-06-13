@@ -32,6 +32,8 @@ func main() {
 		public.POST("/send-otp-email", controller.ResetPasswordController)
 		// Validate OTP
 		public.POST("/validate-otp", controller.ValidateResetTokenController)
+
+		public.POST("/send-maintenance-status-email/:id", controller.SendMaintenanceStatusEmail)
 		
 	}
 

@@ -1032,7 +1032,6 @@ async function CreateHandoverImages(data: FormData) {
     };
 
     let res = await fetch(`${apiUrl}/handover-images`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -1139,7 +1138,27 @@ async function ListSetRooms(data: QuarryInterface) {
     return res;
 }
 
+// Email
+async function SendMaintenanceStatusEmail(id: number) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
 
+    let res = await fetch(`${apiUrl}/send-maintenance-status-email/${id}`, requestOptions).then((res) => {
+        console.log("aaaaaaaaaaaa: ",res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 
 
 export {
@@ -1226,6 +1245,9 @@ export {
     CreateInspection,
   
     ListSetRooms,
+
+    // Email
+    SendMaintenanceStatusEmail,
 
 }
 

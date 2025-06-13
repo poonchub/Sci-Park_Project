@@ -44,7 +44,7 @@ const AdminRoutes = (): RouteObject => {
 				element: <CheckRequests/>
 			},
 			{
-				path: "/maintenance/dashboard",
+				path: "/dashboard",
 				element: <Dashboard/>
 			},
 			{
