@@ -15,3 +15,4 @@ type RoomType struct {
     RoomTypeLayouts       []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`
     RoomTypeImages      []RoomTypeImage  `gorm:"foreignKey:RoomTypeID"`
 }
+
