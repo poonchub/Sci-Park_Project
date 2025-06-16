@@ -4,13 +4,15 @@ import (
 	"gorm.io/gorm"
 )
 
-
 type RoomType struct {
     gorm.Model
+    TypeName    string
+    RoomSize    float32
+    HalfDayRate float64
+    FullDayRate float64
 
-    TypeName    string  `valid:"required~กรุณาระบุชื่อประเภทของห้อง"`
-    FullDayRate float64 `valid:"required~กรุณาระบุราคาเต็มวัน"`
-    HalfDayRate float64 `valid:"required~กรุณาระบุราคาครึ่งวัน"`
-    Rooms       []Room  `gorm:"foreignKey:RoomTypeID" valid:"-"`
+    Rooms       []Room  `gorm:"foreignKey:RoomTypeID"`
+    RoomTypeLayouts       []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`
+    RoomTypeImages      []RoomTypeImage  `gorm:"foreignKey:RoomTypeID"`
 }
 

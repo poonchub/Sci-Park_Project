@@ -1,58 +1,75 @@
 import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
-    colorSchemes: { light: true, dark: true },
-	cssVariables: {
-		colorSchemeSelector: 'class',
-	},
-	breakpoints: {
-		values: {
-			xs: 0,
-			sm: 600,
+    cssVariables: {
+        colorSchemeSelector: "class",
+    },
+    colorSchemes: {
+        light: {
+            palette: {
+                primary: {
+                    main: "#F26522",
+                    contrastText: "#FFFFFF",
+                    dark: "rgb(236, 75, 0)"
+                },
+                secondary: {
+                    main: "#FFFFFF",
+                    contrastText: ""
+                },
+                background: {
+                    primary: "#fcfcfc",
+                    secondary: "#212121"
+                },
+                text: {
+                    primary: "#000000",
+                    secondary: "#6D6E70"
+                },
+                info: {
+                    main: "#08aff1"
+                },
+                warning: {
+                    main: "#A67436"
+                },
+                error: {
+                    main: "#FF3B30"
+                },
+                success: {
+                    main: "#F26522"
+                },
+                divider: "#e0e0e0",
+                customBlue: "#08aff1"
+            }
+        },
+        dark: {
+            palette: {
+                primary: {
+                    main: "#F26522",
+                    contrastText: "#FFFFFF",
+                    dark: "rgb(236, 75, 0)"
+                },
+                text: {
+                    primary: "#FFFFFF",
+                    secondary: "rgb(175, 175, 175)"
+                },
+                secondary: {
+                    main: "#121212"
+                }
+            }
+        }
+    },
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 600,
             sm650: 650,
-			md: 900,
+            md: 900,
             md1000: 1000,
-			lg: 1200,
-			xl: 1536,
-		},
-	},
-    palette: {
-        // สีหลักของระบบ
-        primary: {
-            main: "#F26522", // sut-orange
-            contrastText: "#FFFFFF",
-            dark: "rgb(194, 78, 25)"
-        },
-        secondary: {
-            main: "#FFFFFF", // sut-gold
-            contrastText: "",
-        },
-        background: {
-            primary: '#fcfcfc',
-            secondary: '#212121'
-        },
-        text: {
-            primary: "#000000", // text-primary
-            secondary: "#6D6E70", // text-secondary,
-        },
-        info: {
-            main: "#08aff1", // text-link
-        },
-        warning: {
-            main: "#A67436", // step-active
-        },
-        error: {
-            main: "#FF3B30", // button-cancel-bg
-        },
-        success: {
-            main: "#F26522", // step-border-success
-        },
-        divider: "#e0e0e0", // step-border
-
-        customBlue: '#08aff1',
+            lg: 1200,
+            xl: 1536
+        }
     },
     typography: {
-        fontFamily: '"Noto Sans Thai", sans-serif',
+        fontFamily: '"Noto Sans Thai", sans-serif'
     },
     components: {
         MuiButton: {
@@ -127,7 +144,7 @@ const theme = createTheme({
         MuiPaper: {
             styleOverrides: {
                 root: {
-                    
+
                 },
             },
         },
@@ -143,6 +160,14 @@ const theme = createTheme({
                     },
                 },
             ],
+        },
+        MuiCard: {
+            styleOverrides: {
+                root: {
+                    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
+                    transition: 'box-shadow 0.3s ease-in-out',
+                },
+            },
         },
     },
 });

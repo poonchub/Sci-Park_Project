@@ -11,7 +11,6 @@ interface HandleAssignWorkProps {
     selectedOperator: number | null;
     requestSelected: MaintenanceRequestsInterface | null;
     setAlerts: React.Dispatch<React.SetStateAction<AlertMessage[]>>;
-    refreshRequestData: () => void;
     setOpenPopupAssign: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -19,7 +18,6 @@ const handleAssignWork = async ({
     selectedOperator,
     requestSelected,
     setAlerts,
-    refreshRequestData,
     setOpenPopupAssign,
 }: HandleAssignWorkProps) => {
     if (!selectedOperator || !requestSelected?.ID) {
@@ -46,7 +44,6 @@ const handleAssignWork = async ({
         setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
 
         setTimeout(() => {
-            refreshRequestData();
             setOpenPopupAssign(false);
         }, 500);
 

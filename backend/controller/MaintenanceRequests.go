@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -156,6 +158,8 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		return
 	}
 
+	services.NotifySocketEvent("maintenance_created", rq)
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": rq})
 }
 
@@ -182,6 +186,8 @@ func UpdateMaintenanceRequestByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
 		return
 	}
+
+	services.NotifySocketEvent("maintenance_updated", request)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
 }
@@ -235,13 +241,13 @@ func GetMaintenanceRequestsForUser(c *gin.Context) {
 	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
 
 	c.JSON(http.StatusOK, gin.H{
-		"data":         maintenanceRequests,
-		"page":         page,
-		"limit":        limit,
-		"total":        total,
-		"totalPages":   (total + int64(limit) - 1) / int64(limit),
-		"statusCounts": fetchStatusCounts(start, end, userID, 0),
-		"monthlyCounts":  fetchMonthlyCounts(start, end, userID, 0),
+		"data":          maintenanceRequests,
+		"page":          page,
+		"limit":         limit,
+		"total":         total,
+		"totalPages":    (total + int64(limit) - 1) / int64(limit),
+		"statusCounts":  fetchStatusCounts(start, end, userID, 0),
+		"monthlyCounts": fetchMonthlyCounts(start, end, userID, 0),
 	})
 }
 
@@ -276,11 +282,11 @@ func GetMaintenanceRequestsForAdmin(c *gin.Context) {
 	createdAt := c.DefaultQuery("createdAt", "")
 
 	var counts interface{}
-    if len(createdAt) == 7 { // If createdAt is in the format YYYY-MM
-        counts = fetchDailyCounts(start, end, userID, maintenanceTypeID)
-    } else {
-        counts = fetchMonthlyCounts(start, end, userID, maintenanceTypeID)
-    }
+	if len(createdAt) == 7 { // If createdAt is in the format YYYY-MM
+		counts = fetchDailyCounts(start, end, userID, maintenanceTypeID)
+	} else {
+		counts = fetchMonthlyCounts(start, end, userID, maintenanceTypeID)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":         maintenanceRequests,
@@ -313,11 +319,20 @@ func parseDateRange(createdAt string) (start, end time.Time, err error) {
 
 func buildBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
 	db := config.DB()
-	statusID, _ := strconv.Atoi(c.DefaultQuery("status", "0"))
 	createdAt := c.DefaultQuery("createdAt", "")
 	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
 	requestType := c.DefaultQuery("requestType", "")
+
+	statusStr := c.DefaultQuery("status", "")
+	var statusIDs []int
+	if statusStr != "" && statusStr != "0" {
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+	}
 
 	var start, end time.Time
 	var err error
@@ -330,8 +345,8 @@ func buildBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
 		db = db.Where("maintenance_requests.created_at BETWEEN ? AND ?", start, end)
 	}
 
-	if statusID > 0 {
-		db = db.Where("request_status_id = ?", statusID)
+	if len(statusIDs) > 0 {
+		db = db.Where("request_status_id IN ?", statusIDs)
 	}
 	if maintenanceTypeID > 0 {
 		db = db.Where("maintenance_type_id = ?", maintenanceTypeID)
@@ -437,16 +452,15 @@ func fetchDailyCounts(start, end time.Time, userID, maintenanceTypeID int) []str
 	}
 
 	db.Select(`
-			STRFTIME('%Y-%m-%d', created_at) AS day,
-			COUNT(id) AS count
-		`).
-		Group("day").
-		Order("day ASC").
-		Scan(&dailyCounts)
+		STRFTIME('%Y-%m-%d', created_at, 'localtime') AS day,
+		COUNT(id) AS count
+	`).
+	Group("day").
+	Order("day ASC").
+	Scan(&dailyCounts)
 
 	return dailyCounts
 }
-
 
 func fetchMonthlyCounts(start, end time.Time, userID, maintenanceTypeID int) []struct {
 	Month string `json:"month"`

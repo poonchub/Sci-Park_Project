@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import AlertGroup from '../../components/AlertGroup/AlertGroup';
-import { Box, Button, Card, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, Container, Grid, Typography } from '@mui/material';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import handleAction from '../../utils/handleActionApproval';
 import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from '../../services/http';
@@ -338,10 +338,10 @@ function Dashboard() {
         setGroupedData(grouped);
     }, [maintenanceRequests, selectedDate, maintenanceTypes]);
 
-    
+
 
     return (
-        <div className="dashboard-page">
+        <Box className="dashboard-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -363,87 +363,95 @@ function Dashboard() {
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
             /> */}
 
-            <Grid container spacing={3}>
+            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
+                <Grid container spacing={3}>
 
-                {/* Header Section */}
-                <Grid className='title-box' size={{ xs: 12, md: 12 }}>
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        แดชบอร์ด
-                    </Typography>
-                </Grid>
+                    {/* Header Section */}
+                    <Grid className='title-box' size={{ xs: 12, md: 12 }}>
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                            แดชบอร์ด
+                        </Typography>
+                    </Grid>
 
-                <Grid container size={{ md: 12, lg: 8 }} spacing={3}>
-                    {/* Status Section */}
-                    <RequestStatusCards 
-                        statusCounts={countRequestStatus || {}} 
-                    />
+                    <Grid container size={{ md: 12, lg: 8 }} spacing={3}>
+                        {/* Status Section */}
+                        <RequestStatusCards
+                            statusCounts={countRequestStatus || {}}
+                        />
 
-                    <RequestStatusStackForAdmin statusCounts={countRequestStatus || {}} />
+                        <RequestStatusStackForAdmin statusCounts={countRequestStatus || {}} />
 
-                    {/* Chart Line Section */}
-                    <Grid size={{ xs: 12, md: 12 }} >
-                        <Card sx={{
-                            bgcolor: "secondary.main",
-                            borderRadius: 2,
-                            py: 2,
-                            px: 3,
-                            height: '100%',
-                            justifyContent: 'space-between',
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}>
-                            <Grid container
-                                size={{ xs: 12, md: 12 }}
-                                sx={{
-                                    alignItems: 'center'
-                                }}
-                            >
-                                <Grid size={{ xs: 7.5, md: 9 }} >
-                                    <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                        รายการแจ้งซ่อมรายเดือน
-                                    </Typography>
-                                    <Typography variant="h4" fontWeight={800} color="primary">
-                                        {`${filteredRequest.length} รายการ`}
-                                    </Typography>
-                                </Grid>
-                                <Grid container size={{ xs: 4.5, md: 3 }} 
-                                    sx={{ 
-                                        justifyContent: 'flex-end',
-                                        mb: 1
+                        {/* Chart Line Section */}
+                        <Grid size={{ xs: 12, md: 12 }} >
+                            <Card sx={{
+                                bgcolor: "secondary.main",
+                                borderRadius: 2,
+                                py: 2,
+                                px: 3,
+                                height: '100%',
+                                justifyContent: 'space-between',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <Grid container
+                                    size={{ xs: 12, md: 12 }}
+                                    sx={{
+                                        alignItems: 'center'
                                     }}
                                 >
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DatePicker
-                                            views={['year', 'month']}
-                                            value={selectedDate}
-                                            onChange={(newValue) => newValue && setSelectedDate(newValue)}
-                                            slots={{
-                                                openPickerIcon: CalendarMonth,
-                                            }}
-                                            format="MM/YYYY"
-                                            sx={{ minWidth: "100px", maxWidth: "200px" }}
-                                        />
-                                    </LocalizationProvider>
+                                    <Grid size={{ xs: 7.5, md: 9 }} >
+                                        <Typography variant="subtitle1" color="text.main" fontWeight={600}>
+                                            รายการแจ้งซ่อมรายเดือน
+                                        </Typography>
+                                        <Typography variant="h4" fontWeight={800} color="primary">
+                                            {`${filteredRequest.length} รายการ`}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid container size={{ xs: 4.5, md: 3 }}
+                                        sx={{
+                                            justifyContent: 'flex-end',
+                                            mb: 1
+                                        }}
+                                    >
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DatePicker
+                                                views={['year', 'month']}
+                                                value={selectedDate}
+                                                onChange={(value, _) => {
+                                                    if (dayjs.isDayjs(value)) {
+                                                        setSelectedDate(value);
+                                                    } else {
+                                                        setSelectedDate(null);
+                                                    }
+                                                }}
+                                                slots={{
+                                                    openPickerIcon: CalendarMonth,
+                                                }}
+                                                format="MM/YYYY"
+                                                sx={{ minWidth: "100px", maxWidth: "200px" }}
+                                            />
+                                        </LocalizationProvider>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                            <ApexLineChart data={filteredRequest} height={250} selectedDate={selectedDate} />
+                                <ApexLineChart data={filteredRequest} height={250} selectedDate={selectedDate} />
+                            </Card>
+                        </Grid>
+                    </Grid>
+
+                    {/* Chart Donut Section */}
+                    <Grid size={{ xs: 12, lg: 4 }} >
+                        <ApexDonutChart data={groupedData} completed={completedPercentage} />
+                    </Grid>
+
+                    {/* Data Table */}
+                    <Grid size={{ xs: 12, md: 12 }}>
+                        <Card sx={{ width: "100%", borderRadius: 2 }}>
+
                         </Card>
                     </Grid>
                 </Grid>
-
-                {/* Chart Donut Section */}
-                <Grid size={{ xs: 12, lg: 4 }} >
-                    <ApexDonutChart data={groupedData} completed={completedPercentage} />
-                </Grid>
-
-                {/* Data Table */}
-                <Grid size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        
-                    </Card>
-                </Grid>
-            </Grid>
-        </div>
+            </Container>
+        </Box>
     )
 }
 export default Dashboard;

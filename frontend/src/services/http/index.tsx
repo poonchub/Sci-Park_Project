@@ -1,4 +1,5 @@
 export const apiUrl = "http://localhost:8000";
+export const socketUrl = "http://localhost:3001";
 import { InspectionsInterface } from "../../interfaces/IInspections";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
@@ -625,7 +626,7 @@ async function ListMaintenanceRequests() {
     return res;
 }
 async function GetMaintenanceRequestsForUser(
-    statusID: number, 
+    statusID: string, 
     page: number, 
     limit: number, 
     createdAt?: string | undefined, 
@@ -651,7 +652,7 @@ async function GetMaintenanceRequestsForUser(
     return res;
 }
 async function GetMaintenanceRequestsForAdmin(
-    statusID: number, 
+    statusID: string, 
     page: number, 
     limit: number, 
     maintenanceType: number, 
@@ -937,6 +938,27 @@ async function GetMaintenanceTask(statusID: string, page: number, limit: number,
 
     return res;
 }
+async function GetMaintenanceTaskByID(id: Number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions).then(
+        (res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        }
+    );
+
+    return res;
+}
 async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
     const requestOptions = {
         method: "POST",
@@ -1190,6 +1212,7 @@ export {
 
     // MaintenanceTasks
     GetMaintenanceTask,
+    GetMaintenanceTaskByID,
     CreateMaintenanceTask,
     UpdateMaintenanceTaskByID,
     DeleteMaintenanceTaskByID,

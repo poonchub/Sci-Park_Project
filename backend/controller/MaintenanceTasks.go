@@ -9,6 +9,7 @@ import (
 
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -62,7 +63,34 @@ func CreateMaintenanceTask(c *gin.Context) {
 		return
 	}
 
+	services.NotifySocketEvent("task_created", tsk)
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Created success", "data": tsk})
+}
+
+// GET /maintenance-task/:id
+func GetMaintenanceTaskByID(c *gin.Context) {
+	ID := c.Param("id")
+	var task entity.MaintenanceTask
+
+	db := config.DB()
+	results := db.
+		Preload("User").
+		Preload("MaintenanceRequest.MaintenanceType").
+		Preload("RequestStatus").
+		Preload("MaintenanceRequest.Area").
+		Preload("MaintenanceRequest.Room.Floor").
+		Preload("MaintenanceRequest.Inspection.User").
+		First(&task, ID)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+	if task.ID == 0 {
+		c.JSON(http.StatusNoContent, gin.H{})
+		return
+	}
+	c.JSON(http.StatusOK, task)
 }
 
 // GET maintenance-tasks-option-id
@@ -131,11 +159,11 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
 
 		// ใช้ timestamp สำหรับการเปรียบเทียบ
-		db = db.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+		db = db.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfDay, endOfDay)
 	}
 
 	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor")
+	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor").Preload("MaintenanceRequest.Inspection.User")
 
 	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
 	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {
@@ -162,8 +190,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	}
 
 	if createdAt != "" {
-		// ใช้ timestamp ในการนับจำนวน
-		countQuery = countQuery.Where("created_at >= ? AND created_at <= ?", startOfDay, endOfDay)
+		countQuery = countQuery.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfDay, endOfDay)
 	}
 
 	countQuery.Count(&total)
@@ -201,6 +228,8 @@ func UpdateMaintenanceTaskByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
 		return
 	}
+
+	services.NotifySocketEvent("task_updated", task)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
 }

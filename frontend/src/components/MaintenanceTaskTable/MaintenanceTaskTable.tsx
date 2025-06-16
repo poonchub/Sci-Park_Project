@@ -1,6 +1,6 @@
 // components/MaintenanceTaskTable.tsx
-import { GridColDef } from '@mui/x-data-grid';
-import { Box, Typography } from '@mui/material';
+import { GridColDef, GridColumnVisibilityModel } from '@mui/x-data-grid';
+import { Box, Skeleton, Typography } from '@mui/material';
 import CustomDataGrid from '../CustomDataGrid/CustomDataGrid';
 
 interface MaintenanceTaskTableProps {
@@ -13,6 +13,8 @@ interface MaintenanceTaskTableProps {
     onPageChange: (page: number) => void;
     onLimitChange: (limit: number) => void;
     noData: string;
+    isLoading?: boolean;
+    columnVisibilityModel?: GridColumnVisibilityModel
 }
 
 const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
@@ -25,22 +27,31 @@ const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
     onPageChange,
     onLimitChange,
     noData,
+    isLoading,
+    columnVisibilityModel
 }) => {
     return (
         <Box sx={{ width: '100%', height: '100%' }}>
-            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+            <Typography variant="subtitle1" fontWeight={600} marginBottom={1.4}>
                 {title}
             </Typography>
-            <CustomDataGrid
-                rows={rows}
-                columns={columns}
-                rowCount={rowCount}
-                page={page}
-                limit={limit}
-                onPageChange={onPageChange}
-                onLimitChange={onLimitChange}
-                noDataText={noData}
-            />
+            {
+                isLoading ? (
+                    <Skeleton variant="rectangular" width="100%" height={217} sx={{ borderRadius: 2 }} />
+                ) : (
+                    <CustomDataGrid
+                        rows={rows}
+                        columns={columns}
+                        rowCount={rowCount}
+                        page={page}
+                        limit={limit}
+                        onPageChange={onPageChange}
+                        onLimitChange={onLimitChange}
+                        noDataText={noData}
+                        columnVisibilityModel={columnVisibilityModel}
+                    />
+                )
+            }
         </Box>
     );
 };
