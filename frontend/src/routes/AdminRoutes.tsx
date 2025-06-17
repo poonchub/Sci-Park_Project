@@ -13,6 +13,7 @@ import AddUserForm from "../pages/AddUser/AddUserForm";
 import ManageUsers from "../pages/ManageUsers/ManageUsers";
 import ManageRooms from "../pages/ManageRooms/ManageRooms";
 import AddRoomForm from "../pages/AddRoom/AddNewRoom";
+import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -66,6 +67,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/room/add-room",
 				element: <AddRoomForm/>
+			},
+			{
+				path: "/about-developer",
+				element: <AboutDeveloper/>
 			},
 			{
 				path: "",

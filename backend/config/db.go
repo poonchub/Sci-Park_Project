@@ -56,6 +56,7 @@ func SetupDatabase() {
 		&entity.RequestType{},
 		&entity.RoomLayout{},
 		&entity.RoomTypeLayout{},
+		&entity.Notification{},
 	)
 
 	if err != nil {

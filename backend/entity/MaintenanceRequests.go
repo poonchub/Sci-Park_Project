@@ -26,8 +26,10 @@ type MaintenanceRequest struct {
     Area            Area              `gorm:"foreignKey:AreaID"`
     MaintenanceTypeID   uint          
     MaintenanceType     MaintenanceType   `gorm:"foreignKey:MaintenanceTypeID"`
-    MaintenanceImages []MaintenanceImage `gorm:"foreignKey:RequestID"`
+	
+    MaintenanceImages 	[]MaintenanceImage `gorm:"foreignKey:RequestID"`
 
+	Notification		*Notification	   `gorm:"foreignKey:RequestID"`
     ManagerApproval     *ManagerApproval `gorm:"foreignKey:RequestID"`
     MaintenanceTask     *MaintenanceTask `gorm:"foreignKey:RequestID"`
     Inspection          *Inspection      `gorm:"foreignKey:RequestID"`

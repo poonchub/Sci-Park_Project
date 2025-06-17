@@ -3,7 +3,7 @@ import "./CreateMaintenanceRequest.css"
 
 import { Box, Button, Card, CardContent, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById, UpdateUserbyID } from "../../services/http";
+import { CreateMaintenanceImages, CreateMaintenanceRequest, CreateNotification, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById, UpdateUserbyID } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
@@ -20,6 +20,7 @@ import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ImageUploader from "../../components/ImageUploader/ImageUploader";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>()
@@ -216,7 +217,6 @@ function CreateMaintenanceRequestPage() {
 
         try {
             const resRequest = await CreateMaintenanceRequest(requestPayload);
-
             if (!resRequest) {
                 handleSetAlert('error', resRequest?.Error || "Failed to create request");
                 return;
@@ -229,13 +229,21 @@ function CreateMaintenanceRequestPage() {
 
                 files.forEach(file => formDataFile.append("files", file));
 
-                console.log("📤 FormData:", Array.from(formDataFile.entries()));
-
                 const resImage = await CreateMaintenanceImages(formDataFile);
                 if (!resImage) {
                     handleSetAlert('error', resImage?.Error || "Failed to upload images");
                     return;
                 }
+            }
+
+            const notificationData: NotificationsInterface = {
+                RequestID: resRequest.data.ID
+            }
+
+            const resNotification = await CreateNotification(notificationData);
+            if (!resNotification) {
+                handleSetAlert('error', resRequest?.Error || "Failed to create notification");
+                return;
             }
 
             handleSetAlert('success', "Maintenance request submitted successfully");

@@ -4,6 +4,7 @@ import { MaintenaceImagesInterface } from "./IMaintenaceImages";
 import { MaintenanceTasksInterface } from "./IMaintenanceTasks";
 import { MaintenanceTypesInteface } from "./IMaintenanceTypes";
 import { ManagerApprovalsInterface } from "./IManagerApprovals";
+import { NotificationsInterface } from "./INotifications";
 import { RequestStatusesInterface } from "./IRequestStatuses";
 import { RoomsInterface } from "./IRooms";
 import { UserInterface } from "./IUser";
@@ -33,4 +34,5 @@ export interface MaintenanceRequestsInterface {
     MaintenanceTask?:   MaintenanceTasksInterface;
     Inspection?:        InspectionsInterface;
     MaintenanceImages?:  MaintenaceImagesInterface[];
+    Notification?:     NotificationsInterface;
 }

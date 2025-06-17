@@ -10,6 +10,7 @@ import { RoomsInterface } from "../../interfaces/IRooms";
 import axios from 'axios';
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 
 
 // ฟังก์ชันสำหรับการ Login
@@ -1149,7 +1150,6 @@ async function SendMaintenanceStatusEmail(id: number) {
     };
 
     let res = await fetch(`${apiUrl}/send-maintenance-status-email/${id}`, requestOptions).then((res) => {
-        console.log("aaaaaaaaaaaa: ",res)
         if (res.status == 200) {
             return res.json();
         } else {
@@ -1160,6 +1160,89 @@ async function SendMaintenanceStatusEmail(id: number) {
     return res;
 }
 
+// Notification
+async function ListNotifications() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/notifications`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function GetUnreadNotificationCountsByUserID(id?: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/notification/count/${id}`, requestOptions).then(
+        (res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        }
+    );
+
+    return res;
+}
+async function CreateNotification(data: NotificationsInterface) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/notification`, requestOptions).then((res) => {
+        if (res.status == 201) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+async function UpdateNotificationByID(data: NotificationsInterface, id: Number | undefined) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/notification/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 
 export {
     // RequestStatuses
@@ -1249,6 +1332,11 @@ export {
     // Email
     SendMaintenanceStatusEmail,
 
+    // Notifications
+    ListNotifications,
+    GetUnreadNotificationCountsByUserID,
+    CreateNotification,
+    UpdateNotificationByID,
 }
 
 

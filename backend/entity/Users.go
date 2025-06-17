@@ -34,4 +34,5 @@ type User struct {
     MaintenanceTasks    []MaintenanceTask    `gorm:"foreignKey:UserID"`
     ManagerApprovals    []ManagerApproval    `gorm:"foreignKey:UserID"`
     UserPackages        []UserPackage        `gorm:"foreignKey:UserID"`
+	Notifications 		[]Notification `gorm:"foreignKey:UserID"`
 }

@@ -60,6 +60,7 @@ func Authorizes(roleLevel int) gin.HandlerFunc {
 
 		// เก็บข้อมูล user_id และ role ลงใน context
 		c.Set("user_id", claims.Id)
+		c.Set("user_email", claims.Email)
 		c.Set("user_role", claims.Role)
 		c.Next()
 	}

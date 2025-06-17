@@ -52,7 +52,6 @@ const FilterSection = ({
 
     return (
         <Grid
-            spacing={1}
             className="filter-section"
             size={{ xs: 12 }}
             sx={{

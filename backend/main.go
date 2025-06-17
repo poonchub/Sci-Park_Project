@@ -112,6 +112,12 @@ func main() {
 		// HandoverImages
 		protected.PATCH("/handover-images", controller.UpdateHandoverImages)
 		protected.DELETE("/handover-images/:id", controller.DeleteHandoverImagesByTaskID)
+
+		// Notifications
+		protected.GET("/notifications", controller.ListNotifications)
+		protected.GET("/notifications/count/:id", controller.GetUnreadNotificationCountsByUserID)
+		protected.POST("/notification", controller.CreateNotification)
+		protected.PATCH("/notification/:id", controller.UpdateNotificationByID,)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
