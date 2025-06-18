@@ -34,5 +34,5 @@ export interface MaintenanceRequestsInterface {
     MaintenanceTask?:   MaintenanceTasksInterface;
     Inspection?:        InspectionsInterface;
     MaintenanceImages?:  MaintenaceImagesInterface[];
-    Notification?:     NotificationsInterface;
+    Notification?:     NotificationsInterface[];
 }

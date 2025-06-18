@@ -1,7 +1,8 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
-import { CreateMaintenanceTask, CreateManagerApproval, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID } from "../services/http";
+import { NotificationsInterface } from "../interfaces/INotifications";
+import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, GetNotificationsByRequestAndUser, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -74,11 +75,26 @@ const handleActionApproval = async (
             const resAssign = await CreateMaintenanceTask(task);
             if (!resAssign || resAssign.error)
                 throw new Error(resAssign?.error || "Failed to assign work");
+
+            const notificationDataCreate: NotificationsInterface = {
+                TaskID: resAssign.data.ID
+            }
+            
+            const resNotification = await CreateNotification(notificationDataCreate);
+            if (!resNotification || resNotification.error)
+                throw new Error(resNotification?.error || "Failed to create notification");
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status");
+
+        const notificationDataUpdate: NotificationsInterface = {
+            IsRead: true,
+        };
+        const resUpdated = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
+        if (!resUpdated || resUpdated.error)
+            throw new Error(resUpdated?.error || "Failed to update notification");
 
         setTimeout(() => {
             setAlerts((prev) => [

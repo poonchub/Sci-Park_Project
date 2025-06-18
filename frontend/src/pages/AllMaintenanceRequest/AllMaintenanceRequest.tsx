@@ -15,6 +15,7 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import {
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForAdmin,
+    GetNotificationsByRequestAndUser,
     GetOperators,
     GetRequestStatuses,
     GetUserById,
@@ -51,6 +52,8 @@ import theme from "../../styles/Theme";
 
 import { io } from "socket.io-client";
 import { NotificationsInterface } from "../../interfaces/INotifications";
+
+import { Base64 } from "js-base64";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -537,8 +540,9 @@ function AllMaintenanceRequest() {
                     // editable: true,
                     renderCell: (item) => {
                         const data = item.row;
+                        const encodedId = Base64.encode(data.ID);
                         return (
-                            <Link to="/maintenance/check-requests">
+                            <Link to={`/maintenance/check-requests?id=${encodeURIComponent(encodedId)}`}>
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -658,7 +662,7 @@ function AllMaintenanceRequest() {
                 );
             }
         } catch (error) {
-            console.error("Error updating maintenance request:", error);
+            console.error("Error fetching update maintenance:", error);
         }
     };
 
@@ -688,25 +692,34 @@ function AllMaintenanceRequest() {
         setSelectedStatuses([]);
     };
 
-    const handleUpdateNotification = async (id: number) => {
+    const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
         try {
+            const resNotification = await GetNotificationsByRequestAndUser(request_id, user_id)
+            if (!resNotification || resNotification.error) console.error("Error fetching notification")
+
             const notificationData: NotificationsInterface = {
                 IsRead: true,
             };
-            const res = await UpdateNotificationByID(notificationData, id);
-            if (res) {
-                console.log("Updated notification.");
+            const notificationID = resNotification.data.ID
+            if (!resNotification.data.IsRead) {
+                const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
+                if (resUpdated) {
+                    console.log("✅ Notification updated successfully.");
+                }
+            }
+            else {
+                return
             }
         } catch (error) {
-            console.error("Error updating maintenance request:", error);
+            console.error("❌ Error updating maintenance request:", error);
         }
     };
 
     const handleClickCheck = (data: MaintenanceRequestsInterface) => {
-        localStorage.setItem("requestID", String(data?.ID));
-        const notification = data.Notification
-        if (notification && !notification.IsRead){
-            handleUpdateNotification(notification.ID || 0);
+        if (data){
+            const requestID = data?.ID
+            const userID = user?.ID
+            handleUpdateNotification(requestID, userID)
         }
     };
 

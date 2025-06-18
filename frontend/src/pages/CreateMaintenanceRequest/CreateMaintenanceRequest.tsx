@@ -242,7 +242,7 @@ function CreateMaintenanceRequestPage() {
 
             const resNotification = await CreateNotification(notificationData);
             if (!resNotification) {
-                handleSetAlert('error', resRequest?.Error || "Failed to create notification");
+                handleSetAlert('error', resNotification?.Error || "Failed to create notification");
                 return;
             }
 

@@ -116,8 +116,11 @@ func main() {
 		// Notifications
 		protected.GET("/notifications", controller.ListNotifications)
 		protected.GET("/notifications/count/:id", controller.GetUnreadNotificationCountsByUserID)
+		protected.GET("/notification/:request_id/:user_id", controller.GetNotificationByRequestAndUser)
 		protected.POST("/notification", controller.CreateNotification)
-		protected.PATCH("/notification/:id", controller.UpdateNotificationByID,)
+		protected.PATCH("/notification/:id", controller.UpdateNotificationByID)
+		protected.PATCH("/notifications/:request_id", controller.UpdateNotificationsByRequestID)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token

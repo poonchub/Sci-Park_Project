@@ -1190,7 +1190,28 @@ async function GetUnreadNotificationCountsByUserID(id?: number) {
         },
     };
 
-    let res = await fetch(`${apiUrl}/notification/count/${id}`, requestOptions).then(
+    let res = await fetch(`${apiUrl}/notifications/count/${id}`, requestOptions).then(
+        (res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        }
+    );
+
+    return res;
+}
+async function GetNotificationsByRequestAndUser(request_id?: number, user_id?: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/notification/${request_id}/${user_id}`, requestOptions).then(
         (res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1233,6 +1254,28 @@ async function UpdateNotificationByID(data: NotificationsInterface, id: Number |
     };
 
     let res = await fetch(`${apiUrl}/notification/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+async function UpdateNotificationsByRequestID(data: NotificationsInterface, request_id: Number | undefined) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/notifications/${request_id}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1335,8 +1378,10 @@ export {
     // Notifications
     ListNotifications,
     GetUnreadNotificationCountsByUserID,
+    GetNotificationsByRequestAndUser,
     CreateNotification,
     UpdateNotificationByID,
+    UpdateNotificationsByRequestID,
 }
 
 

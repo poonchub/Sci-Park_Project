@@ -43,7 +43,7 @@ import { Chip, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
-import { isAdmin, isOperator } from "../routes";
+import { isAdmin, isManager, isOperator } from "../routes";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -122,7 +122,7 @@ const WindowsLayout: React.FC = (props: any) => {
             title: t("maintenance"),
             icon: <HandymanOutlined />,
             action:
-                notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && isAdmin ? (
+                notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                     <Chip
                         label={notificationCounts.UnreadRequests}
                         color="primary"
@@ -141,7 +141,7 @@ const WindowsLayout: React.FC = (props: any) => {
                     title: t("requestList"),
                     icon: <FactCheckOutlined />,
                     action:
-                        notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && isAdmin ? (
+                        notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                             <Chip
                                 label={notificationCounts.UnreadRequests}
                                 color="primary"
@@ -361,6 +361,8 @@ const WindowsLayout: React.FC = (props: any) => {
     }, [user]);
 
     useEffect(() => {
+        if (!user?.ID) return;
+
         const socket = io(socketUrl);
 
         socket.on("notification_created", (data) => {
@@ -373,11 +375,15 @@ const WindowsLayout: React.FC = (props: any) => {
             getNewUnreadNotificationCounts();
         });
 
+        socket.on("notification_updated_bulk", (data) => {
+            console.log("📦 Notification updated bulk:", data);
+            getNewUnreadNotificationCounts();
+        });
+
         return () => {
-            socket.off("notification_created");
-            socket.off("notification_updated");
+            socket.disconnect();
         };
-    }, []);
+    }, [user?.ID]);
 
     return (
         <AppProvider
