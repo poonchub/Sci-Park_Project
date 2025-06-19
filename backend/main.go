@@ -116,10 +116,12 @@ func main() {
 		// Notifications
 		protected.GET("/notifications", controller.ListNotifications)
 		protected.GET("/notifications/count/:id", controller.GetUnreadNotificationCountsByUserID)
-		protected.GET("/notification/:request_id/:user_id", controller.GetNotificationByRequestAndUser)
+		protected.GET("/notification/by-request/:request_id/:user_id", controller.GetNotificationByRequestAndUser)
+		protected.GET("/notification/by-task/:task_id/:user_id", controller.GetNotificationByTaskAndUser)
 		protected.POST("/notification", controller.CreateNotification)
 		protected.PATCH("/notification/:id", controller.UpdateNotificationByID)
-		protected.PATCH("/notifications/:request_id", controller.UpdateNotificationsByRequestID)
+		protected.PATCH("/notifications/request/:request_id", controller.UpdateNotificationsByRequestID)
+		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
 
 	}
 

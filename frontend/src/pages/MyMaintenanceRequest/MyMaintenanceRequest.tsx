@@ -1,53 +1,52 @@
-import { faEye, faFileLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { Box, Button, Container, Grid, Skeleton, Typography, useMediaQuery } from '@mui/material'
-import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { faEye, faFileLines, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, Button, Container, Grid, Skeleton, Typography, useMediaQuery } from "@mui/material";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-import './MyMaintenanceRequest.css'
-import { GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl } from '../../services/http'
-import dayjs from 'dayjs'
-import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests'
-import { RequestStatusesInterface } from '../../interfaces/IRequestStatuses'
-import CustomDataGrid from '../../components/CustomDataGrid/CustomDataGrid'
-import { GridColDef } from '@mui/x-data-grid'
-import dateFormat from '../../utils/dateFormat'
-import { statusConfig } from '../../constants/statusConfig'
-import timeFormat from '../../utils/timeFormat'
-import RequestStatusStack from '../../components/RequestStatusStack/RequestStatusStack'
-import FilterSection from '../../components/FilterSection/FilterSection'
-import theme from '../../styles/Theme'
-import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig'
+import "./MyMaintenanceRequest.css";
+import { GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl } from "../../services/http";
+import dayjs from "dayjs";
+import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
+import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
+import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
+import { GridColDef } from "@mui/x-data-grid";
+import dateFormat from "../../utils/dateFormat";
+import { statusConfig } from "../../constants/statusConfig";
+import timeFormat from "../../utils/timeFormat";
+import RequestStatusStack from "../../components/RequestStatusStack/RequestStatusStack";
+import FilterSection from "../../components/FilterSection/FilterSection";
+import theme from "../../styles/Theme";
+import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 function MyMaintenanceRequest() {
-
-    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([])
-    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
+    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
-    const [searchText, setSearchText] = useState('')
+    const [searchText, setSearchText] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
-    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null)
+    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
 
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
-    const [isLoadingData, setIsLoadingData] = useState(true)
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
             return [
                 {
-                    field: '',
-                    headerName: 'รายการแจ้งซ่อมท้้งหมด',
+                    field: "",
+                    headerName: "รายการแจ้งซ่อมท้้งหมด",
                     flex: 1,
                     renderCell: (params) => {
-                        const requestID = String(params.row.ID)
+                        const requestID = String(params.row.ID);
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
                         const {
@@ -60,32 +59,25 @@ function MyMaintenanceRequest() {
                             icon: faQuestionCircle,
                         };
 
-                        const date = dateFormat(params.row.CreatedAt || '')
+                        const date = dateFormat(params.row.CreatedAt || "");
 
-                        const description = params.row.Description
-                        const areaID = params.row.Area?.ID
-                        const areaDetail = params.row.AreaDetail
-                        const roomtype = params.row.Room?.RoomType?.TypeName
-                        const roomNum = params.row.Room?.RoomNumber
-                        const roomFloor = params.row.Room?.Floor?.Number
+                        const description = params.row.Description;
+                        const areaID = params.row.Area?.ID;
+                        const areaDetail = params.row.AreaDetail;
+                        const roomtype = params.row.Room?.RoomType?.TypeName;
+                        const roomNum = params.row.Room?.RoomNumber;
+                        const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
+                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const {
-                            color: typeColor,
-                            icon: typeIcon,
-                        } = maintenanceTypeConfig[maintenanceKey] ?? {
+                        const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
                         };
 
                         return (
-                            <Grid
-                                container
-                                size={{ xs: 12 }}
-                                sx={{ px: 1 }}
-                            >
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }}>
                                 <Grid size={{ xs: 7 }}>
                                     <Typography
                                         sx={{
@@ -93,16 +85,10 @@ function MyMaintenanceRequest() {
                                             whiteSpace: "nowrap",
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
-                                            maxWidth: "100%"
+                                            maxWidth: "100%",
                                         }}
                                     >
-                                        {
-                                            areaID === 2 ? (
-                                                `${areaDetail}`
-                                            ) : (
-                                                `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-                                            )
-                                        }
+                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                                     </Typography>
                                     <Typography
                                         sx={{
@@ -111,27 +97,28 @@ function MyMaintenanceRequest() {
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
                                             maxWidth: "100%",
-                                            color: 'text.secondary'
+                                            color: "text.secondary",
                                         }}
                                     >
                                         {description}
                                     </Typography>
-                                    <Box sx={{
-                                        borderRadius: 10,
-                                        py: 0.5,
-                                        display: 'inline-flex',
-                                        gap: 1,
-                                        color: typeColor,
-                                        alignItems: 'center',
-                                    }}>
+                                    <Box
+                                        sx={{
+                                            borderRadius: 10,
+                                            py: 0.5,
+                                            display: "inline-flex",
+                                            gap: 1,
+                                            color: typeColor,
+                                            alignItems: "center",
+                                        }}
+                                    >
                                         <FontAwesomeIcon icon={typeIcon} />
-                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                            {typeName}
-                                        </Typography>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                     </Box>
                                 </Grid>
 
-                                <Grid size={{ xs: 5 }}
+                                <Grid
+                                    size={{ xs: 5 }}
                                     container
                                     direction="column"
                                     sx={{
@@ -139,31 +126,43 @@ function MyMaintenanceRequest() {
                                         alignItems: "flex-end",
                                     }}
                                 >
-                                    <Box sx={{
-                                        bgcolor: statusColorLite,
-                                        borderRadius: 10,
-                                        px: 1.5, py: 0.5,
-                                        display: 'flex',
-                                        gap: 1,
-                                        color: statusColor,
-                                        alignItems: 'center'
-                                    }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                        }}
+                                    >
                                         <FontAwesomeIcon icon={statusIcon} />
-                                        <Typography sx={{
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            maxWidth: "100%"
-                                        }}>{statusName}</Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {statusName}
+                                        </Typography>
                                     </Box>
                                     <Box>
-                                        <Typography sx={{
-                                            fontSize: 13,
-                                            pr: 1.5, pt: 0.8,
-                                            color: 'text.secondary'
-                                        }}>{date}</Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                pr: 1.5,
+                                                pt: 0.8,
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            {date}
+                                        </Typography>
                                     </Box>
                                 </Grid>
 
@@ -174,18 +173,18 @@ function MyMaintenanceRequest() {
                                     sx={{
                                         justifyContent: "flex-start",
                                         alignItems: "flex-end",
-                                        gap: 1
+                                        gap: 1,
                                     }}
                                 >
-                                    <Link to="/maintenance/check-requests" >
+                                    <Link to="/maintenance/check-requests">
                                         <Button
                                             variant="contained"
                                             color="primary"
                                             size="small"
-                                            onClick={() => localStorage.setItem('requestID', requestID)}
+                                            onClick={() => localStorage.setItem("requestID", requestID)}
                                         >
                                             <FontAwesomeIcon icon={faEye} />
-                                            <Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
+                                            <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
                                         </Button>
                                     </Link>
                                 </Grid>
@@ -197,32 +196,23 @@ function MyMaintenanceRequest() {
         } else {
             return [
                 {
-                    field: 'ID',
-                    headerName: 'หมายเลข',
+                    field: "ID",
+                    headerName: "หมายเลข",
                     flex: 0.5,
-                    align: 'center',
-                    headerAlign: 'center',
+                    align: "center",
+                    headerAlign: "center",
                 },
                 {
-                    field: 'CreatedAt',
-                    headerName: 'วันที่แจ้งซ่อม',
-                    type: 'string',
+                    field: "CreatedAt",
+                    headerName: "วันที่แจ้งซ่อม",
+                    type: "string",
                     flex: 1,
                     // editable: true,
                     renderCell: (params) => {
-                        const date = dateFormat(params.row.CreatedAt || '')
-                        const time = timeFormat(params.row.CreatedAt || '')
+                        const date = dateFormat(params.row.CreatedAt || "");
+                        const time = timeFormat(params.row.CreatedAt || "");
                         return (
-                            <Box >
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%"
-                                    }}
-                                >{date}</Typography>
+                            <Box>
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -230,49 +220,56 @@ function MyMaintenanceRequest() {
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         maxWidth: "100%",
-                                        color: 'text.secondary'
                                     }}
-                                >{time}</Typography>
+                                >
+                                    {date}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {time}
+                                </Typography>
                             </Box>
-                        )
-                    }
+                        );
+                    },
                 },
                 {
-                    field: 'Description',
-                    headerName: 'รายละเอียด',
-                    type: 'string',
+                    field: "Description",
+                    headerName: "รายละเอียด",
+                    type: "string",
                     flex: 1.8,
                     // editable: true,
                     renderCell: (params) => {
-                        const description = params.row.Description
-                        const areaID = params.row.Area?.ID
-                        const areaDetail = params.row.AreaDetail
-                        const roomtype = params.row.Room?.RoomType?.TypeName
-                        const roomNum = params.row.Room?.RoomNumber
-                        const roomFloor = params.row.Room?.Floor?.Number
+                        const description = params.row.Description;
+                        const areaID = params.row.Area?.ID;
+                        const areaDetail = params.row.AreaDetail;
+                        const roomtype = params.row.Room?.RoomType?.TypeName;
+                        const roomNum = params.row.Room?.RoomNumber;
+                        const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า"
+                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
                         return (
-                            <Box >
+                            <Box>
                                 <Typography
                                     sx={{
                                         fontSize: 14,
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
-                                        maxWidth: "100%"
+                                        maxWidth: "100%",
                                     }}
                                 >
-                                    {
-                                        areaID === 2 ? (
-                                            `${areaDetail}`
-                                        ) : (
-                                            `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-                                        )
-                                    }
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -281,91 +278,87 @@ function MyMaintenanceRequest() {
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
                                         maxWidth: "100%",
-                                        color: 'text.secondary'
+                                        color: "text.secondary",
                                     }}
                                 >
                                     {description}
                                 </Typography>
-                                <Box sx={{
-                                    borderRadius: 10,
-                                    py: 0.5,
-                                    display: 'inline-flex',
-                                    gap: 1,
-                                    color: color,
-                                    alignItems: 'center',
-                                }}>
+                                <Box
+                                    sx={{
+                                        borderRadius: 10,
+                                        py: 0.5,
+                                        display: "inline-flex",
+                                        gap: 1,
+                                        color: color,
+                                        alignItems: "center",
+                                    }}
+                                >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                        {typeName}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                 </Box>
                             </Box>
-                        )
+                        );
                     },
                 },
                 {
-                    field: 'RequestStatus',
-                    headerName: 'สถานะ',
-                    type: 'string',
+                    field: "RequestStatus",
+                    headerName: "สถานะ",
+                    type: "string",
                     flex: 1,
                     // editable: true,
                     renderCell: (params) => {
-                        const statusName = params.row.RequestStatus?.Name || "Pending"
+                        const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
                         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle
+                            icon: faQuestionCircle,
                         };
 
                         return (
-                            <Box sx={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                height: '100%'
-                            }}>
-                                <Box sx={{
-                                    bgcolor: colorLite,
-                                    borderRadius: 10,
-                                    px: 1.5,
-                                    py: 0.5,
-                                    display: 'flex',
-                                    gap: 1,
-                                    color: color,
-                                    alignItems: 'center',
-                                }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    height: "100%",
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        bgcolor: colorLite,
+                                        borderRadius: 10,
+                                        px: 1.5,
+                                        py: 0.5,
+                                        display: "flex",
+                                        gap: 1,
+                                        color: color,
+                                        alignItems: "center",
+                                    }}
+                                >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                        {statusName}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
                                 </Box>
-
                             </Box>
-                        )
+                        );
                     },
                 },
                 {
-                    field: 'Check',
-                    headerName: '',
-                    type: 'string',
+                    field: "Check",
+                    headerName: "",
+                    type: "string",
                     flex: 1,
                     // editable: true,
                     renderCell: (item) => {
-                        const requestID = String(item.row.ID)
+                        const requestID = String(item.row.ID);
                         return (
-                            <Link to="/maintenance/check-requests" >
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => localStorage.setItem('requestID', requestID)}
-                                >
+                            <Link to="/maintenance/check-requests">
+                                <Button variant="contained" color="primary" size="small" onClick={() => localStorage.setItem("requestID", requestID)}>
                                     <FontAwesomeIcon icon={faEye} />
-                                    <Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
+                                    <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
                                 </Button>
                             </Link>
-                        )
-                    }
+                        );
+                    },
                 },
             ];
         }
@@ -373,15 +366,16 @@ function MyMaintenanceRequest() {
 
     const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
         try {
-            setIsLoadingData(true)
-            const userId = localStorage.getItem('userId')
-            const statusFormat = selectedStatuses.join(',')
+            setIsLoadingData(true);
+            const userId = localStorage.getItem("userId");
+            const statusFormat = selectedStatuses.join(",");
             const res = await GetMaintenanceRequestsForUser(
                 statusFormat,
                 pageNum,
                 limit,
-                selectedDate ? selectedDate.format('YYYY-MM-DD') : "",
-                Number(userId));
+                selectedDate ? selectedDate.format("YYYY-MM-DD") : "",
+                Number(userId)
+            );
 
             if (res) {
                 setMaintenanceRequests(res.data);
@@ -392,7 +386,7 @@ function MyMaintenanceRequest() {
                     return acc;
                 }, {});
                 setStatusCounts(formatted);
-                setIsLoadingData(false)
+                setIsLoadingData(false);
             }
         } catch (error) {
             console.error("Error fetching maintenance requests:", error);
@@ -414,9 +408,7 @@ function MyMaintenanceRequest() {
         try {
             const res = await GetMaintenanceRequestByID(ID);
             if (res) {
-                setMaintenanceRequests(prev =>
-                    prev.map(item => item.ID === res.ID ? res : item)
-                );
+                setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
         } catch (error) {
             console.error("Error updating maintenance request:", error);
@@ -425,9 +417,9 @@ function MyMaintenanceRequest() {
 
     const handleClearFillter = () => {
         setSelectedDate(null);
-        setSearchText('');
-        setSelectedStatuses([])
-    }
+        setSearchText("");
+        setSelectedStatuses([]);
+    };
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = String(request.ID);
@@ -440,19 +432,19 @@ function MyMaintenanceRequest() {
             requestId?.includes(searchText) ||
             roomTypeName.includes(searchText.toLowerCase()) ||
             floor.includes(searchText.toLowerCase()) ||
-            roomNumber?.includes(searchText.toLowerCase())
+            roomNumber?.includes(searchText.toLowerCase());
 
-        return matchText
+        return matchText;
     });
 
     useEffect(() => {
         getMaintenanceRequests(1, true);
-        getRequestStatuses()
-    }, [])
+        getRequestStatuses();
+    }, []);
 
     useEffect(() => {
         if (requestStatuses) {
-            getMaintenanceRequests(page)
+            getMaintenanceRequests(page);
         }
     }, [page, limit]);
 
@@ -467,7 +459,7 @@ function MyMaintenanceRequest() {
 
         socket.on("maintenance_updated", (data) => {
             console.log("🔄 Maintenance request updated:", data);
-            getUpdateMaintenanceRequest(data.ID)
+            getUpdateMaintenanceRequest(data.ID);
         });
 
         return () => {
@@ -477,80 +469,79 @@ function MyMaintenanceRequest() {
 
     return (
         <Box className="my-maintenance-request-page">
-            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
+            <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid className='title-box' size={{ xs: 5, sm: 5 }}>
+                    <Grid className="title-box" size={{ xs: 5, sm: 5 }}>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             การแจ้งซ่อมของฉัน
                         </Typography>
                     </Grid>
 
-                    <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end", }}>
+                    <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Link to="/maintenance/create-maintenance-request">
-                            <Button variant="containedBlue" >
+                            <Button variant="containedBlue">
                                 <FontAwesomeIcon icon={faFileLines} size="lg" />
-                                <Typography variant="textButtonClassic" >เขียนคำร้อง</Typography>
+                                <Typography variant="textButtonClassic">เขียนคำร้อง</Typography>
                             </Button>
                         </Link>
                     </Grid>
 
                     <Grid container size={{ xs: 12 }} spacing={2}>
-
                         {/* Count Status Section */}
-                        {
-                            isLoadingData ? (
-                                <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
-                            ) : (
-                                <Grid container
-                                    spacing={1}
-                                    className='filter-section'
-                                    size={{ xs: 12 }}
-                                    sx={{
-                                        height: 'auto'
-                                    }}
-                                >
-                                    <RequestStatusStack statusCounts={statusCounts} />
-                                </Grid>
-                            )
-                        }
+                        {isLoadingData ? (
+                            <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
+                        ) : (
+                            <Grid
+                                container
+                                spacing={1}
+                                className="filter-section"
+                                size={{ xs: 12 }}
+                                sx={{
+                                    height: "auto",
+                                }}
+                            >
+                                <RequestStatusStack statusCounts={statusCounts} />
+                            </Grid>
+                        )}
 
                         {/* Filters Section */}
-                        <FilterSection
-                            searchText={searchText}
-                            setSearchText={setSearchText}
-                            selectedDate={selectedDate}
-                            setSelectedDate={setSelectedDate}
-                            selectedStatuses={selectedStatuses}
-                            setSelectedStatuses={setSelectedStatuses}
-                            handleClearFilter={handleClearFillter}
-                            requestStatuses={requestStatuses}
-                        />
+                        {isLoadingData ? (
+                            <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                        ) : (
+                            <FilterSection
+                                searchText={searchText}
+                                setSearchText={setSearchText}
+                                selectedDate={selectedDate}
+                                setSelectedDate={setSelectedDate}
+                                selectedStatuses={selectedStatuses}
+                                setSelectedStatuses={setSelectedStatuses}
+                                handleClearFilter={handleClearFillter}
+                                requestStatuses={requestStatuses}
+                            />
+                        )}
                     </Grid>
 
                     {/* Data Table */}
                     <Grid size={{ xs: 12, md: 12 }}>
-                        {
-                            isLoadingData ? (
-                                <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
-                            ) : (
-                                <CustomDataGrid
-                                    rows={filteredRequests}
-                                    columns={getColumns()}
-                                    rowCount={total}
-                                    page={page}
-                                    limit={limit}
-                                    onPageChange={setPage}
-                                    onLimitChange={setLimit}
-                                    noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
-                                />
-                            )
-                        }
+                        {isLoadingData ? (
+                            <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+                        ) : (
+                            <CustomDataGrid
+                                rows={filteredRequests}
+                                columns={getColumns()}
+                                rowCount={total}
+                                page={page}
+                                limit={limit}
+                                onPageChange={setPage}
+                                onLimitChange={setLimit}
+                                noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                            />
+                        )}
                     </Grid>
                 </Grid>
             </Container>
-
         </Box>
-    )
+    );
 }
-export default MyMaintenanceRequest
+export default MyMaintenanceRequest;

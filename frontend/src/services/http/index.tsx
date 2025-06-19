@@ -1211,7 +1211,28 @@ async function GetNotificationsByRequestAndUser(request_id?: number, user_id?: n
         },
     };
 
-    let res = await fetch(`${apiUrl}/notification/${request_id}/${user_id}`, requestOptions).then(
+    let res = await fetch(`${apiUrl}/notification/by-request/${request_id}/${user_id}`, requestOptions).then(
+        (res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        }
+    );
+
+    return res;
+}
+async function GetNotificationsByTaskAndUser(task_id?: number, user_id?: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/notification/by-task/${task_id}/${user_id}`, requestOptions).then(
         (res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1275,7 +1296,28 @@ async function UpdateNotificationsByRequestID(data: NotificationsInterface, requ
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/notifications/${request_id}`, requestOptions)
+    let res = await fetch(`${apiUrl}/notifications/request/${request_id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id: Number | undefined) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/notifications/task/${task_id}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1379,9 +1421,11 @@ export {
     ListNotifications,
     GetUnreadNotificationCountsByUserID,
     GetNotificationsByRequestAndUser,
+    GetNotificationsByTaskAndUser,
     CreateNotification,
     UpdateNotificationByID,
     UpdateNotificationsByRequestID,
+    UpdateNotificationsByTaskID,
 }
 
 

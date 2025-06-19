@@ -39,6 +39,8 @@ function CreateMaintenanceRequestPage() {
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+    const [isBottonActive, setIsBottonActive] = useState(false)
+
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         AreaDetail: "",
         IsAnytimeAvailable: false,
@@ -194,6 +196,7 @@ function CreateMaintenanceRequestPage() {
     }
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        setIsBottonActive(true)
         event.preventDefault();
         if (!validateForm()) return;
 
@@ -249,6 +252,7 @@ function CreateMaintenanceRequestPage() {
             handleSetAlert('success', "Maintenance request submitted successfully");
             setTimeout(() => {
                 location.href = "/maintenance/my-maintenance-request";
+                setIsBottonActive(false)
             }, 1800);
 
         } catch (error) {
@@ -837,6 +841,7 @@ function CreateMaintenanceRequestPage() {
                                             variant="contained"
                                             sx={{ px: 4, py: 1 }}
                                             type="submit"
+                                            disabled={isBottonActive}
                                         >
                                             <FontAwesomeIcon icon={faUpload} />
                                             <Typography variant="textButtonClassic" >ส่งคำร้อง</Typography>

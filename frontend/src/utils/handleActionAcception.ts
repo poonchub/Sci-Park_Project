@@ -1,6 +1,7 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
-import { SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
+import { NotificationsInterface } from "../interfaces/INotifications";
+import { SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID, UpdateNotificationsByTaskID } from "../services/http";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -23,7 +24,7 @@ const handleActionAcception = async (
         setOpenConfirmAccepted,
         setOpenConfirmCancelled,
         actionType,
-        note
+        note,
     }: handleActionAcceptionProps & { actionType: "accept" | "cancel" }
 ) => {
     if (!selectedTask) {
@@ -47,17 +48,21 @@ const handleActionAcception = async (
         };
 
         const resTask = await UpdateMaintenanceTaskByID(task, selectedTask.ID);
-        if (!resTask || resTask.error)
-            throw new Error(resTask?.error || "Failed to update maintenance task");
+        if (!resTask || resTask.error) throw new Error(resTask?.error || "Failed to update maintenance task");
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
-        if (!resRequest || resRequest.error)
-            throw new Error(resRequest?.error || "Failed to update request status");
+        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
+
+        const notificationDataUpdate: NotificationsInterface = {
+            IsRead: true,
+        };
+        const resUpdateNotification = await UpdateNotificationsByTaskID(notificationDataUpdate, selectedTask.ID);
+        if (!resUpdateNotification || resUpdateNotification.error) throw new Error(resUpdateNotification?.error || "Failed to update notification");
 
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
-                { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" }
+                { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" },
             ]);
 
             setOpenConfirmAccepted(false);

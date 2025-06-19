@@ -1,14 +1,6 @@
 import { Link } from "react-router-dom";
 import "./AllMaintenanceRequest.css";
-import {
-    Box,
-    Button,
-    Card,
-    Container,
-    Grid,
-    Typography,
-    useMediaQuery,
-} from "@mui/material";
+import { Box, Button, Card, Container, Grid, Skeleton, Typography, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 
@@ -27,12 +19,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faQuestionCircle,
-    faXmark,
-    faCheckDouble,
-    faEye,
-} from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faXmark, faCheckDouble, faEye } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -58,21 +45,14 @@ import { Base64 } from "js-base64";
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
     const [operators, setOperators] = useState<UserInterface[]>([]);
-    const [requestStatuses, setRequestStatuses] = useState<
-        RequestStatusesInterface[]
-    >([]);
-    const [maintenanceRequests, setMaintenanceRequests] = useState<
-        MaintenanceRequestsInterface[]
-    >([]);
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
+    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
 
-    const [statusCounts, setStatusCounts] = useState<Record<string, number>>(
-        {}
-    );
+    const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-    const [selectedRequest, setSelectedRequest] =
-        useState<MaintenanceRequestsInterface>({});
+    const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
     const [selectedOperator, setSelectedOperator] = useState(0);
 
     const [page, setPage] = useState(0);
@@ -82,14 +62,14 @@ function AllMaintenanceRequest() {
     const [counts, setCounts] = useState();
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false);
-    const [openConfirmRejected, setOpenConfirmRejected] =
-        useState<boolean>(false);
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 
-    const [alerts, setAlerts] = useState<
-        { type: "warning" | "error" | "success"; message: string }[]
-    >([]);
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+    const [isBottonActive, setIsBottonActive] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
@@ -100,10 +80,8 @@ function AllMaintenanceRequest() {
                     flex: 1,
                     renderCell: (params) => {
                         const requestID = String(params.row.ID);
-                        const statusName =
-                            params.row.RequestStatus?.Name || "Pending";
-                        const statusKey = params.row.RequestStatus
-                            ?.Name as keyof typeof statusConfig;
+                        const statusName = params.row.RequestStatus?.Name || "Pending";
+                        const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
                         const {
                             color: statusColor,
                             colorLite: statusColorLite,
@@ -123,16 +101,13 @@ function AllMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName =
-                            params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
-                        const maintenanceKey = params.row.MaintenanceType
-                            ?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color: typeColor, icon: typeIcon } =
-                            maintenanceTypeConfig[maintenanceKey] ?? {
-                                color: "#000",
-                                colorLite: "#000",
-                                icon: faQuestionCircle,
-                            };
+                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }}>
@@ -146,9 +121,7 @@ function AllMaintenanceRequest() {
                                             maxWidth: "100%",
                                         }}
                                     >
-                                        {areaID === 2
-                                            ? `${areaDetail}`
-                                            : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                                     </Typography>
                                     <Typography
                                         sx={{
@@ -248,17 +221,10 @@ function AllMaintenanceRequest() {
                                             variant="contained"
                                             color="primary"
                                             size="small"
-                                            onClick={() =>
-                                                localStorage.setItem(
-                                                    "requestID",
-                                                    requestID
-                                                )
-                                            }
+                                            onClick={() => localStorage.setItem("requestID", requestID)}
                                         >
                                             <FontAwesomeIcon icon={faEye} />
-                                            <Typography variant="textButtonClassic">
-                                                ดูรายละเอียด
-                                            </Typography>
+                                            <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
                                         </Button>
                                     </Link>
 
@@ -313,12 +279,10 @@ function AllMaintenanceRequest() {
                 {
                     field: "User",
                     headerName: "ผู้แจ้งซ่อม",
-                    description:
-                        "This column has a value getter and is not sortable.",
+                    description: "This column has a value getter and is not sortable.",
                     sortable: false,
                     flex: 1.2,
-                    valueGetter: (params: UserInterface) =>
-                        `${params.EmployeeID} ${params.FirstName || ""} ${params.LastName || ""} `,
+                    valueGetter: (params: UserInterface) => `${params.EmployeeID} ${params.FirstName || ""} ${params.LastName || ""} `,
                 },
                 {
                     field: "CreatedAt",
@@ -372,13 +336,9 @@ function AllMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName =
-                            params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
-                        const maintenanceKey = params.row.MaintenanceType
-                            ?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color, icon } = maintenanceTypeConfig[
-                            maintenanceKey
-                        ] ?? {
+                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
@@ -395,9 +355,7 @@ function AllMaintenanceRequest() {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2
-                                        ? `${areaDetail}`
-                                        : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -422,11 +380,7 @@ function AllMaintenanceRequest() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography
-                                        sx={{ fontSize: 14, fontWeight: 600 }}
-                                    >
-                                        {typeName}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                 </Box>
                             </Box>
                         );
@@ -439,13 +393,9 @@ function AllMaintenanceRequest() {
                     flex: 1,
                     // editable: true,
                     renderCell: (params) => {
-                        const statusName =
-                            params.row.RequestStatus?.Name || "Pending";
-                        const statusKey = params.row.RequestStatus
-                            ?.Name as keyof typeof statusConfig;
-                        const { color, colorLite, icon } = statusConfig[
-                            statusKey
-                        ] ?? {
+                        const statusName = params.row.RequestStatus?.Name || "Pending";
+                        const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
+                        const { color, colorLite, icon } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
@@ -472,11 +422,7 @@ function AllMaintenanceRequest() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography
-                                        sx={{ fontSize: 14, fontWeight: 600 }}
-                                    >
-                                        {statusName}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
                                 </Box>
                             </Box>
                         );
@@ -489,8 +435,7 @@ function AllMaintenanceRequest() {
                     flex: 1,
                     // editable: true,
                     renderCell: (item) => {
-                        return item.row.RequestStatus?.Name === "Pending" &&
-                            (isManager || isAdmin) ? (
+                        return item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin) ? (
                             <Box
                                 className="container-btn"
                                 sx={{
@@ -508,9 +453,7 @@ function AllMaintenanceRequest() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faCheckDouble} />
-                                    <Typography variant="textButtonClassic">
-                                        อนุมัติ
-                                    </Typography>
+                                    <Typography variant="textButtonClassic">อนุมัติ</Typography>
                                 </Button>
                                 <Button
                                     className="btn-reject"
@@ -542,7 +485,7 @@ function AllMaintenanceRequest() {
                         const data = item.row;
                         const encodedId = Base64.encode(data.ID);
                         return (
-                            <Link to={`/maintenance/check-requests?id=${encodeURIComponent(encodedId)}`}>
+                            <Link to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}>
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -552,9 +495,7 @@ function AllMaintenanceRequest() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faEye} />
-                                    <Typography variant="textButtonClassic">
-                                        ดูรายละเอียด
-                                    </Typography>
+                                    <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
                                 </Button>
                             </Link>
                         );
@@ -566,9 +507,7 @@ function AllMaintenanceRequest() {
 
     const getUser = async () => {
         try {
-            const res = await GetUserById(
-                Number(localStorage.getItem("userId"))
-            );
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
             if (res) {
                 setUser(res);
             }
@@ -599,10 +538,7 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async (
-        pageNum: number = 1,
-        setTotalFlag = false
-    ) => {
+    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
         try {
             const reqType = user?.RequestType?.TypeName || "";
             const statusFormat = selectedStatuses.join(",");
@@ -619,21 +555,15 @@ function AllMaintenanceRequest() {
                 setMaintenanceRequests(res.data);
                 setCounts(res.counts);
 
-                const totalCount = res.counts.reduce(
-                    (sum: number, item: { count: number }) => sum + item.count,
-                    0
-                );
+                const totalCount = res.counts.reduce((sum: number, item: { count: number }) => sum + item.count, 0);
                 setTotalAll(totalCount);
 
                 if (setTotalFlag) setTotal(res.total);
 
-                const formatted = res.statusCounts.reduce(
-                    (acc: any, item: any) => {
-                        acc[item.status_name] = item.count;
-                        return acc;
-                    },
-                    {}
-                );
+                const formatted = res.statusCounts.reduce((acc: any, item: any) => {
+                    acc[item.status_name] = item.count;
+                    return acc;
+                }, {});
                 setStatusCounts(formatted);
             }
         } catch (error) {
@@ -657,22 +587,15 @@ function AllMaintenanceRequest() {
         try {
             const res = await GetMaintenanceRequestByID(ID);
             if (res) {
-                setMaintenanceRequests((prev) =>
-                    prev.map((item) => (item.ID === res.ID ? res : item))
-                );
+                setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
         } catch (error) {
             console.error("Error fetching update maintenance:", error);
         }
     };
 
-    const handleClickApprove = (
-        statusName: "Approved" | "Unsuccessful",
-        actionType: "approve" | "reject",
-        note?: string
-    ) => {
-        const statusID =
-            requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+    const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
+        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
         handleActionApproval(statusID, {
             userID: user?.ID,
             selectedRequest,
@@ -683,6 +606,7 @@ function AllMaintenanceRequest() {
             setOpenConfirmRejected,
             actionType,
             note,
+            setIsBottonActive,
         });
     };
 
@@ -694,21 +618,20 @@ function AllMaintenanceRequest() {
 
     const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
         try {
-            const resNotification = await GetNotificationsByRequestAndUser(request_id, user_id)
-            if (!resNotification || resNotification.error) console.error("Error fetching notification")
+            const resNotification = await GetNotificationsByRequestAndUser(request_id, user_id);
+            if (!resNotification || resNotification.error) console.error("Error fetching notification");
 
             const notificationData: NotificationsInterface = {
                 IsRead: true,
             };
-            const notificationID = resNotification.data.ID
+            const notificationID = resNotification.data.ID;
             if (!resNotification.data.IsRead) {
                 const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
                 if (resUpdated) {
                     console.log("✅ Notification updated successfully.");
                 }
-            }
-            else {
-                return
+            } else {
+                return;
             }
         } catch (error) {
             console.error("❌ Error updating maintenance request:", error);
@@ -716,10 +639,10 @@ function AllMaintenanceRequest() {
     };
 
     const handleClickCheck = (data: MaintenanceRequestsInterface) => {
-        if (data){
-            const requestID = data?.ID
-            const userID = user?.ID
-            handleUpdateNotification(requestID, userID)
+        if (data) {
+            const requestID = data?.ID;
+            const userID = user?.ID;
+            handleUpdateNotification(requestID, userID);
         }
     };
 
@@ -727,8 +650,7 @@ function AllMaintenanceRequest() {
         const requestId = request.ID ? Number(request.ID) : null;
         const firstName = request.User?.FirstName?.toLowerCase() || "";
         const lastName = request.User?.LastName?.toLowerCase() || "";
-        const roomType =
-            (request.Room?.RoomType?.TypeName ?? "").toLowerCase() || "";
+        const roomType = (request.Room?.RoomType?.TypeName ?? "").toLowerCase() || "";
 
         const matchText =
             !searchText ||
@@ -744,11 +666,8 @@ function AllMaintenanceRequest() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([
-                    getUser(),
-                    getRequestStatuses(),
-                    getOperators(),
-                ]);
+                await Promise.all([getUser(), getRequestStatuses(), getOperators()]);
+                setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
             }
@@ -803,18 +722,18 @@ function AllMaintenanceRequest() {
                 setSelectedOperator={setSelectedOperator}
                 operators={operators}
                 maintenanceTypeConfig={maintenanceTypeConfig}
+                buttonActive={isBottonActive}
             />
 
             {/* Rejected Confirm */}
             <ConfirmDialog
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={(note) =>
-                    handleClickApprove("Unsuccessful", "reject", note)
-                }
+                handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
                 title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
                 message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
                 showNoteField
+                buttonActive={isBottonActive}
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
@@ -832,60 +751,56 @@ function AllMaintenanceRequest() {
                             รายการแจ้งซ่อม
                         </Typography>
                     </Grid>
-                    <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
-                        {/* Status Section */}
-                        <RequestStatusCards statusCounts={statusCounts || {}} />
 
-                        <RequestStatusStackForAdmin
-                            statusCounts={statusCounts || {}}
-                        />
+                    {!isLoadingData && statusCounts ? (
+                        <>
+                            <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
+                                {/* Status Section */}
+                                <RequestStatusCards statusCounts={statusCounts || {}} />
 
-                        {/* Filters Section size lg */}
-                        <FilterSection
-                            display={{ xs: "none", md: "none", lg: "flex" }}
-                            searchText={searchText}
-                            setSearchText={setSearchText}
-                            selectedDate={selectedDate}
-                            setSelectedDate={setSelectedDate}
-                            selectedStatuses={selectedStatuses}
-                            setSelectedStatuses={setSelectedStatuses}
-                            handleClearFilter={handleClearFillter}
-                            requestStatuses={requestStatuses}
-                        />
-                    </Grid>
+                                <RequestStatusStackForAdmin statusCounts={statusCounts || {}} />
 
-                    {/* Chart Section */}
-                    <Grid size={{ xs: 12, lg: 5 }}>
-                        <Card
-                            sx={{
-                                bgcolor: "secondary.main",
-                                borderRadius: 2,
-                                py: 2,
-                                px: 3,
-                                height: "100%",
-                            }}
-                        >
-                            <Typography
-                                variant="body1"
-                                color="text.primary"
-                                sx={{ fontWeight: 600 }}
-                            >
-                                รายการแจ้งซ่อม
-                            </Typography>
-                            <Typography
-                                sx={{
-                                    fontWeight: 700,
-                                    fontSize: 24,
-                                    color: "#F26522",
-                                }}
-                            >{`${totalAll} รายการ`}</Typography>
-                            <ApexLineChart
-                                height={160}
-                                selectedDate={selectedDate}
-                                counts={counts}
-                            />
-                        </Card>
-                    </Grid>
+                                {/* Filters Section size lg */}
+                                <FilterSection
+                                    display={{ xs: "none", md: "none", lg: "flex" }}
+                                    searchText={searchText}
+                                    setSearchText={setSearchText}
+                                    selectedDate={selectedDate}
+                                    setSelectedDate={setSelectedDate}
+                                    selectedStatuses={selectedStatuses}
+                                    setSelectedStatuses={setSelectedStatuses}
+                                    handleClearFilter={handleClearFillter}
+                                    requestStatuses={requestStatuses}
+                                />
+                            </Grid>
+                            {/* Chart Section */}
+                            <Grid size={{ xs: 12, lg: 5 }}>
+                                <Card
+                                    sx={{
+                                        bgcolor: "secondary.main",
+                                        borderRadius: 2,
+                                        py: 2,
+                                        px: 3,
+                                        height: "100%",
+                                    }}
+                                >
+                                    <Typography variant="body1" color="text.primary" sx={{ fontWeight: 600 }}>
+                                        รายการแจ้งซ่อม
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontWeight: 700,
+                                            fontSize: 24,
+                                            color: "#F26522",
+                                        }}
+                                    >{`${totalAll} รายการ`}</Typography>
+                                    <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
+                                </Card>
+                            </Grid>
+                        </>
+                    ) : (
+                        <Skeleton variant="rectangular" width="100%" height={320} sx={{ borderRadius: 2 }} />
+                    )}
 
                     {/* Filters Section size md */}
                     <FilterSection
@@ -902,16 +817,20 @@ function AllMaintenanceRequest() {
 
                     {/* Data Table */}
                     <Grid size={{ xs: 12, md: 12 }}>
-                        <CustomDataGrid
-                            rows={filteredRequests}
-                            columns={getColumns()}
-                            rowCount={total}
-                            page={page}
-                            limit={limit}
-                            onPageChange={setPage}
-                            onLimitChange={setLimit}
-                            noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
-                        />
+                        {!isLoadingData && statusCounts ? (
+                            <CustomDataGrid
+                                rows={filteredRequests}
+                                columns={getColumns()}
+                                rowCount={total}
+                                page={page}
+                                limit={limit}
+                                onPageChange={setPage}
+                                onLimitChange={setLimit}
+                                noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                            />
+                        ) : (
+                            <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />
+                        )}
                     </Grid>
                 </Grid>
             </Container>

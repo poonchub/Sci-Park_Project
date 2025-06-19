@@ -46,7 +46,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 	})
 }
 
-// GET /notification/:request_id/:user_id
+// GET /notification/by-request/:request_id/:user_id
 func GetNotificationByRequestAndUser(c *gin.Context) {
 	requestID := c.Param("request_id")
 	userID := c.Param("user_id")
@@ -55,6 +55,24 @@ func GetNotificationByRequestAndUser(c *gin.Context) {
 
 	var notifications entity.Notification
 	err := db.Where("request_id = ? AND user_id = ?", requestID, userID).First(&notifications).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": notifications})
+}
+
+// GET /notification/by-task/:task_id/:user_id
+func GetNotificationByTaskAndUser(c *gin.Context) {
+	taskID := c.Param("task_id")
+	userID := c.Param("user_id")
+
+	db := config.DB()
+
+	var notifications entity.Notification
+	err := db.Where("task_id = ? AND user_id = ?", taskID, userID).First(&notifications).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
@@ -230,7 +248,7 @@ func UpdateNotificationByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
 }
 
-// PATCH /notifications/:request_id
+// PATCH /notifications/request/:request_id
 func UpdateNotificationsByRequestID(c *gin.Context) {
 	requestID := c.Param("request_id")
 
@@ -265,6 +283,50 @@ func UpdateNotificationsByRequestID(c *gin.Context) {
 	// Broadcast socket event (optional)
 	services.NotifySocketEvent("notification_updated_bulk", gin.H{
 		"request_id": requestID,
+		"updated":    updateData,
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Notifications updated successfully",
+		"data":    updateData,
+	})
+}
+
+// PATCH /notifications/task/:task_id
+func UpdateNotificationsByTaskID(c *gin.Context) {
+	taskID := c.Param("task_id")
+
+	db := config.DB()
+
+	// ดึง notifications ทั้งหมดที่มี task_id ตรงกัน
+	var notifications []entity.Notification
+	if err := db.Where("task_id = ?", taskID).Find(&notifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find notifications"})
+		return
+	}
+
+	if len(notifications) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No notifications found for this request ID"})
+		return
+	}
+
+	var updateData map[string]interface{}
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	// อัปเดตแบบ bulk
+	if err := db.Model(&entity.Notification{}).
+		Where("task_id = ?", taskID).
+		Updates(updateData).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update notifications"})
+		return
+	}
+
+	// Broadcast socket event (optional)
+	services.NotifySocketEvent("notification_updated_bulk", gin.H{
+		"task_id": taskID,
 		"updated":    updateData,
 	})
 

@@ -2,7 +2,7 @@ import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
 import { NotificationsInterface } from "../interfaces/INotifications";
-import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, GetNotificationsByRequestAndUser, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
+import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -18,6 +18,7 @@ interface handleActionApprovalProps {
     setOpenPopupApproved: (v: boolean) => void;
     setOpenConfirmRejected: (v: boolean) => void;
     note?: string;
+    setIsBottonActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const handleActionApproval = async (
@@ -31,7 +32,8 @@ const handleActionApproval = async (
         setOpenPopupApproved,
         setOpenConfirmRejected,
         actionType,
-        note
+        note,
+        setIsBottonActive
     }: handleActionApprovalProps & { actionType: "approve" | "reject" }
 ) => {
     if (!userID || !selectedRequest) {
@@ -50,6 +52,7 @@ const handleActionApproval = async (
     }
 
     try {
+        setIsBottonActive(true)
         const managerApp: ManagerApprovalsInterface = {
             UserID: userID,
             RequestID: selectedRequest.ID,
@@ -92,9 +95,9 @@ const handleActionApproval = async (
         const notificationDataUpdate: NotificationsInterface = {
             IsRead: true,
         };
-        const resUpdated = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
-        if (!resUpdated || resUpdated.error)
-            throw new Error(resUpdated?.error || "Failed to update notification");
+        const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
+        if (!resUpdateNotification || resUpdateNotification.error)
+            throw new Error(resUpdateNotification?.error || "Failed to update notification");
 
         setTimeout(() => {
             setAlerts((prev) => [
@@ -105,6 +108,7 @@ const handleActionApproval = async (
             setSelectedOperator(0)
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
+            setIsBottonActive(false)
         }, 500);
 
         if (actionType === "reject") {
