@@ -1,19 +1,25 @@
 package entity
 
 import (
+	
+
 	"gorm.io/gorm"
 )
 
 type Room struct {
     gorm.Model
-    RoomNumber    string
 
-    RoomStatusID  uint     
-    RoomStatus    RoomStatus `gorm:"foreignKey:RoomStatusID"`
+    RoomNumber string `valid:"required~กรุณาระบุหมายเลขห้อง"`
+    Capacity   int    `valid:"required~กรุณาระบุความจุ"`
 
-    FloorID       uint     
-    Floor         Floor      `gorm:"foreignKey:FloorID"`
+    RoomStatusID uint       `valid:"required~กรุณาระบุสถานะของห้อง"`
+    RoomStatus   RoomStatus `gorm:"foreignKey:RoomStatusID" valid:"-"`
 
-    RoomTypeID    uint      
-    RoomType      RoomType   `gorm:"foreignKey:RoomTypeID"`
+    FloorID     uint     `valid:"required~กรุณาระบุชั้นของห้อง"`
+    Floor       Floor    `gorm:"foreignKey:FloorID" valid:"-"`
+
+    RoomTypeID  uint     `valid:"required~กรุณาระบุประเภทของห้อง"`
+    RoomType    RoomType `gorm:"foreignKey:RoomTypeID" valid:"-"`
+
+   
 }

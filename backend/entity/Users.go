@@ -1,20 +1,21 @@
 package entity
 
-import ("gorm.io/gorm"
-        "time"
-    )
+import (
+	"time"
+	"gorm.io/gorm"
+)
 
 // User คือ entity สำหรับผู้ใช้ในระบบ
 type User struct {
     gorm.Model
-    CompanyName     string
-    EmployeeID      string
-    BusinessDetail  string
-    FirstName       string
-    LastName        string
-    Email           string
-    Password        string
-    Phone           string
+    CompanyName     string `valid:"required"`
+    EmployeeID      string `valid:"required"`
+    BusinessDetail  string `valid:"required"`
+    FirstName       string `valid:"required"`
+    LastName        string `valid:"required"`
+    Email           string `valid:"email,required"`
+    Password        string `valid:"required,minstringlength(6)"`
+    Phone           string `valid:"phone,required"`
     ProfilePath     string
     IsEmployee      bool
     
