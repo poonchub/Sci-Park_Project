@@ -52,14 +52,13 @@ const FilterSection = ({
 
     return (
         <Grid
-            spacing={1}
             className="filter-section"
             size={{ xs: 12 }}
             sx={{
                 display,
             }}
         >
-            <Card sx={{ width: '100%' }}>
+            <Card sx={{ width: '100%', borderRadius: 2 }}>
                 <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
                     <Grid size={{ xs: 12, sm: 5 }}>
                         <TextField

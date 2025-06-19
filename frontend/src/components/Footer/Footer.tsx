@@ -2,6 +2,7 @@ import { Facebook, Instagram, Twitter } from '@mui/icons-material';
 import { Box, Divider, Grid, IconButton, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { Container } from '@mui/system';
 import { FlaskConical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 function Footer() {
     return (
@@ -64,9 +65,11 @@ function Footer() {
                             <ListItem disableGutters>
                                 <ListItemText primary="พันธกิจ" />
                             </ListItem>
-                            <ListItem disableGutters>
-                                <ListItemText primary="ทีมงาน" />
-                            </ListItem>
+                            <Link to="/about-developer">
+                                <ListItem disableGutters>
+                                    <ListItemText primary="ทีมผู้พัฒนา" />
+                                </ListItem>
+                            </Link>
                         </List>
                     </Grid>
 

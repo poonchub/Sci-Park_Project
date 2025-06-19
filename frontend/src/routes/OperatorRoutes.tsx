@@ -7,6 +7,7 @@ import AcceptWork from "../pages/AcceptWork/AcceptWork";
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 import CreateMaintenanceRequestPage from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
+import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 
 const OperatorRoutes = (): RouteObject => {
     return {
@@ -36,6 +37,10 @@ const OperatorRoutes = (): RouteObject => {
             {
 				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
+			},
+            {
+				path: "/about-developer",
+				element: <AboutDeveloper/>
 			},
             {
 				path: "",

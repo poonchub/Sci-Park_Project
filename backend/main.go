@@ -32,6 +32,8 @@ func main() {
 		public.POST("/send-otp-email", controller.ResetPasswordController)
 		// Validate OTP
 		public.POST("/validate-otp", controller.ValidateResetTokenController)
+
+		public.POST("/send-maintenance-status-email/:id", controller.SendMaintenanceStatusEmail)
 		
 	}
 
@@ -110,6 +112,17 @@ func main() {
 		// HandoverImages
 		protected.PATCH("/handover-images", controller.UpdateHandoverImages)
 		protected.DELETE("/handover-images/:id", controller.DeleteHandoverImagesByTaskID)
+
+		// Notifications
+		protected.GET("/notifications", controller.ListNotifications)
+		protected.GET("/notifications/count/:id", controller.GetUnreadNotificationCountsByUserID)
+		protected.GET("/notification/by-request/:request_id/:user_id", controller.GetNotificationByRequestAndUser)
+		protected.GET("/notification/by-task/:task_id/:user_id", controller.GetNotificationByTaskAndUser)
+		protected.POST("/notification", controller.CreateNotification)
+		protected.PATCH("/notification/:id", controller.UpdateNotificationByID)
+		protected.PATCH("/notifications/request/:request_id", controller.UpdateNotificationsByRequestID)
+		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token

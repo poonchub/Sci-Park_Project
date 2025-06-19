@@ -70,7 +70,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
                             }}
                             key={index}
                         >
-                            <Card sx={{ px: 2, py: 1.8, height: '100%' }} >
+                            <Card sx={{ px: 2, py: 1.8, height: '100%', borderRadius: 2 }} >
                                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                     <Stack direction="row" spacing={1.5} alignItems="center">
                                         <Avatar
