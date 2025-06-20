@@ -19,7 +19,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faXmark, faCheckDouble, faEye, faBell } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faXmark, faCheckDouble, faEye, faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -273,7 +273,7 @@ function AllMaintenanceRequest() {
             return [
                 {
                     field: "ID",
-                    headerName: "หมายเลข",
+                    headerName: "No.",
                     flex: 0.5,
                     align: "center",
                     headerAlign: "center",
@@ -283,61 +283,15 @@ function AllMaintenanceRequest() {
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         return (
                             <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                {hasNotificationForUser && <AnimatedBell/>}
+                                {hasNotificationForUser && <AnimatedBell />}
                                 <Typography>{requestID}</Typography>
                             </Box>
                         );
                     },
                 },
                 {
-                    field: "User",
-                    headerName: "ผู้แจ้งซ่อม",
-                    description: "This column has a value getter and is not sortable.",
-                    sortable: false,
-                    flex: 1.2,
-                    valueGetter: (params: UserInterface) => `${params.EmployeeID} ${params.FirstName || ""} ${params.LastName || ""} `,
-                },
-                {
-                    field: "CreatedAt",
-                    headerName: "วันที่แจ้งซ่อม",
-                    type: "string",
-                    flex: 1,
-                    // editable: true,
-                    renderCell: (params) => {
-                        const date = dateFormat(params.row.CreatedAt || "");
-                        const time = timeFormat(params.row.CreatedAt || "");
-                        return (
-                            <Box>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                    }}
-                                >
-                                    {date}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                        color: "text.secondary",
-                                    }}
-                                >
-                                    {time}
-                                </Typography>
-                            </Box>
-                        );
-                    },
-                },
-                {
-                    field: "Description",
-                    headerName: "รายละเอียด",
+                    field: "Title",
+                    headerName: "Title",
                     type: "string",
                     flex: 1.8,
                     // editable: true,
@@ -400,8 +354,46 @@ function AllMaintenanceRequest() {
                     },
                 },
                 {
+                    field: "Date Submitted",
+                    headerName: "Date Submitted",
+                    type: "string",
+                    flex: 1,
+                    // editable: true,
+                    renderCell: (params) => {
+                        const date = dateFormat(params.row.CreatedAt || "");
+                        const time = timeFormat(params.row.CreatedAt || "");
+                        return (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {date}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {time}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
                     field: "RequestStatus",
-                    headerName: "สถานะ",
+                    headerName: "Status",
                     type: "string",
                     flex: 1,
                     // editable: true,
@@ -442,13 +434,55 @@ function AllMaintenanceRequest() {
                     },
                 },
                 {
-                    field: "Approved",
-                    headerName: "การอนุมัติงาน",
+                    field: "Requester",
+                    headerName: "Requester",
+                    description: "This column has a value getter and is not sortable.",
+                    sortable: false,
+                    flex: 1.2,
+                    renderCell: (params) => {
+                        const user = params.row.User;
+                        const name = `${user.FirstName || ""} ${user.LastName || ""}`;
+                        const employeeID = user.EmployeeID;
+                        return (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {name}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {employeeID}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Actions",
+                    headerName: "Actions",
                     type: "string",
-                    flex: 1,
+                    flex: 1.5,
                     // editable: true,
                     renderCell: (item) => {
-                        return item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin) ? (
+                        const data = item.row;
+                        const encodedId = Base64.encode(data.ID);
+                        const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
+                        return (
                             <Box
                                 className="container-btn"
                                 sx={{
@@ -457,60 +491,95 @@ function AllMaintenanceRequest() {
                                     flexWrap: "wrap",
                                 }}
                             >
-                                <Button
-                                    className="btn-approve"
-                                    variant="containedBlue"
-                                    onClick={() => {
-                                        setOpenPopupApproved(true);
-                                        setSelectedRequest(item.row);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faCheckDouble} />
-                                    <Typography variant="textButtonClassic">อนุมัติ</Typography>
-                                </Button>
-                                <Button
-                                    className="btn-reject"
-                                    variant="outlinedCancel"
-                                    onClick={() => {
-                                        setOpenConfirmRejected(true);
-                                        setSelectedRequest(item.row);
-                                    }}
-                                    sx={{
-                                        minWidth: "0px",
-                                        px: "6px",
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faXmark} size="xl" />
-                                </Button>
+                                {showButtonApprove ? (
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <Button
+                                            className="btn-approve"
+                                            variant="containedBlue"
+                                            onClick={() => {
+                                                setOpenPopupApproved(true);
+                                                setSelectedRequest(item.row);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                                // px: "10px",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faCheck} size="lg"/>
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Approve
+                                            </Typography>
+                                        </Button>
+                                        <Button
+                                            className="btn-reject"
+                                            variant="containedCancel"
+                                            onClick={() => {
+                                                setOpenConfirmRejected(true);
+                                                setSelectedRequest(item.row);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                                // px: "10px",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Reject
+                                            </Typography>
+                                        </Button>
+                                        <Link
+                                            to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}
+                                            style={{ display: "flex", flex: 1 }}
+                                        >
+                                            <Button
+                                                className="btn-detail"
+                                                variant="outlinedGray"
+                                                onClick={() => {
+                                                    handleClickCheck(data);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                    // px: "10px",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faEye} size="lg"/>
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Details
+                                                </Typography>
+                                            </Button>
+                                        </Link>
+                                    </Box>
+                                ) : (
+                                    <Link
+                                        to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}
+                                        style={{ display: "flex", flex: 1 }}
+                                    >
+                                        <Button
+                                            className="btn-detail"
+                                            variant="outlinedGray"
+                                            onClick={() => {
+                                                handleClickCheck(data);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                                // px: "10px",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faEye} size="lg"/>
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Details
+                                            </Typography>
+                                        </Button>
+                                    </Link>
+                                )}
                             </Box>
-                        ) : (
-                            <></>
-                        );
-                    },
-                },
-                {
-                    field: "Check",
-                    headerName: "",
-                    type: "string",
-                    flex: 1,
-                    // editable: true,
-                    renderCell: (item) => {
-                        const data = item.row;
-                        const encodedId = Base64.encode(data.ID);
-                        return (
-                            <Link to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => {
-                                        handleClickCheck(data);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faEye} />
-                                    <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
-                                </Button>
-                            </Link>
                         );
                     },
                 },

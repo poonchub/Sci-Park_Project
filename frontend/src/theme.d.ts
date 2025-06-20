@@ -12,7 +12,10 @@ declare module '@mui/system' {
 declare module '@mui/material/Button' {
     interface ButtonPropsVariantOverrides {
         containedBlue: true;
+        containedCancel: true;
+        containedWhite: true;
         outlinedCancel: true;
+        outlinedGray: true;
     }
 }
 
