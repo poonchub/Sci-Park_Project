@@ -25,7 +25,7 @@ function MyMaintenanceRequest() {
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
 
-    const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+    const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
@@ -418,7 +418,7 @@ function MyMaintenanceRequest() {
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText("");
-        setSelectedStatuses([]);
+        setSelectedStatuses([0]);
     };
 
     const filteredRequests = maintenanceRequests.filter((request) => {
@@ -489,7 +489,7 @@ function MyMaintenanceRequest() {
 
                     <Grid container size={{ xs: 12 }} spacing={2}>
                         {/* Count Status Section */}
-                        {isLoadingData ? (
+                        { !statusCounts ? (
                             <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
                         ) : (
                             <Grid
@@ -501,12 +501,12 @@ function MyMaintenanceRequest() {
                                     height: "auto",
                                 }}
                             >
-                                <RequestStatusStack statusCounts={statusCounts} />
+                                <RequestStatusStack statusCounts={statusCounts || {}} />
                             </Grid>
                         )}
 
                         {/* Filters Section */}
-                        {isLoadingData ? (
+                        {!statusCounts ? (
                             <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
                         ) : (
                             <FilterSection

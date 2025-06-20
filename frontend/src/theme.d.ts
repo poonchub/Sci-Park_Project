@@ -3,6 +3,7 @@ import '@mui/material/styles';
 
 declare module '@mui/system' {
   interface BreakpointOverrides {
+    mobileS: true;
     sm650: true;
     md1000: true;
   }

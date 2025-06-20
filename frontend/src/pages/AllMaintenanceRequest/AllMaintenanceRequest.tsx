@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import "./AllMaintenanceRequest.css";
-import { Box, Button, Card, Container, Grid, Skeleton, Typography, useMediaQuery } from "@mui/material";
+import { Badge, Box, Button, Card, Container, Grid, Skeleton, Typography, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 
@@ -19,7 +19,7 @@ import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faXmark, faCheckDouble, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faXmark, faCheckDouble, faEye, faBell } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -41,6 +41,8 @@ import { io } from "socket.io-client";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
+import { BellRing } from "lucide-react";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -275,6 +277,17 @@ function AllMaintenanceRequest() {
                     flex: 0.5,
                     align: "center",
                     headerAlign: "center",
+                    renderCell: (params) => {
+                        const requestID = params.row.ID;
+                        const notification = params.row.Notifications;
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                        return (
+                            <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell/>}
+                                <Typography>{requestID}</Typography>
+                            </Box>
+                        );
+                    },
                 },
                 {
                     field: "User",
@@ -613,7 +626,7 @@ function AllMaintenanceRequest() {
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText("");
-        setSelectedStatuses([]);
+        setSelectedStatuses([0]);
     };
 
     const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
@@ -754,7 +767,7 @@ function AllMaintenanceRequest() {
 
                     {!isLoadingData && statusCounts ? (
                         <>
-                            <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
+                            <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
                                 {/* Status Section */}
                                 <RequestStatusCards statusCounts={statusCounts || {}} />
 
@@ -774,7 +787,7 @@ function AllMaintenanceRequest() {
                                 />
                             </Grid>
                             {/* Chart Section */}
-                            <Grid size={{ xs: 12, lg: 5 }}>
+                            {/* <Grid size={{ xs: 12, lg: 5 }}>
                                 <Card
                                     sx={{
                                         bgcolor: "secondary.main",
@@ -796,7 +809,7 @@ function AllMaintenanceRequest() {
                                     >{`${totalAll} รายการ`}</Typography>
                                     <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
                                 </Card>
-                            </Grid>
+                            </Grid> */}
                         </>
                     ) : (
                         <Skeleton variant="rectangular" width="100%" height={320} sx={{ borderRadius: 2 }} />

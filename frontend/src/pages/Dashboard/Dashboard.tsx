@@ -18,11 +18,7 @@ import {
 } from "@mui/material";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleAction from "../../utils/handleActionApproval";
-import {
-    GetMaintenanceTypes,
-    GetUserById,
-    ListMaintenanceRequests,
-} from "../../services/http";
+import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from "../../services/http";
 import { UserInterface } from "../../interfaces/IUser";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 
@@ -34,20 +30,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import {
-    CalendarMonth,
-    CalendarToday,
-    CheckCircle,
-    Error,
-    Notifications,
-    SearchOff,
-} from "@mui/icons-material";
+import { CalendarMonth, CalendarToday, CheckCircle, Error, Notifications, SearchOff } from "@mui/icons-material";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import dateFormat from "../../utils/dateFormat";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { statusConfig } from "../../constants/statusConfig";
 import {
+    faBroom,
     faCalendarCheck,
     faChartLine,
     faCoins,
@@ -70,33 +60,17 @@ import { useTranslation } from "react-i18next";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
-    const [maintenanceRequests, setMaintenanceRequests] = useState<
-        MaintenanceRequestsInterface[]
-    >([]);
-    const [filteredRequest, setFilteredRequest] = useState<
-        MaintenanceRequestsInterface[]
-    >([]);
-    const [maintenanceTypes, setMaintenanceTypes] = useState<
-        MaintenanceTypesInteface[]
-    >([]);
-    const [groupedData, setGroupedData] = useState<
-        Record<
-            string,
-            { total: number; completed: number; completedPercentage: number }
-        >
-    >({});
+    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
+    const [filteredRequest, setFilteredRequest] = useState<MaintenanceRequestsInterface[]>([]);
+    const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
+    const [groupedData, setGroupedData] = useState<Record<string, { total: number; completed: number; completedPercentage: number }>>({});
 
-    const [countRequestStatus, setCountRequestStatus] =
-        useState<Record<string, number>>();
+    const [countRequestStatus, setCountRequestStatus] = useState<Record<string, number>>();
     const [completedPercentage, setCompletedPercentage] = useState<number>(0);
 
-    const [alerts, setAlerts] = useState<{ type: string; message: string }[]>(
-        []
-    );
-    const [openConfirmApproved, setOpenConfirmApproved] =
-        useState<boolean>(false);
-    const [openConfirmRejected, setOpenConfirmRejected] =
-        useState<boolean>(false);
+    const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
+    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 
     const [selectedRequest, setSelectedRequest] = useState(0);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
@@ -117,8 +91,7 @@ function Dashboard() {
             description: "This column has a value getter and is not sortable.",
             sortable: false,
             flex: 1.2,
-            valueGetter: (params: UserInterface) =>
-                `${params.FirstName || ""} ${params.LastName || ""}`,
+            valueGetter: (params: UserInterface) => `${params.FirstName || ""} ${params.LastName || ""}`,
         },
         {
             field: "CreatedAt",
@@ -166,9 +139,7 @@ function Dashboard() {
                                 maxWidth: "100%",
                             }}
                         >
-                            {areaID === 2
-                                ? `${AreaDetail}`
-                                : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                            {areaID === 2 ? `${AreaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                         </Typography>
                         <Typography
                             sx={{
@@ -194,8 +165,7 @@ function Dashboard() {
             // editable: true,
             renderCell: (params) => {
                 const statusName = params.row.RequestStatus?.Name || "Pending";
-                const statusKey = params.row.RequestStatus
-                    ?.Name as keyof typeof statusConfig;
+                const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
                 const { color, colorLite, icon } = statusConfig[statusKey] ?? {
                     color: "#000",
                     colorLite: "#000",
@@ -223,9 +193,7 @@ function Dashboard() {
                             }}
                         >
                             <FontAwesomeIcon icon={icon} />
-                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                {statusName}
-                            </Typography>
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
                         </Box>
                     </Box>
                 );
@@ -279,14 +247,7 @@ function Dashboard() {
                 const requestID = String(item.row.ID);
                 return (
                     <Link to="/check-requests">
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            onClick={() =>
-                                localStorage.setItem("requestID", requestID)
-                            }
-                        >
+                        <Button variant="contained" color="primary" size="small" onClick={() => localStorage.setItem("requestID", requestID)}>
                             ตรวจสอบ
                         </Button>
                     </Link>
@@ -297,9 +258,7 @@ function Dashboard() {
 
     const getUser = async () => {
         try {
-            const res = await GetUserById(
-                Number(localStorage.getItem("userId"))
-            );
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
             if (res) {
                 setUser(res);
             }
@@ -315,10 +274,7 @@ function Dashboard() {
                 setMaintenanceRequests(res);
             }
         } catch (error) {
-            console.error(
-                "Error fetching request maintenance requests:",
-                error
-            );
+            console.error("Error fetching request maintenance requests:", error);
         }
     };
 
@@ -336,6 +292,10 @@ function Dashboard() {
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setValueTab(newValue);
     };
+
+    const handleClearFillter = () => {
+        setSelectedDate(null)
+    }
 
     function a11yProps(index: number) {
         return {
@@ -362,39 +322,27 @@ function Dashboard() {
         if (selectedDate && dayjs(selectedDate).isValid()) {
             dataToUse = maintenanceRequests.filter((req) => {
                 const createdAt = dayjs(req.CreatedAt);
-                return (
-                    createdAt.month() === selectedDate.month() &&
-                    createdAt.year() === selectedDate.year()
-                );
+                return createdAt.month() === selectedDate.month() && createdAt.year() === selectedDate.year();
             });
         }
 
         setFilteredRequest(dataToUse);
 
-        const countStatus = dataToUse.reduce<Record<string, number>>(
-            (acc, item) => {
-                const status = item.RequestStatus?.Name || "Unknown";
-                acc[status] = (acc[status] || 0) + 1;
-                return acc;
-            },
-            {}
-        );
+        const countStatus = dataToUse.reduce<Record<string, number>>((acc, item) => {
+            const status = item.RequestStatus?.Name || "Unknown";
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
         setCountRequestStatus(countStatus);
 
         const total = dataToUse.length;
-        const completedCount = dataToUse.filter(
-            (item) => item.RequestStatus?.Name === "Completed"
-        ).length;
+        const completedCount = dataToUse.filter((item) => item.RequestStatus?.Name === "Completed").length;
 
-        const percentage =
-            total > 0 ? Math.round((completedCount / total) * 100) : 0;
+        const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
         setCompletedPercentage(percentage);
 
         // ✅ สร้าง group เริ่มต้นจาก maintenanceTypes ทั้งหมด
-        const grouped: Record<
-            string,
-            { total: number; completed: number; completedPercentage: number }
-        > = {};
+        const grouped: Record<string, { total: number; completed: number; completedPercentage: number }> = {};
 
         maintenanceTypes.forEach((type) => {
             const typeName = type.TypeName;
@@ -425,8 +373,7 @@ function Dashboard() {
             grouped[typeName].total += 1;
             if (isCompleted) grouped[typeName].completed += 1;
 
-            grouped[typeName].completedPercentage =
-                (grouped[typeName].completed / grouped[typeName].total) * 100;
+            grouped[typeName].completedPercentage = (grouped[typeName].completed / grouped[typeName].total) * 100;
         });
 
         setGroupedData(grouped);
@@ -651,23 +598,13 @@ function Dashboard() {
                     >
                         {title}
                     </Typography>
-                    <Typography
-                        variant="h5"
-                        fontWeight="bold"
-                        color="textPrimary"
-                    >
-                        {(typeof value === "number" &&
-                            title.toLowerCase().includes("revenue")) ||
-                        title.toLowerCase().includes("fee")
+                    <Typography variant="h5" fontWeight="bold" color="textPrimary">
+                        {(typeof value === "number" && title.toLowerCase().includes("revenue")) || title.toLowerCase().includes("fee")
                             ? `฿${value.toLocaleString()}`
                             : value.toLocaleString()}
                     </Typography>
                     {subtitle && (
-                        <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            sx={{ mt: 1 }}
-                        >
+                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                             {subtitle}
                         </Typography>
                     )}
@@ -728,22 +665,13 @@ function Dashboard() {
                 <Grid container spacing={3}>
                     {/* Header Section */}
                     <Grid className="title-box" size={{ xs: 12, md: 12 }}>
-                        <Typography
-                            variant="h5"
-                            className="title"
-                            sx={{ fontWeight: 700 }}
-                        >
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             {t("dashboard")}
                         </Typography>
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 12 }}>
-                        <Tabs
-                            value={valueTab}
-                            onChange={handleChange}
-                            variant="scrollable"
-                            allowScrollButtonsMobile
-                        >
+                        <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
                             <Tab label={t("maintenance")} {...a11yProps(0)} />
                             <Tab label={t("bookingRoom")} {...a11yProps(1)} />
                         </Tabs>
@@ -751,19 +679,11 @@ function Dashboard() {
 
                     <CustomTabPanel value={valueTab} index={0}>
                         <Grid container size={{ xs: 12 }} spacing={3}>
-                            <Grid
-                                container
-                                size={{ md: 12, lg: 8 }}
-                                spacing={3}
-                            >
+                            <Grid container size={{ md: 12, lg: 12, xl: 8 }} spacing={3}>
                                 {/* Status Section */}
-                                <RequestStatusCards
-                                    statusCounts={countRequestStatus || {}}
-                                />
+                                <RequestStatusCards statusCounts={countRequestStatus || {}} />
 
-                                <RequestStatusStackForAdmin
-                                    statusCounts={countRequestStatus || {}}
-                                />
+                                <RequestStatusStackForAdmin statusCounts={countRequestStatus || {}} />
 
                                 {/* Chart Line Section */}
                                 <Grid size={{ xs: 12, md: 12 }}>
@@ -785,61 +705,36 @@ function Dashboard() {
                                             sx={{
                                                 alignItems: "center",
                                             }}
+                                            spacing={1}
                                         >
-                                            <Grid size={{ xs: 7.5, md: 9 }}>
-                                                <Typography
-                                                    variant="subtitle1"
-                                                    color="text.main"
-                                                    fontWeight={600}
-                                                >
+                                            <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
+                                                <Typography variant="subtitle1" color="text.main" fontWeight={600}>
                                                     รายการแจ้งซ่อมรายเดือน
                                                 </Typography>
-                                                <Typography
-                                                    variant="h4"
-                                                    fontWeight={800}
-                                                    color="primary"
-                                                >
+                                                <Typography variant="h4" fontWeight={800} color="primary">
                                                     {`${filteredRequest.length} รายการ`}
                                                 </Typography>
                                             </Grid>
                                             <Grid
                                                 container
-                                                size={{ xs: 4.5, md: 3 }}
+                                                size={{ xs: 10, mobileS: 4, md: 6 }}
                                                 sx={{
-                                                    justifyContent: "flex-end",
-                                                    mb: 1,
+                                                    justifyContent: { xs: "flex-start", mobileS: "flex-end" },
                                                 }}
                                             >
-                                                <LocalizationProvider
-                                                    dateAdapter={AdapterDayjs}
-                                                >
+                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                     <DatePicker
-                                                        views={[
-                                                            "year",
-                                                            "month",
-                                                        ]}
+                                                        views={["year", "month"]}
                                                         value={selectedDate}
-                                                        onChange={(
-                                                            value,
-                                                            _
-                                                        ) => {
-                                                            if (
-                                                                dayjs.isDayjs(
-                                                                    value
-                                                                )
-                                                            ) {
-                                                                setSelectedDate(
-                                                                    value
-                                                                );
+                                                        onChange={(value, _) => {
+                                                            if (dayjs.isDayjs(value)) {
+                                                                setSelectedDate(value);
                                                             } else {
-                                                                setSelectedDate(
-                                                                    null
-                                                                );
+                                                                setSelectedDate(null);
                                                             }
                                                         }}
                                                         slots={{
-                                                            openPickerIcon:
-                                                                CalendarMonth,
+                                                            openPickerIcon: CalendarMonth,
                                                         }}
                                                         format="MM/YYYY"
                                                         sx={{
@@ -849,29 +744,39 @@ function Dashboard() {
                                                     />
                                                 </LocalizationProvider>
                                             </Grid>
+                                            <Grid size={{ xs: 2, mobileS: 0.5, md: 1 }}>
+                                                <Button
+                                                    onClick={handleClearFillter}
+                                                    sx={{
+                                                        minWidth: "35px",
+                                                        width: "100%",
+                                                        height: "45px",
+                                                        borderRadius: "10px",
+                                                        border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                        "&:hover": {
+                                                            boxShadow: "none",
+                                                            borderColor: "primary.main",
+                                                            backgroundColor: "transparent",
+                                                        },
+                                                    }}
+                                                >
+                                                    <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
+                                                </Button>
+                                            </Grid>
                                         </Grid>
-                                        <ApexLineChart
-                                            data={filteredRequest}
-                                            height={250}
-                                            selectedDate={selectedDate}
-                                        />
+                                        <ApexLineChart data={filteredRequest} height={250} selectedDate={selectedDate} />
                                     </Card>
                                 </Grid>
                             </Grid>
 
                             {/* Chart Donut Section */}
-                            <Grid size={{ xs: 12, lg: 4 }}>
-                                <ApexDonutChart
-                                    data={groupedData}
-                                    completed={completedPercentage}
-                                />
+                            <Grid size={{ xs: 12, sm: 12 ,lg: 12, xl: 4 }}>
+                                <ApexDonutChart data={groupedData} completed={completedPercentage} />
                             </Grid>
 
                             {/* Data Table */}
                             <Grid size={{ xs: 12, md: 12 }}>
-                                <Card
-                                    sx={{ width: "100%", borderRadius: 2 }}
-                                ></Card>
+                                <Card sx={{ width: "100%", borderRadius: 2 }}></Card>
                             </Grid>
                         </Grid>
                     </CustomTabPanel>
@@ -890,12 +795,7 @@ function Dashboard() {
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                    <SummaryCard
-                                        title="Available Rooms"
-                                        value={summaryData.availableRooms}
-                                        icon={faDoorOpen}
-                                        color="#4caf50"
-                                    />
+                                    <SummaryCard title="Available Rooms" value={summaryData.availableRooms} icon={faDoorOpen} color="#4caf50" />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
                                     <SummaryCard
@@ -941,18 +841,10 @@ function Dashboard() {
                                 <Grid size={{ xs: 12, lg: 8 }}>
                                     <Card>
                                         <CardContent>
-                                            <Typography
-                                                variant="h6"
-                                                gutterBottom
-                                            >
+                                            <Typography variant="h6" gutterBottom>
                                                 Revenue & Booking Trends
                                             </Typography>
-                                            <Chart
-                                                options={revenueChartOptions}
-                                                series={revenueChartSeries}
-                                                type="line"
-                                                height={350}
-                                            />
+                                            <Chart options={revenueChartOptions} series={revenueChartSeries} type="line" height={350} />
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -961,18 +853,10 @@ function Dashboard() {
                                 <Grid size={{ xs: 12, lg: 4 }}>
                                     <Card sx={{ height: "100%" }}>
                                         <CardContent>
-                                            <Typography
-                                                variant="h6"
-                                                gutterBottom
-                                            >
+                                            <Typography variant="h6" gutterBottom>
                                                 Revenue vs Fees
                                             </Typography>
-                                            <Chart
-                                                options={feeChartOptions}
-                                                series={feeChartSeries}
-                                                type="pie"
-                                                height={350}
-                                            />
+                                            <Chart options={feeChartOptions} series={feeChartSeries} type="pie" height={350} />
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -984,18 +868,10 @@ function Dashboard() {
                                 <Grid size={{ xs: 12, lg: 8 }}>
                                     <Card sx={{ height: "100%" }}>
                                         <CardContent>
-                                            <Typography
-                                                variant="h6"
-                                                gutterBottom
-                                            >
+                                            <Typography variant="h6" gutterBottom>
                                                 Weekly Booking Pattern
                                             </Typography>
-                                            <Chart
-                                                options={bookingTrendsOptions}
-                                                series={bookingTrendsSeries}
-                                                type="bar"
-                                                height={300}
-                                            />
+                                            <Chart options={bookingTrendsOptions} series={bookingTrendsSeries} type="bar" height={300} />
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -1004,96 +880,70 @@ function Dashboard() {
                                 <Grid size={{ xs: 12, lg: 4 }}>
                                     <Card>
                                         <CardContent>
-                                            <Box
-                                                display="flex"
-                                                alignItems="center"
-                                                mb={2}
-                                            >
+                                            <Box display="flex" alignItems="center" mb={2}>
                                                 <Notifications
                                                     sx={{
                                                         mr: 1,
                                                         color: "primary.main",
                                                     }}
                                                 />
-                                                <Typography variant="h6">
-                                                    Recent Activity
-                                                </Typography>
+                                                <Typography variant="h6">Recent Activity</Typography>
                                             </Box>
                                             <List dense>
-                                                {activityData.map(
-                                                    (activity, index) => (
-                                                        <React.Fragment
-                                                            key={activity.id}
-                                                        >
-                                                            <ListItem
-                                                                sx={{ px: 0 }}
+                                                {activityData.map((activity, index) => (
+                                                    <React.Fragment key={activity.id}>
+                                                        <ListItem sx={{ px: 0 }}>
+                                                            <ListItemIcon
+                                                                sx={{
+                                                                    minWidth: 40,
+                                                                }}
                                                             >
-                                                                <ListItemIcon
-                                                                    sx={{
-                                                                        minWidth: 40,
-                                                                    }}
-                                                                >
-                                                                    {activity.type ===
-                                                                        "success" && (
-                                                                        <CheckCircle
-                                                                            sx={{
-                                                                                color: "success.main",
-                                                                                fontSize: 20,
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                    {activity.type ===
-                                                                        "error" && (
-                                                                        <Error
-                                                                            sx={{
-                                                                                color: "error.main",
-                                                                                fontSize: 20,
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                    {activity.type ===
-                                                                        "info" && (
-                                                                        <CalendarToday
-                                                                            sx={{
-                                                                                color: "info.main",
-                                                                                fontSize: 20,
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </ListItemIcon>
-                                                                <ListItemText
-                                                                    primary={
-                                                                        <Typography
-                                                                            variant="body2"
-                                                                            sx={{
-                                                                                fontWeight: 500,
-                                                                            }}
-                                                                        >
-                                                                            {
-                                                                                activity.message
-                                                                            }
-                                                                        </Typography>
-                                                                    }
-                                                                    secondary={
-                                                                        <Typography
-                                                                            variant="caption"
-                                                                            color="textSecondary"
-                                                                        >
-                                                                            {
-                                                                                activity.time
-                                                                            }
-                                                                        </Typography>
-                                                                    }
-                                                                />
-                                                            </ListItem>
-                                                            {index <
-                                                                activityData.length -
-                                                                    1 && (
-                                                                <Divider />
-                                                            )}
-                                                        </React.Fragment>
-                                                    )
-                                                )}
+                                                                {activity.type === "success" && (
+                                                                    <CheckCircle
+                                                                        sx={{
+                                                                            color: "success.main",
+                                                                            fontSize: 20,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                                {activity.type === "error" && (
+                                                                    <Error
+                                                                        sx={{
+                                                                            color: "error.main",
+                                                                            fontSize: 20,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                                {activity.type === "info" && (
+                                                                    <CalendarToday
+                                                                        sx={{
+                                                                            color: "info.main",
+                                                                            fontSize: 20,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                            </ListItemIcon>
+                                                            <ListItemText
+                                                                primary={
+                                                                    <Typography
+                                                                        variant="body2"
+                                                                        sx={{
+                                                                            fontWeight: 500,
+                                                                        }}
+                                                                    >
+                                                                        {activity.message}
+                                                                    </Typography>
+                                                                }
+                                                                secondary={
+                                                                    <Typography variant="caption" color="textSecondary">
+                                                                        {activity.time}
+                                                                    </Typography>
+                                                                }
+                                                            />
+                                                        </ListItem>
+                                                        {index < activityData.length - 1 && <Divider />}
+                                                    </React.Fragment>
+                                                ))}
                                             </List>
                                         </CardContent>
                                     </Card>

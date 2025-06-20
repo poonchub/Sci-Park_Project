@@ -44,6 +44,7 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench } from "lucide-react";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -83,6 +84,8 @@ const WindowsLayout: React.FC = (props: any) => {
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
 
+    const iconSize = 24
+
     const { t } = useTranslation();
 
     const NAVIGATION: Navigation = [
@@ -93,17 +96,17 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "home",
             title: t("home"),
-            icon: <HomeOutlined />,
+            icon: <Home size={iconSize}/>,
         },
         {
             segment: "booking-room",
             title: t("bookingRoom"),
-            icon: <MeetingRoomOutlined />,
+            icon: <DoorOpen size={iconSize}/>,
         },
         {
             segment: "maintenance/my-maintenance-request",
             title: t("maintenance"),
-            icon: <AssignmentIndOutlined />,
+            icon: <Wrench size={iconSize}/>,
         },
         {
             kind: "divider",
@@ -115,12 +118,12 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "dashboard",
             title: t("dashboard"),
-            icon: <DashboardOutlinedIcon />,
+            icon: <LayoutDashboard size={iconSize}/>,
         },
         {
             segment: "maintenance",
             title: t("maintenance"),
-            icon: <HandymanOutlined />,
+            icon: <Wrench size={iconSize}/>,
             action:
                 notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                     <Chip
@@ -139,7 +142,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 {
                     segment: "all-maintenance-request",
                     title: t("requestList"),
-                    icon: <FactCheckOutlined />,
+                    icon: <ClipboardList size={iconSize}/>,
                     action:
                         notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                             <Chip
@@ -152,7 +155,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 {
                     segment: "accept-work",
                     title: "My Work",
-                    icon: <HomeRepairServiceOutlined />,
+                    icon: <HardHat />,
                     action:
                         notificationCounts?.UnreadTasks && notificationCounts.UnreadTasks && isOperator ? (
                             <Chip
@@ -167,17 +170,17 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "user",
             title: t("user"),
-            icon: <AccountBoxOutlinedIcon />,
+            icon: <UserRound size={iconSize} />,
             children: [
                 {
                     segment: "manage-user",
                     title: t("manageUser"),
-                    icon: <ManageAccountsOutlinedIcon />,
+                    icon: <UserCog size={iconSize}/>,
                 },
                 {
                     segment: "add-user",
                     title: t("addUser"),
-                    icon: <PersonAddAltOutlinedIcon />,
+                    icon: <UserRoundPlus  size={iconSize}/>,
                 },
                 {
                     segment: "traffic",
@@ -194,17 +197,17 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "room",
             title: t("room"),
-            icon: <BarChartIcon />,
+            icon: <DoorOpen size={iconSize}/>,
             children: [
                 {
                     segment: "manage-room",
                     title: t("manageRoom"),
-                    icon: <DescriptionIcon />,
+                    icon: <ClipboardList />,
                 },
                 {
                     segment: "traffic",
                     title: "Traffic",
-                    icon: <DescriptionIcon />,
+                    icon: <ClipboardList />,
                 },
             ],
         },

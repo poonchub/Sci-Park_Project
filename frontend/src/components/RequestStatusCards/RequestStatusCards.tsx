@@ -10,6 +10,7 @@ interface Props {
         xs?: number;
         sm?: number;
         md?: number;
+        md1000?: number;
         lg?: number;
         xl?: number;
     };
@@ -51,7 +52,8 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                 size={{
                     xs: size?.xs || 12,
                     sm: size?.sm || 6,
-                    md: size?.md || 4,
+                    md: size?.md || 6,
+                    md1000: size?.md1000 || 4,
                     lg: size?.lg,
                     xl: size?.xl,
                 }}

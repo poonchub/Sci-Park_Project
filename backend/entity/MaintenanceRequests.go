@@ -28,7 +28,7 @@ type MaintenanceRequest struct {
 	MaintenanceType   MaintenanceType   `gorm:"foreignKey:MaintenanceTypeID" valid:"-"`
 
 	MaintenanceImages []MaintenanceImage `gorm:"foreignKey:RequestID"`
-  Notification		  []Notification	   `gorm:"foreignKey:RequestID"`
+  	Notifications	  []Notification	 `gorm:"foreignKey:RequestID"`
 
 	ManagerApproval *ManagerApproval `gorm:"foreignKey:RequestID"`
 	MaintenanceTask *MaintenanceTask `gorm:"foreignKey:RequestID"`
