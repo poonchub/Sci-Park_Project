@@ -41,7 +41,7 @@ const handleActionInspection = async (
         return;
     }
 
-    if (files?.length === 0) {
+    if (actionType === "rework" && files?.length === 0) {
         setAlerts((prev) => [...prev, { type: 'warning', message: "No images uploaded" }]);
         return;
     }
@@ -78,11 +78,6 @@ const handleActionInspection = async (
         const request: MaintenanceRequestsInterface = {
             RequestStatusID: statusID,
         };
-
-        console.log("inspection: ", inspection)
-        console.log("task: ", task)
-        console.log("request: ", request)
-        console.log("actionType: ", actionType)
 
         const resInspection = await CreateInspection(inspection);
         if (!resInspection || resInspection.error)

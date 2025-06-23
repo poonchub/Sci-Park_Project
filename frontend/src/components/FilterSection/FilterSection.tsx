@@ -120,7 +120,7 @@ const FilterSection = ({
                                     }
                                 }}
                             >
-                                <MenuItem value={0}>ทุกสถานะ</MenuItem>
+                                <MenuItem value={0}>All Status</MenuItem>
                                 {!(isAdmin || isManager) && <MenuItem value="in-process">In Process</MenuItem>}
                                 {requestStatuses
                                     .filter(status => !inProcessNames.includes(status.Name || ''))

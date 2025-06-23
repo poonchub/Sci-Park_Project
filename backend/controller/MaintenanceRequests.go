@@ -238,6 +238,7 @@ func GetMaintenanceRequestsForUser(c *gin.Context) {
 		Preload("RequestStatus").
 		Preload("Area").
 		Preload("MaintenanceType").
+		Preload("MaintenanceTask").
 		Order("maintenance_requests.created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&maintenanceRequests).Error; err != nil {

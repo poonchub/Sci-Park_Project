@@ -1,7 +1,7 @@
 import { BellRing } from "lucide-react";
 import { motion } from "framer-motion";
 
-const MotionBellRing = motion(BellRing);
+const MotionBellRing = motion.create(BellRing);
 
 export default function AnimatedBell() {
   return (
