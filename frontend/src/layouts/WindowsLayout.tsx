@@ -212,8 +212,8 @@ const WindowsLayout: React.FC = (props: any) => {
             ],
         },
         {
-            segment: "integrations",
-            title: "Integrations",
+            segment: "all-booking-room",
+            title: "All Booking Room",
             icon: <LayersIcon />,
         },
         {
@@ -230,6 +230,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance/my-maintenance-request",
             "room",
             "user",
+            "all-booking-room",
 
             "all-maintenance-request",
             "manage-room",
@@ -242,6 +243,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "booking-room",
             "maintenance",
             "maintenance/my-maintenance-request",
+            "all-booking-room",
 
             "all-maintenance-request",
         ],

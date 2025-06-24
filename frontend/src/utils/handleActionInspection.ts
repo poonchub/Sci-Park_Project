@@ -1,7 +1,15 @@
 import { InspectionsInterface } from "../interfaces/IInspections";
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
-import { CreateInspection, DeleteHandoverImagesByTaskID, UpdateMaintenanceImages, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
+import { NotificationsInterface } from "../interfaces/INotifications";
+import {
+    CreateInspection,
+    DeleteHandoverImagesByTaskID,
+    UpdateMaintenanceImages,
+    UpdateMaintenanceRequestByID,
+    UpdateMaintenanceTaskByID,
+    UpdateNotificationsByTaskID,
+} from "../services/http";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -28,7 +36,7 @@ const handleActionInspection = async (
         setOpenConfirmRework,
         actionType,
         note,
-        files
+        files,
     }: handleActionInspectionProps & { actionType: "confirm" | "rework" }
 ) => {
     if (!userID || !selectedRequest) {
@@ -42,24 +50,23 @@ const handleActionInspection = async (
     }
 
     if (actionType === "rework" && files?.length === 0) {
-        setAlerts((prev) => [...prev, { type: 'warning', message: "No images uploaded" }]);
+        setAlerts((prev) => [...prev, { type: "warning", message: "No images uploaded" }]);
         return;
     }
 
     try {
-
         if (files && files.length > 0) {
             const formDataFile = new FormData();
             formDataFile.append("userID", String(userID));
             formDataFile.append("requestID", String(selectedRequest.ID));
 
-            files.forEach(file => formDataFile.append("files", file));
+            files.forEach((file) => formDataFile.append("files", file));
 
             console.log("📤 FormData:", Array.from(formDataFile.entries()));
 
             const resImage = await UpdateMaintenanceImages(formDataFile);
             if (!resImage) {
-                setAlerts((prev) => [...prev, { type: 'error', message: resImage?.Error || "Failed to upload images" }]);
+                setAlerts((prev) => [...prev, { type: "error", message: resImage?.Error || "Failed to upload images" }]);
                 return;
             }
         }
@@ -80,27 +87,32 @@ const handleActionInspection = async (
         };
 
         const resInspection = await CreateInspection(inspection);
-        if (!resInspection || resInspection.error)
-            throw new Error(resInspection?.error || "Failed to create inspection");
+        if (!resInspection || resInspection.error) throw new Error(resInspection?.error || "Failed to create inspection");
 
         const resTask = await UpdateMaintenanceTaskByID(task, selectedRequest.MaintenanceTask?.ID);
-        if (!resTask || resTask.error)
-            throw new Error(resTask?.error || "Failed to update maintenance task");
+        if (!resTask || resTask.error) throw new Error(resTask?.error || "Failed to update maintenance task");
 
         if (actionType === "rework") {
-            const resImages = await DeleteHandoverImagesByTaskID(selectedRequest.MaintenanceTask?.ID)
-            if (!resImages || resImages.error)
-                throw new Error(resImages?.error || "Failed to delete handover images");
+            const resImages = await DeleteHandoverImagesByTaskID(selectedRequest.MaintenanceTask?.ID);
+            if (!resImages || resImages.error) throw new Error(resImages?.error || "Failed to delete handover images");
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
-        if (!resRequest || resRequest.error)
-            throw new Error(resRequest?.error || "Failed to update request status");
+        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
+
+        if (actionType === "rework") {
+            const notificationDataUpdate: NotificationsInterface = {
+                IsRead: false,
+            };
+            const resUpdateNotification = await UpdateNotificationsByTaskID(notificationDataUpdate, selectedRequest.MaintenanceTask?.ID);
+            if (!resUpdateNotification || resUpdateNotification.error)
+                throw new Error(resUpdateNotification?.error || "Failed to update notification");
+        }
 
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
-                { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework Requested successful" }
+                { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework Requested successful" },
             ]);
 
             setOpenConfirmInspection(false);

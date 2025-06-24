@@ -11,6 +11,7 @@ import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceReq
 import AddUserForm from "../pages/AddUser/AddUserForm";
 import ManageUsers from "../pages/ManageUsers/ManageUsers";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
+import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 
 const ManagerRoutes = (): RouteObject => {
     return {
@@ -56,6 +57,10 @@ const ManagerRoutes = (): RouteObject => {
             {
 				path: "/about-developer",
 				element: <AboutDeveloper/>
+			},
+            {
+				path: "/all-booking-room",
+				element: <AllBookingRoom/>
 			},
             {
 				path: "",

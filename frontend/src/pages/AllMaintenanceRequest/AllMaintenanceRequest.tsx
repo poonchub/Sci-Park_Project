@@ -205,15 +205,7 @@ function AllMaintenanceRequest() {
                                     </Box>
                                 </Grid>
 
-                                <Grid
-                                    size={{ xs: 5 }}
-                                    container
-                                    direction="column"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        alignItems: "flex-end",
-                                    }}
-                                >
+                                <Grid size={{ xs: 5 }} container direction="column">
                                     <Box
                                         sx={{
                                             bgcolor: statusColorLite,
@@ -224,7 +216,8 @@ function AllMaintenanceRequest() {
                                             gap: 1,
                                             color: statusColor,
                                             alignItems: "center",
-                                            width: '100%'
+                                            justifyContent: "center",
+                                            width: "100%",
                                         }}
                                     >
                                         <FontAwesomeIcon icon={statusIcon} />
@@ -351,7 +344,7 @@ function AllMaintenanceRequest() {
                         const notification = params.row.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         return (
-                            <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
                                 {hasNotificationForUser && <AnimatedBell />}
                                 <Typography>{requestID}</Typography>
                             </Box>
@@ -381,7 +374,14 @@ function AllMaintenanceRequest() {
                         };
 
                         return (
-                            <Box>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -432,7 +432,14 @@ function AllMaintenanceRequest() {
                         const date = dateFormat(params.row.CreatedAt || "");
                         const time = timeFormat(params.row.CreatedAt || "");
                         return (
-                            <Box>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -479,7 +486,8 @@ function AllMaintenanceRequest() {
                             <Box
                                 sx={{
                                     display: "flex",
-                                    alignItems: "flex-start",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
                                     height: "100%",
                                 }}
                             >
@@ -493,7 +501,8 @@ function AllMaintenanceRequest() {
                                         gap: 1,
                                         color: color,
                                         alignItems: "center",
-                                        width: '100%'
+                                        justifyContent: "center",
+                                        width: "100%",
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
@@ -524,7 +533,14 @@ function AllMaintenanceRequest() {
                         const name = `${user.FirstName || ""} ${user.LastName || ""}`;
                         const employeeID = user.EmployeeID;
                         return (
-                            <Box>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -568,6 +584,8 @@ function AllMaintenanceRequest() {
                                     display: "flex",
                                     gap: 0.8,
                                     flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: '100%'
                                 }}
                             >
                                 {showButtonApprove ? (
@@ -748,6 +766,7 @@ function AllMaintenanceRequest() {
 
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+        setIsBottonActive(true);
         handleActionApproval(statusID, {
             userID: user?.ID,
             selectedRequest,
@@ -758,8 +777,8 @@ function AllMaintenanceRequest() {
             setOpenConfirmRejected,
             actionType,
             note,
-            setIsBottonActive,
         });
+        setIsBottonActive(false);
     };
 
     const handleClearFillter = () => {
@@ -900,7 +919,6 @@ function AllMaintenanceRequest() {
                             className="title"
                             sx={{
                                 fontWeight: 700,
-                                fontSize: {},
                             }}
                         >
                             รายการแจ้งซ่อม
@@ -917,7 +935,7 @@ function AllMaintenanceRequest() {
 
                                 {/* Filters Section size lg */}
                                 <FilterSection
-                                    display={{ xs: "none", md: "none", lg: "flex" }}
+                                    // display={{ xs: "none", md: "none", lg: "flex" }}
                                     searchText={searchText}
                                     setSearchText={setSearchText}
                                     selectedDate={selectedDate}
@@ -958,7 +976,7 @@ function AllMaintenanceRequest() {
                     )}
 
                     {/* Filters Section size md */}
-                    <FilterSection
+                    {/* <FilterSection
                         display={{ xs: "flex", lg: "none" }}
                         searchText={searchText}
                         setSearchText={setSearchText}
@@ -968,7 +986,7 @@ function AllMaintenanceRequest() {
                         setSelectedStatuses={setSelectedStatuses}
                         handleClearFilter={handleClearFillter}
                         requestStatuses={requestStatuses}
-                    />
+                    /> */}
 
                     {/* Data Table */}
                     <Grid size={{ xs: 12, md: 12 }}>

@@ -156,8 +156,11 @@ function CheckRequest() {
 
     // Handle sumitting task to an operator
     const onClickSubmit = () => {
+        setIsBottonActive(true)
+
         if (!maintenanceRequest) {
             setAlerts((prev) => [...prev, { type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }]);
+            setIsBottonActive(false)
             return;
         }
 
@@ -169,12 +172,13 @@ function CheckRequest() {
             files: submitfiles,
             setFiles: setSubmitFiles,
         });
+        setIsBottonActive(false)
     };
 
     // Handle approval or rejection
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionApproval(statusID, {
             userID: Number(userID),
             selectedRequest: maintenanceRequest || {},
@@ -185,13 +189,13 @@ function CheckRequest() {
             setOpenConfirmRejected,
             actionType,
             note,
-            setIsBottonActive,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionAcception(statusID, {
             selectedTask: maintenanceTask,
             setAlerts,
@@ -200,11 +204,12 @@ function CheckRequest() {
             actionType,
             note,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionInspection(statusID, {
             userID,
             selectedRequest: maintenanceRequest,
@@ -215,10 +220,12 @@ function CheckRequest() {
             note,
             files: requestfiles,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickCancel = async () => {
         try {
+            setIsBottonActive(true)
             const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
@@ -231,13 +238,14 @@ function CheckRequest() {
             setTimeout(() => {
                 setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
 
-                getMaintenanceRequest();
                 setOpenConfirmCancelledFromOwnRequest(false);
+                setIsBottonActive(false)
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
+            setIsBottonActive(false)
         }
     };
 

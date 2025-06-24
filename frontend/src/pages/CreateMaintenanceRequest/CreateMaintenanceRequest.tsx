@@ -310,7 +310,6 @@ function CreateMaintenanceRequestPage() {
                 location.href = "/maintenance/my-maintenance-request";
             }, 1800);
 
-            setIsSubmitButtonActive(false);
         } catch (error) {
             console.error("🚨 Error submitting request:", error);
             handleSetAlert("error", "An unexpected error occurred");
