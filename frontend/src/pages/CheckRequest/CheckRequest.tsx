@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Grid, Skeleton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faCheck, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import "./CheckRequest.css";
 
@@ -156,8 +156,11 @@ function CheckRequest() {
 
     // Handle sumitting task to an operator
     const onClickSubmit = () => {
+        setIsBottonActive(true)
+
         if (!maintenanceRequest) {
             setAlerts((prev) => [...prev, { type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }]);
+            setIsBottonActive(false)
             return;
         }
 
@@ -169,12 +172,13 @@ function CheckRequest() {
             files: submitfiles,
             setFiles: setSubmitFiles,
         });
+        setIsBottonActive(false)
     };
 
     // Handle approval or rejection
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionApproval(statusID, {
             userID: Number(userID),
             selectedRequest: maintenanceRequest || {},
@@ -185,13 +189,13 @@ function CheckRequest() {
             setOpenConfirmRejected,
             actionType,
             note,
-            setIsBottonActive,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionAcception(statusID, {
             selectedTask: maintenanceTask,
             setAlerts,
@@ -200,11 +204,12 @@ function CheckRequest() {
             actionType,
             note,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-
+        setIsBottonActive(true)
         handleActionInspection(statusID, {
             userID,
             selectedRequest: maintenanceRequest,
@@ -215,10 +220,12 @@ function CheckRequest() {
             note,
             files: requestfiles,
         });
+        setIsBottonActive(false)
     };
 
     const handleClickCancel = async () => {
         try {
+            setIsBottonActive(true)
             const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
@@ -231,13 +238,14 @@ function CheckRequest() {
             setTimeout(() => {
                 setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
 
-                getMaintenanceRequest();
                 setOpenConfirmCancelledFromOwnRequest(false);
+                setIsBottonActive(false)
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
+            setIsBottonActive(false)
         }
     };
 
@@ -449,11 +457,11 @@ function CheckRequest() {
                                     </Typography>
                                 </Grid>
 
-                                <Grid size={{ xs: 12, md: 6 }}>
+                                <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                     <RequestInfoTable data={maintenanceRequest} />
                                 </Grid>
 
-                                <Grid container size={{ xs: 12, md: 6 }} direction="column">
+                                <Grid container size={{ xs: 12, md: 12, lg: 6 }} direction="column">
                                     {!isNotApproved && maintenanceRequest ? (
                                        <Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
                                             <Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
@@ -493,27 +501,22 @@ function CheckRequest() {
                                         <Box sx={{ gap: 1, display: "flex" }}>
                                             {/* Reject button */}
                                             <Button
-                                                variant="outlinedCancel"
+                                                variant="containedCancel"
                                                 onClick={() => setOpenConfirmRejected(true)}
                                                 sx={{
                                                     minWidth: "0px",
-                                                    px: "8px",
+                                                    px: 2,
                                                     py: 1,
-                                                    color: "gray",
-                                                    borderColor: "gray",
-                                                    "&:hover": {
-                                                        borderColor: "#FF3B30",
-                                                    },
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                <Typography variant="textButtonClassic">ปฏิเสธคำร้อง</Typography>
+                                                <Typography variant="textButtonClassic">Reject</Typography>
                                             </Button>
 
                                             {/* Approve button */}
                                             <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
-                                                <FontAwesomeIcon icon={faTools} />
-                                                <Typography variant="textButtonClassic">อนุมัติคำร้อง</Typography>
+                                                <FontAwesomeIcon icon={faCheck} size="lg"/>
+                                                <Typography variant="textButtonClassic">Approve</Typography>
                                             </Button>
                                         </Box>
                                     ) : (
@@ -530,7 +533,7 @@ function CheckRequest() {
                                         >
                                             {isOwnRequest && isPending ? (
                                                 <Button
-                                                    variant="outlinedCancel"
+                                                    variant="containedCancel"
                                                     onClick={() => {
                                                         setOpenConfirmCancelledFromOwnRequest(true);
                                                     }}
@@ -538,13 +541,10 @@ function CheckRequest() {
                                                         minWidth: "0px",
                                                         px: 4,
                                                         py: 1,
-                                                        "&:hover": {
-                                                            borderColor: "#FF3B30",
-                                                        },
                                                     }}
                                                 >
                                                     <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                    <Typography variant="textButtonClassic">ยกเลิกคำร้อง</Typography>
+                                                    <Typography variant="textButtonClassic">Cancel</Typography>
                                                 </Button>
                                             ) : isWaitingForReview ? (
                                                 <Box sx={{ gap: 1, display: "flex" }}>
@@ -555,7 +555,7 @@ function CheckRequest() {
                                                         }}
                                                     >
                                                         <FontAwesomeIcon icon={faRepeat} />
-                                                        <Typography variant="textButtonClassic">ขอซ่อมซ้ำ</Typography>
+                                                        <Typography variant="textButtonClassic">Rework</Typography>
                                                     </Button>
 
                                                     <Button
@@ -565,8 +565,8 @@ function CheckRequest() {
                                                         }}
                                                         sx={{ px: 4, py: 1 }}
                                                     >
-                                                        <FontAwesomeIcon icon={faTools} />
-                                                        <Typography variant="textButtonClassic">ยืนยันการตรวจรับ</Typography>
+                                                        <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                        <Typography variant="textButtonClassic">Confirm</Typography>
                                                     </Button>
                                                 </Box>
                                             ) : (
@@ -578,23 +578,18 @@ function CheckRequest() {
                                     {(isApproved || isInProgress || isRework) && isOperator && isOwnTask && (
                                         <Box sx={{ gap: 1, display: "flex" }}>
                                             <Button
-                                                variant="outlinedCancel"
+                                                variant="containedCancel"
                                                 onClick={() => {
                                                     setOpenConfirmCancelledFromManager(true);
                                                 }}
                                                 sx={{
                                                     minWidth: "0px",
-                                                    px: "8px",
+                                                    px: 2,
                                                     py: 1,
-                                                    color: "gray",
-                                                    borderColor: "gray",
-                                                    "&:hover": {
-                                                        borderColor: "#FF3B30",
-                                                    },
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                <Typography variant="textButtonClassic">ยกเลิกงาน</Typography>
+                                                <Typography variant="textButtonClassic">Cancel</Typography>
                                             </Button>
 
                                             {isApproved || isRework ? (
@@ -605,8 +600,8 @@ function CheckRequest() {
                                                     }}
                                                     sx={{ px: 4, py: 1 }}
                                                 >
-                                                    <FontAwesomeIcon icon={faTools} />
-                                                    <Typography variant="textButtonClassic">เริ่มงาน</Typography>
+                                                    <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                    <Typography variant="textButtonClassic">Start</Typography>
                                                 </Button>
                                             ) : isInProgress || isWaitingForReview ? (
                                                 <Button
@@ -616,7 +611,7 @@ function CheckRequest() {
                                                     }}
                                                 >
                                                     <FontAwesomeIcon icon={faPaperPlane} />
-                                                    <Typography variant="textButtonClassic">ส่งงาน</Typography>
+                                                    <Typography variant="textButtonClassic">Submit</Typography>
                                                 </Button>
                                             ) : (
                                                 <></>

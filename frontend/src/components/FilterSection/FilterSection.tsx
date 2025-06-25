@@ -16,6 +16,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
+import { Activity, CalendarDays } from "lucide-react";
 
 
 type Props = {
@@ -100,7 +101,7 @@ const FilterSection = ({
                             <Select
                                 startAdornment={
                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                        <FontAwesomeIcon icon={faChartSimple} size="lg" />
+                                        <Activity size={18} strokeWidth={3}/>
                                     </InputAdornment>
                                 }
                                 value={
@@ -119,7 +120,7 @@ const FilterSection = ({
                                     }
                                 }}
                             >
-                                <MenuItem value={0}>ทุกสถานะ</MenuItem>
+                                <MenuItem value={0}>All Status</MenuItem>
                                 {!(isAdmin || isManager) && <MenuItem value="in-process">In Process</MenuItem>}
                                 {requestStatuses
                                     .filter(status => !inProcessNames.includes(status.Name || ''))

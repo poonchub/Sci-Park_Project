@@ -3,6 +3,7 @@ import '@mui/material/styles';
 
 declare module '@mui/system' {
   interface BreakpointOverrides {
+    mobileS: true;
     sm650: true;
     md1000: true;
   }
@@ -11,7 +12,10 @@ declare module '@mui/system' {
 declare module '@mui/material/Button' {
     interface ButtonPropsVariantOverrides {
         containedBlue: true;
+        containedCancel: true;
+        containedWhite: true;
         outlinedCancel: true;
+        outlinedGray: true;
     }
 }
 

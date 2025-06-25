@@ -1,9 +1,10 @@
-import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Card, Divider, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+    faCheck,
     faEye,
     faMagnifyingGlass,
     faPaperPlane,
@@ -34,7 +35,7 @@ import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import dateFormat from "../../utils/dateFormat";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleActionAcception from "../../utils/handleActionAcception";
@@ -50,6 +51,7 @@ import theme from "../../styles/Theme";
 import { io } from "socket.io-client";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import { NotificationsInterface } from "../../interfaces/INotifications";
+import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
 
 import { Base64 } from "js-base64";
 
@@ -92,8 +94,10 @@ function AcceptWork() {
 
     const [isBottonActive, _setIsBottonActive] = useState(false);
 
+    const navigate = useNavigate();
+
     const columnVisibilityModel = {
-        Acception: valueTab !== 2,
+        Requester: valueTab !== 2,
         Inspection: valueTab === 2,
     };
 
@@ -102,13 +106,13 @@ function AcceptWork() {
             return [
                 {
                     field: "",
-                    headerName: "รายการแจ้งซ่อมท้้งหมด",
+                    headerName: "All Maintenance Requests",
                     flex: 1,
                     renderCell: (params) => {
-                        const requestID = String(params.row.MaintenanceRequest?.ID);
+                        const data = params.row;
                         const requests = params.row.MaintenanceRequest;
 
-                        const date = dateFormat(params.row.CreatedAt || "");
+                        const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
 
                         const areaID = requests?.Area?.ID;
                         const areaDetail = requests?.AreaDetail;
@@ -121,12 +125,23 @@ function AcceptWork() {
                         const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
+                        const isApproved = params.row.RequestStatus?.Name === "Approved";
+                        const isRework = params.row.RequestStatus?.Name === "Rework Requested";
+                        const isInProgress = params.row.RequestStatus?.Name === "In Progress";
+                        const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting For Review";
+
+                        const cardItem = document.querySelector(".card-row-container") as HTMLElement;
+                        let width;
+                        if (cardItem) {
+                            width = cardItem.offsetWidth;
+                        }
+
                         return (
-                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }}>
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-row-container">
                                 <Grid size={{ xs: 7 }}>
                                     <Typography
                                         sx={{
-                                            fontSize: 14,
+                                            fontSize: 16,
                                             whiteSpace: "nowrap",
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
@@ -135,6 +150,19 @@ function AcceptWork() {
                                     >
                                         {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
                                     </Typography>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
+                                        <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {dateTime}
+                                        </Typography>
+                                    </Box>
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -162,48 +190,121 @@ function AcceptWork() {
                                     </Box>
                                 </Grid>
 
-                                <Grid
-                                    size={{ xs: 5 }}
-                                    container
-                                    direction="column"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        alignItems: "flex-end",
-                                    }}
-                                >
-                                    <Box>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 13,
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            {date}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
+                                <Divider sx={{ width: "100%", my: 1 }} />
 
-                                <Grid
-                                    size={{ xs: 12 }}
-                                    container
-                                    direction="column"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        alignItems: "flex-end",
-                                        gap: 1,
-                                    }}
-                                >
-                                    <Link to="/maintenance/check-requests">
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            size="small"
-                                            onClick={() => localStorage.setItem("requestID", requestID)}
-                                        >
-                                            <FontAwesomeIcon icon={faEye} />
-                                            <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
-                                        </Button>
-                                    </Link>
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            {isApproved || isRework ? (
+                                                <>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedBlue"
+                                                            onClick={() => {
+                                                                setOpenConfirmAccepted(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faCheck} />
+                                                            <Typography variant="textButtonClassic">Start</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedCancel"
+                                                            onClick={() => {
+                                                                setOpenConfirmCancelled(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                            <Typography variant="textButtonClassic">Cancel</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                </>
+                                            ) : isInProgress ? (
+                                                <>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedBlue"
+                                                            onClick={() => {
+                                                                setOpenPopupSubmit(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faPaperPlane} />
+                                                            <Typography variant="textButtonClassic">Submit</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedCancel"
+                                                            onClick={() => {
+                                                                setOpenConfirmCancelled(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                            <Typography variant="textButtonClassic">Cancel</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                </>
+                                            ) : (
+                                                <></>
+                                            )}
+                                            {isWaitingForReview ? (
+                                                <Grid size={{ xs: 12 }}>
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={() => {
+                                                            handleClickCheck(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            width: "100%",
+                                                        }}
+                                                        fullWidth
+                                                    >
+                                                        <FontAwesomeIcon icon={faEye} size="lg" />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Details
+                                                        </Typography>
+                                                    </Button>
+                                                </Grid>
+                                            ) : (
+                                                <Grid size={{ xs: 2 }}>
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={() => {
+                                                            handleClickCheck(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            width: "100%",
+                                                        }}
+                                                        fullWidth
+                                                    >
+                                                        <FontAwesomeIcon icon={faEye} size="lg" />
+                                                        {width && width > 530 && (
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Details
+                                                            </Typography>
+                                                        )}
+                                                    </Button>
+                                                </Grid>
+                                            )}
+                                        </Grid>
+                                    </Box>
                                 </Grid>
                             </Grid>
                         );
@@ -214,7 +315,7 @@ function AcceptWork() {
             return [
                 {
                     field: "ID",
-                    headerName: "หมายเลข",
+                    headerName: "No.",
                     flex: 0.5,
                     align: "center",
                     headerAlign: "center",
@@ -223,46 +324,8 @@ function AcceptWork() {
                     },
                 },
                 {
-                    field: "UpdatedAt",
-                    headerName: valueTab === 0 ? "วันที่ได้รับมอบ" : valueTab === 1 ? "วันที่รับงาน" : valueTab === 2 ? "วันที่ส่งมอบ" : "",
-                    type: "string",
-                    flex: 1,
-                    // editable: true,
-                    renderCell: (params) => {
-                        const date = dateFormat(params.row.CreatedAt || "");
-                        const time = timeFormat(params.row.CreatedAt || "");
-                        return (
-                            <Box>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                    }}
-                                >
-                                    {date}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                        color: "text.secondary",
-                                    }}
-                                >
-                                    {time}
-                                </Typography>
-                            </Box>
-                        );
-                    },
-                },
-                {
-                    field: "Description",
-                    headerName: "รายละเอียด",
+                    field: "Title",
+                    headerName: "Title",
                     type: "string",
                     flex: 1.6,
                     // editable: true,
@@ -321,78 +384,85 @@ function AcceptWork() {
                     },
                 },
                 {
-                    field: "Acception",
-                    headerName: "จัดการ",
+                    field: "UpdatedAt",
+                    headerName: valueTab === 0 ? "Date Assigned" : valueTab === 1 ? "Start Date" : valueTab === 2 ? "Date Submitted" : "",
                     type: "string",
-                    flex: 1.2,
+                    flex: 1,
                     // editable: true,
-                    renderCell: (item) => {
-                        const isApproved = item.row.RequestStatus?.Name === "Approved";
-                        const isRework = item.row.RequestStatus?.Name === "Rework Requested";
-                        const isInProgress = item.row.RequestStatus?.Name === "In Progress";
-
-                        return isApproved || isRework ? (
+                    renderCell: (params) => {
+                        const date = dateFormat(params.row.CreatedAt || "");
+                        const time = timeFormat(params.row.CreatedAt || "");
+                        return (
                             <Box>
-                                <Button
-                                    variant="containedBlue"
-                                    onClick={() => {
-                                        setOpenConfirmAccepted(true);
-                                        setSelectedTask(item.row);
-                                    }}
-                                    sx={{ mr: 0.8 }}
-                                >
-                                    <FontAwesomeIcon icon={faTools} />
-                                    <Typography variant="textButtonClassic">เริ่มงาน</Typography>
-                                </Button>
-                                <Button
-                                    variant="outlinedCancel"
-                                    onClick={() => {
-                                        setOpenConfirmCancelled(true);
-                                        setSelectedTask(item.row);
-                                    }}
+                                <Typography
                                     sx={{
-                                        minWidth: "0px",
-                                        px: "6px",
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={faXmark} size="xl" />
-                                </Button>
+                                    {date}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {time}
+                                </Typography>
                             </Box>
-                        ) : isInProgress ? (
+                        );
+                    },
+                },
+                {
+                    field: "Requester",
+                    headerName: "Requester",
+                    description: "This column has a value getter and is not sortable.",
+                    sortable: false,
+                    flex: 1.2,
+                    renderCell: (params) => {
+                        const user = params.row.MaintenanceRequest.User;
+                        const name = `${user.FirstName || ""} ${user.LastName || ""}`;
+                        const employeeID = user.EmployeeID;
+                        return (
                             <Box>
-                                <Button
-                                    variant="containedBlue"
-                                    onClick={() => {
-                                        setOpenPopupSubmit(true);
-                                        setSelectedTask(item.row);
-                                    }}
-                                    sx={{ mr: 0.8 }}
-                                >
-                                    <FontAwesomeIcon icon={faPaperPlane} />
-                                    <Typography variant="textButtonClassic">ส่งงาน</Typography>
-                                </Button>
-                                <Button
-                                    variant="outlinedCancel"
-                                    onClick={() => {
-                                        setOpenConfirmCancelled(true);
-                                        setSelectedTask(item.row);
-                                    }}
+                                <Typography
                                     sx={{
-                                        minWidth: "0px",
-                                        px: "6px",
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={faXmark} size="xl" />
-                                </Button>
+                                    {name}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {employeeID}
+                                </Typography>
                             </Box>
-                        ) : (
-                            <></>
                         );
                     },
                 },
                 {
                     field: "Inspection",
-                    headerName: "ผู้ตรวจรับ",
+                    headerName: "Inspected By",
                     type: "string",
                     flex: 1.6,
                     // editable: true,
@@ -443,27 +513,124 @@ function AcceptWork() {
                     },
                 },
                 {
-                    field: "Check",
-                    headerName: "",
+                    field: "Actions",
+                    headerName: "Actions",
                     type: "string",
-                    flex: 1.2,
-                    // editable: true,
+                    flex: 1.5,
                     renderCell: (item) => {
-                        const taskData = item.row;
-                        const requestData = item.row.MaintenanceRequest;
-                        const encodedId = Base64.encode(requestData.ID);
+                        const data = item.row;
+                        const statusName = item.row.RequestStatus?.Name;
+
                         return (
-                            <Link to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}>
-                                <Button variant="contained" onClick={() => handleClickCheck(taskData)}>
-                                    <FontAwesomeIcon icon={faEye} />
-                                    <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
-                                </Button>
-                            </Link>
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                {renderActionButtons(data, statusName)}
+                            </Box>
                         );
                     },
                 },
             ];
         }
+    };
+
+    const renderActionButtons = (data: any, statusName: string) => {
+        const showSubmit = statusName === "In Progress";
+        const showAcceptReject = statusName === "Approved" || statusName === "Rework Requested";
+
+        return (
+            <>
+                {showAcceptReject && (
+                    <>
+                        <Button
+                            className="btn-accept"
+                            variant="containedBlue"
+                            onClick={() => {
+                                setOpenConfirmAccepted(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Start
+                            </Typography>
+                        </Button>
+                        <Button
+                            className="btn-reject"
+                            variant="containedCancel"
+                            onClick={() => {
+                                setOpenConfirmCancelled(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Cancel
+                            </Typography>
+                        </Button>
+                    </>
+                )}
+
+                {showSubmit && (
+                    <>
+                        <Button
+                            className="btn-submit"
+                            variant="containedBlue"
+                            onClick={() => {
+                                setOpenPopupSubmit(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faPaperPlane} />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Submit
+                            </Typography>
+                        </Button>
+                        <Button
+                            className="btn-reject"
+                            variant="containedCancel"
+                            onClick={() => {
+                                setOpenConfirmCancelled(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Cancel
+                            </Typography>
+                        </Button>
+                    </>
+                )}
+
+                <Button
+                    className="btn-detail"
+                    variant="outlinedGray"
+                    onClick={() => handleClickCheck(data)}
+                    sx={{
+                        minWidth: "42px",
+                        width: !(showSubmit || showAcceptReject) ? "100%" : "",
+                    }}
+                >
+                    <FontAwesomeIcon icon={faEye} size="lg" />
+                    {!(showSubmit || showAcceptReject) ? (
+                        <Typography variant="textButtonClassic">Details</Typography>
+                    ) : (
+                        <Typography variant="textButtonClassic" className="text-btn">
+                            Details
+                        </Typography>
+                    )}
+                </Button>
+            </>
+        );
     };
 
     const getMaintenanceTypes = async () => {
@@ -618,9 +785,12 @@ function AcceptWork() {
 
     const handleClickCheck = (data: MaintenanceTasksInterface) => {
         if (data) {
+            const encodedId = Base64.encode(String(data.RequestID));
             const taskID = data?.ID;
             const userID = Number(localStorage.getItem("userId"));
+
             handleUpdateNotification(taskID, userID);
+            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
 
@@ -644,7 +814,7 @@ function AcceptWork() {
         const fetchInitialData = async () => {
             try {
                 await Promise.all([getMaintenanceTypes(), getRequestStatuses()]);
-                setIsLoadingInitialData(false)
+                setIsLoadingInitialData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
             }

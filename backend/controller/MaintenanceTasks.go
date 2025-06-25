@@ -163,7 +163,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	}
 
 	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor").Preload("MaintenanceRequest.Inspection.User")
+	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor").Preload("MaintenanceRequest.Inspection.User").Preload("MaintenanceRequest.User")
 
 	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
 	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {

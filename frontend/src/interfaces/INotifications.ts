@@ -3,4 +3,5 @@ export interface NotificationsInterface{
     IsRead?:    boolean;
     RequestID?: number;
     TaskID?:    number;
+    UserID?:    number;
 }

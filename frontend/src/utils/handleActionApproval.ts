@@ -18,7 +18,6 @@ interface handleActionApprovalProps {
     setOpenPopupApproved: (v: boolean) => void;
     setOpenConfirmRejected: (v: boolean) => void;
     note?: string;
-    setIsBottonActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const handleActionApproval = async (
@@ -33,7 +32,6 @@ const handleActionApproval = async (
         setOpenConfirmRejected,
         actionType,
         note,
-        setIsBottonActive
     }: handleActionApprovalProps & { actionType: "approve" | "reject" }
 ) => {
     if (!userID || !selectedRequest) {
@@ -52,7 +50,6 @@ const handleActionApproval = async (
     }
 
     try {
-        setIsBottonActive(true)
         const managerApp: ManagerApprovalsInterface = {
             UserID: userID,
             RequestID: selectedRequest.ID,
@@ -108,7 +105,6 @@ const handleActionApproval = async (
             setSelectedOperator(0)
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
-            setIsBottonActive(false)
         }, 500);
 
         if (actionType === "reject") {

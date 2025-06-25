@@ -61,6 +61,7 @@ func main() {
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
 		protected.GET("/user/:id", controller.GetUserByID)
+		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		
 		protected.PATCH("/change-password", controller.ChangePassword)
 		protected.GET("/operators", controller.ListOperators)
@@ -145,7 +146,6 @@ func main() {
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		// Users
-		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		protected.GET("/users", controller.ListUsers)
 
 		// Rooms

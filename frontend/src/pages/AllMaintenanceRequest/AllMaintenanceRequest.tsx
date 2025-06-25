@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./AllMaintenanceRequest.css";
-import { Box, Button, Card, Container, Grid, Skeleton, Typography, useMediaQuery } from "@mui/material";
+import { Badge, Box, Button, Card, Container, Divider, Grid, Skeleton, Tooltip, Typography, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 
@@ -19,7 +19,8 @@ import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faXmark, faCheckDouble, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faXmark, faCheckDouble, faEye, faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -41,6 +42,7 @@ import { io } from "socket.io-client";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -71,15 +73,19 @@ function AllMaintenanceRequest() {
     const [isBottonActive, setIsBottonActive] = useState(false);
     const [isLoadingData, setIsLoadingData] = useState(true);
 
+    const navigate = useNavigate();
+
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
             return [
                 {
                     field: "",
-                    headerName: "รายการแจ้งซ่อมท้้งหมด",
+                    headerName: "All Maintenance Requests",
                     flex: 1,
                     renderCell: (params) => {
-                        const requestID = String(params.row.ID);
+                        const data = params.row;
+                        const showButtonApprove = params.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
+
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
                         const {
@@ -92,7 +98,7 @@ function AllMaintenanceRequest() {
                             icon: faQuestionCircle,
                         };
 
-                        const date = dateFormat(params.row.CreatedAt || "");
+                        const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
 
                         const description = params.row.Description;
                         const areaID = params.row.Area?.ID;
@@ -109,20 +115,48 @@ function AllMaintenanceRequest() {
                             icon: faQuestionCircle,
                         };
 
+                        const requester = params.row.User;
+                        const requesterName = `${requester?.FirstName || ""} ${requester?.LastName || ""} (${requester?.EmployeeID})`;
+
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+
+                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
+                        let width;
+                        if (cardItem) {
+                            width = cardItem.offsetWidth;
+                        }
+
                         return (
-                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }}>
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container">
                                 <Grid size={{ xs: 7 }}>
-                                    <Typography
-                                        sx={{
-                                            fontSize: 14,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            maxWidth: "100%",
-                                        }}
-                                    >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
-                                    </Typography>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        {hasNotificationForUser && <AnimatedBell />}
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
+                                        <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {dateTime}
+                                        </Typography>
+                                    </Box>
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -131,10 +165,24 @@ function AllMaintenanceRequest() {
                                             textOverflow: "ellipsis",
                                             maxWidth: "100%",
                                             color: "text.secondary",
+                                            my: 0.8,
                                         }}
                                     >
                                         {description}
                                     </Typography>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 1 }}>
+                                        <FontAwesomeIcon icon={faUser} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {requesterName}
+                                        </Typography>
+                                    </Box>
                                     <Box
                                         sx={{
                                             borderRadius: 10,
@@ -157,15 +205,7 @@ function AllMaintenanceRequest() {
                                     </Box>
                                 </Grid>
 
-                                <Grid
-                                    size={{ xs: 5 }}
-                                    container
-                                    direction="column"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        alignItems: "flex-end",
-                                    }}
-                                >
+                                <Grid size={{ xs: 5 }} container direction="column">
                                     <Box
                                         sx={{
                                             bgcolor: statusColorLite,
@@ -176,6 +216,8 @@ function AllMaintenanceRequest() {
                                             gap: 1,
                                             color: statusColor,
                                             alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
                                         }}
                                     >
                                         <FontAwesomeIcon icon={statusIcon} />
@@ -192,75 +234,97 @@ function AllMaintenanceRequest() {
                                             {statusName}
                                         </Typography>
                                     </Box>
-                                    <Box>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 13,
-                                                pr: 1.5,
-                                                pt: 0.8,
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            {date}
-                                        </Typography>
-                                    </Box>
                                 </Grid>
 
-                                <Grid
-                                    size={{ xs: 12 }}
-                                    container
-                                    direction="column"
-                                    sx={{
-                                        justifyContent: "flex-start",
-                                        alignItems: "flex-end",
-                                        gap: 1,
-                                    }}
-                                >
-                                    <Link to="/maintenance/check-requests">
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            size="small"
-                                            onClick={() => localStorage.setItem("requestID", requestID)}
-                                        >
-                                            <FontAwesomeIcon icon={faEye} />
-                                            <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
-                                        </Button>
-                                    </Link>
+                                <Divider sx={{ width: "100%", my: 1 }} />
 
-                                    {/* {
-                                        params.row.RequestStatus?.Name === 'Pending' && (isManager || isAdmin) ? (
-                                            <Box>
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        {showButtonApprove ? (
+                                            <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                                <Grid size={{ xs: 5 }}>
+                                                    <Tooltip title={"Approve"}>
+                                                        <Button
+                                                            variant="containedBlue"
+                                                            onClick={() => {
+                                                                setOpenPopupApproved(true);
+                                                                setSelectedRequest(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Approve
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                                <Grid size={{ xs: 5 }}>
+                                                    <Tooltip title={"Reject"}>
+                                                        <Button
+                                                            variant="containedCancel"
+                                                            onClick={() => {
+                                                                setOpenConfirmRejected(true);
+                                                                setSelectedRequest(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Reject
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                                <Grid size={{ xs: 2 }}>
+                                                    <Tooltip title={"Details"}>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                handleClickCheck(data);
+                                                            }}
+                                                            sx={{
+                                                                minWidth: "42px",
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                                            {width && width > 530 && (
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Details
+                                                                </Typography>
+                                                            )}
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                            </Grid>
+                                        ) : (
+                                            <Tooltip title={"Details"}>
                                                 <Button
-                                                    variant="outlinedCancel"
+                                                    className="btn-detail"
+                                                    variant="outlinedGray"
                                                     onClick={() => {
-                                                        setOpenConfirmRejected(true)
-                                                        setSelectedRequest(params.row)
+                                                        handleClickCheck(data);
                                                     }}
                                                     sx={{
-                                                        minWidth: '0px',
-                                                        px: '6px',
-                                                        mr: 0.8
+                                                        minWidth: "42px",
+                                                        width: "100%",
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                    <FontAwesomeIcon icon={faEye} size="lg" />
+                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                        Details
+                                                    </Typography>
                                                 </Button>
-
-                                                <Button
-                                                    variant="containedBlue"
-                                                    onClick={() => {
-                                                        setOpenPopupApproved(true)
-                                                        setSelectedRequest(params.row)
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faCheckDouble} />
-                                                    <Typography variant="textButtonClassic" >อนุมัติ</Typography>
-                                                </Button>
-                                            </Box>
-                                        ) : (
-                                            <></>
-                                        )
-                                    } */}
+                                            </Tooltip>
+                                        )}
+                                    </Box>
                                 </Grid>
                             </Grid>
                         );
@@ -271,60 +335,25 @@ function AllMaintenanceRequest() {
             return [
                 {
                     field: "ID",
-                    headerName: "หมายเลข",
+                    headerName: "No.",
                     flex: 0.5,
                     align: "center",
                     headerAlign: "center",
-                },
-                {
-                    field: "User",
-                    headerName: "ผู้แจ้งซ่อม",
-                    description: "This column has a value getter and is not sortable.",
-                    sortable: false,
-                    flex: 1.2,
-                    valueGetter: (params: UserInterface) => `${params.EmployeeID} ${params.FirstName || ""} ${params.LastName || ""} `,
-                },
-                {
-                    field: "CreatedAt",
-                    headerName: "วันที่แจ้งซ่อม",
-                    type: "string",
-                    flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
-                        const date = dateFormat(params.row.CreatedAt || "");
-                        const time = timeFormat(params.row.CreatedAt || "");
+                        const requestID = params.row.ID;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         return (
-                            <Box>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                    }}
-                                >
-                                    {date}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                        color: "text.secondary",
-                                    }}
-                                >
-                                    {time}
-                                </Typography>
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography>{requestID}</Typography>
                             </Box>
                         );
                     },
                 },
                 {
-                    field: "Description",
-                    headerName: "รายละเอียด",
+                    field: "Title",
+                    headerName: "Title",
                     type: "string",
                     flex: 1.8,
                     // editable: true,
@@ -345,7 +374,14 @@ function AllMaintenanceRequest() {
                         };
 
                         return (
-                            <Box>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -387,8 +423,53 @@ function AllMaintenanceRequest() {
                     },
                 },
                 {
+                    field: "Date Submitted",
+                    headerName: "Date Submitted",
+                    type: "string",
+                    flex: 1,
+                    // editable: true,
+                    renderCell: (params) => {
+                        const date = dateFormat(params.row.CreatedAt || "");
+                        const time = timeFormat(params.row.CreatedAt || "");
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {date}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {time}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
                     field: "RequestStatus",
-                    headerName: "สถานะ",
+                    headerName: "Status",
                     type: "string",
                     flex: 1,
                     // editable: true,
@@ -405,7 +486,8 @@ function AllMaintenanceRequest() {
                             <Box
                                 sx={{
                                     display: "flex",
-                                    alignItems: "flex-start",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
                                     height: "100%",
                                 }}
                             >
@@ -419,85 +501,173 @@ function AllMaintenanceRequest() {
                                         gap: 1,
                                         color: color,
                                         alignItems: "center",
+                                        justifyContent: "center",
+                                        width: "100%",
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {statusName}
+                                    </Typography>
                                 </Box>
                             </Box>
                         );
                     },
                 },
                 {
-                    field: "Approved",
-                    headerName: "การอนุมัติงาน",
+                    field: "Requester",
+                    headerName: "Requester",
+                    description: "This column has a value getter and is not sortable.",
+                    sortable: false,
+                    flex: 1.2,
+                    renderCell: (params) => {
+                        const user = params.row.User;
+                        const name = `${user.FirstName || ""} ${user.LastName || ""}`;
+                        const employeeID = user.EmployeeID;
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {name}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {employeeID}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Actions",
+                    headerName: "Actions",
                     type: "string",
-                    flex: 1,
+                    flex: 1.5,
                     // editable: true,
                     renderCell: (item) => {
-                        return item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin) ? (
+                        const data = item.row;
+                        const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
+                        return (
                             <Box
                                 className="container-btn"
                                 sx={{
                                     display: "flex",
                                     gap: 0.8,
                                     flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: '100%'
                                 }}
                             >
-                                <Button
-                                    className="btn-approve"
-                                    variant="containedBlue"
-                                    onClick={() => {
-                                        setOpenPopupApproved(true);
-                                        setSelectedRequest(item.row);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faCheckDouble} />
-                                    <Typography variant="textButtonClassic">อนุมัติ</Typography>
-                                </Button>
-                                <Button
-                                    className="btn-reject"
-                                    variant="outlinedCancel"
-                                    onClick={() => {
-                                        setOpenConfirmRejected(true);
-                                        setSelectedRequest(item.row);
-                                    }}
-                                    sx={{
-                                        minWidth: "0px",
-                                        px: "6px",
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faXmark} size="xl" />
-                                </Button>
+                                {showButtonApprove ? (
+                                    <>
+                                        <Tooltip title={"Approve"}>
+                                            <Button
+                                                className="btn-approve"
+                                                variant="containedBlue"
+                                                onClick={() => {
+                                                    setOpenPopupApproved(true);
+                                                    setSelectedRequest(data);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                    // px: "10px",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Approve
+                                                </Typography>
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title={"Reject"}>
+                                            <Button
+                                                className="btn-reject"
+                                                variant="containedCancel"
+                                                onClick={() => {
+                                                    setOpenConfirmRejected(true);
+                                                    setSelectedRequest(data);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                    // px: "10px",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Reject
+                                                </Typography>
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title={"Details"}>
+                                            <Button
+                                                className="btn-detail"
+                                                variant="outlinedGray"
+                                                onClick={() => {
+                                                    handleClickCheck(data);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                    // px: "10px",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faEye} size="lg" />
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Details
+                                                </Typography>
+                                            </Button>
+                                        </Tooltip>
+                                    </>
+                                ) : (
+                                    <Tooltip title={"Details"}>
+                                        <Button
+                                            className="btn-detail"
+                                            variant="outlinedGray"
+                                            onClick={() => {
+                                                handleClickCheck(data);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                                // px: "10px",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Details
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                )}
                             </Box>
-                        ) : (
-                            <></>
-                        );
-                    },
-                },
-                {
-                    field: "Check",
-                    headerName: "",
-                    type: "string",
-                    flex: 1,
-                    // editable: true,
-                    renderCell: (item) => {
-                        const data = item.row;
-                        const encodedId = Base64.encode(data.ID);
-                        return (
-                            <Link to={`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`}>
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => {
-                                        handleClickCheck(data);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faEye} />
-                                    <Typography variant="textButtonClassic">ดูรายละเอียด</Typography>
-                                </Button>
-                            </Link>
                         );
                     },
                 },
@@ -596,6 +766,7 @@ function AllMaintenanceRequest() {
 
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+        setIsBottonActive(true);
         handleActionApproval(statusID, {
             userID: user?.ID,
             selectedRequest,
@@ -606,14 +777,14 @@ function AllMaintenanceRequest() {
             setOpenConfirmRejected,
             actionType,
             note,
-            setIsBottonActive,
         });
+        setIsBottonActive(false);
     };
 
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText("");
-        setSelectedStatuses([]);
+        setSelectedStatuses([0]);
     };
 
     const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
@@ -640,9 +811,12 @@ function AllMaintenanceRequest() {
 
     const handleClickCheck = (data: MaintenanceRequestsInterface) => {
         if (data) {
+            const encodedId = Base64.encode(String(data.ID));
             const requestID = data?.ID;
             const userID = user?.ID;
+
             handleUpdateNotification(requestID, userID);
+            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
 
@@ -745,7 +919,6 @@ function AllMaintenanceRequest() {
                             className="title"
                             sx={{
                                 fontWeight: 700,
-                                fontSize: {},
                             }}
                         >
                             รายการแจ้งซ่อม
@@ -754,7 +927,7 @@ function AllMaintenanceRequest() {
 
                     {!isLoadingData && statusCounts ? (
                         <>
-                            <Grid container size={{ md: 12, lg: 7 }} spacing={3}>
+                            <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
                                 {/* Status Section */}
                                 <RequestStatusCards statusCounts={statusCounts || {}} />
 
@@ -762,7 +935,7 @@ function AllMaintenanceRequest() {
 
                                 {/* Filters Section size lg */}
                                 <FilterSection
-                                    display={{ xs: "none", md: "none", lg: "flex" }}
+                                    // display={{ xs: "none", md: "none", lg: "flex" }}
                                     searchText={searchText}
                                     setSearchText={setSearchText}
                                     selectedDate={selectedDate}
@@ -774,7 +947,7 @@ function AllMaintenanceRequest() {
                                 />
                             </Grid>
                             {/* Chart Section */}
-                            <Grid size={{ xs: 12, lg: 5 }}>
+                            {/* <Grid size={{ xs: 12, lg: 5 }}>
                                 <Card
                                     sx={{
                                         bgcolor: "secondary.main",
@@ -796,14 +969,14 @@ function AllMaintenanceRequest() {
                                     >{`${totalAll} รายการ`}</Typography>
                                     <ApexLineChart height={160} selectedDate={selectedDate} counts={counts} />
                                 </Card>
-                            </Grid>
+                            </Grid> */}
                         </>
                     ) : (
                         <Skeleton variant="rectangular" width="100%" height={320} sx={{ borderRadius: 2 }} />
                     )}
 
                     {/* Filters Section size md */}
-                    <FilterSection
+                    {/* <FilterSection
                         display={{ xs: "flex", lg: "none" }}
                         searchText={searchText}
                         setSearchText={setSearchText}
@@ -813,7 +986,7 @@ function AllMaintenanceRequest() {
                         setSelectedStatuses={setSelectedStatuses}
                         handleClearFilter={handleClearFillter}
                         requestStatuses={requestStatuses}
-                    />
+                    /> */}
 
                     {/* Data Table */}
                     <Grid size={{ xs: 12, md: 12 }}>

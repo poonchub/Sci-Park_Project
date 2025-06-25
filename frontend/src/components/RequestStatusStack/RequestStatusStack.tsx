@@ -52,7 +52,7 @@ function RequestStatusStack({ statusCounts, size }: Props) {
                         lg: size?.lg || 3,
                         xl: size?.xl,
                     }} key={label}>
-                        <Card sx={{ px: 2, py: 1.8, height: '100%', borderRadius: 2 }}>
+                        <Card sx={{ px: 2, py: 1.8, height: '100%', borderRadius: 2, alignItems: 'center', display: 'grid', borderLeft: `4px solid ${statusConfig[label].color}` }}>
                             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                 <Stack direction="row" spacing={1.5} alignItems="center">
                                     <Avatar
@@ -68,8 +68,8 @@ function RequestStatusStack({ statusCounts, size }: Props) {
                                     </Avatar>
                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
                                 </Stack>
-                                <Typography variant="body2" fontWeight={500} sx={{ textAlign: 'end'}}>
-                                    {value} รายการ
+                                <Typography variant="body2" fontWeight={500} >
+                                    {value}
                                 </Typography>
                             </Stack>
                         </Card>
