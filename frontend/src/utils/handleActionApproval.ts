@@ -1,7 +1,8 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
-import { CreateMaintenanceTask, CreateManagerApproval, UpdateMaintenanceRequestByID } from "../services/http";
+import { NotificationsInterface } from "../interfaces/INotifications";
+import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -30,7 +31,7 @@ const handleActionApproval = async (
         setOpenPopupApproved,
         setOpenConfirmRejected,
         actionType,
-        note
+        note,
     }: handleActionApprovalProps & { actionType: "approve" | "reject" }
 ) => {
     if (!userID || !selectedRequest) {
@@ -74,11 +75,26 @@ const handleActionApproval = async (
             const resAssign = await CreateMaintenanceTask(task);
             if (!resAssign || resAssign.error)
                 throw new Error(resAssign?.error || "Failed to assign work");
+
+            const notificationDataCreate: NotificationsInterface = {
+                TaskID: resAssign.data.ID
+            }
+            
+            const resNotification = await CreateNotification(notificationDataCreate);
+            if (!resNotification || resNotification.error)
+                throw new Error(resNotification?.error || "Failed to create notification");
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status");
+
+        const notificationDataUpdate: NotificationsInterface = {
+            IsRead: true,
+        };
+        const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
+        if (!resUpdateNotification || resUpdateNotification.error)
+            throw new Error(resUpdateNotification?.error || "Failed to update notification");
 
         setTimeout(() => {
             setAlerts((prev) => [
@@ -90,6 +106,12 @@ const handleActionApproval = async (
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);
         }, 500);
+
+        if (actionType === "reject") {
+            const resEmail = await SendMaintenanceStatusEmail(selectedRequest.ID || 0);
+            if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email");
+        }
+
     } catch (error) {
         console.error("API Error:", error);
         const errMessage = (error as Error).message || "Unknown error!";

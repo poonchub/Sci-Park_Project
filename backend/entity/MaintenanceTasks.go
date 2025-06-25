@@ -12,5 +12,7 @@ type MaintenanceTask struct {
 	MaintenanceRequest MaintenanceRequest `gorm:"foreignKey:RequestID" valid:"-"`
 	RequestStatusID   uint             `valid:"required~กรุณาระบุสถานะ"`
 	RequestStatus     RequestStatus    `gorm:"foreignKey:RequestStatusID" valid:"-"`
+  
 	HandoverImages    []HandoverImage  `gorm:"foreignKey:TaskID"`
+  Notifications  	  []Notification 	`gorm:"foreignKey:TaskID"`
 }

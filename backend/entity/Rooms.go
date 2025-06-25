@@ -21,5 +21,5 @@ type Room struct {
     RoomTypeID  uint     `valid:"required~กรุณาระบุประเภทของห้อง"`
     RoomType    RoomType `gorm:"foreignKey:RoomTypeID" valid:"-"`
 
-   
+    BookingRoom []BookingRoom `gorm:"foreignKey:RoomID"`
 }

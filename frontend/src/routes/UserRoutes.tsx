@@ -6,6 +6,7 @@ import Home from "../pages/Home/Home";
 import CreateMaintenanceRequestPage from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
+import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -31,6 +32,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/maintenance/check-requests",
 				element: <CheckRequests/>
+			},
+			{
+				path: "/about-developer",
+				element: <AboutDeveloper/>
 			},
 			{
 				path: "",

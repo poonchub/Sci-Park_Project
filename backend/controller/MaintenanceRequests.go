@@ -153,6 +153,14 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		MaintenanceTypeID:  request.MaintenanceTypeID,
 	}
 
+	var existing entity.MaintenanceRequest
+	if err := db.Where("user_id = ? AND maintenance_type_id = ? AND start_time = ? AND end_time = ? AND room_id = ? AND description = ?", 
+		rq.UserID, rq.MaintenanceTypeID, rq.StartTime, rq.EndTime, rq.RoomID, rq.Description).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Duplicate maintenance request already exists"})
+		return
+	}
+
 	if err := db.Create(&rq).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -230,6 +238,8 @@ func GetMaintenanceRequestsForUser(c *gin.Context) {
 		Preload("RequestStatus").
 		Preload("Area").
 		Preload("MaintenanceType").
+		Preload("MaintenanceTask").
+		Preload("MaintenanceImages").
 		Order("maintenance_requests.created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&maintenanceRequests).Error; err != nil {
@@ -269,6 +279,7 @@ func GetMaintenanceRequestsForAdmin(c *gin.Context) {
 		Preload("RequestStatus").
 		Preload("Area").
 		Preload("MaintenanceType").
+		Preload("Notifications").
 		Order("maintenance_requests.created_at DESC").
 		Limit(limit).Offset(offset).
 		Find(&maintenanceRequests).Error; err != nil {

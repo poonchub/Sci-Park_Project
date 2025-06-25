@@ -60,6 +60,7 @@ const theme = createTheme({
     breakpoints: {
         values: {
             xs: 0,
+            mobileS: 400,
             sm: 600,
             sm650: 650,
             md: 900,
@@ -118,6 +119,13 @@ const theme = createTheme({
                     },
                 },
                 {
+                    props: { variant: 'containedCancel' },
+                    style: {
+                        backgroundColor: '#FF3B30',
+                        color: '#fff',
+                    },
+                },
+                {
                     props: { variant: 'outlinedCancel' },
                     style: {
                         border: '1px solid #FF3B30',
@@ -126,6 +134,18 @@ const theme = createTheme({
                         '&:hover': {
                             backgroundColor: '#FF3B30',
                             color: '#fff',
+                        },
+                    },
+                },
+                {
+                    props: { variant: 'outlinedGray' },
+                    style: {
+                        border: '1px solid rgb(109, 110, 112, 0.4)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#6D6E70',
+                        maxHeight: '37px',
+                        '&:hover': {
+                            backgroundColor: 'rgb(255, 255, 255)',
                         },
                     },
                 },

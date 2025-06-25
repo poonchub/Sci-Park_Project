@@ -16,6 +16,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
+import { Activity, CalendarDays } from "lucide-react";
 
 
 type Props = {
@@ -52,14 +53,13 @@ const FilterSection = ({
 
     return (
         <Grid
-            spacing={1}
             className="filter-section"
             size={{ xs: 12 }}
             sx={{
                 display,
             }}
         >
-            <Card sx={{ width: '100%' }}>
+            <Card sx={{ width: '100%', borderRadius: 2 }}>
                 <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
                     <Grid size={{ xs: 12, sm: 5 }}>
                         <TextField
@@ -101,7 +101,7 @@ const FilterSection = ({
                             <Select
                                 startAdornment={
                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                        <FontAwesomeIcon icon={faChartSimple} size="lg" />
+                                        <Activity size={18} strokeWidth={3}/>
                                     </InputAdornment>
                                 }
                                 value={
@@ -120,7 +120,7 @@ const FilterSection = ({
                                     }
                                 }}
                             >
-                                <MenuItem value={0}>ทุกสถานะ</MenuItem>
+                                <MenuItem value={0}>All Status</MenuItem>
                                 {!(isAdmin || isManager) && <MenuItem value="in-process">In Process</MenuItem>}
                                 {requestStatuses
                                     .filter(status => !inProcessNames.includes(status.Name || ''))

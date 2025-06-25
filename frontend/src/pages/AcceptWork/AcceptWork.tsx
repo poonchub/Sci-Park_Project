@@ -1,23 +1,41 @@
-import { Box, Button, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Card, Divider, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faMagnifyingGlass, faPaperPlane, faQuestionCircle, faRotateRight, faToolbox, faTools, faXmark, } from "@fortawesome/free-solid-svg-icons";
+import {
+    faCheck,
+    faEye,
+    faMagnifyingGlass,
+    faPaperPlane,
+    faQuestionCircle,
+    faRotateRight,
+    faToolbox,
+    faTools,
+    faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import { GridColDef } from '@mui/x-data-grid';
-import { GetMaintenanceTask, GetMaintenanceTaskByID, GetMaintenanceTypes, GetRequestStatuses, socketUrl } from "../../services/http";
+import { GridColDef } from "@mui/x-data-grid";
+import {
+    GetMaintenanceTask,
+    GetMaintenanceTaskByID,
+    GetMaintenanceTypes,
+    GetNotificationsByTaskAndUser,
+    GetRequestStatuses,
+    socketUrl,
+    UpdateNotificationByID,
+} from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
 
-import './AcceptWork.css';
+import "./AcceptWork.css";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import dateFormat from "../../utils/dateFormat";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleActionAcception from "../../utils/handleActionAcception";
@@ -30,858 +48,1012 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { useMediaQuery } from "@mui/system";
 import theme from "../../styles/Theme";
 
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
+import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
+import { NotificationsInterface } from "../../interfaces/INotifications";
+import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
 
-interface TabPanelProps {
-	children?: React.ReactNode;
-	index: number;
-	value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-	const { children, value, index, ...other } = props;
-
-	return (
-		<Grid size={{ xs: 12, md: 12 }} sx={{ display: (value !== index) ? 'none' : '' }}>
-			<div
-				role="tabpanel"
-				id={`full-width-tabpanel-${index}`}
-				aria-labelledby={`full-width-tab-${index}`}
-				{...other}
-			>
-				{value === index && (
-					<Grid>
-						{children}
-					</Grid>
-				)}
-			</div>
-		</Grid>
-
-	);
-}
+import { Base64 } from "js-base64";
 
 function a11yProps(index: number) {
-	return {
-		id: `simple-tab-${index}`,
-		'aria-controls': `simple-tabpanel-${index}`,
-	};
+    return {
+        id: `simple-tab-${index}`,
+        "aria-controls": `simple-tabpanel-${index}`,
+    };
 }
 
 function AcceptWork() {
+    const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
+    const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
+    const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>();
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
 
-	const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([])
-	const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
-	const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>()
-	const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([])
+    const [searchText, setSearchText] = useState("");
+    const [selectedType, setSelectedType] = useState(0);
+    const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
 
-	const [searchText, setSearchText] = useState('')
-	const [selectedType, setSelectedType] = useState(0)
-	const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
+    const [page, setPage] = useState(0);
+    const [limit, setLimit] = useState(10);
+    const [total, setTotal] = useState(0);
 
-	const [page, setPage] = useState(0);
-	const [limit, setLimit] = useState(10);
-	const [total, setTotal] = useState(0);
+    const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
+    const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+    const [openPopupSubmit, setOpenPopupSubmit] = useState(false);
 
-	const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
-	const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
-	const [openPopupSubmit, setOpenPopupSubmit] = useState(false)
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+    const [files, setFiles] = useState<File[]>([]);
 
-	const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
-	const [files, setFiles] = useState<File[]>([]);
+    const [valueTab, setValueTab] = useState(0);
 
-	const [valueTab, setValueTab] = useState(0);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
 
-	const [isLoadingData, setIsLoadingData] = useState(true)
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-	const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const valueTabRef = useRef(valueTab);
 
-	const columnVisibilityModel = {
-		Acception: valueTab !== 2,
-		Inspection: valueTab === 2,
-	}
+    const [isBottonActive, _setIsBottonActive] = useState(false);
 
-	const getColumns = (): GridColDef[] => {
-		if (isSmallScreen) {
-			return [
-				{
-					field: '',
-					headerName: 'รายการแจ้งซ่อมท้้งหมด',
-					flex: 1,
-					renderCell: (params) => {
-						const requestID = String(params.row.MaintenanceRequest?.ID)
-						const requests = params.row.MaintenanceRequest
+    const navigate = useNavigate();
 
-						const date = dateFormat(params.row.CreatedAt || '')
+    const columnVisibilityModel = {
+        Requester: valueTab !== 2,
+        Inspection: valueTab === 2,
+    };
 
-						const areaID = requests?.Area?.ID
-						const areaDetail = requests?.AreaDetail
-						const roomtype = requests?.Room?.RoomType?.TypeName
-						const roomNum = requests?.Room?.RoomNumber
-						const roomFloor = requests?.Room?.Floor?.Number
-						const description = requests?.Description
+    const getColumns = (): GridColDef[] => {
+        if (isSmallScreen) {
+            return [
+                {
+                    field: "",
+                    headerName: "All Maintenance Requests",
+                    flex: 1,
+                    renderCell: (params) => {
+                        const data = params.row;
+                        const requests = params.row.MaintenanceRequest;
 
-						const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า"
-						const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
-						const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+                        const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
 
-						return (
-							<Grid
-								container
-								size={{ xs: 12 }}
-								sx={{ px: 1 }}
-							>
-								<Grid size={{ xs: 7 }}>
-									<Typography
-										sx={{
-											fontSize: 14,
-											whiteSpace: "nowrap",
-											overflow: "hidden",
-											textOverflow: "ellipsis",
-											maxWidth: "100%"
-										}}
-									>
-										{
-											areaID === 2 ? (
-												`${areaDetail}`
-											) : (
-												`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-											)
-										}
-									</Typography>
-									<Typography
-										sx={{
-											fontSize: 14,
-											whiteSpace: "nowrap",
-											overflow: "hidden",
-											textOverflow: "ellipsis",
-											maxWidth: "100%",
-											color: 'text.secondary'
-										}}
-									>
-										{description}
-									</Typography>
-									<Box sx={{
-										borderRadius: 10,
-										py: 0.5,
-										display: 'inline-flex',
-										gap: 1,
-										color: color,
-										alignItems: 'center',
-									}}>
-										<FontAwesomeIcon icon={icon} />
-										<Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-											{typeName}
-										</Typography>
-									</Box>
-								</Grid>
+                        const areaID = requests?.Area?.ID;
+                        const areaDetail = requests?.AreaDetail;
+                        const roomtype = requests?.Room?.RoomType?.TypeName;
+                        const roomNum = requests?.Room?.RoomNumber;
+                        const roomFloor = requests?.Room?.Floor?.Number;
+                        const description = requests?.Description;
 
-								<Grid size={{ xs: 5 }}
-									container
-									direction="column"
-									sx={{
-										justifyContent: "flex-start",
-										alignItems: "flex-end",
-									}}
-								>
-									<Box>
-										<Typography sx={{
-											fontSize: 13,
-											color: 'text.secondary'
-										}}>{date}</Typography>
-									</Box>
-								</Grid>
+                        const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-								<Grid
-									size={{ xs: 12 }}
-									container
-									direction="column"
-									sx={{
-										justifyContent: "flex-start",
-										alignItems: "flex-end",
-										gap: 1
-									}}
-								>
-									<Link to="/maintenance/check-requests" >
-										<Button
-											variant="contained"
-											color="primary"
-											size="small"
-											onClick={() => localStorage.setItem('requestID', requestID)}
-										>
-											<FontAwesomeIcon icon={faEye} />
-											<Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
-										</Button>
-									</Link>
-								</Grid>
-							</Grid>
-						);
-					},
-				},
-			]
-		} else {
-			return [
-				{
-					field: 'ID',
-					headerName: 'หมายเลข',
-					flex: 0.5,
-					align: 'center',
-					headerAlign: 'center',
-					renderCell: (params) => {
-						return params.row.MaintenanceRequest?.ID
-					}
-				},
-				{
-					field: 'UpdatedAt',
-					headerName: (
-						valueTab === 0 ? 'วันที่ได้รับมอบ' :
-							valueTab === 1 ? 'วันที่รับงาน' :
-								valueTab === 2 ? 'วันที่ส่งมอบ' : ''
-					),
-					type: 'string',
-					flex: 1,
-					// editable: true,
-					renderCell: (params) => {
-						const date = dateFormat(params.row.CreatedAt || '')
-						const time = timeFormat(params.row.CreatedAt || '')
-						return (
-							<Box >
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%"
-									}}
-								>{date}</Typography>
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%",
-										color: 'text.secondary'
-									}}
-								>{time}</Typography>
-							</Box>
-						)
-					}
-				},
-				{
-					field: 'Description',
-					headerName: 'รายละเอียด',
-					type: 'string',
-					flex: 1.6,
-					// editable: true,
-					renderCell: (params) => {
-						const requests = params.row.MaintenanceRequest
-						const areaID = requests?.Area?.ID
-						const areaDetail = requests?.AreaDetail
-						const roomtype = requests?.Room?.RoomType?.TypeName
-						const roomNum = requests?.Room?.RoomNumber
-						const roomFloor = requests?.Room?.Floor?.Number
+                        const isApproved = params.row.RequestStatus?.Name === "Approved";
+                        const isRework = params.row.RequestStatus?.Name === "Rework Requested";
+                        const isInProgress = params.row.RequestStatus?.Name === "In Progress";
+                        const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting For Review";
 
-						const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า"
-						const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
-						const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+                        const cardItem = document.querySelector(".card-row-container") as HTMLElement;
+                        let width;
+                        if (cardItem) {
+                            width = cardItem.offsetWidth;
+                        }
 
-						return (
-							<Box >
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%"
-									}}
-								>
-									{
-										areaID === 2 ? (
-											`${areaDetail}`
-										) : (
-											`${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`
-										)
-									}
-								</Typography>
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%",
-										color: 'text.secondary'
-									}}
-								>
-									{requests?.Description}
-								</Typography>
-								<Box sx={{
-									borderRadius: 10,
-									py: 0.5,
-									display: 'inline-flex',
-									gap: 1,
-									color: color,
-									alignItems: 'center',
-								}}>
-									<FontAwesomeIcon icon={icon} />
-									<Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-										{typeName}
-									</Typography>
-								</Box>
-							</Box>
-						)
-					},
-				},
-				{
-					field: 'Acception',
-					headerName: 'จัดการ',
-					type: 'string',
-					flex: 1.2,
-					// editable: true,
-					renderCell: (item) => {
-						const isApproved = item.row.RequestStatus?.Name === 'Approved'
-						const isRework = item.row.RequestStatus?.Name === 'Rework Requested'
-						const isInProgress = item.row.RequestStatus?.Name === 'In Progress'
+                        return (
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-row-container">
+                                <Grid size={{ xs: 7 }}>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 16,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxWidth: "100%",
+                                        }}
+                                    >
+                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                    </Typography>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
+                                        <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {dateTime}
+                                        </Typography>
+                                    </Box>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxWidth: "100%",
+                                            color: "text.secondary",
+                                        }}
+                                    >
+                                        {description}
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            borderRadius: 10,
+                                            py: 0.5,
+                                            display: "inline-flex",
+                                            gap: 1,
+                                            color: color,
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={icon} />
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
+                                    </Box>
+                                </Grid>
 
-						return isApproved || isRework ? (
-							<Box>
-								<Button
-									variant="containedBlue"
-									onClick={() => {
-										setOpenConfirmAccepted(true)
-										setSelectedTask(item.row)
-									}}
-									sx={{ mr: 0.8 }}
-								>
-									<FontAwesomeIcon icon={faTools} />
-									<Typography variant="textButtonClassic" >เริ่มงาน</Typography>
-								</Button>
-								<Button
-									variant="outlinedCancel"
-									onClick={() => {
-										setOpenConfirmCancelled(true)
-										setSelectedTask(item.row)
-									}}
-									sx={{
-										minWidth: '0px',
-										px: '6px',
-									}}
-								>
-									<FontAwesomeIcon icon={faXmark} size="xl" />
-								</Button>
-							</Box>
-						) : isInProgress ? (
-							<Box>
-								<Button
-									variant="containedBlue"
-									onClick={() => {
-										setOpenPopupSubmit(true)
-										setSelectedTask(item.row)
-									}}
-									sx={{ mr: 0.8 }}
-								>
-									<FontAwesomeIcon icon={faPaperPlane} />
-									<Typography variant="textButtonClassic" >ส่งงาน</Typography>
-								</Button>
-								<Button
-									variant="outlinedCancel"
-									onClick={() => {
-										setOpenConfirmCancelled(true)
-										setSelectedTask(item.row)
-									}}
-									sx={{
-										minWidth: '0px',
-										px: '6px',
-									}}
-								>
-									<FontAwesomeIcon icon={faXmark} size="xl" />
-								</Button>
-							</Box>
-						) : (
-							<></>
-						)
-					},
-				},
-				{
-					field: 'Inspection',
-					headerName: 'ผู้ตรวจรับ',
-					type: 'string',
-					flex: 1.6,
-					// editable: true,
-					renderCell: (params) => {
-						const task = params.row
-						const inspection = params.row.MaintenanceRequest?.Inspection
-						const user = inspection?.User
-						const name = `${user?.FirstName} ${user?.LastName}`
-						const date = dateFormat(inspection?.CreatedAt || '')
-						const time = timeFormat(inspection?.CreatedAt || '')
-						return inspection ? (
-							<Box >
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%"
-									}}
-								>{name}</Typography>
-								<Typography
-									sx={{
-										fontSize: 14,
-										whiteSpace: "nowrap",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										maxWidth: "100%",
-										color: 'text.secondary'
-									}}
-								>{`${date}, ${time}`}</Typography>
-							</Box>
-						) : (
-							<Typography
-								sx={{
-									fontSize: 14,
-									whiteSpace: "nowrap",
-									overflow: "hidden",
-									textOverflow: "ellipsis",
-									maxWidth: "100%",
-								}}
-							>{task.RequestStatus.Name}</Typography>
-						)
-					}
-				},
-				{
-					field: 'Check',
-					headerName: '',
-					type: 'string',
-					flex: 1.2,
-					// editable: true,
-					renderCell: (item) => {
-						const requestID = String(item.row.MaintenanceRequest?.ID)
-						return (
-							<Link to="/maintenance/check-requests" >
-								<Button
-									variant="contained"
-									onClick={() => localStorage.setItem('requestID', requestID)}
-								>
-									<FontAwesomeIcon icon={faEye} />
-									<Typography variant="textButtonClassic" >ดูรายละเอียด</Typography>
-								</Button>
-							</Link>
+                                <Divider sx={{ width: "100%", my: 1 }} />
 
-						)
-					}
-				},
-			]
-		}
-	}
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            {isApproved || isRework ? (
+                                                <>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedBlue"
+                                                            onClick={() => {
+                                                                setOpenConfirmAccepted(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faCheck} />
+                                                            <Typography variant="textButtonClassic">Start</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedCancel"
+                                                            onClick={() => {
+                                                                setOpenConfirmCancelled(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                            <Typography variant="textButtonClassic">Cancel</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                </>
+                                            ) : isInProgress ? (
+                                                <>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedBlue"
+                                                            onClick={() => {
+                                                                setOpenPopupSubmit(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faPaperPlane} />
+                                                            <Typography variant="textButtonClassic">Submit</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Button
+                                                            variant="containedCancel"
+                                                            onClick={() => {
+                                                                setOpenConfirmCancelled(true);
+                                                                setSelectedTask(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                            <Typography variant="textButtonClassic">Cancel</Typography>
+                                                        </Button>
+                                                    </Grid>
+                                                </>
+                                            ) : (
+                                                <></>
+                                            )}
+                                            {isWaitingForReview ? (
+                                                <Grid size={{ xs: 12 }}>
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={() => {
+                                                            handleClickCheck(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            width: "100%",
+                                                        }}
+                                                        fullWidth
+                                                    >
+                                                        <FontAwesomeIcon icon={faEye} size="lg" />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Details
+                                                        </Typography>
+                                                    </Button>
+                                                </Grid>
+                                            ) : (
+                                                <Grid size={{ xs: 2 }}>
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={() => {
+                                                            handleClickCheck(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            width: "100%",
+                                                        }}
+                                                        fullWidth
+                                                    >
+                                                        <FontAwesomeIcon icon={faEye} size="lg" />
+                                                        {width && width > 530 && (
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Details
+                                                            </Typography>
+                                                        )}
+                                                    </Button>
+                                                </Grid>
+                                            )}
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        );
+                    },
+                },
+            ];
+        } else {
+            return [
+                {
+                    field: "ID",
+                    headerName: "No.",
+                    flex: 0.5,
+                    align: "center",
+                    headerAlign: "center",
+                    renderCell: (params) => {
+                        return params.row.MaintenanceRequest?.ID;
+                    },
+                },
+                {
+                    field: "Title",
+                    headerName: "Title",
+                    type: "string",
+                    flex: 1.6,
+                    // editable: true,
+                    renderCell: (params) => {
+                        const requests = params.row.MaintenanceRequest;
+                        const areaID = requests?.Area?.ID;
+                        const areaDetail = requests?.AreaDetail;
+                        const roomtype = requests?.Room?.RoomType?.TypeName;
+                        const roomNum = requests?.Room?.RoomNumber;
+                        const roomFloor = requests?.Room?.Floor?.Number;
 
-	const getMaintenanceTypes = async () => {
-		try {
-			const res = await GetMaintenanceTypes();
-			if (res) {
-				setMaintenanceTypes(res);
-			}
-		} catch (error) {
-			console.error("Error fetching maintenance types:", error);
-		}
-	};
+                        const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
-	const getMaintenanceTasks = async () => {
-		try {
-			setIsLoadingData(true)
+                        return (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {requests?.Description}
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        borderRadius: 10,
+                                        py: 0.5,
+                                        display: "inline-flex",
+                                        gap: 1,
+                                        color: color,
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={icon} />
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
+                                </Box>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "UpdatedAt",
+                    headerName: valueTab === 0 ? "Date Assigned" : valueTab === 1 ? "Start Date" : valueTab === 2 ? "Date Submitted" : "",
+                    type: "string",
+                    flex: 1,
+                    // editable: true,
+                    renderCell: (params) => {
+                        const date = dateFormat(params.row.CreatedAt || "");
+                        const time = timeFormat(params.row.CreatedAt || "");
+                        return (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {date}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {time}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Requester",
+                    headerName: "Requester",
+                    description: "This column has a value getter and is not sortable.",
+                    sortable: false,
+                    flex: 1.2,
+                    renderCell: (params) => {
+                        const user = params.row.MaintenanceRequest.User;
+                        const name = `${user.FirstName || ""} ${user.LastName || ""}`;
+                        const employeeID = user.EmployeeID;
+                        return (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {name}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    {employeeID}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Inspection",
+                    headerName: "Inspected By",
+                    type: "string",
+                    flex: 1.6,
+                    // editable: true,
+                    renderCell: (params) => {
+                        const task = params.row;
+                        const inspection = params.row.MaintenanceRequest?.Inspection;
+                        const user = inspection?.User;
+                        const name = `${user?.FirstName} ${user?.LastName}`;
+                        const date = dateFormat(inspection?.CreatedAt || "");
+                        const time = timeFormat(inspection?.CreatedAt || "");
+                        return inspection ? (
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                    }}
+                                >
+                                    {name}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        maxWidth: "100%",
+                                        color: "text.secondary",
+                                    }}
+                                >{`${date}, ${time}`}</Typography>
+                            </Box>
+                        ) : (
+                            <Typography
+                                sx={{
+                                    fontSize: 14,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                }}
+                            >
+                                {task.RequestStatus.Name}
+                            </Typography>
+                        );
+                    },
+                },
+                {
+                    field: "Actions",
+                    headerName: "Actions",
+                    type: "string",
+                    flex: 1.5,
+                    renderCell: (item) => {
+                        const data = item.row;
+                        const statusName = item.row.RequestStatus?.Name;
 
-			const statusNames =
-				valueTab === 0 ? ["Approved", "Rework Requested"] :
-					valueTab === 1 ? ["In Progress"] :
-						valueTab === 2 ? ["Waiting For Review", "Completed"] : [""]
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                {renderActionButtons(data, statusName)}
+                            </Box>
+                        );
+                    },
+                },
+            ];
+        }
+    };
 
-			const statusIDs = statusNames
-				.map(name => requestStatuses?.find(item => item.Name === name)?.ID)
-				.filter(Boolean)
+    const renderActionButtons = (data: any, statusName: string) => {
+        const showSubmit = statusName === "In Progress";
+        const showAcceptReject = statusName === "Approved" || statusName === "Rework Requested";
 
-			if (statusIDs.length === 0) return;
+        return (
+            <>
+                {showAcceptReject && (
+                    <>
+                        <Button
+                            className="btn-accept"
+                            variant="containedBlue"
+                            onClick={() => {
+                                setOpenConfirmAccepted(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Start
+                            </Typography>
+                        </Button>
+                        <Button
+                            className="btn-reject"
+                            variant="containedCancel"
+                            onClick={() => {
+                                setOpenConfirmCancelled(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Cancel
+                            </Typography>
+                        </Button>
+                    </>
+                )}
 
-			const statusFormat = statusIDs.join(",");
+                {showSubmit && (
+                    <>
+                        <Button
+                            className="btn-submit"
+                            variant="containedBlue"
+                            onClick={() => {
+                                setOpenPopupSubmit(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faPaperPlane} />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Submit
+                            </Typography>
+                        </Button>
+                        <Button
+                            className="btn-reject"
+                            variant="containedCancel"
+                            onClick={() => {
+                                setOpenConfirmCancelled(true);
+                                setSelectedTask(data);
+                            }}
+                            sx={{ minWidth: "42px" }}
+                        >
+                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Cancel
+                            </Typography>
+                        </Button>
+                    </>
+                )}
 
-			const res = await GetMaintenanceTask(
-				statusFormat,
-				page,
-				limit,
-				selectedType,
-				selectedDate ? selectedDate.format('YYYY-MM-DD') : ""
-			);
+                <Button
+                    className="btn-detail"
+                    variant="outlinedGray"
+                    onClick={() => handleClickCheck(data)}
+                    sx={{
+                        minWidth: "42px",
+                        width: !(showSubmit || showAcceptReject) ? "100%" : "",
+                    }}
+                >
+                    <FontAwesomeIcon icon={faEye} size="lg" />
+                    {!(showSubmit || showAcceptReject) ? (
+                        <Typography variant="textButtonClassic">Details</Typography>
+                    ) : (
+                        <Typography variant="textButtonClassic" className="text-btn">
+                            Details
+                        </Typography>
+                    )}
+                </Button>
+            </>
+        );
+    };
 
-			if (res) {
-				setMaintenanceTasks(res.data);
-				setTotal(res.total);
-				setIsLoadingData(false)
-			}
-		} catch (error) {
-			console.error("Error fetching maintenance tasks:", error);
-		}
-	};
+    const getMaintenanceTypes = async () => {
+        try {
+            const res = await GetMaintenanceTypes();
+            if (res) {
+                setMaintenanceTypes(res);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance types:", error);
+        }
+    };
 
-	const getRequestStatuses = async () => {
-		try {
-			const res = await GetRequestStatuses();
-			if (res) {
-				setRequestStatuses(res);
-			}
-		} catch (error) {
-			console.error("Error fetching request statuses:", error);
-		}
-	};
+    const getMaintenanceTasks = async () => {
+        try {
+            setIsLoadingData(true);
 
-	const getNewMaintenanceTask = async (ID: number) => {
-		try {
-			const res = await GetMaintenanceTaskByID(ID);
-			if (res) {
-				setMaintenanceTasks(prev => [res, ...prev]);
-				setTotal(prev => prev + 1);
-			}
-		} catch (error) {
-			console.error("Error fetching maintenance request:", error);
-		}
-	};
+            const statusNames =
+                valueTab === 0
+                    ? ["Approved", "Rework Requested"]
+                    : valueTab === 1
+                      ? ["In Progress"]
+                      : valueTab === 2
+                        ? ["Waiting For Review", "Completed"]
+                        : [""];
 
-	const getUpdatedMaintenanceTask = async (data: MaintenanceTasksInterface) => {
-		try {
-			const res = await GetMaintenanceTaskByID(data.ID || 0);
-			if (res) {
-				console.log(res)
-				const statusName = res.RequestStatus.Name
-				if (statusName === 'Waiting For Review' || statusName === 'In Progress' || statusName === 'Unsuccessful') {
-					setMaintenanceTasks(prev => prev.filter(task => task.ID !== data.ID));
-					setTotal(prev => (prev > 0 ? prev - 1 : 0));
-				}
-				else if (statusName === 'Rework Requested' && valueTab === 0) {
-					setMaintenanceTasks(prev => [res, ...prev]);
-					setTotal(prev => prev + 1);
-				}
-				else {
-					setMaintenanceTasks(prev =>
-						prev.map(item => item.ID === res.ID ? res : item)
-					);
-				}
-			}
-		} catch (error) {
-			console.error("Error fetching maintenance request:", error);
-		}
+            const statusIDs = statusNames.map((name) => requestStatuses?.find((item) => item.Name === name)?.ID).filter(Boolean);
 
-	};
+            if (statusIDs.length === 0) return;
 
-	const handleClickAcceptWork = (
-		statusName: "In Progress" | "Unsuccessful",
-		actionType: "accept" | "cancel",
-		note?: string
-	) => {
-		const statusID = requestStatuses?.find(item => item.Name === statusName)?.ID || 0;
+            const statusFormat = statusIDs.join(",");
 
-		handleActionAcception(statusID, {
-			selectedTask,
-			setAlerts,
-			setOpenConfirmAccepted,
-			setOpenConfirmCancelled,
-			actionType,
-			note
-		});
-	};
+            const res = await GetMaintenanceTask(statusFormat, page, limit, selectedType, selectedDate ? selectedDate.format("YYYY-MM-DD") : "");
 
-	const onClickSubmit = () => {
-		if (!selectedTask) {
-			setAlerts((prev) => [
-				...prev,
-				{ type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }
-			]);
-			return;
-		}
-		const statusID = requestStatuses?.find(item => item.Name === "Waiting For Review")?.ID || 0;
+            if (res) {
+                setMaintenanceTasks(res.data);
+                setTotal(res.total);
+                setIsLoadingData(false);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance tasks:", error);
+        }
+    };
 
-		handleSubmitWork(statusID, {
-			selectedTask,
-			setAlerts,
-			setOpenPopupSubmit,
-			files,
-			setFiles,
-		});
-	};
+    const getRequestStatuses = async () => {
+        try {
+            const res = await GetRequestStatuses();
+            if (res) {
+                setRequestStatuses(res);
+            }
+        } catch (error) {
+            console.error("Error fetching request statuses:", error);
+        }
+    };
 
-	const handleClearFillter = () => {
-		setSelectedDate(null);
-		setSearchText('');
-		setSelectedType(0)
-	}
+    const getNewMaintenanceTask = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceTaskByID(ID);
+            if (res) {
+                setMaintenanceTasks((prev) => [res, ...prev]);
+                setTotal((prev) => prev + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance request:", error);
+        }
+    };
 
-	const filteredTasks = maintenanceTasks.filter((item) => {
-		const request = item.MaintenanceRequest
-		const requestId = request?.ID ? Number(request.ID) : null;
-		const firstName = request?.User?.FirstName?.toLowerCase() || "";
-		const lastName = request?.User?.LastName?.toLowerCase() || "";
+    const getUpdatedMaintenanceTask = async (data: MaintenanceTasksInterface) => {
+        try {
+            const res = await GetMaintenanceTaskByID(data.ID || 0);
+            if (res) {
+                const statusName = res.RequestStatus.Name;
 
-		const matchText =
-			!searchText ||
-			requestId === Number(searchText) ||
-			firstName.includes(searchText.toLowerCase()) ||
-			lastName.includes(searchText.toLowerCase())
+                if (
+                    statusName === "Waiting For Review" ||
+                    statusName === "In Progress" ||
+                    statusName === "Unsuccessful" ||
+                    statusName === "Rework Requested"
+                ) {
+                    setMaintenanceTasks((prev) => prev.filter((task) => task.ID !== data.ID));
+                    setTotal((prev) => (prev > 0 ? prev - 1 : 0));
+                } else {
+                    setMaintenanceTasks((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+                }
 
-		// คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
-		return matchText
-	});
+                if (statusName === "Rework Requested" && valueTabRef.current === 0) {
+                    setMaintenanceTasks((prev) => [res, ...prev]);
+                    setTotal((prev) => prev + 1);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance request:", error);
+        }
+    };
 
-	useEffect(() => {
-		const fetchInitialData = async () => {
-			try {
-				await Promise.all([
-					getMaintenanceTypes(),
-					getRequestStatuses()
-				]);
-			} catch (error) {
-				console.error("Error fetching initial data:", error);
-			}
-		};
+    const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
+        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
 
-		fetchInitialData();
-	}, []);
+        handleActionAcception(statusID, {
+            selectedTask,
+            setAlerts,
+            setOpenConfirmAccepted,
+            setOpenConfirmCancelled,
+            actionType,
+            note,
+        });
+    };
 
-	useEffect(() => {
-		getMaintenanceTasks()
-	}, [requestStatuses])
+    const onClickSubmit = () => {
+        if (!selectedTask) {
+            setAlerts((prev) => [...prev, { type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }]);
+            return;
+        }
+        const statusID = requestStatuses?.find((item) => item.Name === "Waiting For Review")?.ID || 0;
 
-	useEffect(() => {
-		getMaintenanceTasks()
-	}, [page, limit, selectedType, selectedDate, valueTab])
+        handleSubmitWork(statusID, {
+            selectedTask,
+            setAlerts,
+            setOpenPopupSubmit,
+            files,
+            setFiles,
+        });
+    };
 
+    const handleClearFillter = () => {
+        setSelectedDate(null);
+        setSearchText("");
+        setSelectedType(0);
+    };
 
-	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
-		setValueTab(newValue);
-	};
+    const handleUpdateNotification = async (task_id?: number, user_id?: number) => {
+        try {
+            const resNotification = await GetNotificationsByTaskAndUser(task_id, user_id);
+            if (!resNotification || resNotification.error) console.error("Error fetching notification");
 
-	useEffect(() => {
-		const socket = io(socketUrl);
-		const userId = Number(localStorage.getItem('userId'))
+            const notificationData: NotificationsInterface = {
+                IsRead: true,
+            };
+            const notificationID = resNotification.data.ID;
+            if (!resNotification.data.IsRead) {
+                const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
+                if (resUpdated) {
+                    console.log("✅ Notification updated successfully.");
+                }
+            } else {
+                return;
+            }
+        } catch (error) {
+            console.error("❌ Error updating maintenance request:", error);
+        }
+    };
 
-		socket.on("task_created", (data) => {
-			console.log("📦 New maintenance task:", data);
-			if (data.UserID === userId && valueTab === 0) {
-				getNewMaintenanceTask(data.ID)
-			}
-		});
+    const handleClickCheck = (data: MaintenanceTasksInterface) => {
+        if (data) {
+            const encodedId = Base64.encode(String(data.RequestID));
+            const taskID = data?.ID;
+            const userID = Number(localStorage.getItem("userId"));
 
-		socket.on("task_updated", (data) => {
-			console.log("🔄 Maintenance task updated:", data);
-			if (data.UserID === userId) {
-				getUpdatedMaintenanceTask(data);
-			}
-		});
+            handleUpdateNotification(taskID, userID);
+            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
+        }
+    };
 
-		return () => {
-			socket.off("task_created");
-			socket.off("task_updated");
-		};
-	}, []);
+    const filteredTasks = maintenanceTasks.filter((item) => {
+        const request = item.MaintenanceRequest;
+        const requestId = request?.ID ? Number(request.ID) : null;
+        const firstName = request?.User?.FirstName?.toLowerCase() || "";
+        const lastName = request?.User?.LastName?.toLowerCase() || "";
 
-	return (
-		<Box className="accept-work-page">
-			{/* Show Alerts */}
-			<AlertGroup alerts={alerts} setAlerts={setAlerts} />
+        const matchText =
+            !searchText ||
+            requestId === Number(searchText) ||
+            firstName.includes(searchText.toLowerCase()) ||
+            lastName.includes(searchText.toLowerCase());
 
-			{/* Submit Popup */}
-			<SubmitPopup
-				open={openPopupSubmit}
-				onClose={() => setOpenPopupSubmit(false)}
-				onConfirm={onClickSubmit}
-				setAlerts={setAlerts}
-				files={files}
-				onChange={setFiles}
-			/>
+        // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+        return matchText;
+    });
 
-			{/* Accepted Confirm */}
-			<ConfirmDialog
-				open={openConfirmAccepted}
-				setOpenConfirm={setOpenConfirmAccepted}
-				handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
-				title="ยืนยันการดำเนินการงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-			/>
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getMaintenanceTypes(), getRequestStatuses()]);
+                setIsLoadingInitialData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
 
-			{/* Cancelled Confirm */}
-			<ConfirmDialog
-				open={openConfirmCancelled}
-				setOpenConfirm={setOpenConfirmCancelled}
-				handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
-				title="ยืนยันการยกเลิกงานแจ้งซ่อม"
-				message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-				showNoteField
-			/>
+        fetchInitialData();
+    }, []);
 
-			<Grid
-				container
-				spacing={3}
-			>
-				<Grid className='title-box' size={{ xs: 10, md: 12 }}>
-					<Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-						งานของฉัน
-					</Typography>
-				</Grid>
+    useEffect(() => {
+        getMaintenanceTasks();
+    }, [requestStatuses]);
 
-				{/* Filters Section */}
-				<Grid container
-					spacing={1}
-					className='filter-section'
-					size={{ xs: 12 }}
-					sx={{
-						alignItems: "flex-end",
-						height: 'auto'
-					}}>
-					<Grid size={{ xs: 12, sm: 5 }}>
-						<TextField
-							fullWidth
-							className="search-box"
-							variant="outlined"
-							placeholder="ค้นหา"
-							margin="none"
-							value={searchText}
-							onChange={(e) => setSearchText(e.target.value)}
-							slotProps={{
-								input: {
-									startAdornment: (
-										<InputAdornment position="start" sx={{ px: 0.5 }}>
-											<FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
-										</InputAdornment>
-									),
-								}
-							}}
-						/>
-					</Grid>
-					<Grid size={{ xs: 5, sm: 3 }}>
-						<LocalizationProvider dateAdapter={AdapterDayjs}>
-							<DatePicker
-								format="DD/MM/YYYY"
-								value={selectedDate}
-								onChange={(value, _) => {
-									if (dayjs.isDayjs(value)) {
-										setSelectedDate(value);
-									} else {
-										setSelectedDate(null);
-									}
-								}}
-								slots={{
-									openPickerIcon: CalendarMonth,
-								}}
-								sx={{ width: '100%' }}
-							/>
-						</LocalizationProvider>
-					</Grid>
-					<Grid size={{ xs: 5, sm: 3 }}>
-						<FormControl fullWidth>
-							<Select
-								value={selectedType}
-								onChange={(e) => setSelectedType(Number(e.target.value))}
-								displayEmpty
-								startAdornment={
-									<InputAdornment position="start" sx={{ pl: 0.5 }}>
-										<FontAwesomeIcon icon={faToolbox} size="lg" />
-									</InputAdornment>
-								}
-							>
-								<MenuItem value={0}>{'ทุกประเภทงาน'}</MenuItem>
-								{
-									maintenanceTypes.map((item, index) => {
-										return (
-											<MenuItem key={index} value={index + 1}>{item.TypeName}</MenuItem>
-										)
-									})
-								}
-							</Select>
-						</FormControl>
-					</Grid>
-					<Grid size={{ xs: 2, sm: 1 }}>
-						<Button onClick={handleClearFillter}
-							sx={{
-								minWidth: 0,
-								width: '100%',
-								height: '45px',
-								borderRadius: '10px',
-								border: '1px solid rgb(109, 110, 112, 0.4)',
-								"&:hover": {
-									boxShadow: 'none',
-									borderColor: 'primary.main',
-									backgroundColor: 'transparent'
-								},
-							}}
-						><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-					</Grid>
-				</Grid>
+    useEffect(() => {
+        getMaintenanceTasks();
+    }, [page, limit, selectedType, selectedDate, valueTab]);
 
-				{/* Data Table */}
-				<Grid
-					container
-					size={{ xs: 12, md: 12 }}
-					spacing={2.2}
-				>
-					<Grid size={{ xs: 12, md: 12 }} >
-						<Tabs
-							value={valueTab}
-							onChange={handleChange}
-							variant="scrollable"
-							allowScrollButtonsMobile
-						>
-							<Tab label="รอดำเนินการ" {...a11yProps(0)} />
-							<Tab label="กำลังดำเนินการ" {...a11yProps(1)} />
-							<Tab label="ดำเนินการเสร็จสิ้น" {...a11yProps(1)} />
-						</Tabs>
-					</Grid>
-					<CustomTabPanel value={valueTab} index={0}>
-						<MaintenanceTaskTable
-							title="รอดำเนินการ"
-							rows={filteredTasks}
-							columns={getColumns()}
-							rowCount={total}
-							page={page}
-							limit={limit}
-							onPageChange={(p) => setPage(p + 1)}
-							onLimitChange={setLimit}
-							noData={'ไม่พบงานที่รอดำเนินการ'}
-							isLoading={isLoadingData}
-							columnVisibilityModel={columnVisibilityModel}
-						/>
-					</CustomTabPanel>
-					<CustomTabPanel value={valueTab} index={1}>
-						<MaintenanceTaskTable
-							title="กำลังดำเนินการ"
-							rows={filteredTasks}
-							columns={getColumns()}
-							rowCount={total}
-							page={page}
-							limit={limit}
-							onPageChange={(p) => setPage(p + 1)}
-							onLimitChange={setLimit}
-							noData={'ไม่พบงานที่กำลังดำเนินการ'}
-							isLoading={isLoadingData}
-							columnVisibilityModel={columnVisibilityModel}
-						/>
-					</CustomTabPanel>
-					<CustomTabPanel value={valueTab} index={2}>
-						<MaintenanceTaskTable
-							title="ดำเนินการเสร็จสิ้น"
-							rows={filteredTasks}
-							columns={getColumns()}
-							rowCount={total}
-							page={page}
-							limit={limit}
-							onPageChange={(p) => setPage(p + 1)}
-							onLimitChange={setLimit}
-							noData={'ไม่พบงานที่ดำเนินการเสร็จสิ้น'}
-							isLoading={isLoadingData}
-							columnVisibilityModel={columnVisibilityModel}
-						/>
-					</CustomTabPanel>
-				</Grid>
-			</Grid>
-		</Box>
-	)
+    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+        setValueTab(newValue);
+    };
+
+    useEffect(() => {
+        const socket = io(socketUrl);
+        const userId = Number(localStorage.getItem("userId"));
+
+        socket.on("task_created", (data) => {
+            if (data.UserID === userId && valueTabRef.current === 0) {
+                getNewMaintenanceTask(data.ID);
+            }
+        });
+
+        socket.on("task_updated", (data) => {
+            if (data.UserID === userId) {
+                getUpdatedMaintenanceTask(data);
+            }
+        });
+
+        return () => {
+            socket.off("task_created");
+            socket.off("task_updated");
+        };
+    }, []);
+
+    useEffect(() => {
+        valueTabRef.current = valueTab;
+    }, [valueTab]);
+
+    return (
+        <Box className="accept-work-page">
+            {/* Show Alerts */}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+
+            {/* Submit Popup */}
+            <SubmitPopup
+                open={openPopupSubmit}
+                onClose={() => setOpenPopupSubmit(false)}
+                onConfirm={onClickSubmit}
+                setAlerts={setAlerts}
+                files={files}
+                onChange={setFiles}
+            />
+
+            {/* Accepted Confirm */}
+            <ConfirmDialog
+                open={openConfirmAccepted}
+                setOpenConfirm={setOpenConfirmAccepted}
+                handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
+                title="ยืนยันการดำเนินการงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                buttonActive={isBottonActive}
+            />
+
+            {/* Cancelled Confirm */}
+            <ConfirmDialog
+                open={openConfirmCancelled}
+                setOpenConfirm={setOpenConfirmCancelled}
+                handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
+                title="ยืนยันการยกเลิกงานแจ้งซ่อม"
+                message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                showNoteField
+                buttonActive={isBottonActive}
+            />
+
+            <Grid container spacing={3}>
+                <Grid className="title-box" size={{ xs: 10, md: 12 }}>
+                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                        งานของฉัน
+                    </Typography>
+                </Grid>
+
+                {/* Filters Section */}
+                {!isLoadingInitialData ? (
+                    <Grid className="filter-section" size={{ xs: 12 }}>
+                        <Card sx={{ width: "100%", borderRadius: 2 }}>
+                            <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
+                                <Grid size={{ xs: 12, sm: 5 }}>
+                                    <TextField
+                                        fullWidth
+                                        className="search-box"
+                                        variant="outlined"
+                                        placeholder="ค้นหา"
+                                        margin="none"
+                                        value={searchText}
+                                        onChange={(e) => setSearchText(e.target.value)}
+                                        slotProps={{
+                                            input: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                        <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                    </InputAdornment>
+                                                ),
+                                            },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 5, sm: 3 }}>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            format="DD/MM/YYYY"
+                                            value={selectedDate}
+                                            onChange={(value, _) => {
+                                                if (dayjs.isDayjs(value)) {
+                                                    setSelectedDate(value);
+                                                } else {
+                                                    setSelectedDate(null);
+                                                }
+                                            }}
+                                            slots={{
+                                                openPickerIcon: CalendarMonth,
+                                            }}
+                                            sx={{ width: "100%" }}
+                                        />
+                                    </LocalizationProvider>
+                                </Grid>
+                                <Grid size={{ xs: 5, sm: 3 }}>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            value={selectedType}
+                                            onChange={(e) => setSelectedType(Number(e.target.value))}
+                                            displayEmpty
+                                            startAdornment={
+                                                <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                    <FontAwesomeIcon icon={faToolbox} size="lg" />
+                                                </InputAdornment>
+                                            }
+                                        >
+                                            <MenuItem value={0}>{"ทุกประเภทงาน"}</MenuItem>
+                                            {maintenanceTypes.map((item, index) => {
+                                                return (
+                                                    <MenuItem key={index} value={index + 1}>
+                                                        {item.TypeName}
+                                                    </MenuItem>
+                                                );
+                                            })}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid size={{ xs: 2, sm: 1 }}>
+                                    <Button
+                                        onClick={handleClearFillter}
+                                        sx={{
+                                            minWidth: 0,
+                                            width: "100%",
+                                            height: "45px",
+                                            borderRadius: "10px",
+                                            border: "1px solid rgb(109, 110, 112, 0.4)",
+                                            "&:hover": {
+                                                boxShadow: "none",
+                                                borderColor: "primary.main",
+                                                backgroundColor: "transparent",
+                                            },
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Card>
+                    </Grid>
+                ) : (
+                    <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                )}
+
+                {/* Data Table */}
+                <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
+                    <Grid size={{ xs: 12, md: 12 }}>
+                        <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
+                            <Tab label="รอดำเนินการ" {...a11yProps(0)} />
+                            <Tab label="กำลังดำเนินการ" {...a11yProps(1)} />
+                            <Tab label="ดำเนินการเสร็จสิ้น" {...a11yProps(2)} />
+                        </Tabs>
+                    </Grid>
+                    <CustomTabPanel value={valueTab} index={0}>
+                        <MaintenanceTaskTable
+                            title="รอดำเนินการ"
+                            rows={filteredTasks}
+                            columns={getColumns()}
+                            rowCount={total}
+                            page={page}
+                            limit={limit}
+                            onPageChange={(p) => setPage(p + 1)}
+                            onLimitChange={setLimit}
+                            noData={"ไม่พบงานที่รอดำเนินการ"}
+                            isLoading={isLoadingData}
+                            columnVisibilityModel={columnVisibilityModel}
+                        />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={valueTab} index={1}>
+                        <MaintenanceTaskTable
+                            title="กำลังดำเนินการ"
+                            rows={filteredTasks}
+                            columns={getColumns()}
+                            rowCount={total}
+                            page={page}
+                            limit={limit}
+                            onPageChange={(p) => setPage(p + 1)}
+                            onLimitChange={setLimit}
+                            noData={"ไม่พบงานที่กำลังดำเนินการ"}
+                            isLoading={isLoadingData}
+                            columnVisibilityModel={columnVisibilityModel}
+                        />
+                    </CustomTabPanel>
+                    <CustomTabPanel value={valueTab} index={2}>
+                        <MaintenanceTaskTable
+                            title="ดำเนินการเสร็จสิ้น"
+                            rows={filteredTasks}
+                            columns={getColumns()}
+                            rowCount={total}
+                            page={page}
+                            limit={limit}
+                            onPageChange={(p) => setPage(p + 1)}
+                            onLimitChange={setLimit}
+                            noData={"ไม่พบงานที่ดำเนินการเสร็จสิ้น"}
+                            isLoading={isLoadingData}
+                            columnVisibilityModel={columnVisibilityModel}
+                        />
+                    </CustomTabPanel>
+                </Grid>
+            </Grid>
+        </Box>
+    );
 }
 export default AcceptWork;

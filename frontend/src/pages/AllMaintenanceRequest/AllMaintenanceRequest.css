@@ -22,14 +22,20 @@
 
     .container-btn {
         container-type: inline-size;
-    }
 
-    @container (max-width: 115px) {
-
-        .btn-approve,
-        .btn-reject {
-            width: 100%;
+        .text-btn{
+            display: none;
         }
     }
 
+    @container (max-width: 160px) {
+        .btn-approve,
+        .btn-reject, .btn-detail {
+            width: 100%;
+
+            .text-btn{
+                display: block;
+            }
+        }
+    }
 }

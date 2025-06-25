@@ -56,6 +56,10 @@ func SetupDatabase() {
 		&entity.RequestType{},
 		&entity.RoomLayout{},
 		&entity.RoomTypeLayout{},
+		&entity.Notification{},
+		&entity.TimeSlot{},
+		&entity.Roomprice{},
+		&entity.BookingRoom{},
 	)
 
 	if err != nil {
@@ -164,45 +168,45 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RoomType
 	roomTypes := []entity.RoomType{
 		{
-			TypeName: "ห้องประชุมขนาดเล็ก",
-			RoomSize: 18, 
-			HalfDayRate: 500.0, 
+			TypeName:    "ห้องประชุมขนาดเล็ก",
+			RoomSize:    18,
+			HalfDayRate: 500.0,
 			FullDayRate: 1000.0,
 		},
 		{
-			TypeName: "ห้องประชุมขนาดกลาง",
-			RoomSize: 63,  
-			HalfDayRate: 1000.0, 
+			TypeName:    "ห้องประชุมขนาดกลาง",
+			RoomSize:    63,
+			HalfDayRate: 1000.0,
 			FullDayRate: 2000.0,
 		},
 		{
-			TypeName: "ห้องอบรม สัมมนา ขนาดกลาง", 
-			RoomSize: 135, 
-			HalfDayRate: 6000.0, 
+			TypeName:    "ห้องอบรม สัมมนา ขนาดกลาง",
+			RoomSize:    135,
+			HalfDayRate: 6000.0,
 			FullDayRate: 12000.0,
 		},
 		{
-			TypeName: "ห้องอบรม สัมมนา ขนาดใหญ่", 
-			RoomSize: 273, 
-			HalfDayRate: 7500.0, 
+			TypeName:    "ห้องอบรม สัมมนา ขนาดใหญ่",
+			RoomSize:    273,
+			HalfDayRate: 7500.0,
 			FullDayRate: 15000.0,
 		},
 		{
-			TypeName: "EVENT HALL", 
-			RoomSize: 1218, 
-			HalfDayRate: 25000.0, 
+			TypeName:    "EVENT HALL",
+			RoomSize:    1218,
+			HalfDayRate: 25000.0,
 			FullDayRate: 50000.0,
 		},
 		{
-			TypeName: "NE2 HALL 1", 
-			RoomSize: 1180, 
-			HalfDayRate: 32500.0, 
+			TypeName:    "NE2 HALL 1",
+			RoomSize:    1180,
+			HalfDayRate: 32500.0,
 			FullDayRate: 65000.0,
 		},
 		{
-			TypeName: "NE2 HALL 2", 
-			RoomSize: 487, 
-			HalfDayRate: 17500.0, 
+			TypeName:    "NE2 HALL 2",
+			RoomSize:    487,
+			HalfDayRate: 17500.0,
 			FullDayRate: 35000.0,
 		},
 	}
@@ -214,10 +218,10 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล RoomLayout
 	roomLayout := []entity.RoomLayout{
-		{ LayoutName: "Class Room" },
-		{ LayoutName: "U-Shape" },
-		{ LayoutName: "Theater" },
-		{ LayoutName: "Group"},
+		{LayoutName: "Class Room"},
+		{LayoutName: "U-Shape"},
+		{LayoutName: "Theater"},
+		{LayoutName: "Group"},
 	}
 	for _, layout := range roomLayout {
 		db.FirstOrCreate(&layout, entity.RoomLayout{
@@ -228,109 +232,109 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RoomTypeLayout
 	roomTypeLayout := []entity.RoomTypeLayout{
 		// ห้องประชุมขนาดเล็ก
-		{ 
-			Capacity: 6,
+		{
+			Capacity:     6,
 			RoomLayoutID: 2,
-			RoomTypeID: 1,
+			RoomTypeID:   1,
 		},
 
 		// ห้องประชุมขนาดกลาง
-		{ 
-			Capacity: 12,
+		{
+			Capacity:     12,
 			RoomLayoutID: 2,
-			RoomTypeID: 2,
+			RoomTypeID:   2,
 		},
 
 		// ห้องอบรม สัมมนา ขนาดกลาง
-		{ 
-			Capacity: 60,
+		{
+			Capacity:     60,
 			RoomLayoutID: 1,
-			RoomTypeID: 3,
+			RoomTypeID:   3,
 		},
-		{ 
-			Capacity: 90,
+		{
+			Capacity:     90,
 			RoomLayoutID: 3,
-			RoomTypeID: 3,
+			RoomTypeID:   3,
 		},
-		{ 
-			Capacity: 40,
+		{
+			Capacity:     40,
 			RoomLayoutID: 4,
-			RoomTypeID: 3,
+			RoomTypeID:   3,
 		},
 
 		// ห้องอบรม สัมมนา ขนาดใหญ่
-		{ 
-			Capacity: 120,
+		{
+			Capacity:     120,
 			RoomLayoutID: 1,
-			RoomTypeID: 4,
+			RoomTypeID:   4,
 		},
-		{ 
-			Capacity: 120,
+		{
+			Capacity:     120,
 			RoomLayoutID: 2,
-			RoomTypeID: 4,
+			RoomTypeID:   4,
 		},
-		{ 
-			Capacity: 180,
+		{
+			Capacity:     180,
 			RoomLayoutID: 3,
-			RoomTypeID: 4,
+			RoomTypeID:   4,
 		},
-		{ 
-			Capacity: 80,
-			Note: "20 Group",
+		{
+			Capacity:     80,
+			Note:         "20 Group",
 			RoomLayoutID: 4,
-			RoomTypeID: 4,
+			RoomTypeID:   4,
 		},
 
 		// NE2 HALL 1
-		{ 
-			Capacity: 300,
+		{
+			Capacity:     300,
 			RoomLayoutID: 1,
-			RoomTypeID: 6,
+			RoomTypeID:   6,
 		},
-		{ 
-			Capacity: 250,
+		{
+			Capacity:     250,
 			RoomLayoutID: 2,
-			RoomTypeID: 6,
+			RoomTypeID:   6,
 		},
-		{ 
-			Capacity: 500,
+		{
+			Capacity:     500,
 			RoomLayoutID: 3,
-			RoomTypeID: 6,
+			RoomTypeID:   6,
 		},
-		{ 
-			Capacity: 400,
-			Note: "100 Group",
+		{
+			Capacity:     400,
+			Note:         "100 Group",
 			RoomLayoutID: 4,
-			RoomTypeID: 6,
+			RoomTypeID:   6,
 		},
 
 		// NE2 HALL 2
-		{ 
-			Capacity: 120,
+		{
+			Capacity:     120,
 			RoomLayoutID: 1,
-			RoomTypeID: 7,
+			RoomTypeID:   7,
 		},
-		{ 
-			Capacity: 100,
+		{
+			Capacity:     100,
 			RoomLayoutID: 2,
-			RoomTypeID: 7,
+			RoomTypeID:   7,
 		},
-		{ 
-			Capacity: 200,
+		{
+			Capacity:     200,
 			RoomLayoutID: 3,
-			RoomTypeID: 7,
+			RoomTypeID:   7,
 		},
-		{ 
-			Capacity: 120,
-			Note: "30 Group",
+		{
+			Capacity:     120,
+			Note:         "30 Group",
 			RoomLayoutID: 4,
-			RoomTypeID: 7,
+			RoomTypeID:   7,
 		},
 	}
 	for _, typelayout := range roomTypeLayout {
 		db.FirstOrCreate(&typelayout, entity.RoomTypeLayout{
 			RoomLayoutID: typelayout.RoomLayoutID,
-			RoomTypeID: typelayout.RoomTypeID,
+			RoomTypeID:   typelayout.RoomTypeID,
 		})
 	}
 
@@ -637,6 +641,73 @@ func SeedDatabase() {
 		RequestID: 1,
 	}
 	db.FirstOrCreate(&maintenanceImage)
+
+	// 🔹 ข้อมูล TimeSlot
+	timeSlots := []entity.TimeSlot{
+		{TimeSlotName: "เช้า", StartTime: "08:00", EndTime: "12:00"},
+		{TimeSlotName: "บ่าย", StartTime: "13:00", EndTime: "17:00"},
+		{TimeSlotName: "เต็มวัน", StartTime: "08:00", EndTime: "17:00"},
+	}
+	fmt.Println("📌 Seeding TimeSlots")
+	for _, slot := range timeSlots {
+		result := db.FirstOrCreate(&slot, entity.TimeSlot{
+			TimeSlotName: slot.TimeSlotName,
+			StartTime:    slot.StartTime,
+			EndTime:      slot.EndTime,
+		})
+		fmt.Printf("🧪 TimeSlot: %s | RowsAffected: %d | Error: %v\n", slot.TimeSlotName, result.RowsAffected, result.Error)
+	}
+
+	// 🔹 ข้อมูล Roomprice (สมมุติว่าห้องขนาดเล็ก = RoomTypeID 1, TimeSlotID ตามข้างบน)
+	roomPrices := []entity.Roomprice{
+		{Price: 500, TimeSlotID: 1, RoomTypeID: 1},  // เช้า
+		{Price: 500, TimeSlotID: 2, RoomTypeID: 1},  // บ่าย
+		{Price: 1000, TimeSlotID: 3, RoomTypeID: 1}, // เต็มวัน
+
+		{Price: 1000, TimeSlotID: 1, RoomTypeID: 2}, // เช้า
+		{Price: 1000, TimeSlotID: 2, RoomTypeID: 2}, // บ่าย
+		{Price: 2000, TimeSlotID: 3, RoomTypeID: 2}, // เต็มวัน
+	}
+	fmt.Println("📌 Seeding Roomprices")
+	for _, rp := range roomPrices {
+		result := db.FirstOrCreate(&rp, entity.Roomprice{
+			TimeSlotID: rp.TimeSlotID,
+			RoomTypeID: rp.RoomTypeID,
+			Price:      rp.Price,
+		})
+		fmt.Printf("🧪 Roomprice: RoomTypeID=%d TimeSlotID=%d Price=%d | RowsAffected: %d | Error: %v\n",
+			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
+	}
+
+	// 🔹 ข้อมูล BookingRoom (User: users[6] คือ Internal 1, Room: rooms[0] = A302, TimeSlot: 1 = เช้า)
+	bookingRooms := []entity.BookingRoom{
+		{
+			Date:       "2025-06-25",
+			Purpose:    "ประชุมแผนงานวิจัย",
+			UserID:     users[6].ID,
+			RoomID:     rooms[0].ID,
+			TimeSlotID: 1,
+		},
+		{
+			Date:       "2025-06-26",
+			Purpose:    "อบรมพนักงานใหม่",
+			UserID:     users[7].ID,
+			RoomID:     rooms[1].ID,
+			TimeSlotID: 2,
+		},
+	}
+	fmt.Println("📌 Seeding BookingRooms")
+	for _, br := range bookingRooms {
+		result := db.FirstOrCreate(&br, entity.BookingRoom{
+			Date:       br.Date,
+			RoomID:     br.RoomID,
+			UserID:     br.UserID,
+			TimeSlotID: br.TimeSlotID,
+			Purpose:    br.Purpose,
+		})
+		fmt.Printf("🧪 BookingRoom: Date=%s RoomID=%d TimeSlotID=%d UserID=%d | RowsAffected: %d | Error: %v\n",
+			br.Date, br.RoomID, br.TimeSlotID, br.UserID, result.RowsAffected, result.Error)
+	}
 
 	fmt.Println("✅ Sample data added successfully!")
 }
