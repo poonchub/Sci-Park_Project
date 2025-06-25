@@ -36,4 +36,5 @@ type User struct {
     ManagerApprovals    []ManagerApproval    `gorm:"foreignKey:UserID"`
     UserPackages        []UserPackage        `gorm:"foreignKey:UserID"`
 	Notifications 		[]Notification `gorm:"foreignKey:UserID"`
+    BookingRoom        []BookingRoom `gorm:"foreignKey:UserID"`
 }
