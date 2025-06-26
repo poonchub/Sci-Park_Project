@@ -60,6 +60,11 @@ func SetupDatabase() {
 		&entity.TimeSlot{},
 		&entity.Roomprice{},
 		&entity.BookingRoom{},
+		&entity.Payment{},
+		&entity.RoomTypeImage{},
+		&entity.Equipment{},
+		&entity.RoomEquipment{},
+		
 	)
 
 	if err != nil {
@@ -707,6 +712,64 @@ func SeedDatabase() {
 		})
 		fmt.Printf("🧪 BookingRoom: Date=%s RoomID=%d TimeSlotID=%d UserID=%d | RowsAffected: %d | Error: %v\n",
 			br.Date, br.RoomID, br.TimeSlotID, br.UserID, result.RowsAffected, result.Error)
+	}
+
+	// 🔹 ข้อมูล Equipment
+	equipments := []entity.Equipment{
+		{EquipmentName: "โปรเจคเตอร์"},
+		{EquipmentName: "ไมโครโฟน"},
+		{EquipmentName: "กระดานไวท์บอร์ด"},
+		{EquipmentName: "โต๊ะ"},
+		{EquipmentName: "เก้าอี้"},
+	}
+	for _, e := range equipments {
+		db.FirstOrCreate(&e, entity.Equipment{EquipmentName: e.EquipmentName})
+	}
+
+	fmt.Println("📌 Seeding RoomEquipment")
+	roomEquipments := []entity.RoomEquipment{
+		{RoomID: 1, EquipmentID: 1, Quantity: 1},  // A302 มีโปรเจคเตอร์ 1 ตัว
+		{RoomID: 1, EquipmentID: 2, Quantity: 2},  // A302 มีไมโครโฟน 2 ตัว
+		{RoomID: 2, EquipmentID: 3, Quantity: 1},  // A303 มีไวท์บอร์ด 1 อัน
+		{RoomID: 2, EquipmentID: 4, Quantity: 10}, // A303 มีโต๊ะ 10 ตัว
+		{RoomID: 2, EquipmentID: 5, Quantity: 20}, // A303 มีเก้าอี้ 20 ตัว
+	}
+	for _, re := range roomEquipments {
+		result := db.FirstOrCreate(&re, entity.RoomEquipment{
+			RoomID:      re.RoomID,
+			EquipmentID: re.EquipmentID,
+			Quantity:    re.Quantity,
+		})
+		fmt.Printf("🧪 RoomEquipment: RoomID=%d EquipmentID=%d Quantity=%d | RowsAffected: %d\n",
+			re.RoomID, re.EquipmentID, re.Quantity, result.RowsAffected)
+	}
+
+	fmt.Println("📌 Seeding Payments")
+	payments := []entity.Payment{
+		{
+			PaymentsDate:  "2025-06-25",
+			Amount:        500.00,
+			SlipPath:      "/slips/payment1.jpg",
+			Note:          "จองห้องประชุมเช้า",
+			UserID:        users[6].ID, // internaluser1
+			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
+		},
+		{
+			PaymentsDate:  "2025-06-26",
+			Amount:        1000.00,
+			SlipPath:      "/slips/payment2.jpg",
+			Note:          "อบรมพนักงานใหม่",
+			UserID:        users[7].ID, // internaluser2
+			BookingRoomID: 2,
+		},
+	}
+	for _, p := range payments {
+		result := db.FirstOrCreate(&p, entity.Payment{
+			BookingRoomID: p.BookingRoomID,
+			UserID:        p.UserID,
+			Amount:        p.Amount,
+		})
+		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
 	}
 
 	fmt.Println("✅ Sample data added successfully!")

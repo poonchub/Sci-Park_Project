@@ -37,4 +37,5 @@ type User struct {
     UserPackages        []UserPackage        `gorm:"foreignKey:UserID"`
 	Notifications 		[]Notification `gorm:"foreignKey:UserID"`
     BookingRoom        []BookingRoom `gorm:"foreignKey:UserID"`
+    Payments           []Payment `gorm:"foreignKey:UserID"`
 }
