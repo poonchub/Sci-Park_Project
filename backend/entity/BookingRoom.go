@@ -12,4 +12,5 @@ type BookingRoom struct {
 	Room              Room             `gorm:"foreignKey:RoomID" valid:"-"`
 	TimeSlotID        uint             `valid:"required~กรุณาระบุสถานะ"`
 	TimeSlot          TimeSlot         `gorm:"foreignKey:TimeSlotID" valid:"-"`
+	Payments           []Payment `gorm:"foreignKey:UserID"`
 }
