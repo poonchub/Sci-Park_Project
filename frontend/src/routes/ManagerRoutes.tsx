@@ -10,6 +10,8 @@ import AllMaintenanceRequest from "../pages/AllMaintenanceRequest/AllMaintenance
 import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceRequest";
 import AddUserForm from "../pages/AddUser/AddUserForm";
 import ManageUsers from "../pages/ManageUsers/ManageUsers";
+import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
+import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 
 const ManagerRoutes = (): RouteObject => {
     return {
@@ -41,7 +43,7 @@ const ManagerRoutes = (): RouteObject => {
                 element: <CheckRequests />
             },
             {
-                path: "/maintenance/dashboard",
+                path: "/dashboard",
                 element: <Dashboard />
             },
             {
@@ -52,6 +54,14 @@ const ManagerRoutes = (): RouteObject => {
                 path: "/manage-user",
                 element: <ManageUsers />
             },
+            {
+				path: "/about-developer",
+				element: <AboutDeveloper/>
+			},
+            {
+				path: "/all-booking-room",
+				element: <AllBookingRoom/>
+			},
             {
 				path: "",
 				element: <Home/>

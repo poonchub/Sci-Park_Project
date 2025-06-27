@@ -70,7 +70,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
                             }}
                             key={index}
                         >
-                            <Card sx={{ px: 2, py: 1.8, height: '100%' }} >
+                            <Card sx={{ px: 2, py: 1.8, height: '100%', borderRadius: 2,alignItems: 'center', display: 'grid', borderLeft: `4px solid ${statusConfig[item.name].color}` }} >
                                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                     <Stack direction="row" spacing={1.5} alignItems="center">
                                         <Avatar
@@ -86,8 +86,8 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
                                         </Avatar>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>{item.name}</Typography>
                                     </Stack>
-                                    <Typography variant="body2" fontWeight={500}>
-                                        {item.count} รายการ
+                                    <Typography variant="body2" fontWeight={500} sx={{ textAlign: 'end'}}>
+                                        {item.count}
                                     </Typography>
                                 </Stack>
                             </Card>

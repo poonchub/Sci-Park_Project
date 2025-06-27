@@ -1,6 +1,6 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
-import { CreateHandoverImages, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
+import { CreateHandoverImages, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -44,8 +44,6 @@ const handleSubmitWork = async (
 
             files.forEach(file => formDataFile.append("files", file));
 
-            console.log("📤 FormData:", Array.from(formDataFile.entries()));
-
             const resImage = await CreateHandoverImages(formDataFile);
             if (!resImage) {
                 setAlerts((prev) => [...prev, { type: 'error', message: resImage?.Error || "Failed to upload images" }]);
@@ -73,6 +71,10 @@ const handleSubmitWork = async (
 
             setOpenPopupSubmit(false);
         }, 500);
+
+        const resEmail = await SendMaintenanceStatusEmail(selectedTask.RequestID || 0);
+        console.log(resEmail)
+        if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email");
 
     } catch (error) {
         console.error("API Error:", error);

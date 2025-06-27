@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
     handleFunction: (note?: string) => void;
     title: string;
     message: string;
+    buttonActive: boolean;
     showNoteField?: boolean;
 }
 
@@ -27,7 +28,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     handleFunction,
     title,
     message,
-    showNoteField
+    buttonActive,
+    showNoteField,
 }) => {
 
     const [note, setNote] = useState("");
@@ -91,7 +93,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         setOpenConfirm(false);
                     }}
                     variant="contained"
-                    autoFocus
+                    disabled={buttonActive}
                 >
                     ตกลง
                 </Button>

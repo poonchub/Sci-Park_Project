@@ -5,4 +5,23 @@
         margin-bottom: 0 !important;
         width: 100% !important;
     }
+
+    .container-btn {
+        container-type: inline-size;
+
+        .text-btn{
+            display: none;
+        }
+    }
+
+    @container (max-width: 160px) {
+        .btn-accept,
+        .btn-reject, .btn-detail, .btn-submit {
+            width: 100%;
+
+            .text-btn{
+                display: block;
+            }
+        }
+    }
 }

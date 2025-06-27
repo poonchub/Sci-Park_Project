@@ -10,6 +10,7 @@ interface Props {
         xs?: number;
         sm?: number;
         md?: number;
+        md1000?: number;
         lg?: number;
         xl?: number;
     };
@@ -51,7 +52,8 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                 size={{
                     xs: size?.xs || 12,
                     sm: size?.sm || 6,
-                    md: size?.md || 4,
+                    md: size?.md || 6,
+                    md1000: size?.md1000 || 4,
                     lg: size?.lg,
                     xl: size?.xl,
                 }}
@@ -63,7 +65,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                     }
                 }}
             >
-                <Card className="status-card" sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2 }}>
+                <Card className="status-card" sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2, borderLeft: `4px solid ${item.color}` }}>
                     <CardContent className="status-card-content" sx={{ height: '100%' }}>
                         <Grid size={{ xs: 10, md: 12 }}
                             container
@@ -74,10 +76,10 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                                 alignItems: "flex-start",
                             }}
                         >
-                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: 'text.main' }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: 'text.secondary' }}>
                                 {item.name}
                             </Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 20 }}>
+                            <Typography variant="h5" fontWeight="bold" color="textPrimary">
                                 {item.count} รายการ
                             </Typography>
                         </Grid>

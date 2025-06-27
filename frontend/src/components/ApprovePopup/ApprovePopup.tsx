@@ -28,6 +28,7 @@ interface ApprovePopupProps {
     setSelectedOperator: React.Dispatch<React.SetStateAction<number>>;
     operators: UserInterface[];
     maintenanceTypeConfig: MaintenanceTypeConfig;
+    buttonActive: boolean;
 }
 
 const ApprovePopup: React.FC<ApprovePopupProps> = ({
@@ -39,6 +40,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
     setSelectedOperator,
     operators,
     maintenanceTypeConfig,
+    buttonActive,
 }) => {
     return (
         <Dialog open={open} onClose={onClose}>
@@ -138,7 +140,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                 >
                     ยกเลิก
                 </Button>
-                <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
+                <Button variant="contained" onClick={onConfirm} disabled={buttonActive}>ยืนยัน</Button>
             </DialogActions>
         </Dialog>
     );
