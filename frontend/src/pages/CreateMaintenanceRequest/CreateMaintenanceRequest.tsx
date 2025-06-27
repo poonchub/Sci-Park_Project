@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./CreateMaintenanceRequest.css"
 
 import { Box, Button, Card, CardContent, Checkbox, Container, FormControl, FormControlLabel, FormGroup, FormHelperText, Grid, InputAdornment, MenuItem, Radio, RadioGroup, SelectChangeEvent, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CreateMaintenanceImages, CreateMaintenanceRequest, GetAreas, GetFloors, GetMaintenanceTypes, GetRequestStatuses, GetRooms, GetRoomTypes, GetUserById, UpdateUserbyID } from "../../services/http";
 import { AreasInterface } from "../../interfaces/IAreas";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
@@ -53,6 +53,8 @@ function CreateMaintenanceRequestPage() {
     const [onEdit, setOnEdit] = useState(false);
 
     const [files, setFiles] = useState<File[]>([]);
+
+    const navigate = useNavigate();
 
     const getUser = async () => {
         try {
@@ -240,7 +242,7 @@ function CreateMaintenanceRequestPage() {
 
             handleSetAlert('success', "Maintenance request submitted successfully");
             setTimeout(() => {
-                location.href = "/maintenance/my-maintenance-request";
+                navigate("/maintenance/my-maintenance-request");
             }, 1800);
 
         } catch (error) {

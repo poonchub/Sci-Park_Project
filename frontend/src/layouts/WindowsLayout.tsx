@@ -126,7 +126,7 @@ const NAVIGATION: Navigation = [
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, DashboardLayout, Navigation, NavigationItem, Router, Session } from '@toolpad/core';
-import { useTheme } from '@mui/material';
+import { Container, useTheme } from '@mui/material';
 
 function useToolpadRouter(): Router {
 	const location = useLocation();
@@ -295,17 +295,21 @@ const WindowsLayout: React.FC = (props: any) => {
 				sidebarExpandedWidth={260}
 			>
 				{/* Main content area */}
-				<Box
-					className="content-box"
-					sx={{
-						minHeight: '95vh',
-						overflow: 'auto',
-						p: 4,
-					}}
+				<Container
+					maxWidth={false}
+					sx={{ p: '0px !important', overflow: 'auto' }}
+					className='content-box'
 				>
-					<Outlet />
-				</Box>
-				<Footer />
+					<Box
+						sx={{
+							minHeight: '95vh',
+							p: 4,
+						}}
+					>
+						<Outlet />
+					</Box>
+					<Footer />
+				</Container>
 			</DashboardLayout>
 		</AppProvider>
 	);

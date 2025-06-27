@@ -41,7 +41,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
     maintenanceTypeConfig,
 }) => {
     return (
-        <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
+        <Dialog open={open} onClose={onClose}>
             {/* Dialog title */}
             <DialogTitle 
                 sx={{ 
