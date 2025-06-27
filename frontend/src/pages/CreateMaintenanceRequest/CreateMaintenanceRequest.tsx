@@ -20,7 +20,7 @@ import {
     SelectChangeEvent,
     Typography,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     CreateMaintenanceImages,
     CreateMaintenanceRequest,
@@ -98,6 +98,8 @@ function CreateMaintenanceRequestPage() {
     const [onEdit, setOnEdit] = useState(false);
 
     const [files, setFiles] = useState<File[]>([]);
+
+    const navigate = useNavigate();
 
     const getUser = async () => {
         try {
@@ -307,7 +309,7 @@ function CreateMaintenanceRequestPage() {
 
             handleSetAlert("success", "Maintenance request submitted successfully");
             setTimeout(() => {
-                location.href = "/maintenance/my-maintenance-request";
+                navigate("/maintenance/my-maintenance-request");
             }, 1800);
 
         } catch (error) {

@@ -43,7 +43,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
     buttonActive,
 }) => {
     return (
-        <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
+        <Dialog open={open} onClose={onClose}>
             {/* Dialog title */}
             <DialogTitle 
                 sx={{ 
