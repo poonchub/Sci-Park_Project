@@ -1,6 +1,10 @@
 package entity
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type TimeSlot struct {
     gorm.Model
