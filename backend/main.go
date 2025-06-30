@@ -54,6 +54,7 @@ func main() {
 
 		// RoomTypes
 		protected.GET("/room-types", controller.ListRoomTypes)
+		protected.GET("/room-types-for-booking", controller.ListRoomTypesForBooking)
 
 		// RoomStatuses
 		protected.GET("/room-status", controller.ListRoomStatus)
@@ -141,6 +142,9 @@ func main() {
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
 	{	
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
+
+		// BookingRooms
+		protected.GET("/booking-rooms", controller.ListBookingRooms)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

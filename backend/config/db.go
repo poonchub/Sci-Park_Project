@@ -70,7 +70,7 @@ func SetupDatabase() {
 		&entity.RoomTypeLayout{},
 		&entity.Notification{},
 		&entity.TimeSlot{},
-		&entity.Roomprice{},
+		&entity.RoomPrice{},
 		&entity.BookingRoom{},
 		&entity.Payment{},
 		&entity.RoomTypeImage{},
@@ -677,7 +677,7 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Roomprice (สมมุติว่าห้องขนาดเล็ก = RoomTypeID 1, TimeSlotID ตามข้างบน)
-	roomPrices := []entity.Roomprice{
+	roomPrices := []entity.RoomPrice{
 		{Price: 500, TimeSlotID: 1, RoomTypeID: 1},  // เช้า
 		{Price: 500, TimeSlotID: 2, RoomTypeID: 1},  // บ่าย
 		{Price: 1000, TimeSlotID: 3, RoomTypeID: 1}, // เต็มวัน
@@ -688,7 +688,7 @@ func SeedDatabase() {
 	}
 	fmt.Println("📌 Seeding Roomprices")
 	for _, rp := range roomPrices {
-		result := db.FirstOrCreate(&rp, entity.Roomprice{
+		result := db.FirstOrCreate(&rp, entity.RoomPrice{
 			TimeSlotID: rp.TimeSlotID,
 			RoomTypeID: rp.RoomTypeID,
 			Price:      rp.Price,

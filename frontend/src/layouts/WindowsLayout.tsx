@@ -17,6 +17,7 @@ import LayersIcon from "@mui/icons-material/Layers";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 
+import { Container, Chip, useTheme } from '@mui/material';
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import {
     AssignmentIndOutlined,
@@ -38,7 +39,6 @@ import {
     Router,
     Session,
 } from "@toolpad/core";
-import { Chip, useTheme } from "@mui/material";
 // import ToolbarActions from "../components/ToolbarActions/ToolbarActions";
 import { useTranslation } from "react-i18next";
 
@@ -405,25 +405,27 @@ const WindowsLayout: React.FC = (props: any) => {
             }}
         >
             <DashboardLayout
-                sidebarExpandedWidth={260}
-                // slots={{
-                //   toolbarActions: ToolbarActions,
-                // }}
-            >
-                {/* Main content area */}
-                <Box
-                    className="content-box"
-                    sx={{
-                        minHeight: "95vh",
-                        overflow: "auto",
-                        p: 4,
-                    }}
-                >
-                    <Outlet />
-                </Box>
-                <Footer />
-            </DashboardLayout>
+				sidebarExpandedWidth={260}
+			>
+				{/* Main content area */}
+				<Container
+					maxWidth={false}
+					sx={{ p: '0px !important', overflow: 'auto' }}
+					className='content-box'
+				>
+					<Box
+						sx={{
+							minHeight: '95vh',
+							p: 4,
+						}}
+					>
+						<Outlet />
+					</Box>
+					<Footer />
+				</Container>
+			</DashboardLayout>
         </AppProvider>
+        
     );
 };
 

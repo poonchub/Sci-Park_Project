@@ -470,8 +470,7 @@ async function UpdateRoomType(roomTypeData:RoomtypesInterface) {
     return res;
 }
 
-
-
+// Roomtypes
 async function GetRoomTypes() {
     const requestOptions = {
         method: "GET",
@@ -482,6 +481,26 @@ async function GetRoomTypes() {
     };
 
     let res = await fetch(`${apiUrl}/room-types`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function ListRoomTypesForBooking() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-types-for-booking`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1329,6 +1348,28 @@ async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id
     return res;
 }
 
+// BookingRooms
+async function ListBookingRooms() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    }
+
+    let res = await fetch(`${apiUrl}/booking-rooms`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -1355,6 +1396,7 @@ export {
 
     // RoomTypes
     GetRoomTypes,
+    ListRoomTypesForBooking,
     CreateRoomType,
     UpdateRoomType,
 
@@ -1426,6 +1468,9 @@ export {
     UpdateNotificationByID,
     UpdateNotificationsByRequestID,
     UpdateNotificationsByTaskID,
+
+    // BookingRooms
+    ListBookingRooms
 }
 
 
