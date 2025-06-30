@@ -17,8 +17,6 @@ func DB() *gorm.DB {
 	return db
 }
 
-
-
 // ฟังก์ชันเชื่อมต่อฐานข้อมูล
 func ConnectDB() {
 	var err error
@@ -36,6 +34,14 @@ func parseTime(s string) time.Time {
 	t, err := time.Parse("15:04", s)
 	if err != nil {
 		log.Fatalf("❌ parseTime error: %v", err)
+	}
+	return t
+}
+
+func parseDate(dateStr string) time.Time {
+	t, err := time.Parse("2006-01-02", dateStr) // รูปแบบวันที่มาตรฐานของ Go
+	if err != nil {
+		panic("❌ Invalid date format: " + dateStr)
 	}
 	return t
 }
@@ -658,8 +664,6 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&maintenanceImage)
 
-
-	
 	// 🔹 ข้อมูล TimeSlot
 	timeSlots := []entity.TimeSlot{
 		{TimeSlotName: "เช้า", StartTime: parseTime("08:00"), EndTime: parseTime("12:00")},
@@ -700,20 +704,21 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล BookingRoom (User: users[6] คือ Internal 1, Room: rooms[0] = A302, TimeSlot: 1 = เช้า)
 	bookingRooms := []entity.BookingRoom{
 		{
-			Date:       "2025-06-25",
+			Date:       parseDate("2025-06-25"),
 			Purpose:    "ประชุมแผนงานวิจัย",
 			UserID:     users[6].ID,
 			RoomID:     rooms[0].ID,
 			TimeSlotID: 1,
 		},
 		{
-			Date:       "2025-06-26",
+			Date:       parseDate("2025-06-26"),
 			Purpose:    "อบรมพนักงานใหม่",
 			UserID:     users[7].ID,
 			RoomID:     rooms[1].ID,
 			TimeSlotID: 2,
 		},
 	}
+
 	fmt.Println("📌 Seeding BookingRooms")
 	for _, br := range bookingRooms {
 		result := db.FirstOrCreate(&br, entity.BookingRoom{
