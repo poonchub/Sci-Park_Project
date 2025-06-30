@@ -746,20 +746,20 @@ func SeedDatabase() {
 
 	fmt.Println("📌 Seeding RoomEquipment")
 	roomEquipments := []entity.RoomEquipment{
-		{RoomID: 1, EquipmentID: 1, Quantity: 1},  // A302 มีโปรเจคเตอร์ 1 ตัว
-		{RoomID: 1, EquipmentID: 2, Quantity: 2},  // A302 มีไมโครโฟน 2 ตัว
-		{RoomID: 2, EquipmentID: 3, Quantity: 1},  // A303 มีไวท์บอร์ด 1 อัน
-		{RoomID: 2, EquipmentID: 4, Quantity: 10}, // A303 มีโต๊ะ 10 ตัว
-		{RoomID: 2, EquipmentID: 5, Quantity: 20}, // A303 มีเก้าอี้ 20 ตัว
+		{RoomTypeID: 1, EquipmentID: 1, Quantity: 1},  // A302 มีโปรเจคเตอร์ 1 ตัว
+		{RoomTypeID: 1, EquipmentID: 2, Quantity: 2},  // A302 มีไมโครโฟน 2 ตัว
+		{RoomTypeID: 2, EquipmentID: 3, Quantity: 1},  // A303 มีไวท์บอร์ด 1 อัน
+		{RoomTypeID: 2, EquipmentID: 4, Quantity: 10}, // A303 มีโต๊ะ 10 ตัว
+		{RoomTypeID: 2, EquipmentID: 5, Quantity: 20}, // A303 มีเก้าอี้ 20 ตัว
 	}
 	for _, re := range roomEquipments {
 		result := db.FirstOrCreate(&re, entity.RoomEquipment{
-			RoomID:      re.RoomID,
+			RoomTypeID:      re.RoomTypeID,
 			EquipmentID: re.EquipmentID,
 			Quantity:    re.Quantity,
 		})
 		fmt.Printf("🧪 RoomEquipment: RoomID=%d EquipmentID=%d Quantity=%d | RowsAffected: %d\n",
-			re.RoomID, re.EquipmentID, re.Quantity, result.RowsAffected)
+			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
 	fmt.Println("📌 Seeding Payments")
