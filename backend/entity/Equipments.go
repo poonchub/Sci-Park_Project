@@ -8,6 +8,5 @@ import (
 type Equipment struct {
     gorm.Model
 	EquipmentName string `valid:"required~กรุณาระบุชื่ออุปกรณ์"`
-
 	RoomEquipment []RoomEquipment `gorm:"foreignKey:EquipmentID"`
 }
