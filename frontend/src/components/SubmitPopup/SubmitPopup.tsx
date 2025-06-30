@@ -27,7 +27,7 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
 }) => {
 
     return (
-        <Dialog open={open} onClose={onClose} sx={{ zIndex: 999 }}>
+        <Dialog open={open} onClose={onClose}>
             {/* Dialog title */}
             <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
                 ส่งงานซ่อม

@@ -9,18 +9,23 @@ import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { CalendarMonth } from "@mui/icons-material";
 import { Select } from "../../components/Select/Select";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import theme from "../../styles/Theme";
 import { mockBookingRooms } from "./mockData";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
+import { ListBookingRooms } from "../../services/http";
+import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 
 function AllBookingRoom() {
+    const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([])
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
 
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
+
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -633,6 +638,34 @@ function AllBookingRoom() {
             ];
         }
     };
+    
+    const getBookingRooms = async () => {
+        try {
+            const res = await ListBookingRooms();
+            if (res) {
+                setBookingRooms(res);
+            }
+        } catch (error) {
+            console.error("Error fetching booking rooms:", error);
+        }
+    };
+
+    useEffect(()=>{
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([
+                    getBookingRooms(),
+                ]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
+    }, [])
+
+    console.log(bookingRooms)
 
     return (
         <Box className="all-booking-room-page">
@@ -747,7 +780,7 @@ function AllBookingRoom() {
                     <Grid size={{ xs: 12, md: 12 }}>
                         {true ? (
                             <CustomDataGrid
-                                rows={mockBookingRooms}
+                                rows={bookingRooms}
                                 columns={getColumns()}
                                 rowCount={total}
                                 page={page}

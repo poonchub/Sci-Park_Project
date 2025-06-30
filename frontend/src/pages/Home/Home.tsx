@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react';
 import {
-    AppBar,
-    Toolbar,
     Typography,
     Container,
     Box,
@@ -10,40 +7,23 @@ import {
     CardMedia,
     Grid,
     Button,
-    Divider,
     Paper,
-    IconButton,
-    Avatar,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemIcon,
     Chip,
-    useTheme,
-    useMediaQuery
 } from '@mui/material';
 
 import {
-    Menu as MenuIcon,
-    Bell,
-    Settings,
-    CalendarDays,
     Wrench,
     DoorOpen,
-    Briefcase,
-    FileText,
-    StickyNote,
-    FlaskConical,
     ArrowRight,
-    ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// ข้อมูลองค์กรจำลอง
+// ข้อมูลองค์กร
 const organizationInfo = {
-    name: "Scipark",
+    name: "Regional Science Park Northeast 2",
     description: "ศูนย์วิทยาศาสตร์และเทคโนโลยีชั้นนำ มุ่งสร้างสรรค์นวัตกรรมและสนับสนุนการทำงานอย่างมีประสิทธิภาพ",
-    mission: "มุ่งมั่นพัฒนาและสนับสนุนงานวิจัยด้านวิทยาศาสตร์และเทคโนโลยี เพื่อยกระดับคุณภาพชีวิตและขับเคลื่อนเศรษฐกิจของประเทศ"
+    mission: "มุ่งมั่นพัฒนาและสนับสนุนงานวิจัยด้านวิทยาศาสตร์และเทคโนโลยี เพื่อยกระดับคุณภาพชีวิตและขับเคลื่อนเศรษฐกิจของประเทศ",
+    about: "เราให้บริการระบบสนับสนุนการทำงานที่ครบวงจร ทั้งระบบแจ้งซ่อม ระบบจองห้องประชุม และบริการอื่นๆ อีกมากมาย เพื่อให้บุคลากรสามารถทำงานได้อย่างมีประสิทธิภาพสูงสุด"
 };
 
 // ข้อมูลข่าวสารจำลอง
@@ -89,9 +69,6 @@ const mainFeatures = [
 
 // คอมโพเนนต์หลัก
 export default function SciparkHomePage() {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
     return (
         <Box className="home-page">
@@ -110,47 +87,26 @@ export default function SciparkHomePage() {
                     <Grid container spacing={4} alignItems="center">
                         <Grid size={{ xs: 12, md: 6 }}>
                             <Typography
+                                component="h2"
+                                variant="h4"
+                                align="left"
+                                gutterBottom
+                                sx={{ fontWeight: 'bold' }}
+                            >
+                                ยินดีต้อนรับสู่
+                            </Typography>
+                            <Typography
                                 component="h1"
                                 variant="h2"
                                 align="left"
                                 gutterBottom
                                 sx={{ fontWeight: 'bold' }}
                             >
-                                ยินดีต้อนรับสู่ {organizationInfo.name}
+                                {organizationInfo.name}
                             </Typography>
                             <Typography variant="h5">
                                 {organizationInfo.description}
                             </Typography>
-                            <Box sx={{ mt: 4 }}>
-                                <Button
-                                    variant="contained"
-                                    size="large"
-                                    sx={{
-                                        mr: 2,
-                                        bgcolor: 'white',
-                                        color: 'primary.main',
-                                        '&:hover': {
-                                            bgcolor: 'grey.100',
-                                        }
-                                    }}
-                                >
-                                    แจ้งซ่อม
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    size="large"
-                                    sx={{
-                                        borderColor: 'white',
-                                        color: 'white',
-                                        '&:hover': {
-                                            borderColor: 'grey.300',
-                                            bgcolor: 'rgba(255,255,255,0.1)',
-                                        }
-                                    }}
-                                >
-                                    จองห้องประชุม
-                                </Button>
-                            </Box>
                         </Grid>
                     </Grid>
                 </Container>
@@ -191,47 +147,33 @@ export default function SciparkHomePage() {
 
                 <Grid container spacing={4}>
                     {mainFeatures.map((feature, index) => (
-                        <Grid size={{ xs: 12, md: (12/mainFeatures.length) }} key={index}>
-                            <Card
-                                sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'transform 0.3s, box-shadow 0.3s',
-                                    '&:hover': {
-                                        transform: 'translateY(-5px)',
-                                        boxShadow: 6,
-                                    }
-                                }}
-                            >
-                                <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 4 }}>
-                                    <Box sx={{ color: 'primary.main', mb: 2 }}>
-                                        {feature.icon}
-                                    </Box>
-                                    <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'bold' }}>
-                                        {feature.title}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
-                                        {feature.description}
-                                    </Typography>
-                                </CardContent>
-                                <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end' }}>
-                                    <Link to={feature.path}>
-                                        <Button
-                                            endIcon={<ChevronRight />}
-                                            sx={{
-                                                color: 'customBlue',
-                                                "&:hover": {
-                                                    background: 'none',
-                                                    boxShadow: 'none'
-                                                }
-                                            }}
-                                        >
-                                            เข้าใช้งาน
-                                        </Button>
-                                    </Link>
-                                </Box>
-                            </Card>
+                        <Grid size={{ xs: 12, md: (12 / mainFeatures.length) }} key={index}>
+                            <Link to={feature.path}>
+                                <Card
+                                    sx={{
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        transition: 'transform 0.3s, box-shadow 0.3s',
+                                        '&:hover': {
+                                            transform: 'translateY(-5px)',
+                                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                                        }
+                                    }}
+                                >
+                                    <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 3 }}>
+                                        <Box sx={{ color: 'primary.main', mb: 2 }}>
+                                            {feature.icon}
+                                        </Box>
+                                        <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'bold' }}>
+                                            {feature.title}
+                                        </Typography>
+                                        <Typography variant="body1" color="text.secondary">
+                                            {feature.description}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            </Link>
                         </Grid>
                     ))}
                 </Grid>
@@ -254,11 +196,11 @@ export default function SciparkHomePage() {
                             <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
                                 เกี่ยวกับ {organizationInfo.name}
                             </Typography>
-                            <Typography variant="body1" paragraph>
+                            <Typography variant="body1">
                                 {organizationInfo.mission}
                             </Typography>
-                            <Typography variant="body1" paragraph>
-                                เราให้บริการระบบสนับสนุนการทำงานที่ครบวงจร ทั้งระบบแจ้งซ่อม ระบบจองห้องประชุม และบริการอื่นๆ อีกมากมาย เพื่อให้บุคลากรสามารถทำงานได้อย่างมีประสิทธิภาพสูงสุด
+                            <Typography variant="body1">
+                                {organizationInfo.about}
                             </Typography>
                             <Button
                                 variant="outlined"
@@ -327,12 +269,12 @@ export default function SciparkHomePage() {
                                     <Button
                                         size="small"
                                         sx={{
-                                                color: 'customBlue',
-                                                "&:hover": {
-                                                    background: 'none',
-                                                    boxShadow: 'none'
-                                                }
-                                            }}
+                                            color: 'customBlue',
+                                            "&:hover": {
+                                                background: 'none',
+                                                boxShadow: 'none'
+                                            }
+                                        }}
                                         endIcon={<ArrowRight />}
                                     >
                                         อ่านต่อ

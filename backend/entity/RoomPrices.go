@@ -2,7 +2,7 @@ package entity
 
 import "gorm.io/gorm"
 
-type Roomprice struct {
+type RoomPrice struct {
     gorm.Model
    
 	Price 		int

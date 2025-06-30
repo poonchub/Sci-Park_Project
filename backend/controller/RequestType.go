@@ -8,7 +8,6 @@ import (
 
 )
 
-// ListRole - ฟังก์ชันสำหรับดึงข้อมูลทั้งหมดจาก Role
 func ListRequestType(c *gin.Context) {
 	var request_type []entity.RequestType
 

@@ -14,6 +14,6 @@ type RoomType struct {
     Rooms       []Room  `gorm:"foreignKey:RoomTypeID"`
     RoomTypeLayouts       []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`
     RoomTypeImages      []RoomTypeImage  `gorm:"foreignKey:RoomTypeID"`
-    Roomprices     []Roomprice  `gorm:"foreignKey:RoomTypeID"`
+    RoomPrices     []RoomPrice  `gorm:"foreignKey:RoomTypeID"`
 }
 
