@@ -17,6 +17,8 @@ func DB() *gorm.DB {
 	return db
 }
 
+
+
 // ฟังก์ชันเชื่อมต่อฐานข้อมูล
 func ConnectDB() {
 	var err error
@@ -28,6 +30,16 @@ func ConnectDB() {
 	fmt.Println("✅ Connected to database")
 	db = database
 }
+
+// เพิ่ม function สำหรับแปลง "08:00" เป็น time.Time
+func parseTime(s string) time.Time {
+	t, err := time.Parse("15:04", s)
+	if err != nil {
+		log.Fatalf("❌ parseTime error: %v", err)
+	}
+	return t
+}
+
 
 // ฟังก์ชันสร้างตารางในฐานข้อมูล
 func SetupDatabase() {
@@ -64,7 +76,6 @@ func SetupDatabase() {
 		&entity.RoomTypeImage{},
 		&entity.Equipment{},
 		&entity.RoomEquipment{},
-		
 	)
 
 	if err != nil {
@@ -647,11 +658,13 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&maintenanceImage)
 
+
+	
 	// 🔹 ข้อมูล TimeSlot
 	timeSlots := []entity.TimeSlot{
-		{TimeSlotName: "เช้า", StartTime: "08:00", EndTime: "12:00"},
-		{TimeSlotName: "บ่าย", StartTime: "13:00", EndTime: "17:00"},
-		{TimeSlotName: "เต็มวัน", StartTime: "08:00", EndTime: "17:00"},
+		{TimeSlotName: "เช้า", StartTime: parseTime("08:00"), EndTime: parseTime("12:00")},
+		{TimeSlotName: "บ่าย", StartTime: parseTime("13:00"), EndTime: parseTime("17:00")},
+		{TimeSlotName: "เต็มวัน", StartTime: parseTime("08:00"), EndTime: parseTime("17:00")},
 	}
 	fmt.Println("📌 Seeding TimeSlots")
 	for _, slot := range timeSlots {
