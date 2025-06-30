@@ -7,6 +7,5 @@ import (
 type RoomLayout struct {
     gorm.Model
     LayoutName  string
-
     RoomTypeLayouts       []RoomTypeLayout  `gorm:"foreignKey:RoomLayoutID"`
 }
