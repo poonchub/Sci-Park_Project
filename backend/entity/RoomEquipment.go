@@ -8,8 +8,8 @@ import (
 type RoomEquipment struct {
     gorm.Model
 	Quantity 	int
-	RoomID 		uint
-	Room 		Room `gorm:"foreignKey:RoomID"`
+	RoomTypeID 	uint
+	RoomType 	RoomType `gorm:"foreignKey:RoomTypeID"`
 	EquipmentID uint
 	Equipment 	Equipment `gorm:"foreignKey:EquipmentID"`
 }	
