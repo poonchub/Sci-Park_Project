@@ -29,7 +29,7 @@ const AddUserForm: React.FC = () => {
   // Fetch data when component mounts
   const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
   const [userType, setUserType] = useState<string>('internal');
-
+  const tests = String("JS")
   const roleID = watch('RoleID');  // Watching RoleID value
 
   const handleClickShowPassword = () => {
@@ -280,10 +280,10 @@ const AddUserForm: React.FC = () => {
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="ชื่อจริง (ไม่มีคำนำหน้า)"
+                        label="กรุณากรอกชื่อจริง (ไม่มีคำนำหน้า)"
                         fullWidth
                         error={!!errors.FirstName}
-                        helperText={String(errors.FirstName?.message) || ""}
+                        helperText={String(errors.FirstName?.message || "") }
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -303,10 +303,10 @@ const AddUserForm: React.FC = () => {
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="นามสกุล"
+                        label="กรุณากรอกนามสกุล"
                         fullWidth
                         error={!!errors.LastName}
-                        helperText={String(errors.LastName?.message) || ""}
+                        helperText={String(errors.LastName?.message || "") }
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -340,7 +340,7 @@ const AddUserForm: React.FC = () => {
                         </Select>
                       )}
                     />
-                    <FormHelperText>{String(errors.Gender?.message)}</FormHelperText>
+                    <FormHelperText>{String(errors.Gender?.message || "")}</FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 3 }}>
@@ -359,10 +359,11 @@ const AddUserForm: React.FC = () => {
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="หมายเลข โทรศัพท์"
+                        label="กรุณากรอกหมายเลข โทรศัพท์"
                         fullWidth
                         error={!!errors.Phone}
-                        helperText={String(errors.Phone?.message) || ""}
+                        helperText={String(errors.Phone?.message || "")}
+                        
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -393,7 +394,7 @@ const AddUserForm: React.FC = () => {
                         label="กรุณากรอก อีเมล"
                         fullWidth
                         error={!!errors.Email}
-                        helperText={String(errors.Email?.message) || ""}
+                        helperText={String(errors.Email?.message || "")}
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -426,7 +427,7 @@ const AddUserForm: React.FC = () => {
                         type={showPassword ? 'text' : 'password'}  // ทำให้รหัสผ่านแสดง/ซ่อน
                         fullWidth
                         error={!!errors.Password}
-                        helperText={String(errors.Password?.message) || ""}
+                        helperText={String(errors.Password?.message || "")}
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -469,7 +470,7 @@ const AddUserForm: React.FC = () => {
                       </Select>
                     )}
                   />
-                  <FormHelperText>{String(errors.Role?.message)}</FormHelperText>
+                  <FormHelperText>{String(errors.Role?.message || "")}</FormHelperText>
                 </FormControl>
               </Grid>
             )}
@@ -493,7 +494,7 @@ const AddUserForm: React.FC = () => {
                       </Select>
                     )}
                   />
-                  <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>
+                  <FormHelperText>{String(errors.RequestTypeID?.message || "")}</FormHelperText>
                 </FormControl>
               </Grid>
             )}
@@ -519,7 +520,7 @@ const AddUserForm: React.FC = () => {
                     label="กรุณากรอกรหัสพนักงาน"
                     fullWidth
                     error={!!errors.EmployeeID}  // เปลี่ยนจาก errors.Email เป็น errors.EmployeeID
-                    helperText={String(errors.EmployeeID?.message) || ""}
+                    helperText={String(errors.EmployeeID?.message || "" )}
                     slotProps={{
                       inputLabel: {
                         sx: { color: '#6D6E70' }
@@ -550,7 +551,7 @@ const AddUserForm: React.FC = () => {
                     </Select>
                   )}
                 />
-                <FormHelperText>{String(errors.Package?.message)}</FormHelperText>
+                <FormHelperText>{String(errors.Package?.message || "")}</FormHelperText>
               </FormControl>
             </Grid>
 
