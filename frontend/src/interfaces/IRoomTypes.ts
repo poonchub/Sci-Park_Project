@@ -1,4 +1,6 @@
+import { RoomEquipmentsInterface } from "./IRoomEquipments";
 import { RoomsInterface } from "./IRooms";
+import { RoomTypeImagesInterface } from "./IRoomTypeImages";
 import { RoomTypeLayouts } from "./IRoomtypeLayouts";
 
 export interface RoomtypesInterface {
@@ -9,4 +11,6 @@ export interface RoomtypesInterface {
     RoomSize?:      number;
     Rooms?:         RoomsInterface[];
     RoomTypeLayouts?:   RoomTypeLayouts[];
+    RoomTypeImages?:    RoomTypeImagesInterface[];
+    RoomEquipments?:     RoomEquipmentsInterface[];
 }

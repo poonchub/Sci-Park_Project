@@ -45,7 +45,8 @@ func ListRoomTypesForBooking(c *gin.Context) {
     // ดึงข้อมูลจากฐานข้อมูล
     if err := db.
 		Preload("RoomTypeLayouts.RoomLayout").
-		// Preload("RoomTypeImages").
+		Preload("RoomEquipments.Equipment").
+		Preload("RoomTypeImages").
 		Preload("RoomPrices").
 		Find(&roomTypes).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch room types"})
@@ -62,8 +63,9 @@ func ListRoomTypesForBooking(c *gin.Context) {
             "FullDayRate": roomType.FullDayRate,
 			"RoomSize":    roomType.RoomSize,
 			"RoomTypeLayouts":	roomType.RoomTypeLayouts,
-			// "RoomTypeImages": 	roomType.RoomTypeImages,
+			"RoomTypeImages": 	roomType.RoomTypeImages,
 			"RoomPrices":		roomType.RoomPrices,
+			"RoomEquipments":		roomType.RoomEquipments,
         })
     }
 
