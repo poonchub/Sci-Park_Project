@@ -35,17 +35,17 @@ import { ListRoomTypesForBooking } from '../../services/http';
 import { RoomtypesInterface } from '../../interfaces/IRoomTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand } from '@fortawesome/free-solid-svg-icons';
-import { Clock12, CloudSun, Cloudy, Sun, Users } from 'lucide-react';
+import { Clock12, CloudSun, Cloudy, Sun, Users, XCircle } from 'lucide-react';
 import Carousel from 'react-material-ui-carousel';
+import { equipmentConfig } from '../../constants/equipmentConfig';
 
 const BookingRoom = () => {
-    const [roomtypes, setRoomTypes] = useState<RoomtypesInterface[]>([])
+    const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([])
     const [selectedRoomtypes, setSelectedRoomTypes] = useState<RoomtypesInterface>()
 
-    const [filteredRooms, setFilteredRooms] = useState();
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [filters, setFilters] = useState({
-        size: 'all',
+        price: 'all',
         capacity: 'all',
         search: '',
     });
@@ -94,7 +94,16 @@ const BookingRoom = () => {
 
     };
 
-    const roomTypeItemCard = roomtypes.map((item, index) => {
+    const filteredRoomTypes = roomTypes.filter((roomType) => {
+        const roomTypeName = roomType.TypeName;
+
+        const match =
+            roomTypeName?.toLowerCase()?.includes(filters.search.toLowerCase())
+
+        return match;
+    });
+
+    const roomTypeItemCard = filteredRoomTypes.map((item, index) => {
         console.log(item)
         const roomSizeStr = `Size: ${item.RoomSize} sqm`
         const halfDayPriceStr = `Half-day: ฿${item.HalfDayRate?.toLocaleString('th-TH')}`
@@ -201,6 +210,55 @@ const BookingRoom = () => {
                                 <Typography gutterBottom sx={{ fontWeight: 500 }}>
                                     Available Equipment
                                 </Typography>
+                                <Grid container spacing={0.8}>
+                                    {
+                                        item.RoomEquipments?.map((roomEquipment, index) => {
+                                            const equipmentName = roomEquipment.Equipment?.EquipmentName
+
+                                            if (!equipmentName || !equipmentConfig[equipmentName]) return null;
+
+                                            const config = equipmentConfig[equipmentName];
+                                            const Icon = config.icon;
+
+                                            return (
+                                                <Box key={index}
+                                                    sx={{
+                                                        display: 'inline-flex',
+                                                        gap: 1,
+                                                        alignItems: 'center',
+                                                        border: '1px solid #e2e8f0',
+                                                        px: 1.2,
+                                                        py: 0.6,
+                                                        borderRadius: 1
+                                                    }}
+                                                >
+                                                    <Icon size={16} strokeWidth={2.2} />
+                                                    <Typography variant='body2'>
+                                                        {equipmentName}
+                                                    </Typography>
+                                                </Box>
+                                            )
+                                        })
+                                    }
+                                    {
+                                        item.RoomEquipments?.length === 0 && (
+                                            <Box key={index}
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    alignItems: 'center',
+                                                    border: '1px solid #e2e8f0',
+                                                    px: 1.2,
+                                                    py: 0.6,
+                                                    borderRadius: 1
+                                                }}
+                                            >
+                                                <XCircle size={16} strokeWidth={2.2} />
+                                                <Typography variant='body2'>There is no equipment in this room.</Typography>
+                                            </Box>
+                                        )
+                                    }
+                                </Grid>
                             </Box>
 
                             <Box>
@@ -210,12 +268,7 @@ const BookingRoom = () => {
                                 <Grid container spacing={0.8}>
                                     {
                                         item.RoomTypeLayouts?.map((layout, index) => {
-                                            let layoutStr
-                                            if (layout.RoomLayout) {
-                                                layoutStr = `${layout.RoomLayout?.LayoutName}: ${layout.Capacity} ${layout.Note ? `(${layout.Note})` : ''}`
-                                            } else {
-                                                layoutStr = layout.Note
-                                            }
+                                            const layoutStr = `${layout.RoomLayout?.LayoutName}: ${layout.Capacity} ${layout.Note ? `(${layout.Note})` : ''}`
 
                                             return (
                                                 <Grid size={{ xs: 12, sm: 6 }}
@@ -325,131 +378,240 @@ const BookingRoom = () => {
                                     p: 2,
                                 }}
                             >
-                                <Typography gutterBottom fontWeight={500}>
-                                    Room Size
-                                </Typography>
                                 <Box
                                     sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 0.8,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1
                                     }}
                                 >
-                                    <FontAwesomeIcon
-                                        icon={faExpand}
-                                        style={{
-                                            width: "18px",
-                                            height: "18px",
-                                            paddingBottom: "2px"
-                                        }}
-                                    />
-                                    <Typography fontSize={18} fontWeight={600}>
-                                        {`${selectedRoomtypes?.RoomSize} sqm`}
+                                    <Typography gutterBottom fontWeight={500}>
+                                        Room Size
                                     </Typography>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.8,
+                                        }}
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faExpand}
+                                            style={{
+                                                width: "18px",
+                                                height: "18px",
+                                                paddingBottom: "2px"
+                                            }}
+                                        />
+                                        <Typography fontSize={18} fontWeight={600}>
+                                            {`${selectedRoomtypes?.RoomSize?.toLocaleString('th')} sqm`}
+                                        </Typography>
+                                    </Box>
                                 </Box>
                             </Grid>
 
                             <Grid
-                                container
                                 size={{ xs: 6 }}
                                 sx={{
                                     bgcolor: '#f9fafb',
                                     borderRadius: 2,
                                     p: 2,
                                 }}
-                                spacing={1}
                             >
-                                <Typography gutterBottom fontWeight={500}>
-                                    Pricing (THB)
-                                </Typography>
-                                <Grid size={{ xs: 12 }}
+                                <Box
                                     sx={{
                                         display: 'flex',
-                                        justifyContent: 'space-between',
-                                        color: 'text.secondary'
+                                        flexDirection: 'column',
+                                        gap: 1
                                     }}
                                 >
-                                    <Box
+                                    <Typography gutterBottom fontWeight={500}>
+                                        Pricing (THB)
+                                    </Typography>
+                                    <Grid size={{ xs: 12 }}
                                         sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.8,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            color: 'text.secondary'
                                         }}
                                     >
-                                        <Clock12 size={16} strokeWidth={2.2} />
-                                        <Typography>
-                                            Half-day rate:
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 0.8,
+                                            }}
+                                        >
+                                            <Clock12 size={16} strokeWidth={2.2} />
+                                            <Typography>
+                                                Half-day rate:
+                                            </Typography>
+                                        </Box>
+                                        <Typography fontSize={18} fontWeight={700} color='#2563eb'>
+                                            {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
                                         </Typography>
-                                    </Box>
-                                    <Typography fontSize={18} fontWeight={700} color='#2563eb'>
-                                        {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={{ xs: 12 }}
-                                    sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        color: 'text.secondary'
-                                    }}
-                                >
-                                    <Box
+                                    </Grid>
+                                    <Grid size={{ xs: 12 }}
                                         sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.8,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            color: 'text.secondary'
                                         }}
                                     >
-                                        <Sun size={16} strokeWidth={2.2} />
-                                        <Typography>
-                                            Half-day rate:
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 0.8,
+                                            }}
+                                        >
+                                            <Sun size={16} strokeWidth={2.2} />
+                                            <Typography>
+                                                Half-day rate:
+                                            </Typography>
+                                        </Box>
+                                        <Typography fontSize={18} fontWeight={700} color='#2563eb'>
+                                            {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
                                         </Typography>
-                                    </Box>
-                                    <Typography fontSize={18} fontWeight={700} color='#2563eb'>
-                                        {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
-                                    </Typography>
-                                </Grid>
+                                    </Grid>
+                                </Box>
                             </Grid>
 
                             <Grid
-                                container
                                 size={{ xs: 6 }}
                                 sx={{
                                     bgcolor: '#f9fafb',
                                     borderRadius: 2,
                                     p: 2,
                                 }}
-                                spacing={1}
                             >
-                                <Typography gutterBottom fontWeight={500}>
-                                    Seating Capacity
-                                </Typography>
-                                {
-                                    selectedRoomtypes?.RoomTypeLayouts?.map((layout, index) => {
-                                        let layoutStr
-                                        if (layout.RoomLayout) {
-                                            layoutStr = `${layout.RoomLayout?.LayoutName}: ${layout.Capacity} ${layout.Note ? `(${layout.Note})` : ''}`
-                                        } else {
-                                            layoutStr = layout.Note
-                                        }
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        // flexDirection: 'column',
+                                        flexWrap: 'wrap',
+                                        gap: 1
+                                    }}
+                                >
+                                    <Typography gutterBottom fontWeight={500} width={'100%'}>
+                                        Seating Capacity
+                                    </Typography>
+                                    {
+                                        selectedRoomtypes?.RoomTypeLayouts?.map((layout, index) => {
+                                            const layoutName = layout.RoomLayout?.LayoutName
+                                            const note = layout.Note
+                                            return (
+                                                <Grid size={{ xs: 12, md: 6 }}
+                                                    container
+                                                    direction={'column'}
+                                                    sx={{
+                                                        gap: 1,
+                                                        alignItems: 'center',
+                                                        bgcolor: '#FFF',
+                                                        py: 1.4,
+                                                        px: 0.6,
+                                                        borderRadius: 1
+                                                    }}
+                                                    key={index}
+                                                >
+                                                    <Users size={18} strokeWidth={2.2} />
+                                                    <Typography variant='body2' fontWeight={500}>
+                                                        {layoutName}
+                                                    </Typography>
+                                                    <Typography fontSize={18} fontWeight={700} color='#2563eb'>
+                                                        {layout.Capacity}
+                                                    </Typography>
+                                                    {note &&
+                                                        <Typography color='text.secondary' fontSize={14}>
+                                                            {`(${note})`}
+                                                        </Typography>
+                                                    }
 
-                                        return (
-                                            <Grid size={{ xs: 12 }}
+                                                </Grid>
+                                            )
+                                        })
+                                    }
+                                </Box>
+                            </Grid>
+
+                            <Grid
+                                size={{ xs: 6 }}
+                                sx={{
+                                    bgcolor: '#f9fafb',
+                                    borderRadius: 2,
+                                    p: 2,
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1
+                                    }}
+                                >
+                                    <Typography gutterBottom fontWeight={500} width={'100%'}>
+                                        Available Equipment
+                                    </Typography>
+                                    {
+                                        selectedRoomtypes?.RoomEquipments?.map((roomEquipment, index) => {
+                                            const equipmentName = roomEquipment.Equipment?.EquipmentName
+                                            const equipmentQuantity = roomEquipment.Quantity
+
+                                            if (!equipmentName || !equipmentConfig[equipmentName]) return null;
+
+                                            const config = equipmentConfig[equipmentName];
+                                            const Icon = config.icon;
+
+                                            return (
+                                                <Grid key={index}
+                                                    container
+                                                    sx={{
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        bgcolor: '#FFF',
+                                                        px: 1.6,
+                                                        py: 1,
+                                                        borderRadius: 1,
+                                                    }}
+                                                    size={{ xs: 12 }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1
+                                                        }}
+                                                    >
+                                                        <Icon size={16} strokeWidth={2.2} />
+                                                        <Typography variant='body2'>
+                                                            {equipmentName}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography variant='body2' fontWeight={600}>{equipmentQuantity}</Typography>
+                                                </Grid>
+                                            )
+                                        })
+                                    }
+                                    {
+                                        selectedRoomtypes?.RoomEquipments?.length === 0 && (
+                                            <Grid
+                                                container
                                                 sx={{
-                                                    display: 'inline-flex',
-                                                    gap: 1,
                                                     alignItems: 'center',
-                                                    color: 'text.secondary'
+                                                    bgcolor: '#FFF',
+                                                    px: 1.6,
+                                                    py: 1,
+                                                    borderRadius: 1,
                                                 }}
-                                                key={index}
+                                                size={{ xs: 12 }}
+                                                spacing={1}
                                             >
-                                                <Users size={16} strokeWidth={2.2} />
-                                                <Typography variant='body2'>
-                                                    {layoutStr}
-                                                </Typography>
+                                                <XCircle size={16} strokeWidth={2.2} />
+                                                <Typography variant='body2'>There is no equipment in this room.</Typography>
                                             </Grid>
                                         )
-                                    })
-                                }
+                                    }
+                                </Box>
                             </Grid>
                         </Grid>
                     </DialogContentText>
@@ -484,10 +646,11 @@ const BookingRoom = () => {
                         </Typography>
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 12 }}>
+                    {/* Filter section */}
+                    {/* <Grid size={{ xs: 12, md: 12 }}>
                         <Card sx={{ p: 2, mb: 3 }}>
                             <Grid container spacing={2} alignItems="center">
-                                <Grid size={{ xs: 12, md: 4 }}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
                                         fullWidth
                                         name="search"
@@ -496,12 +659,11 @@ const BookingRoom = () => {
                                         placeholder='ค้นหาห้องประชุม'
                                     />
                                 </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <FormControl fullWidth>
                                         <Select
-                                            labelId="size-filter-label"
-                                            name="size"
-                                            value={filters.size}
+                                            value={filters.price}
                                             onChange={handleFilterChange}
                                         >
                                             <MenuItem value="all">ทั้งหมด</MenuItem>
@@ -512,7 +674,7 @@ const BookingRoom = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <FormControl fullWidth>
                                         <Select
                                             labelId="capacity-filter-label"
@@ -529,7 +691,7 @@ const BookingRoom = () => {
                                 </Grid>
                             </Grid>
                         </Card>
-                    </Grid>
+                    </Grid> */}
 
                     <Grid container spacing={2.5} size={{ xs: 12, md: 12 }}>
                         {roomTypeItemCard}

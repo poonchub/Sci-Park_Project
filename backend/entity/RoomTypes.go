@@ -11,10 +11,10 @@ type RoomType struct {
     HalfDayRate float64
     FullDayRate float64
 
-    Rooms       []Room  `gorm:"foreignKey:RoomTypeID"`
-    RoomTypeLayouts       []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`
+    Rooms               []Room  `gorm:"foreignKey:RoomTypeID"`
+    RoomTypeLayouts     []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`
     RoomTypeImages      []RoomTypeImage  `gorm:"foreignKey:RoomTypeID"`
-    RoomPrices     []RoomPrice  `gorm:"foreignKey:RoomTypeID"`
-   
+    RoomPrices          []RoomPrice  `gorm:"foreignKey:RoomTypeID"`
+    RoomEquipments      []RoomEquipment  `gorm:"foreignKey:RoomTypeID"`
 }
 
