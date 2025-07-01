@@ -35,7 +35,8 @@ import { ListRoomTypesForBooking } from '../../services/http';
 import { RoomtypesInterface } from '../../interfaces/IRoomTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExpand } from '@fortawesome/free-solid-svg-icons';
-import { CloudSun, Cloudy, Sun, Users } from 'lucide-react';
+import { Clock12, CloudSun, Cloudy, Sun, Users } from 'lucide-react';
+import Carousel from 'react-material-ui-carousel';
 
 const BookingRoom = () => {
     const [roomtypes, setRoomTypes] = useState<RoomtypesInterface[]>([])
@@ -176,7 +177,7 @@ const BookingRoom = () => {
                                             alignItems: 'center'
                                         }}
                                     >
-                                        <Sun size={16} strokeWidth={2.2} />
+                                        <Clock12 size={16} strokeWidth={2.2} />
                                         <Typography variant='body2'>
                                             {halfDayPriceStr}
                                         </Typography>
@@ -188,7 +189,7 @@ const BookingRoom = () => {
                                             alignItems: 'center'
                                         }}
                                     >
-                                        <Cloudy size={16} strokeWidth={2.2} />
+                                        <Sun size={16} strokeWidth={2.2} />
                                         <Typography variant='body2'>
                                             {fullDayPriceStr}
                                         </Typography>
@@ -276,16 +277,181 @@ const BookingRoom = () => {
 
                 {/* Message content (split into separate lines for readability) */}
                 <DialogContent sx={{ minWidth: 500 }}>
-                    <DialogContentText sx={{ color: 'text.primary' }}>
-                        <CardMedia
-                            component="img"
-                            image="https://www.hoteljosef.com/wp-content/uploads/2024/06/conference-rooms-prague-projector-690x470.jpg"
-                            alt="green iguana"
-                            sx={{ 
-                                height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                borderRadius: 2 
+                    <DialogContentText
+                        sx={{
+                            color: 'text.primary',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2
+                        }}
+                    >
+                        <Carousel
+                            indicators={true}
+                            autoPlay={true}
+                            animation="slide"
+                            duration={500}
+                            navButtonsAlwaysVisible={true}
+                            navButtonsProps={{
+                                style: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                }
                             }}
-                        />
+                        >
+                            <CardMedia
+                                component="img"
+                                image="https://www.corporatevision-news.com/wp-content/uploads/2020/04/7-Steps-to-Make-the-Best-Conference-Room-for-Your-Office.jpg"
+                                alt="green iguana"
+                                sx={{
+                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                    borderRadius: 2
+                                }}
+                            />
+                            <CardMedia
+                                component="img"
+                                image="https://www.webex.com/content/dam/www/us/en/images/workspaces/large-meeting-room/modular/large-modular-hero-new.jpg"
+                                alt="green iguana"
+                                sx={{
+                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                    borderRadius: 2
+                                }}
+                            />
+                        </Carousel>
+                        <Grid container spacing={2}>
+                            <Grid
+                                size={{ xs: 6 }}
+                                sx={{
+                                    bgcolor: '#f9fafb',
+                                    borderRadius: 2,
+                                    p: 2,
+                                }}
+                            >
+                                <Typography gutterBottom fontWeight={500}>
+                                    Room Size
+                                </Typography>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 0.8,
+                                    }}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={faExpand}
+                                        style={{
+                                            width: "18px",
+                                            height: "18px",
+                                            paddingBottom: "2px"
+                                        }}
+                                    />
+                                    <Typography fontSize={18} fontWeight={600}>
+                                        {`${selectedRoomtypes?.RoomSize} sqm`}
+                                    </Typography>
+                                </Box>
+                            </Grid>
+
+                            <Grid
+                                container
+                                size={{ xs: 6 }}
+                                sx={{
+                                    bgcolor: '#f9fafb',
+                                    borderRadius: 2,
+                                    p: 2,
+                                }}
+                                spacing={1}
+                            >
+                                <Typography gutterBottom fontWeight={500}>
+                                    Pricing (THB)
+                                </Typography>
+                                <Grid size={{ xs: 12 }}
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        color: 'text.secondary'
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.8,
+                                        }}
+                                    >
+                                        <Clock12 size={16} strokeWidth={2.2} />
+                                        <Typography>
+                                            Half-day rate:
+                                        </Typography>
+                                    </Box>
+                                    <Typography fontSize={18} fontWeight={700} color='#2563eb'>
+                                        {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
+                                    </Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12 }}
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        color: 'text.secondary'
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.8,
+                                        }}
+                                    >
+                                        <Sun size={16} strokeWidth={2.2} />
+                                        <Typography>
+                                            Half-day rate:
+                                        </Typography>
+                                    </Box>
+                                    <Typography fontSize={18} fontWeight={700} color='#2563eb'>
+                                        {`฿${selectedRoomtypes?.HalfDayRate?.toLocaleString('th')}`}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+
+                            <Grid
+                                container
+                                size={{ xs: 6 }}
+                                sx={{
+                                    bgcolor: '#f9fafb',
+                                    borderRadius: 2,
+                                    p: 2,
+                                }}
+                                spacing={1}
+                            >
+                                <Typography gutterBottom fontWeight={500}>
+                                    Seating Capacity
+                                </Typography>
+                                {
+                                    selectedRoomtypes?.RoomTypeLayouts?.map((layout, index) => {
+                                        let layoutStr
+                                        if (layout.RoomLayout) {
+                                            layoutStr = `${layout.RoomLayout?.LayoutName}: ${layout.Capacity} ${layout.Note ? `(${layout.Note})` : ''}`
+                                        } else {
+                                            layoutStr = layout.Note
+                                        }
+
+                                        return (
+                                            <Grid size={{ xs: 12 }}
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    alignItems: 'center',
+                                                    color: 'text.secondary'
+                                                }}
+                                                key={index}
+                                            >
+                                                <Users size={16} strokeWidth={2.2} />
+                                                <Typography variant='body2'>
+                                                    {layoutStr}
+                                                </Typography>
+                                            </Grid>
+                                        )
+                                    })
+                                }
+                            </Grid>
+                        </Grid>
                     </DialogContentText>
                 </DialogContent>
 
