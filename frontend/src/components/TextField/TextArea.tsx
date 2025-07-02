@@ -2,7 +2,7 @@ import { styled, TextField as MuiTextField } from "@mui/material";
 
 
 // Custom styled TextField component
-export const TextField = styled(MuiTextField)(() => ({
+export const TextArea = styled(MuiTextField)(() => ({
     borderRadius: "10px",
 
     // Custom styling for input
@@ -15,7 +15,7 @@ export const TextField = styled(MuiTextField)(() => ({
     "& .MuiOutlinedInput-root": {
         borderRadius: "10px",
         border: "none",
-        height: '45px',
+        minHeight: '45px',
 
         // Default border styling
         "& fieldset": {

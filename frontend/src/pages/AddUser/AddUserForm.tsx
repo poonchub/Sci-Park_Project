@@ -29,7 +29,6 @@ const AddUserForm: React.FC = () => {
   // Fetch data when component mounts
   const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
   const [userType, setUserType] = useState<string>('internal');
-  const tests = String("JS")
   const roleID = watch('RoleID');  // Watching RoleID value
 
   const handleClickShowPassword = () => {

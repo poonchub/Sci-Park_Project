@@ -44,7 +44,7 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench } from "lucide-react";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser  } from "lucide-react";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -219,6 +219,11 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             kind: "divider",
         },
+        {
+            segment: "my-account",
+            title: "My Account",
+            icon: <ShieldUser  />,
+        },
     ];
 
     const accessibleSegments: Record<Role, string[]> = {
@@ -231,6 +236,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "room",
             "user",
             "all-booking-room",
+            "my-account",
 
             "all-maintenance-request",
             "manage-room",
@@ -244,6 +250,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance",
             "maintenance/my-maintenance-request",
             "all-booking-room",
+            "my-account",
 
             "all-maintenance-request",
         ],
@@ -253,10 +260,11 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance",
             "maintenance/my-maintenance-request",
             "room",
+            "my-account",
 
             "accept-work",
         ],
-        User: ["booking-room", "maintenance/my-maintenance-request"],
+        User: ["booking-room", "maintenance/my-maintenance-request","my-account",],
     };
 
     function isAllowed(segment: string, role: Role): boolean {

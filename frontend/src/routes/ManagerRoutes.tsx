@@ -12,7 +12,7 @@ import AddUserForm from "../pages/AddUser/AddUserForm";
 import ManageUsers from "../pages/ManageUsers/ManageUsers";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
-
+import MyAccount from "../pages/MyAccount/MyAccount";
 const ManagerRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -61,6 +61,10 @@ const ManagerRoutes = (): RouteObject => {
             {
 				path: "/all-booking-room",
 				element: <AllBookingRoom/>
+			},
+            {
+			path: "my-account",
+			element: <MyAccount/>
 			},
             {
 				path: "",

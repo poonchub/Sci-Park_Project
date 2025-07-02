@@ -8,7 +8,7 @@ import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceReq
 import CreateMaintenanceRequestPage from "../pages/CreateMaintenanceRequest/CreateMaintenanceRequest";
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
-
+import MyAccount from "../pages/MyAccount/MyAccount";
 const OperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -41,6 +41,10 @@ const OperatorRoutes = (): RouteObject => {
             {
 				path: "/about-developer",
 				element: <AboutDeveloper/>
+			},
+            {
+				path: "my-account",
+				element: <MyAccount/>
 			},
             {
 				path: "",

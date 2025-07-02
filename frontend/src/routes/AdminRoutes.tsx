@@ -15,6 +15,7 @@ import ManageRooms from "../pages/ManageRooms/ManageRooms";
 import AddRoomForm from "../pages/AddRoom/AddNewRoom";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
+import MyAccount from "../pages/MyAccount/MyAccount";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -76,6 +77,10 @@ const AdminRoutes = (): RouteObject => {
             {
 				path: "/all-booking-room",
 				element: <AllBookingRoom/>
+			},
+			{
+				path: "my-account",
+				element: <MyAccount/>
 			},
 			{
 				path: "",
