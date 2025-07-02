@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Box from "@mui/material/Box";
 
@@ -88,6 +88,15 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const { t } = useTranslation();
 
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [location.pathname]);
+
     const NAVIGATION: Navigation = [
         {
             kind: "header",
@@ -96,17 +105,17 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "home",
             title: t("home"),
-            icon: <Home size={iconSize}/>,
+            icon: <Home size={iconSize} />,
         },
         {
             segment: "booking-room",
             title: t("bookingRoom"),
-            icon: <DoorOpen size={iconSize}/>,
+            icon: <DoorOpen size={iconSize} />,
         },
         {
             segment: "maintenance/my-maintenance-request",
             title: t("maintenance"),
-            icon: <Wrench size={iconSize}/>,
+            icon: <Wrench size={iconSize} />,
         },
         {
             kind: "divider",
@@ -118,12 +127,12 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "dashboard",
             title: t("dashboard"),
-            icon: <LayoutDashboard size={iconSize}/>,
+            icon: <LayoutDashboard size={iconSize} />,
         },
         {
             segment: "maintenance",
             title: t("maintenance"),
-            icon: <Wrench size={iconSize}/>,
+            icon: <Wrench size={iconSize} />,
             action:
                 notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                     <Chip
@@ -142,7 +151,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 {
                     segment: "all-maintenance-request",
                     title: t("requestList"),
-                    icon: <ClipboardList size={iconSize}/>,
+                    icon: <ClipboardList size={iconSize} />,
                     action:
                         notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
                             <Chip
@@ -175,12 +184,12 @@ const WindowsLayout: React.FC = (props: any) => {
                 {
                     segment: "manage-user",
                     title: t("manageUser"),
-                    icon: <UserCog size={iconSize}/>,
+                    icon: <UserCog size={iconSize} />,
                 },
                 {
                     segment: "add-user",
                     title: t("addUser"),
-                    icon: <UserRoundPlus  size={iconSize}/>,
+                    icon: <UserRoundPlus size={iconSize} />,
                 },
                 {
                     segment: "traffic",
@@ -197,7 +206,7 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "room",
             title: t("room"),
-            icon: <DoorOpen size={iconSize}/>,
+            icon: <DoorOpen size={iconSize} />,
             children: [
                 {
                     segment: "manage-room",
@@ -413,27 +422,28 @@ const WindowsLayout: React.FC = (props: any) => {
             }}
         >
             <DashboardLayout
-				sidebarExpandedWidth={260}
-			>
-				{/* Main content area */}
-				<Container
-					maxWidth={false}
-					sx={{ p: '0px !important', overflow: 'auto' }}
-					className='content-box'
-				>
-					<Box
-						sx={{
-							minHeight: '95vh',
-							p: 4,
-						}}
-					>
-						<Outlet />
-					</Box>
-					<Footer />
-				</Container>
-			</DashboardLayout>
+                sidebarExpandedWidth={260}
+            >
+                {/* Main content area */}
+                <Container
+                    maxWidth={false}
+                    sx={{ p: '0px !important', overflow: 'auto' }}
+                    className='content-box'
+                    ref={containerRef}
+                >
+                    <Box
+                        sx={{
+                            minHeight: '95vh',
+                            p: 4,
+                        }}
+                    >
+                        <Outlet />
+                    </Box>
+                    <Footer />
+                </Container>
+            </DashboardLayout>
         </AppProvider>
-        
+
     );
 };
 

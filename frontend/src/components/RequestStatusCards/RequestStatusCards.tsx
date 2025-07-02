@@ -79,8 +79,18 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                             <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: 'text.secondary' }}>
                                 {item.name}
                             </Typography>
-                            <Typography variant="h5" fontWeight="bold" color="textPrimary">
-                                {item.count} รายการ
+                            <Typography
+                                variant="h5" 
+                                fontWeight="bold" 
+                                color="textPrimary" 
+                            >
+                                <Box component="span" >
+                                    {item.count}
+                                </Box>
+                                {' '}
+                                <Box component="span" sx={{ fontSize: 16, fontWeight: 600 }}>
+                                    Items
+                                </Box>
                             </Typography>
                         </Grid>
                         <Grid

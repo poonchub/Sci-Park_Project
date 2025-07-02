@@ -124,7 +124,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                    ประเภทงานซ่อม
+                    Maintenance Types
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
@@ -137,7 +137,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                             height={height}
                         />
                     ) : (
-                        <Typography color="text.secondary">กำลังโหลดข้อมูล...</Typography>
+                        <Typography color="text.secondary">Loading data...</Typography>
                     )}
                 </Box>
 
@@ -161,7 +161,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                         <Typography variant="body2">{label}</Typography>
                                     </Stack>
                                     <Typography variant="body2" fontWeight={500}>
-                                        {value.total} รายการ
+                                        {value.total} Items
                                     </Typography>
                                 </Stack>
                                 <LinearProgress

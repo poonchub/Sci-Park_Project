@@ -51,7 +51,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     return (
         <>
-
             {/* Drop Zone */}
             <Grid
                 size={{ xs: 12 }}
@@ -84,10 +83,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     </Grid>
                 }
 
-                <Typography sx={{ mb: 0.5, fontSize: 14 }}>ลากและวางไฟล์ที่นี่ หรือ</Typography>
+                <Typography sx={{ mb: 0.5, fontSize: 14 }}>Drag and drop image files here, or</Typography>
                 <Button variant="contained" component="label">
                     <FontAwesomeIcon icon={faImage} size="lg" />
-                    <Typography variant="textButtonClassic" >คลิกเลือกไฟล์</Typography>
+                    <Typography variant="textButtonClassic" >Click to select files</Typography>
                     <input
                         accept="image/*"
                         type="file"

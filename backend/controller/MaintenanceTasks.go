@@ -98,7 +98,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	// รับค่าจาก Query Parameters
 	operatorID, _ := strconv.Atoi(c.DefaultQuery("operator", "0"))
 	maintenanceTypeID, _ := strconv.Atoi(c.DefaultQuery("maintenanceType", "0"))
-	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM-DD
+	createdAt := c.DefaultQuery("createdAt", "") // รูปแบบ YYYY-MM
 
 	// รับหลายค่า statusID แบบ comma-separated เช่น ?status=1,2
 	statusStr := c.DefaultQuery("status", "")
@@ -147,7 +147,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 	if createdAt != "" {
 		// แปลงวันที่ที่รับมาให้เป็นเวลาที่เขตเวลา Asia/Bangkok
 		loc, _ := time.LoadLocation("Asia/Bangkok")
-		parsedTime, err := time.ParseInLocation("2006-01-02", createdAt, loc)
+		parsedTime, err := time.ParseInLocation("2006-01", createdAt, loc)
 		if err != nil {
 			fmt.Println("Error parsing time:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
@@ -155,15 +155,23 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		}
 
 		// กำหนดเวลาเริ่มต้น (00:00) และสิ้นสุด (23:59)
-		startOfDay = parsedTime
-		endOfDay = parsedTime.Add(24 * time.Hour).Add(-time.Second)
+		startOfMonth := parsedTime
+		endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Second)
 
 		// ใช้ timestamp สำหรับการเปรียบเทียบ
-		db = db.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfDay, endOfDay)
+		db = db.Where("maintenance_tasks.created_at >= ? AND maintenance_tasks.created_at <= ?", startOfMonth, endOfMonth)
 	}
 
 	// ✅ ใช้ Preload() เพื่อโหลดข้อมูลสัมพันธ์
-	query := db.Preload("User").Preload("MaintenanceRequest.MaintenanceType").Preload("RequestStatus").Preload("MaintenanceRequest.Area").Preload("MaintenanceRequest.Room.Floor").Preload("MaintenanceRequest.Inspection.User").Preload("MaintenanceRequest.User")
+	query := db.
+		Preload("User").
+		Preload("MaintenanceRequest.MaintenanceType").
+		Preload("RequestStatus").
+		Preload("MaintenanceRequest.Area").
+		Preload("MaintenanceRequest.Room.Floor").
+		Preload("MaintenanceRequest.Room.RoomType").
+		Preload("MaintenanceRequest.Inspection.User").
+		Preload("MaintenanceRequest.User")
 
 	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
 	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {
