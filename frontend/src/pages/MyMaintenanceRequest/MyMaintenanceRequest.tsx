@@ -26,7 +26,7 @@ import RequestStatusStack from "../../components/RequestStatusStack/RequestStatu
 import FilterSection from "../../components/FilterSection/FilterSection";
 import theme from "../../styles/Theme";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
-import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
+import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 import { Base64 } from "js-base64";
 
@@ -69,7 +69,7 @@ function MyMaintenanceRequest() {
         if (isSmallScreen) {
             return [
                 {
-                    field: "",
+                    field: "All Maintenance Requests",
                     headerName: "All Maintenance Requests",
                     flex: 1,
                     renderCell: (params) => {
@@ -95,7 +95,7 @@ function MyMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
@@ -124,7 +124,7 @@ function MyMaintenanceRequest() {
                                             maxWidth: "100%",
                                         }}
                                     >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                     </Typography>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
                                         <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
@@ -360,7 +360,6 @@ function MyMaintenanceRequest() {
                     headerName: "Title",
                     type: "string",
                     flex: 1.8,
-                    // editable: true,
                     renderCell: (params) => {
                         const description = params.row.Description;
                         const areaID = params.row.Area?.ID;
@@ -369,7 +368,7 @@ function MyMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
@@ -391,7 +390,7 @@ function MyMaintenanceRequest() {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -427,7 +426,6 @@ function MyMaintenanceRequest() {
                     headerName: "Date Submitted",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
                         const date = dateFormat(params.row.CreatedAt || "");
                         const time = timeFormat(params.row.CreatedAt || "");
@@ -472,7 +470,6 @@ function MyMaintenanceRequest() {
                     headerName: "Status",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
@@ -527,7 +524,6 @@ function MyMaintenanceRequest() {
                     headerName: "Actions",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (item) => {
                         const data = item.row;
                         const showButtonConfirm = item.row.RequestStatus?.Name === "Waiting For Review";
@@ -555,7 +551,6 @@ function MyMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faCheck} size="lg" />
@@ -574,12 +569,11 @@ function MyMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faRepeat} size="lg" />
                                                 <Typography variant="textButtonClassic" className="text-btn">
-                                                    ReworK
+                                                    Rework
                                                 </Typography>
                                             </Button>
                                         </Tooltip>
@@ -592,7 +586,6 @@ function MyMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faEye} size="lg" />
@@ -614,7 +607,6 @@ function MyMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faXmark} size="lg" />
@@ -632,7 +624,6 @@ function MyMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faEye} size="lg" />
@@ -761,14 +752,14 @@ function MyMaintenanceRequest() {
             };
 
             const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
-            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
+            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status.");
 
             const notificationDataUpdate: NotificationsInterface = {
                 IsRead: true,
             };
             const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
             if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification");
+                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
             setTimeout(() => {
                 setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
@@ -866,8 +857,8 @@ function MyMaintenanceRequest() {
                 open={openConfirmInspection}
                 setOpenConfirm={setOpenConfirmInspection}
                 handleFunction={() => handleClickInspection("Completed", "confirm")}
-                title="ยืนยันการตรวจรับงาน"
-                message="คุณแน่ใจหรือไม่ว่าต้องการตรวจรับงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Inspection"
+                message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -877,8 +868,8 @@ function MyMaintenanceRequest() {
                 setOpenConfirm={setOpenConfirmRework}
                 handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
                 setAlerts={setAlerts}
-                title="ยืนยันการขอซ่อมซ้ำ"
-                message="คุณแน่ใจหรือไม่ว่าต้องการขอซ่อมซ้ำงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Rework Request"
+                message="Are you sure you want to request a rework for this maintenance job? This action cannot be undone."
                 showNoteField
                 files={requestfiles}
                 onChangeFiles={setRequestFiles}
@@ -889,8 +880,8 @@ function MyMaintenanceRequest() {
                 open={openConfirmCancelled}
                 setOpenConfirm={setOpenConfirmCancelled}
                 handleFunction={() => handleClickCancel()}
-                title="ยืนยันการยกเลิกคำร้อง"
-                message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำร้องนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Cancel Request"
+                message="Are you sure you want to cancel this request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -899,7 +890,7 @@ function MyMaintenanceRequest() {
                     {/* Header Section */}
                     <Grid className="title-box" size={{ xs: 5, sm: 5 }}>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            การแจ้งซ่อมของฉัน
+                            My Maintenance Requests
                         </Typography>
                     </Grid>
 
@@ -907,7 +898,7 @@ function MyMaintenanceRequest() {
                         <Link to="/maintenance/create-maintenance-request">
                             <Button variant="containedBlue">
                                 <FontAwesomeIcon icon={faFileLines} size="lg" />
-                                <Typography variant="textButtonClassic">เขียนคำร้อง</Typography>
+                                <Typography variant="textButtonClassic">Create Request</Typography>
                             </Button>
                         </Link>
                     </Grid>
@@ -960,7 +951,7 @@ function MyMaintenanceRequest() {
                                 limit={limit}
                                 onPageChange={setPage}
                                 onLimitChange={setLimit}
-                                noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                                noDataText="Maintenance request information not found."
                             />
                         )}
                     </Grid>

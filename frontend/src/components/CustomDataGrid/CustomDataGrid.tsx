@@ -54,7 +54,6 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                 pageSizeOptions={[5, 10, 20, 50]}
                 paginationMode="server"
                 rowCount={rowCount}
-                // checkboxSelection
                 columnVisibilityModel={columnVisibilityModel}
                 disableRowSelectionOnClick
                 disableColumnResize={false}
@@ -88,6 +87,9 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                     },
                     "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
                         outline: "none",
+                    },
+                    "& .MuiDataGrid-virtualScroller": {
+                        overflowY: "hidden",
                     },
                 }}
                 slotProps={{

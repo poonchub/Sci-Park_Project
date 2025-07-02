@@ -21,32 +21,32 @@ import { Link } from 'react-router-dom';
 // ข้อมูลองค์กร
 const organizationInfo = {
     name: "Regional Science Park Northeast 2",
-    description: "ศูนย์วิทยาศาสตร์และเทคโนโลยีชั้นนำ มุ่งสร้างสรรค์นวัตกรรมและสนับสนุนการทำงานอย่างมีประสิทธิภาพ",
-    mission: "มุ่งมั่นพัฒนาและสนับสนุนงานวิจัยด้านวิทยาศาสตร์และเทคโนโลยี เพื่อยกระดับคุณภาพชีวิตและขับเคลื่อนเศรษฐกิจของประเทศ",
-    about: "เราให้บริการระบบสนับสนุนการทำงานที่ครบวงจร ทั้งระบบแจ้งซ่อม ระบบจองห้องประชุม และบริการอื่นๆ อีกมากมาย เพื่อให้บุคลากรสามารถทำงานได้อย่างมีประสิทธิภาพสูงสุด"
+    description: "A leading science and technology center committed to innovation and supporting efficient work processes.",
+    mission: "Dedicated to developing and supporting research in science and technology to enhance quality of life and drive the nation's economy.",
+    about: "We provide a comprehensive support system including repair requests, meeting room bookings, and many other services to enable personnel to work at their highest efficiency."
 };
 
-// ข้อมูลข่าวสารจำลอง
+// Sample news data
 const newsItems = [
     {
         id: 1,
-        title: "เปิดตัวระบบ Scipark ใหม่",
-        date: "15 พฤษภาคม 2025",
-        summary: "เรายินดีที่จะประกาศการเปิดตัวระบบ Scipark ที่ได้รับการปรับปรุงใหม่ พร้อมฟีเจอร์การแจ้งซ่อมและการจองห้องประชุมที่ทันสมัย",
+        title: "Launch of the New Scipark System",
+        date: "May 15, 2025",
+        summary: "We are pleased to announce the launch of the revamped Scipark system featuring modern repair request and meeting room booking capabilities.",
         image: "/api/placeholder/400/250"
     },
     {
         id: 2,
-        title: "การประชุมวิทยาศาสตร์ประจำปี 2025",
-        date: "10 พฤษภาคม 2025",
-        summary: "เตรียมพบกับการประชุมวิทยาศาสตร์ประจำปี 2025 ซึ่งจะจัดขึ้นในเดือนมิถุนายนนี้ พร้อมวิทยากรระดับนานาชาติ",
+        title: "Annual Science Conference 2025",
+        date: "May 10, 2025",
+        summary: "Get ready for the 2025 Annual Science Conference happening this June with international speakers.",
         image: "/api/placeholder/400/250"
     },
     {
         id: 3,
-        title: "เปิดรับสมัครโครงการวิจัยใหม่",
-        date: "5 พฤษภาคม 2025",
-        summary: "Scipark เปิดรับข้อเสนอโครงการวิจัยใหม่ในด้านเทคโนโลยีสะอาดและพลังงานทดแทน สมัครได้ตั้งแต่วันนี้ถึง 30 มิถุนายน",
+        title: "Call for New Research Proposals",
+        date: "May 5, 2025",
+        summary: "Scipark is accepting new research proposals in clean technology and renewable energy. Applications open now through June 30.",
         image: "/api/placeholder/400/250"
     }
 ];
@@ -55,14 +55,14 @@ const newsItems = [
 const mainFeatures = [
     {
         icon: <Wrench size={40} />,
-        title: "ระบบแจ้งซ่อม",
-        description: "แจ้งซ่อมอุปกรณ์และสิ่งอำนวยความสะดวกได้อย่างรวดเร็ว พร้อมติดตามสถานะงานซ่อมแบบเรียลไทม์",
+        title: "Maintenance Request",
+        description: "Quickly report issues with equipment and facilities, and track repair status in real-time.",
         path: "/maintenance/my-maintenance-request"
     },
     {
         icon: <DoorOpen size={40} />,
-        title: "ระบบจองห้องประชุม",
-        description: "จองห้องประชุมและทรัพยากรได้สะดวก ดูตารางการใช้งานห้องและจัดการการประชุมได้ในที่เดียว",
+        title: "Meeting Room Booking",
+        description: "Easily book meeting rooms and resources, view room schedules, and manage meetings all in one place.",
         path: "/booking-room"
     },
 ];
@@ -93,7 +93,7 @@ export default function SciparkHomePage() {
                                 gutterBottom
                                 sx={{ fontWeight: 'bold' }}
                             >
-                                ยินดีต้อนรับสู่
+                                Welcome to
                             </Typography>
                             <Typography
                                 component="h1"
@@ -142,7 +142,7 @@ export default function SciparkHomePage() {
             <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
                 {/* Quick Access Cards */}
                 <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
-                    ระบบหลัก
+                    Main Features
                 </Typography>
 
                 <Grid container spacing={4}>
@@ -194,7 +194,7 @@ export default function SciparkHomePage() {
                     <Grid container spacing={4} alignItems="center">
                         <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-                                เกี่ยวกับ {organizationInfo.name}
+                                About {organizationInfo.name}
                             </Typography>
                             <Typography variant="body1">
                                 {organizationInfo.mission}
@@ -207,7 +207,7 @@ export default function SciparkHomePage() {
                                 endIcon={<ArrowRight />}
                                 sx={{ mt: 2 }}
                             >
-                                อ่านเพิ่มเติม
+                                Read More
                             </Button>
                         </Grid>
                         <Grid size={{ xs: 12, md: 6 }}>
@@ -226,7 +226,7 @@ export default function SciparkHomePage() {
 
                 {/* Latest News */}
                 <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 8, mb: 3, fontWeight: 'bold' }}>
-                    ข่าวสารล่าสุด
+                    Latest News
                 </Typography>
 
                 <Grid container spacing={4}>
@@ -277,7 +277,7 @@ export default function SciparkHomePage() {
                                         }}
                                         endIcon={<ArrowRight />}
                                     >
-                                        อ่านต่อ
+                                        Read More
                                     </Button>
                                 </Box>
                             </Card>
@@ -291,7 +291,7 @@ export default function SciparkHomePage() {
                         color="primary"
                         endIcon={<ArrowRight />}
                     >
-                        ดูข่าวสารทั้งหมด
+                        View All News
                     </Button>
                 </Box>
 
@@ -307,7 +307,7 @@ export default function SciparkHomePage() {
                     }}
                 >
                     <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 'bold' }}>
-                        สถิติการให้บริการ
+                        Service Statistics
                     </Typography>
 
                     <Grid container spacing={4} justifyContent="center">
@@ -317,7 +317,7 @@ export default function SciparkHomePage() {
                                     150+
                                 </Typography>
                                 <Typography variant="body1">
-                                    ห้องประชุมให้บริการ
+                                    Meeting Rooms Available
                                 </Typography>
                             </Box>
                         </Grid>
@@ -327,7 +327,7 @@ export default function SciparkHomePage() {
                                     9,800+
                                 </Typography>
                                 <Typography variant="body1">
-                                    การแจ้งซ่อมสำเร็จ
+                                    Completed Repair Requests
                                 </Typography>
                             </Box>
                         </Grid>
@@ -337,7 +337,7 @@ export default function SciparkHomePage() {
                                     98%
                                 </Typography>
                                 <Typography variant="body1">
-                                    ความพึงพอใจ
+                                    Customer Satisfaction
                                 </Typography>
                             </Box>
                         </Grid>
@@ -347,7 +347,7 @@ export default function SciparkHomePage() {
                                     24/7
                                 </Typography>
                                 <Typography variant="body1">
-                                    บริการสนับสนุน
+                                    Support Service
                                 </Typography>
                             </Box>
                         </Grid>

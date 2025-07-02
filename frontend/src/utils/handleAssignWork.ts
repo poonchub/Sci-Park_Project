@@ -36,10 +36,10 @@ const handleAssignWork = async ({
         };
 
         const resAssign = await CreateMaintenanceTask(task);
-        if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to assign work");
+        if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to assign work.");
 
         const resRequest = await UpdateMaintenanceRequestByID(request, requestSelected.ID);
-        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request");
+        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request.");
 
         setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
 

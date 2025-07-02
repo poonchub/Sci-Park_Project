@@ -45,7 +45,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {/* Dialog title with warning icon */}
             <DialogTitle
                 sx={{
-                    fontWeight: 700, 
+                    fontWeight: 700,
                     color: 'primary.main',
                     textAlign: 'center'
                 }}
@@ -56,16 +56,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
             {/* Message content (split into separate lines for readability) */}
             <DialogContent sx={{ minWidth: 500 }}>
-                {message.split(' ').map((m, index) => (
-                    <DialogContentText key={index} sx={{ color: 'text.primary' }}>
-                        {m}
-                    </DialogContentText>
-                ))}
+                <DialogContentText sx={{ color: 'text.primary' }}>
+                    {message}
+                </DialogContentText>
 
                 {showNoteField && (
                     <TextField
                         fullWidth
-                        placeholder="ป้อนเหตุผล"
+                        placeholder="Enter reason"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         sx={{ mt: 2 }}
@@ -85,7 +83,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         }
                     }}
                 >
-                    ยกเลิก
+                    Cancel
                 </Button>
                 <Button
                     onClick={() => {
@@ -95,7 +93,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                     variant="contained"
                     disabled={buttonActive}
                 >
-                    ตกลง
+                    Confirm
                 </Button>
             </DialogActions>
         </Dialog>

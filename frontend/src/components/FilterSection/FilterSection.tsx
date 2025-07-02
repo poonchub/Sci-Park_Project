@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartSimple, faMagnifyingGlass, faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faRotateRight } from "@fortawesome/free-solid-svg-icons";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../DatePicker/DatePicker";
@@ -16,7 +16,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
-import { Activity, CalendarDays } from "lucide-react";
+import { Activity } from "lucide-react";
 
 
 type Props = {
@@ -66,7 +66,7 @@ const FilterSection = ({
                             fullWidth
                             className="search-box"
                             variant="outlined"
-                            placeholder="ค้นหา"
+                            placeholder="Search"
                             margin="none"
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}

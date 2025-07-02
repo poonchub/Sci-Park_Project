@@ -46,7 +46,7 @@ const handleSubmitWork = async (
 
             const resImage = await CreateHandoverImages(formDataFile);
             if (!resImage) {
-                setAlerts((prev) => [...prev, { type: 'error', message: resImage?.Error || "Failed to upload images" }]);
+                setAlerts((prev) => [...prev, { type: 'error', message: resImage?.Error || "Failed to upload images." }]);
                 return;
             }
         }
@@ -60,10 +60,10 @@ const handleSubmitWork = async (
         };
 
         const resAssign = await UpdateMaintenanceTaskByID(task, selectedTask.ID);
-        if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to update task");
+        if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to update task.");
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
-        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request");
+        if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request.");
 
         setTimeout(() => {
             setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
@@ -74,7 +74,7 @@ const handleSubmitWork = async (
 
         const resEmail = await SendMaintenanceStatusEmail(selectedTask.RequestID || 0);
         console.log(resEmail)
-        if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email");
+        if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email.");
 
     } catch (error) {
         console.error("API Error:", error);

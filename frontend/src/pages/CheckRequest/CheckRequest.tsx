@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Grid, Skeleton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faCheck, faPaperPlane, faRepeat, faTools, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faAngleLeft, faCheck, faPaperPlane, faRepeat, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import "./CheckRequest.css";
 
@@ -53,7 +53,7 @@ function CheckRequest() {
     const [openPopupSubmit, setOpenPopupSubmit] = useState(false);
     const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
     const [openConfirmCancelledFromOwnRequest, setOpenConfirmCancelledFromOwnRequest] = useState<boolean>(false);
-    const [openConfirmCancelledFromManager, setOpenConfirmCancelledFromManager] = useState<boolean>(false);
+    const [openConfirmCancelledFromOperator, setOpenConfirmCancelledFromOperator] = useState<boolean>(false);
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
 
@@ -88,8 +88,8 @@ function CheckRequest() {
             ? maintenanceTask?.Description
                 ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}`
                 : managerApproval?.Description
-                  ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
-                  : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
+                    ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
+                    : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
             : "";
 
     const cancelDate =
@@ -97,8 +97,8 @@ function CheckRequest() {
             ? maintenanceTask?.Description
                 ? dateFormat(maintenanceTask?.UpdatedAt || "")
                 : managerApproval?.Description
-                  ? dateFormat(managerApproval?.UpdatedAt || "")
-                  : dateFormat(maintenanceRequest?.UpdatedAt || "")
+                    ? dateFormat(managerApproval?.UpdatedAt || "")
+                    : dateFormat(maintenanceRequest?.UpdatedAt || "")
             : "";
 
     const userID = Number(localStorage.getItem("userId"));
@@ -159,7 +159,7 @@ function CheckRequest() {
         setIsBottonActive(true)
 
         if (!maintenanceRequest) {
-            setAlerts((prev) => [...prev, { type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }]);
+            setAlerts((prev) => [...prev, { type: "error", message: "Selected maintenance request not found" }]);
             setIsBottonActive(false)
             return;
         }
@@ -200,7 +200,7 @@ function CheckRequest() {
             selectedTask: maintenanceTask,
             setAlerts,
             setOpenConfirmAccepted,
-            setOpenConfirmCancelled: setOpenConfirmCancelledFromManager,
+            setOpenConfirmCancelled: setOpenConfirmCancelledFromOperator,
             actionType,
             note,
         });
@@ -270,9 +270,21 @@ function CheckRequest() {
 
     // Load all necessary data on mount
     useEffect(() => {
-        getMaintenanceRequest();
-        getRequestStatuses();
-        getOperators();
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([
+                    getMaintenanceRequest(),
+                    getRequestStatuses(),
+                    getOperators(),
+                ]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
+
     }, []);
 
     useEffect(() => {
@@ -280,7 +292,6 @@ function CheckRequest() {
             const fileList = await convertPathsToFiles(maintenanceImages || []);
             if (fileList) {
                 setRequestFiles(fileList);
-                setIsLoadingData(false);
             }
         };
 
@@ -320,8 +331,8 @@ function CheckRequest() {
                 open={openConfirmCancelledFromOwnRequest}
                 setOpenConfirm={setOpenConfirmCancelledFromOwnRequest}
                 handleFunction={() => handleClickCancel()}
-                title="ยืนยันการยกเลิกคำร้อง"
-                message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำร้องนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Cancel Request"
+                message="Are you sure you want to cancel this request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -343,8 +354,8 @@ function CheckRequest() {
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
                 handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Request Rejection"
+                message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
                 buttonActive={isBottonActive}
             />
@@ -354,18 +365,18 @@ function CheckRequest() {
                 open={openConfirmAccepted}
                 setOpenConfirm={setOpenConfirmAccepted}
                 handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
-                title="ยืนยันการดำเนินการงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Request Processing"
+                message="Are you sure you want to proceed with this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
-            {/* Cancellation From Manager Confirm */}
+            {/* Cancellation From Operator Confirm */}
             <ConfirmDialog
-                open={openConfirmCancelledFromManager}
-                setOpenConfirm={setOpenConfirmCancelledFromManager}
+                open={openConfirmCancelledFromOperator}
+                setOpenConfirm={setOpenConfirmCancelledFromOperator}
                 handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
-                title="ยืนยันการยกเลิกงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Cancellation"
+                message="Are you sure you want to cancel this maintenance request? This action cannot be undone."
                 showNoteField
                 buttonActive={isBottonActive}
             />
@@ -375,8 +386,8 @@ function CheckRequest() {
                 open={openConfirmInspection}
                 setOpenConfirm={setOpenConfirmInspection}
                 handleFunction={() => handleClickInspection("Completed", "confirm")}
-                title="ยืนยันการตรวจรับงาน"
-                message="คุณแน่ใจหรือไม่ว่าต้องการตรวจรับงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Inspection"
+                message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -386,8 +397,8 @@ function CheckRequest() {
                 setOpenConfirm={setOpenConfirmRework}
                 handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
                 setAlerts={setAlerts}
-                title="ยืนยันการขอซ่อมซ้ำ"
-                message="คุณแน่ใจหรือไม่ว่าต้องการขอซ่อมซ้ำงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Rework Request"
+                message="Are you sure you want to request a rework for this maintenance job? This action cannot be undone."
                 showNoteField
                 files={requestfiles}
                 onChangeFiles={setRequestFiles}
@@ -397,14 +408,16 @@ function CheckRequest() {
             <Grid container spacing={2}>
                 <Grid className="title-box" size={{ xs: 5, md: 5 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        ตรวจสอบคำร้องแจ้งซ่อม
+                        Maintenance Request Review
                     </Typography>
                 </Grid>
                 <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
-                    <Button variant="outlined" onClick={handleBack}>
-                        <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                        <Typography variant="textButtonClassic">ย้อนกลับ</Typography>
-                    </Button>
+                    <Box>
+                        <Button variant="outlined" onClick={handleBack}>
+                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                            <Typography variant="textButtonClassic">Back</Typography>
+                        </Button>
+                    </Box>
                 </Grid>
 
                 {isLoadingData ? (
@@ -419,12 +432,12 @@ function CheckRequest() {
                         {/* Info cards for approval and assignment */}
                         {maintenanceRequest && !isUnsuccessful ? (
                             <>
-                                <InfoCard type="approved" title="ผู้อนุมัติ" name={managerName} date={approvalDate} />
+                                <InfoCard type="approved" title="Approved By" name={managerName} date={approvalDate} />
 
-                                <InfoCard type="assigned" title="ผู้รับผิดชอบ" name={operatorName} date={assignDate} />
+                                <InfoCard type="assigned" title="Assigned To" name={operatorName} date={assignDate} />
                             </>
                         ) : (
-                            <InfoCard type="unsuccessful" title="ผู้ยกเลิก" name={cancellerName} date={cancelDate} />
+                            <InfoCard type="unsuccessful" title="Cancelled By" name={cancellerName} date={cancelDate} />
                         )}
                     </>
                 )}
@@ -453,7 +466,7 @@ function CheckRequest() {
                             >
                                 <Grid size={{ xs: 12, md: 12 }}>
                                     <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
-                                        ข้อมูลการแจ้งซ่อม
+                                        Information
                                     </Typography>
                                 </Grid>
 
@@ -463,9 +476,9 @@ function CheckRequest() {
 
                                 <Grid container size={{ xs: 12, md: 12, lg: 6 }} direction="column">
                                     {!isNotApproved && maintenanceRequest ? (
-                                       <Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+                                        <Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
                                             <Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
-                                                การดำเนินงาน
+                                                Task Operation
                                             </Typography>
                                             <Box sx={{ border: "1px solid #08aff1", borderRadius: 2, px: 2 }}>
                                                 <TaskInfoTable data={maintenanceRequest} />
@@ -479,14 +492,14 @@ function CheckRequest() {
                                         {taskImages && taskImages.length !== 0 && !isRework ? (
                                             <Box>
                                                 <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
-                                                    ภาพประกอบการส่งมอบ
+                                                    Handover Images
                                                 </Typography>
                                                 <RequestImages images={maintenanceTask?.HandoverImages ?? []} apiUrl={apiUrl} />
                                             </Box>
                                         ) : maintenanceImages && maintenanceImages?.length !== 0 ? (
                                             <Box>
                                                 <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
-                                                    ภาพประกอบการแจ้งซ่อม
+                                                    Request Images
                                                 </Typography>
                                                 <RequestImages images={maintenanceImages ?? []} apiUrl={apiUrl} />
                                             </Box>
@@ -515,7 +528,7 @@ function CheckRequest() {
 
                                             {/* Approve button */}
                                             <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
-                                                <FontAwesomeIcon icon={faCheck} size="lg"/>
+                                                <FontAwesomeIcon icon={faCheck} size="lg" />
                                                 <Typography variant="textButtonClassic">Approve</Typography>
                                             </Button>
                                         </Box>
@@ -580,7 +593,7 @@ function CheckRequest() {
                                             <Button
                                                 variant="containedCancel"
                                                 onClick={() => {
-                                                    setOpenConfirmCancelledFromManager(true);
+                                                    setOpenConfirmCancelledFromOperator(true);
                                                 }}
                                                 sx={{
                                                     minWidth: "0px",

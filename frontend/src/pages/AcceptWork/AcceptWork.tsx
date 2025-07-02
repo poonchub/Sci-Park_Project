@@ -11,7 +11,6 @@ import {
     faQuestionCircle,
     faRotateRight,
     faToolbox,
-    faTools,
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -35,7 +34,7 @@ import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import dateFormat from "../../utils/dateFormat";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleActionAcception from "../../utils/handleActionAcception";
@@ -51,7 +50,7 @@ import theme from "../../styles/Theme";
 import { io } from "socket.io-client";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import { NotificationsInterface } from "../../interfaces/INotifications";
-import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
+import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 import { Base64 } from "js-base64";
 
@@ -105,7 +104,7 @@ function AcceptWork() {
         if (isSmallScreen) {
             return [
                 {
-                    field: "",
+                    field: "All Maintenance Requests",
                     headerName: "All Maintenance Requests",
                     flex: 1,
                     renderCell: (params) => {
@@ -121,7 +120,7 @@ function AcceptWork() {
                         const roomFloor = requests?.Room?.Floor?.Number;
                         const description = requests?.Description;
 
-                        const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = requests?.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
@@ -148,7 +147,7 @@ function AcceptWork() {
                                             maxWidth: "100%",
                                         }}
                                     >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                     </Typography>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
                                         <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
@@ -328,7 +327,6 @@ function AcceptWork() {
                     headerName: "Title",
                     type: "string",
                     flex: 1.6,
-                    // editable: true,
                     renderCell: (params) => {
                         const requests = params.row.MaintenanceRequest;
                         const areaID = requests?.Area?.ID;
@@ -337,7 +335,7 @@ function AcceptWork() {
                         const roomNum = requests?.Room?.RoomNumber;
                         const roomFloor = requests?.Room?.Floor?.Number;
 
-                        const typeName = requests?.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = requests?.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = requests?.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
 
@@ -352,7 +350,7 @@ function AcceptWork() {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -388,7 +386,6 @@ function AcceptWork() {
                     headerName: valueTab === 0 ? "Date Assigned" : valueTab === 1 ? "Start Date" : valueTab === 2 ? "Date Submitted" : "",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
                         const date = dateFormat(params.row.CreatedAt || "");
                         const time = timeFormat(params.row.CreatedAt || "");
@@ -465,7 +462,6 @@ function AcceptWork() {
                     headerName: "Inspected By",
                     type: "string",
                     flex: 1.6,
-                    // editable: true,
                     renderCell: (params) => {
                         const task = params.row;
                         const inspection = params.row.MaintenanceRequest?.Inspection;
@@ -663,7 +659,7 @@ function AcceptWork() {
 
             const statusFormat = statusIDs.join(",");
 
-            const res = await GetMaintenanceTask(statusFormat, page, limit, selectedType, selectedDate ? selectedDate.format("YYYY-MM-DD") : "");
+            const res = await GetMaintenanceTask(statusFormat, page, limit, selectedType, selectedDate ? selectedDate.format("YYYY-MM") : "");
 
             if (res) {
                 setMaintenanceTasks(res.data);
@@ -741,7 +737,7 @@ function AcceptWork() {
 
     const onClickSubmit = () => {
         if (!selectedTask) {
-            setAlerts((prev) => [...prev, { type: "error", message: "ไม่พบข้อมูลงานซ่อมที่เลือก" }]);
+            setAlerts((prev) => [...prev, { type: "error", message: "The selected maintenance task information was not found." }]);
             return;
         }
         const statusID = requestStatuses?.find((item) => item.Name === "Waiting For Review")?.ID || 0;
@@ -764,7 +760,7 @@ function AcceptWork() {
     const handleUpdateNotification = async (task_id?: number, user_id?: number) => {
         try {
             const resNotification = await GetNotificationsByTaskAndUser(task_id, user_id);
-            if (!resNotification || resNotification.error) console.error("Error fetching notification");
+            if (!resNotification || resNotification.error) console.error("Error fetching notification.");
 
             const notificationData: NotificationsInterface = {
                 IsRead: true,
@@ -881,8 +877,8 @@ function AcceptWork() {
                 open={openConfirmAccepted}
                 setOpenConfirm={setOpenConfirmAccepted}
                 handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
-                title="ยืนยันการดำเนินการงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการดำเนินการงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Request Processing"
+                message="Are you sure you want to proceed with this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -891,8 +887,8 @@ function AcceptWork() {
                 open={openConfirmCancelled}
                 setOpenConfirm={setOpenConfirmCancelled}
                 handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
-                title="ยืนยันการยกเลิกงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการยกเลิกงานแจ้งซ่อมนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Cancellation"
+                message="Are you sure you want to cancel this maintenance request? This action cannot be undone.ด้"
                 showNoteField
                 buttonActive={isBottonActive}
             />
@@ -900,7 +896,7 @@ function AcceptWork() {
             <Grid container spacing={3}>
                 <Grid className="title-box" size={{ xs: 10, md: 12 }}>
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        งานของฉัน
+                        My Work
                     </Typography>
                 </Grid>
 
@@ -914,7 +910,7 @@ function AcceptWork() {
                                         fullWidth
                                         className="search-box"
                                         variant="outlined"
-                                        placeholder="ค้นหา"
+                                        placeholder="Search"
                                         margin="none"
                                         value={searchText}
                                         onChange={(e) => setSearchText(e.target.value)}
@@ -932,7 +928,8 @@ function AcceptWork() {
                                 <Grid size={{ xs: 5, sm: 3 }}>
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                                         <DatePicker
-                                            format="DD/MM/YYYY"
+                                            views={['year', 'month']}
+                                            format="MM/YYYY"
                                             value={selectedDate}
                                             onChange={(value, _) => {
                                                 if (dayjs.isDayjs(value)) {
@@ -960,7 +957,7 @@ function AcceptWork() {
                                                 </InputAdornment>
                                             }
                                         >
-                                            <MenuItem value={0}>{"ทุกประเภทงาน"}</MenuItem>
+                                            <MenuItem value={0}>{"All Maintenance Types"}</MenuItem>
                                             {maintenanceTypes.map((item, index) => {
                                                 return (
                                                     <MenuItem key={index} value={index + 1}>
@@ -1001,14 +998,14 @@ function AcceptWork() {
                 <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
                     <Grid size={{ xs: 12, md: 12 }}>
                         <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
-                            <Tab label="รอดำเนินการ" {...a11yProps(0)} />
-                            <Tab label="กำลังดำเนินการ" {...a11yProps(1)} />
-                            <Tab label="ดำเนินการเสร็จสิ้น" {...a11yProps(2)} />
+                            <Tab label="Pending" {...a11yProps(0)} />
+                            <Tab label="In Progress" {...a11yProps(1)} />
+                            <Tab label="Completed" {...a11yProps(2)} />
                         </Tabs>
                     </Grid>
                     <CustomTabPanel value={valueTab} index={0}>
                         <MaintenanceTaskTable
-                            title="รอดำเนินการ"
+                            title="Pending"
                             rows={filteredTasks}
                             columns={getColumns()}
                             rowCount={total}
@@ -1016,14 +1013,14 @@ function AcceptWork() {
                             limit={limit}
                             onPageChange={(p) => setPage(p + 1)}
                             onLimitChange={setLimit}
-                            noData={"ไม่พบงานที่รอดำเนินการ"}
+                            noData={"No pending tasks found."}
                             isLoading={isLoadingData}
                             columnVisibilityModel={columnVisibilityModel}
                         />
                     </CustomTabPanel>
                     <CustomTabPanel value={valueTab} index={1}>
                         <MaintenanceTaskTable
-                            title="กำลังดำเนินการ"
+                            title="In Progress"
                             rows={filteredTasks}
                             columns={getColumns()}
                             rowCount={total}
@@ -1031,14 +1028,14 @@ function AcceptWork() {
                             limit={limit}
                             onPageChange={(p) => setPage(p + 1)}
                             onLimitChange={setLimit}
-                            noData={"ไม่พบงานที่กำลังดำเนินการ"}
+                            noData={"No tasks in progress found."}
                             isLoading={isLoadingData}
                             columnVisibilityModel={columnVisibilityModel}
                         />
                     </CustomTabPanel>
                     <CustomTabPanel value={valueTab} index={2}>
                         <MaintenanceTaskTable
-                            title="ดำเนินการเสร็จสิ้น"
+                            title="Completed"
                             rows={filteredTasks}
                             columns={getColumns()}
                             rowCount={total}
@@ -1046,7 +1043,7 @@ function AcceptWork() {
                             limit={limit}
                             onPageChange={(p) => setPage(p + 1)}
                             onLimitChange={setLimit}
-                            noData={"ไม่พบงานที่ดำเนินการเสร็จสิ้น"}
+                            noData={"No completed tasks found."}
                             isLoading={isLoadingData}
                             columnVisibilityModel={columnVisibilityModel}
                         />

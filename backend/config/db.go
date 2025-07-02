@@ -46,7 +46,6 @@ func parseDate(dateStr string) time.Time {
 	return t
 }
 
-
 // ฟังก์ชันสร้างตารางในฐานข้อมูล
 func SetupDatabase() {
 	if db == nil {
@@ -133,8 +132,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Area
 	areas := []entity.Area{
-		{Name: "ห้องประชุม/ห้องทำงาน"},
-		{Name: "บริเวณอื่น ๆ"},
+		{Name: "Meeting Room / Workspace"},
+		{Name: "Other Areas"},
 	}
 	for _, area := range areas {
 		db.FirstOrCreate(&area, entity.Area{Name: area.Name})
@@ -190,43 +189,43 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RoomType
 	roomTypes := []entity.RoomType{
 		{
-			TypeName:    "ห้องประชุมขนาดเล็ก",
+			TypeName:    "Small Meeting Room",
 			RoomSize:    18,
 			HalfDayRate: 500.0,
 			FullDayRate: 1000.0,
 		},
 		{
-			TypeName:    "ห้องประชุมขนาดกลาง",
+			TypeName:    "Medium Meeting Room",
 			RoomSize:    63,
 			HalfDayRate: 1000.0,
 			FullDayRate: 2000.0,
 		},
 		{
-			TypeName:    "ห้องอบรม สัมมนา ขนาดกลาง",
+			TypeName:    "Medium Training / Seminar Room",
 			RoomSize:    135,
 			HalfDayRate: 6000.0,
 			FullDayRate: 12000.0,
 		},
 		{
-			TypeName:    "ห้องอบรม สัมมนา ขนาดใหญ่",
+			TypeName:    "Large Training / Seminar Room",
 			RoomSize:    273,
 			HalfDayRate: 7500.0,
 			FullDayRate: 15000.0,
 		},
 		{
-			TypeName:    "EVENT HALL",
+			TypeName:    "Event Hall",
 			RoomSize:    1218,
 			HalfDayRate: 25000.0,
 			FullDayRate: 50000.0,
 		},
 		{
-			TypeName:    "NE2 HALL 1",
+			TypeName:    "NE2 Hall 1",
 			RoomSize:    1180,
 			HalfDayRate: 32500.0,
 			FullDayRate: 65000.0,
 		},
 		{
-			TypeName:    "NE2 HALL 2",
+			TypeName:    "NE2 Hall 2",
 			RoomSize:    487,
 			HalfDayRate: 17500.0,
 			FullDayRate: 35000.0,
@@ -585,12 +584,12 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล MaintenanceTypes
 	maintenanceTypes := []entity.MaintenanceType{
-		{TypeName: "งานไฟฟ้า"},
-		{TypeName: "งานเครื่องปรับอากาศ"},
-		{TypeName: "งานอินเทอร์เน็ต"},
-		{TypeName: "งานประปา"},
-		{TypeName: "งานโครงสร้าง"},
-		{TypeName: "งานอื่นๆ"},
+		{TypeName: "Electrical Work"},
+		{TypeName: "Air Conditioning Work"},
+		{TypeName: "Internet Work"},
+		{TypeName: "Plumbing Work"},
+		{TypeName: "Structural Work"},
+		{TypeName: "Other Work"},
 	}
 	for _, mt := range maintenanceTypes {
 		db.FirstOrCreate(&mt, entity.MaintenanceType{TypeName: mt.TypeName})
@@ -754,7 +753,7 @@ func SeedDatabase() {
 	}
 	for _, re := range roomEquipments {
 		result := db.FirstOrCreate(&re, entity.RoomEquipment{
-			RoomTypeID:      re.RoomTypeID,
+			RoomTypeID:  re.RoomTypeID,
 			EquipmentID: re.EquipmentID,
 			Quantity:    re.Quantity,
 		})
