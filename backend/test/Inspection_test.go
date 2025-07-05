@@ -14,7 +14,7 @@ func TestInspectionValidation(t *testing.T) {
 
     t.Run("Valid Inspection", func(t *testing.T) {
         inspection := entity.Inspection{
-            Description:      "ตรวจสอบการเปลี่ยนอะไหล่",
+            Note:      "ตรวจสอบการเปลี่ยนอะไหล่",
             UserID:           1,
             RequestID:        1,
             RequestStatusID:  1,
@@ -27,7 +27,7 @@ func TestInspectionValidation(t *testing.T) {
 
     t.Run("Missing Description", func(t *testing.T) {
         inspection := entity.Inspection{
-            Description:      "", // Missing required field
+            Note:      "", // Missing required field
             UserID:           1,
             RequestID:        1,
             RequestStatusID:  1,
@@ -40,7 +40,7 @@ func TestInspectionValidation(t *testing.T) {
 
     t.Run("Missing UserID", func(t *testing.T) {
         inspection := entity.Inspection{
-            Description:      "ตรวจสอบ",
+            Note:      "ตรวจสอบ",
             RequestID:        1,
             RequestStatusID:  1,
         }
@@ -52,7 +52,7 @@ func TestInspectionValidation(t *testing.T) {
 
     t.Run("Missing RequestID", func(t *testing.T) {
         inspection := entity.Inspection{
-            Description:      "ตรวจสอบ",
+            Note:      "ตรวจสอบ",
             UserID:           1,
             RequestStatusID:  1,
         }
@@ -64,7 +64,7 @@ func TestInspectionValidation(t *testing.T) {
 
     t.Run("Missing RequestStatusID", func(t *testing.T) {
         inspection := entity.Inspection{
-            Description:      "ตรวจสอบ",
+            Note:      "ตรวจสอบ",
             UserID:           1,
             RequestID:        1,
         }

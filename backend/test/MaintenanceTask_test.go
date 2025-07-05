@@ -14,7 +14,7 @@ func TestMaintenanceTaskValidation(t *testing.T) {
 
 	t.Run("Valid MaintenanceTask", func(t *testing.T) {
 		task := entity.MaintenanceTask{
-			Description:       "Fix electrical panel",
+			Note:       "Fix electrical panel",
 			UserID:            1,
 			RequestID:         2,
 			RequestStatusID:   3,
@@ -27,7 +27,7 @@ func TestMaintenanceTaskValidation(t *testing.T) {
 
 	t.Run("Missing Required Fields", func(t *testing.T) {
 		task := entity.MaintenanceTask{
-			Description:       "",
+			Note:       "",
 			UserID:            0,
 			RequestID:         0,
 			RequestStatusID:   0,

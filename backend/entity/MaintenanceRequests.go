@@ -9,11 +9,11 @@ import (
 // MaintenanceRequest คือ entity สำหรับคำขอซ่อม
 type MaintenanceRequest struct {
 	gorm.Model
-	AreaDetail         string    `valid:"required~กรุณาระบุพื้นที่"`
+	AreaDetail         string
 	Description        string    `valid:"required~กรุณาระบุคำอธิบาย"`
-	IsAnytimeAvailable bool      // ไม่ต้องใช้ tag เพราะเป็น bool
-	StartTime          time.Time `valid:"required~กรุณาระบุเวลาเริ่มต้น"`
-	EndTime            time.Time `valid:"required~กรุณาระบุเวลาสิ้นสุด"`
+	IsAnytimeAvailable bool
+	StartTime          time.Time
+	EndTime            time.Time
 	OtherTypeDetail    string
 
 	UserID            uint              `valid:"required~กรุณาระบุผู้แจ้ง"`

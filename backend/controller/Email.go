@@ -568,13 +568,13 @@ func SendMaintenanceStatusEmail(c *gin.Context) {
 				return
 			}
 
-			description = approval.Description
+			description = approval.Note
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	} else {
-		description = task.Description
+		description = task.Note
 	}
 
 	name := request.User.FirstName + " " + request.User.LastName

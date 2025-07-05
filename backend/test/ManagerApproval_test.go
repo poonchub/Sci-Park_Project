@@ -14,7 +14,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 
 	t.Run("Valid ManagerApproval", func(t *testing.T) {
 		approval := entity.ManagerApproval{
-			Description:     "อนุมัติให้ดำเนินการซ่อมได้",
+			Note:     "อนุมัติให้ดำเนินการซ่อมได้",
 			UserID:          1,
 			RequestID:       2,
 			RequestStatusID: 3,
@@ -27,7 +27,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 
 	t.Run("Missing Description", func(t *testing.T) {
 		approval := entity.ManagerApproval{
-			Description:     "",
+			Note:     "",
 			UserID:          1,
 			RequestID:       2,
 			RequestStatusID: 3,
@@ -40,7 +40,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 
 	t.Run("Missing UserID", func(t *testing.T) {
 		approval := entity.ManagerApproval{
-			Description:     "ทดสอบ",
+			Note:     "ทดสอบ",
 			UserID:          0,
 			RequestID:       2,
 			RequestStatusID: 3,
@@ -53,7 +53,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 
 	t.Run("Missing RequestID", func(t *testing.T) {
 		approval := entity.ManagerApproval{
-			Description:     "ทดสอบ",
+			Note:     "ทดสอบ",
 			UserID:          1,
 			RequestID:       0,
 			RequestStatusID: 3,
@@ -66,7 +66,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 
 	t.Run("Missing RequestStatusID", func(t *testing.T) {
 		approval := entity.ManagerApproval{
-			Description:     "ทดสอบ",
+			Note:     "ทดสอบ",
 			UserID:          1,
 			RequestID:       2,
 			RequestStatusID: 0,

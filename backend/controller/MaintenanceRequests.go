@@ -10,7 +10,9 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"sci-park_web-application/services"
+	"sci-park_web-application/validator"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -106,23 +108,29 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		return
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&booking); !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
-	// 	return
-	// }
-
 	db := config.DB()
+
+	var requestStatus entity.RequestStatus
+	if err := db.Where("name = ?", "Pending").First(&requestStatus).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending' not found"})
+		return
+	}
+
+	request.RequestStatusID = requestStatus.ID
+
+	if ok, err := govalidator.ValidateStruct(&request); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
+	if err := validator.ValidateMaintenanceRequest(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
 
 	var user entity.User
 	if err := db.First(&user, request.UserID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-		return
-	}
-
-	var RequestStatusID = 2
-	var status entity.RequestStatus
-	if err := db.First(&status, RequestStatusID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "request status not found"})
 		return
 	}
 
@@ -148,13 +156,13 @@ func CreateMaintenanceRequest(c *gin.Context) {
 		OtherTypeDetail:    request.OtherTypeDetail,
 		UserID:             request.UserID,
 		RoomID:             request.RoomID,
-		RequestStatusID:    uint(RequestStatusID),
+		RequestStatusID:    request.RequestStatusID,
 		AreaID:             request.AreaID,
 		MaintenanceTypeID:  request.MaintenanceTypeID,
 	}
 
 	var existing entity.MaintenanceRequest
-	if err := db.Where("user_id = ? AND maintenance_type_id = ? AND start_time = ? AND end_time = ? AND room_id = ? AND description = ?", 
+	if err := db.Where("user_id = ? AND maintenance_type_id = ? AND start_time = ? AND end_time = ? AND room_id = ? AND description = ?",
 		rq.UserID, rq.MaintenanceTypeID, rq.StartTime, rq.EndTime, rq.RoomID, rq.Description).
 		First(&existing).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Duplicate maintenance request already exists"})
@@ -466,9 +474,9 @@ func fetchDailyCounts(start, end time.Time, userID, maintenanceTypeID int) []str
 		STRFTIME('%Y-%m-%d', created_at, 'localtime') AS day,
 		COUNT(id) AS count
 	`).
-	Group("day").
-	Order("day ASC").
-	Scan(&dailyCounts)
+		Group("day").
+		Order("day ASC").
+		Scan(&dailyCounts)
 
 	return dailyCounts
 }

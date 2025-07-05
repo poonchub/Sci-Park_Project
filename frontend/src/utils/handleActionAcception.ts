@@ -40,7 +40,7 @@ const handleActionAcception = async (
     try {
         const task: MaintenanceTasksInterface = {
             RequestStatusID: statusID,
-            Description: note || "",
+            Note: note || "",
         };
 
         const request: MaintenanceRequestsInterface = {

@@ -277,6 +277,8 @@ function CreateMaintenanceRequestPage() {
             EndTime: formData.IsAnytimeAvailable ? undefined : `0001-01-01T${formData.EndTime}:00Z`,
         };
 
+        console.log(requestPayload)
+
         try {
             const resRequest = await CreateMaintenanceRequest(requestPayload);
             if (!resRequest) {
