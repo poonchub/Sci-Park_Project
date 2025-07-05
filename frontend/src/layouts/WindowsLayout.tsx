@@ -1,32 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Box from "@mui/material/Box";
-
+import { apiUrl } from '../services/http/index';
 import {
     GetUnreadNotificationCountsByUserID,
     GetUserById,
     socketUrl,
 } from "../services/http";
 import { UserInterface } from "../interfaces/IUser";
-
 import Footer from "../components/Footer/Footer";
-import AccountBoxOutlinedIcon from "@mui/icons-material/AccountBoxOutlined";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
-import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
-import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
-
+import {MaintenaceImagesInterface} from '../interfaces/IMaintenaceImages'
 import { Container, Chip, useTheme } from '@mui/material';
-import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import {
-    AssignmentIndOutlined,
-    FactCheckOutlined,
-    HandymanOutlined,
-    HomeOutlined,
-    HomeRepairServiceOutlined,
-    MeetingRoomOutlined,
-} from "@mui/icons-material";
+
 
 import { Role } from "../constants/navigationConfig";
 
@@ -84,6 +71,8 @@ const WindowsLayout: React.FC = (props: any) => {
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
 
+    
+    
     const iconSize = 24
 
     const { t } = useTranslation();
@@ -289,37 +278,79 @@ const WindowsLayout: React.FC = (props: any) => {
         });
     }
 
-    // Fetch user data by ID (stored in localStorage)
-    const getUser = async () => {
+    
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    const convertPathsToBase64 = async (images: MaintenaceImagesInterface[]): Promise<string | null> => {
+    if (images.length === 0) return null;
+
+    const img = images[0]; // ✅ ดึงแค่ไฟล์แรก
+    const url = apiUrl + "/" + img.FilePath;
+
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error('Error converting image to base64: ', error);
+        return null;
+    }
+};
+
+
+    useEffect(() => {
+    const loadUserAndImage = async () => {
         try {
             const res = await GetUserById(Number(userId));
             if (res) {
+                const imagePathArray = [{ ID: 0, FilePath: String(res?.ProfilePath) }];
+                const base64Image = await convertPathsToBase64(imagePathArray);
+
+                // เซ็ต session หลังจากได้ user และ image
+                setSession({
+                    user: {
+                        name: `${res.FirstName} ${res.LastName}`,
+                        email: res.Email,
+                        image: base64Image || "",
+                    },
+                });
+
                 setUser(res);
+                setProfileImage(base64Image);
+                getUnreadNotificationCounts(); // ดึงเฉพาะหลังจากเซ็ต session เสร็จ
             }
         } catch (error) {
-            console.error("Error fetching user:", error);
+            console.error("Error loading user or image:", error);
         }
     };
 
-    // Fetch user info on first load
-    useEffect(() => {
-        getUser();
-    }, []);
+    loadUserAndImage();
+}, []);
+
 
     const navigation = getNavigationByRole(role);
     const navigateUrl = useNavigate();
 
     const [session, setSession] = React.useState<Session | null>(null);
 
+    
+
+
     const authentication = React.useMemo(() => {
         return {
             signIn: () => {
-                if (user) {
+                if (user && profileImage) {
                     setSession({
                         user: {
                             name: `${user.FirstName} ${user.LastName}`,
                             email: user.Email,
-                            image: user.ProfilePath,
+                            image: profileImage || "",
                         },
                     });
                 } else {
@@ -361,14 +392,8 @@ const WindowsLayout: React.FC = (props: any) => {
     };
 
     useEffect(() => {
-        if (user) {
-            setSession({
-                user: {
-                    name: `${user.FirstName} ${user.LastName}`,
-                    email: user.Email,
-                    image: user.ProfilePath,
-                },
-            });
+        
+        if (user && profileImage) {
             getUnreadNotificationCounts();
         }
     }, [user]);
