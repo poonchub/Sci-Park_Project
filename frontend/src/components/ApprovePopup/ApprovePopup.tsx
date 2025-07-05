@@ -52,7 +52,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                     textAlign: 'center' 
                 }}
             >
-                มอบหมายงานซ่อม
+                Approve Maintenance Request
             </DialogTitle>
 
             <DialogContent sx={{ minWidth: 500 }}>
@@ -62,10 +62,10 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                         <Typography sx={{ fontWeight: 600 }}>
                             {requestSelected.Area?.Name === 'บริเวณอื่นๆ'
                                 ? requestSelected.AreaDetail
-                                : `${requestSelected.Area?.Name || "-"} ชั้น ${requestSelected.Room?.Floor?.Number || "-"} ห้อง ${requestSelected.Room?.RoomNumber || "-"}`}
+                                : `${requestSelected.Area?.Name || "-"} - Floor ${requestSelected.Room?.Floor?.Number || "-"}, Room No. ${requestSelected.Room?.RoomNumber || "-"}`}
                         </Typography>
                         <Typography sx={{ color: 'text.secondary' }}>
-                            {requestSelected.Description || "ไม่มีรายละเอียด"}
+                            {requestSelected.Description || "No description available"}
                         </Typography>
                     </Grid>
 
@@ -101,7 +101,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                     {/* Operator select dropdown */}
                     <Grid size={{ xs: 10, md: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 500, mt: 2 }}>
-                            ผู้รับผิดชอบงาน
+                            Maintenance Operator
                         </Typography>
                         <Select
                             value={selectedOperator ?? 0}
@@ -115,7 +115,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                             }
                             sx={{ mt: 1 }}
                         >
-                            <MenuItem value={0}><em>{'-- เลือกผู้ดำเนินการ --'}</em></MenuItem>
+                            <MenuItem value={0}><em>{'-- Select Maintenance Operator --'}</em></MenuItem>
                             {operators.map((item) => (
                                 <MenuItem key={item.ID} value={item.ID}>
                                     {`${item.EmployeeID} ${item.FirstName} ${item.LastName}`}
@@ -138,9 +138,11 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                         }
                     }}
                 >
-                    ยกเลิก
+                    Cancel
                 </Button>
-                <Button variant="contained" onClick={onConfirm} disabled={buttonActive}>ยืนยัน</Button>
+                <Button variant="contained" onClick={onConfirm} disabled={buttonActive}>
+                    Confirm
+                </Button>
             </DialogActions>
         </Dialog>
     );

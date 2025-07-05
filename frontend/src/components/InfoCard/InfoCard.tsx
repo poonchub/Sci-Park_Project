@@ -53,11 +53,11 @@ const InfoCard: React.FC<InfoCardProps> = ({ type, title, name, date, size }) =>
                         {/* Handle the case where name is null */}
                         {name == null && type === "approved" ? (
                             <Typography variant="body1" sx={{ fontSize: 14, color: "#6D6E70", mb: "4px" }}>
-                                ยังไม่ได้อนุมัติ
+                                Not yet approved
                             </Typography>
                         ) : name == null && type === "assigned" ? (
                             <Typography variant="body1" sx={{ fontSize: 14, color: "#6D6E70", mb: "4px" }}>
-                                ยังไม่ได้มอบหมาย
+                                Not yet assigned
                             </Typography>
                         ) : (
                             <>

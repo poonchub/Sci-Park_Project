@@ -16,8 +16,6 @@ import {
     Tabs,
     Typography,
 } from "@mui/material";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
-import handleAction from "../../utils/handleActionApproval";
 import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from "../../services/http";
 import { UserInterface } from "../../interfaces/IUser";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
@@ -30,12 +28,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { CalendarMonth, CalendarToday, CheckCircle, Error, Notifications, SearchOff } from "@mui/icons-material";
+import { CalendarMonth, CalendarToday, CheckCircle, Error, Notifications } from "@mui/icons-material";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import dateFormat from "../../utils/dateFormat";
-import { AreasInterface } from "../../interfaces/IAreas";
-import { statusConfig } from "../../constants/statusConfig";
 import {
     faBroom,
     faCalendarCheck,
@@ -43,13 +37,10 @@ import {
     faCoins,
     faCreditCard,
     faDoorOpen,
-    faQuestionCircle,
     faUsers,
-    faXmark,
     IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "react-router-dom";
 import RequestStatusStackForAdmin from "../../components/RequestStatusStackForAdmin/RequestStatusStackForAdmin";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 
@@ -69,192 +60,12 @@ function Dashboard() {
     const [completedPercentage, setCompletedPercentage] = useState<number>(0);
 
     const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
-    const [openConfirmApproved, setOpenConfirmApproved] = useState<boolean>(false);
-    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
 
-    const [selectedRequest, setSelectedRequest] = useState(0);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
 
     const [valueTab, setValueTab] = useState(0);
 
-    const { t, i18n } = useTranslation();
-
-    const columns: GridColDef<(typeof maintenanceRequests)[number]>[] = [
-        {
-            field: "ID",
-            headerName: "ID",
-            flex: 0.5,
-        },
-        {
-            field: "User",
-            headerName: "ผู้แจ้งซ่อม",
-            description: "This column has a value getter and is not sortable.",
-            sortable: false,
-            flex: 1.2,
-            valueGetter: (params: UserInterface) => `${params.FirstName || ""} ${params.LastName || ""}`,
-        },
-        {
-            field: "CreatedAt",
-            headerName: "วันที่",
-            type: "string",
-            flex: 1,
-            // editable: true,
-            valueGetter: (params) => dateFormat(params),
-        },
-        {
-            field: "Area",
-            headerName: "บริเวณที่แจ้งซ่อม",
-            type: "string",
-            flex: 1.2,
-            // editable: true,
-            valueGetter: (params: AreasInterface) => params.Name,
-        },
-        {
-            field: "Description",
-            headerName: "รายละเอียด",
-            type: "string",
-            flex: 1.8,
-            // editable: true,
-            renderCell: (params) => {
-                const areaID = params.row.Area?.ID;
-                const AreaDetail = params.row.AreaDetail;
-                const roomtype = params.row.Room?.RoomType?.TypeName;
-                const roomNum = params.row.Room?.RoomNumber;
-                const roomFloor = params.row.Room?.Floor?.Number;
-                return (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            height: "100%",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <Typography
-                            sx={{
-                                fontSize: 14,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: "100%",
-                            }}
-                        >
-                            {areaID === 2 ? `${AreaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
-                        </Typography>
-                        <Typography
-                            sx={{
-                                fontSize: 14,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: "100%",
-                                color: "#6D6E70",
-                            }}
-                        >
-                            {params.row.Description}
-                        </Typography>
-                    </Box>
-                );
-            },
-        },
-        {
-            field: "RequestStatus",
-            headerName: "สถานะ",
-            type: "string",
-            flex: 1.2,
-            // editable: true,
-            renderCell: (params) => {
-                const statusName = params.row.RequestStatus?.Name || "Pending";
-                const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
-                const { color, colorLite, icon } = statusConfig[statusKey] ?? {
-                    color: "#000",
-                    colorLite: "#000",
-                    icon: faQuestionCircle,
-                };
-
-                return (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            height: "100%",
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                bgcolor: colorLite,
-                                borderRadius: 10,
-                                px: 1.5,
-                                py: 0.5,
-                                display: "flex",
-                                gap: 1,
-                                color: color,
-                                alignItems: "center",
-                            }}
-                        >
-                            <FontAwesomeIcon icon={icon} />
-                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
-                        </Box>
-                    </Box>
-                );
-            },
-        },
-        {
-            field: "Approved",
-            headerName: "จัดการ",
-            type: "string",
-            flex: 1.4,
-            // editable: true,
-            renderCell: (item) => {
-                return item.row.RequestStatus?.Name === "Pending" ? (
-                    <Box>
-                        <Button
-                            variant="containedBlue"
-                            onClick={() => {
-                                setOpenConfirmApproved(true);
-                                setSelectedRequest(Number(item.id));
-                            }}
-                            sx={{ mr: 0.5 }}
-                        >
-                            อนุมัติ
-                        </Button>
-                        <Button
-                            variant="outlinedCancel"
-                            onClick={() => {
-                                setOpenConfirmRejected(true);
-                                setSelectedRequest(Number(item.id));
-                            }}
-                            sx={{
-                                minWidth: "0px",
-                                px: "6px",
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faXmark} size="xl" />
-                        </Button>
-                    </Box>
-                ) : (
-                    <></>
-                );
-            },
-        },
-        {
-            field: "Check",
-            headerName: "",
-            type: "string",
-            flex: 1,
-            // editable: true,
-            renderCell: (item) => {
-                const requestID = String(item.row.ID);
-                return (
-                    <Link to="/check-requests">
-                        <Button variant="contained" color="primary" size="small" onClick={() => localStorage.setItem("requestID", requestID)}>
-                            ตรวจสอบ
-                        </Button>
-                    </Link>
-                );
-            },
-        },
-    ];
+    const { t } = useTranslation();
 
     const getUser = async () => {
         try {
@@ -380,7 +191,6 @@ function Dashboard() {
     }, [maintenanceRequests, selectedDate, maintenanceTypes]);
 
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
     // Mock data for summary cards
     const summaryData = {
@@ -462,7 +272,7 @@ function Dashboard() {
             position: "bottom",
         },
         dataLabels: {
-            formatter: (val, opts) => {
+            formatter: (_val, opts) => {
                 const value = opts.w.config.series[opts.seriesIndex];
                 return `฿${value.toLocaleString()}`;
             },
@@ -620,7 +430,6 @@ function Dashboard() {
                     <Box
                         sx={{
                             borderRadius: "50%",
-                            //   bgcolor: color,
                             border: 1,
                             aspectRatio: "1/1",
                             display: "flex",
@@ -640,33 +449,12 @@ function Dashboard() {
 
     return (
         <Box className="dashboard-page">
-            {/* Show Alerts */}
-            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
-
-            {/* Approved Confirm */}
-            {/* <ConfirmDialog
-                open={openConfirmApproved}
-                setOpenConfirm={setOpenConfirmApproved}
-                handleFunction={() => handleClick(2, "Approval successful")}
-                title="ยืนยันการอนุมัติงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการอนุมัติงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            /> */}
-
-            {/* Rejected Confirm */}
-            {/* <ConfirmDialog
-                open={openConfirmRejected}
-                setOpenConfirm={setOpenConfirmRejected}
-                handleFunction={() => handleClick(3, "Rejection successful")}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-            /> */}
-
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
                     <Grid className="title-box" size={{ xs: 12, md: 12 }}>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            {t("dashboard")}
+                            Dashboard
                         </Typography>
                     </Grid>
 
@@ -709,10 +497,17 @@ function Dashboard() {
                                         >
                                             <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
                                                 <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                                    รายการแจ้งซ่อมรายเดือน
+                                                    Monthly Requests
                                                 </Typography>
                                                 <Typography variant="h4" fontWeight={800} color="primary">
-                                                    {`${filteredRequest.length} รายการ`}
+                                                    <Box component="span" >
+                                                        {`${filteredRequest.length}`}
+                                                    </Box>
+                                                    {' '}
+                                                    <Box component="span" sx={{ fontSize: 20, fontWeight: 700 }}>
+                                                        Items
+                                                    </Box>
+                                                    
                                                 </Typography>
                                             </Grid>
                                             <Grid
@@ -770,13 +565,8 @@ function Dashboard() {
                             </Grid>
 
                             {/* Chart Donut Section */}
-                            <Grid size={{ xs: 12, sm: 12 ,lg: 12, xl: 4 }}>
+                            <Grid size={{ xs: 12, sm: 12, lg: 12, xl: 4 }}>
                                 <ApexDonutChart data={groupedData} completed={completedPercentage} />
-                            </Grid>
-
-                            {/* Data Table */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                                <Card sx={{ width: "100%", borderRadius: 2 }}></Card>
                             </Grid>
                         </Grid>
                     </CustomTabPanel>

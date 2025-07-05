@@ -2,7 +2,7 @@ import { Facebook, Instagram, Twitter } from '@mui/icons-material';
 import { Box, Divider, Grid, IconButton, List, ListItem, ListItemText, Typography } from '@mui/material';
 import { Container } from '@mui/system';
 import { FlaskConical } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 function Footer() {
     return (
@@ -23,53 +23,88 @@ function Footer() {
                                 SCIPARK
                             </Typography>
                         </Box>
-                        <Typography variant="body2" color="text.secondary" paragraph>
-                            ศูนย์วิทยาศาสตร์และเทคโนโลยีชั้นนำ มุ่งสร้างสรรค์นวัตกรรมและสนับสนุนการทำงานอย่างมีประสิทธิภาพ
+                        <Typography variant="body2" color="text.secondary">
+                            A leading science and technology center, dedicated to creating innovation and supporting efficient work.
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                             {/* Social Media Icons */}
                             <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Facebook/>
+                                <Facebook />
                             </IconButton>
                             <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Instagram/>
+                                <Instagram />
                             </IconButton>
                             <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Twitter/>
+                                <Twitter />
                             </IconButton>
                         </Box>
                     </Grid>
 
                     <Grid size={{ xs: 6, md: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                            ระบบหลัก
+                            Main Features
                         </Typography>
                         <List dense disablePadding>
-                            <ListItem disableGutters>
-                                <ListItemText primary="ระบบแจ้งซ่อม" />
+                            <ListItem
+                                disableGutters
+                                component={RouterLink}
+                                to="/maintenance/my-maintenance-request"
+                                sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                    },
+                                }}
+                            >
+                                <ListItemText primary="Maintenance Request" />
                             </ListItem>
-                            <ListItem disableGutters>
-                                <ListItemText primary="ระบบจองห้องประชุม" />
+                            <ListItem
+                                disableGutters
+                                component={RouterLink}
+                                to="/booking-room"
+                                sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                    },
+                                }}
+                            >
+                                <ListItemText primary="Meeting Room Booking" />
                             </ListItem>
                         </List>
                     </Grid>
 
                     <Grid size={{ xs: 6, md: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                            เกี่ยวกับเรา
+                            About Us
                         </Typography>
-                        <List dense disablePadding>
-                            <ListItem disableGutters>
-                                <ListItemText primary="ประวัติองค์กร" />
+                        <List dense disablePadding sx={{ color: 'text.secondary' }}>
+                            <ListItem
+                                disableGutters
+                                component={RouterLink}
+                                to="/about-developer"
+                                sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                    },
+                                }}
+                            >
+                                <ListItemText primary="Organization History" />
                             </ListItem>
-                            <ListItem disableGutters>
-                                <ListItemText primary="พันธกิจ" />
+                            <ListItem
+                                disableGutters
+                                component={RouterLink}
+                                to="/about-developer"
+                                sx={{
+                                    color: 'text.secondary',
+                                    '&:hover': {
+                                        color: 'primary.main',
+                                    },
+                                }}
+                            >
+                                <ListItemText primary="Development Team" />
                             </ListItem>
-                            <Link to="/about-developer">
-                                <ListItem disableGutters>
-                                    <ListItemText primary="ทีมผู้พัฒนา" />
-                                </ListItem>
-                            </Link>
                         </List>
                     </Grid>
 
@@ -79,27 +114,27 @@ function Footer() {
                         </Typography>
                         <List dense disablePadding>
                             <ListItem disableGutters>
-                                <ListItemText primary="นโยบายความเป็นส่วนตัว" />
+                                <ListItemText primary="Privacy Policy" />
                             </ListItem>
                             <ListItem disableGutters>
-                                <ListItemText primary="เงื่อนไขการใช้งาน" />
+                                <ListItemText primary="Terms of Use" />
                             </ListItem>
                             <ListItem disableGutters>
-                                <ListItemText primary="วิธีใช้งานระบบ" />
+                                <ListItemText primary="How to Use the System" />
                             </ListItem>
                         </List>
                     </Grid>
 
                     <Grid size={{ xs: 6, md: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                            ติดต่อเรา
+                            Contact Us
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            อาคารศูนย์วิทยาศาสตร์<br />
-                            เลขที่ 123 ถนนวิทยาศาสตร์<br />
-                            กรุงเทพฯ 10900<br />
-                            โทร: 02-123-4567<br />
-                            อีเมล: contact@scipark.org
+                            Science Center Building<br />
+                            No. 123 Science Road<br />
+                            Bangkok 10900<br />
+                            Tel: 02-123-4567<br />
+                            Email: contact@scipark.org
                         </Typography>
                     </Grid>
                 </Grid>
@@ -107,7 +142,7 @@ function Footer() {
                 <Divider sx={{ mt: 4, mb: 4 }} />
 
                 <Typography variant="body2" color="text.secondary" align="center">
-                    © {new Date().getFullYear()} Scipark. สงวนลิขสิทธิ์.
+                    © {new Date().getFullYear()} Scipark. All rights reserved.
                 </Typography>
             </Container>
         </Box>

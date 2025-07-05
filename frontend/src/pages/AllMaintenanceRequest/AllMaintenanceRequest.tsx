@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./AllMaintenanceRequest.css";
-import { Badge, Box, Button, Card, Container, Divider, Grid, Skeleton, Tooltip, Typography, useMediaQuery } from "@mui/material";
+import { Box, Button, Container, Divider, Grid, Skeleton, Tooltip, Typography, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 
@@ -19,14 +19,13 @@ import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faXmark, faCheckDouble, faEye, faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faQuestionCircle, faXmark, faEye, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import dateFormat from "../../utils/dateFormat";
 import { statusConfig } from "../../constants/statusConfig";
-import ApexLineChart from "../../components/ApexLineChart/ApexLineChart";
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards";
 import handleActionApproval from "../../utils/handleActionApproval";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
@@ -60,8 +59,8 @@ function AllMaintenanceRequest() {
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
-    const [totalAll, setTotalAll] = useState(0);
-    const [counts, setCounts] = useState();
+    // const [totalAll, setTotalAll] = useState(0);
+    // const [counts, setCounts] = useState();
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
@@ -79,7 +78,7 @@ function AllMaintenanceRequest() {
         if (isSmallScreen) {
             return [
                 {
-                    field: "",
+                    field: "All Maintenance Requests",
                     headerName: "All Maintenance Requests",
                     flex: 1,
                     renderCell: (params) => {
@@ -107,7 +106,7 @@ function AllMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
@@ -141,7 +140,7 @@ function AllMaintenanceRequest() {
                                                 maxWidth: "100%",
                                             }}
                                         >
-                                            {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                            {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
@@ -356,7 +355,6 @@ function AllMaintenanceRequest() {
                     headerName: "Title",
                     type: "string",
                     flex: 1.8,
-                    // editable: true,
                     renderCell: (params) => {
                         const description = params.row.Description;
                         const areaID = params.row.Area?.ID;
@@ -365,7 +363,7 @@ function AllMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "งานไฟฟ้า";
+                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
@@ -391,7 +389,7 @@ function AllMaintenanceRequest() {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} ชั้น ${roomFloor} ห้อง ${roomNum}`}
+                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -427,7 +425,6 @@ function AllMaintenanceRequest() {
                     headerName: "Date Submitted",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
                         const date = dateFormat(params.row.CreatedAt || "");
                         const time = timeFormat(params.row.CreatedAt || "");
@@ -472,7 +469,6 @@ function AllMaintenanceRequest() {
                     headerName: "Status",
                     type: "string",
                     flex: 1,
-                    // editable: true,
                     renderCell: (params) => {
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
@@ -573,7 +569,6 @@ function AllMaintenanceRequest() {
                     headerName: "Actions",
                     type: "string",
                     flex: 1.5,
-                    // editable: true,
                     renderCell: (item) => {
                         const data = item.row;
                         const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
@@ -600,7 +595,6 @@ function AllMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faCheck} size="lg" />
@@ -619,7 +613,6 @@ function AllMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faXmark} size="lg" />
@@ -637,7 +630,6 @@ function AllMaintenanceRequest() {
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
-                                                    // px: "10px",
                                                 }}
                                             >
                                                 <FontAwesomeIcon icon={faEye} size="lg" />
@@ -657,7 +649,6 @@ function AllMaintenanceRequest() {
                                             }}
                                             sx={{
                                                 minWidth: "42px",
-                                                // px: "10px",
                                             }}
                                         >
                                             <FontAwesomeIcon icon={faEye} size="lg" />
@@ -723,10 +714,10 @@ function AllMaintenanceRequest() {
 
             if (res) {
                 setMaintenanceRequests(res.data);
-                setCounts(res.counts);
+                // setCounts(res.counts);
 
-                const totalCount = res.counts.reduce((sum: number, item: { count: number }) => sum + item.count, 0);
-                setTotalAll(totalCount);
+                // const totalCount = res.counts.reduce((sum: number, item: { count: number }) => sum + item.count, 0);
+                // setTotalAll(totalCount);
 
                 if (setTotalFlag) setTotal(res.total);
 
@@ -790,7 +781,7 @@ function AllMaintenanceRequest() {
     const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
         try {
             const resNotification = await GetNotificationsByRequestAndUser(request_id, user_id);
-            if (!resNotification || resNotification.error) console.error("Error fetching notification");
+            if (!resNotification || resNotification.error) console.error("Error fetching notification.");
 
             const notificationData: NotificationsInterface = {
                 IsRead: true,
@@ -904,8 +895,8 @@ function AllMaintenanceRequest() {
                 open={openConfirmRejected}
                 setOpenConfirm={setOpenConfirmRejected}
                 handleFunction={(note) => handleClickApprove("Unsuccessful", "reject", note)}
-                title="ยืนยันการปฏิเสธงานแจ้งซ่อม"
-                message="คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธงานแจ้งซ่อมนี้หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+                title="Confirm Maintenance Request Rejection"
+                message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
                 buttonActive={isBottonActive}
             />
@@ -921,7 +912,7 @@ function AllMaintenanceRequest() {
                                 fontWeight: 700,
                             }}
                         >
-                            รายการแจ้งซ่อม
+                            Maintenance Request List
                         </Typography>
                     </Grid>
 
@@ -999,7 +990,7 @@ function AllMaintenanceRequest() {
                                 limit={limit}
                                 onPageChange={setPage}
                                 onLimitChange={setLimit}
-                                noDataText="ไม่พบข้อมูลงานแจ้งซ่อม"
+                                noDataText="Maintenance request information not found."
                             />
                         ) : (
                             <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />

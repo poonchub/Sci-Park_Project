@@ -18,6 +18,7 @@ import {
     Radio,
     RadioGroup,
     SelectChangeEvent,
+    Skeleton,
     Typography,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -61,7 +62,6 @@ import ImageUploader from "../../components/ImageUploader/ImageUploader";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
-import { Tune } from "@mui/icons-material";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -85,7 +85,7 @@ function CreateMaintenanceRequestPage() {
 
     const [formData, setFormData] = useState<MaintenanceRequestsInterface>({
         AreaDetail: "",
-        IsAnytimeAvailable: false,
+        IsAnytimeAvailable: true,
         Description: "",
         StartTime: "",
         EndTime: "",
@@ -100,6 +100,9 @@ function CreateMaintenanceRequestPage() {
     const [files, setFiles] = useState<File[]>([]);
 
     const navigate = useNavigate();
+
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
 
     const getUser = async () => {
         try {
@@ -337,7 +340,7 @@ function CreateMaintenanceRequestPage() {
     const handleResetData = (ignore: string = "") => {
         setFormData({
             Description: "",
-            IsAnytimeAvailable: false,
+            IsAnytimeAvailable: true,
             StartTime: "",
             EndTime: "",
             OtherTypeDetail: "",
@@ -354,20 +357,20 @@ function CreateMaintenanceRequestPage() {
         const newErrors: { [key: string]: string } = {};
 
         if (!user?.Email?.trim()) {
-            newErrors.Email = "กรุณาป้อนอีเมล";
+            newErrors.Email = "Please enter your email.";
         } else {
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailPattern.test(user.Email.trim())) {
-                newErrors.Email = "รูปแบบอีเมลไม่ถูกต้อง";
+                newErrors.Email = "Invalid email format.";
             }
         }
 
         if (!user?.Phone?.trim()) {
-            newErrors.Phone = "กรุณาป้อนหมายเลขโทรศัพท์";
+            newErrors.Phone = "Please enter your phone number.";
         } else {
             const phonePattern = /^0[0-9]{9}$/;
             if (!phonePattern.test(user.Phone.trim())) {
-                newErrors.Phone = "กรุณากรอกหมายเลขโทรศัพท์ให้ถูกต้อง 10 หลัก";
+                newErrors.Phone = "Phone number must be 10 digits starting with 0.";
             }
         }
 
@@ -378,27 +381,27 @@ function CreateMaintenanceRequestPage() {
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
 
-        const otherAreaID = areas?.find((item) => item.Name === "บริเวณอื่น ๆ")?.ID || 0;
+        const otherAreaID = areas?.find((item) => item.Name === "Other Areas")?.ID || 0;
 
         if (!formData.AreaID) {
-            newErrors.AreaID = "กรุณาเลือกบริเวณที่ต้องการแจ้งซ่อม";
+            newErrors.AreaID = "Please select the maintenance area.";
         } else if (formData.AreaID == otherAreaID && !formData.AreaDetail?.trim()) {
-            newErrors.AreaDetail = "กรุณาระบุบริเวณเพิ่มเติม";
+            newErrors.AreaDetail = "Please specify additional area details.";
         } else if (formData.AreaID !== otherAreaID && selectedRoomtype == 0) {
-            newErrors.RoomTypeID = "กรุณาระบุประเภทห้อง";
+            newErrors.RoomTypeID = "Please specify room type.";
         } else if (formData.AreaID !== otherAreaID && selectedFloor == 0) {
-            newErrors.FloorID = "กรุณาระบุตำแหน่งหรือชั้น";
+            newErrors.FloorID = "Please specify floor or location.";
         } else if (formData.AreaID !== otherAreaID && !formData.RoomID) {
-            newErrors.RoomID = "กรุณาเลือกหมายเลขห้อง";
+            newErrors.RoomID = "Please select room number.";
         } else if (!formData.MaintenanceTypeID) {
-            newErrors.MaintenanceTypeID = "กรุณาเลือกประเภทปัญหา";
+            newErrors.MaintenanceTypeID = "Please select problem type.";
         } else if (formData.MaintenanceTypeID === 6 && !formData.OtherTypeDetail?.trim()) {
-            newErrors.OtherTypeDetail = "กรุณาระบุประเภทปัญหาเพิ่มเติม";
+            newErrors.OtherTypeDetail = "Please specify additional problem type.";
         } else if (!formData.Description?.trim()) {
-            newErrors.Description = "กรุณาระบุรายละเอียด";
+            newErrors.Description = "Please provide description.";
         } else if (!formData.IsAnytimeAvailable) {
-            if (!formData.StartTime) newErrors.StartTime = "กรุณาระบุเวลาเริ่ม";
-            if (!formData.EndTime) newErrors.EndTime = "กรุณาระบุเวลาสิ้นสุด";
+            if (!formData.StartTime) newErrors.StartTime = "Please specify start time";
+            if (!formData.EndTime) newErrors.EndTime = "Please specify end time";
         }
 
         setErrors(newErrors);
@@ -410,13 +413,24 @@ function CreateMaintenanceRequestPage() {
     });
 
     useEffect(() => {
-        getUser();
-        getAreas();
-        getRooms();
-        getRoomTypes();
-        getFloors();
-        getMaintenanceTypes();
-        getRequestStatuses();
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([
+                    getUser(),
+                    getAreas(),
+                    getRooms(),
+                    getRoomTypes(),
+                    getFloors(),
+                    getMaintenanceTypes(),
+                    getRequestStatuses(),
+                ]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -444,111 +458,203 @@ function CreateMaintenanceRequestPage() {
                     {/* Header Section */}
                     <Grid className="title-box" size={{ sm: 5, md: 5 }}>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            เขียนคำร้องแจ้งซ่อม
+                            Create Maintenance Request
                         </Typography>
                     </Grid>
                     <Grid container size={{ sm: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Link to="/maintenance/my-maintenance-request" style={{ textAlign: "center" }}>
                             <Button variant="outlined">
                                 <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                                <Typography sx={{ fontSize: 14, ml: 0.6 }}>ย้อนกลับ</Typography>
+                                <Typography sx={{ fontSize: 14, ml: 0.6 }}>Back</Typography>
                             </Button>
                         </Link>
                     </Grid>
 
                     {/* Stepper showing request progress */}
                     <Grid size={{ xs: 12, md: 12 }}>
-                        <RequestStepper requestStatuses={requestStatuses} requestStatusID={0} />
+                        {
+                            isLoadingData ? (
+                                <Skeleton variant="rectangular" width="100%" height={120} sx={{ borderRadius: 2 }} />
+                            ) : (
+                                <RequestStepper requestStatuses={requestStatuses} requestStatusID={0} />
+                            )
+                        }
                     </Grid>
 
                     {/* Form Card Section */}
-                    <Card className="status-card" sx={{ width: "100%", borderRadius: 2 }}>
-                        <CardContent>
-                            <Grid
-                                container
-                                component="form"
-                                spacing={{
-                                    xs: 3,
-                                    md: 8,
-                                }}
-                                sx={{
-                                    px: {
-                                        xs: 2,
-                                        md: 6,
-                                    },
-                                    py: {
-                                        xs: 1,
-                                        md: 4,
-                                    },
-                                    alignItems: "flex-start",
-                                }}
-                                onSubmit={handleSubmit}
-                            >
-                                {/* Left Section (Form Inputs) */}
-                                <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
-                                    {/* Area Selection */}
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Typography variant="body1" className="title-field">
-                                            บริเวณที่ต้องการแจ้งซ่อม
-                                        </Typography>
-                                        <FormControl>
-                                            <RadioGroup row name="AreaID" value={formData.AreaID} onChange={handleInputChange}>
-                                                {areas.map((item, index) => {
-                                                    return (
-                                                        <FormControlLabel
-                                                            key={index}
-                                                            value={item.ID}
-                                                            control={<Radio sx={{ color: "#6D6E70" }} />}
-                                                            label={item.Name}
-                                                        />
-                                                    );
-                                                })}
-                                            </RadioGroup>
-                                        </FormControl>
-                                    </Grid>
-
-                                    {formData.AreaID == 2 ? (
-                                        <>
-                                            {/* Area Detail Input */}
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <TextField
-                                                    multiline
-                                                    rows={2}
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    name="AreaDetail"
-                                                    value={formData.AreaDetail}
-                                                    onChange={handleInputChange}
-                                                    placeholder="ระบุบริเวณที่ต้องการแจ้งซ่อม"
-                                                    error={!!errors.AreaDetail}
-                                                    helperText={errors.AreaDetail}
-                                                    slotProps={{
-                                                        input: {
-                                                            className: "custom-input",
-                                                        },
-                                                    }}
-                                                />
-                                            </Grid>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* Room Type Selection */}
+                    {
+                        isLoadingData ? (
+                            <Skeleton variant="rectangular" width="100%" height={500} sx={{ borderRadius: 2 }} />
+                        ) : (
+                            <Card className="status-card" sx={{ width: "100%", borderRadius: 2 }}>
+                                <CardContent>
+                                    <Grid
+                                        container
+                                        component="form"
+                                        spacing={{
+                                            xs: 3,
+                                            md: 8,
+                                        }}
+                                        sx={{
+                                            px: {
+                                                xs: 2,
+                                                md: 6,
+                                            },
+                                            py: {
+                                                xs: 1,
+                                                md: 4,
+                                            },
+                                            alignItems: "flex-start",
+                                        }}
+                                        onSubmit={handleSubmit}
+                                    >
+                                        {/* Left Section (Form Inputs) */}
+                                        <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
+                                            {/* Area Selection */}
                                             <Grid size={{ xs: 12, md: 12 }}>
                                                 <Typography variant="body1" className="title-field">
-                                                    ประเภทห้อง
+                                                    Maintenance Area
                                                 </Typography>
-                                                <FormControl fullWidth error={!!errors.RoomTypeID}>
+                                                <FormControl>
+                                                    <RadioGroup row name="AreaID" value={formData.AreaID} onChange={handleInputChange}>
+                                                        {areas.map((item, index) => {
+                                                            return (
+                                                                <FormControlLabel
+                                                                    key={index}
+                                                                    value={item.ID}
+                                                                    control={<Radio sx={{ color: "#6D6E70" }} />}
+                                                                    label={item.Name}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </RadioGroup>
+                                                </FormControl>
+                                            </Grid>
+
+                                            {formData.AreaID == 2 ? (
+                                                <>
+                                                    {/* Area Detail Input */}
+                                                    <Grid size={{ xs: 12, md: 12 }}>
+                                                        <TextField
+                                                            multiline
+                                                            rows={2}
+                                                            fullWidth
+                                                            variant="outlined"
+                                                            name="AreaDetail"
+                                                            value={formData.AreaDetail}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Enter area for maintenance."
+                                                            error={!!errors.AreaDetail}
+                                                            helperText={errors.AreaDetail}
+                                                            slotProps={{
+                                                                input: {
+                                                                    className: "custom-input",
+                                                                },
+                                                            }}
+                                                        />
+                                                    </Grid>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {/* Room Type Selection */}
+                                                    <Grid size={{ xs: 12, md: 12 }}>
+                                                        <Typography variant="body1" className="title-field">
+                                                            Room Type
+                                                        </Typography>
+                                                        <FormControl fullWidth error={!!errors.RoomTypeID}>
+                                                            <Select
+                                                                name="RoomTypeID"
+                                                                displayEmpty
+                                                                defaultValue={0}
+                                                                value={selectedRoomtype}
+                                                                onChange={(e) => handleSelectedFilter(Number(e.target.value), "roomtype")}
+                                                            >
+                                                                <MenuItem value={0}>
+                                                                    <em>{"-- Select Room Type --"}</em>
+                                                                </MenuItem>
+                                                                {roomTypes.map((item, index) => {
+                                                                    return (
+                                                                        <MenuItem key={index} value={item.ID}>
+                                                                            {item.TypeName}
+                                                                        </MenuItem>
+                                                                    );
+                                                                })}
+                                                            </Select>
+                                                            {errors.RoomTypeID && <FormHelperText>{errors.RoomTypeID}</FormHelperText>}
+                                                        </FormControl>
+                                                    </Grid>
+
+                                                    {/* Floor Number Selection */}
+                                                    <Grid size={{ xs: 6, md: 6 }}>
+                                                        <Typography variant="body1" className="title-field">
+                                                            Location / Floor
+                                                        </Typography>
+                                                        <FormControl fullWidth error={!!errors.FloorID}>
+                                                            <Select
+                                                                name="FloorNumber"
+                                                                displayEmpty
+                                                                defaultValue={""}
+                                                                value={selectedRoomtype === 0 ? 0 : selectedFloor}
+                                                                disabled={selectedRoomtype === 0}
+                                                                onChange={(e) => handleSelectedFilter(Number(e.target.value), "floorNumber")}
+                                                            >
+                                                                <MenuItem value={0}>
+                                                                    <em>{"-- Select Location or Floor --"}</em>
+                                                                </MenuItem>
+                                                                {floors.map((item, index) => {
+                                                                    return <MenuItem key={index} value={item.ID}>{`Floor ${item.Number}`}</MenuItem>;
+                                                                })}
+                                                            </Select>
+                                                            {errors.FloorID && <FormHelperText>{errors.FloorID}</FormHelperText>}
+                                                        </FormControl>
+                                                    </Grid>
+
+                                                    {/* Room Number Selection */}
+                                                    <Grid size={{ xs: 6, md: 6 }}>
+                                                        <Typography variant="body1" className="title-field">
+                                                            Room Number
+                                                        </Typography>
+                                                        <FormControl fullWidth error={!!errors.RoomID}>
+                                                            <Select
+                                                                name="RoomID"
+                                                                value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
+                                                                onChange={handleSelectChange}
+                                                                displayEmpty
+                                                                disabled={selectedFloor === 0 || selectedRoomtype === 0}
+                                                            >
+                                                                <MenuItem value={0}>
+                                                                    <em>{"-- Select Room Number --"}</em>
+                                                                </MenuItem>
+                                                                {filteredRooms.map((item, index) => {
+                                                                    return (
+                                                                        <MenuItem key={index} value={item.ID}>
+                                                                            {item.RoomNumber}
+                                                                        </MenuItem>
+                                                                    );
+                                                                })}
+                                                            </Select>
+                                                            {errors.RoomID && <FormHelperText>{errors.RoomID}</FormHelperText>}
+                                                        </FormControl>
+                                                    </Grid>
+                                                </>
+                                            )}
+
+                                            {/* Maintenance Type Selection */}
+                                            <Grid size={{ xs: 12, md: 12 }}>
+                                                <Typography variant="body1" className="title-field">
+                                                    Maintenance Type
+                                                </Typography>
+                                                <FormControl fullWidth error={!!errors.MaintenanceTypeID}>
                                                     <Select
-                                                        name="RoomTypeID"
+                                                        name="MaintenanceTypeID"
+                                                        value={Number(formData.MaintenanceTypeID)}
+                                                        onChange={handleSelectChange}
                                                         displayEmpty
-                                                        defaultValue={0}
-                                                        value={selectedRoomtype}
-                                                        onChange={(e) => handleSelectedFilter(Number(e.target.value), "roomtype")}
                                                     >
                                                         <MenuItem value={0}>
-                                                            <em>{"-- เลือกประเภทห้อง --"}</em>
+                                                            <em>{"-- Select Maintenance Type --"}</em>
                                                         </MenuItem>
-                                                        {roomTypes.map((item, index) => {
+                                                        {maintenanceTypes.map((item, index) => {
                                                             return (
                                                                 <MenuItem key={index} value={item.ID}>
                                                                     {item.TypeName}
@@ -556,334 +662,253 @@ function CreateMaintenanceRequestPage() {
                                                             );
                                                         })}
                                                     </Select>
-                                                    {errors.RoomTypeID && <FormHelperText>{errors.RoomTypeID}</FormHelperText>}
+                                                    {errors.MaintenanceTypeID && <FormHelperText>{errors.MaintenanceTypeID}</FormHelperText>}
                                                 </FormControl>
+                                                {formData.MaintenanceTypeID == 6 ? (
+                                                    <>
+                                                        {/* OtherType Detail Input */}
+                                                        <Grid size={{ xs: 12, md: 12 }}>
+                                                            <TextField
+                                                                multiline
+                                                                rows={2}
+                                                                fullWidth
+                                                                variant="outlined"
+                                                                name="OtherTypeDetail"
+                                                                value={formData.OtherTypeDetail}
+                                                                onChange={handleInputChange}
+                                                                placeholder="Enter maintenance type."
+                                                                error={!!errors.OtherTypeDetail}
+                                                                helperText={errors.OtherTypeDetail}
+                                                                slotProps={{
+                                                                    input: {
+                                                                        className: "custom-input",
+                                                                    },
+                                                                }}
+                                                                sx={{ mt: 1 }}
+                                                            />
+                                                        </Grid>
+                                                    </>
+                                                ) : (
+                                                    <></>
+                                                )}
                                             </Grid>
 
-                                            {/* Floor Number Selection */}
-                                            <Grid size={{ xs: 6, md: 6 }}>
+                                            {/* Description Input */}
+                                            <Grid size={{ xs: 12, md: 12 }}>
                                                 <Typography variant="body1" className="title-field">
-                                                    ตำแหน่ง/ชั้น
+                                                    Description
                                                 </Typography>
-                                                <FormControl fullWidth error={!!errors.FloorID}>
-                                                    <Select
-                                                        name="FloorNumber"
-                                                        displayEmpty
-                                                        defaultValue={""}
-                                                        value={selectedRoomtype === 0 ? 0 : selectedFloor}
-                                                        disabled={selectedRoomtype === 0}
-                                                        onChange={(e) => handleSelectedFilter(Number(e.target.value), "floorNumber")}
-                                                    >
-                                                        <MenuItem value={0}>
-                                                            <em>{"-- เลือกตำแหน่งหรือชั้น --"}</em>
-                                                        </MenuItem>
-                                                        {floors.map((item, index) => {
-                                                            return <MenuItem key={index} value={item.ID}>{`ชั้น ${item.Number}`}</MenuItem>;
-                                                        })}
-                                                    </Select>
-                                                    {errors.FloorID && <FormHelperText>{errors.FloorID}</FormHelperText>}
-                                                </FormControl>
+                                                <TextField
+                                                    multiline
+                                                    rows={4}
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    name="Description"
+                                                    value={formData.Description}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter maintenance description."
+                                                    error={!!errors.Description}
+                                                    helperText={errors.Description}
+                                                    slotProps={{
+                                                        input: {
+                                                            className: "custom-input",
+                                                        },
+                                                    }}
+                                                />
                                             </Grid>
 
-                                            {/* Room Number Selection */}
-                                            <Grid size={{ xs: 6, md: 6 }}>
+                                            {/* Time Input */}
+                                            <Grid container size={{ xs: 12, md: 12 }} spacing={0}>
                                                 <Typography variant="body1" className="title-field">
-                                                    หมายเลขห้อง
+                                                    Available Time Slots
                                                 </Typography>
-                                                <FormControl fullWidth error={!!errors.RoomID}>
-                                                    <Select
-                                                        name="RoomID"
-                                                        value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
-                                                        onChange={handleSelectChange}
-                                                        displayEmpty
-                                                        disabled={selectedFloor === 0 || selectedRoomtype === 0}
-                                                    >
-                                                        <MenuItem value={0}>
-                                                            <em>{"-- เลือกหมายเลขห้อง --"}</em>
-                                                        </MenuItem>
-                                                        {filteredRooms.map((item, index) => {
-                                                            return (
-                                                                <MenuItem key={index} value={item.ID}>
-                                                                    {item.RoomNumber}
-                                                                </MenuItem>
-                                                            );
-                                                        })}
-                                                    </Select>
-                                                    {errors.RoomID && <FormHelperText>{errors.RoomID}</FormHelperText>}
-                                                </FormControl>
-                                            </Grid>
-                                        </>
-                                    )}
 
-                                    {/* Maintenance Type Selection */}
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Typography variant="body1" className="title-field">
-                                            ประเภทปัญหา
-                                        </Typography>
-                                        <FormControl fullWidth error={!!errors.MaintenanceTypeID}>
-                                            <Select
-                                                name="MaintenanceTypeID"
-                                                value={Number(formData.MaintenanceTypeID)}
-                                                onChange={handleSelectChange}
-                                                displayEmpty
-                                            >
-                                                <MenuItem value={0}>
-                                                    <em>{"-- เลือกประเภทปัญหา --"}</em>
-                                                </MenuItem>
-                                                {maintenanceTypes.map((item, index) => {
-                                                    return (
-                                                        <MenuItem key={index} value={item.ID}>
-                                                            {item.TypeName}
-                                                        </MenuItem>
-                                                    );
-                                                })}
-                                            </Select>
-                                            {errors.MaintenanceTypeID && <FormHelperText>{errors.MaintenanceTypeID}</FormHelperText>}
-                                        </FormControl>
-                                        {formData.MaintenanceTypeID == 6 ? (
-                                            <>
-                                                {/* OtherType Detail Input */}
                                                 <Grid size={{ xs: 12, md: 12 }}>
+                                                    <FormGroup>
+                                                        <FormControlLabel
+                                                            control={
+                                                                <Checkbox
+                                                                    name="IsAnytimeAvailable"
+                                                                    checked={formData.IsAnytimeAvailable}
+                                                                    onChange={handleInputChange}
+                                                                    sx={{ color: "#6D6E70" }}
+                                                                />
+                                                            }
+                                                            label="Any time"
+                                                        />
+                                                    </FormGroup>
+                                                </Grid>
+
+                                                <Grid
+                                                    container
+                                                    size={{ xs: 12, md: 12 }}
+                                                    sx={{
+                                                        justifyContent: "space-between",
+                                                    }}
+                                                >
+                                                    <Grid size={{ xs: 5.5, md: 5.5 }}>
+                                                        <TextField
+                                                            name="StartTime"
+                                                            type="time"
+                                                            fullWidth
+                                                            value={formData.StartTime}
+                                                            onChange={handleInputChange}
+                                                            disabled={formData.IsAnytimeAvailable}
+                                                            error={!!errors.StartTime}
+                                                            helperText={errors.StartTime}
+                                                        />
+                                                    </Grid>
+                                                    <Typography variant="body1" sx={{ alignItems: "center", display: "flex" }}>
+                                                        to
+                                                    </Typography>
+                                                    <Grid size={{ xs: 5.5, md: 5.5 }}>
+                                                        <TextField
+                                                            name="EndTime"
+                                                            type="time"
+                                                            fullWidth
+                                                            value={formData.EndTime}
+                                                            onChange={handleInputChange}
+                                                            disabled={formData.IsAnytimeAvailable}
+                                                            error={!!errors.EndTime}
+                                                            helperText={errors.EndTime}
+                                                        />
+                                                    </Grid>
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+
+                                        {/* Right Section (User Info & Upload) */}
+                                        <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
+                                            <Grid size={{ xs: 12, md: 12 }}>
+                                                <Typography variant="body1" className="title-field">
+                                                    Request Creator
+                                                </Typography>
+                                                <TextField
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
+                                                    slotProps={{
+                                                        input: {
+                                                            readOnly: true,
+                                                            startAdornment: (
+                                                                <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                                    <FontAwesomeIcon icon={faUserTie} size="lg" />
+                                                                </InputAdornment>
+                                                            ),
+                                                        },
+                                                    }}
+                                                />
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12, md: 12 }}>
+                                                <Typography variant="body1" className="title-field">
+                                                    Contact Information
+                                                </Typography>
+                                                <Grid container spacing={1}>
                                                     <TextField
-                                                        multiline
-                                                        rows={2}
+                                                        name="Phone"
                                                         fullWidth
                                                         variant="outlined"
-                                                        name="OtherTypeDetail"
-                                                        value={formData.OtherTypeDetail}
-                                                        onChange={handleInputChange}
-                                                        placeholder="ระบุประเภทปัญหา"
-                                                        error={!!errors.OtherTypeDetail}
-                                                        helperText={errors.OtherTypeDetail}
+                                                        value={user ? user.Phone : ""}
+                                                        onChange={handleUserDataChange}
+                                                        error={!!errors.Phone}
+                                                        helperText={errors.Phone}
                                                         slotProps={{
                                                             input: {
-                                                                className: "custom-input",
+                                                                readOnly: !onEdit,
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                                        <FontAwesomeIcon icon={faPhone} size="lg" />
+                                                                    </InputAdornment>
+                                                                ),
                                                             },
                                                         }}
-                                                        sx={{ mt: 1 }}
+                                                    />
+                                                    <TextField
+                                                        name="Email"
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        value={user ? user.Email : ""}
+                                                        onChange={handleUserDataChange}
+                                                        error={!!errors.Email}
+                                                        helperText={errors.Email}
+                                                        slotProps={{
+                                                            input: {
+                                                                readOnly: !onEdit,
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
+                                                                        <FontAwesomeIcon icon={faEnvelope} size="lg" />
+                                                                    </InputAdornment>
+                                                                ),
+                                                            },
+                                                        }}
                                                     />
                                                 </Grid>
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </Grid>
-
-                                    {/* Description Input */}
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Typography variant="body1" className="title-field">
-                                            รายละเอียด
-                                        </Typography>
-                                        <TextField
-                                            multiline
-                                            rows={4}
-                                            fullWidth
-                                            variant="outlined"
-                                            name="Description"
-                                            value={formData.Description}
-                                            onChange={handleInputChange}
-                                            placeholder="ระบุรายละเอียดงานแจ้งซ่อม"
-                                            error={!!errors.Description}
-                                            helperText={errors.Description}
-                                            slotProps={{
-                                                input: {
-                                                    className: "custom-input",
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Time Input */}
-                                    <Grid container size={{ xs: 12, md: 12 }} spacing={0}>
-                                        <Typography variant="body1" className="title-field">
-                                            ช่วงเวลาที่รับบริการได้
-                                        </Typography>
-
-                                        <Grid size={{ xs: 12, md: 12 }}>
-                                            <FormGroup>
-                                                <FormControlLabel
-                                                    control={
-                                                        <Checkbox
-                                                            name="IsAnytimeAvailable"
-                                                            checked={formData.IsAnytimeAvailable}
-                                                            onChange={handleInputChange}
-                                                            sx={{ color: "#6D6E70" }}
-                                                        />
-                                                    }
-                                                    label="ทุกช่วงเวลา"
-                                                />
-                                            </FormGroup>
-                                        </Grid>
-
-                                        <Grid
-                                            container
-                                            size={{ xs: 12, md: 12 }}
-                                            sx={{
-                                                justifyContent: "space-between",
-                                                // alignItems: "center",
-                                            }}
-                                        >
-                                            <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                <TextField
-                                                    name="StartTime"
-                                                    type="time"
-                                                    fullWidth
-                                                    value={formData.StartTime}
-                                                    onChange={handleInputChange}
-                                                    disabled={formData.IsAnytimeAvailable}
-                                                    error={!!errors.StartTime}
-                                                    helperText={errors.StartTime}
-                                                />
+                                                <Grid container size={{ xs: 12, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
+                                                    {!onEdit ? (
+                                                        <Button variant="containedBlue" onClick={() => setOnEdit(!onEdit)}>
+                                                            <FontAwesomeIcon icon={faPencil} />
+                                                            <Typography variant="textButtonClassic">Edit Info</Typography>
+                                                        </Button>
+                                                    ) : (
+                                                        <Box sx={{ display: "flex", gap: 1 }}>
+                                                            <Button
+                                                                variant="outlined"
+                                                                onClick={() => {
+                                                                    getUser;
+                                                                    setOnEdit(false);
+                                                                }}
+                                                            >
+                                                                <FontAwesomeIcon icon={faUndo} />
+                                                                <Typography variant="textButtonClassic">Cancel</Typography>
+                                                            </Button>
+                                                            <Button variant="contained" onClick={handleUpdateUser} disabled={isEditButtonActive}>
+                                                                <FontAwesomeIcon icon={faFloppyDisk} />
+                                                                <Typography variant="textButtonClassic">Save</Typography>
+                                                            </Button>
+                                                        </Box>
+                                                    )}
+                                                </Grid>
                                             </Grid>
-                                            <Typography variant="body1" sx={{ alignItems: "center", display: "flex" }}>
-                                                ถึง
-                                            </Typography>
-                                            <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                <TextField
-                                                    name="EndTime"
-                                                    type="time"
-                                                    fullWidth
-                                                    value={formData.EndTime}
-                                                    onChange={handleInputChange}
-                                                    disabled={formData.IsAnytimeAvailable}
-                                                    error={!!errors.EndTime}
-                                                    helperText={errors.EndTime}
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
 
-                                {/* Right Section (User Info & Upload) */}
-                                <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Typography variant="body1" className="title-field">
-                                            ผู้เขียนคำร้อง
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            variant="outlined"
-                                            value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
-                                            slotProps={{
-                                                input: {
-                                                    readOnly: true,
-                                                    startAdornment: (
-                                                        <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                            <FontAwesomeIcon icon={faUserTie} size="lg" />
-                                                        </InputAdornment>
-                                                    ),
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Typography variant="body1" className="title-field">
-                                            ข้อมูลการติดต่อ
-                                        </Typography>
-                                        <Grid container spacing={1}>
-                                            <TextField
-                                                name="Phone"
-                                                fullWidth
-                                                variant="outlined"
-                                                value={user ? user.Phone : ""}
-                                                onChange={handleUserDataChange}
-                                                error={!!errors.Phone}
-                                                helperText={errors.Phone}
-                                                slotProps={{
-                                                    input: {
-                                                        readOnly: !onEdit,
-                                                        startAdornment: (
-                                                            <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                                <FontAwesomeIcon icon={faPhone} size="lg" />
-                                                            </InputAdornment>
-                                                        ),
-                                                    },
-                                                }}
-                                            />
-                                            <TextField
-                                                name="Email"
-                                                fullWidth
-                                                variant="outlined"
-                                                value={user ? user.Email : ""}
-                                                onChange={handleUserDataChange}
-                                                error={!!errors.Email}
-                                                helperText={errors.Email}
-                                                slotProps={{
-                                                    input: {
-                                                        readOnly: !onEdit,
-                                                        startAdornment: (
-                                                            <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                                <FontAwesomeIcon icon={faEnvelope} size="lg" />
-                                                            </InputAdornment>
-                                                        ),
-                                                    },
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid container size={{ xs: 12, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                            {!onEdit ? (
-                                                <Button variant="containedBlue" onClick={() => setOnEdit(!onEdit)}>
-                                                    <FontAwesomeIcon icon={faPencil} />
-                                                    <Typography variant="textButtonClassic">แก้ไขข้อมูล</Typography>
-                                                </Button>
-                                            ) : (
-                                                <Box sx={{ display: "flex", gap: 1 }}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        onClick={() => {
-                                                            getUser;
-                                                            setOnEdit(false);
+                                            <Grid size={{ xs: 12, md: 12 }}>
+                                                <Box display={"flex"}>
+                                                    <Typography variant="body1" className="title-field">
+                                                        Request Images
+                                                    </Typography>
+                                                    <Typography
+                                                        variant="body1"
+                                                        sx={{
+                                                            ml: 0.5,
+                                                            color: "gray",
                                                         }}
                                                     >
-                                                        <FontAwesomeIcon icon={faUndo} />
-                                                        <Typography variant="textButtonClassic">ยกเลิก</Typography>
-                                                    </Button>
-                                                    <Button variant="contained" onClick={handleUpdateUser} disabled={isEditButtonActive}>
-                                                        <FontAwesomeIcon icon={faFloppyDisk} />
-                                                        <Typography variant="textButtonClassic">บันทึก</Typography>
-                                                    </Button>
+                                                        (Maximum 3 files)
+                                                    </Typography>
                                                 </Box>
-                                            )}
+
+                                                <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
+                                            </Grid>
+                                        </Grid>
+
+                                        {/* Buttom Section */}
+                                        <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                <Button variant="outlined" sx={{ minHeight: "37px" }} onClick={() => handleResetData()}>
+                                                    <FontAwesomeIcon icon={faRotateRight} />
+                                                    <Typography variant="textButtonClassic">Reset Data</Typography>
+                                                </Button>
+                                                <Button variant="contained" sx={{ px: 4, py: 1 }} type="submit" disabled={isSubmitButtonActive}>
+                                                    <FontAwesomeIcon icon={faUpload} />
+                                                    <Typography variant="textButtonClassic">Submit Request</Typography>
+                                                </Button>
+                                            </Box>
                                         </Grid>
                                     </Grid>
-
-                                    <Grid size={{ xs: 12, md: 12 }}>
-                                        <Box display={"flex"}>
-                                            <Typography variant="body1" className="title-field">
-                                                ภาพประกอบการแจ้งซ่อม
-                                            </Typography>
-                                            <Typography
-                                                variant="body1"
-                                                sx={{
-                                                    ml: 0.5,
-                                                    color: "gray",
-                                                }}
-                                            >
-                                                (สูงสุด 3 ไฟล์)
-                                            </Typography>
-                                        </Box>
-
-                                        <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
-                                    </Grid>
-                                </Grid>
-
-                                {/* Buttom Section */}
-                                <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
-                                    <Box sx={{ gap: 1, display: "flex" }}>
-                                        <Button variant="outlined" sx={{ minHeight: "37px" }} onClick={() => handleResetData()}>
-                                            <FontAwesomeIcon icon={faRotateRight} />
-                                            <Typography variant="textButtonClassic">รีเซ็ตข้อมูล</Typography>
-                                        </Button>
-                                        <Button variant="contained" sx={{ px: 4, py: 1 }} type="submit" disabled={isSubmitButtonActive}>
-                                            <FontAwesomeIcon icon={faUpload} />
-                                            <Typography variant="textButtonClassic">ส่งคำร้อง</Typography>
-                                        </Button>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
+                                </CardContent>
+                            </Card>
+                        )
+                    }
                 </Grid>
             </Container>
         </Box>

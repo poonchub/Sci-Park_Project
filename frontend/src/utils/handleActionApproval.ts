@@ -69,12 +69,12 @@ const handleActionApproval = async (
 
         const resApproval = await CreateManagerApproval(managerApp);
         if (!resApproval || resApproval.error)
-            throw new Error(resApproval?.error || "Failed to create manager approval");
+            throw new Error(resApproval?.error || "Failed to create manager approval.");
 
         if (actionType === "approve") {
             const resAssign = await CreateMaintenanceTask(task);
             if (!resAssign || resAssign.error)
-                throw new Error(resAssign?.error || "Failed to assign work");
+                throw new Error(resAssign?.error || "Failed to assign work.");
 
             const notificationDataCreate: NotificationsInterface = {
                 TaskID: resAssign.data.ID
@@ -82,19 +82,19 @@ const handleActionApproval = async (
             
             const resNotification = await CreateNotification(notificationDataCreate);
             if (!resNotification || resNotification.error)
-                throw new Error(resNotification?.error || "Failed to create notification");
+                throw new Error(resNotification?.error || "Failed to create notification.");
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
         if (!resRequest || resRequest.error)
-            throw new Error(resRequest?.error || "Failed to update request status");
+            throw new Error(resRequest?.error || "Failed to update request status.");
 
         const notificationDataUpdate: NotificationsInterface = {
             IsRead: true,
         };
         const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
         if (!resUpdateNotification || resUpdateNotification.error)
-            throw new Error(resUpdateNotification?.error || "Failed to update notification");
+            throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
         setTimeout(() => {
             setAlerts((prev) => [

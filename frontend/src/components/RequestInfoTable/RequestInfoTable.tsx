@@ -19,7 +19,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
     const unsuccessfulDescription = data?.RequestStatus?.Name === 'Unsuccessful' ?
 		(
 			task?.Description ? task?.Description :
-            approval?.Description ? approval.Description : "ยกเลิกคำร้องโดยผู้เขียน"
+            approval?.Description ? approval.Description : "Request cancelled by the requester."
 		) : null
 
     return (
@@ -28,7 +28,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Request ID */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">หมายเลขคำร้อง</Typography>
+                        <Typography className="title-list">Request No.</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>{data.ID}</Typography>
@@ -38,7 +38,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Request timestamp */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">เวลาที่ร้องขอ</Typography>
+                        <Typography className="title-list">Requested At</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
@@ -50,11 +50,11 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Room/Location info */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">พื้นที่/ห้อง</Typography>
+                        <Typography className="title-list">Location / Room</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`${data.Room?.RoomType?.TypeName} ชั้น ${data.Room?.Floor?.Number} ห้อง ${data.Room?.RoomNumber}`}
+                            {`${data.Room?.RoomType?.TypeName} - Floor ${data.Room?.Floor?.Number}, Room No. ${data.Room?.RoomNumber}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -62,7 +62,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Maintenance type */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ประเภทงาน</Typography>
+                        <Typography className="title-list">Maintenance Type</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>{data.MaintenanceType?.TypeName}</Typography>
@@ -72,7 +72,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Description */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">รายละเอียด</Typography>
+                        <Typography className="title-list">Description</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>{data.Description}</Typography>
@@ -82,12 +82,12 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Available time */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ช่วงเวลาที่รับบริการได้</Typography>
+                        <Typography className="title-list">Available Time</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
                             {data.IsAnytimeAvailable
-                                ? 'ทุกช่วงเวลา'
+                                ? 'Anytime'
                                 : `${data.StartTime?.slice(11, 16)} - ${data.EndTime?.slice(11, 16)} น.`}
                         </Typography>
                     </TableCell>
@@ -96,7 +96,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Requester information */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ร้องขอโดย</Typography>
+                        <Typography className="title-list">Requested By</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
@@ -108,14 +108,14 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                 {/* Contact information */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ข้อมูลการติดต่อ</Typography>
+                        <Typography className="title-list">Contact Information</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`โทรศัพท์: ${phoneFormat(data.User?.Phone || '')}`}
+                            {`Phone: ${phoneFormat(data.User?.Phone || '')}`}
                         </Typography>
                         <Typography>
-                            {`อีเมล: ${data.User?.Email}`}
+                            {`Email: ${data.User?.Email}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -125,7 +125,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     data.Inspection?.Description &&
                     <TableRow>
                         <TableCell>
-                            <Typography className="title-list">หมายเหตุการขอซ่อมซ้ำ</Typography>
+                            <Typography className="title-list">Rework Notes</Typography>
                         </TableCell>
                         <TableCell>
                             <Typography>
@@ -140,7 +140,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     unsuccessfulDescription &&
                     <TableRow>
                         <TableCell>
-                            <Typography className="title-list">หมายเหตุการยกเลิก</Typography>
+                            <Typography className="title-list">Cancellation Notes</Typography>
                         </TableCell>
                         <TableCell>
                             <Typography>
