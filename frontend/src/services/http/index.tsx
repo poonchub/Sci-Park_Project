@@ -135,7 +135,7 @@ async function CreateUser(data: any) {
     formData.append("role_id", (data.RoleID ?? 1).toString());
     formData.append("employee_id", data.EmployeeID || "");
     formData.append("is_employee", data.IsEmployee || "");
-    formData.append("request_type_id", data.RequestTypeID.toString() || "");
+    formData.append("request_type_id", (data.RequestTypeID ?? 1).toString());
 
 
     if (data.Profile_Image) {
@@ -378,6 +378,32 @@ async function CreateRoom(roomData:RoomsInterface) {
 
     return res;
 }
+
+async function UpdateProfileImage(file: File) {
+    const formData = new FormData();
+    formData.append("profile_image", file);
+
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+
+        },
+        body: formData,
+    };
+
+    let res = await fetch(`${apiUrl}/update-profile/${localStorage.getItem("userId")}`, requestOptions)
+        .then((res) => {
+            if (res) {
+                return res; // Success: Return the updated room data
+            } else {
+                return false; // Failure
+            }
+        });
+
+    return res;
+}
+
 
 async function UpdateRoom(roomData:RoomsInterface) {
     const requestOptions = {
@@ -1384,6 +1410,7 @@ export {
     ChangePassword,
     GetOperators,
     UpdateUserbyID,
+    UpdateProfileImage,
 
     // Areas
     GetAreas,

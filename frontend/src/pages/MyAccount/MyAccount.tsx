@@ -3,8 +3,7 @@ import { apiUrl } from '../../services/http';
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, Avatar, Grid } from '@mui/material';
 import '../AddUser/AddUserForm.css';  // Import the updated CSS
-import { UserInterface } from '../../interfaces/IUser';
-import { GetUserById,ListPackages } from '../../services/http';
+import { GetUserById } from '../../services/http';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -13,7 +12,7 @@ import { TextArea } from '../../components/TextField/TextArea';
 import {MaintenaceImagesInterface} from '../../interfaces/IMaintenaceImages'
 import { GetUserInterface } from '../../interfaces/IGetUser';
 
-
+import { UpdateProfileImage } from '../../services/http/index'
 
 
 
@@ -26,7 +25,7 @@ const MyAccount: React.FC = () => {
     const [user, setUser] = useState<GetUserInterface | null>();
     const [userType, setUserType] = useState<string>('internal');
     const [img,setImg] = useState<MaintenaceImagesInterface | null>()
-    const roleID = 3;  // Watching RoleID value
+
 
     const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
     if (images.length === 0) return [];
@@ -42,28 +41,40 @@ const MyAccount: React.FC = () => {
 };
 
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            let selectedFiles = Array.from(event.target.files).filter(isValidImage);
+const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+        let selectedFiles = Array.from(event.target.files).filter(isValidImage);
 
-            // ตรวจสอบว่าเลือกไฟล์ได้แค่ 1 ไฟล์
-            if (selectedFiles.length > 1) {
-                selectedFiles = selectedFiles.slice(0, 1);
-                alert("สามารถเลือกได้แค่ 1 ไฟล์เท่านั้น");
-            }
+        // ตรวจสอบว่าเลือกไฟล์ได้แค่ 1 ไฟล์
+        if (selectedFiles.length > 1) {
+            selectedFiles = selectedFiles.slice(0, 1);
+            alert("สามารถเลือกได้แค่ 1 ไฟล์เท่านั้น");
+        }
 
-            // แปลงไฟล์เป็น Base64
+        if (selectedFiles[0]) {
+            const file = selectedFiles[0];
+
+            // แสดงรูปภาพทันที
             const reader = new FileReader();
             reader.onloadend = () => {
-                setProfileImage(reader.result as string);  // เก็บ Base64 string ของรูปภาพ
+                setProfileImage(reader.result as string);
             };
+            reader.readAsDataURL(file);
 
-            if (selectedFiles[0]) {
-                reader.readAsDataURL(selectedFiles[0]);
-                setFile(selectedFiles[0]);  // เก็บไฟล์เดียว
+            setFile(file); // เก็บไฟล์ใหม่ใน state
+
+            // เรียก API อัปเดตทันที
+            const result = await UpdateProfileImage(file);
+            console.log(result)
+            if (result && 'status' in result && result.status === 200) {
+                setAlerts([{ type: "success", message: "อัปเดตรูปโปรไฟล์สำเร็จ" }]);
+            } else {
+                setAlerts([{ type: "error", message: "เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์" }]);
             }
         }
-    };
+    }
+};
+
 
     useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +89,9 @@ const MyAccount: React.FC = () => {
                 
                 // เก็บภาพลง state ถ้าต้องการ
                 setImg(imagePathArray[0]);
+                if(res.IsEmployee == false){
+                    setUserType("external")
+                }
 
                 const files = await convertPathsToFiles(imagePathArray);
                 if (files.length > 0) {
@@ -105,11 +119,6 @@ const MyAccount: React.FC = () => {
 }, []);
 
 
-    const onSubmit = async (data: UserInterface) => {
-
-        
-
-    };
 
 
 
@@ -300,14 +309,14 @@ const MyAccount: React.FC = () => {
                         )}
 
                         {/* Conditional Rendering for Manager (RoleID === 3) */}
-                        {userType === 'internal' && roleID === 3 && (
+                        {userType === 'internal' && (user?.RoleID === 3 || user?.RoleID === 4) && (
                             <Grid size={{ xs: 12, sm: 4 }}>
                                 <Typography variant="body1" className="title-field">จัดการ</Typography>
                                 <TextField
                                     id="outlined-read-only-input"
                                     defaultValue="-"
                                     fullWidth
-                                    
+                                    value={String(user?.RequestType?.TypeName)}
                                     slotProps={{
                                         input: {
                                             readOnly: true,
@@ -343,7 +352,7 @@ const MyAccount: React.FC = () => {
                                 id="outlined-read-only-input"
                                 defaultValue="-"
                                 fullWidth
-                                value={String(user?.UserPackages || "-")}
+                                value={String(user?.UserPackages && user.UserPackages.length > 0 ? user.UserPackages[0].Package?.package_name || "-" : "-")}
                                 slotProps={{
                                     input: {
                                         readOnly: true,
@@ -353,7 +362,7 @@ const MyAccount: React.FC = () => {
                         </Grid>
 
                         {/* Conditional Rendering based on User Type */}
-                        {userType === 'internal' && (
+                        {userType === 'external' && (
                             <>
                                 <Grid size={{ xs: 4 }}>
                                     <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>

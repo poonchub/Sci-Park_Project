@@ -40,6 +40,7 @@ const AboutDeveloper = () => {
                 bio: "Full Stack Developer with a growth mindset, dedicated to crafting high-quality web applications with clean architecture and seamless user experiences.",
                 avatar: "./aboutdevelopment/developers/Chanchai_Lertsri.jpg",
                 initials: "CL",
+                email: "chanchai.radsee@gmail.com",
                 github: "https://github.com/Chanchai2004",
                 facebook: "https://www.facebook.com/got.chanchai.2025",
             },

@@ -66,6 +66,7 @@ func main() {
 		
 		protected.PATCH("/change-password", controller.ChangePassword)
 		protected.GET("/operators", controller.ListOperators)
+		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)

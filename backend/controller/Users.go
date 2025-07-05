@@ -183,7 +183,7 @@ func CreateUser(c *gin.Context) {
 }
 
 
-// GET /user-token/:id
+// GET /user-token/:id 
 func GetUserByID(c *gin.Context) {
 	// รับค่า id จาก param
 	id := c.Param("id")
@@ -193,13 +193,22 @@ func GetUserByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID is required"})
 		return
 	}
+
 	var user entity.User
 	db := config.DB()
-	// ค้นหาผู้ใช้จากฐานข้อมูลโดยใช้ id
-	if err := db.Preload("Role").Preload("Gender").Preload("RequestType").First(&user, id).Error; err != nil {
+
+	// ค้นหาผู้ใช้จากฐานข้อมูลโดย preload ข้อมูลทุก entity ที่เกี่ยวข้อง
+	if err := db.
+		Preload("Role").
+		Preload("Gender").
+		Preload("RequestType").
+		Preload("UserPackages.Package"). // ✅ preload package ที่อยู่ใน userPackages
+		First(&user, id).Error; err != nil {
+
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
+
 	// ส่งข้อมูลผู้ใช้กลับไปในรูปแบบ JSON
 	c.JSON(http.StatusOK, user)
 }
@@ -559,3 +568,54 @@ c.JSON(http.StatusOK, gin.H{
         "data": user,
     })
 }
+
+func UpdateProfileImage(c *gin.Context) {
+	userID := c.Param("id") // รับ user id จาก path parameter
+
+	var user entity.User
+	if err := config.DB().First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// รับไฟล์โปรไฟล์ใหม่
+	file, err := c.FormFile("profile_image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Profile image is required"})
+		return
+	}
+
+	profileFolder := "./images/Profiles"
+	if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
+		err := os.MkdirAll(profileFolder, os.ModePerm)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+			return
+		}
+	}
+
+	// ใช้ path เดิมที่เก็บใน user.ProfilePath ถ้ามี
+	fileExtension := path.Ext(file.Filename)
+	filePath := user.ProfilePath
+
+	if filePath == "" {
+		// ถ้ายังไม่มี path ให้สร้างใหม่
+		filePath = path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
+		user.ProfilePath = filePath
+	}
+
+	// อัปเดตไฟล์ (บันทึกไฟล์ใหม่ ทับไฟล์เดิม)
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+
+	// อัปเดต path ใน database เผื่อเปลี่ยนนามสกุลไฟล์
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile path"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile image updated successfully", "profile_path": user.ProfilePath})
+}
+

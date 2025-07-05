@@ -475,7 +475,7 @@ const AddUserForm: React.FC = () => {
             )}
 
             {/* Conditional Rendering for Manager (RoleID === 3) */}
-            {userType === 'internal' && roleID === 3 && (
+            {userType === 'internal' && (roleID === 3 || roleID === 4) && (
               <Grid size={{ xs: 12, sm: 3 }}>
                 <Typography variant="body1" className="title-field">จัดการ</Typography>
                 <FormControl fullWidth error={!!errors.RequestTypeID}>

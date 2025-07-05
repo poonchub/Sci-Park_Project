@@ -26,7 +26,7 @@ export interface GetUserInterface {
     IsEmployee?:    boolean;
     RequestTypeID?: number;
     RequestType?:   RequestTypeInterface;
-    UserPackages?:string;
+    UserPackages?:any;
 
     UserNameCombined?: string;
 }
