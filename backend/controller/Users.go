@@ -585,32 +585,34 @@ func UpdateProfileImage(c *gin.Context) {
 		return
 	}
 
+	// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
 	profileFolder := "./images/Profiles"
 	if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
-		err := os.MkdirAll(profileFolder, os.ModePerm)
-		if err != nil {
+		if err := os.MkdirAll(profileFolder, os.ModePerm); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
 			return
 		}
 	}
 
-	// ใช้ path เดิมที่เก็บใน user.ProfilePath ถ้ามี
 	fileExtension := path.Ext(file.Filename)
-	filePath := user.ProfilePath
+	var filePath string
 
-	if filePath == "" {
-		// ถ้ายังไม่มี path ให้สร้างใหม่
+	if user.ProfilePath == "" {
+		// ถ้ายังไม่มี path → สร้างชื่อใหม่เหมือนใน CreateUser
 		filePath = path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
 		user.ProfilePath = filePath
+	} else {
+		// ถ้ามี path แล้ว → ใช้ path เดิม
+		filePath = user.ProfilePath
 	}
 
-	// อัปเดตไฟล์ (บันทึกไฟล์ใหม่ ทับไฟล์เดิม)
+	// บันทึกไฟล์ (เขียนทับถ้ามี)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
 
-	// อัปเดต path ใน database เผื่อเปลี่ยนนามสกุลไฟล์
+	// อัปเดต path ใน database (เผื่อนามสกุลเปลี่ยน)
 	if err := config.DB().Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile path"})
 		return
@@ -618,4 +620,3 @@ func UpdateProfileImage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile image updated successfully", "profile_path": user.ProfilePath})
 }
-
