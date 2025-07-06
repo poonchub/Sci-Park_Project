@@ -222,7 +222,11 @@ const LoginPage: React.FC = () => {
                     OR
                   </Typography>
                 </Divider>
-                <Link href="/reset-password" className="forgot-link">Forgot Email or Password?</Link>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
+  <Link href="/register" className="forgot-link">Create an Account</Link>
+  <span className='forgot-link' style={{color: 'gray' , opacity: "50%"}}>|</span>  {/* เส้นคั่นตรงกลาง */}
+  <Link href="/reset-password" className="forgot-link">Forgot Password?</Link>
+</div>
               </form>
             </div>
           </motion.div>

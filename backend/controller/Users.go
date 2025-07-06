@@ -183,6 +183,119 @@ func CreateUser(c *gin.Context) {
 }
 
 
+func CreateUserExternalOnly(c *gin.Context) {
+	var user entity.User
+
+	// รับข้อมูลจาก form-data สำหรับ External User
+	user.CompanyName = c.PostForm("company_name")
+	user.BusinessDetail = c.PostForm("business_detail")
+	user.FirstName = c.PostForm("first_name")
+	user.LastName = c.PostForm("last_name")
+	user.Email = c.PostForm("email")
+	user.Password = c.PostForm("password")
+	user.Phone = c.PostForm("phone")
+	user.IsEmployee = false // เฉพาะ External User
+	user.RoleID = 1
+
+	// รับ GenderID (เพศ)
+	genderIDStr := c.DefaultPostForm("gender_id", "1")
+	genderID, err := strconv.ParseUint(genderIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid gender_id"})
+		return
+	}
+	user.GenderID = uint(genderID)
+
+	// ตรวจสอบอีเมลซ้ำ
+	var existingUser entity.User
+	if err := config.DB().Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
+		return
+	}
+
+	// แฮชรหัสผ่าน
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+	user.Password = string(hashedPassword)
+
+	// อัปโหลดรูปโปรไฟล์ (ถ้ามี)
+	file, err := c.FormFile("profile_image")
+	if err == nil {
+		profileFolder := "./images/Profiles"
+		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(profileFolder, os.ModePerm)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				return
+			}
+		}
+
+		fileExtension := path.Ext(file.Filename)
+		filePath := path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
+		if filePath != "" {
+			user.ProfilePath = filePath
+		}
+
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+			return
+		}
+	}
+
+	// บันทึกข้อมูลผู้ใช้
+	if err := config.DB().Create(&user).Error; err != nil {
+		if err == gorm.ErrDuplicatedKey {
+			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user"})
+		}
+		return
+	}
+
+	// รับ package_id (optional)
+	packageIDStr := c.PostForm("package_id")
+	if packageIDStr == "" {
+		packageIDStr = "1" // ค่า default package 1
+	}
+
+	packageID, err := strconv.Atoi(packageIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package_id"})
+		return
+	}
+
+	// สร้าง UserPackage
+	userPackage := entity.UserPackage{
+		UserID:                 &user.ID,
+		PackageID:              uint(packageID),
+		MeetingRoomUsed:        0,
+		TrainingRoomUsed:       0,
+		MultiFunctionRoomUsed:  0,
+	}
+
+	if err := config.DB().Create(&userPackage).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user package"})
+		return
+	}
+
+	user.UserPackageID = &userPackage.ID
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user with UserPackageID"})
+		return
+	}
+
+	// ตอบกลับเมื่อสร้างผู้ใช้สำเร็จ
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User and UserPackage created successfully",
+		"data":    user,
+	})
+}
+
+
+
 // GET /user-token/:id 
 func GetUserByID(c *gin.Context) {
 	// รับค่า id จาก param

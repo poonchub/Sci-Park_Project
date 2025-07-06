@@ -34,6 +34,12 @@ func main() {
 		public.POST("/validate-otp", controller.ValidateResetTokenController)
 
 		public.POST("/send-maintenance-status-email/:id", controller.SendMaintenanceStatusEmail)
+
+		// Genders
+		public.GET("/genders",controller.ListGenders)
+
+		//Register
+		public.POST("/register",controller.CreateUserExternalOnly)
 		
 	}
 
@@ -90,8 +96,7 @@ func main() {
 		// Room
 		protected.GET("/room/:id", controller.GetRoomByID)
 
-		// Genders
-		protected.GET("/genders",controller.ListGenders)
+		
 
 		// Roles
 		protected.GET("/roles",controller.ListRoles)

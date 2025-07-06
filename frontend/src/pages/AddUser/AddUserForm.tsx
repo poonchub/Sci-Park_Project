@@ -15,6 +15,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
+import { TextArea } from '../../components/TextField/TextArea';
 
 
 const AddUserForm: React.FC = () => {
@@ -218,50 +219,7 @@ const AddUserForm: React.FC = () => {
 
 
 
-            {/* Conditional Rendering based on User Type */}
-            {userType === 'external' && (
-              <>
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
-                  <Controller
-                    name="CompanyName"
-                    control={control}
-                    defaultValue=""
-                    rules={{ required: 'กรุณากรอกชื่อบริษัท' }}
-                    render={({ field }) => (
-                      <TextField {...field} label="ชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message) || ""}
-                        slotProps={{
-                          inputLabel: {
-                            sx: { color: '#6D6E70' }
-                          }
-                        }}
-                      />
-
-                    )}
-                  />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
-                  <Controller
-                    name="BusinessDetail"
-                    control={control}
-                    defaultValue=""
-                    rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }}
-                    render={({ field }) => (
-                      <TextField {...field} label="คำอธิบายธุรกิจ" fullWidth error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message) || ""}
-                        slotProps={{
-                          inputLabel: {
-                            sx: { color: '#6D6E70' }
-                          }
-                        }}
-                      />
-
-                    )}
-
-                  />
-                </Grid>
-              </>
-            )}
+            
 
 
 
@@ -430,10 +388,8 @@ const AddUserForm: React.FC = () => {
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
-                          }
-                        }}
-                        InputProps={{
-                          endAdornment: (
+                          },
+                          input: {endAdornment: (
                             <IconButton
                               onClick={handleClickShowPassword}  // ฟังก์ชันเปิด/ปิดการแสดงรหัสผ่าน
                               edge="end"
@@ -441,7 +397,10 @@ const AddUserForm: React.FC = () => {
                               {showPassword ? <Visibility /> : <VisibilityOff />}
                             </IconButton>
                           )
+
+                          }
                         }}
+                        
                       />
                     )}
                   />
@@ -533,17 +492,17 @@ const AddUserForm: React.FC = () => {
 
 
             {/* Package Dropdown */}
-            <Grid size={{ xs: 12, sm: 3 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
               <FormControl fullWidth error={!!errors.package}>
-                <InputLabel sx={{ color: '#6D6E70' }}>สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)</InputLabel>
+                <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือกสิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)</InputLabel>
                 <Controller
                   name="UserPackageID"
                   control={control}
                   defaultValue=""
 
                   render={({ field }) => (
-                    <Select {...field} label="สิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
+                    <Select {...field} label="กรุณาเลือกสิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
                       {packages.map((pkg) => (
                         <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
                       ))}
@@ -553,6 +512,51 @@ const AddUserForm: React.FC = () => {
                 <FormHelperText>{String(errors.Package?.message || "")}</FormHelperText>
               </FormControl>
             </Grid>
+
+            {/* Conditional Rendering based on User Type */}
+            {userType === 'external' && (
+              <>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
+                  <Controller
+                    name="CompanyName"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: 'กรุณากรอกชื่อบริษัท' }}
+                    render={({ field }) => (
+                      <TextField {...field} label="กรุณากรอกชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")}
+                        slotProps={{
+                          inputLabel: {
+                            sx: { color: '#6D6E70' }
+                          }
+                        }}
+                      />
+
+                    )}
+                  />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
+                  <Controller
+                    name="BusinessDetail"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }}
+                    render={({ field }) => (
+                      <TextArea {...field} label="กรุณากรอกคำอธิบายธุรกิจ" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "") }
+                        slotProps={{
+                          inputLabel: {
+                            sx: { color: '#6D6E70' }
+                          }
+                        }}
+                      />
+
+                    )}
+
+                  />
+                </Grid>
+              </>
+            )}
 
             {/* Submit Button */}
             <Grid size={{ xs: 12 }} className="submit-button-container">

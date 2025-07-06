@@ -515,7 +515,7 @@ func ValidateResetTokenController(c *gin.Context) {
 		ExpirationHours: 24,
 	}
 
-	role := "admin"
+	role := "Admin"
 	// สร้าง Token โดยส่งทั้ง email และ role
 	tokenString, err := jwtWrapper.GenerateToken(user.Email, role) // ส่งทั้ง email และ role
 	if err != nil {

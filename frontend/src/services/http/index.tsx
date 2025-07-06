@@ -270,6 +270,75 @@ async function UpdateUserbyID(data: any) {
     
 }
 
+
+async function CreateUserExternalOnly(data: any) {
+    const formData = new FormData();
+    formData.append("company_name", data.CompanyName || "");
+    formData.append("business_detail", data.BusinessDetail || "");
+    formData.append("first_name", data.FirstName || "");
+    formData.append("last_name", data.LastName || "");
+    formData.append("gender_id", data.GenderID.toString());
+    formData.append("email", data.Email || "");
+    formData.append("password", data.Password || "");
+    formData.append("phone", data.Phone || "");
+    formData.append("role_id", (1).toString());
+
+
+    formData.append("package_id", data.UserPackageID?.toString() || "1");
+
+  
+    const requestOptions = {
+        headers: {
+            
+        },
+    };
+
+    
+
+
+        
+    try {
+        // Send FormData with requestOptions
+        
+        const response = await axios.post(`${apiUrl}/register`, formData, requestOptions);
+
+        // Handle the response and return a custom object
+        if (response.status === 201) {
+            return {
+                status: 'success',
+                message: 'User created successfully',
+                data: response.data,  // You can return response data
+            };
+        } else {
+            return {
+                status: 'error',
+                message: 'Failed to create user',
+                data: response.data,  // Include error data in response
+            };
+        }
+    } catch (error) {
+        // If the error is from axios, it will be caught here
+        if (axios.isAxiosError(error)) {
+            // Check if the error has a response and message
+            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+
+            return {
+                status: 'error',
+                message: errorMessage,
+                data: null,
+            };
+        } else {
+            // If the error is not from axios, handle it here
+            return {
+                status: 'error',
+                message: 'An unexpected error occurred',
+                data: null,
+            };
+        }
+    }
+    
+}
+
 async function GetOperators() {
     const requestOptions = {
         method: "GET",
@@ -1411,6 +1480,7 @@ export {
     GetOperators,
     UpdateUserbyID,
     UpdateProfileImage,
+    CreateUserExternalOnly,
 
     // Areas
     GetAreas,

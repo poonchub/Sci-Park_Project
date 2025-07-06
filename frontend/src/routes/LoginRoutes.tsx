@@ -3,7 +3,7 @@ import { RouteObject } from "react-router-dom";
 import OutletLayout from "../layouts/OutletLayout";
 import Loadable from "../components/Loadable/Loadable";
 import ResetPassword from "../pages/Login/ResetPasswordPage";
-
+import Register from "../pages/Login/Register";
 const  Login = Loadable(lazy(() => import("../pages/Login/LoginPage")));
 
 const LoginRoutes = (): RouteObject => {
@@ -22,6 +22,10 @@ const LoginRoutes = (): RouteObject => {
       {
         path: "/reset-password",
         element: <ResetPassword />,
+      },
+      {
+        path: "/register",
+        element: <Register />,
       },
 
     ],
