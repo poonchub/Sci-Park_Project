@@ -511,7 +511,7 @@ function CreateMaintenanceRequestPage() {
                                         onSubmit={handleSubmit}
                                     >
                                         {/* Left Section (Form Inputs) */}
-                                        <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
+                                        <Grid container size={{ xs: 12, lg: 6 }} spacing={3}>
                                             {/* Area Selection */}
                                             <Grid size={{ xs: 12, md: 12 }}>
                                                 <Typography variant="body1" className="title-field">
@@ -780,7 +780,7 @@ function CreateMaintenanceRequestPage() {
                                         </Grid>
 
                                         {/* Right Section (User Info & Upload) */}
-                                        <Grid container size={{ xs: 12, md: 6 }} spacing={3}>
+                                        <Grid container size={{ xs: 12, lg: 6 }} spacing={3}>
                                             <Grid size={{ xs: 12, md: 12 }}>
                                                 <Typography variant="body1" className="title-field">
                                                     Request Creator
