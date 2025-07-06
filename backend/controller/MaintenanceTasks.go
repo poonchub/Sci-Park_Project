@@ -10,7 +10,9 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"sci-park_web-application/services"
+	"sci-park_web-application/validator"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,10 +26,16 @@ func CreateMaintenanceTask(c *gin.Context) {
 		return
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&booking); !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
-	// 	return
-	// }
+	if ok, err := govalidator.ValidateStruct(&task); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
+	if err := validator.ValidateMaintenanceTask(&task);
+	err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
 
 	db := config.DB()
 
@@ -50,7 +58,7 @@ func CreateMaintenanceTask(c *gin.Context) {
 	}
 
 	tsk := entity.MaintenanceTask{
-		Description:     task.Description,
+		Note:     task.Note,
 		UserID:          task.UserID,
 		RequestID:       task.RequestID,
 		RequestStatusID: task.RequestStatusID,

@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/validator"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,10 +20,16 @@ func CreateInspection(c *gin.Context) {
 		return
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&booking); !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
-	// 	return
-	// }
+	if ok, err := govalidator.ValidateStruct(&inspection); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
+	if err := validator.ValidateInspection(&inspection); 
+	err != nil{
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
 
 	db := config.DB()
 
@@ -44,7 +52,7 @@ func CreateInspection(c *gin.Context) {
 	}
 
 	tsk := entity.Inspection{
-		Description:     inspection.Description,
+		Note:     inspection.Note,
 		UserID:          inspection.UserID,
 		RequestID:       inspection.RequestID,
 		RequestStatusID: inspection.RequestStatusID,

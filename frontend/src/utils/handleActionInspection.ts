@@ -75,7 +75,7 @@ const handleActionInspection = async (
             UserID: userID,
             RequestID: selectedRequest.ID,
             RequestStatusID: statusID,
-            Description: note || "",
+            Note: note || "",
         };
 
         const task: MaintenanceTasksInterface = {
