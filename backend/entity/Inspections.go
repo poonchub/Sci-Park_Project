@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 // Inspection คือ entity สำหรับการตรวจสอบซ่อม
 type Inspection struct {
     gorm.Model
-    Description     string       `valid:"required"` 
+    Note     string
     UserID          uint            `valid:"required"`
     User            User           `gorm:"foreignKey:UserID" valid:"-"`
     RequestID       uint           `valid:"required"`

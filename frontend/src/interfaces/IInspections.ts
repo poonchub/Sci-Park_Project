@@ -5,7 +5,7 @@ import { UserInterface } from "./IUser";
 export interface InspectionsInterface {
     ID?:        number;
     CreatedAt?:  string;
-    Description?:   string;
+    Note?:   string;
     UserID?:        number;
     User?:          UserInterface;
     RequestID?:     number;

@@ -5,7 +5,9 @@ import (
 
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/validator"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,10 +21,16 @@ func CreateManagerApproval(c *gin.Context) {
 		return
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&booking); !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
-	// 	return
-	// }
+	if ok, err := govalidator.ValidateStruct(&manager); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
+	if err := validator.ValidateManagerApproval(&manager);
+	err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
 
 	db := config.DB()
 
@@ -45,7 +53,7 @@ func CreateManagerApproval(c *gin.Context) {
 	}
 
 	mg := entity.ManagerApproval{
-		Description: manager.Description,
+		Note: manager.Note,
 		UserID: manager.UserID,
 		RequestID: manager.RequestID,
 		RequestStatusID: manager.RequestStatusID,

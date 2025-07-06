@@ -6,6 +6,7 @@ import (
 	"sci-park_web-application/entity"
 	"sci-park_web-application/services"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -90,6 +91,11 @@ func CreateNotification(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&notificationInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(&notificationInput); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 		return
 	}
 

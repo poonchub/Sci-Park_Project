@@ -4,7 +4,7 @@ export interface ManagerApprovalsInterface {
     ID?:            number;
     CreatedAt?:     string;
     UpdatedAt?:     string;
-    Description?:   string;
+    Note?:   string;
     UserID?:        number;
     User?:          UserInterface;
     RequestID?:     number;
