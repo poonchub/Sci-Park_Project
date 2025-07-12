@@ -45,7 +45,7 @@ const handleActionApproval = async (
     }
 
     if (actionType === "reject" && (!note || note.trim() === "")) {
-        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a description before reject requested." }]);
+        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a reason before reject requested." }]);
         return;
     }
 

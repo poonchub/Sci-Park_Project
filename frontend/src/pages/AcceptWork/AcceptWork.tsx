@@ -1,4 +1,4 @@
-import { Box, Button, Card, Divider, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Card, Container, Divider, FormControl, Grid, InputAdornment, MenuItem, Skeleton, Tab, Tabs, Tooltip, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
@@ -203,59 +203,67 @@ function AcceptWork() {
                                             {isApproved || isRework ? (
                                                 <>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Button
-                                                            variant="containedBlue"
-                                                            onClick={() => {
-                                                                setOpenConfirmAccepted(true);
-                                                                setSelectedTask(data);
-                                                            }}
-                                                            fullWidth
-                                                        >
-                                                            <FontAwesomeIcon icon={faCheck} />
-                                                            <Typography variant="textButtonClassic">Start</Typography>
-                                                        </Button>
+                                                        <Tooltip title={"Start"}>
+                                                            <Button
+                                                                variant="containedBlue"
+                                                                onClick={() => {
+                                                                    setOpenConfirmAccepted(true);
+                                                                    setSelectedTask(data);
+                                                                }}
+                                                                fullWidth
+                                                            >
+                                                                <FontAwesomeIcon icon={faCheck} />
+                                                                <Typography variant="textButtonClassic">Start</Typography>
+                                                            </Button>
+                                                        </Tooltip>
                                                     </Grid>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Button
-                                                            variant="containedCancel"
-                                                            onClick={() => {
-                                                                setOpenConfirmCancelled(true);
-                                                                setSelectedTask(data);
-                                                            }}
-                                                            fullWidth
-                                                        >
-                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
-                                                            <Typography variant="textButtonClassic">Cancel</Typography>
-                                                        </Button>
+                                                        <Tooltip title={"Cancel"}>
+                                                            <Button
+                                                                variant="containedCancel"
+                                                                onClick={() => {
+                                                                    setOpenConfirmCancelled(true);
+                                                                    setSelectedTask(data);
+                                                                }}
+                                                                fullWidth
+                                                            >
+                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                                <Typography variant="textButtonClassic">Cancel</Typography>
+                                                            </Button>
+                                                        </Tooltip>
                                                     </Grid>
                                                 </>
                                             ) : isInProgress ? (
                                                 <>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Button
-                                                            variant="containedBlue"
-                                                            onClick={() => {
-                                                                setOpenPopupSubmit(true);
-                                                                setSelectedTask(data);
-                                                            }}
-                                                            fullWidth
-                                                        >
-                                                            <FontAwesomeIcon icon={faPaperPlane} />
-                                                            <Typography variant="textButtonClassic">Submit</Typography>
-                                                        </Button>
+                                                        <Tooltip title={"Submit"}>
+                                                            <Button
+                                                                variant="containedBlue"
+                                                                onClick={() => {
+                                                                    setOpenPopupSubmit(true);
+                                                                    setSelectedTask(data);
+                                                                }}
+                                                                fullWidth
+                                                            >
+                                                                <FontAwesomeIcon icon={faPaperPlane} />
+                                                                <Typography variant="textButtonClassic">Submit</Typography>
+                                                            </Button>
+                                                        </Tooltip>
                                                     </Grid>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Button
-                                                            variant="containedCancel"
-                                                            onClick={() => {
-                                                                setOpenConfirmCancelled(true);
-                                                                setSelectedTask(data);
-                                                            }}
-                                                            fullWidth
-                                                        >
-                                                            <FontAwesomeIcon icon={faXmark} size="xl" />
-                                                            <Typography variant="textButtonClassic">Cancel</Typography>
-                                                        </Button>
+                                                        <Tooltip title={"Cancel"}>
+                                                            <Button
+                                                                variant="containedCancel"
+                                                                onClick={() => {
+                                                                    setOpenConfirmCancelled(true);
+                                                                    setSelectedTask(data);
+                                                                }}
+                                                                fullWidth
+                                                            >
+                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                                <Typography variant="textButtonClassic">Cancel</Typography>
+                                                            </Button>
+                                                        </Tooltip>
                                                     </Grid>
                                                 </>
                                             ) : (
@@ -263,43 +271,47 @@ function AcceptWork() {
                                             )}
                                             {isWaitingForReview ? (
                                                 <Grid size={{ xs: 12 }}>
-                                                    <Button
-                                                        variant="outlinedGray"
-                                                        onClick={() => {
-                                                            handleClickCheck(data);
-                                                        }}
-                                                        sx={{
-                                                            minWidth: "42px",
-                                                            width: "100%",
-                                                        }}
-                                                        fullWidth
-                                                    >
-                                                        <FontAwesomeIcon icon={faEye} size="lg" />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Details
-                                                        </Typography>
-                                                    </Button>
-                                                </Grid>
-                                            ) : (
-                                                <Grid size={{ xs: 2 }}>
-                                                    <Button
-                                                        variant="outlinedGray"
-                                                        onClick={() => {
-                                                            handleClickCheck(data);
-                                                        }}
-                                                        sx={{
-                                                            minWidth: "42px",
-                                                            width: "100%",
-                                                        }}
-                                                        fullWidth
-                                                    >
-                                                        <FontAwesomeIcon icon={faEye} size="lg" />
-                                                        {width && width > 530 && (
+                                                    <Tooltip title={"Details"}>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                handleClickCheck(data);
+                                                            }}
+                                                            sx={{
+                                                                minWidth: "42px",
+                                                                width: "100%",
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faEye} size="lg" />
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Details
                                                             </Typography>
-                                                        )}
-                                                    </Button>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                            ) : (
+                                                <Grid size={{ xs: 2 }}>
+                                                    <Tooltip title={"Details"}>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                handleClickCheck(data);
+                                                            }}
+                                                            sx={{
+                                                                minWidth: "42px",
+                                                                width: "100%",
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                                            {width && width > 530 && (
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Details
+                                                                </Typography>
+                                                            )}
+                                                        </Button>
+                                                    </Tooltip>
                                                 </Grid>
                                             )}
                                         </Grid>
@@ -543,88 +555,99 @@ function AcceptWork() {
             <>
                 {showAcceptReject && (
                     <>
-                        <Button
-                            className="btn-accept"
-                            variant="containedBlue"
-                            onClick={() => {
-                                setOpenConfirmAccepted(true);
-                                setSelectedTask(data);
-                            }}
-                            sx={{ minWidth: "42px" }}
-                        >
-                            <FontAwesomeIcon icon={faCheck} size="lg" />
-                            <Typography variant="textButtonClassic" className="text-btn">
-                                Start
-                            </Typography>
-                        </Button>
-                        <Button
-                            className="btn-reject"
-                            variant="containedCancel"
-                            onClick={() => {
-                                setOpenConfirmCancelled(true);
-                                setSelectedTask(data);
-                            }}
-                            sx={{ minWidth: "42px" }}
-                        >
-                            <FontAwesomeIcon icon={faXmark} size="lg" />
-                            <Typography variant="textButtonClassic" className="text-btn">
-                                Cancel
-                            </Typography>
-                        </Button>
+                        <Tooltip title={"Start"}>
+                            <Button
+                                className="btn-accept"
+                                variant="containedBlue"
+                                onClick={() => {
+                                    setOpenConfirmAccepted(true);
+                                    setSelectedTask(data);
+                                }}
+                                sx={{ minWidth: "42px" }}
+                            >
+                                <FontAwesomeIcon icon={faCheck} size="lg" />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Start
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={"Cancel"}>
+                            <Button
+                                className="btn-reject"
+                                variant="containedCancel"
+                                onClick={() => {
+                                    setOpenConfirmCancelled(true);
+                                    setSelectedTask(data);
+                                }}
+                                sx={{ minWidth: "42px" }}
+                            >
+                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Cancel
+                                </Typography>
+                            </Button>
+                        </Tooltip>
                     </>
                 )}
 
                 {showSubmit && (
                     <>
-                        <Button
-                            className="btn-submit"
-                            variant="containedBlue"
-                            onClick={() => {
-                                setOpenPopupSubmit(true);
-                                setSelectedTask(data);
-                            }}
-                            sx={{ minWidth: "42px" }}
-                        >
-                            <FontAwesomeIcon icon={faPaperPlane} />
-                            <Typography variant="textButtonClassic" className="text-btn">
-                                Submit
-                            </Typography>
-                        </Button>
-                        <Button
-                            className="btn-reject"
-                            variant="containedCancel"
-                            onClick={() => {
-                                setOpenConfirmCancelled(true);
-                                setSelectedTask(data);
-                            }}
-                            sx={{ minWidth: "42px" }}
-                        >
-                            <FontAwesomeIcon icon={faXmark} size="lg" />
-                            <Typography variant="textButtonClassic" className="text-btn">
-                                Cancel
-                            </Typography>
-                        </Button>
+                        <Tooltip title={"Submit"}>
+                            <Button
+                                className="btn-submit"
+                                variant="containedBlue"
+                                onClick={() => {
+                                    setOpenPopupSubmit(true);
+                                    setSelectedTask(data);
+                                }}
+                                sx={{ minWidth: "42px" }}
+                            >
+                                <FontAwesomeIcon icon={faPaperPlane} />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Submit
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={"Cancel"}>
+                            <Button
+                                className="btn-reject"
+                                variant="containedCancel"
+                                onClick={() => {
+                                    setOpenConfirmCancelled(true);
+                                    setSelectedTask(data);
+                                }}
+                                sx={{ minWidth: "42px" }}
+                            >
+                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Cancel
+                                </Typography>
+                            </Button>
+                        </Tooltip>
                     </>
                 )}
 
-                <Button
-                    className="btn-detail"
-                    variant="outlinedGray"
-                    onClick={() => handleClickCheck(data)}
-                    sx={{
-                        minWidth: "42px",
-                        width: !(showSubmit || showAcceptReject) ? "100%" : "",
-                    }}
-                >
-                    <FontAwesomeIcon icon={faEye} size="lg" />
-                    {!(showSubmit || showAcceptReject) ? (
-                        <Typography variant="textButtonClassic">Details</Typography>
-                    ) : (
-                        <Typography variant="textButtonClassic" className="text-btn">
-                            Details
-                        </Typography>
-                    )}
-                </Button>
+                <Tooltip title={"Details"}>
+                    <Button
+                        className="btn-detail"
+                        variant="outlinedGray"
+                        onClick={() => handleClickCheck(data)}
+                        sx={{
+                            minWidth: "42px",
+                            width: !(showSubmit || showAcceptReject) ? "100%" : "",
+                        }}
+                    >
+                        <FontAwesomeIcon icon={faEye} size="lg" />
+                        {!(showSubmit || showAcceptReject) ? (
+                            <Typography variant="textButtonClassic">Details</Typography>
+                        ) : (
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Details
+                            </Typography>
+                        )}
+                    </Button>
+                </Tooltip>
+
             </>
         );
     };
@@ -648,10 +671,10 @@ function AcceptWork() {
                 valueTab === 0
                     ? ["Approved", "Rework Requested"]
                     : valueTab === 1
-                      ? ["In Progress"]
-                      : valueTab === 2
-                        ? ["Waiting For Review", "Completed"]
-                        : [""];
+                        ? ["In Progress"]
+                        : valueTab === 2
+                            ? ["Waiting For Review", "Completed"]
+                            : [""];
 
             const statusIDs = statusNames.map((name) => requestStatuses?.find((item) => item.Name === name)?.ID).filter(Boolean);
 
@@ -893,163 +916,165 @@ function AcceptWork() {
                 buttonActive={isBottonActive}
             />
 
-            <Grid container spacing={3}>
-                <Grid className="title-box" size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        My Work
-                    </Typography>
-                </Grid>
+            <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+                <Grid container spacing={3}>
+                    <Grid className="title-box" size={{ xs: 10, md: 12 }}>
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                            My Work
+                        </Typography>
+                    </Grid>
 
-                {/* Filters Section */}
-                {!isLoadingInitialData ? (
-                    <Grid className="filter-section" size={{ xs: 12 }}>
-                        <Card sx={{ width: "100%", borderRadius: 2 }}>
-                            <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
-                                <Grid size={{ xs: 12, sm: 5 }}>
-                                    <TextField
-                                        fullWidth
-                                        className="search-box"
-                                        variant="outlined"
-                                        placeholder="Search"
-                                        margin="none"
-                                        value={searchText}
-                                        onChange={(e) => setSearchText(e.target.value)}
-                                        slotProps={{
-                                            input: {
-                                                startAdornment: (
-                                                    <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                        <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
-                                                    </InputAdornment>
-                                                ),
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 5, sm: 3 }}>
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DatePicker
-                                            views={['year', 'month']}
-                                            format="MM/YYYY"
-                                            value={selectedDate}
-                                            onChange={(value, _) => {
-                                                if (dayjs.isDayjs(value)) {
-                                                    setSelectedDate(value);
-                                                } else {
-                                                    setSelectedDate(null);
-                                                }
+                    {/* Filters Section */}
+                    {!isLoadingInitialData ? (
+                        <Grid className="filter-section" size={{ xs: 12 }}>
+                            <Card sx={{ width: "100%", borderRadius: 2 }}>
+                                <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
+                                    <Grid size={{ xs: 12, sm: 5 }}>
+                                        <TextField
+                                            fullWidth
+                                            className="search-box"
+                                            variant="outlined"
+                                            placeholder="Search"
+                                            margin="none"
+                                            value={searchText}
+                                            onChange={(e) => setSearchText(e.target.value)}
+                                            slotProps={{
+                                                input: {
+                                                    startAdornment: (
+                                                        <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                        </InputAdornment>
+                                                    ),
+                                                },
                                             }}
-                                            slots={{
-                                                openPickerIcon: CalendarMonth,
-                                            }}
-                                            sx={{ width: "100%" }}
                                         />
-                                    </LocalizationProvider>
-                                </Grid>
-                                <Grid size={{ xs: 5, sm: 3 }}>
-                                    <FormControl fullWidth>
-                                        <Select
-                                            value={selectedType}
-                                            onChange={(e) => setSelectedType(Number(e.target.value))}
-                                            displayEmpty
-                                            startAdornment={
-                                                <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                    <FontAwesomeIcon icon={faToolbox} size="lg" />
-                                                </InputAdornment>
-                                            }
+                                    </Grid>
+                                    <Grid size={{ xs: 5, sm: 3 }}>
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DatePicker
+                                                views={['year', 'month']}
+                                                format="MM/YYYY"
+                                                value={selectedDate}
+                                                onChange={(value, _) => {
+                                                    if (dayjs.isDayjs(value)) {
+                                                        setSelectedDate(value);
+                                                    } else {
+                                                        setSelectedDate(null);
+                                                    }
+                                                }}
+                                                slots={{
+                                                    openPickerIcon: CalendarMonth,
+                                                }}
+                                                sx={{ width: "100%" }}
+                                            />
+                                        </LocalizationProvider>
+                                    </Grid>
+                                    <Grid size={{ xs: 5, sm: 3 }}>
+                                        <FormControl fullWidth>
+                                            <Select
+                                                value={selectedType}
+                                                onChange={(e) => setSelectedType(Number(e.target.value))}
+                                                displayEmpty
+                                                startAdornment={
+                                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                        <FontAwesomeIcon icon={faToolbox} size="lg" />
+                                                    </InputAdornment>
+                                                }
+                                            >
+                                                <MenuItem value={0}>{"All Maintenance Types"}</MenuItem>
+                                                {maintenanceTypes.map((item, index) => {
+                                                    return (
+                                                        <MenuItem key={index} value={index + 1}>
+                                                            {item.TypeName}
+                                                        </MenuItem>
+                                                    );
+                                                })}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid size={{ xs: 2, sm: 1 }}>
+                                        <Button
+                                            onClick={handleClearFillter}
+                                            sx={{
+                                                minWidth: 0,
+                                                width: "100%",
+                                                height: "45px",
+                                                borderRadius: "10px",
+                                                border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                "&:hover": {
+                                                    boxShadow: "none",
+                                                    borderColor: "primary.main",
+                                                    backgroundColor: "transparent",
+                                                },
+                                            }}
                                         >
-                                            <MenuItem value={0}>{"All Maintenance Types"}</MenuItem>
-                                            {maintenanceTypes.map((item, index) => {
-                                                return (
-                                                    <MenuItem key={index} value={index + 1}>
-                                                        {item.TypeName}
-                                                    </MenuItem>
-                                                );
-                                            })}
-                                        </Select>
-                                    </FormControl>
+                                            <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
+                                        </Button>
+                                    </Grid>
                                 </Grid>
-                                <Grid size={{ xs: 2, sm: 1 }}>
-                                    <Button
-                                        onClick={handleClearFillter}
-                                        sx={{
-                                            minWidth: 0,
-                                            width: "100%",
-                                            height: "45px",
-                                            borderRadius: "10px",
-                                            border: "1px solid rgb(109, 110, 112, 0.4)",
-                                            "&:hover": {
-                                                boxShadow: "none",
-                                                borderColor: "primary.main",
-                                                backgroundColor: "transparent",
-                                            },
-                                        }}
-                                    >
-                                        <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Card>
-                    </Grid>
-                ) : (
-                    <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
-                )}
+                            </Card>
+                        </Grid>
+                    ) : (
+                        <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                    )}
 
-                {/* Data Table */}
-                <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
-                    <Grid size={{ xs: 12, md: 12 }}>
-                        <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
-                            <Tab label="Pending" {...a11yProps(0)} />
-                            <Tab label="In Progress" {...a11yProps(1)} />
-                            <Tab label="Completed" {...a11yProps(2)} />
-                        </Tabs>
+                    {/* Data Table */}
+                    <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
+                        <Grid size={{ xs: 12, md: 12 }}>
+                            <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
+                                <Tab label="Pending" {...a11yProps(0)} />
+                                <Tab label="In Progress" {...a11yProps(1)} />
+                                <Tab label="Completed" {...a11yProps(2)} />
+                            </Tabs>
+                        </Grid>
+                        <CustomTabPanel value={valueTab} index={0}>
+                            <MaintenanceTaskTable
+                                title="Pending"
+                                rows={filteredTasks}
+                                columns={getColumns()}
+                                rowCount={total}
+                                page={page}
+                                limit={limit}
+                                onPageChange={(p) => setPage(p + 1)}
+                                onLimitChange={setLimit}
+                                noData={"No pending tasks found."}
+                                isLoading={isLoadingData}
+                                columnVisibilityModel={columnVisibilityModel}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={valueTab} index={1}>
+                            <MaintenanceTaskTable
+                                title="In Progress"
+                                rows={filteredTasks}
+                                columns={getColumns()}
+                                rowCount={total}
+                                page={page}
+                                limit={limit}
+                                onPageChange={(p) => setPage(p + 1)}
+                                onLimitChange={setLimit}
+                                noData={"No tasks in progress found."}
+                                isLoading={isLoadingData}
+                                columnVisibilityModel={columnVisibilityModel}
+                            />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={valueTab} index={2}>
+                            <MaintenanceTaskTable
+                                title="Completed"
+                                rows={filteredTasks}
+                                columns={getColumns()}
+                                rowCount={total}
+                                page={page}
+                                limit={limit}
+                                onPageChange={(p) => setPage(p + 1)}
+                                onLimitChange={setLimit}
+                                noData={"No completed tasks found."}
+                                isLoading={isLoadingData}
+                                columnVisibilityModel={columnVisibilityModel}
+                            />
+                        </CustomTabPanel>
                     </Grid>
-                    <CustomTabPanel value={valueTab} index={0}>
-                        <MaintenanceTaskTable
-                            title="Pending"
-                            rows={filteredTasks}
-                            columns={getColumns()}
-                            rowCount={total}
-                            page={page}
-                            limit={limit}
-                            onPageChange={(p) => setPage(p + 1)}
-                            onLimitChange={setLimit}
-                            noData={"No pending tasks found."}
-                            isLoading={isLoadingData}
-                            columnVisibilityModel={columnVisibilityModel}
-                        />
-                    </CustomTabPanel>
-                    <CustomTabPanel value={valueTab} index={1}>
-                        <MaintenanceTaskTable
-                            title="In Progress"
-                            rows={filteredTasks}
-                            columns={getColumns()}
-                            rowCount={total}
-                            page={page}
-                            limit={limit}
-                            onPageChange={(p) => setPage(p + 1)}
-                            onLimitChange={setLimit}
-                            noData={"No tasks in progress found."}
-                            isLoading={isLoadingData}
-                            columnVisibilityModel={columnVisibilityModel}
-                        />
-                    </CustomTabPanel>
-                    <CustomTabPanel value={valueTab} index={2}>
-                        <MaintenanceTaskTable
-                            title="Completed"
-                            rows={filteredTasks}
-                            columns={getColumns()}
-                            rowCount={total}
-                            page={page}
-                            limit={limit}
-                            onPageChange={(p) => setPage(p + 1)}
-                            onLimitChange={setLimit}
-                            noData={"No completed tasks found."}
-                            isLoading={isLoadingData}
-                            columnVisibilityModel={columnVisibilityModel}
-                        />
-                    </CustomTabPanel>
                 </Grid>
-            </Grid>
+            </Container>
         </Box>
     );
 }

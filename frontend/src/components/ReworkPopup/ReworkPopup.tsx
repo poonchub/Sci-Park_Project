@@ -53,7 +53,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
             {/* Dialog title with warning icon */}
             <DialogTitle
                 sx={{
-                    fontWeight: 700, 
+                    fontWeight: 700,
                     color: 'primary.main',
                     textAlign: 'center'
                 }}
@@ -64,16 +64,14 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
 
             {/* Message content (split into separate lines for readability) */}
             <DialogContent sx={{ minWidth: 500 }}>
-                {message.split(' ').map((m, index) => (
-                    <DialogContentText key={index} sx={{ color: 'text.primary' }}>
-                        {m}
-                    </DialogContentText>
-                ))}
+                <DialogContentText sx={{ color: 'text.primary' }}>
+                    {message}
+                </DialogContentText>
 
                 {showNoteField && (
                     <TextField
                         fullWidth
-                        placeholder="ป้อนเหตุผล"
+                        placeholder="Enter reason"
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         sx={{ mt: 2, mb: 2 }}
@@ -81,8 +79,8 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                 )}
 
                 <Box display={'flex'}>
-                    <Typography sx={{ fontWeight: 500, mb: 1 }}>แนบภาพประกอบ</Typography>
-                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(สูงสุด 3 ไฟล์)</Typography>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach image</Typography>
+                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(maximum 3 files)</Typography>
                 </Box>
 
                 <Grid container spacing={1}>
@@ -97,7 +95,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
 
             {/* Action buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button 
+                <Button
                     onClick={() => setOpenConfirm(false)}
                     sx={{
                         color: 'customBlue',

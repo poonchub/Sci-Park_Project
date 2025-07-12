@@ -885,7 +885,7 @@ function CreateMaintenanceRequestPage() {
                                                             color: "gray",
                                                         }}
                                                     >
-                                                        (Maximum 3 files)
+                                                        (maximum 3 files)
                                                     </Typography>
                                                 </Box>
 
