@@ -51,21 +51,21 @@ function ManageRooms() {
         },
         {
             field: 'RoomNumber',
-            headerName: 'เลขที่ห้อง',
+            headerName: 'Room Number',
             type: 'string',
             flex: 1,
             valueGetter: (params: RoomsInterface) => params || '-',  // Default value if EmployeeID is missing
         },
         {
             field: 'RoomType',
-            headerName: 'ประเภทห้อง',
+            headerName: 'Room Type',
             type: 'string',
             flex: 1,
             valueGetter: (params: RoomsInterface) => params || '-',
         },
         {
             field: 'RoomStatus', // Field name from the data
-            headerName: 'สถานะห้อง', // Header for the column
+            headerName: 'Room Status', // Header for the column
             sortable: false,  // Prevent sorting on this column
             flex: 1.2,  // Make the column flexible
             valueGetter: (params: RoomsInterface) => params.RoomStatus || '-', // Default value if RoomStatus is missing
@@ -108,21 +108,21 @@ function ManageRooms() {
         
         {
             field: 'Capacity',
-            headerName: 'ความจุห้อง (คน)',
+            headerName: 'Room Capacity (persons)',
             type: 'string',
             flex: 1.2,
             valueGetter: (params: RoomsInterface) => params || '-',  // Default value if Role is missing
         },
         {
             field: 'assigned',
-            headerName: 'จัดการ',
+            headerName: 'Actions',
             renderCell: (params) => (
                 <Box
                     sx={{
                         display: 'flex',
-                        justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวนอนให้ตรงกลาง
-                        alignItems: 'center', // จัดตำแหน่งปุ่มในแนวตั้งให้ตรงกลาง
-                        height: '100%', // ให้ Box ขยายเต็มความสูงของช่อง
+                        justifyContent: 'center', // Center buttons horizontally
+                        alignItems: 'center', // Center buttons vertically
+                        height: '100%', // Make Box expand to full height of cell
                     }}
                 >
                     <Button
@@ -138,7 +138,7 @@ function ManageRooms() {
                             }
                         }}
                     >
-                        แก้ไข
+                        Edit
                     </Button>
                 </Box>
             ),
@@ -146,50 +146,50 @@ function ManageRooms() {
 
     ];
 
-    // ฟังก์ชันค้นหาข้อมูล
+    // Search function
     const handleSearch = () => {
         let filteredRoom = rooms;
 
-        // การกรองข้อมูลจากคำค้นหาผ่าน searchText
+        // Filter data by search text
         if (searchText !== '') {
             filteredRoom = filteredRoom.filter((room) =>
                 (room.RoomNumber && room.RoomNumber.toLowerCase().includes(searchText.toLowerCase())));
         }
 
-        // การกรองข้อมูลตามตำแหน่ง (role) หากเลือกตำแหน่ง
+        // Filter data by floor if floor is selected
         if (selectFloor !== 0) {
             filteredRoom = filteredRoom.filter((floor) => floor.FloorID === selectFloor);
         }
 
-        // การกรองข้อมูลตามสิทธิพิเศษ (package) หากเลือกสิทธิพิเศษ
+        // Filter data by room type if room type is selected
         if (selectRoomType !== 0) {
             filteredRoom = filteredRoom.filter((roomtype) => roomtype.RoomTypeID === selectRoomType);
         }
 
-        setRooms(filteredRoom);  // กำหนดผลลัพธ์ที่กรองแล้ว
+        setRooms(filteredRoom);  // Set filtered results
     };
 
     const handleOpenPopup = (roomID: number) => {
-        setSelectedRoomID(roomID);  // ตั้งค่า selectedRoomID ให้กับห้องที่ต้องการแก้ไข
-        setOpenPopup(true);  // เปิด Pop-up
+        setSelectedRoomID(roomID);  // Set selectedRoomID to the room to be edited
+        setOpenPopup(true);  // Open Pop-up
       };
 
     useEffect(() => {
-        Listrooms();  // ดึงข้อมูลผู้ใช้งานใหม่
+        Listrooms();  // Fetch new user data
         if (rooms === null || []) {
-            // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
-            FecthFloors();  // ดึงข้อมูลชั้น
-            FecthRoomTypes();  // ดึงข้อมูลประเภทห้อง
-            FecthRoomStatus();  // ดึงข้อมูลสถานะห้อง
+            // When popup is closed, reset search or fetch new data from API
+            FecthFloors();  // Fetch floor data
+            FecthRoomTypes();  // Fetch room type data
+            FecthRoomStatus();  // Fetch room status data
 
         }
-    }, []);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+    }, []);  // This useEffect will run every time selectedUserId changes
 
     const FecthFloors = async () => {
         try {
-            const res = await GetFloors();  // ดึงข้อมูลชั้นจาก API
+            const res = await GetFloors();  // Fetch floor data from API
             if (res) {
-                setFloors(res);  // กำหนดข้อมูลชั้นที่ดึงมา
+                setFloors(res);  // Set fetched floor data
                 console.log(res); // Log the fetched data
             }
         } catch (error) {
@@ -198,9 +198,9 @@ function ManageRooms() {
     }
     const FecthRoomTypes = async () => {
         try {
-            const res = await GetRoomTypes();  // ดึงข้อมูลประเภทห้องจาก API
+            const res = await GetRoomTypes();  // Fetch room type data from API
             if (res) {
-                setRoomTypes(res);  // กำหนดข้อมูลประเภทห้องที่ดึงมา
+                setRoomTypes(res);  // Set fetched room type data
                 console.log(res); // Log the fetched data
             }
         } catch (error) {
@@ -209,9 +209,9 @@ function ManageRooms() {
     }
     const FecthRoomStatus = async () => {
         try {
-            const res = await GetRoomStatus();  // ดึงข้อมูลสถานะห้องจาก API
+            const res = await GetRoomStatus();  // Fetch room status data from API
             if (res) {
-                setRoomStatus(res);  // กำหนดข้อมูลสถานะห้องที่ดึงมา
+                setRoomStatus(res);  // Set fetched room status data
                 console.log(res); // Log the fetched data
             }
         } catch (error) {
@@ -223,15 +223,15 @@ function ManageRooms() {
 
 
     const handleClosePopup = () => {
-        setOpenPopup(false);  // ปิด Pop-up
-        setSelectedRoomID(null); // รีเซ็ต selectedRoomID
-        setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
-        setSelectRoomType(0);  // รีเซ็ตการเลือกประเภทห้อง
-        setSelectRoomStatus(0);  // รีเซ็ตการเลือกสถานะห้อง
-        setSelectFloors(0);  // รีเซ็ตการเลือกชั้น
-        setPage(1);  // รีเซ็ตหน้าเป็นหน้าที่ 1
-        setLimit(10);  // รีเซ็ตจำนวนหน้าที่แสดงเป็นค่าเริ่มต้น
-        Listrooms();  // เรียกฟังก์ชันดึงข้อมูลใหม่
+        setOpenPopup(false);  // Close Pop-up
+        setSelectedRoomID(null); // Reset selectedRoomID
+        setSearchText('');  // Reset search text if needed
+        setSelectRoomType(0);  // Reset room type selection
+        setSelectRoomStatus(0);  // Reset room status selection
+        setSelectFloors(0);  // Reset floor selection
+        setPage(1);  // Reset to page 1
+        setLimit(10);  // Reset page size to default
+        Listrooms();  // Call function to fetch new data
         console.log(alerts); // Log message when popup is closed
     };
     
@@ -262,8 +262,8 @@ function ManageRooms() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedSearchText(searchText);  // เมื่อหยุดพิมพ์ 500ms จะตั้งค่า debouncedSearchText
-        }, 500);  // delay 500ms (หรือสามารถปรับให้เหมาะสม)
+            setDebouncedSearchText(searchText);  // When stop typing for 500ms, set debouncedSearchText
+        }, 500);  // delay 500ms (or adjust as appropriate)
 
         return () => clearTimeout(timer);
     }, [searchText]);
@@ -307,7 +307,7 @@ function ManageRooms() {
 
             <Grid container spacing={3}>
                 <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h6" className="title">จัดการห้อง</Typography>
+                    <Typography variant="h6" className="title">Manage Rooms</Typography>
                 </Grid>
 
 
@@ -323,12 +323,12 @@ function ManageRooms() {
                                 fullWidth
                                 className="search-box"
                                 variant="outlined"
-                                placeholder="ค้นหา (เลขที่ห้อง)"
+                                placeholder="Search (Room Number)"
                                 margin="none"
                                 value={searchText}
                                 onChange={(e) => {
-                                    setSearchText(e.target.value);  // set ค่าของ searchText
-                                    //handleSearch();  // เรียกฟังก์ชันค้นหา
+                                    setSearchText(e.target.value);  // set searchText value
+                                    //handleSearch();  // call search function
                                 }}
                                 slotProps={{
                                     input: {
@@ -347,8 +347,8 @@ function ManageRooms() {
                                 <Select
                                     value={selectFloor}
                                     onChange={(e) => {
-                                        setSelectFloors(Number(e.target.value));  // อัปเดต selectrole
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        setSelectFloors(Number(e.target.value));  // update selectrole
+                                        handleSearch();  // call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -358,7 +358,7 @@ function ManageRooms() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกชั้น'}</MenuItem>
+                                    <MenuItem value={0}>{'All Floors'}</MenuItem>
                                     {
                                         floors.length > 0 ? floors.map((item, index) => (
                                             <MenuItem key={index} value={item.ID}>{item.ID}</MenuItem>
@@ -373,8 +373,8 @@ function ManageRooms() {
                                 <Select
                                     value={selectRoomType}
                                     onChange={(e) => {
-                                        setSelectRoomType(Number(e.target.value));  // อัปเดต selectrole
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        setSelectRoomType(Number(e.target.value));  // update selectrole
+                                        handleSearch();  // call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -384,7 +384,7 @@ function ManageRooms() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกประเภท'}</MenuItem>
+                                    <MenuItem value={0}>{'All Types'}</MenuItem>
                                     {
                                         roomTypes.length > 0 ? roomTypes.map((item, index) => (
                                             <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
@@ -401,8 +401,8 @@ function ManageRooms() {
                                 <Select
                                     value={selectRoomStatus}
                                     onChange={(e) => {
-                                        setSelectRoomStatus(Number(e.target.value));  // อัปเดต selectrole
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        setSelectRoomStatus(Number(e.target.value));  // update selectrole
+                                        handleSearch();  // call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -412,7 +412,7 @@ function ManageRooms() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกสถานะ'}</MenuItem>
+                                    <MenuItem value={0}>{'All Status'}</MenuItem>
                                     {
                                         roomStatus.length > 0 ? roomStatus.map((item, index) => (
                                             <MenuItem key={index} value={item.ID}>{item.StatusName}</MenuItem>
@@ -464,7 +464,7 @@ function ManageRooms() {
                                     >
                                         <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
                                         <Typography variant="body1" sx={{ mt: 1 }}>
-                                            ไม่มีรายละเอียดที่ตรงกับคำค้นหา
+                                            No details match your search
                                         </Typography>
                                     </Box>
                                 ),

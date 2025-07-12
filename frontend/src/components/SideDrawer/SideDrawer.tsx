@@ -26,6 +26,7 @@ const ICON_MAP: Record<string, JSX.Element> = {
 	'/accept-work': <HandymanOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/manage-user': <ManageAccountsOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/add-user': <PersonAddAltOutlinedIcon sx={{ color: 'text.secondary' }} />,
+	'/add-user-by-csv': <PersonAddAltOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/booking-room': <ChecklistOutlinedIcon sx={{ color: 'text.secondary' }} />,
 	'/manage-room': <AutoAwesomeMosaicOutlinedIcon  sx={{ color: 'text.secondary' }} />,
 	'/add-room': <DashboardCustomizeOutlinedIcon  sx={{ color: 'text.secondary' }} />,

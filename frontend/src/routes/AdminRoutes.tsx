@@ -16,6 +16,7 @@ import AddRoomForm from "../pages/AddRoom/AddNewRoom";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
+import AddUserFormByCsv from "../pages/AddUser/AddUserFormByCsv";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -58,10 +59,15 @@ const AdminRoutes = (): RouteObject => {
                 path: "/user/add-user",
                 element: <AddUserForm/>
             },
+			{
+				path: "/user/add-user-by-csv",
+				element: <AddUserFormByCsv/>
+			},
             {
                 path: "/user/manage-user",
                 element: <ManageUsers/>
             },
+
 			{
                 path: "/room/manage-room",
                 element: <ManageRooms/>
@@ -82,6 +88,7 @@ const AdminRoutes = (): RouteObject => {
 				path: "my-account",
 				element: <MyAccount/>
 			},
+
 			{
 				path: "",
 				element: <Home/>

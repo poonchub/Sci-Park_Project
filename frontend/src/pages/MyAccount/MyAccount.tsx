@@ -19,7 +19,7 @@ import { UpdateProfileImage } from '../../services/http/index'
 
 const MyAccount: React.FC = () => {
 
-    const [file, setFile] = useState<File | null>(null);  // เก็บไฟล์เดียว
+    const [file, setFile] = useState<File | null>(null);  // Store single file
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);// Fetch data when component mounts
     const [user, setUser] = useState<GetUserInterface | null>();
@@ -30,14 +30,14 @@ const MyAccount: React.FC = () => {
     const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
     if (images.length === 0) return [];
  
-    const img = images[0]; // ✅ ดึงแค่ไฟล์แรก
+    const img = images[0]; // ✅ Get only the first file
     const url = apiUrl + "/" + img.FilePath;
     const response = await fetch(url);
     const blob = await response.blob();
     const fileType = blob.type || "image/jpeg";
     const fileName = img.FilePath?.split("/").pop() || `image1.jpg`;
 
-    return [new File([blob], fileName, { type: fileType })]; // ✅ คืนค่ากลับเป็น array ที่มีไฟล์เดียว
+    return [new File([blob], fileName, { type: fileType })]; // ✅ Return array with single file
 };
 
 
@@ -45,31 +45,31 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
         let selectedFiles = Array.from(event.target.files).filter(isValidImage);
 
-        // ตรวจสอบว่าเลือกไฟล์ได้แค่ 1 ไฟล์
+        // Check if only 1 file can be selected
         if (selectedFiles.length > 1) {
             selectedFiles = selectedFiles.slice(0, 1);
-            alert("สามารถเลือกได้แค่ 1 ไฟล์เท่านั้น");
+            alert("You can only select 1 file");
         }
 
         if (selectedFiles[0]) {
             const file = selectedFiles[0];
 
-            // แสดงรูปภาพทันที
+            // Display image immediately
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImage(reader.result as string);
             };
             reader.readAsDataURL(file);
 
-            setFile(file); // เก็บไฟล์ใหม่ใน state
+            setFile(file); // Store new file in state
 
-            // เรียก API อัปเดตทันที
+            // Call API to update immediately
             const result = await UpdateProfileImage(file);
             console.log(result)
             if (result && 'status' in result && result.status === 200) {
-                setAlerts([{ type: "success", message: "อัปเดตรูปโปรไฟล์สำเร็จ" }]);
+                setAlerts([{ type: "success", message: "Profile image updated successfully" }]);
             } else {
-                setAlerts([{ type: "error", message: "เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์" }]);
+                setAlerts([{ type: "error", message: "Error updating profile image" }]);
             }
         }
     }
@@ -87,7 +87,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                 const imagePathArray = [{ ID: 0, FilePath: String(res.ProfilePath) }];
                 
-                // เก็บภาพลง state ถ้าต้องการ
+                // Store image in state if needed
                 setImg(imagePathArray[0]);
                 if(res.IsEmployee == false){
                     setUserType("external")
@@ -98,7 +98,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                     const file = files[0];
                     setFile(file);
 
-                    // แปลงไฟล์เป็น Base64 เพื่อแสดงรูป
+                    // Convert file to Base64 to display image
                     const reader = new FileReader();
                     reader.onloadend = () => {
                         setProfileImage(reader.result as string);
@@ -167,7 +167,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                 className="title"
                 style={{ marginBottom: '20px', marginTop: '10px' }}
             >
-                ข้อมูลผู้ใช้
+                User Information
             </Typography>
 
             <div className="add-user">
@@ -176,19 +176,19 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                     <Grid container spacing={2}>
 
-                        {/* User Type Selection (บุคคลภายใน/บุคคลภายนอก) */}
+                        {/* User Type Selection (Internal/External Person) */}
 
 
 
 
                         {/* Profile Image and Button */}
                         <Grid size={{ xs: 12, sm: 12 }} container direction="column" justifyContent="center" alignItems="center" textAlign="center">
-                            {/* แสดงภาพโปรไฟล์ */}
+                            {/* Display profile image */}
                             <Avatar sx={{ width: 150, height: 150 }} src={profileImage || ''} />
 
-                            {/* ปุ่มเลือกไฟล์ */}
+                            {/* File selection button */}
                             <Button variant="outlined" component="label" className="upload-button" sx={{ marginTop: 2 }}>
-                                แก้ไขรูปภาพ
+                                Edit Image
                                 <input type="file" hidden onChange={handleFileChange} />
                             </Button>
                         </Grid>
@@ -204,7 +204,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                         <Grid size={{ xs: 12, sm: 12 }}>
                             <Grid container spacing={2}>
                                 <Grid size={{ xs: 12, sm: 6 }} >
-                                    <Typography variant="body1" className="title-field">ชื่อ</Typography>
+                                    <Typography variant="body1" className="title-field">First Name</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
                                         fullWidth
@@ -218,7 +218,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                    <Typography variant="body1" className="title-field">นามสกุล</Typography>
+                                    <Typography variant="body1" className="title-field">Last Name</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
                                         value={String(user?.LastName || "-")}
@@ -238,7 +238,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                             <Grid container spacing={2}>
                                 {/* Gender Dropdown */}
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">เพศ</Typography>
+                                    <Typography variant="body1" className="title-field">Gender</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
                                         fullWidth
@@ -251,7 +251,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
+                                    <Typography variant="body1" className="title-field">Phone Number</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
                                         fullWidth
@@ -266,7 +266,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                                 {/* Email Field */}
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">อีเมล</Typography>
+                                    <Typography variant="body1" className="title-field">Email</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
                                         fullWidth
@@ -288,7 +288,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                         {/* Role Dropdown */}
                         {userType === 'internal' && (
                             <Grid size={{ xs: 12, sm: 4 }}>
-                                <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                                <Typography variant="body1" className="title-field">Position</Typography>
                                 <TextField
                                     id="outlined-read-only-input"
                                     fullWidth
@@ -305,7 +305,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                         {/* Conditional Rendering for Manager (RoleID === 3) */}
                         {userType === 'internal' && (user?.RoleID === 3 || user?.RoleID === 4) && (
                             <Grid size={{ xs: 12, sm: 4 }}>
-                                <Typography variant="body1" className="title-field">จัดการ</Typography>
+                                <Typography variant="body1" className="title-field">Management</Typography>
                                 <TextField
                                     id="outlined-read-only-input"
                                     fullWidth
@@ -322,7 +322,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                         {/* EmployeeID Field */}
                         {userType === 'internal' && <Grid size={{ xs: 12, sm: 4 }}>
-                            <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
+                            <Typography variant="body1" className="title-field">Employee ID</Typography>
                             <TextField
                                 id="outlined-read-only-input"
                                 fullWidth
@@ -339,7 +339,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                         {/* Package Dropdown */}
                         <Grid size={{ xs: 12, sm: 4 }}>
-                            <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
+                            <Typography variant="body1" className="title-field">Privileges</Typography>
                             <TextField
                                 id="outlined-read-only-input"
                                 fullWidth
@@ -356,7 +356,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                         {userType === 'external' && (
                             <>
                                 <Grid size={{ xs: 4 }}>
-                                    <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
+                                    <Typography variant="body1" className="title-field">Company Name</Typography>
 
                                     <TextField
                                         id="outlined-read-only-input"
@@ -371,7 +371,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                 </Grid>
 
                                 <Grid size={{ xs: 12 }}>
-                                    <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
+                                    <Typography variant="body1" className="title-field">Business Description</Typography>
                                     <TextArea
                                         id="outlined-read-only-input"
                                         fullWidth

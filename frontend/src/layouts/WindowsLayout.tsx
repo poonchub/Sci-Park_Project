@@ -181,6 +181,11 @@ const WindowsLayout: React.FC = (props: any) => {
                     icon: <UserRoundPlus size={iconSize} />,
                 },
                 {
+                    segment: "add-user-by-csv",
+                    title: t("addUserByCsv"),
+                    icon: <UserRoundPlus size={iconSize} />,
+                },
+                {
                     segment: "traffic",
                     title: "Traffic",
                     icon: <DescriptionIcon />,
@@ -240,6 +245,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "manage-room",
             "manage-user",
             "add-user",
+            "add-user-by-csv",
         ],
         Manager: [
             "home",

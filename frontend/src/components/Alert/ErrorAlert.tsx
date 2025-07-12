@@ -46,14 +46,22 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
   useEffect(() => {
     if (shouldCloseRef.current) {
       shouldCloseRef.current = false;
+      // Clear any existing timers
+      if (_intervalId) {
+        clearInterval(_intervalId);
+      }
       onClose();
     }
-  }, [progress, onClose]);
+  }, [progress, onClose, _intervalId]);
 
   // To handle closing the alert and triggering the slide-out animation
   const handleClose = () => {
-    document.querySelector('.MuiAlert-root')?.classList.add('slideOutToRight');
-    setTimeout(onClose, 500); // Call onClose after animation ends (500ms)
+    // Clear any existing timers to prevent conflicts
+    if (_intervalId) {
+      clearInterval(_intervalId);
+    }
+    // Call onClose immediately to ensure proper cleanup
+    onClose();
   };
 
   return (
@@ -66,9 +74,9 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
         left: '100%', // Start from the right side of the screen
         transform: 'translateX(-50%)',
         width: '35%',
-        zIndex: 1350 + totalAlerts - index, // Dynamic zIndex to ensure the last alert is on top
-        backgroundColor: 'white', // Background color
-        color: 'black', // Text color
+        zIndex: 1350 + index, // Simple zIndex based on index only
+        backgroundColor: '#fef2f2', // Light red background for better contrast
+        color: '#991b1b', // Dark red text for better readability
         padding: '12px',
         opacity: 0, // Start with zero opacity (hidden)
         transition: 'opacity 0.5s ease-in, transform 0.5s ease-out', // Fade and slide transition
@@ -115,7 +123,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
       onMouseEnter={() => setIsHovered(true)}  // Set hover state to true
       onMouseLeave={() => setIsHovered(false)} // Set hover state to false
     >
-      <AlertTitle style={{ color: "black", fontWeight: "bold" }}>Error</AlertTitle>
+      <AlertTitle style={{ color: "#991b1b", fontWeight: "bold" }}>Error</AlertTitle>
       {message}
     </Alert>
   );

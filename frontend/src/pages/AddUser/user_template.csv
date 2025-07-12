@@ -1,0 +1,18 @@
+FirstName,LastName,Email,Phone,EmployeeID,CompanyName,BusinessDetail,Gender,Role,UserPackage,RequestType
+John,Doe,john.doe@company.com,"0812345678",123456,,,Male,User,None,
+Jane,Smith,jane.smith@company.com,"0898765432",654321,ABC Company,Software Development,Female,Operator,Silver,
+Mike,Johnson,mike@external.com,"0855555555",,XYZ Corp,Consulting Services,Male,User,Gold,
+Sarah,Wilson,sarah.wilson@company.com,"0866666666",789012,,,Female,Manager,Platinum,Internal
+David,Brown,david@external.com,"0877777777",,Tech Solutions,IT Consulting,Male,User,Diamond,
+Emily,Davis,emily.davis@company.com,"0811111111",111111,Innovation Corp,Research & Development,Female,Admin,Gold,
+Michael,Chen,michael.chen@company.com,"0822222222",222222,,,Male,Operator,Silver,
+Lisa,Anderson,lisa.anderson@external.com,"0833333333",,Global Tech,Digital Marketing,Female,User,Platinum,
+Robert,Taylor,robert.taylor@company.com,"0844444444",333333,Data Systems,Data Analytics,Male,Manager,Gold,External
+Amanda,White,amanda.white@company.com,"0855555555",444444,,,Female,User,None,
+James,Miller,james.miller@external.com,"0866666666",,Creative Solutions,Graphic Design,Male,User,Silver,
+Jessica,Lee,jessica.lee@company.com,"0877777777",555555,Health Tech,Healthcare Software,Female,Operator,Platinum,
+Christopher,Harris,chris.harris@company.com,"0888888888",666666,,,Male,Manager,Gold,Both
+Rachel,Clark,rachel.clark@external.com,"0899999999",,EduTech,Educational Software,Female,User,Diamond,
+Daniel,Lewis,daniel.lewis@company.com,"0800000000",777777,,,Male,Admin,Silver,
+Nicole,Robinson,nicole.robinson@external.com,"0812345679",,Finance Corp,Financial Services,Female,User,Gold,
+

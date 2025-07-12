@@ -1,0 +1,198 @@
+===========================================
+CSV USER IMPORT MANUAL
+===========================================
+
+This manual explains how to use the CSV template for importing users into the system.
+
+===========================================
+DOWNLOADING AND USING THE TEMPLATE
+===========================================
+
+1. Click "Download Template" to get the CSV file
+2. Open the file in Excel, Google Sheets, or any spreadsheet application
+3. Fill in your user data following the guidelines below
+4. Save the file as CSV format (UTF-8 encoding)
+5. Upload the file back to the system using "Choose CSV File"
+
+===========================================
+CSV FILE STRUCTURE
+===========================================
+
+The CSV file contains the following columns in this exact order:
+
+Column A: FirstName
+Column B: LastName  
+Column C: Email
+Column D: Phone
+Column E: EmployeeID
+Column F: CompanyName
+Column G: BusinessDetail
+Column H: Gender
+Column I: Role
+Column J: UserPackage
+Column K: RequestType
+
+===========================================
+FIELD DESCRIPTIONS AND REQUIREMENTS
+===========================================
+
+REQUIRED FIELDS (Must be filled):
+
+1. FirstName
+   - Description: User's first name
+   - Format: Text only
+   - Example: John, Mary, สมชาย
+   - Validation: Cannot be empty
+
+2. LastName  
+   - Description: User's last name
+   - Format: Text only
+   - Example: Smith, Johnson, ใจดี
+   - Validation: Cannot be empty
+
+3. Email
+   - Description: User's email address
+   - Format: Valid email format
+   - Example: john.smith@company.com, user@domain.co.th
+   - Validation: Must be valid email format (user@domain.com)
+
+4. Phone
+   - Description: User's phone number
+   - Format: Thai mobile number
+   - Example: 0812345678, 0898765432
+   - Validation: Must start with 0 and have exactly 10 digits
+
+5. Gender
+   - Description: User's gender
+   - Allowed Values: Male, Female
+   - Example: Male, Female
+   - Validation: Must be exactly "Male" or "Female"
+
+6. Role
+   - Description: User's role in the system
+   - Allowed Values: User, Operator, Manager, Admin
+   - Example: User, Manager, Admin
+   - Validation: Must be one of the allowed values
+
+OPTIONAL FIELDS (Can be left empty):
+
+7. EmployeeID
+   - Description: Employee identification number
+   - Format: 6-digit number
+   - Example: 123456, 789012
+   - Validation: If provided, must be exactly 6 digits
+   - Note: If EmployeeID is provided, user is marked as Employee
+   - Note: If EmployeeID is empty, user is marked as External User
+
+8. CompanyName
+   - Description: Company name (for external users)
+   - Format: Text
+   - Example: ABC Corporation, XYZ Company
+   - Validation: Required only if EmployeeID is empty (External User)
+
+9. BusinessDetail
+   - Description: Business description (for external users)
+   - Format: Text
+   - Example: Software Development, Consulting Services
+   - Validation: Required only if EmployeeID is empty (External User)
+
+10. UserPackage
+    - Description: User's subscription package
+    - Allowed Values: None, Silver, Gold, Platinum, Diamond
+    - Example: Silver, Gold, None
+    - Validation: Must be one of the allowed values or empty
+
+11. RequestType
+    - Description: Type of requests user can make (Manager only)
+    - Allowed Values: Internal, External, Both
+    - Example: Internal, Both
+    - Validation: Can only be used when Role is "Manager"
+
+===========================================
+USER TYPE DETERMINATION
+===========================================
+
+The system automatically determines user type based on EmployeeID:
+
+EMPLOYEE USER:
+- EmployeeID is provided (6 digits)
+- CompanyName and BusinessDetail are optional
+- Can have any role: User, Operator, Manager, Admin
+
+EXTERNAL USER:
+- EmployeeID is empty
+- CompanyName and BusinessDetail are REQUIRED
+- Can only have role: User
+
+===========================================
+VALIDATION RULES
+===========================================
+
+1. Email Format: Must be valid email (user@domain.com)
+2. Phone Format: Must start with 0 and have 10 digits
+3. Employee ID: If provided, must be exactly 6 digits
+4. Gender: Must be "Male" or "Female"
+5. Role: Must be "User", "Operator", "Manager", or "Admin"
+6. UserPackage: Must be "None", "Silver", "Gold", "Platinum", or "Diamond"
+7. RequestType: Can only be used with "Manager" role
+8. External Users: Must have CompanyName and BusinessDetail
+
+===========================================
+COMMON ERRORS TO AVOID
+===========================================
+
+❌ WRONG:
+- Phone: 812345678 (missing leading 0)
+- Phone: 081234567 (only 9 digits)
+- Email: john.smith (missing @domain.com)
+- EmployeeID: 12345 (only 5 digits)
+- Gender: male (lowercase)
+- Role: user (lowercase)
+- RequestType: Internal (with non-Manager role)
+
+✅ CORRECT:
+- Phone: 0812345678
+- Email: john.smith@company.com
+- EmployeeID: 123456
+- Gender: Male
+- Role: User
+- RequestType: Internal (only with Manager role)
+
+===========================================
+EXAMPLE DATA ROWS
+===========================================
+
+EMPLOYEE EXAMPLES:
+John,Smith,john.smith@company.com,0812345678,123456,,,Male,User,Silver,
+Jane,Doe,jane.doe@company.com,0898765432,789012,,,Female,Manager,Gold,Internal
+Mike,Johnson,mike.johnson@company.com,0855555555,111111,,,Male,Admin,Platinum,
+
+EXTERNAL USER EXAMPLES:
+Alice,Brown,alice.brown@external.com,0866666666,,ABC Corp,Software Development,Female,User,Gold,
+Bob,Wilson,bob.wilson@consulting.com,0877777777,,XYZ Consulting,IT Services,Male,User,Silver,
+
+===========================================
+TROUBLESHOOTING
+===========================================
+
+If your upload fails:
+
+1. Check that all required fields are filled
+2. Verify email format is correct
+3. Ensure phone number starts with 0 and has 10 digits
+4. Confirm EmployeeID is exactly 6 digits (if provided)
+5. Check that Gender and Role use exact allowed values
+6. For external users, ensure CompanyName and BusinessDetail are filled
+7. Verify RequestType is only used with Manager role
+
+===========================================
+SUPPORT
+===========================================
+
+If you encounter issues:
+1. Check the validation errors shown in the table
+2. Edit individual rows using the "Edit" button
+3. Use "Save Temporarily" to fix validation issues
+4. Use "Save & Create User" to create the user in the system
+
+=========================================== 

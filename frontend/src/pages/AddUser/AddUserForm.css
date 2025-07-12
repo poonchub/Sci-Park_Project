@@ -101,13 +101,7 @@
   transition: background-color 0.3s ease;
 }
 
-.add-user button[type="reset"] {
 
-  background-color: #ffffff;
-  color: rgb(45, 213, 255);
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
 
 .add-user button[type="submit"]:hover {
   background-color: #e65c00;

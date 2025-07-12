@@ -158,7 +158,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
           <ManageAccountsOutlinedIcon style={{ fontSize: '32px', color: '#ff6f00' }} />
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-            แก้ไขข้อมูลห้อง
+            Edit Room Information
           </Typography>
         </div>
       </DialogTitle>
@@ -168,12 +168,12 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
           <form onSubmit={handleSubmit(handleSave)}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body1" className="title-field">หมายเลขห้อง</Typography>
+                <Typography variant="body1" className="title-field">Room Number</Typography>
                 <Controller
                   name="RoomNumber"
                   control={control}
                   defaultValue={room.RoomNumber || ''}
-                  rules={{ required: 'กรุณากรอกหมายเลขห้อง' }}
+                  rules={{ required: 'Please enter room number' }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -186,16 +186,16 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="body1" className="title-field">ความจุห้อง (คน)</Typography>
+                <Typography variant="body1" className="title-field">Room Capacity (persons)</Typography>
                 <Controller
                   name="Capacity"
                   control={control}
                   defaultValue={room.Capacity || 0}
                   rules={{
-                    required: 'กรุณากรอกความจุห้อง',
+                    required: 'Please enter room capacity',
                     min: {
                       value: 1,
-                      message: 'ความจุห้องต้องมากกว่า 0'
+                      message: 'Room capacity must be greater than 0'
                     }
                   }}
                   render={({ field }) => (
@@ -212,7 +212,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth error={!!errors.RoomStatusID}>
-                  <Typography variant="body1" className="title-field">สถานะห้อง</Typography>
+                  <Typography variant="body1" className="title-field">Room Status</Typography>
                   <Select
                     labelId="room-status-label"
                     name="RoomStatusID"
@@ -220,7 +220,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
                     onChange={(e) => setSelectedRoomStatus(Number(e.target.value))}
                     displayEmpty
                   >
-                    <MenuItem value={0}><em>-- กรุณาเลือกสถานะ --</em></MenuItem>
+                    <MenuItem value={0}><em>-- Please select status --</em></MenuItem>
                     {roomStatus.map((status) => (
                       <MenuItem key={status.ID} value={status.ID}>{status.StatusName}</MenuItem>
                     ))}
@@ -231,7 +231,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth error={!!errors.FloorID}>
-                  <Typography variant="body1" className="title-field">ชั้น</Typography>
+                  <Typography variant="body1" className="title-field">Floor</Typography>
                   <Select
                     labelId="floor-label"
                     name="FloorID"
@@ -239,9 +239,9 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
                     onChange={(e) => setSelectedFloor(Number(e.target.value))}
                     displayEmpty
                   >
-                    <MenuItem value={0}><em>-- กรุณาเลือกชั้น --</em></MenuItem>
+                    <MenuItem value={0}><em>-- Please select floor --</em></MenuItem>
                     {floors.map((floor) => (
-                      <MenuItem key={floor.ID} value={floor.ID}>{`ชั้น ${floor.Number}`}</MenuItem>
+                      <MenuItem key={floor.ID} value={floor.ID}>{`Floor ${floor.Number}`}</MenuItem>
                     ))}
                   </Select>
                   {errors.FloorID && <FormHelperText>{String(errors.FloorID?.message)}</FormHelperText>}
@@ -250,7 +250,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth error={!!errors.RoomTypeID}>
-                  <Typography variant="body1" className="title-field">ประเภทห้อง</Typography>
+                  <Typography variant="body1" className="title-field">Room Type</Typography>
                   <Select
                     labelId="room-type-label"
                     name="RoomTypeID"
@@ -258,7 +258,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
                     onChange={(e) => setSelectedRoomType(Number(e.target.value))}
                     displayEmpty
                   >
-                    <MenuItem value={0}><em>-- กรุณาเลือกประเภทห้อง --</em></MenuItem>
+                    <MenuItem value={0}><em>-- Please select room type --</em></MenuItem>
                     {roomTypes.map((type) => (
                       <MenuItem key={type.ID} value={type.ID}>{type.TypeName}</MenuItem>
                     ))}
@@ -269,8 +269,8 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
             </Grid>
 
             <DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <Button onClick={onClose} color="secondary">ยกเลิก</Button>
-              <Button type="submit" variant="contained" startIcon={<SaveIcon />}>บันทึก</Button>
+              <Button onClick={onClose} color="secondary">Cancel</Button>
+              <Button type="submit" variant="contained" startIcon={<SaveIcon />}>Save</Button>
             </DialogActions>
           </form>
         )}
