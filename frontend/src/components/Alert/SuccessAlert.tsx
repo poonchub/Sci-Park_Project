@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Alert } from '@mui/material';
 import AlertTitle from '@mui/material/AlertTitle';
 
@@ -13,6 +13,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
   const [progress, setProgress] = useState(100);
   const [isHovered, setIsHovered] = useState(false); // State to track hover
   const [_intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null); // Store interval ID to clear it
+  const shouldCloseRef = useRef(false);
 
   // Update progress over time when not hovered
   useEffect(() => {
@@ -25,7 +26,7 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
           const newProgress = prevProgress - 1; // Decrease by 1% every 60ms
           if (newProgress <= 0) {
             if (timer) clearInterval(timer); // Stop when the progress is 0
-            onClose(); // Trigger the onClose once progress is done
+            shouldCloseRef.current = true; // Mark that we should close
           }
           return newProgress;
         });
@@ -39,7 +40,15 @@ const SuccessAlert: React.FC<SuccessAlertProps> = ({ message, onClose, index, to
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isHovered, onClose]);
+  }, [isHovered]);
+
+  // Separate effect to handle closing when progress reaches 0
+  useEffect(() => {
+    if (shouldCloseRef.current) {
+      shouldCloseRef.current = false;
+      onClose();
+    }
+  }, [progress, onClose]);
 
   // To handle closing the alert and triggering the slide-out animation
   const handleClose = () => {

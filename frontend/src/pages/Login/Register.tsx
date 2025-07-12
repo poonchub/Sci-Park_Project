@@ -59,7 +59,7 @@ const RegisterPage: React.FC = () => {
         if (isStep1Valid) {
             setStep(2);
         } else {
-            setAlerts((prev) => [...prev, { type: 'warning', message: 'กรุณากรอกข้อมูลในส่วนแรกให้ครบถ้วนและถูกต้อง' }]);
+            setAlerts((prev) => [...prev, { type: 'warning', message: 'Please fill in the first section completely and correctly' }]);
         }
     };
 
@@ -67,7 +67,7 @@ const RegisterPage: React.FC = () => {
         // Trigger validation only for fields in Step 2
         const isStep2Valid = await trigger(["GenderID", "Phone", "Email", "Password"]);
         if (!isStep2Valid) {
-            setAlerts((prev) => [...prev, { type: 'warning', message: 'กรุณากรอกข้อมูลในส่วนที่สองให้ครบถ้วนและถูกต้อง' }]);
+            setAlerts((prev) => [...prev, { type: 'warning', message: 'Please fill in the second section completely and correctly' }]);
             return;
         }
 
@@ -95,7 +95,7 @@ const RegisterPage: React.FC = () => {
             }
         } catch (error) {
             console.error('Error creating user', error);
-            setAlerts((prev) => [...prev, { type: 'error', message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' }]);
+            setAlerts((prev) => [...prev, { type: 'error', message: 'An error occurred. Please try again.' }]);
         } finally {
             setLoading(false);
         }
@@ -139,7 +139,7 @@ const RegisterPage: React.FC = () => {
                             <form onSubmit={handleSubmit(onSubmit)}>
                                 {step === 1 && (
                                     <>
-                                        <Typography variant="h6" sx={{ mb: 2 }}>ข้อมูลบริษัทและส่วนตัว (ส่วนที่ 1)</Typography>
+                                        <Typography variant="h6" sx={{ mb: 2 }}>Company and Personal Information (Section 1)</Typography>
 
                                         
                                             <Grid size={{ xs: 12, sm: 6 }}>
@@ -147,9 +147,9 @@ const RegisterPage: React.FC = () => {
                                                     name="FirstName"
                                                     control={control}
                                                     defaultValue=""
-                                                    rules={{ required: 'กรุณากรอกชื่อจริง' }}
+                                                    rules={{ required: 'Please enter your first name' }}
                                                     render={({ field }) => (
-                                                        <TextField className='field' {...field} label="กรุณากรอกชื่อจริง" fullWidth error={!!errors.FirstName} helperText={String(errors.FirstName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextField className='field' {...field} label="First Name" fullWidth error={!!errors.FirstName} helperText={String(errors.FirstName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -158,9 +158,9 @@ const RegisterPage: React.FC = () => {
                                                     name="LastName"
                                                     control={control}
                                                     defaultValue=""
-                                                    rules={{ required: 'กรุณากรอกนามสกุล' }}
+                                                    rules={{ required: 'Please enter your last name' }}
                                                     render={({ field }) => (
-                                                        <TextField className='field' {...field} label="กรุณากรอกนามสกุล" fullWidth error={!!errors.LastName} helperText={String(errors.LastName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextField className='field' {...field} label="Last Name" fullWidth error={!!errors.LastName} helperText={String(errors.LastName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -169,9 +169,9 @@ const RegisterPage: React.FC = () => {
                                                     name="CompanyName"
                                                     control={control}
                                                     defaultValue=""
-                                                    rules={{ required: 'กรุณากรอกชื่อบริษัท' }}
+                                                    rules={{ required: 'Please enter company name' }}
                                                     render={({ field }) => (
-                                                        <TextField className='field' {...field} label="กรุณากรอกชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextField className='field' {...field} label="Company Name" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -180,9 +180,9 @@ const RegisterPage: React.FC = () => {
                                                     name="BusinessDetail"
                                                     control={control}
                                                     defaultValue=""
-                                                    rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }}
+                                                    rules={{ required: 'Please enter business description' }}
                                                     render={({ field }) => (
-                                                        <TextArea className='field' {...field} label="กรุณากรอกคำอธิบายธุรกิจ" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextArea className='field' {...field} label="Business Description" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -206,19 +206,19 @@ const RegisterPage: React.FC = () => {
 
                                 {step === 2 && (
                                     <>
-                                        <Typography variant="h6" sx={{ mb: 2 }}>ข้อมูลติดต่อและรหัสผ่าน (ส่วนที่ 2)</Typography>
+                                        <Typography variant="h6" sx={{ mb: 2 }}>Contact Information and Password (Section 2)</Typography>
 
                                         
                                             <Grid size={{ xs: 12, sm: 6 }}>
                                                 <FormControl fullWidth error={!!errors.GenderID}>
-                                                    <InputLabel sx={{ color: '#6D6E70' }}>เลือกเพศ</InputLabel>
+                                                    <InputLabel sx={{ color: '#6D6E70' }}>Select Gender</InputLabel>
                                                     <Controller
                                                         name="GenderID"
                                                         control={control}
                                                         defaultValue=""
-                                                        rules={{ required: 'กรุณาเลือกเพศ' }}
+                                                        rules={{ required: 'Please select gender' }}
                                                         render={({ field }) => (
-                                                            <Select {...field} label="เลือกเพศ" sx={{ color: '#6D6E70' }}>
+                                                            <Select {...field} label="Select Gender" sx={{ color: '#6D6E70' }}>
                                                                 {genders.map((gender) => (
                                                                     <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
                                                                 ))}
@@ -234,14 +234,14 @@ const RegisterPage: React.FC = () => {
                                                     control={control}
                                                     defaultValue=""
                                                     rules={{
-                                                        required: 'กรุณากรอกหมายเลขโทรศัพท์',
+                                                        required: 'Please enter phone number',
                                                         pattern: {
                                                             value: /^0[0-9]{9}$/,
-                                                            message: 'หมายเลขโทรศัพท์ต้องเริ่มต้นด้วย 0 และมีทั้งหมด 10 หลัก'
+                                                            message: 'Phone number must start with 0 and have 10 digits'
                                                         }
                                                     }}
                                                     render={({ field }) => (
-                                                        <TextField className='field' {...field} label="เบอร์โทรศัพท์" fullWidth error={!!errors.Phone} helperText={String(errors.Phone?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextField className='field' {...field} label="Phone Number" fullWidth error={!!errors.Phone} helperText={String(errors.Phone?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -251,14 +251,14 @@ const RegisterPage: React.FC = () => {
                                                     control={control}
                                                     defaultValue=""
                                                     rules={{
-                                                        required: 'กรุณากรอกอีเมล',
+                                                        required: 'Please enter email',
                                                         pattern: {
                                                             value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                                                            message: 'กรุณากรอกอีเมลที่ถูกต้อง'
+                                                            message: 'Please enter a valid email'
                                                         }
                                                     }}
                                                     render={({ field }) => (
-                                                        <TextField className='field' {...field} label="อีเมล" fullWidth error={!!errors.Email} helperText={String(errors.Email?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
+                                                        <TextField className='field' {...field} label="Email" fullWidth error={!!errors.Email} helperText={String(errors.Email?.message || "")} slotProps={{ inputLabel: { sx: { color: '#6D6E70' } }, formHelperText: { sx: { color: "red" } } }} />
                                                     )}
                                                 />
                                             </Grid>
@@ -268,17 +268,17 @@ const RegisterPage: React.FC = () => {
                                                     control={control}
                                                     defaultValue=""
                                                     rules={{
-                                                        required: 'กรุณากรอกรหัสผ่าน',
+                                                        required: 'Please enter password',
                                                         pattern: {
-                                                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,
-                                                            message: 'รหัสผ่านต้องมีตัวพิมพ์เล็ก, ตัวพิมพ์ใหญ่ และตัวเลขอย่างน้อย 8 ตัว'
+                                                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/,
+                                                            message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character with minimum 8 characters'
                                                         }
                                                     }}
                                                     render={({ field }) => (
                                                         <TextField
                                                             className='field'
                                                             {...field}
-                                                            label="รหัสผ่าน"
+                                                            label="Password"
                                                             type={showPassword ? 'text' : 'password'}
                                                             fullWidth
                                                             error={!!errors.Password}

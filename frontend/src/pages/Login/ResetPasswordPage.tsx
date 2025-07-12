@@ -265,10 +265,10 @@ const ResetPasswordPage: React.FC = () => {
                                         name="newPassword"
                                         control={control}
                                         rules={{
-                                            required: 'กรุณากรอกรหัสผ่านใหม่',
+                                            required: 'Please enter new password',
                                             pattern: {
-                                                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,
-                                                message: 'รหัสผ่านต้องมีตัวอักษรพิมพ์เล็ก, พิมพ์ใหญ่ และตัวเลขอย่างน้อย 8 ตัว'
+                                                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/,
+                                                message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character with minimum 8 characters'
                                             }
                                         }}
                                         render={({ field }) => (
@@ -302,9 +302,9 @@ const ResetPasswordPage: React.FC = () => {
                                         name="confirmPassword"
                                         control={control}
                                         rules={{
-                                            required: 'กรุณายืนยันรหัสผ่านใหม่',
+                                            required: 'Please confirm new password',
                                             validate: (value) =>
-                                                value === newPasswordValue || 'รหัสผ่านไม่ตรงกัน'
+                                                value === newPasswordValue || 'Passwords do not match'
                                         }}
                                         render={({ field }) => (
                                             <TextField

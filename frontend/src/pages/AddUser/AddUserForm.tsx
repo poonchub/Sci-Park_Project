@@ -164,7 +164,7 @@ const AddUserForm: React.FC = () => {
         className="title"
         style={{ marginBottom: '20px', marginTop: '10px' }}
       >
-        เพิ่มผู้ใช้งาน
+        Add User
       </Typography>
 
       <div className="add-user">
@@ -175,7 +175,7 @@ const AddUserForm: React.FC = () => {
 
             {/* User Type Selection (บุคคลภายใน/บุคคลภายนอก) */}
             <Grid size={{ xs: 6, md: 6 }}>
-              <Typography variant="body1" className="title-field">ประเภทผู้ใช้</Typography>
+              <Typography variant="body1" className="title-field">User Type</Typography>
               <FormControl>
                 <RadioGroup
                   row
@@ -192,12 +192,12 @@ const AddUserForm: React.FC = () => {
                   <FormControlLabel
                     value="internal"
                     control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />}
-                    label="บุคคลภายใน"
+                    label="Internal User"
                   />
                   <FormControlLabel
                     value="external"
                     control={<Radio sx={{ color: 'black', '&.Mui-checked': { color: 'e65c00' } }} />}
-                    label="บุคคลภายนอก"
+                    label="External User"
                   />
                 </RadioGroup>
               </FormControl>
@@ -212,7 +212,7 @@ const AddUserForm: React.FC = () => {
 
               {/* ปุ่มเลือกไฟล์ */}
               <Button variant="outlined" component="label" className="upload-button" sx={{ marginTop: 2 }}>
-                เพิ่มรูปภาพ
+                Add Photo
                 <input type="file" hidden onChange={handleFileChange} />
               </Button>
             </Grid>
@@ -228,16 +228,16 @@ const AddUserForm: React.FC = () => {
             <Grid size={{ xs: 12, sm: 12 }}>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }} >
-                  <Typography variant="body1" className="title-field">ชื่อ</Typography>
+                  <Typography variant="body1" className="title-field">First Name</Typography>
                   <Controller
                     name="FirstName"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกชื่อ' }}
+                    rules={{ required: 'Please enter first name' }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="กรุณากรอกชื่อจริง (ไม่มีคำนำหน้า)"
+                        label="Please enter first name (without title)"
                         fullWidth
                         error={!!errors.FirstName}
                         helperText={String(errors.FirstName?.message || "") }
@@ -251,16 +251,16 @@ const AddUserForm: React.FC = () => {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">นามสกุล</Typography>
+                  <Typography variant="body1" className="title-field">Last Name</Typography>
                   <Controller
                     name="LastName"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกนามสกุล' }}
+                    rules={{ required: 'Please enter last name' }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="กรุณากรอกนามสกุล"
+                        label="Please enter last name"
                         fullWidth
                         error={!!errors.LastName}
                         helperText={String(errors.LastName?.message || "") }
@@ -281,16 +281,16 @@ const AddUserForm: React.FC = () => {
               <Grid container spacing={2}>
                 {/* Gender Dropdown */}
                 <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="body1" className="title-field">เพศ</Typography>
+                  <Typography variant="body1" className="title-field">Gender</Typography>
                   <FormControl fullWidth error={!!errors.gender}>
-                    <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือกเพศ</InputLabel>
+                    <InputLabel sx={{ color: '#6D6E70' }}>Please select gender</InputLabel>
                     <Controller
                       name="GenderID"
                       control={control}
                       defaultValue=""
-                      rules={{ required: 'กรุณาเลือกเพศ' }}
+                      rules={{ required: 'Please select gender' }}
                       render={({ field }) => (
-                        <Select {...field} label="กรุณาเลือกเพศ">
+                        <Select {...field} label="Please select gender">
                           {genders.map((gender) => (
                             <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
                           ))}
@@ -301,22 +301,22 @@ const AddUserForm: React.FC = () => {
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
+                  <Typography variant="body1" className="title-field">Phone Number</Typography>
                   <Controller
                     name="Phone"
                     control={control}
                     defaultValue=""
                     rules={{
-                      required: 'กรุณากรอกหมายเลขโทรศัพท์',
+                      required: 'Please enter phone number',
                       pattern: {
                         value: /^0[0-9]{9}$/,  // เริ่มต้นด้วย 0 และตามด้วยตัวเลข 9 ตัว
-                        message: 'หมายเลขโทรศัพท์ต้องเริ่มต้นด้วย 0 และมีทั้งหมด 10 หลัก'
+                        message: 'Phone number must start with 0 and have 10 digits'
                       }
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="กรุณากรอกหมายเลข โทรศัพท์"
+                        label="Please enter phone number"
                         fullWidth
                         error={!!errors.Phone}
                         helperText={String(errors.Phone?.message || "")}
@@ -333,22 +333,22 @@ const AddUserForm: React.FC = () => {
 
                 {/* Email Field */}
                 <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="body1" className="title-field">อีเมล</Typography>
+                  <Typography variant="body1" className="title-field">Email</Typography>
                   <Controller
                     name="Email"
                     control={control}
                     defaultValue=""
                     rules={{
-                      required: 'กรุณากรอกอีเมล',
+                      required: 'Please enter email',
                       pattern: {
                         value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Regular expression สำหรับตรวจสอบอีเมล
-                        message: 'กรุณากรอกอีเมลที่ถูกต้อง'
+                        message: 'Please enter a valid email'
                       }
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="กรุณากรอก อีเมล"
+                        label="Please enter email"
                         fullWidth
                         error={!!errors.Email}
                         helperText={String(errors.Email?.message || "")}
@@ -365,22 +365,22 @@ const AddUserForm: React.FC = () => {
 
                 {/* Password Field */}
                 <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="body1" className="title-field">รหัสผ่าน</Typography>
+                  <Typography variant="body1" className="title-field">Password</Typography>
                   <Controller
                     name="Password"
                     control={control}
                     defaultValue=""
                     rules={{
-                      required: 'กรุณากรอกรหัสผ่าน',
+                      required: 'Please enter password',
                       pattern: {
-                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/,  // ต้องมีตัวเล็ก, ตัวใหญ่, และตัวเลข, อย่างน้อย 8 ตัว
-                        message: 'รหัสผ่านต้องมีตัวอักษรพิมพ์เล็ก, พิมพ์ใหญ่ และตัวเลขอย่างน้อย 8 ตัว'
+                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/,  // ต้องมีตัวเล็ก, ตัวใหญ่, ตัวเลข, และอักขระพิเศษ, อย่างน้อย 8 ตัว
+                        message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character with minimum 8 characters'
                       }
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
-                        label="กรุณากรอกรหัสผ่าน"
+                        label="Please enter password"
                         type={showPassword ? 'text' : 'password'}  // ทำให้รหัสผ่านแสดง/ซ่อน
                         fullWidth
                         error={!!errors.Password}
@@ -412,16 +412,16 @@ const AddUserForm: React.FC = () => {
             {/* Role Dropdown */}
             {userType === 'internal' && (
               <Grid size={{ xs: 12, sm: 3 }}>
-                <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
+                <Typography variant="body1" className="title-field">Position</Typography>
                 <FormControl fullWidth error={!!errors.role}>
-                  <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก ตำแหน่ง</InputLabel>
+                  <InputLabel sx={{ color: '#6D6E70' }}>Please select position</InputLabel>
                   <Controller
                     name="RoleID"
                     control={control}
                     defaultValue={1}
-                    rules={{ required: 'กรุณาเลือกตำแหน่ง' }}
+                    rules={{ required: 'Please select position' }}
                     render={({ field }) => (
-                      <Select {...field} label="กรุณาเลือก ตำแหน่ง">
+                      <Select {...field} label="Please select position">
                         {roles.map((role) => (
                           <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
                         ))}
@@ -436,16 +436,16 @@ const AddUserForm: React.FC = () => {
             {/* Conditional Rendering for Manager (RoleID === 3) */}
             {userType === 'internal' && (roleID === 3 || roleID === 4) && (
               <Grid size={{ xs: 12, sm: 3 }}>
-                <Typography variant="body1" className="title-field">จัดการ</Typography>
+                <Typography variant="body1" className="title-field">Management</Typography>
                 <FormControl fullWidth error={!!errors.RequestTypeID}>
-                  <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือก จัดการ</InputLabel>
+                  <InputLabel sx={{ color: '#6D6E70' }}>Please select management</InputLabel>
                   <Controller
                     name="RequestTypeID"
                     control={control}
                     defaultValue={0}
-                    rules={{ required: 'กรุณาเลือก จัดการ' }}
+                    rules={{ required: 'Please select management' }}
                     render={({ field }) => (
-                      <Select {...field} label="กรุณากรอก จัดการ">
+                      <Select {...field} label="Please select management">
                         {requiredTypes.map((requiredType) => (
                           <MenuItem key={requiredType.ID} value={requiredType.ID}>{requiredType.TypeName}</MenuItem>
                         ))}
@@ -460,22 +460,22 @@ const AddUserForm: React.FC = () => {
 
             {/* EmployeeID Field */}
             {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
-              <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
+              <Typography variant="body1" className="title-field">Employee ID</Typography>
               <Controller
                 name="EmployeeID"
                 control={control}
                 defaultValue=""
                 rules={{
-                  required: 'กรุณากรอกรหัสพนักงาน',
+                  required: 'Please enter employee ID',
                   pattern: {
                     value: /^[0-9]{6}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
-                    message: 'กรุณากรอกรหัสพนักงานที่ถูกต้อง มีตัวเลข 6 ตัว'
+                    message: 'Please enter a valid employee ID with 6 digits'
                   }
                 }}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="กรุณากรอกรหัสพนักงาน"
+                    label="Please enter employee ID"
                     fullWidth
                     error={!!errors.EmployeeID}  // เปลี่ยนจาก errors.Email เป็น errors.EmployeeID
                     helperText={String(errors.EmployeeID?.message || "" )}
@@ -493,16 +493,16 @@ const AddUserForm: React.FC = () => {
 
             {/* Package Dropdown */}
             <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
+              <Typography variant="body1" className="title-field">Privileges</Typography>
               <FormControl fullWidth error={!!errors.package}>
-                <InputLabel sx={{ color: '#6D6E70' }}>กรุณาเลือกสิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)</InputLabel>
+                <InputLabel sx={{ color: '#6D6E70' }}>Please select privileges (optional)</InputLabel>
                 <Controller
                   name="UserPackageID"
                   control={control}
                   defaultValue=""
 
                   render={({ field }) => (
-                    <Select {...field} label="กรุณาเลือกสิทธิพิเศษ (หากไม่มีไม่จำเป็นต้องเลือก)">
+                    <Select {...field} label="Please select privileges (optional)">
                       {packages.map((pkg) => (
                         <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
                       ))}
@@ -517,14 +517,14 @@ const AddUserForm: React.FC = () => {
             {userType === 'external' && (
               <>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant="body1" className="title-field">ชื่อบริษัท</Typography>
+                  <Typography variant="body1" className="title-field">Company Name</Typography>
                   <Controller
                     name="CompanyName"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกชื่อบริษัท' }}
+                    rules={{ required: 'Please enter company name' }}
                     render={({ field }) => (
-                      <TextField {...field} label="กรุณากรอกชื่อบริษัท" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")}
+                      <TextField {...field} label="Please enter company name" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")}
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -536,14 +536,14 @@ const AddUserForm: React.FC = () => {
                   />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
+                  <Typography variant="body1" className="title-field">Business Description</Typography>
                   <Controller
                     name="BusinessDetail"
                     control={control}
                     defaultValue=""
-                    rules={{ required: 'กรุณากรอกคำอธิบายธุรกิจ' }}
+                    rules={{ required: 'Please enter business description' }}
                     render={({ field }) => (
-                      <TextArea {...field} label="กรุณากรอกคำอธิบายธุรกิจ" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "") }
+                      <TextArea {...field} label="Please enter business description" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "") }
                         slotProps={{
                           inputLabel: {
                             sx: { color: '#6D6E70' }
@@ -568,10 +568,10 @@ const AddUserForm: React.FC = () => {
                 sx={{ marginRight: 2 }}
                 onClick={() => { reset(); setProfileImage(""); }} // เรียกใช้ reset() เพื่อรีเซ็ตฟอร์ม
               >
-                รีเซ็ต
+                Reset
               </Button>
               <Button type="submit" variant="contained" color="primary">
-                เพิ่มผู้ใช้งาน
+                Add User
               </Button>
 
 
