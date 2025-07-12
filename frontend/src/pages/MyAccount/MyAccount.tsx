@@ -207,7 +207,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">ชื่อ</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue={"-"}
                                         fullWidth
                                         value={String(user?.FirstName || "-")}
                                         autoFocus
@@ -222,7 +221,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">นามสกุล</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue="-"
                                         value={String(user?.LastName || "-")}
                                         fullWidth
                                         slotProps={{
@@ -243,7 +241,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">เพศ</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue="-"
                                         fullWidth
                                         value={user?.Gender?.name || "-"}
                                         slotProps={{
@@ -257,7 +254,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">หมายเลข โทรศัพท์</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue="-"
                                         fullWidth
                                         value={user?.Phone || "-"}
                                         slotProps={{
@@ -273,7 +269,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">อีเมล</Typography>
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue="-"
                                         fullWidth
                                         value={user?.Email || "-"}
                                         slotProps={{
@@ -296,7 +291,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                 <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
                                 <TextField
                                     id="outlined-read-only-input"
-                                    defaultValue="-"
                                     fullWidth
                                     value={user?.Role?.name || "-"}
                                     slotProps={{
@@ -314,7 +308,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                 <Typography variant="body1" className="title-field">จัดการ</Typography>
                                 <TextField
                                     id="outlined-read-only-input"
-                                    defaultValue="-"
                                     fullWidth
                                     value={String(user?.RequestType?.TypeName)}
                                     slotProps={{
@@ -332,7 +325,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                             <Typography variant="body1" className="title-field">รหัสพนักงาน</Typography>
                             <TextField
                                 id="outlined-read-only-input"
-                                defaultValue="-"
                                 fullWidth
                                 value={String(user?.EmployeeID || "-")}
                                 slotProps={{
@@ -350,7 +342,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                             <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
                             <TextField
                                 id="outlined-read-only-input"
-                                defaultValue="-"
                                 fullWidth
                                 value={String(user?.UserPackages && user.UserPackages.length > 0 ? user.UserPackages[0].Package?.package_name || "-" : "-")}
                                 slotProps={{
@@ -369,7 +360,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
                                     <TextField
                                         id="outlined-read-only-input"
-                                        defaultValue="-"
                                         fullWidth
                                         value={String(user?.CompanyName || "-")}
                                         slotProps={{
@@ -384,7 +374,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                                     <Typography variant="body1" className="title-field">คำอธิบายธุรกิจ</Typography>
                                     <TextArea
                                         id="outlined-read-only-input"
-                                        defaultValue={"-"}
                                         fullWidth
                                         value={String(user?.BusinessDetail || "-")}
                                         multiline

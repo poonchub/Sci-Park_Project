@@ -45,7 +45,7 @@ const AddUserForm: React.FC = () => {
       // ตรวจสอบว่าเลือกไฟล์ได้แค่ 1 ไฟล์
       if (selectedFiles.length > 1) {
         selectedFiles = selectedFiles.slice(0, 1);
-        alert("สามารถเลือกได้แค่ 1 ไฟล์เท่านั้น");
+        alert("You can only select 1 file.");
       }
 
       // แปลงไฟล์เป็น Base64
@@ -90,7 +90,7 @@ const AddUserForm: React.FC = () => {
 
     try {
       const response = await CreateUser(formData);
-      console.log('User created successfully', response);
+      
 
       if (response.status === "success") {
         setAlerts((prevAlerts) => [
@@ -186,7 +186,7 @@ const AddUserForm: React.FC = () => {
                     reset();  // Reset form data to initial state
                     setFile(null);  // Reset file state
                     setProfileImage(null);  // Reset profile image state
-                    console.log("User Type:::", userType);
+
                   }}
                 >
                   <FormControlLabel
@@ -418,7 +418,7 @@ const AddUserForm: React.FC = () => {
                   <Controller
                     name="RoleID"
                     control={control}
-                    defaultValue={1}
+                    defaultValue="" // <-- Use empty string as default
                     rules={{ required: 'Please select position' }}
                     render={({ field }) => (
                       <Select {...field} label="Please select position">

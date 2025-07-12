@@ -45,49 +45,49 @@ function ManageUsers() {
         },
         {
             field: 'EmployeeID',
-            headerName: 'รหัสพนักงาน',
+            headerName: 'Employee ID',
             type: 'string',
             flex: 1,
             valueGetter: (params: UserInterface) => params || '-',  // Default value if EmployeeID is missing
         },
         {
             field: 'UserNameCombined',
-            headerName: 'ผู้ใช้งาน',
+            headerName: 'User',
             sortable: false,
             flex: 1.2,
-            valueGetter: (params: UserInterface) => params || '-', // ใช้ UserNameCombined จาก JSON
+            valueGetter: (params: UserInterface) => params || '-', // Use UserNameCombined from JSON
         },
         {
             field: 'Email',
-            headerName: 'อีเมล',
+            headerName: 'Email',
             type: 'string',
             flex: 1,
             valueGetter: (params: UserInterface) => params || '-',
         },
         {
             field: 'Role',
-            headerName: 'ตำแหน่ง',
+            headerName: 'Position',
             type: 'string',
             flex: 1.2,
             valueGetter: (params: UserInterface) => params || '-',  // Default value if Role is missing
         },
         {
             field: 'PackageName',
-            headerName: 'สิทธิพิเศษ',
+            headerName: 'Privileges',
             type: 'string',
             flex: 1.2,
             valueGetter: (params: PackagesInterface) => params || '-',
         },
         {
             field: 'assigned',
-            headerName: 'จัดการ',
+            headerName: 'Manage',
             renderCell: (params) => (
                 <Box
                     sx={{
                         display: 'flex',
-                        justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวนอนให้ตรงกลาง
-                        alignItems: 'center', // จัดตำแหน่งปุ่มในแนวตั้งให้ตรงกลาง
-                        height: '100%', // ให้ Box ขยายเต็มความสูงของช่อง
+                        justifyContent: 'center', // Center button horizontally
+                        alignItems: 'center', // Center button vertically
+                        height: '100%', // Make Box expand to full height of cell
                     }}
                 >
                     <Button
@@ -103,7 +103,7 @@ function ManageUsers() {
                             }
                         }}
                     >
-                        แก้ไข
+                        Edit
                     </Button>
                 </Box>
             ),
@@ -116,12 +116,12 @@ function ManageUsers() {
 
     }
 
-    // ฟังก์ชันค้นหาข้อมูล
+    // Search function
     const handleSearch = () => {
         let filteredUsers = users;
 
 
-        // การกรองข้อมูลจากคำค้นหาผ่าน searchText
+        // Filter data from search text
         if (searchText !== '') {
             filteredUsers = filteredUsers.filter((user) =>
                 (user.UserNameCombined && user.UserNameCombined.toLowerCase().includes(searchText.toLowerCase())) ||
@@ -130,17 +130,17 @@ function ManageUsers() {
             );
         }
 
-        // การกรองข้อมูลตามตำแหน่ง (role) หากเลือกตำแหน่ง
+        // Filter data by position (role) if position is selected
         if (selectrole !== 0) {
             filteredUsers = filteredUsers.filter((user) => user.RoleID === selectrole);
         }
 
-        // การกรองข้อมูลตามสิทธิพิเศษ (package) หากเลือกสิทธิพิเศษ
+        // Filter data by privileges (package) if privileges are selected
         if (selectpackage !== 0) {
             filteredUsers = filteredUsers.filter((user) => user.UserPackageID === selectpackage);
         }
 
-        setUsers(filteredUsers);  // กำหนดผลลัพธ์ที่กรองแล้ว
+        setUsers(filteredUsers);  // Set filtered results
     };
 
     const handleOpenPopup = (userId: number) => {
@@ -150,19 +150,19 @@ function ManageUsers() {
 
     useEffect(() => {
         if (selectedUserId === null) {
-            // เมื่อปิด pop-up, รีเซ็ตการค้นหาหรือดึงข้อมูลใหม่จาก API
-            getUsers();  // ดึงข้อมูลผู้ใช้งานใหม่
+            // When popup is closed, reset search or fetch new data from API
+            getUsers();  // Fetch new user data
         }
-    }, [selectedUserId]);  // useEffect นี้จะทำงานทุกครั้งที่ selectedUserId เปลี่ยน
+    }, [selectedUserId]);  // This useEffect will run every time selectedUserId changes
 
     const handleClosePopup = () => {
         setOpenPopup(false);
-        setSelectPackage(0);  // รีเซ็ต selectpackage เมื่อปิด pop-up
-        setSelectRole(0);  // รีเซ็ต selectrole เมื่อปิด pop-up
+        setSelectPackage(0);  // Reset selectpackage when popup is closed
+        setSelectRole(0);  // Reset selectrole when popup is closed
         
-        setSelectedUserId(null); // รีเซ็ต selectedUserId เมื่อปิด pop-up
-        setSearchText('');  // รีเซ็ตข้อความการค้นหาหากต้องการ
-        setPage(1);         // รีเซ็ตไปยังหน้าที่ 1
+        setSelectedUserId(null); // Reset selectedUserId when popup is closed
+        setSearchText('');  // Reset search text if needed
+        setPage(1);         // Reset to page 1
 
     };
 
@@ -187,9 +187,9 @@ function ManageUsers() {
 
     const getPackages = async () => {
         try {
-            const res = await ListPackages();  // Call the API to get users data
+            const res = await ListPackages();  // Call the API to get packages data
             if (res) {
-                setPackages(res);  // Set the fetched users to state
+                setPackages(res);  // Set the fetched packages to state
             }
         } catch (error) {
             console.error("Error fetching package:", error);
@@ -198,9 +198,9 @@ function ManageUsers() {
 
     const getRoles = async () => {
         try {
-            const res = await ListRoles();  // Call the API to get users data
+            const res = await ListRoles();  // Call the API to get roles data
             if (res) {
-                setRoles(res);  // Set the fetched users to state
+                setRoles(res);  // Set the fetched roles to state
             }
         } catch (error) {
             console.error("Error fetching role:", error);
@@ -209,14 +209,14 @@ function ManageUsers() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedSearchText(searchText);  // เมื่อหยุดพิมพ์ 500ms จะตั้งค่า debouncedSearchText
-        }, 500);  // delay 500ms (หรือสามารถปรับให้เหมาะสม)
+            setDebouncedSearchText(searchText);  // When typing stops for 500ms, set debouncedSearchText
+        }, 500);  // delay 500ms (or can be adjusted as needed)
 
         return () => clearTimeout(timer);
     }, [searchText]);
 
     useEffect(() => {
-        getUsers();  // ดึงข้อมูลเมื่อหน้าโหลด
+        getUsers();  // Fetch data when page loads
         getPackages();
         getRoles();
     }, [selectrole, selectpackage, isEmployee, page, limit]);
@@ -247,7 +247,7 @@ function ManageUsers() {
 
             <Grid container spacing={3}>
                 <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h6" className="title">จัดการผู้ใช้งาน</Typography>
+                    <Typography variant="h6" className="title">Manage Users</Typography>
                 </Grid>
 
                 {selectedUserId !== null && (
@@ -272,12 +272,12 @@ function ManageUsers() {
                                 fullWidth
                                 className="search-box"
                                 variant="outlined"
-                                placeholder="ค้นหา (รหัสพนักงาน หรือ ชื่อผู้ใช้งาน หรือ อีเมล)"
+                                placeholder="Search (Employee ID or Username or Email)"
                                 margin="none"
                                 value={searchText}
                                 onChange={(e) => {
-                                    setSearchText(e.target.value);  // set ค่าของ searchText
-                                    handleSearch();  // เรียกฟังก์ชันค้นหา
+                                    setSearchText(e.target.value);  // set searchText value
+                                    handleSearch();  // call search function
                                 }}
                                 slotProps={{
                                     input: {
@@ -297,8 +297,8 @@ function ManageUsers() {
                                 <Select
                                     value={selectrole}
                                     onChange={(e) => {
-                                        setSelectRole(Number(e.target.value));  // อัปเดต selectrole
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        setSelectRole(Number(e.target.value));  // Update selectrole
+                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -308,7 +308,7 @@ function ManageUsers() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกตำแหน่ง'}</MenuItem>
+                                    <MenuItem value={0}>{'All Positions'}</MenuItem>
                                     {
                                         roles.length > 0 ? roles.map((item, index) => (
                                             <MenuItem key={index} value={item.ID}>{item.Name}</MenuItem>
@@ -323,9 +323,9 @@ function ManageUsers() {
                                 <Select
                                     value={isEmployee}  // กำหนดค่า isEmployee ที่เลือก
                                     onChange={(e) => {
-                                        // แปลงค่า value เป็น boolean หรือ undefined
+                                        // Convert value to boolean or undefined
                                         setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -335,9 +335,9 @@ function ManageUsers() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value="undefined">{'ทั้งหมด'}</MenuItem>  {/* ตัวเลือกไม่เลือก */}
-                                    <MenuItem value="true">{'เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกพนักงาน */}
-                                    <MenuItem value="false">{'ไม่เป็นพนักงาน'}</MenuItem>  {/* ตัวเลือกไม่เป็นพนักงาน */}
+                                    <MenuItem value="undefined">{'All'}</MenuItem>  {/* No selection option */}
+                                    <MenuItem value="true">{'Employee'}</MenuItem>  {/* Employee option */}
+                                    <MenuItem value="false">{'Non-Employee'}</MenuItem>  {/* Non-employee option */}
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -352,8 +352,8 @@ function ManageUsers() {
                                 <Select
                                     value={selectpackage}
                                     onChange={(e) => {
-                                        setSelectPackage(Number(e.target.value));  // อัปเดต selectpackage
-                                        handleSearch();  // เรียกฟังก์ชันกรองข้อมูล
+                                        setSelectPackage(Number(e.target.value));  // Update selectpackage
+                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -363,7 +363,7 @@ function ManageUsers() {
                                     }
                                     sx={{ borderRadius: 2 }}
                                 >
-                                    <MenuItem value={0}>{'ทุกสิทธิพิเศษ'}</MenuItem>
+                                    <MenuItem value={0}>{'All Privileges'}</MenuItem>
                                     {
                                         packages.length > 0 ? packages.map((item, index) => (
                                             <MenuItem key={index} value={item.ID}>{item.PackageName}</MenuItem>
@@ -415,7 +415,7 @@ function ManageUsers() {
                                     >
                                         <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
                                         <Typography variant="body1" sx={{ mt: 1 }}>
-                                            ไม่มีรายละเอียดที่ตรงกับคำค้นหา
+                                            No details match your search
                                         </Typography>
                                     </Box>
                                 ),

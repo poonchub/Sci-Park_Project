@@ -56,14 +56,17 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
   const [isemployee, setIsEmployee] = useState<boolean | undefined>(undefined);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
+  const [isLoading, setIsLoading] = useState(true); // Loading state
 
   const roleID = watch("RoleID");
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
+        let userData = null;
         if (userId > 0) {
-          const userData = await GetUserById(userId);
+          userData = await GetUserById(userId);
           setUser(userData);
           setValue('FirstName', userData.FirstName);
           setValue('LastName', userData.LastName);
@@ -76,12 +79,6 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('UserPackageID', userData.UserPackageID);
           setValue('RequestTypeID', userData.RequestTypeID);
           setIsEmployee(userData.IsEmployee);
-
-          setSelectedGender(userData.GenderID ?? null);
-          setSelectedRole(userData.RoleID ?? null);
-          setSelectedPackage(userData.UserPackageID ?? null);
-          setSelectedRequestType(userData.RequestTypeID ?? null);
-
         }
 
 
@@ -98,12 +95,22 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
         setPackages(packageData);
         setRequiredTypes(requiredTypeData);
 
+        // Set selected values after data is loaded
+        if (userData) {
+          setSelectedGender(userData.GenderID ?? null);
+          setSelectedRole(userData.RoleID ?? null);
+          setSelectedPackage(userData.UserPackageID ?? null);
+          setSelectedRequestType(userData.RequestTypeID ?? null);
+        }
+
       } catch (error) {
         console.error('Error loading user data:', error);
         setAlerts(prev => [
           ...prev,
           { type: 'error', message: 'Failed to load user data. Please try again.' },
         ]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -364,21 +371,22 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth error={!!errors.GenderID}>
                   <Typography variant="body1" className="title-field">เพศ</Typography>
-                  <Select
-                    labelId="gender-label"
-                    name="GenderID"
-                    value={selectedGender ?? user.GenderID}
-                    onChange={(e) => setSelectedGender(Number(e.target.value))}
-                    displayEmpty
-                  >
-                    <MenuItem value={0}>
-                      <em>-- กรุณาเลือกเพศ --</em>
-                    </MenuItem>
-                    {genders.map((gender) => (
-                      <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
-                    ))}
-
-                  </Select>
+                  {!isLoading && (
+                    <Select
+                      labelId="gender-label"
+                      name="GenderID"
+                      value={selectedGender ?? 0}
+                      onChange={(e) => setSelectedGender(Number(e.target.value))}
+                      displayEmpty
+                    >
+                      <MenuItem value={0}>
+                        <em>-- กรุณาเลือกเพศ --</em>
+                      </MenuItem>
+                      {genders.map((gender) => (
+                        <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
                   {errors.GenderID && <FormHelperText>{String(errors.GenderID.message)}</FormHelperText>}
                 </FormControl>
               </Grid>
@@ -388,20 +396,22 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <FormControl fullWidth error={!!errors.RoleID}>
                       <Typography variant="body1" className="title-field">ตำแหน่ง</Typography>
-                      <Select
-                        labelId="role-label"
-                        name="RoleID"
-                        value={selectedRole ?? user.RoleID}
-                        onChange={(e) => setSelectedRole(Number(e.target.value))}
-                        displayEmpty
-                      >
-                        <MenuItem value={0}>
-                          <em>-- กรุณาเลือก ตำแหน่ง --</em>
-                        </MenuItem>
-                        {roles.map((role) => (
-                          <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
-                        ))}
-                      </Select>
+                      {!isLoading && (
+                        <Select
+                          labelId="role-label"
+                          name="RoleID"
+                          value={selectedRole ?? 0}
+                          onChange={(e) => setSelectedRole(Number(e.target.value))}
+                          displayEmpty
+                        >
+                          <MenuItem value={0}>
+                            <em>-- กรุณาเลือก ตำแหน่ง --</em>
+                          </MenuItem>
+                          {roles.map((role) => (
+                            <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
+                          ))}
+                        </Select>
+                      )}
                       {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
                     </FormControl>
                   </Grid>
@@ -410,21 +420,23 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       <Grid size={{ xs: 12, sm: 6 }}>
         <FormControl fullWidth error={!!errors.RequestTypeID}>
           <Typography variant="body1" className="title-field">จัดการ</Typography>
-          <Select
-            labelId="request-type-label"
-            name="RequestTypeID"
-            defaultValue={1}
-            value={selectedRequestType ?? user.RequestTypeID} // Optional: Modify value based on condition
-            onChange={(e) => setSelectedRequestType(Number(e.target.value))}
-            displayEmpty
-          >
-            <MenuItem value={0}>
-              <em>-- กรุณาเลือก จัดการ --</em>
-            </MenuItem>
-            {requiredTypes.map((requiredType) => (
-              <MenuItem key={requiredType.ID} value={requiredType.ID}>{requiredType.TypeName}</MenuItem>
-            ))}
-          </Select>
+          {!isLoading && (
+            <Select
+              labelId="request-type-label"
+              name="RequestTypeID"
+              defaultValue={1}
+              value={selectedRequestType ?? 0} // Optional: Modify value based on condition
+              onChange={(e) => setSelectedRequestType(Number(e.target.value))}
+              displayEmpty
+            >
+              <MenuItem value={0}>
+                <em>-- กรุณาเลือก จัดการ --</em>
+              </MenuItem>
+              {requiredTypes.map((requiredType) => (
+                <MenuItem key={requiredType.ID} value={requiredType.ID}>{requiredType.TypeName}</MenuItem>
+              ))}
+            </Select>
+          )}
           {errors.RequestTypeID && <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>}
         </FormControl>
       </Grid>
@@ -437,18 +449,20 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth >
                   <Typography variant="body1" className="title-field">สิทธิพิเศษ</Typography>
-                  <Select
-                    labelId="package-label"
-                    name="UserPackageID"
-                    value={selectedPackage ?? user.UserPackageID ?? 0} // Default to 0 if no package is selected
-                    onChange={(e) => setSelectedPackage(Number(e.target.value))}
-                    displayEmpty
-                  >
-                    <MenuItem value={0}><em>-- ไม่มี สิทธิพิเศษ --</em></MenuItem>
-                    {packages.map((pkg) => (
-                      <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
-                    ))}
-                  </Select>
+                  {!isLoading && (
+                    <Select
+                      labelId="package-label"
+                      name="UserPackageID"
+                      value={selectedPackage ?? 0} // Default to 0 if no package is selected
+                      onChange={(e) => setSelectedPackage(Number(e.target.value))}
+                      displayEmpty
+                    >
+                      <MenuItem value={0}><em>-- ไม่มี สิทธิพิเศษ --</em></MenuItem>
+                      {packages.map((pkg) => (
+                        <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
                 </FormControl>
               </Grid>
             </Grid>
