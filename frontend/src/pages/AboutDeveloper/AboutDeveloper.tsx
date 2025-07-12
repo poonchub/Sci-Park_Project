@@ -55,9 +55,9 @@ const AboutDeveloper = () => {
                 facebook: "https://www.facebook.com/poonsub.nanawan/",
             },
         ],
-        advisor: {
+        Supervisor: {
             name: "Dr. Komsan Srivisut",
-            role: "Academic Advisor",
+            role: "Supervisor",
             bio: "Lecturer at Suranaree University of Technology with a PhD in Computer Science from the University of York, UK. Specialised in metaheuristics, hyper-heuristics, and optimisation techniques for software engineering and life sciences.",
             avatar: "./aboutdevelopment/advisors/Komsan_Srivisut.jpg",
             initials: "KS",
@@ -244,7 +244,7 @@ const AboutDeveloper = () => {
                     </Grid>
                 </Grid>
 
-                {/* Academic Advisor Section */}
+                {/* Supervisor Section */}
                 <Grid container size={{ xs: 12 }} spacing={1}>
                     <Grid
                         container
@@ -252,10 +252,10 @@ const AboutDeveloper = () => {
                         sx={{ alignItems: "baseline" }}
                     >
                         <FontAwesomeIcon icon={faGraduationCap} />
-                        <Typography variant="h6">Academic Advisor</Typography>
+                        <Typography variant="h6">Supervisor</Typography>
                     </Grid>
                     <Grid container size={{ xs: 12 }}>
-                        <PersonCard person={teamMembers.advisor} />
+                        <PersonCard person={teamMembers.Supervisor} />
                     </Grid>
                 </Grid>
 
