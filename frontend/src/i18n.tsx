@@ -7,7 +7,7 @@ i18n.use(initReactI18next).init({
       translation: {
         dashboard: "Dashboard",
         bookingRoom: "Booking Room",
-        maintenance: "Maintenace",
+        maintenance: "Maintenance",
         home: "Home",
         user: "User",
         manageUser: "Manage User",

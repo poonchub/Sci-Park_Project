@@ -18,8 +18,8 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
 
     const unsuccessfulDescription = data?.RequestStatus?.Name === 'Unsuccessful' ?
 		(
-			task?.Description ? task?.Description :
-            approval?.Description ? approval.Description : "Request cancelled by the requester."
+			task?.Note ? task?.Note :
+            approval?.Note ? approval.Note : "Request cancelled by the requester."
 		) : null
 
     return (
@@ -122,14 +122,14 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
 
                 {/* Rework Description information */}
                 {
-                    data.Inspection?.Description &&
+                    data.Inspection?.Note &&
                     <TableRow>
                         <TableCell>
                             <Typography className="title-list">Rework Notes</Typography>
                         </TableCell>
                         <TableCell>
                             <Typography>
-                                {data.Inspection?.Description}
+                                {data.Inspection?.Note}
                             </Typography>
                         </TableCell>
                     </TableRow>

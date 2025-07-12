@@ -132,7 +132,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
             alignItems: 'center',
             display: 'flex'
         }}>
-            <CardContent sx={{ p: '16px 24px', width: '100%' }}>
+            <CardContent sx={{ p: '16px 24px', width: '100%', overflow: 'scroll' }}>
                 <StepperComponent
                     activeStep={activeStep}
                     steps={filteredSteps

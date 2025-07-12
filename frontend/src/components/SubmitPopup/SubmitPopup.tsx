@@ -30,13 +30,13 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
         <Dialog open={open} onClose={onClose}>
             {/* Dialog title */}
             <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
-                ส่งงานซ่อม
+                Submit Maintenance Work
             </DialogTitle>
 
             <DialogContent sx={{ minWidth: 350 }}>
                 <Box display={'flex'}>
-                    <Typography sx={{ fontWeight: 500, mb: 1 }}>แนบภาพประกอบ</Typography>
-                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'text.secondary' }}>(สูงสุด 3 ไฟล์)</Typography>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach image</Typography>
+                    <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'text.secondary' }}>(maximum 3 files)</Typography>
                 </Box>
 
                 <Grid container spacing={1}>

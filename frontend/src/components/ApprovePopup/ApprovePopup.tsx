@@ -60,7 +60,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                     {/* Display location and request details */}
                     <Grid size={{ xs: 10, md: 12 }}>
                         <Typography sx={{ fontWeight: 600 }}>
-                            {requestSelected.Area?.Name === 'บริเวณอื่นๆ'
+                            {requestSelected.Area?.Name === 'Other Areas'
                                 ? requestSelected.AreaDetail
                                 : `${requestSelected.Area?.Name || "-"} - Floor ${requestSelected.Room?.Floor?.Number || "-"}, Room No. ${requestSelected.Room?.RoomNumber || "-"}`}
                         </Typography>
