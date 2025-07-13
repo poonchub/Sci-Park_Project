@@ -23,6 +23,7 @@ import {
     DialogContentText,
     DialogActions
 } from '@mui/material';
+import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 
 import {
     Event,
@@ -70,12 +71,68 @@ const BookingRoom = () => {
                 ]);
                 setIsLoadingData(false);
             } catch (error) {
-                console.error("Error fetching initial data:", error);
+                console.error("Error fetching booking rooms:", error);
             }
         };
 
         fetchInitialData();
     }, []);
+
+    // Analytics tracking
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        console.log('[ANALYTICS DEBUG] BookingRoom.tsx useEffect triggered - Component mounted');
+
+        // ส่ง request ตอนเข้า (duration = 0)
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem('userId')),
+            page_path: KEY_PAGES.BOOKING_ROOM,
+            page_name: 'Booking Room',
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                console.log('[ANALYTICS DEBUG] sendAnalyticsOnLeave called but already sent, skipping...');
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            console.log('[ANALYTICS DEBUG] Sending analytics:', {
+                duration,
+                is_bounce: isBounce,
+                timestamp: new Date().toISOString(),
+                component: 'BookingRoom.tsx'
+            });
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem('userId')),
+                page_path: KEY_PAGES.BOOKING_ROOM,
+                page_name: 'Booking Room',
+                duration,
+                is_bounce: isBounce,
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            console.log('[ANALYTICS DEBUG] beforeunload event triggered');
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            console.log('[ANALYTICS DEBUG] BookingRoom.tsx useEffect cleanup - Component unmounting');
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
+    }, []);
+
+    console.log('[ANALYTICS DEBUG] BookingRoom.tsx render called');
 
     // การจัดการ Filter
     const handleFilterChange = (e: { target: { name: any; value: any; }; }) => {

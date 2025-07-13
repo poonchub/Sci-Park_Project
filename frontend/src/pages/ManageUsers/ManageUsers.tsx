@@ -19,6 +19,8 @@ import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
+// Remove analytics import - no longer needed
+// import { analyticsService } from "../../services/analyticsService";
 
 function ManageUsers() {
     const [users, setUsers] = useState<UserInterface[]>([]);
@@ -216,10 +218,13 @@ function ManageUsers() {
     }, [searchText]);
 
     useEffect(() => {
-        getUsers();  // Fetch data when page loads
-        getPackages();
+        getUsers();
         getRoles();
-    }, [selectrole, selectpackage, isEmployee, page, limit]);
+        getPackages();
+        
+        // Remove analytics tracking from ManageUsers
+        // analyticsService.trackKeyPageVisit('MANAGE_USERS', 'Manage Users');
+    }, []);
 
     useEffect(() => {
         handleSearch();

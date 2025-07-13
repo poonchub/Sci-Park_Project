@@ -48,6 +48,7 @@ import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { useMediaQuery, useTheme } from "@mui/system";
 import { useTranslation } from "react-i18next";
+import { analyticsService } from "../../services/analyticsService";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -119,6 +120,9 @@ function Dashboard() {
         getMaintenanceRequests();
         getUser();
         getMaintenanceTypes();
+        
+        // Remove analytics tracking from Dashboard
+        // analyticsService.trackKeyPageVisit('DASHBOARD', 'Dashboard');
     }, []);
 
     useEffect(() => {

@@ -11,7 +11,52 @@ import axios from 'axios';
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
+import { handleSessionExpiration } from "../../utils/sessionManager";
 
+// สร้าง axios instance สำหรับจัดการ interceptor
+const axiosInstance = axios.create({
+    baseURL: apiUrl,
+    timeout: 10000,
+});
+
+// Request interceptor - เพิ่ม token ในทุก request
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor - จัดการ token หมดอายุ
+axiosInstance.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        // ตรวจสอบว่าเป็น error 401 (Unauthorized) หรือ token หมดอายุ
+        if (error.response?.status === 401) {
+            const errorMessage = error.response?.data?.error || error.response?.data?.Error;
+            
+            // ตรวจสอบว่าเป็น token หมดอายุหรือไม่
+            if (errorMessage && (
+                errorMessage.includes("JWT is expired") || 
+                errorMessage.includes("expired") ||
+                errorMessage.includes("token") ||
+                errorMessage.includes("unauthorized")
+            )) {
+                // ใช้ utility function สำหรับจัดการ session หมดอายุ
+                handleSessionExpiration();
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 
 // ฟังก์ชันสำหรับการ Login
 async function UserLogin(data: UserInterface) {
@@ -65,59 +110,36 @@ async function ChangePassword(data: any) {
 
 
 async function GetUserById(id:number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/user/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/user/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return false;
+    }
 }
 
 
 async function ListUsers(data: QuarryInterface) {
-    // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
-    const params = new URLSearchParams();
-    
-    // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
-    if (data.roleID && data.roleID > 0) params.append("role_id", String(data.roleID));
-    if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
-    params.append("page", String(data.page));  // แปลง page เป็น string
-    params.append("limit", String(data.limit));  // แปลง limit เป็น string
-    if (data.isemployee!== undefined) {
-        params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
+    try {
+        // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
+        const params = new URLSearchParams();
+        
+        // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
+        if (data.roleID && data.roleID > 0) params.append("role_id", String(data.roleID));
+        if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
+        params.append("page", String(data.page));  // แปลง page เป็น string
+        params.append("limit", String(data.limit));  // แปลง limit เป็น string
+        if (data.isemployee!== undefined) {
+            params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
+        }
+
+        const response = await axiosInstance.get(`/users?${params.toString()}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return false;
     }
-
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    // ใช้ fetch กับ URL ที่ประกอบไปด้วย query parameters
-    let res = await fetch(`${apiUrl}/users?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
 }
 
 
@@ -144,21 +166,9 @@ async function CreateUser(data: any) {
 
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
-    const token = localStorage.getItem("token");  
-    const requestOptions = {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    };
-
-    
-
-
-        
     try {
-        // Send FormData with requestOptions
-        
-        const response = await axios.post(`${apiUrl}/create-user`, formData, requestOptions);
+        // Send FormData with axiosInstance
+        const response = await axiosInstance.post(`/create-user`, formData);
 
         // Handle the response and return a custom object
         if (response.status === 201) {
@@ -340,90 +350,46 @@ async function CreateUserExternalOnly(data: any) {
 }
 
 async function GetOperators() {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/operators`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/operators`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching operators:", error);
+        return false;
+    }
 }
 
 // Request Statuses
 async function GetRequestStatuses() {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/request-statuses`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/request-statuses`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching request statuses:", error);
+        return false;
+    }
 }
 
 // Areas
 async function GetAreas() {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/areas`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/areas`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching areas:", error);
+        return false;
+    }
 }
 
 // Rooms
 async function GetRooms() {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/rooms`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/rooms`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching rooms:", error);
+        return false;
+    }
 }
 
 async function CreateRoom(roomData:RoomsInterface) {
@@ -1296,25 +1262,13 @@ async function ListNotifications() {
     return res;
 }
 async function GetUnreadNotificationCountsByUserID(id?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/notifications/count/${id}`, requestOptions).then(
-        (res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        }
-    );
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/notifications/count/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification counts:", error);
+        return false;
+    }
 }
 async function GetNotificationsByRequestAndUser(request_id?: number, user_id?: number) {
     const requestOptions = {
@@ -1463,6 +1417,93 @@ async function ListBookingRooms() {
         });
 
     return res;
+}
+
+// Analytics API
+export async function getSystemAnalytics() {
+    try {
+        const response = await axiosInstance.get('/analytics/system');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching system analytics:', error);
+        return false;
+    }
+}
+
+export async function getDashboardAnalytics() {
+    try {
+        const response = await axiosInstance.get('/analytics/dashboard');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching dashboard analytics:', error);
+        return false;
+    }
+}
+
+export async function trackPageVisit(data: any) {
+    console.log('[ANALYTICS DEBUG] HTTP trackPageVisit called with data:', {
+        user_id: data.user_id,
+        page_path: data.page_path,
+        page_name: data.page_name,
+        duration: data.duration,
+        is_bounce: data.is_bounce,
+        timestamp: new Date().toISOString()
+    });
+    
+    // แสดงสถานะ duration
+    if (data.duration === 0) {
+        console.log('[ANALYTICS DEBUG] Entry request (duration = 0) - will be skipped by backend');
+    } else if (data.duration <= 2) {
+        console.log('[ANALYTICS DEBUG] Short visit (duration <= 2s) - will be skipped by backend');
+    } else {
+        console.log('[ANALYTICS DEBUG] Valid visit (duration > 2s) - will be recorded by backend');
+    }
+    
+    try {
+        console.log('[ANALYTICS DEBUG] Making API call to /analytics/track');
+        const response = await axiosInstance.post('/analytics/track', data);
+        console.log('[ANALYTICS DEBUG] API response received:', response.data);
+        return response.data;
+    } catch (error: any) {
+        console.error('[ANALYTICS DEBUG] Error tracking page visit:', error);
+        if (error.response) {
+            console.error('[ANALYTICS DEBUG] Response data:', error.response.data);
+            console.error('[ANALYTICS DEBUG] Response status:', error.response.status);
+        }
+        return false;
+    }
+}
+
+export async function getVisitsRange(start: string, end: string) {
+    try {
+        const response = await axiosInstance.get(`/analytics/visits-range?start=${start}&end=${end}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching visits range:', error);
+        return false;
+    }
+}
+
+export async function getPopularPagesByPeriod(period: string) {
+    try {
+        const response = await axiosInstance.get(`/analytics/popular-pages-by-period?period=${period}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching popular pages by period:', error);
+        return false;
+    }
+}
+
+export async function getPerformanceAnalytics(start: string, end: string) {
+    try {
+        console.log('HTTP: Calling performance analytics API with:', { start, end });
+        const response = await axiosInstance.get(`/analytics/performance?start=${start}&end=${end}`);
+        console.log('HTTP: Performance analytics API response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching performance analytics:', error);
+        return false;
+    }
 }
 
 export {

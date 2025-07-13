@@ -50,7 +50,7 @@ func UserLogin(c *gin.Context) {
 	jwtWrapper := services.JwtWrapper{
 		SecretKey:       config.GetSecretKey(), // ใช้คีย์จาก config
 		Issuer:          "AuthService",
-		ExpirationHours: 72,  // หมดอายุใน 72 ชั่วโมง
+		ExpirationHours: 24,  // หมดอายุใน 24 ชั่วโมง (1 วัน)
 	}
 
 		// กำหนด role สำหรับผู้ใช้
