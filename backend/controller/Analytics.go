@@ -42,6 +42,11 @@ func TrackPageVisit(c *gin.Context) {
 		return
 	}
 
+	// ตรวจสอบและตั้งค่า interaction_count ถ้าไม่มี
+	if analytics.InteractionCount < 0 {
+		analytics.InteractionCount = 0
+	}
+
 	// ตั้งค่าเวลาปัจจุบัน
 	analytics.VisitTime = time.Now()
 
@@ -437,15 +442,50 @@ func GetPerformanceAnalytics(c *gin.Context) {
 		TotalVisits     int64   `json:"total_visits"`
 		UniqueVisitors  int64   `json:"unique_visitors"`
 		AverageDuration float64 `json:"average_duration"`
-		BounceRate      float64 `json:"bounce_rate"`
+		EngagementScore float64 `json:"engagement_score"`
 	}
 	var pagePerformance []PagePerformance
+	// Get raw data for engagement score calculation
+	var rawData []struct {
+		PagePath            string  `json:"page_path"`
+		PageName            string  `json:"page_name"`
+		TotalVisits         int64   `json:"total_visits"`
+		UniqueVisitors      int64   `json:"unique_visitors"`
+		AverageDuration     float64 `json:"average_duration"`
+		AverageInteractions float64 `json:"average_interactions"`
+	}
 	db.Model(&entity.Analytics{}).
-		Select("page_path, page_name, COUNT(*) as total_visits, COUNT(DISTINCT user_id) as unique_visitors, AVG(duration) as average_duration, SUM(CASE WHEN is_bounce THEN 1 ELSE 0 END)*100.0/COUNT(*) as bounce_rate").
+		Select("page_path, page_name, COUNT(*) as total_visits, COUNT(DISTINCT user_id) as unique_visitors, AVG(duration) as average_duration, AVG(interaction_count) as average_interactions").
 		Where("page_path IN ? AND visit_time >= ? AND visit_time <= ?", keyPages, start, end.Add(24*time.Hour-1)).
 		Group("page_path, page_name").
 		Order("total_visits DESC").
-		Scan(&pagePerformance)
+		Scan(&rawData)
+
+	// Calculate engagement score for each page
+	for _, data := range rawData {
+		// Engagement Score calculation
+		durationWeight := 0.6
+		interactionWeight := 0.4
+		maxDuration := 600.0
+		maxInteractions := 50.0
+
+		durationScore := (data.AverageDuration / maxDuration) * durationWeight
+		interactionScore := (data.AverageInteractions / maxInteractions) * interactionWeight
+
+		engagementScore := (durationScore + interactionScore) * 100
+		if engagementScore > 100 {
+			engagementScore = 100
+		}
+
+		pagePerformance = append(pagePerformance, PagePerformance{
+			PagePath:        data.PagePath,
+			PageName:        data.PageName,
+			TotalVisits:     data.TotalVisits,
+			UniqueVisitors:  data.UniqueVisitors,
+			AverageDuration: data.AverageDuration,
+			EngagementScore: engagementScore,
+		})
+	}
 
 	// Time slots (09:00-11:00, ... 21:00-23:00, Other)
 	type TimeSlot struct {
@@ -679,21 +719,42 @@ func updatePageAnalytics(pagePath, pageName string) {
 	totalVisits := len(analytics)
 	uniqueVisitors := make(map[uint]bool)
 	var totalDuration int
+	var totalInteractions int
 	bounceCount := 0
 
 	for _, a := range analytics {
 		uniqueVisitors[a.UserID] = true
 		totalDuration += a.Duration
+		totalInteractions += a.InteractionCount
 		if a.IsBounce {
 			bounceCount++
 		}
 	}
 
 	averageDuration := 0.0
+	averageInteractions := 0.0
 	bounceRate := 0.0
 	if totalVisits > 0 {
 		averageDuration = float64(totalDuration) / float64(totalVisits)
+		averageInteractions = float64(totalInteractions) / float64(totalVisits)
 		bounceRate = float64(bounceCount) / float64(totalVisits) * 100
+	}
+
+	// คำนวณ Engagement Score (0-100)
+	// Formula: (duration_weight * avg_duration + interaction_weight * avg_interactions) / max_score * 100
+	// duration_weight = 0.6, interaction_weight = 0.4
+	// max_duration = 600 seconds (10 minutes), max_interactions = 50
+	durationWeight := 0.6
+	interactionWeight := 0.4
+	maxDuration := 600.0
+	maxInteractions := 50.0
+
+	durationScore := (averageDuration / maxDuration) * durationWeight
+	interactionScore := (averageInteractions / maxInteractions) * interactionWeight
+
+	engagementScore := (durationScore + interactionScore) * 100
+	if engagementScore > 100 {
+		engagementScore = 100
 	}
 
 	// อัปเดตหรือสร้าง PageAnalytics
@@ -701,13 +762,15 @@ func updatePageAnalytics(pagePath, pageName string) {
 	if err := db.Where("page_path = ?", pagePath).First(&pageAnalytics).Error; err != nil {
 		// สร้างใหม่
 		pageAnalytics = entity.PageAnalytics{
-			PagePath:        pagePath,
-			PageName:        pageName,
-			TotalVisits:     totalVisits,
-			UniqueVisitors:  len(uniqueVisitors),
-			AverageDuration: averageDuration,
-			BounceRate:      bounceRate,
-			LastUpdated:     time.Now(),
+			PagePath:            pagePath,
+			PageName:            pageName,
+			TotalVisits:         totalVisits,
+			UniqueVisitors:      len(uniqueVisitors),
+			AverageDuration:     averageDuration,
+			BounceRate:          bounceRate,
+			EngagementScore:     engagementScore,
+			AverageInteractions: averageInteractions,
+			LastUpdated:         time.Now(),
 		}
 		db.Create(&pageAnalytics)
 	} else {
@@ -716,6 +779,8 @@ func updatePageAnalytics(pagePath, pageName string) {
 		pageAnalytics.UniqueVisitors = len(uniqueVisitors)
 		pageAnalytics.AverageDuration = averageDuration
 		pageAnalytics.BounceRate = bounceRate
+		pageAnalytics.EngagementScore = engagementScore
+		pageAnalytics.AverageInteractions = averageInteractions
 		pageAnalytics.LastUpdated = time.Now()
 		db.Save(&pageAnalytics)
 	}

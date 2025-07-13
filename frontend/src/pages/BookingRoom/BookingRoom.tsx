@@ -24,6 +24,7 @@ import {
     DialogActions
 } from '@mui/material';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 import {
     Event,
@@ -45,6 +46,14 @@ const BookingRoom = () => {
     const [selectedRoomtypes, setSelectedRoomTypes] = useState<RoomtypesInterface>()
 
     const [isLoadingData, setIsLoadingData] = useState(true);
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.BOOKING_ROOM,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] BookingRoom - Interaction count updated: ${count}`);
+        }
+    });
     const [filters, setFilters] = useState({
         price: 'all',
         capacity: 'all',
@@ -114,6 +123,7 @@ const BookingRoom = () => {
                 page_name: 'Booking Room',
                 duration,
                 is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
             });
         };
 

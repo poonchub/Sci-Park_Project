@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 // ข้อมูลองค์กร
 const organizationInfo = {
@@ -74,6 +75,14 @@ export default function SciparkHomePage() {
     const startTimeRef = useRef(Date.now());
     const sentRef = useRef(false);
 
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.HOME,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] Home - Interaction count updated: ${count}`);
+        }
+    });
+
     useEffect(() => {
         const startTime = Date.now();
         let sent = false;
@@ -109,6 +118,7 @@ export default function SciparkHomePage() {
                 page_name: 'Home Page',
                 duration,
                 is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
             });
         };
 

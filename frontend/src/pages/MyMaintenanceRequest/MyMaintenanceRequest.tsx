@@ -38,11 +38,20 @@ import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
+import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 
 function MyMaintenanceRequest() {
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.MY_MAINTENANCE_REQUEST,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] MyMaintenanceRequest - Interaction count updated: ${count}`);
+        }
+    });
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
@@ -846,6 +855,7 @@ function MyMaintenanceRequest() {
                 page_name: 'My Maintenance Request',
                 duration,
                 is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
             });
         };
 

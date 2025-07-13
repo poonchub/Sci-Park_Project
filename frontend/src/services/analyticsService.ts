@@ -65,7 +65,7 @@ export interface PerformanceAnalyticsData {
         total_visits: number;
         unique_visitors: number;
         average_duration: number;
-        bounce_rate: number;
+        engagement_score: number;
     }>;
     time_slots: Array<{
         slot: string;
@@ -88,6 +88,7 @@ export interface TrackPageVisitData {
     duration?: number;
     is_bounce?: boolean;
     is_returning?: boolean;
+    interaction_count?: number; // เพิ่ม interaction_count
 }
 
 // Key pages configuration - Only track 4 specific pages
@@ -143,6 +144,7 @@ class AnalyticsService {
             page_name: data.page_name,
             duration: data.duration,
             is_bounce: data.is_bounce,
+            interaction_count: data.interaction_count, // log interaction_count
             timestamp: new Date().toISOString()
         });
         
@@ -159,7 +161,7 @@ class AnalyticsService {
     /**
      * Track a key page visit with default data
      */
-    async trackKeyPageVisit(pagePath: KeyPagePath, pageName: string): Promise<boolean> {
+    async trackKeyPageVisit(pagePath: KeyPagePath, pageName: string, interaction_count?: number): Promise<boolean> {
         const userId = localStorage.getItem('userId');
         if (!userId) {
             console.warn('No user ID found for analytics tracking');
@@ -179,6 +181,7 @@ class AnalyticsService {
             duration: 0, // Will be updated when user leaves the page
             is_bounce: false,
             is_returning: this.isReturningUser(),
+            interaction_count: interaction_count ?? 0,
         };
 
         try {

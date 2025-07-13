@@ -737,7 +737,7 @@ const Analytics: React.FC = () => {
                                                             Avg Duration
                                                         </th>
                                                         <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd' }}>
-                                                            Bounce Rate
+                                                            Avg Engagement Score
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -788,8 +788,13 @@ const Analytics: React.FC = () => {
                                                                     </td>
                                                                     <td style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #eee' }}>
                                                                         <Chip 
-                                                                            label={`${page.bounce_rate.toFixed(1)}%`} 
-                                                                            sx={{ bgcolor: config.color + '22', color: config.color, fontWeight: 600 }} 
+                                                                            label={`${page.engagement_score.toFixed(1)}`} 
+                                                                            sx={{ 
+                                                                                bgcolor: page.engagement_score >= 70 ? '#4caf50' : 
+                                                                                        page.engagement_score >= 50 ? '#ff9800' : '#f44336',
+                                                                                color: '#fff', 
+                                                                                fontWeight: 600 
+                                                                            }} 
                                                                             size="small" 
                                                                         />
                                                                     </td>

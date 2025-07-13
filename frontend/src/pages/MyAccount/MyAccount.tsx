@@ -14,6 +14,7 @@ import { GetUserInterface } from '../../interfaces/IGetUser';
 
 import { UpdateProfileImage } from '../../services/http/index'
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 
 const MyAccount: React.FC = () => {
@@ -23,6 +24,14 @@ const MyAccount: React.FC = () => {
     const [user, setUser] = useState<GetUserInterface | null>();
     const [userType, setUserType] = useState<string>('internal');
     const [img,setImg] = useState<MaintenaceImagesInterface | null>()
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.MY_ACCOUNT,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] MyAccount - Interaction count updated: ${count}`);
+        }
+    });
 
 
     const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
@@ -152,6 +161,7 @@ useEffect(() => {
             page_name: 'My Account',
             duration,
             is_bounce: isBounce,
+            interaction_count: getInteractionCount(),
         });
     };
 
