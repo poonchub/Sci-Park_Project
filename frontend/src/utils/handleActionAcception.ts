@@ -33,7 +33,7 @@ const handleActionAcception = async (
     }
 
     if (actionType === "cancel" && (!note || note.trim() === "")) {
-        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a description before cancel requested." }]);
+        setAlerts((prev) => [...prev, { type: "warning", message: "Please enter a reason before cancel requested." }]);
         return;
     }
 

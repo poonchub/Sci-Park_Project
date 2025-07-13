@@ -85,18 +85,18 @@ function CheckRequest() {
 
     const cancellerName =
         maintenanceRequest?.RequestStatus?.Name === "Unsuccessful"
-            ? maintenanceTask?.Description
+            ? maintenanceTask?.Note
                 ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}`
-                : managerApproval?.Description
+                : managerApproval?.Note
                     ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
                     : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
             : "";
 
     const cancelDate =
         maintenanceRequest?.RequestStatus?.Name === "Unsuccessful"
-            ? maintenanceTask?.Description
+            ? maintenanceTask?.Note
                 ? dateFormat(maintenanceTask?.UpdatedAt || "")
-                : managerApproval?.Description
+                : managerApproval?.Note
                     ? dateFormat(managerApproval?.UpdatedAt || "")
                     : dateFormat(maintenanceRequest?.UpdatedAt || "")
             : "";

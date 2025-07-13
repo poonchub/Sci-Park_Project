@@ -23,7 +23,7 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                 {/* Requester information */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ผู้รับผิดชอบ</Typography>
+                        <Typography className="title-list">Operator</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
@@ -35,14 +35,14 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                 {/* Contact information */}
                 <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ข้อมูลการติดต่อ</Typography>
+                        <Typography className="title-list">Contact Information</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`โทรศัพท์: ${phoneFormat(data.MaintenanceTask?.User?.Phone || '')}`}
+                            {`Phone: ${phoneFormat(data.MaintenanceTask?.User?.Phone || '')}`}
                         </Typography>
                         <Typography>
-                            {`อีเมล: ${data.MaintenanceTask?.User?.Email}`}
+                            {`Email: ${data.MaintenanceTask?.User?.Email}`}
                         </Typography>
                     </TableCell>
                 </TableRow>
@@ -50,7 +50,7 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                 {/* Completed information */}
                 { (isCompleted || isWaitingForReview) && <TableRow>
                     <TableCell>
-                        <Typography className="title-list">เสร็จสิ้นเมื่อ</Typography>
+                        <Typography className="title-list">Completed On</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>{`${dateFormat(data.MaintenanceTask?.UpdatedAt || '')}, ${timeFormat(data.MaintenanceTask?.UpdatedAt || '')}`}</Typography>
@@ -60,7 +60,7 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                 {/* Inspection information */}
                 { (isCompleted) && <TableRow>
                     <TableCell>
-                        <Typography className="title-list">ตรวจรับโดย</Typography>
+                        <Typography className="title-list">Inspected By</Typography>
                     </TableCell>
                     <TableCell>
                         <Typography>{`${data.Inspection?.User?.FirstName} ${data.Inspection?.User?.LastName}`}</Typography>

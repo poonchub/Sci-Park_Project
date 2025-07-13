@@ -86,15 +86,18 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 <Typography sx={{ mb: 0.5, fontSize: 14 }}>Drag and drop image files here, or</Typography>
                 <Button variant="contained" component="label">
                     <FontAwesomeIcon icon={faImage} size="lg" />
-                    <Typography variant="textButtonClassic" >Click to select files</Typography>
+                    <Typography variant="textButtonClassic" >Click to select image files</Typography>
                     <input
-                        accept="image/*"
+                        accept="image/png, image/jpeg, image/jpg"
                         type="file"
                         multiple
                         hidden
                         onChange={handleFileChange}
                     />
                 </Button>
+                <Typography sx={{ fontSize: 13, color: 'gray', mt: 1 }}>
+                    Supported file types: .png, .jpg, .jpeg
+                </Typography>
             </Grid>
         </>
     );
