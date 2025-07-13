@@ -169,7 +169,7 @@ const AddUserForm: React.FC = () => {
           Add User
         </Typography>
         <Button
-          variant="text"
+          variant="outlined"
           startIcon={<FontAwesomeIcon icon={faBook} />}
           onClick={() => {
             const manualContent = `===========================================

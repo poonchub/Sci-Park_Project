@@ -254,7 +254,7 @@ function ManageUsers() {
                 <Grid className='title-box' size={{ xs: 10, md: 12 }} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" className="title">Manage Users</Typography>
                     <Button
-                        variant="text"
+                        variant="outlined"
                         startIcon={<FontAwesomeIcon icon={faBook} />}
                         onClick={() => {
                             const manualContent = `===========================================
