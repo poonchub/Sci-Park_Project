@@ -13,18 +13,25 @@ import {MaintenaceImagesInterface} from '../../interfaces/IMaintenaceImages'
 import { GetUserInterface } from '../../interfaces/IGetUser';
 
 import { UpdateProfileImage } from '../../services/http/index'
-
-
+import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 
 const MyAccount: React.FC = () => {
-
     const [file, setFile] = useState<File | null>(null);  // Store single file
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);// Fetch data when component mounts
     const [user, setUser] = useState<GetUserInterface | null>();
     const [userType, setUserType] = useState<string>('internal');
     const [img,setImg] = useState<MaintenaceImagesInterface | null>()
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.MY_ACCOUNT,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] MyAccount - Interaction count updated: ${count}`);
+        }
+    });
 
 
     const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
@@ -118,9 +125,62 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     fetchData();
 }, []);
 
+// Analytics tracking
+useEffect(() => {
+    const startTime = Date.now();
+    let sent = false;
 
+    console.log('[ANALYTICS DEBUG] MyAccount.tsx useEffect triggered - Component mounted');
 
+    // ส่ง request ตอนเข้า (duration = 0)
+    analyticsService.trackPageVisit({
+        user_id: Number(localStorage.getItem('userId')),
+        page_path: KEY_PAGES.MY_ACCOUNT,
+        page_name: 'My Account',
+        duration: 0, // ตอนเข้า duration = 0
+        is_bounce: false,
+    });
 
+    // ฟังก์ชันส่ง analytics ตอนออก
+    const sendAnalyticsOnLeave = (isBounce: boolean) => {
+        if (sent) {
+            console.log('[ANALYTICS DEBUG] sendAnalyticsOnLeave called but already sent, skipping...');
+            return;
+        }
+        sent = true;
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        console.log('[ANALYTICS DEBUG] Sending analytics:', {
+            duration,
+            is_bounce: isBounce,
+            timestamp: new Date().toISOString(),
+            component: 'MyAccount.tsx'
+        });
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem('userId')),
+            page_path: KEY_PAGES.MY_ACCOUNT,
+            page_name: 'My Account',
+            duration,
+            is_bounce: isBounce,
+            interaction_count: getInteractionCount(),
+        });
+    };
+
+    // ออกจากหน้าแบบปิด tab/refresh
+    const handleBeforeUnload = () => {
+        console.log('[ANALYTICS DEBUG] beforeunload event triggered');
+        sendAnalyticsOnLeave(true);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // ออกจากหน้าแบบ SPA (React)
+    return () => {
+        console.log('[ANALYTICS DEBUG] MyAccount.tsx useEffect cleanup - Component unmounting');
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        sendAnalyticsOnLeave(false);
+    };
+}, []);
+
+console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
 
     const isValidImage = (file: File) => {
         return file.type.startsWith("image/");

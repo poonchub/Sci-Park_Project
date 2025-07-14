@@ -209,7 +209,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
             </Typography>
           </div>
           <Button
-            variant="text"
+            variant="outlined"
             size="small"
             startIcon={<FontAwesomeIcon icon={faBook} />}
             onClick={() => {

@@ -17,6 +17,7 @@ import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import AddUserFormByCsv from "../pages/AddUser/AddUserFormByCsv";
+import Analytics from "../components/Analytics/Analytics";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -75,6 +76,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/room/add-room",
 				element: <AddRoomForm/>
+			},
+			{
+				path: "/analytics",
+				element: <Analytics/>
 			},
 			{
 				path: "/about-developer",

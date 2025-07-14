@@ -81,6 +81,10 @@ func SetupDatabase() {
 		&entity.RoomTypeImage{},
 		&entity.Equipment{},
 		&entity.RoomEquipment{},
+		&entity.Analytics{},
+		&entity.UserAnalyticsSummary{},
+		&entity.PageAnalytics{},
+		&entity.SystemAnalytics{},
 	)
 
 	if err != nil {

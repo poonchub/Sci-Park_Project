@@ -23,11 +23,14 @@ type JwtClaim struct {
 
 // GenerateToken generates a jwt token
 func (j *JwtWrapper) GenerateToken(email, role string) (signedToken string, err error) {
+   // หมดอายุตามจำนวนชั่วโมงที่กำหนด
+   expirationTime := time.Now().Local().Add(time.Hour * time.Duration(j.ExpirationHours))
+
    claims := &JwtClaim{
        Email: email,
        Role:  role, // กำหนดบทบาทในโทเค็น
        StandardClaims: jwt.StandardClaims{
-           ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(j.ExpirationHours)).Unix(),
+           ExpiresAt: expirationTime.Unix(),
            Issuer:    j.Issuer,
        },
    }

@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 	"sci-park_web-application/config"
-	"sci-park_web-application/middlewares"
 	"sci-park_web-application/controller"
+	"sci-park_web-application/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,18 +36,34 @@ func main() {
 		public.POST("/send-maintenance-status-email/:id", controller.SendMaintenanceStatusEmail)
 
 		// Genders
-		public.GET("/genders",controller.ListGenders)
+		public.GET("/genders", controller.ListGenders)
 
 		//Register
-		public.POST("/register",controller.CreateUserExternalOnly)
-		
+		public.POST("/register", controller.CreateUserExternalOnly)
+
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)
 	protected := r.Group("/")
 	protected.Use(middlewares.Authorizes(middlewares.User)) // ✅ Middleware ตรวจสอบ Token
 	{
-		// protected.GET("/users", controller.GetAllUsers)
+		// Users
+		protected.GET("/users", controller.ListUsers)
+		protected.GET("/user/:id", controller.GetUserByID)
+		protected.POST("/user", controller.CreateUser)
+		protected.PATCH("/user/:id", controller.UpdateUserByID)
+
+		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
+
+		// Analytics
+		protected.POST("/analytics/track", controller.TrackPageVisit)
+		protected.GET("/analytics/user/:user_id", controller.GetUserAnalytics)
+		protected.GET("/analytics/page/:page_path", controller.GetPageAnalytics)
+		protected.GET("/analytics/system", controller.GetSystemAnalytics)
+		protected.GET("/analytics/dashboard", controller.GetAnalyticsDashboard)
+		protected.GET("/analytics/visits-range", controller.GetVisitsRange)
+		protected.GET("/analytics/popular-pages-by-period", controller.GetPopularPagesByPeriod)
+		protected.GET("/analytics/performance", controller.GetPerformanceAnalytics)
 
 		// Areas
 		protected.GET("/areas", controller.ListAreas)
@@ -67,9 +83,8 @@ func main() {
 
 		// Users
 		protected.POST("/create-user", controller.CreateUser)
-		protected.GET("/user/:id", controller.GetUserByID)
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
-		
+
 		protected.PATCH("/change-password", controller.ChangePassword)
 		protected.GET("/operators", controller.ListOperators)
 		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
@@ -96,16 +111,14 @@ func main() {
 		// Room
 		protected.GET("/room/:id", controller.GetRoomByID)
 
-		
-
 		// Roles
-		protected.GET("/roles",controller.ListRoles)
+		protected.GET("/roles", controller.ListRoles)
 
 		// Packages
-		protected.GET("/packages",controller.ListPackages)
+		protected.GET("/packages", controller.ListPackages)
 
 		// RequestTypes
-		protected.GET("/request-types",controller.ListRequestType)
+		protected.GET("/request-types", controller.ListRequestType)
 
 		// ManagerApprovals
 		protected.POST("/manager-approval", controller.CreateManagerApproval)
@@ -134,11 +147,11 @@ func main() {
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
-	{	
+	{
 		// MaintenanceTasks
 		protected.GET("/maintenance-task/:id", controller.GetMaintenanceTaskByID)
 		protected.GET("/maintenance-tasks-option-id", controller.GetMaintenanceTasksByOperatorID)
-		
+
 		protected.DELETE("/maintenance-task/:id", controller.DeleteMaintenanceTaskByID)
 
 		// HondoverImages
@@ -156,15 +169,12 @@ func main() {
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
-	{	
-		// Users
-		protected.GET("/users", controller.ListUsers)
-
+	{
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)
 		protected.POST("/create-room", controller.CreateRoom)
 		protected.PATCH("/update-room/:id", controller.UpdateRoom)
-		
+
 		// Floors
 		protected.POST("/create-floor", controller.CreateFloor)
 		protected.PATCH("/update-floor/:id", controller.UpdateFloor)

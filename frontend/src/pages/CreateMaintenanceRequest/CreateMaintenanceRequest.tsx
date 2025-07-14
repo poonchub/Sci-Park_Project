@@ -62,6 +62,7 @@ import ImageUploader from "../../components/ImageUploader/ImageUploader";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
+import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -433,6 +434,9 @@ function CreateMaintenanceRequestPage() {
         };
 
         fetchInitialData();
+        
+        // Remove analytics tracking from CreateMaintenanceRequest
+        // analyticsService.trackKeyPageVisit(KEY_PAGES.CREATE_MAINTENANCE_REQUEST, 'Create Maintenance Request');
     }, []);
 
     useEffect(() => {

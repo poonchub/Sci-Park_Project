@@ -31,7 +31,8 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser  } from "lucide-react";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser,ChartPie   } from "lucide-react";
+import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -86,6 +87,14 @@ const WindowsLayout: React.FC = (props: any) => {
         }
     }, [location.pathname]);
 
+    // ตรวจสอบ token หมดอายุแบบฉลาด
+    useEffect(() => {
+        if (userId) {
+            const cleanup = setupSmartSessionMonitoring(userId);
+            return cleanup;
+        }
+    }, [userId]);
+
     const NAVIGATION: Navigation = [
         {
             kind: "header",
@@ -119,6 +128,11 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <LayoutDashboard size={iconSize} />,
         },
         {
+            segment: "analytics",
+            title: "Analytics",
+            icon: <ChartPie  />,
+        },
+        {
             segment: "maintenance",
             title: t("maintenance"),
             icon: <Wrench size={iconSize} />,
@@ -129,7 +143,7 @@ const WindowsLayout: React.FC = (props: any) => {
                         color="primary"
                         size="small"
                     />
-                ) : notificationCounts?.UnreadTasks && notificationCounts.UnreadTasks && isOperator ? (
+                ) : notificationCounts?.UnreadTasks && notificationCounts?.UnreadTasks && isOperator ? (
                     <Chip
                         label={notificationCounts.UnreadTasks}
                         color="primary"
@@ -233,6 +247,7 @@ const WindowsLayout: React.FC = (props: any) => {
         Admin: [
             "home",
             "dashboard",
+            "analytics",
             "booking-room",
             "maintenance",
             "maintenance/my-maintenance-request",
@@ -389,6 +404,7 @@ const WindowsLayout: React.FC = (props: any) => {
             }
         } catch (error) {
             console.error("Error fetching notification counts:", error);
+            // ถ้าเป็น error 401 (token หมดอายุ) จะถูกจัดการโดย axios interceptor แล้ว
         }
     };
 
@@ -403,6 +419,7 @@ const WindowsLayout: React.FC = (props: any) => {
             }
         } catch (error) {
             console.error("Error fetching new notification counts:", error);
+            // ถ้าเป็น error 401 (token หมดอายุ) จะถูกจัดการโดย axios interceptor แล้ว
         }
     };
 

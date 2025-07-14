@@ -51,8 +51,10 @@ import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import { useTranslation } from "react-i18next";
+
 import { Select } from "../../components/Select/Select";
 import { Activity, LineChart } from "lucide-react";
+import { analyticsService } from "../../services/analyticsService";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -137,6 +139,9 @@ function Dashboard() {
         getMaintenanceRequests();
         getUser();
         getMaintenanceTypes();
+        
+        // Remove analytics tracking from Dashboard
+        // analyticsService.trackKeyPageVisit('DASHBOARD', 'Dashboard');
     }, []);
 
     useEffect(() => {

@@ -716,7 +716,7 @@ const AddUserFormByCsv: React.FC = () => {
              </Button>
              
              <Button
-               variant="text"
+               variant="outlined"
                startIcon={<FontAwesomeIcon icon={faBook} />}
                disabled={isLoadingData}
                onClick={() => {

@@ -17,6 +17,9 @@ import {
     ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 // ข้อมูลองค์กร
 const organizationInfo = {
@@ -69,6 +72,72 @@ const mainFeatures = [
 
 // คอมโพเนนต์หลัก
 export default function SciparkHomePage() {
+    const startTimeRef = useRef(Date.now());
+    const sentRef = useRef(false);
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.HOME,
+        onInteractionChange: (count) => {
+            console.log(`[INTERACTION DEBUG] Home - Interaction count updated: ${count}`);
+        }
+    });
+
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        console.log('[ANALYTICS DEBUG] Home.tsx useEffect triggered - Component mounted');
+
+        // ส่ง request ตอนเข้า (duration = 0)
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem('userId')),
+            page_path: KEY_PAGES.HOME,
+            page_name: 'Home Page',
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                console.log('[ANALYTICS DEBUG] sendAnalyticsOnLeave called but already sent, skipping...');
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            console.log('[ANALYTICS DEBUG] Sending analytics:', {
+                duration,
+                is_bounce: isBounce,
+                timestamp: new Date().toISOString(),
+                component: 'Home.tsx'
+            });
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem('userId')),
+                page_path: KEY_PAGES.HOME,
+                page_name: 'Home Page',
+                duration,
+                is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            console.log('[ANALYTICS DEBUG] beforeunload event triggered');
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            console.log('[ANALYTICS DEBUG] Home.tsx useEffect cleanup - Component unmounting');
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
+    }, []);
+
+    console.log('[ANALYTICS DEBUG] Home.tsx render called');
 
     return (
         <Box className="home-page">

@@ -23,6 +23,7 @@ import InfoAlert from '../../components/Alert/InfoAlert';
 import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import EditRoomPopup from './EditRoomPopup';
+import { analyticsService } from "../../services/analyticsService";
 
 
 function ManageRooms() {
@@ -183,6 +184,9 @@ function ManageRooms() {
             FecthRoomStatus();  // Fetch room status data
 
         }
+        
+        // Remove analytics tracking from ManageRooms
+        // analyticsService.trackKeyPageVisit('MANAGE_ROOMS', 'Manage Rooms');
     }, []);  // This useEffect will run every time selectedUserId changes
 
     const FecthFloors = async () => {

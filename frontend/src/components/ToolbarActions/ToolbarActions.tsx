@@ -1,12 +1,15 @@
-import { IconButton, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { DarkMode, LightMode } from "@mui/icons-material";
+import { IconButton, Stack, ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
+import { DarkMode, LightMode, Settings } from "@mui/icons-material";
 import { useColorScheme } from "@mui/material/styles";
 import i18n from "../../i18n";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import CookieConsent from "../CookieConsent/CookieConsent";
 
 const ToolbarActions = () => {
   const { mode, setMode } = useColorScheme();
   const { i18n: i18nInstance } = useTranslation();
+  const [showCookieSettings, setShowCookieSettings] = useState(false);
 
   const toggleTheme = () => {
     setMode(mode === "light" ? "dark" : "light");
@@ -19,6 +22,10 @@ const ToolbarActions = () => {
     if (newLang) {
       i18n.changeLanguage(newLang);
     }
+  };
+
+  const handleCookieSettings = () => {
+    setShowCookieSettings(true);
   };
 
   return (
@@ -42,7 +49,25 @@ const ToolbarActions = () => {
         )}
       </IconButton>
 
-      
+      <Tooltip title="Cookie Settings">
+        <IconButton onClick={handleCookieSettings} color="inherit">
+          <Settings sx={{ color: "primary.main" }} />
+        </IconButton>
+      </Tooltip>
+
+      {/* Cookie Settings Dialog */}
+      <CookieConsent 
+        open={showCookieSettings}
+        onClose={() => setShowCookieSettings(false)}
+        onAccept={(preferences) => {
+          console.log('Cookie preferences updated:', preferences);
+          setShowCookieSettings(false);
+        }}
+        onDecline={() => {
+          console.log('Cookies declined');
+          setShowCookieSettings(false);
+        }}
+      />
     </Stack>
   );
 };

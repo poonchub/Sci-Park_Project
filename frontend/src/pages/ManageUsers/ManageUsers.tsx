@@ -19,6 +19,8 @@ import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
+// Remove analytics import - no longer needed
+// import { analyticsService } from "../../services/analyticsService";
 
 function ManageUsers() {
     const [users, setUsers] = useState<UserInterface[]>([]);
@@ -216,10 +218,13 @@ function ManageUsers() {
     }, [searchText]);
 
     useEffect(() => {
-        getUsers();  // Fetch data when page loads
-        getPackages();
+        getUsers();
         getRoles();
-    }, [selectrole, selectpackage, isEmployee, page, limit]);
+        getPackages();
+        
+        // Remove analytics tracking from ManageUsers
+        // analyticsService.trackKeyPageVisit('MANAGE_USERS', 'Manage Users');
+    }, []);
 
     useEffect(() => {
         handleSearch();
@@ -249,7 +254,7 @@ function ManageUsers() {
                 <Grid className='title-box' size={{ xs: 10, md: 12 }} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" className="title">Manage Users</Typography>
                     <Button
-                        variant="text"
+                        variant="outlined"
                         startIcon={<FontAwesomeIcon icon={faBook} />}
                         onClick={() => {
                             const manualContent = `===========================================
