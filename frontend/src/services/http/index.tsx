@@ -740,6 +740,29 @@ async function ListMaintenanceRequests() {
 
     return res;
 }
+async function ListMaintenanceRequestsByDateRange(
+    startDate: string | null , 
+    endDate: string | null
+) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/maintenance-requests/by-date?start_date=${startDate}&end_date=${endDate}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 async function GetMaintenanceRequestsForUser(
     statusID: string, 
     page: number, 
@@ -1513,6 +1536,7 @@ export {
 
     // MaintenanceRequests
     ListMaintenanceRequests,
+    ListMaintenanceRequestsByDateRange,
     GetMaintenanceRequestsForUser,
     GetMaintenanceRequestsForAdmin,
     GetMaintenanceRequestByID,

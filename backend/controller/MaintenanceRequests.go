@@ -512,3 +512,51 @@ func fetchMonthlyCounts(start, end time.Time, userID, maintenanceTypeID int) []s
 
 	return monthlyCounts
 }
+
+
+// GET /maintenance-requests/by-date
+func ListMaintenanceRequestsByDateRange(c *gin.Context) {
+    var requests []entity.MaintenanceRequest
+
+    // อ่าน query param
+    startDateStr := c.Query("start_date")
+    endDateStr := c.Query("end_date")
+
+    db := config.DB()
+
+    query := db.Preload("User").
+        Preload("Room.Floor").
+        Preload("Room.RoomType").
+        Preload("RequestStatus").
+        Preload("Area").
+        Preload("MaintenanceType")
+
+    // กำหนด layout และ timezone
+    layout := "2006-01-02"
+    loc, err := time.LoadLocation("Asia/Bangkok") // เปลี่ยนเป็น timezone ที่ต้องการ
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+        return
+    }
+
+    if startDateStr != "" && endDateStr != "" {
+        startDate, errStart := time.ParseInLocation(layout, startDateStr, loc)
+        endDate, errEnd := time.ParseInLocation(layout, endDateStr, loc)
+
+        if errStart != nil || errEnd != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format, expected YYYY-MM-DD"})
+            return
+        }
+
+        // กรองวันที่ในช่วง startDate ถึง endDate (แก้ฟิลด์ created_at ตามจริง)
+        query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+    }
+
+    results := query.Find(&requests)
+    if results.Error != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, &requests)
+}

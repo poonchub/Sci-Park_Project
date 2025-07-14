@@ -147,7 +147,9 @@ func main() {
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
 	{	
+		// Maintenance
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
+		protected.GET("/maintenance-requests/by-date", controller.ListMaintenanceRequestsByDateRange)
 
 		// BookingRooms
 		protected.GET("/booking-rooms", controller.ListBookingRooms)

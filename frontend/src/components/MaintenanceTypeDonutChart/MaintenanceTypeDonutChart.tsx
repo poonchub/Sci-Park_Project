@@ -128,17 +128,18 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                 </Typography>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
-                    {series.length > 0 ? (
-                        <ReactApexChart
-                            key={mode}
-                            options={options}
-                            series={series}
-                            type="donut"
-                            height={height}
-                        />
-                    ) : (
-                        <Typography color="text.secondary">Loading data...</Typography>
-                    )}
+                    {
+                        series.length > 0 ? (
+                            <ReactApexChart
+                                key={`${mode}-${completed}`}
+                                options={options}
+                                series={series}
+                                type="donut"
+                                height={height}
+                            />
+                        ) : (
+                            <Typography color="text.secondary">Loading data...</Typography>
+                        )}
                 </Box>
 
                 <Stack spacing={1.5} mt={2}>

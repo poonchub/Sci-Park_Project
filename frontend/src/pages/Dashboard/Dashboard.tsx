@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import {
     Box,
@@ -7,16 +7,20 @@ import {
     CardContent,
     Container,
     Divider,
+    FormControl,
     Grid,
+    InputAdornment,
     List,
     ListItem,
     ListItemIcon,
     ListItemText,
+    MenuItem,
     Tab,
     Tabs,
     Typography,
+    useTheme,
 } from "@mui/material";
-import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests } from "../../services/http";
+import { GetMaintenanceTypes, GetUserById, ListMaintenanceRequests, ListMaintenanceRequestsByDateRange } from "../../services/http";
 import { UserInterface } from "../../interfaces/IUser";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 
@@ -46,8 +50,9 @@ import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import { useMediaQuery, useTheme } from "@mui/system";
 import { useTranslation } from "react-i18next";
+import { Select } from "../../components/Select/Select";
+import { Activity, LineChart } from "lucide-react";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -62,6 +67,12 @@ function Dashboard() {
     const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
 
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
+    const [selectedDateOption, setSelectedDateOption] = useState<string>('daily')
+
+    const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
+        start: null,
+        end: null,
+    });
 
     const [valueTab, setValueTab] = useState(0);
 
@@ -80,7 +91,11 @@ function Dashboard() {
 
     const getMaintenanceRequests = async () => {
         try {
-            const res = await ListMaintenanceRequests();
+            const res = await ListMaintenanceRequestsByDateRange(
+                dateRange.start ? dateRange.start.format("YYYY-MM-DD") : '',
+                dateRange.end ? dateRange.end.format("YYYY-MM-DD") : ''
+            )
+
             if (res) {
                 setMaintenanceRequests(res);
             }
@@ -105,7 +120,10 @@ function Dashboard() {
     };
 
     const handleClearFillter = () => {
-        setSelectedDate(null)
+        setDateRange({
+            start: null,
+            end: null,
+        })
     }
 
     function a11yProps(index: number) {
@@ -126,16 +144,15 @@ function Dashboard() {
     }, [selectedDate]);
 
     useEffect(() => {
-        if (!maintenanceRequests?.length || !maintenanceTypes?.length) return;
+        if (dateRange.start && dateRange.end) {
+            getMaintenanceRequests()
+        }
+    }, [dateRange])
+
+    useEffect(() => {
+        if (!maintenanceTypes?.length) return;
 
         let dataToUse = maintenanceRequests;
-
-        if (selectedDate && dayjs(selectedDate).isValid()) {
-            dataToUse = maintenanceRequests.filter((req) => {
-                const createdAt = dayjs(req.CreatedAt);
-                return createdAt.month() === selectedDate.month() && createdAt.year() === selectedDate.year();
-            });
-        }
 
         setFilteredRequest(dataToUse);
 
@@ -149,8 +166,13 @@ function Dashboard() {
         const total = dataToUse.length;
         const completedCount = dataToUse.filter((item) => item.RequestStatus?.Name === "Completed").length;
 
-        const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-        setCompletedPercentage(percentage);
+        if (maintenanceRequests.length) {
+            const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+            setCompletedPercentage(percentage);
+        } else {
+            setCompletedPercentage(0)
+        }
+
 
         // ✅ สร้าง group เริ่มต้นจาก maintenanceTypes ทั้งหมด
         const grouped: Record<string, { total: number; completed: number; completedPercentage: number }> = {};
@@ -188,7 +210,22 @@ function Dashboard() {
         });
 
         setGroupedData(grouped);
-    }, [maintenanceRequests, selectedDate, maintenanceTypes]);
+    }, [maintenanceRequests, maintenanceTypes]);
+
+    const [openEndPicker, setOpenEndPicker] = useState(false);
+    const [openStartPicker, setOpenStartPicker] = useState(false);
+
+    useEffect(() => {
+        if (dateRange.start && !dateRange.end) {
+            setTimeout(() => setOpenEndPicker(true), 200);
+        }
+    }, [dateRange.start]);
+
+    useEffect(() => {
+        if (dateRange.end && !dateRange.start) {
+            setTimeout(() => setOpenStartPicker(true), 200);
+        }
+    }, [dateRange.end]);
 
     const theme = useTheme();
 
@@ -485,6 +522,7 @@ function Dashboard() {
                                             justifyContent: "space-between",
                                             display: "flex",
                                             flexDirection: "column",
+                                            gap: 1
                                         }}
                                     >
                                         <Grid
@@ -495,7 +533,7 @@ function Dashboard() {
                                             }}
                                             spacing={1}
                                         >
-                                            <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
+                                            <Grid size={{ xs: 12, sm: 12, sm650: 4 }}>
                                                 <Typography variant="subtitle1" color="text.main" fontWeight={600}>
                                                     Monthly Requests
                                                 </Typography>
@@ -507,59 +545,89 @@ function Dashboard() {
                                                     <Box component="span" sx={{ fontSize: 20, fontWeight: 700 }}>
                                                         Items
                                                     </Box>
-                                                    
+
                                                 </Typography>
                                             </Grid>
-                                            <Grid
-                                                container
-                                                size={{ xs: 10, mobileS: 4, md: 6 }}
-                                                sx={{
-                                                    justifyContent: { xs: "flex-start", mobileS: "flex-end" },
-                                                }}
-                                            >
-                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                    <DatePicker
-                                                        views={["year", "month"]}
-                                                        value={selectedDate}
-                                                        onChange={(value, _) => {
-                                                            if (dayjs.isDayjs(value)) {
-                                                                setSelectedDate(value);
-                                                            } else {
-                                                                setSelectedDate(null);
+                                            <Grid container size={{ xs: 12, sm: 12, sm650: 8 }} spacing={1}>
+                                                <Grid size={{ xs: 12, sm: 12, sm650: 3 }}>
+                                                    <FormControl fullWidth>
+                                                        <Select
+                                                            startAdornment={
+                                                                <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                                    <LineChart size={20} strokeWidth={3} />
+                                                                </InputAdornment>
                                                             }
-                                                        }}
-                                                        slots={{
-                                                            openPickerIcon: CalendarMonth,
-                                                        }}
-                                                        format="MM/YYYY"
+                                                            value={selectedDateOption}
+                                                            onChange={(value) => {
+                                                                setSelectedDateOption(value.target.value as string)
+                                                            }}
+                                                        >
+                                                            <MenuItem value={'daily'}>Daily</MenuItem>
+                                                            <MenuItem value={'weekly'}>Weekly</MenuItem>
+                                                            <MenuItem value={'monthly'}>Monthly</MenuItem>
+                                                            <MenuItem value={'yearly'}>Yearly</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+
+                                                <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                        <DatePicker
+                                                            label="Start Date"
+                                                            value={dateRange.start ?? null}
+                                                            onChange={(newValue) =>
+                                                                setDateRange((prev) => ({ ...prev, start: newValue ?? null }))
+                                                            }
+                                                            maxDate={dateRange.end ?? undefined}
+                                                            slots={{
+                                                                openPickerIcon: CalendarMonth,
+                                                            }}
+                                                            open={openStartPicker}
+                                                            onOpen={() => setOpenStartPicker(true)}
+                                                            onClose={() => setOpenStartPicker(false)}
+                                                        />
+                                                    </LocalizationProvider>
+                                                </Grid>
+                                                <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                        <DatePicker
+                                                            label="End Date"
+                                                            value={dateRange.end ?? null}
+                                                            onChange={(newValue) =>
+                                                                setDateRange((prev) => ({ ...prev, end: newValue ?? null }))
+                                                            }
+                                                            minDate={dateRange.start ?? undefined}
+                                                            slots={{
+                                                                openPickerIcon: CalendarMonth,
+                                                            }}
+                                                            open={openEndPicker}
+                                                            onOpen={() => setOpenEndPicker(true)}
+                                                            onClose={() => setOpenEndPicker(false)}
+                                                        />
+                                                    </LocalizationProvider>
+                                                </Grid>
+                                                <Grid size={{ xs: 12, sm: 2  }}>
+                                                    <Button
+                                                        onClick={handleClearFillter}
                                                         sx={{
-                                                            minWidth: "100px",
-                                                            maxWidth: "200px",
+                                                            minWidth: "35px",
+                                                            width: "100%",
+                                                            height: "45px",
+                                                            borderRadius: "10px",
+                                                            border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                            "&:hover": {
+                                                                boxShadow: "none",
+                                                                borderColor: "primary.main",
+                                                                backgroundColor: "transparent",
+                                                            },
                                                         }}
-                                                    />
-                                                </LocalizationProvider>
-                                            </Grid>
-                                            <Grid size={{ xs: 2, mobileS: 0.5, md: 1 }}>
-                                                <Button
-                                                    onClick={handleClearFillter}
-                                                    sx={{
-                                                        minWidth: "35px",
-                                                        width: "100%",
-                                                        height: "45px",
-                                                        borderRadius: "10px",
-                                                        border: "1px solid rgb(109, 110, 112, 0.4)",
-                                                        "&:hover": {
-                                                            boxShadow: "none",
-                                                            borderColor: "primary.main",
-                                                            backgroundColor: "transparent",
-                                                        },
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
-                                                </Button>
+                                                    >
+                                                        <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
+                                                    </Button>
+                                                </Grid>
                                             </Grid>
                                         </Grid>
-                                        <ApexLineChart data={filteredRequest} height={250} selectedDate={selectedDate} />
+                                        <ApexLineChart selectedDateOption={selectedDateOption} data={filteredRequest} height={250} dateRange={dateRange} />
                                     </Card>
                                 </Grid>
                             </Grid>

@@ -130,7 +130,6 @@ const FilterSection = ({
                                         </MenuItem>
                                     ))}
                             </Select>
-
                         </FormControl>
                     </Grid>
 
