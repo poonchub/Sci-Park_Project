@@ -5,7 +5,7 @@ import { DatePicker as MuiDatePicker } from "@mui/x-date-pickers";
 export const DatePicker = styled(MuiDatePicker)(() => ({
     // Input styling
     "& .MuiInputBase-root": {
-        borderRadius: "10px",         // Rounded corners
+        borderRadius: "10px",
         height: '45px',
         border: "none",
         width: '100%'
@@ -15,6 +15,12 @@ export const DatePicker = styled(MuiDatePicker)(() => ({
         borderColor: "rgb(109, 110, 112, 0.4)",
     },
     "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#F26522 !important", // Highlight on hover
+        borderColor: "#F26522 !important",
+    },
+    "& .MuiInputLabel-root": {
+        top: "-4px",
+    },
+    "& .MuiInputLabel-shrink": {
+        top: "2px",
     },
 }));

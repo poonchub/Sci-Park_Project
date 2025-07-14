@@ -11,6 +11,7 @@ import {
     Button,
     Card,
     CardContent,
+    Container,
     Grid,
     IconButton,
     Tooltip,
@@ -202,90 +203,93 @@ const AboutDeveloper = () => {
 
     return (
         <div className="about-developer-page">
-            <Grid container spacing={3}>
-                <Grid className="title-box" size={{ xs: 5, md: 5 }}>
-                    <Typography
-                        variant="h5"
-                        className="title"
-                        sx={{ fontWeight: 700 }}
-                    >
-                        Development Team
-                    </Typography>
-                </Grid>
 
-                {/* Back Button */}
-                <Grid
-                    container
-                    size={{ xs: 7, md: 7 }}
-                    sx={{ justifyContent: "flex-end" }}
-                >
-                    <Button variant="outlined" onClick={() => navigate(-1)}>
-                        <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                        <Typography variant="textButtonClassic">
-                            ย้อนกลับ
+            <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+                <Grid container spacing={3}>
+                    <Grid className="title-box" size={{ xs: 5, md: 5 }}>
+                        <Typography
+                            variant="h5"
+                            className="title"
+                            sx={{ fontWeight: 700 }}
+                        >
+                            Development Team
                         </Typography>
-                    </Button>
-                </Grid>
+                    </Grid>
 
-                {/* Developers Section */}
-                <Grid container size={{ xs: 12 }} spacing={2}>
+                    {/* Back Button */}
                     <Grid
                         container
-                        direction="row"
-                        sx={{ alignItems: "baseline" }}
+                        size={{ xs: 7, md: 7 }}
+                        sx={{ justifyContent: "flex-end" }}
                     >
-                        <FontAwesomeIcon icon={faUsers} />
-                        <Typography variant="h6">Developers</Typography>
+                        <Button variant="outlined" onClick={() => navigate(-1)}>
+                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                            <Typography variant="textButtonClassic">
+                                ย้อนกลับ
+                            </Typography>
+                        </Button>
                     </Grid>
-                    <Grid container size={{ xs: 12 }}>
-                        {teamMembers.students.map((student, index) => (
-                            <PersonCard key={index} person={student} />
-                        ))}
-                    </Grid>
-                </Grid>
 
-                {/* Supervisor Section */}
-                <Grid container size={{ xs: 12 }} spacing={1}>
-                    <Grid
-                        container
-                        direction="row"
-                        sx={{ alignItems: "baseline" }}
-                    >
-                        <FontAwesomeIcon icon={faGraduationCap} />
-                        <Typography variant="h6">Supervisor</Typography>
+                    {/* Developers Section */}
+                    <Grid container size={{ xs: 12 }} spacing={2}>
+                        <Grid
+                            container
+                            direction="row"
+                            sx={{ alignItems: "baseline" }}
+                        >
+                            <FontAwesomeIcon icon={faUsers} />
+                            <Typography variant="h6">Developers</Typography>
+                        </Grid>
+                        <Grid container size={{ xs: 12 }}>
+                            {teamMembers.students.map((student, index) => (
+                                <PersonCard key={index} person={student} />
+                            ))}
+                        </Grid>
                     </Grid>
-                    <Grid container size={{ xs: 12 }}>
-                        <PersonCard person={teamMembers.Supervisor} />
-                    </Grid>
-                </Grid>
 
-                {/* Industry Sponsor Section */}
-                <Grid container size={{ xs: 12 }} spacing={1}>
-                    <Grid
-                        container
-                        direction="row"
-                        sx={{ alignItems: "baseline" }}
-                    >
-                        <FontAwesomeIcon icon={faGraduationCap} />
-                        <Typography variant="h6">Industry Sponsor</Typography>
+                    {/* Supervisor Section */}
+                    <Grid container size={{ xs: 12 }} spacing={1}>
+                        <Grid
+                            container
+                            direction="row"
+                            sx={{ alignItems: "baseline" }}
+                        >
+                            <FontAwesomeIcon icon={faGraduationCap} />
+                            <Typography variant="h6">Supervisor</Typography>
+                        </Grid>
+                        <Grid container size={{ xs: 12 }}>
+                            <PersonCard person={teamMembers.Supervisor} />
+                        </Grid>
                     </Grid>
-                    <Grid container size={{ xs: 12 }}>
-                        <PersonCard person={teamMembers.supporter} />
-                    </Grid>
-                </Grid>
 
-                {/* Footer */}
-                <Grid size={{ xs: 12 }} sx={{ textAlign: "center", mt: 2 }}>
-                    <Typography
-                        variant="body1"
-                        color="text.secondary"
-                        fontSize={14}
-                    >
-                        Proudly developed by students for SCiPark • Academic
-                        Year 2024
-                    </Typography>
+                    {/* Industry Sponsor Section */}
+                    <Grid container size={{ xs: 12 }} spacing={1}>
+                        <Grid
+                            container
+                            direction="row"
+                            sx={{ alignItems: "baseline" }}
+                        >
+                            <FontAwesomeIcon icon={faGraduationCap} />
+                            <Typography variant="h6">Industry Sponsor</Typography>
+                        </Grid>
+                        <Grid container size={{ xs: 12 }}>
+                            <PersonCard person={teamMembers.supporter} />
+                        </Grid>
+                    </Grid>
+
+                    {/* Footer */}
+                    <Grid size={{ xs: 12 }} sx={{ textAlign: "center", mt: 2 }}>
+                        <Typography
+                            variant="body1"
+                            color="text.secondary"
+                            fontSize={14}
+                        >
+                            Proudly developed by students for SCiPark • Academic
+                            Year 2024
+                        </Typography>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Container>
         </div>
     );
 };
