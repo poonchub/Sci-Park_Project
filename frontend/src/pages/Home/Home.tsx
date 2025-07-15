@@ -17,9 +17,12 @@ import {
     ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
+import { apiUrl, ListNews, ListPinnedNews } from '../../services/http';
+import { NewsImagesInterface } from '../../interfaces/NewsImages';
+import { NewsInterface } from '../../interfaces/News';
 
 // ข้อมูลองค์กร
 const organizationInfo = {
@@ -28,31 +31,6 @@ const organizationInfo = {
     mission: "Dedicated to developing and supporting research in science and technology to enhance quality of life and drive the nation's economy.",
     about: "We provide a comprehensive support system including repair requests, meeting room bookings, and many other services to enable personnel to work at their highest efficiency."
 };
-
-// Sample news data
-const newsItems = [
-    {
-        id: 1,
-        title: "Launch of the New Scipark System",
-        date: "May 15, 2025",
-        summary: "We are pleased to announce the launch of the revamped Scipark system featuring modern repair request and meeting room booking capabilities.",
-        image: "/api/placeholder/400/250"
-    },
-    {
-        id: 2,
-        title: "Annual Science Conference 2025",
-        date: "May 10, 2025",
-        summary: "Get ready for the 2025 Annual Science Conference happening this June with international speakers.",
-        image: "/api/placeholder/400/250"
-    },
-    {
-        id: 3,
-        title: "Call for New Research Proposals",
-        date: "May 5, 2025",
-        summary: "Scipark is accepting new research proposals in clean technology and renewable energy. Applications open now through June 30.",
-        image: "/api/placeholder/400/250"
-    }
-];
 
 // ฟีเจอร์หลักของระบบ
 const mainFeatures = [
@@ -72,6 +50,9 @@ const mainFeatures = [
 
 // คอมโพเนนต์หลัก
 export default function SciparkHomePage() {
+    const [news, setNews] = useState<NewsInterface[]>([])
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
     const startTimeRef = useRef(Date.now());
     const sentRef = useRef(false);
 
@@ -82,6 +63,39 @@ export default function SciparkHomePage() {
             console.log(`[INTERACTION DEBUG] Home - Interaction count updated: ${count}`);
         }
     });
+
+    const getNews = async () => {
+        try {
+            const res = await ListPinnedNews()
+            if (res) {
+                setNews(res)
+            }
+        } catch (error) {
+            console.error("Error fetching news:", error);
+        }
+    }
+
+    function formatDate(isoString: string): string {
+        const date = new Date(isoString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getNews()]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
+    }, []);
 
     useEffect(() => {
         const startTime = Date.now();
@@ -299,69 +313,71 @@ export default function SciparkHomePage() {
                 </Typography>
 
                 <Grid container spacing={4}>
-                    {newsItems.map((news) => (
-                        <Grid key={news.id} size={{ xs: 12, md: 4 }}>
-                            <Card
-                                sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'transform 0.3s, box-shadow 0.3s',
-                                    '&:hover': {
-                                        transform: 'translateY(-5px)',
-                                        boxShadow: 6,
-                                    }
-                                }}
-                            >
-                                <CardMedia
-                                    component="img"
-                                    height="200"
-                                    image={news.image}
-                                    alt={news.title}
-                                />
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Chip
-                                            label={news.date}
-                                            size="small"
-                                            sx={{ bgcolor: 'primary.light', color: 'white' }}
+                    {news.map((news) => {
+                        return (
+                            <Grid key={news.ID} size={{ xs: 4 }}>
+                                <Card
+                                    sx={{
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        borderRadius: 2
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            overflow: 'hidden',
+                                            height: 400,
+                                            '& img': {
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover',
+                                                transition: 'transform 0.3s ease-in-out',
+                                            },
+                                            '&:hover img': {
+                                                transform: 'scale(1.05)',
+                                            },
+                                        }}
+                                    >
+                                        <img
+                                            src={`${apiUrl}/${news.NewsImages?.[0]?.FilePath}`}
+                                            alt={news.Title}
                                         />
                                     </Box>
-                                    <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'medium' }}>
-                                        {news.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {news.summary}
-                                    </Typography>
-                                </CardContent>
-                                <Box sx={{ p: 2, pt: 0 }}>
-                                    <Button
-                                        size="small"
-                                        sx={{
-                                            color: 'customBlue',
-                                            "&:hover": {
-                                                background: 'none',
-                                                boxShadow: 'none'
-                                            }
-                                        }}
-                                        endIcon={<ArrowRight />}
-                                    >
-                                        Read More
-                                    </Button>
-                                </Box>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
 
+                                    <CardContent sx={{ flexGrow: 1 }}>
+                                        <Box sx={{ mb: 1.5 }}>
+                                            <Chip
+                                                label={formatDate(news.DisplayStart ?? '')}
+                                                size="small"
+                                                sx={{ bgcolor: 'primary.light', color: 'white', padding: 2, fontWeight: 600 }}
+                                            />
+                                        </Box>
+                                        <Box sx={{ px: 1 }}>
+                                            <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'medium' }}>
+                                                {news.Title}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {news.Summary}
+                                            </Typography>
+                                        </Box>
+
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        )
+                    })}
+                </Grid>
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        endIcon={<ArrowRight />}
-                    >
-                        View All News
-                    </Button>
+                    <Link to='/news'>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            endIcon={<ArrowRight />}
+                        >
+                            View All News
+                        </Button>
+                    </Link>
                 </Box>
 
                 {/* Statistics & Highlights */}

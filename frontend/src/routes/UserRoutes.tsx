@@ -8,6 +8,7 @@ import MyMaintenanceRequest from "../pages/MyMaintenanceRequest/MyMaintenanceReq
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
+import News from "../pages/News/News";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -41,6 +42,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "my-account",
 				element: <MyAccount/>
+			},
+			{
+				path: "/news",
+				element: <News/>
 			},
 			{
 				path: "",

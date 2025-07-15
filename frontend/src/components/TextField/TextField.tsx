@@ -7,7 +7,7 @@ export const TextField = styled(MuiTextField)(() => ({
 
     // Custom styling for input
     "& .custom-input": {
-        padding: "10px",
+        padding: "12px 14px",
         height: "auto !important",
     },
 

@@ -22,6 +22,7 @@ import {
     GetMaintenanceTypes,
     GetNotificationsByTaskAndUser,
     GetRequestStatuses,
+    GetUserById,
     socketUrl,
     UpdateNotificationByID,
 } from "../../services/http";
@@ -53,6 +54,8 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 import { Base64 } from "js-base64";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { UserInterface } from "../../interfaces/IUser";
 
 function a11yProps(index: number) {
     return {
@@ -66,6 +69,7 @@ function AcceptWork() {
     const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
     const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>();
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
+    const [user, setUser] = useState<UserInterface>();
 
     const [searchText, setSearchText] = useState("");
     const [selectedType, setSelectedType] = useState(0);
@@ -129,6 +133,9 @@ function AcceptWork() {
                         const isInProgress = params.row.RequestStatus?.Name === "In Progress";
                         const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting For Review";
 
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+
                         const cardItem = document.querySelector(".card-row-container") as HTMLElement;
                         let width;
                         if (cardItem) {
@@ -138,17 +145,21 @@ function AcceptWork() {
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-row-container">
                                 <Grid size={{ xs: 7 }}>
-                                    <Typography
-                                        sx={{
-                                            fontSize: 16,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            maxWidth: "100%",
-                                        }}
-                                    >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
-                                    </Typography>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        {hasNotificationForUser && <AnimatedBell />}
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
+                                        </Typography>
+                                    </Box>
+
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
                                         <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
                                         <Typography
@@ -331,7 +342,15 @@ function AcceptWork() {
                     align: "center",
                     headerAlign: "center",
                     renderCell: (params) => {
-                        return params.row.MaintenanceRequest?.ID;
+                        const requestID = params.row.MaintenanceRequest.ID;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                        return (
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography>{requestID}</Typography>
+                            </Box>
+                        );
                     },
                 },
                 {
@@ -745,6 +764,17 @@ function AcceptWork() {
         }
     };
 
+    const getUser = async () => {
+        try {
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
+            if (res) {
+                setUser(res);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
     const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
 
@@ -832,7 +862,11 @@ function AcceptWork() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getMaintenanceTypes(), getRequestStatuses()]);
+                await Promise.all([
+                    getMaintenanceTypes(),
+                    getRequestStatuses(),
+                    getUser(),
+                ]);
                 setIsLoadingInitialData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -911,7 +945,7 @@ function AcceptWork() {
                 setOpenConfirm={setOpenConfirmCancelled}
                 handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
                 title="Confirm Maintenance Cancellation"
-                message="Are you sure you want to cancel this maintenance request? This action cannot be undone.ด้"
+                message="Are you sure you want to cancel this maintenance request? This action cannot be undone."
                 showNoteField
                 buttonActive={isBottonActive}
             />

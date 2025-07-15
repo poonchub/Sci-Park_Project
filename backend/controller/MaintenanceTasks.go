@@ -179,7 +179,8 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		Preload("MaintenanceRequest.Room.Floor").
 		Preload("MaintenanceRequest.Room.RoomType").
 		Preload("MaintenanceRequest.Inspection.User").
-		Preload("MaintenanceRequest.User")
+		Preload("MaintenanceRequest.User").
+		Preload("Notifications")
 
 	// ✅ ใช้ Find() ร่วมกับ Limit() และ Offset()
 	if err := query.Order("maintenance_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&maintenanceTasks).Error; err != nil {

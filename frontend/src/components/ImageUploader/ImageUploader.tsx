@@ -57,7 +57,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                 sx={{
                     border: "2px dashed #0094DE",
                     borderRadius: 2,
-                    p: 1.8,
+                    px: 1.8,
+                    py: 4,
                     textAlign: "center",
                     backgroundColor: "rgba(0, 162, 255, 0.1)",
                 }}

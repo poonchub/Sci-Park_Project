@@ -9,6 +9,7 @@ import CreateMaintenanceRequestPage from "../pages/CreateMaintenanceRequest/Crea
 import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
+import News from "../pages/News/News";
 const OperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -16,44 +17,48 @@ const OperatorRoutes = (): RouteObject => {
         children: [
             {
                 path: "/home",
-                element: <Home/>
+                element: <Home />
             },
             {
                 path: "/booking-room",
-                element: <BookingRoom/>
+                element: <BookingRoom />
             },
             {
                 path: "/maintenance/accept-work",
-                element: <AcceptWork/>
+                element: <AcceptWork />
             },
             {
-				path: "/maintenance/my-maintenance-request",
-				element: <MyMaintenanceRequest/>
-			},
+                path: "/maintenance/my-maintenance-request",
+                element: <MyMaintenanceRequest />
+            },
             {
-				path: "/maintenance/create-maintenance-request",
-				element: <CreateMaintenanceRequestPage/>
-			},
+                path: "/maintenance/create-maintenance-request",
+                element: <CreateMaintenanceRequestPage />
+            },
             {
-				path: "/maintenance/check-requests",
-				element: <CheckRequests/>
-			},
+                path: "/maintenance/check-requests",
+                element: <CheckRequests />
+            },
             {
-				path: "/about-developer",
-				element: <AboutDeveloper/>
-			},
+                path: "/about-developer",
+                element: <AboutDeveloper />
+            },
             {
-				path: "my-account",
-				element: <MyAccount/>
-			},
+                path: "my-account",
+                element: <MyAccount />
+            },
             {
-				path: "",
-				element: <Home/>
-			},
+                path: "/news",
+                element: <News />
+            },
             {
-				path: "*",
-				element: <Home/>
-			},
+                path: "",
+                element: <Home />
+            },
+            {
+                path: "*",
+                element: <Home />
+            },
         ]
     }
 }

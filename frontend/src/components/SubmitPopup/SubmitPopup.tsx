@@ -61,9 +61,9 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
                         }
                     }}
                 >
-                    ยกเลิก
+                    Cancel
                 </Button>
-                <Button variant="contained" onClick={onConfirm}>ยืนยัน</Button>
+                <Button variant="contained" onClick={onConfirm}>Confirm</Button>
             </DialogActions>
         </Dialog>
     );

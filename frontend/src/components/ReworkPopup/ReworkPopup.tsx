@@ -104,7 +104,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                             boxShadow: 'none'
                         }
                     }}
-                >ยกเลิก</Button>
+                >Cancel</Button>
                 <Button
                     onClick={() => {
                         handleConfirm();
@@ -113,7 +113,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                     variant="contained"
                     autoFocus
                 >
-                    ตกลง
+                    Confirm
                 </Button>
             </DialogActions>
         </Dialog>
