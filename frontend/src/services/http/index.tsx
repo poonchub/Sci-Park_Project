@@ -217,7 +217,10 @@ async function UpdateUserbyID(data: any) {
     formData.append("last_name", data.LastName || "");
     formData.append("gender_id", data.GenderID.toString());
     formData.append("email", data.Email || "");
-    formData.append("password", data.Password || "");
+    // Only append password if user entered a new password
+    if (data.Password) {
+        formData.append("password", data.Password);
+    }
     formData.append("phone", data.Phone || "");
     formData.append("role_id", data.RoleID.toString());
     formData.append("employee_id", data.EmployeeID || "");
