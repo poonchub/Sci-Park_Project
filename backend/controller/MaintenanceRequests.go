@@ -215,12 +215,12 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	db := config.DB()
 
 	var request entity.MaintenanceRequest
-	if err := db.Where("booking_id = ?", ID).First(&request).Error; err != nil {
+	if err := db.Where("id = ?", ID).First(&request).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Maintenance request not found"})
 		return
 	}
 
-	if err := db.Where("booking_id = ?", ID).Delete(&entity.MaintenanceRequest{}).Error; err != nil {
+	if err := db.Where("id = ?", ID).Delete(&entity.MaintenanceRequest{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Maintenance request"})
 		return
 	}

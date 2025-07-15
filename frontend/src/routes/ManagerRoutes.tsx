@@ -13,6 +13,7 @@ import ManageUsers from "../pages/ManageUsers/ManageUsers";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
+import News from "../pages/News/News";
 const ManagerRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -65,6 +66,10 @@ const ManagerRoutes = (): RouteObject => {
             {
 			path: "my-account",
 			element: <MyAccount/>
+			},
+            {
+				path: "/news",
+				element: <News/>
 			},
             {
 				path: "",

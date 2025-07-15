@@ -85,6 +85,8 @@ func SetupDatabase() {
 		&entity.UserAnalyticsSummary{},
 		&entity.PageAnalytics{},
 		&entity.SystemAnalytics{},
+		&entity.News{},
+		&entity.NewsImage{},
 	)
 
 	if err != nil {
@@ -794,4 +796,58 @@ func SeedDatabase() {
 	}
 
 	fmt.Println("✅ Sample data added successfully!")
+
+	// 🔹 ข้อมูล News
+	news := []entity.News{
+		{
+			Title:        "Announcement: Holiday Closure",
+			Summary:      "The office will be closed next week due to the holiday.",
+			FullContent:  "📢 [Announcement: Holiday Closure]\n\nPlease be informed that our office will be closed from Monday to Friday next week due to the annual holiday. During this period, all services including support and operations will be temporarily suspended. We apologize for any inconvenience this may cause and appreciate your understanding.\n\n📆 Office will reopen as usual on the following Monday. Have a great holiday!",
+			DisplayStart: time.Now(),
+			DisplayEnd:   time.Now().Add(7 * 24 * time.Hour),
+			IsPinned:     true,
+			UserID:       1,
+		},
+		{
+			Title:        "New Lab Equipment Arrival",
+			Summary:      "Brand new lab equipment has just arrived and is now available!",
+			FullContent:  "🧪 [New Lab Equipment Now Available]\n\nWe’re excited to announce the arrival of new state-of-the-art laboratory equipment! These tools are now available for reservation and use by registered users. Whether you're working on research, development, or testing – the new equipment is here to support your innovation.\n\n💡 Please log in to the reservation system to book your preferred time slots. For more info, contact the Lab Management Team.",
+			DisplayStart: time.Now(),
+			DisplayEnd:   time.Now().Add(10 * 24 * time.Hour),
+			IsPinned:     true,
+			UserID:       1,
+		},
+		{
+			Title:        "Maintenance Notice",
+			Summary:      "Scheduled server maintenance this Friday night.",
+			FullContent:  "⚙️ [Maintenance Notification]\n\nPlease be advised that there will be a scheduled server maintenance this Friday (10 PM - 2 AM). During this time, some services may be temporarily unavailable, including the website and internal systems.\n\n🔧 This maintenance is essential to ensure long-term system stability and improve performance. We recommend saving your work and logging out before 10 PM.\n\nThank you for your patience and cooperation.",
+			DisplayStart: time.Now(),
+			DisplayEnd:   time.Now().Add(5 * 24 * time.Hour),
+			IsPinned:     true,
+			UserID:       1,
+		},
+		{
+			Title:        "Workshop: AI for Beginners",
+			Summary:      "Join our free AI workshop for beginners next month!",
+			FullContent:  "🤖 [Free Workshop: AI for Beginners]\n\nAre you curious about Artificial Intelligence but don't know where to start? We’ve got you covered! Our beginner-friendly AI workshop will be held next month and is open to all students and staff interested in technology and data science.\n\n📚 Topics include: Intro to AI, Machine Learning Basics, and Hands-On Sessions. No prior coding experience is required.\n\n📍 Limited seats available — Register now via our website!",
+			DisplayStart: time.Now(),
+			DisplayEnd:   time.Now().Add(14 * 24 * time.Hour),
+			IsPinned:     false,
+			UserID:       1,
+		},
+		{
+			Title:        "Internship Program Open",
+			Summary:      "Applications for our internship program are now open!",
+			FullContent:  "🚀 [Internship Program Now Accepting Applications]\n\nAre you ready to kickstart your career? Our Internship Program for the upcoming semester is now officially open! This is a fantastic opportunity to gain real-world experience, work with expert mentors, and build valuable skills in your field of interest.\n\n📌 Open to undergraduate and graduate students.\n📝 Apply online before the deadline: [insert date here]\n\nDon't miss this chance to grow your future with us!",
+			DisplayStart: time.Now(),
+			DisplayEnd:   time.Now().Add(30 * 24 * time.Hour),
+			IsPinned:     false,
+			UserID:       1,
+		},
+	}
+	for _, n := range news {
+		db.FirstOrCreate(&n, entity.News{
+			Title: n.Title,
+		})
+	}
 }

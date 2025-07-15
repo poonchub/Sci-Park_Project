@@ -38,6 +38,6 @@ func GetPaymentByID(c *gin.Context) {
 }
 
 // POST /payment
-func CreatePayennt(c gin.Context) {
+func CreatePayennt(c *gin.Context) {
 	
 }

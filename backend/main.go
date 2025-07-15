@@ -144,6 +144,9 @@ func main() {
 		protected.PATCH("/notifications/request/:request_id", controller.UpdateNotificationsByRequestID)
 		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
 
+		// News
+		protected.GET("/news", controller.ListNews)
+		protected.GET("/news/pinned", controller.ListPinnedNews)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -166,6 +169,15 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms", controller.ListBookingRooms)
+
+		// News
+		protected.POST("/news", controller.CreateNews)
+		protected.PATCH("/news/:id", controller.UpdateNewsByID)
+		protected.DELETE("/news/:id", controller.DeleteNewsByID)
+
+		// NewsImages
+		protected.POST("/news-images", controller.CreateNewsImages)
+		protected.DELETE("/news-images/:newsID", controller.DeleteNewsImagesByNewsID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

@@ -31,7 +31,7 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser,ChartPie   } from "lucide-react";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser,ChartPie, Newspaper   } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 
 function useToolpadRouter(): Router {
@@ -114,6 +114,11 @@ const WindowsLayout: React.FC = (props: any) => {
             segment: "maintenance/my-maintenance-request",
             title: t("maintenance"),
             icon: <Wrench size={iconSize} />,
+        },
+        {
+            segment: "news",
+            title: "News",
+            icon: <Newspaper size={iconSize} />,
         },
         {
             kind: "divider",
@@ -255,6 +260,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "user",
             "all-booking-room",
             "my-account",
+            "news",
 
             "all-maintenance-request",
             "manage-room",
@@ -270,6 +276,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance/my-maintenance-request",
             "all-booking-room",
             "my-account",
+            "news",
 
             "all-maintenance-request",
         ],
@@ -280,10 +287,17 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance/my-maintenance-request",
             "room",
             "my-account",
+            "news",
 
             "accept-work",
         ],
-        User: ["booking-room", "maintenance/my-maintenance-request","my-account",],
+        User: [
+            "home",
+            "booking-room", 
+            "maintenance/my-maintenance-request",
+            "my-account",
+            "news",
+        ],
     };
 
     function isAllowed(segment: string, role: Role): boolean {

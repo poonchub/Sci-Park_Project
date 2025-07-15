@@ -80,26 +80,49 @@ func CreateHandoverImages(c *gin.Context) {
 
 // DELETE /handover-images/:id
 func DeleteHandoverImagesByTaskID(c *gin.Context) {
-	taskID := c.Param("id")
+	taskIDStr := c.Param("id")
+	taskID, err := strconv.ParseUint(taskIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid taskID"})
+		return
+	}
+
 	db := config.DB()
-
 	var images []entity.HandoverImage
+
+	// Retrieve all images for this task
 	if err := db.Where("task_id = ?", taskID).Find(&images).Error; err != nil || len(images) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบภาพสำหรับ Task นี้"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "No images found for the specified task"})
 		return
 	}
 
-	// ลบออกจาก DB
-	if err := db.Where("task_id = ?", taskID).Delete(&entity.HandoverImage{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถลบภาพได้"})
-		return
-	}
-
+	// Delete image files from disk
 	for _, img := range images {
-		os.Remove(img.FilePath)
+		if err := os.Remove(img.FilePath); err != nil && !os.IsNotExist(err) {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":     "Failed to delete image file",
+				"file_path": img.FilePath,
+			})
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "ลบภาพสำเร็จ"})
+	// Delete image records from the database
+	if err := db.Where("task_id = ?", taskID).Delete(&entity.HandoverImage{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image records from database"})
+		return
+	}
+
+	// Optionally delete the folder if images exist
+	if len(images) > 0 {
+		imageFolder := filepath.Dir(images[0].FilePath)
+		if err := os.RemoveAll(imageFolder); err != nil && !os.IsNotExist(err) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image folder"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Handover images deleted successfully"})
 }
 
 // PATCH /handover-images

@@ -21,7 +21,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <I18nextProvider i18n={i18n}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme} defaultMode="light">
         <CssBaseline />
         <Router>
           <AppContent />
