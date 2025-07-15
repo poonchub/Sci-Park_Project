@@ -227,8 +227,8 @@ function ManageUsers() {
     }, []);
 
     useEffect(() => {
-        handleSearch();
-    }, [debouncedSearchText]);
+        getUsers();
+    }, [selectrole, selectpackage, isEmployee, page, limit]);
 
 
     return (
@@ -293,7 +293,6 @@ function ManageUsers() {
                                 value={searchText}
                                 onChange={(e) => {
                                     setSearchText(e.target.value);  // set searchText value
-                                    handleSearch();  // call search function
                                 }}
                                 slotProps={{
                                     input: {
@@ -314,7 +313,6 @@ function ManageUsers() {
                                     value={selectrole}
                                     onChange={(e) => {
                                         setSelectRole(Number(e.target.value));  // Update selectrole
-                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -341,7 +339,6 @@ function ManageUsers() {
                                     onChange={(e) => {
                                         // Convert value to boolean or undefined
                                         setIsEmployee(e.target.value === 'undefined' ? undefined : e.target.value === 'true');
-                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
@@ -369,7 +366,6 @@ function ManageUsers() {
                                     value={selectpackage}
                                     onChange={(e) => {
                                         setSelectPackage(Number(e.target.value));  // Update selectpackage
-                                        handleSearch();  // Call filter function
                                     }}
                                     displayEmpty
                                     startAdornment={
