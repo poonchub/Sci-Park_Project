@@ -587,6 +587,7 @@ function Dashboard() {
                                                             slots={{
                                                                 openPickerIcon: CalendarMonth,
                                                             }}
+                                                            format="DD/MM/YYYY"
                                                             open={openStartPicker}
                                                             onOpen={() => setOpenStartPicker(true)}
                                                             onClose={() => setOpenStartPicker(false)}
@@ -605,6 +606,7 @@ function Dashboard() {
                                                             slots={{
                                                                 openPickerIcon: CalendarMonth,
                                                             }}
+                                                            format="DD/MM/YYYY"
                                                             open={openEndPicker}
                                                             onOpen={() => setOpenEndPicker(true)}
                                                             onClose={() => setOpenEndPicker(false)}

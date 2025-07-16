@@ -10,7 +10,7 @@ export interface NewsInterface {
     DisplayStart?:      string;
     DisplayEnd?:        string;
     IsActive?:  boolean;
-    IsPinned:   boolean;
+    IsPinned?:   boolean;
 
     UserID?:    number;
     User?:      UserInterface;

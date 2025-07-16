@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, CardMedia, Chip, Container, FormControlLabel, Grid, Switch, Typography } from '@mui/material'
+import { Box, Button, Card, CardContent, CardMedia, Chip, Collapse, Container, Fade, FormControlLabel, Grid, Switch, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { NewsInterface } from '../../interfaces/News'
-import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews } from '../../services/http';
+import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews, ListNewsOrdered } from '../../services/http';
 import { TextField } from '../../components/TextField/TextField';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear } from '@fortawesome/free-solid-svg-icons';
@@ -16,11 +16,14 @@ import { Android12Switch } from '../../components/Android12Switch/Android12Switc
 import AlertGroup from '../../components/AlertGroup/AlertGroup';
 import { UserInterface } from '../../interfaces/IUser';
 import { isAdmin, isManager } from '../../routes';
+import NewsCard from '../../components/NewsCard/NewsCard';
+import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
 
 function News() {
     const [news, setNews] = useState<NewsInterface[]>([])
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isClickEdit, setIsClickEdit] = useState(false);
     const [formData, setFormData] = useState<NewsInterface>({
         Title: '',
         Summary: '',
@@ -38,40 +41,21 @@ function News() {
         end: null,
     });
     const [files, setFiles] = useState<File[]>([]);
-    const [user, setUser] = useState<UserInterface>();
+    const [selectedNews, setSelectedNews] = useState<NewsInterface>({})
+    const [openPopupCard, setOpenPopupCard] = useState<boolean>(false)
 
     const [openEndPicker, setOpenEndPicker] = useState(false);
     const [openStartPicker, setOpenStartPicker] = useState(false);
 
     const getNews = async () => {
         try {
-            const res = await ListNews()
+            const res = await ListNewsOrdered()
             if (res) {
                 setNews(res)
             }
         } catch (error) {
             console.error("Error fetching news:", error);
         }
-    }
-
-    const getUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
-            if (res) {
-                setUser(res);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
-
-    function formatDate(isoString: string): string {
-        const date = new Date(isoString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
     }
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,15 +82,14 @@ function News() {
             return;
         }
 
-        if (!user?.ID) {
+        const userID = Number(localStorage.getItem("userId"))
+        if (!userID) {
             handleSetAlert("error", "UserID not found");
             setIsSubmitButtonActive(false);
             return;
         } else {
-            formData.UserID = user?.ID
+            formData.UserID = userID
         }
-
-        console.log(files.length)
 
         if (files.length === 0) {
             handleSetAlert("warning", "No images uploaded");
@@ -124,7 +107,7 @@ function News() {
 
             if (files.length > 0) {
                 const formDataFile = new FormData();
-                formDataFile.append("userID", String(user.ID));
+                formDataFile.append("userID", String(userID));
                 formDataFile.append("newsID", resNews.data.ID);
 
                 files.forEach((file) => formDataFile.append("files", file));
@@ -210,7 +193,7 @@ function News() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getNews(), getUser(),]);
+                await Promise.all([getNews()]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -225,8 +208,21 @@ function News() {
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
+            <NewsDetailPopup
+                open={openPopupCard}
+                onClose={() => setOpenPopupCard(false)}
+                selectedNews={selectedNews}
+                isEditMode={isEditMode}
+                isClickEdit={isClickEdit}
+                setIsClickEdit={setIsClickEdit}
+            />
+
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-                <Grid container spacing={3}>
+                <Grid container spacing={3}
+                    sx={{
+                        alignItems: 'flex-start'
+                    }}
+                >
                     <Grid className="title-box" size={{ xs: 4 }}>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Latest News
@@ -245,7 +241,10 @@ function News() {
                                 isEditMode ? (
                                     <Button
                                         variant='outlined'
-                                        onClick={() => setIsEditMode(false)}
+                                        onClick={() => {
+                                            setIsEditMode(false),
+                                                getNews()
+                                        }}
                                     >
                                         <FontAwesomeIcon icon={faGear} size="lg" />
                                         <Typography variant="textButtonClassic">View Mode</Typography>
@@ -264,264 +263,242 @@ function News() {
                         </Grid>
                     }
 
-                    {
-                        isEditMode && <Card sx={{
-                            p: 2,
-                            borderRadius: 2,
-                            width: '100%',
-                            marginBottom: 3
-                        }}>
-                            <Grid
-                                container
-                                spacing={2}
-                                size={{ xs: 12 }}
-                                sx={{ p: 2 }}
-                            >
-                                <Grid container
-                                    sx={{
-                                        alignItems: 'center'
-                                    }}
-                                    spacing={1}
-                                >
-                                    <CirclePlus size={18} strokeWidth={2} />
-                                    <Typography variant='body1' sx={{ fontWeight: 500, fontSize: 20 }}>
-                                        Create News Post
-                                    </Typography>
-                                </Grid>
-                                <Grid container
-                                    size={{ xs: 12 }}
-                                    spacing={4}
-                                    component="form"
-                                    onSubmit={handleSubmit}
-                                    sx={{
-                                        alignItems: "flex-start",
-                                    }}
-                                >
-                                    <Grid
-                                        container
-                                        size={{ xs: 6 }}
-                                        spacing={2}
-                                    >
-                                        <Grid size={{ xs: 12 }} >
-                                            <Typography variant="body1" gutterBottom fontWeight={600}>
-                                                Title
-                                            </Typography>
-                                            <TextField
-                                                name='Title'
-                                                fullWidth
-                                                variant="outlined"
-                                                value={formData.Title}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter the news title"
-                                                error={!!errors.Title}
-                                                helperText={errors.Title}
-                                            />
-                                        </Grid>
-                                        <Grid size={{ xs: 12 }}>
-                                            <Typography variant="body1" gutterBottom fontWeight={600}>
-                                                Summary
-                                            </Typography>
-                                            <TextField
-                                                name='Summary'
-                                                multiline
-                                                rows={4}
-                                                fullWidth
-                                                variant="outlined"
-                                                value={formData.Summary}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter a short summary of the news"
-                                                error={!!errors.Summary}
-                                                helperText={errors.Summary}
-                                                slotProps={{
-                                                    input: {
-                                                        className: "custom-input",
-                                                    },
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid size={{ xs: 12 }}>
-                                            <Typography variant="body1" gutterBottom fontWeight={600}>
-                                                Content
-                                            </Typography>
-                                            <TextField
-                                                name='FullContent'
-                                                multiline
-                                                rows={4}
-                                                fullWidth
-                                                variant="outlined"
-                                                value={formData.FullContent}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter the full content of the news"
-                                                error={!!errors.FullContent}
-                                                helperText={errors.FullContent}
-                                                slotProps={{
-                                                    input: {
-                                                        className: "custom-input",
-                                                    },
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid size={{ xs: 12 }} paddingLeft={1}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Android12Switch
-                                                        checked={formData.IsPinned}
-                                                        onChange={(event) =>
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                IsPinned: event.target.checked,
-                                                            }))
-                                                        }
-                                                    />
-                                                }
-                                                label="Pin to top"
-                                            />
-                                        </Grid>
-                                    </Grid>
-                                    <Grid size={{ xs: 6 }}>
-                                        <Box display={'flex'} flexDirection={'column'} gap={2}>
-                                            <Grid size={{ xs: 12 }}>
-                                                <Typography variant="body1" gutterBottom fontWeight={600}>
-                                                    Display Period
-                                                </Typography>
-                                                <Grid container
-                                                    size={{ xs: 12 }}
-                                                    sx={{
-                                                        border: '1px solid #08aff1',
-                                                        borderRadius: "10px",
-                                                        p: 2
-                                                    }}
-                                                    spacing={1}
-                                                >
-                                                    <Grid size={{ xs: 6 }}>
-                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                            <DatePicker
-                                                                label="Start date"
-                                                                value={formData.DisplayStart ? dayjs(formData.DisplayStart) : null}
-                                                                onChange={(newValue) => handleDateChange('DisplayStart', newValue)}
-                                                                maxDate={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : undefined}
-                                                                slots={{
-                                                                    openPickerIcon: CalendarMonth,
-                                                                }}
-                                                                open={openStartPicker}
-                                                                onOpen={() => setOpenStartPicker(true)}
-                                                                onClose={() => setOpenStartPicker(false)}
-                                                                sx={{ width: '100%' }}
-                                                            />
-                                                        </LocalizationProvider>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 6 }}>
-                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                            <DatePicker
-                                                                label="End Date"
-                                                                value={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : null}
-                                                                onChange={(newValue) => handleDateChange('DisplayEnd', newValue)}
-                                                                minDate={formData.DisplayStart ? dayjs(formData.DisplayStart) : undefined}
-                                                                slots={{
-                                                                    openPickerIcon: CalendarMonth,
-                                                                }}
-                                                                open={openEndPicker}
-                                                                onOpen={() => setOpenEndPicker(true)}
-                                                                onClose={() => setOpenEndPicker(false)}
-                                                                sx={{ width: '100%' }}
-                                                            />
-                                                        </LocalizationProvider>
-                                                    </Grid>
-                                                </Grid>
-                                            </Grid>
-                                            <Grid size={{ xs: 12 }}>
-                                                <Box display={"flex"}>
-                                                    <Typography variant="body1" gutterBottom fontWeight={600}>
-                                                        Images
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="body1"
-                                                        sx={{
-                                                            ml: 0.5,
-                                                            color: "gray",
-                                                        }}
-                                                    >
-                                                        (maximum 3 files)
-                                                    </Typography>
-                                                </Box>
+                    <Grid className="title-box" size={{ xs: 12 }}>
+                        <Typography variant="body1" className="title" sx={{ fontWeight: 500 }}>
+                            News from management and teams to foster understanding and connection within the organization.
+                        </Typography>
+                    </Grid>
 
-                                                <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
-                                            </Grid>
-                                        </Box>
+                    {
+                        <Collapse in={isEditMode} timeout={400} unmountOnExit>
+                            <Card sx={{
+                                p: 2,
+                                borderRadius: 2,
+                                width: '100%',
+                                marginBottom: 3
+                            }}>
+                                <Grid
+                                    container
+                                    spacing={2}
+                                    size={{ xs: 12 }}
+                                    sx={{ p: 2 }}
+                                >
+                                    <Grid container
+                                        sx={{
+                                            alignItems: 'center'
+                                        }}
+                                        spacing={1}
+                                    >
+                                        <CirclePlus size={18} strokeWidth={2} />
+                                        <Typography variant='body1' sx={{ fontWeight: 500, fontSize: 20 }}>
+                                            Create News Post
+                                        </Typography>
                                     </Grid>
                                     <Grid container
                                         size={{ xs: 12 }}
-                                        sx={{ justifyContent: 'flex-end' }}
-                                    >
-                                        <Box display={'flex'} gap={1.5}>
-                                            <Button variant='outlinedGray'>
-                                                Cancel
-                                            </Button>
-                                            <Button variant='contained' type='submit'>
-                                                Create News
-                                            </Button>
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-                        </Card>
-                    }
-
-                    <Grid container size={{ xs: 12 }} spacing={3}>
-                        {news.map((news) => {
-                            return (
-                                <Grid key={news.ID} size={{ xs: 6 }}>
-                                    <Card
+                                        spacing={4}
+                                        component="form"
+                                        onSubmit={handleSubmit}
                                         sx={{
-                                            height: '100%',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            borderRadius: 2
+                                            alignItems: "flex-start",
                                         }}
                                     >
-                                        <Box
-                                            sx={{
-                                                overflow: 'hidden',
-                                                height: 400,
-                                                '& img': {
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover',
-                                                    transition: 'transform 0.3s ease-in-out',
-                                                },
-                                                '&:hover img': {
-                                                    transform: 'scale(1.05)',
-                                                },
-                                            }}
+                                        <Grid
+                                            container
+                                            size={{ xs: 6 }}
+                                            spacing={2}
                                         >
-                                            <img
-                                                src={`${apiUrl}/${news.NewsImages?.[0]?.FilePath}`}
-                                                alt={news.Title}
-                                            />
-                                        </Box>
-
-                                        <CardContent sx={{ flexGrow: 1 }}>
-                                            <Box sx={{ mb: 1.5 }}>
-                                                <Chip
-                                                    label={formatDate(news.DisplayStart ?? '')}
-                                                    size="small"
-                                                    sx={{ bgcolor: 'primary.light', color: 'white', padding: 2, fontWeight: 600 }}
+                                            <Grid size={{ xs: 12 }} >
+                                                <Typography variant="body1" gutterBottom fontWeight={600}>
+                                                    Title
+                                                </Typography>
+                                                <TextField
+                                                    name='Title'
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    value={formData.Title}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter the news title"
+                                                    error={!!errors.Title}
+                                                    helperText={errors.Title}
                                                 />
-                                            </Box>
-                                            <Box sx={{ px: 1 }}>
-                                                <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'medium' }}>
-                                                    {news.Title}
+                                            </Grid>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body1" gutterBottom fontWeight={600}>
+                                                    Summary
                                                 </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {news.Summary}
+                                                <TextField
+                                                    name='Summary'
+                                                    multiline
+                                                    rows={4}
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    value={formData.Summary}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter a short summary of the news"
+                                                    error={!!errors.Summary}
+                                                    helperText={errors.Summary}
+                                                    slotProps={{
+                                                        input: {
+                                                            className: "custom-input",
+                                                        },
+                                                    }}
+                                                />
+                                            </Grid>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body1" gutterBottom fontWeight={600}>
+                                                    Content
                                                 </Typography>
-                                            </Box>
+                                                <TextField
+                                                    name='FullContent'
+                                                    multiline
+                                                    rows={4}
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    value={formData.FullContent}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter the full content of the news"
+                                                    error={!!errors.FullContent}
+                                                    helperText={errors.FullContent}
+                                                    slotProps={{
+                                                        input: {
+                                                            className: "custom-input",
+                                                        },
+                                                    }}
+                                                />
+                                            </Grid>
+                                            <Grid size={{ xs: 12 }} paddingLeft={1}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Android12Switch
+                                                            checked={formData.IsPinned}
+                                                            onChange={(event) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    IsPinned: event.target.checked,
+                                                                }))
+                                                            }
+                                                        />
+                                                    }
+                                                    label="Pin to top"
+                                                />
+                                            </Grid>
+                                        </Grid>
+                                        <Grid size={{ xs: 6 }}>
+                                            <Box display={'flex'} flexDirection={'column'} gap={2}>
+                                                <Grid size={{ xs: 12 }}>
+                                                    <Typography variant="body1" gutterBottom fontWeight={600}>
+                                                        Display Period
+                                                    </Typography>
+                                                    <Grid container
+                                                        size={{ xs: 12 }}
+                                                        sx={{
+                                                            border: '1px solid #c5c5c6',
+                                                            borderRadius: "10px",
+                                                            p: 2
+                                                        }}
+                                                        spacing={1.2}
+                                                    >
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    label="Start date"
+                                                                    value={formData.DisplayStart ? dayjs(formData.DisplayStart) : null}
+                                                                    onChange={(newValue) => handleDateChange('DisplayStart', newValue)}
+                                                                    maxDate={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : undefined}
+                                                                    slots={{
+                                                                        openPickerIcon: CalendarMonth,
+                                                                    }}
+                                                                    format="DD/MM/YYYY"
+                                                                    open={openStartPicker}
+                                                                    onOpen={() => setOpenStartPicker(true)}
+                                                                    onClose={() => setOpenStartPicker(false)}
+                                                                    sx={{ width: '100%' }}
+                                                                    slotProps={{
+                                                                        textField: {
+                                                                            error: !!errors.DisplayStart,
+                                                                            helperText: errors.DisplayStart,
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
+                                                        </Grid>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    label="End Date"
+                                                                    value={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : null}
+                                                                    onChange={(newValue) => handleDateChange('DisplayEnd', newValue)}
+                                                                    minDate={formData.DisplayStart ? dayjs(formData.DisplayStart) : undefined}
+                                                                    slots={{
+                                                                        openPickerIcon: CalendarMonth,
+                                                                    }}
+                                                                    format="DD/MM/YYYY"
+                                                                    open={openEndPicker}
+                                                                    onOpen={() => setOpenEndPicker(true)}
+                                                                    onClose={() => setOpenEndPicker(false)}
+                                                                    sx={{ width: '100%' }}
+                                                                    slotProps={{
+                                                                        textField: {
+                                                                            error: !!errors.DisplayEnd,
+                                                                            helperText: errors.DisplayEnd,
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid size={{ xs: 12 }}>
+                                                    <Box display={"flex"}>
+                                                        <Typography variant="body1" gutterBottom fontWeight={600}>
+                                                            Images
+                                                        </Typography>
+                                                        <Typography
+                                                            variant="body1"
+                                                            sx={{
+                                                                ml: 0.5,
+                                                                color: "gray",
+                                                            }}
+                                                        >
+                                                            (maximum 3 files)
+                                                        </Typography>
+                                                    </Box>
 
-                                        </CardContent>
-                                    </Card>
+                                                    <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
+                                                </Grid>
+                                            </Box>
+                                        </Grid>
+                                        <Grid container
+                                            size={{ xs: 12 }}
+                                            sx={{ justifyContent: 'flex-end' }}
+                                        >
+                                            <Box display={'flex'} gap={1.5}>
+                                                <Button variant='outlinedGray'>
+                                                    Cancel
+                                                </Button>
+                                                <Button variant='contained' type='submit'>
+                                                    Create News
+                                                </Button>
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
-                            )
-                        })}
+                            </Card>
+                        </Collapse>
+                    }
+                    <Grid container size={{ xs: 12 }} spacing={3}>
+                        {news.map((news) => (
+                            <NewsCard
+                                key={news.ID}
+                                news={news}
+                                gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
+                                isEditMode={isEditMode}
+                                onOpenPopup={() => setOpenPopupCard(true)}
+                                setSelectedNews={setSelectedNews}
+                                setIsClickEdit={setIsClickEdit}
+                            />
+                        ))}
                     </Grid>
                 </Grid>
             </Container>

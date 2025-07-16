@@ -397,6 +397,38 @@ const BookingRoom = () => {
 
                 {/* Message content (split into separate lines for readability) */}
                 <DialogContent sx={{ minWidth: 500 }}>
+                    <Carousel
+                        indicators={true}
+                        autoPlay={true}
+                        animation="slide"
+                        duration={500}
+                        navButtonsAlwaysVisible
+                        // navButtonsAlwaysInvisible={selectedNews?.NewsImages?.length && selectedNews?.NewsImages?.length <= 1 ? true : false}
+                        navButtonsProps={{
+                            style: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            }
+                        }}
+                    >
+                        <CardMedia
+                            component="img"
+                            image="https://www.corporatevision-news.com/wp-content/uploads/2020/04/7-Steps-to-Make-the-Best-Conference-Room-for-Your-Office.jpg"
+                            alt="green iguana"
+                            sx={{
+                                height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                borderRadius: 2
+                            }}
+                        />
+                        <CardMedia
+                            component="img"
+                            image="https://www.webex.com/content/dam/www/us/en/images/workspaces/large-meeting-room/modular/large-modular-hero-new.jpg"
+                            alt="green iguana"
+                            sx={{
+                                height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                borderRadius: 2
+                            }}
+                        />
+                    </Carousel>
                     <DialogContentText
                         sx={{
                             color: 'text.primary',
@@ -405,37 +437,6 @@ const BookingRoom = () => {
                             gap: 2
                         }}
                     >
-                        <Carousel
-                            indicators={true}
-                            autoPlay={true}
-                            animation="slide"
-                            duration={500}
-                            navButtonsAlwaysVisible={true}
-                            navButtonsProps={{
-                                style: {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                }
-                            }}
-                        >
-                            <CardMedia
-                                component="img"
-                                image="https://www.corporatevision-news.com/wp-content/uploads/2020/04/7-Steps-to-Make-the-Best-Conference-Room-for-Your-Office.jpg"
-                                alt="green iguana"
-                                sx={{
-                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                    borderRadius: 2
-                                }}
-                            />
-                            <CardMedia
-                                component="img"
-                                image="https://www.webex.com/content/dam/www/us/en/images/workspaces/large-meeting-room/modular/large-modular-hero-new.jpg"
-                                alt="green iguana"
-                                sx={{
-                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                    borderRadius: 2
-                                }}
-                            />
-                        </Carousel>
                         <Grid container spacing={2}>
                             <Grid
                                 size={{ xs: 6 }}

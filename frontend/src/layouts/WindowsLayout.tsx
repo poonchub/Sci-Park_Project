@@ -438,7 +438,7 @@ const WindowsLayout: React.FC = (props: any) => {
     };
 
     useEffect(() => {
-        
+        if (!user?.ID) return;
         if (user && profileImage) {
             getUnreadNotificationCounts();
         }

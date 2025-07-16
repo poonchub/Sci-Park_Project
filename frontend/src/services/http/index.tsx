@@ -1289,6 +1289,7 @@ async function ListNotifications() {
     return res;
 }
 async function GetUnreadNotificationCountsByUserID(id?: number) {
+    if (!id) return
     try {
         const response = await axiosInstance.get(`/notifications/count/${id}`);
         return response.data;
@@ -1574,6 +1575,52 @@ async function ListPinnedNews() {
 
     return res;
 }
+async function ListUnpinnedNews(limit?: number) {
+    const params = new URLSearchParams();
+
+    if (limit && limit > 0) {
+        params.append("limit", limit.toString());
+    }
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news/unpinned?${params.toString()}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function ListNewsOrdered() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news/ordered`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 async function CreateNews(data: NewsImagesInterface) {
     const requestOptions = {
         method: "POST",
@@ -1784,6 +1831,8 @@ export {
     // News
     ListNews,
     ListPinnedNews,
+    ListNewsOrdered,
+    ListUnpinnedNews,
     CreateNews,
     UpdateNewsByID,
     DeleteNewsByID,

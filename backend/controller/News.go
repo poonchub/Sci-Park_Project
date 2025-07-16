@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
@@ -16,8 +17,7 @@ func ListNews(c *gin.Context) {
 	db := config.DB()
 
 	result := db.
-		Preload("NewsImages").
-		Order("created_at DESC").Find(&news)
+		Preload("NewsImages").Find(&news)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
@@ -26,17 +26,65 @@ func ListNews(c *gin.Context) {
 	c.JSON(http.StatusOK, &news)
 }
 
+// GET /news/ordered
+func ListNewsOrdered(c *gin.Context) {
+	var news []entity.News
+	db := config.DB()
+
+	result := db.
+		Preload("NewsImages").
+		Order("is_pinned DESC").            // ✅ ปักหมุดมาก่อน
+		Order("display_start DESC").         // ✅ ข่าวใหม่ก่อน
+		Find(&news)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, news)
+}
+
+// GET /news/unpinned?limit=
+func ListUnpinnedNews(c *gin.Context) {
+	var news []entity.News
+	db := config.DB()
+
+	limitParam := c.Query("limit")
+
+	query := db.
+		Where("is_pinned = ?", false).
+		Order("display_start DESC").
+		Preload("User").
+		Preload("NewsImages")
+
+	if limitParam != "" {
+		var limit int
+		if _, err := fmt.Sscanf(limitParam, "%d", &limit); err == nil && limit > 0 {
+			query = query.Limit(limit)
+		}
+	}
+
+	result := query.Find(&news)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, news)
+}
+
 // GET /news/pinned
 func ListPinnedNews(c *gin.Context) {
 	var pinnedNews []entity.News
 	db := config.DB()
 
-	now := time.Now().UTC()
+	now := time.Now()
 
 	err := db.
 		Where("is_pinned = ?", true).
 		Where("display_start <= ? AND display_end >= ?", now, now).
-		Order("created_at DESC").
+		Order("display_start DESC").
 		Preload("User").
 		Preload("NewsImages").
 		Find(&pinnedNews).Error
