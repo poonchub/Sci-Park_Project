@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -133,6 +134,8 @@ func CreateNews(c *gin.Context){
 		return
 	}
 
+	services.NotifySocketEvent("news_created", n)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Create success",
 		"data": n,
@@ -162,6 +165,8 @@ func UpdateNewsByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
 		return
 	}
+
+	services.NotifySocketEvent("news_updated", news)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
 }

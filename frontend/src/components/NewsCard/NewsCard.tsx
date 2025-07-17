@@ -1,4 +1,4 @@
-import { Card, CardContent, Chip, Grid, Typography, Box, Fab } from '@mui/material';
+import { Card, CardContent, Chip, Grid, Typography, Box, Fab, Collapse, Zoom, Tooltip } from '@mui/material';
 import React, { useState } from 'react';
 import { NewsInterface } from '../../interfaces/News';
 import { apiUrl, UpdateNewsByID } from '../../services/http';
@@ -83,21 +83,24 @@ const NewsCard: React.FC<NewsCardProps> = ({
                     <img
                         src={
                             news.NewsImages && news.NewsImages.length > 0
-                                ? `${apiUrl}/${news.NewsImages[0].FilePath}`
+                                ? `${apiUrl}/${news.NewsImages[0].FilePath}?t=${news.NewsImages[0].UpdatedAt}`
                                 : 'https://placehold.co/600x400'
                         }
                         alt={news.Title}
                     />
-                    {
-                        isEditMode &&
-                        <>
+
+                    <Zoom
+                        in={isEditMode}
+                        timeout={400}
+                        unmountOnExit
+                    >
+                        <Tooltip title={news.IsPinned ? 'Unpin' : ' Pin to top'}>
                             <Fab
                                 size='small'
-                                aria-label="like"
                                 sx={{
                                     position: 'absolute',
                                     top: 16,
-                                    right: 64,
+                                    right: 66,
                                     boxShadow: 3,
                                 }}
                                 color={news.IsPinned ? 'primary' : undefined}
@@ -112,9 +115,17 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                     }}
                                 />
                             </Fab>
+                        </Tooltip>
+
+                    </Zoom>
+                    <Zoom
+                        in={isEditMode}
+                        timeout={300}
+                        unmountOnExit
+                    >
+                        <Tooltip title='Edit'>
                             <Fab
                                 size='small'
-                                aria-label="like"
                                 sx={{
                                     position: 'absolute',
                                     top: 16,
@@ -131,8 +142,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
                             >
                                 <Pencil />
                             </Fab>
-                        </>
-                    }
+                        </Tooltip>
+                    </Zoom>
                 </Box>
                 <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ mb: 1.5 }}>
@@ -151,22 +162,23 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         <Typography gutterBottom variant="h5" sx={{ fontWeight: 500 }}>
                             {news.Title}
                         </Typography>
-                        <Box display={'flex'} gap={1}>
-                            <Typography
-                                variant="body2"
-                                gutterBottom
-                                fontWeight={500}
-                            >
-                                {'Display Period:'}
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                gutterBottom
-                            >
-                                {`${formatNewsDate(news.DisplayStart ?? '')} - ${formatNewsDate(news.DisplayStart ?? '')}`}
-                            </Typography>
-                        </Box>
-
+                        <Collapse in={isEditMode} timeout={300}>
+                            <Box display={'flex'} gap={1}>
+                                <Typography
+                                    variant="body2"
+                                    gutterBottom
+                                    fontWeight={500}
+                                >
+                                    {'Display Period:'}
+                                </Typography>
+                                <Typography
+                                    variant="body2"
+                                    gutterBottom
+                                >
+                                    {`${formatNewsDate(news.DisplayStart ?? '')} - ${formatNewsDate(news.DisplayStart ?? '')}`}
+                                </Typography>
+                            </Box>
+                        </Collapse>
                         <Typography
                             variant="body2"
                             color="text.secondary"

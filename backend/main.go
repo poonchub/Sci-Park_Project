@@ -179,6 +179,7 @@ func main() {
 
 		// NewsImages
 		protected.POST("/news-images", controller.CreateNewsImages)
+		protected.PATCH("/news-images", controller.UpdateNewsImages)
 		protected.DELETE("/news-images/:newsID", controller.DeleteNewsImagesByNewsID)
 	}
 

@@ -4,6 +4,7 @@ import { NewsImagesInterface } from "./NewsImages";
 export interface NewsInterface {
     ID?:        number;
     CreatedAt?: string;
+    UpdatedAt?: string;
     Title?:     string;
     Summary?:   string;
     FullContent?:   string;

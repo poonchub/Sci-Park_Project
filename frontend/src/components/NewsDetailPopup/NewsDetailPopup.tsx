@@ -1,13 +1,14 @@
 import {
-    Box, Button, CardMedia, Chip, Collapse, Dialog, DialogActions, DialogContent,
-    DialogContentText, DialogTitle, Divider, Fab, Grid, Typography
+    Box, Button, CardMedia, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent,
+    DialogContentText, DialogTitle, Divider, Fab, Fade, Grid, Tooltip, Typography,
+    Zoom
 } from '@mui/material';
 import { NewsInterface } from '../../interfaces/News';
 import Carousel from 'react-material-ui-carousel';
-import { apiUrl, UpdateNewsByID } from '../../services/http';
+import { apiUrl, UpdateNewsByID, UpdateNewsImages } from '../../services/http';
 import formatNewsDate from '../../utils/formatNewsDate';
-import { BadgeCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { TextField } from '../TextField/TextField';
 import { DatePicker } from '../DatePicker/DatePicker';
 import { CalendarMonth } from '@mui/icons-material';
@@ -15,6 +16,12 @@ import AlertGroup from '../AlertGroup/AlertGroup';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faImage } from '@fortawesome/free-solid-svg-icons';
+import { motion } from "framer-motion";
+import React from 'react';
+import Lottie from 'lottie-react';
+import animationData from '../../../public/lottie/Succes 2.json';
 
 interface NewsDetailPopupProps {
     open: boolean;
@@ -23,6 +30,7 @@ interface NewsDetailPopupProps {
     isEditMode?: boolean;
     isClickEdit?: boolean;
     setIsClickEdit?: React.Dispatch<React.SetStateAction<boolean>>;
+    onUpdated?: () => void;
 }
 
 const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
@@ -32,6 +40,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
     isEditMode = false,
     isClickEdit = false,
     setIsClickEdit,
+    onUpdated,
 }) => {
     const [initialNews, setInitialNews] = useState<NewsInterface>({});
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -40,6 +49,8 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
     const [isSubmitButtonActive, setIsSubmitButtonActive] = useState(false);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [files, setFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [loadingStatus, setLoadingStatus] = useState<"idle" | "loading" | "success">("idle");
 
     const handleUpdatePinned = async () => {
         try {
@@ -86,22 +97,22 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
         const newErrors: { [key: string]: string } = {};
 
         if (!initialNews.Title?.trim()) {
-            newErrors.Title = "Title is required.";
+            newErrors.Title = "Please enter a news title.";
         } else if (!initialNews.Summary?.trim()) {
-            newErrors.Summary = "Summary is required.";
+            newErrors.Summary = "Please provide a short summary of the news.";
         } else if (!initialNews.FullContent?.trim()) {
-            newErrors.FullContent = "Summary is required.";
+            newErrors.FullContent = "Please enter the full content of the news.";
         } else if (!initialNews.DisplayStart) {
-            newErrors.DisplayStart = "Start date is required.";
+            newErrors.DisplayStart = "Please select the start date for displaying the news.";
         } else if (!initialNews.DisplayEnd) {
-            newErrors.DisplayEnd = "End date is required.";
+            newErrors.DisplayEnd = "Please select the end date for displaying the news.";
         }
 
         if (initialNews.DisplayStart && initialNews.DisplayEnd) {
             const start = new Date(initialNews.DisplayStart);
             const end = new Date(initialNews.DisplayEnd);
             if (end < start) {
-                newErrors.DisplayEnd = "End date must be after start date.";
+                newErrors.DisplayEnd = "The end date must be later than the start date.";
             }
         }
 
@@ -111,27 +122,87 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
 
     const handleUpdateNews = async () => {
         setIsSubmitButtonActive(true);
+        setLoadingStatus('loading'); // เริ่มโหลด
+
         if (!validateForm()) {
             setIsSubmitButtonActive(false);
-            return;
-        }
-
-        if (files.length === 0) {
-            handleSetAlert("warning", "No images uploaded");
-            setIsSubmitButtonActive(false);
+            setLoadingStatus('idle');
             return;
         }
 
         try {
+            const resUpdateNews = await UpdateNewsByID(initialNews, selectedNews?.ID);
+            if (!resUpdateNews) {
+                handleSetAlert("error", resUpdateNews?.Error || "Failed to update news");
+                setIsSubmitButtonActive(false);
+                setLoadingStatus('idle');
+                return;
+            }
+
+            if (files.length > 0) {
+                const formDataFile = new FormData();
+                const userID = localStorage.getItem("userId") || ''
+                formDataFile.append("userID", userID);
+                formDataFile.append("newsID", String(initialNews.ID));
+                files.forEach((file) => formDataFile.append("files", file));
+
+                const resImage = await UpdateNewsImages(formDataFile);
+                if (!resImage || resImage.error) {
+                    handleSetAlert("error", resImage?.error || "Failed to upload images");
+                    setIsSubmitButtonActive(false);
+                    setLoadingStatus('idle');
+                    return;
+                }
+            }
+
+            console.log("The news has been update successfully.")
+
+            setTimeout(() => {
+                setLoadingStatus('success'); // 🎯 สำเร็จแล้ว แสดง Lottie ต่อ
+                setIsClickEdit?.(false);
+                setAlerts([]);
+                setFiles([]);
+            }, 350);
+
+            setTimeout(() => {
+                onUpdated?.();
+                setIsSubmitButtonActive(false);
+                onClose();
+                setLoadingStatus('idle');
+            }, 2100);
 
         } catch (error) {
-
+            console.error("Error updating news:", error);
+            handleSetAlert("error", "An unexpected error occurred.");
+            setIsSubmitButtonActive(false);
+            setLoadingStatus('idle');
         }
     }
 
     const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
         setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
     };
+
+    const isValidImage = (file: File) => file.type.startsWith("image/");
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            let selectedFiles = Array.from(event.target.files).filter(isValidImage);
+
+            if (selectedFiles.length > 3) {
+                selectedFiles = selectedFiles.slice(0, 3);
+                setAlerts((prev) => [...prev, { type: "warning", message: `You can upload up to ${3} files.` }]);
+            }
+
+            setFiles(selectedFiles);
+        }
+    };
+
+    const handleResetData = () => {
+        if (selectedNews) {
+            setInitialNews(selectedNews)
+        }
+        setFiles([])
+    }
 
     useEffect(() => {
         if (selectedNews) {
@@ -155,8 +226,10 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
         <Dialog
             open={open}
             onClose={() => {
-                onClose();
-                setIsClickEdit?.(false);
+                onClose()
+                setIsClickEdit?.(false)
+                handleResetData()
+                setAlerts([])
             }}
             slotProps={{
                 paper: {
@@ -173,37 +246,94 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             <DialogTitle sx={{
                 display: 'flex',
                 gap: 1,
-                alignItems: 'center'
+                justifyContent: 'space-between'
             }}>
-                <Newspaper />
-                <Typography sx={{ fontWeight: 700, fontSize: 22 }}>
-                    {"Latest News"}
-                </Typography>
-            </DialogTitle>
+                <Box sx={{
+                    display: 'flex',
+                    gap: 1,
+                    alignItems: 'center'
+                }}>
+                    <Newspaper />
+                    <Typography sx={{ fontWeight: 700, fontSize: 22 }}>
+                        {"Latest News"}
+                    </Typography>
+                </Box>
+                <Zoom in={isSubmitButtonActive} timeout={300} unmountOnExit>
+                    <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center', position: 'relative' }}>
+                        <Typography sx={{ fontWeight: 500, fontSize: 14, color: 'text.secondary' }}>
+                            {loadingStatus === 'loading' ? "Saving Changes..." : loadingStatus === 'success' ? "Completed!" : ""}
+                        </Typography>
 
+                        <Box sx={{ position: 'relative', width: 30, height: 30 }}>
+                            <Zoom in={loadingStatus === 'loading'} timeout={300} unmountOnExit>
+                                <CircularProgress
+                                    size={30}
+                                    sx={{ color: 'customGreen', position: 'absolute', top: '0%', left: '0%', transform: 'translate(-50%, -50%)' }}
+                                />
+                            </Zoom>
+
+                            <Zoom in={loadingStatus === 'success'} timeout={300} unmountOnExit>
+                                <Box sx={{ position: 'absolute', top: 0, left: 0, width: 40, height: 40 }}>
+                                    <Lottie
+                                        animationData={animationData}
+                                        loop={false}
+                                        style={{ width: 30, height: 30 }}
+                                    />
+                                </Box>
+                            </Zoom>
+                        </Box>
+                    </Box>
+                </Zoom>
+            </DialogTitle>
             <DialogContent sx={{ minWidth: 350 }}>
                 <Grid container size={{ xs: 12 }}>
                     <Grid size={{ xs: 12 }} position={'relative'}>
-                        <Fab
-                            variant="extended"
-                            size='small'
-                            sx={{
-                                position: 'absolute',
-                                top: 12,
-                                right: 12,
-                                boxShadow: 3,
-                                gap: 1,
-                                px: 2
-                            }}
-                            color={initialNews?.IsPinned ? 'primary' : undefined}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                handleUpdatePinned();
-                            }}
-                        >
-                            <ImageUp/>
-                            Upload Image
-                        </Fab>
+                        {
+                            isClickEdit &&
+                            <Box>
+                                <input
+                                    type="file"
+                                    accept="image/png, image/jpeg, image/jpg"
+                                    multiple
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    hidden
+                                />
+
+                                <Zoom
+                                    in={isClickEdit}
+                                    timeout={300}
+                                    unmountOnExit
+                                >
+                                    <Fab
+                                        variant="extended"
+                                        size="small"
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: (files.length > 1 || (initialNews.NewsImages?.length ?? 0) > 1) ? 55 : 30,
+                                            right: 20,
+                                            gap: 1,
+                                            px: 2,
+                                            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255, 255, 255, 0.18)',
+                                            lineHeight: 0,
+                                            '&:hover': {
+                                                color: 'white'
+                                            }
+                                        }}
+                                        color="secondary"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            fileInputRef.current?.click();
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={faImage} />
+                                        Upload Image
+                                    </Fab>
+                                </Zoom>
+                            </Box>
+                        }
                         <Carousel
                             indicators
                             autoPlay
@@ -211,7 +341,11 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             duration={500}
                             navButtonsAlwaysVisible
                             navButtonsAlwaysInvisible={
-                                !initialNews?.NewsImages || initialNews.NewsImages.length <= 1
+                                files.length > 0 ? (
+                                    !files || files.length == 1
+                                ) : (
+                                    !initialNews?.NewsImages || initialNews.NewsImages.length <= 1
+                                )
                             }
                             navButtonsProps={{
                                 style: {
@@ -219,34 +353,61 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                 },
                             }}
                         >
-                            {initialNews?.NewsImages && initialNews.NewsImages.length > 1 ? (
-                                initialNews.NewsImages.map((image, idx) => (
+                            {
+                                files.length > 1 ? (
+                                    files.map((file, idx) => {
+                                        const imageUrl = URL.createObjectURL(file);
+                                        return (
+                                            <CardMedia
+                                                key={`newfile-${idx}`}
+                                                component="img"
+                                                image={imageUrl}
+                                                alt={`uploaded-image-${idx}`}
+                                                sx={{
+                                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                                    borderRadius: 2,
+                                                }}
+                                            />
+                                        )
+                                    })
+                                ) : files.length == 1 ? (
                                     <CardMedia
-                                        key={idx}
                                         component="img"
-                                        image={`${apiUrl}/${image?.FilePath}`}
-                                        alt={`news-image-${idx}`}
+                                        image={URL.createObjectURL(files[0])}
+                                        alt='news-image'
                                         sx={{
                                             height: { xs: 150, sm: 200, md: 300, lg: 450 },
                                             borderRadius: 2,
                                         }}
                                     />
-                                ))
-                            ) : (
-                                <CardMedia
-                                    component="img"
-                                    image={
-                                        initialNews?.NewsImages?.[0]?.FilePath
-                                            ? `${apiUrl}/${initialNews.NewsImages[0].FilePath}`
-                                            : 'https://placehold.co/600x400'
-                                    }
-                                    alt="news-image"
-                                    sx={{
-                                        height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                        borderRadius: 2,
-                                    }}
-                                />
-                            )}
+                                ) : initialNews?.NewsImages && initialNews.NewsImages.length > 1 ? (
+                                    initialNews.NewsImages.map((image, idx) => (
+                                        <CardMedia
+                                            key={idx}
+                                            component="img"
+                                            image={`${apiUrl}/${image?.FilePath}`}
+                                            alt={`news-image-${idx}`}
+                                            sx={{
+                                                height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                                borderRadius: 2,
+                                            }}
+                                        />
+                                    ))
+                                ) : (
+                                    <CardMedia
+                                        component="img"
+                                        image={
+                                            initialNews?.NewsImages?.[0]?.FilePath
+                                                ? `${apiUrl}/${initialNews.NewsImages[0].FilePath}`
+                                                : 'https://placehold.co/600x400'
+                                        }
+                                        alt="news-image"
+                                        sx={{
+                                            height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                            borderRadius: 2,
+                                        }}
+                                    />
+                                )}
                         </Carousel>
                     </Grid>
                     <Grid size={{ xs: 12 }} position={'relative'}>
@@ -265,71 +426,114 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                 },
                             }}
                         />
+
+                        {/* Pin Button */}
                         {
                             isEditMode &&
-                            <>
+                            <Zoom in={isEditMode} timeout={400}>
+                                <motion.div
+                                    initial={false}
+                                    animate={{ right: isClickEdit ? 116 : isEditMode ? 66 : 16 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 6,
+                                    }}
+                                >
+                                    <Tooltip title={initialNews.IsPinned ? 'Unpin' : ' Pin to top'}>
+                                        <Fab
+                                            size='small'
+                                            sx={{
+                                                boxShadow: 3,
+                                            }}
+                                            color={initialNews?.IsPinned ? 'primary' : undefined}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleUpdatePinned();
+                                            }}
+                                        >
+                                            <Pin
+                                                style={{
+                                                    transform: 'rotate(45deg)',
+                                                }}
+                                            />
+                                        </Fab>
+                                    </Tooltip>
+                                </motion.div>
+                            </Zoom>
+                        }
+
+                        {/* Edit Button */}
+                        <Zoom in={!isClickEdit && isEditMode} timeout={400}>
+                            <Tooltip title='Edit'>
                                 <Fab
                                     size='small'
-                                    aria-label="like"
                                     sx={{
                                         position: 'absolute',
                                         top: 6,
-                                        right: 64,
+                                        right: 16,
                                         boxShadow: 3,
                                     }}
-                                    color={initialNews?.IsPinned ? 'primary' : undefined}
+                                    color={'secondary'}
                                     onClick={(event) => {
                                         event.stopPropagation();
-                                        handleUpdatePinned();
+                                        setIsClickEdit?.(true)
                                     }}
                                 >
-                                    <Pin
-                                        style={{
-                                            transform: 'rotate(45deg)',
-                                        }}
-                                    />
+                                    <Pencil />
                                 </Fab>
-                                {
-                                    isClickEdit ? (
-                                        <Fab
-                                            size='small'
-                                            aria-label="like"
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 6,
-                                                right: 16,
-                                                boxShadow: 3,
-                                            }}
-                                            color={'secondary'}
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleUpdateNews()
-                                            }}
-                                        >
-                                            <BadgeCheck />
-                                        </Fab>
-                                    ) : (
-                                        <Fab
-                                            size='small'
-                                            aria-label="like"
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 6,
-                                                right: 16,
-                                                boxShadow: 3,
-                                            }}
-                                            color={'secondary'}
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                setIsClickEdit?.(true)
-                                            }}
-                                        >
-                                            <Pencil />
-                                        </Fab>
-                                    )
-                                }
-                            </>
-                        }
+                            </Tooltip>
+                        </Zoom>
+
+                        {/* Save Change Button */}
+                        <Zoom in={isClickEdit} timeout={400}>
+                            <Tooltip title='Save Change'>
+                                <Fab
+                                    size='small'
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 6,
+                                        right: 66,
+                                        boxShadow: 3,
+                                        color: 'secondary.main',
+                                        backgroundColor: 'customGreen',
+                                        '&:hover': {
+                                            backgroundColor: '#369d33',
+                                        }
+                                    }}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleUpdateNews()
+                                    }}
+                                >
+                                    <Save />
+                                </Fab>
+                            </Tooltip>
+                        </Zoom>
+
+                        {/* Reset button */}
+                        <Zoom in={isClickEdit} timeout={400}>
+                            <Tooltip title='Reset'>
+                                <Fab
+                                    size='small'
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 6,
+                                        right: 16,
+                                        boxShadow: 3,
+                                    }}
+                                    color={'secondary'}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        setIsClickEdit?.(false)
+                                        handleResetData()
+                                        setAlerts([])
+                                    }}
+                                >
+                                    <RotateCcw />
+                                </Fab>
+                            </Tooltip>
+                        </Zoom>
                     </Grid>
 
                     <Collapse in={isClickEdit} timeout={400} sx={{ mt: 2 }}>
@@ -483,9 +687,20 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} variant="outlined" startIcon={<CircleX size={18} />}>
-                    Close
-                </Button>
+                <Zoom in={open} timeout={400}>
+                    <Button
+                        onClick={() => {
+                            onClose()
+                            setIsClickEdit?.(false)
+                            handleResetData()
+                            setAlerts([])
+                        }}
+                        variant="outlined"
+                        startIcon={<CircleX size={18} />}
+                    >
+                        Close
+                    </Button>
+                </Zoom>
             </DialogActions>
         </Dialog>
     );

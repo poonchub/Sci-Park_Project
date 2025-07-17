@@ -37,7 +37,8 @@ const theme = createTheme({
                     main: "#F26522"
                 },
                 divider: "#e0e0e0",
-                customBlue: "#08aff1"
+                customBlue: "#08aff1",
+                customGreen: "#3dc03c"
             }
         },
         dark: {
@@ -53,7 +54,8 @@ const theme = createTheme({
                 },
                 secondary: {
                     main: "#121212"
-                }
+                },
+                customGreen: "#3dc03c"
             }
         }
     },

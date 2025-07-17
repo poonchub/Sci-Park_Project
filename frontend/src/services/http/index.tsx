@@ -1703,6 +1703,26 @@ async function CreateNewsImages(data: FormData) {
 
     return res;
 }
+async function UpdateNewsImages(data: FormData) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news-images`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 async function DeleteNewsImagesByNewsID(newsID: number | undefined) {
     const requestOptions = {
         method: "DELETE",
@@ -1839,6 +1859,7 @@ export {
 
     // NewsImages
     CreateNewsImages,
+    UpdateNewsImages,
     DeleteNewsImagesByNewsID,
 }
 

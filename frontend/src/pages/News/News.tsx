@@ -1,10 +1,10 @@
-import { Box, Button, Card, CardContent, CardMedia, Chip, Collapse, Container, Fade, FormControlLabel, Grid, Switch, Typography } from '@mui/material'
+import { Box, Button, Card, CardContent, CardMedia, Chip, Collapse, Container, Fade, FormControlLabel, Grid, Stack, Switch, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { NewsInterface } from '../../interfaces/News'
-import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews, ListNewsOrdered } from '../../services/http';
+import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews, ListNewsOrdered, socketUrl } from '../../services/http';
 import { TextField } from '../../components/TextField/TextField';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faGear } from '@fortawesome/free-solid-svg-icons';
 import { CirclePlus } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -18,6 +18,8 @@ import { UserInterface } from '../../interfaces/IUser';
 import { isAdmin, isManager } from '../../routes';
 import NewsCard from '../../components/NewsCard/NewsCard';
 import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
+import { MaterialUISwitch } from '../../components/MaterialUISwitch/MaterialUISwitch';
+import { io } from 'socket.io-client';
 
 function News() {
     const [news, setNews] = useState<NewsInterface[]>([])
@@ -50,8 +52,9 @@ function News() {
     const getNews = async () => {
         try {
             const res = await ListNewsOrdered()
+            console.log("KKKKKKKK", res)
             if (res) {
-                setNews(res)
+                setNews([...res])
             }
         } catch (error) {
             console.error("Error fetching news:", error);
@@ -124,8 +127,8 @@ function News() {
 
             handleSetAlert("success", "The news has been created successfully.");
             setTimeout(() => {
-                getNews()
                 handleResetData()
+                setIsSubmitButtonActive(false)
             }, 1800);
         } catch (error) {
             console.error("🚨 Error submitting request:", error);
@@ -155,22 +158,22 @@ function News() {
         const newErrors: { [key: string]: string } = {};
 
         if (!formData.Title?.trim()) {
-            newErrors.Title = "Title is required.";
+            newErrors.Title = "Please enter a news title.";
         } else if (!formData.Summary?.trim()) {
-            newErrors.Summary = "Summary is required.";
+            newErrors.Summary = "Please provide a short summary of the news.";
         } else if (!formData.FullContent?.trim()) {
-            newErrors.FullContent = "Summary is required.";
+            newErrors.FullContent = "Please enter the full content of the news.";
         } else if (!formData.DisplayStart) {
-            newErrors.DisplayStart = "Start date is required.";
+            newErrors.DisplayStart = "Please select the start date for displaying the news.";
         } else if (!formData.DisplayEnd) {
-            newErrors.DisplayEnd = "End date is required.";
+            newErrors.DisplayEnd = "Please select the end date for displaying the news.";
         }
 
         if (formData.DisplayStart && formData.DisplayEnd) {
             const start = new Date(formData.DisplayStart);
             const end = new Date(formData.DisplayEnd);
             if (end < start) {
-                newErrors.DisplayEnd = "End date must be after start date.";
+                newErrors.DisplayEnd = "The end date must be later than the start date.";
             }
         }
 
@@ -203,6 +206,14 @@ function News() {
         fetchInitialData();
     }, []);
 
+    useEffect(() => {
+        if (openPopupCard) {
+            document.getElementById('root')?.setAttribute('inert', '');
+        } else {
+            document.getElementById('root')?.removeAttribute('inert');
+        }
+    }, [openPopupCard]);
+
     return (
         <Box className="news-page">
             {/* Show Alerts */}
@@ -215,6 +226,7 @@ function News() {
                 isEditMode={isEditMode}
                 isClickEdit={isClickEdit}
                 setIsClickEdit={setIsClickEdit}
+                onUpdated={getNews} 
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
@@ -237,29 +249,16 @@ function News() {
                                 justifyContent: 'flex-end'
                             }}
                         >
-                            {
-                                isEditMode ? (
-                                    <Button
-                                        variant='outlined'
-                                        onClick={() => {
-                                            setIsEditMode(false),
-                                                getNews()
-                                        }}
-                                    >
-                                        <FontAwesomeIcon icon={faGear} size="lg" />
-                                        <Typography variant="textButtonClassic">View Mode</Typography>
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant='outlined'
-                                        onClick={() => setIsEditMode(true)}
-                                    >
-                                        <FontAwesomeIcon icon={faGear} size="lg" />
-                                        <Typography variant="textButtonClassic">Edit Mode</Typography>
-                                    </Button>
-                                )
-                            }
-
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                <Typography sx={{ fontWeight: 500 }}>
+                                    {isEditMode ? "Editing Enabled" : "View Only"}
+                                </Typography>
+                                <MaterialUISwitch sx={{ m: 1 }}
+                                    onChange={(event) =>
+                                        setIsEditMode(event.target.checked)
+                                    }
+                                />
+                            </Stack>
                         </Grid>
                     }
 
@@ -477,7 +476,11 @@ function News() {
                                                 <Button variant='outlinedGray'>
                                                     Cancel
                                                 </Button>
-                                                <Button variant='contained' type='submit'>
+                                                <Button
+                                                    variant='contained'
+                                                    type='submit'
+                                                    disabled={isSubmitButtonActive}
+                                                >
                                                     Create News
                                                 </Button>
                                             </Box>
@@ -490,7 +493,7 @@ function News() {
                     <Grid container size={{ xs: 12 }} spacing={3}>
                         {news.map((news) => (
                             <NewsCard
-                                key={news.ID}
+                                key={JSON.stringify(news)}
                                 news={news}
                                 gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
                                 isEditMode={isEditMode}
