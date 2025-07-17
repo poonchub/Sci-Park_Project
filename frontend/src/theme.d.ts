@@ -22,6 +22,7 @@ declare module '@mui/material/Button' {
 declare module "@mui/material/styles" {
     interface PaletteOptions {
         customBlue?: string
+        customGreen?: string
     }
 
     interface TypeBackground {

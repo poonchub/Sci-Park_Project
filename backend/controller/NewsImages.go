@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -73,9 +75,96 @@ func CreateNewsImages(c *gin.Context) {
 		savedImages = append(savedImages, image)
 	}
 
+	services.NotifySocketEvent("news_images_created", savedImages)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": 		"อัปโหลดสำเร็จ",
 		"newsImages": 	savedImages,
+	})
+}
+
+// PATCH /news-images
+func UpdateNewsImages(c *gin.Context) {
+	userIDStr := c.PostForm("userID")
+	newsIDStr := c.PostForm("newsID")
+
+	newsID, err := strconv.ParseUint(newsIDStr, 10, 32)
+
+	if userIDStr == "" || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "กรุณาระบุ userID และ requestID ให้ถูกต้อง"})
+		return
+	}
+
+	db := config.DB()
+
+	// ดึงภาพเดิมจากฐานข้อมูล
+	var oldImages []entity.NewsImage
+	if err := db.Where("news_id = ?", newsID).Find(&oldImages).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงภาพเดิมได้"})
+		return
+	}
+
+	// ลบไฟล์จริงและข้อมูลใน DB
+	for _, img := range oldImages {
+		os.Remove(img.FilePath) // ลบไฟล์จาก disk (optional)
+	}
+	if err := db.Where("news_id = ?", newsID).Delete(&entity.NewsImage{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ลบภาพเดิมจากฐานข้อมูลไม่สำเร็จ"})
+		return
+	}
+
+	// รับไฟล์ใหม่
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์อัปโหลด"})
+		return
+	}
+
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "กรุณาอัปโหลดอย่างน้อยหนึ่งไฟล์"})
+		return
+	}
+
+	// เตรียมโฟลเดอร์
+	folderPath := fmt.Sprintf("images/news/user%s/news%s", userIDStr, newsIDStr)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างโฟลเดอร์ได้"})
+		return
+	}
+
+	var newsImages []entity.NewsImage
+	for i, file := range files {
+		ext := filepath.Ext(file.Filename)
+		if ext == "" {
+			ext = ".jpg"
+		}
+		newFileName := fmt.Sprintf("news%s_%d%s", newsIDStr, i+1, ext)
+		fullPath := path.Join(folderPath, newFileName)
+
+		if err := c.SaveUploadedFile(file, fullPath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถบันทึกไฟล์ได้"})
+			return
+		}
+
+		image := entity.NewsImage{
+			FilePath:  fullPath,
+			NewsID: uint(newsID),
+		}
+
+		if err := db.Create(&image).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		newsImages = append(newsImages, image)
+	}
+
+	services.NotifySocketEvent("news_images_updated", newsImages)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":          "อัปเดตรูปภาพสำเร็จ",
+		"newsImage": newsImages,
 	})
 }
 

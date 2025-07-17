@@ -37,4 +37,11 @@ export const TextArea = styled(MuiTextField)(() => ({
         },
     },
 
+    "& .MuiInputLabel-root": {
+        top: "-4px",
+    },
+    "& .MuiInputLabel-shrink": {
+        top: "2px",
+    },
+
 }));

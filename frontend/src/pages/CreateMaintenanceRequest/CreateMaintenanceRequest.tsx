@@ -8,6 +8,7 @@ import {
     CardContent,
     Checkbox,
     Container,
+    DialogActions,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -63,6 +64,12 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
+import dayjs from "dayjs";
+import { LocalizationProvider, PickersActionBar } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { MobileTimePicker } from "../../components/MobileTimePicker/MobileTimePicker";
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import TimePickerField from "../../components/TimePickerField/TimePickerField";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -452,6 +459,31 @@ function CreateMaintenanceRequestPage() {
         }
     }, [formData.IsAnytimeAvailable]);
 
+    const CustomActionBar = ({ onAccept, onCancel }: any) => {
+        return (
+            <DialogActions sx={{ mb: 1 }}>
+                <Button
+                    onClick={onCancel}
+                    variant="outlinedGray"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    onClick={onAccept}
+                    variant="contained"
+                    sx={{
+                        backgroundColor: '#F26522',
+                        '&:hover': {
+                            backgroundColor: '#d2551d',
+                        },
+                    }}
+                >
+                    OK
+                </Button>
+            </DialogActions>
+        );
+    };
+
     return (
         <Box className="create-maintenance-request-page">
             {/* Show Alerts */}
@@ -727,7 +759,7 @@ function CreateMaintenanceRequestPage() {
                                                     Available Time Slots
                                                 </Typography>
 
-                                                <Grid size={{ xs: 12, md: 12 }}>
+                                                <Grid size={{ xs: 12, md: 12 }} marginBottom={1.5}>
                                                     <FormGroup>
                                                         <FormControlLabel
                                                             control={
@@ -751,30 +783,38 @@ function CreateMaintenanceRequestPage() {
                                                     }}
                                                 >
                                                     <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                        <TextField
-                                                            name="StartTime"
-                                                            type="time"
-                                                            fullWidth
-                                                            value={formData.StartTime}
-                                                            onChange={handleInputChange}
+                                                        <TimePickerField
+                                                            label="Start Time"
+                                                            value={formData.StartTime ?? ''}
+                                                            onChange={(value) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    StartTime: value,
+                                                                }))
+                                                            }
                                                             disabled={formData.IsAnytimeAvailable}
                                                             error={!!errors.StartTime}
                                                             helperText={errors.StartTime}
+                                                            maxTime={formData.EndTime}
                                                         />
                                                     </Grid>
                                                     <Typography variant="body1" sx={{ alignItems: "center", display: "flex" }}>
                                                         to
                                                     </Typography>
                                                     <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                        <TextField
-                                                            name="EndTime"
-                                                            type="time"
-                                                            fullWidth
-                                                            value={formData.EndTime}
-                                                            onChange={handleInputChange}
+                                                        <TimePickerField
+                                                            label="End Time"
+                                                            value={formData.EndTime ?? ''}
+                                                            onChange={(value) =>
+                                                                setFormData((prev) => ({
+                                                                    ...prev,
+                                                                    EndTime: value,
+                                                                }))
+                                                            }
                                                             disabled={formData.IsAnytimeAvailable}
                                                             error={!!errors.EndTime}
                                                             helperText={errors.EndTime}
+                                                            minTime={formData.StartTime}
                                                         />
                                                     </Grid>
                                                 </Grid>

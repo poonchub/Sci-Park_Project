@@ -20,9 +20,11 @@ import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
-import { apiUrl, ListNews, ListPinnedNews } from '../../services/http';
+import { apiUrl, ListNews, ListPinnedNews, ListUnpinnedNews } from '../../services/http';
 import { NewsImagesInterface } from '../../interfaces/NewsImages';
 import { NewsInterface } from '../../interfaces/News';
+import NewsCard from '../../components/NewsCard/NewsCard';
+import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
 
 // ข้อมูลองค์กร
 const organizationInfo = {
@@ -52,6 +54,8 @@ const mainFeatures = [
 export default function SciparkHomePage() {
     const [news, setNews] = useState<NewsInterface[]>([])
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [openPopupCard, setOpenPopupCard] = useState<boolean>(false)
+    const [selectedNews, setSelectedNews] = useState<NewsInterface>({})
 
     const startTimeRef = useRef(Date.now());
     const sentRef = useRef(false);
@@ -64,22 +68,30 @@ export default function SciparkHomePage() {
 
     const getNews = async () => {
         try {
-            const res = await ListPinnedNews()
-            if (res) {
-                setNews(res)
+            const pinnedNews = await ListPinnedNews();
+            if (!pinnedNews) {
+                setNews([]);
+                return;
             }
+
+            let combinedNews = [...pinnedNews];
+
+            if (pinnedNews.length < 3) {
+                const needed = 3 - pinnedNews.length;
+                const orderedNews = await ListUnpinnedNews(needed);
+
+                if (orderedNews) {
+                    const pinnedIds = new Set(pinnedNews.map((item: any) => item.ID));
+                    const filteredOrderedNews = orderedNews.filter((item: any) => !pinnedIds.has(item.ID));
+
+                    combinedNews = combinedNews.concat(filteredOrderedNews.slice(0, needed));
+                }
+            }
+
+            setNews(combinedNews);
         } catch (error) {
             console.error("Error fetching news:", error);
         }
-    }
-
-    function formatDate(isoString: string): string {
-        const date = new Date(isoString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
     }
 
     useEffect(() => {
@@ -140,6 +152,13 @@ export default function SciparkHomePage() {
 
     return (
         <Box className="home-page">
+
+            <NewsDetailPopup
+                open={openPopupCard}
+                onClose={() => setOpenPopupCard(false)}
+                selectedNews={selectedNews}
+            />
+
             {/* Hero Section */}
             <Box
                 sx={{
@@ -298,60 +317,15 @@ export default function SciparkHomePage() {
                 </Typography>
 
                 <Grid container spacing={4}>
-                    {news.map((news) => {
-                        return (
-                            <Grid key={news.ID} size={{ xs: 4 }}>
-                                <Card
-                                    sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        borderRadius: 2
-                                    }}
-                                >
-                                    <Box
-                                        sx={{
-                                            overflow: 'hidden',
-                                            height: 400,
-                                            '& img': {
-                                                width: '100%',
-                                                height: '100%',
-                                                objectFit: 'cover',
-                                                transition: 'transform 0.3s ease-in-out',
-                                            },
-                                            '&:hover img': {
-                                                transform: 'scale(1.05)',
-                                            },
-                                        }}
-                                    >
-                                        <img
-                                            src={`${apiUrl}/${news.NewsImages?.[0]?.FilePath}`}
-                                            alt={news.Title}
-                                        />
-                                    </Box>
-
-                                    <CardContent sx={{ flexGrow: 1 }}>
-                                        <Box sx={{ mb: 1.5 }}>
-                                            <Chip
-                                                label={formatDate(news.DisplayStart ?? '')}
-                                                size="small"
-                                                sx={{ bgcolor: 'primary.light', color: 'white', padding: 2, fontWeight: 600 }}
-                                            />
-                                        </Box>
-                                        <Box sx={{ px: 1 }}>
-                                            <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'medium' }}>
-                                                {news.Title}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {news.Summary}
-                                            </Typography>
-                                        </Box>
-
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        )
-                    })}
+                    {news.map((news) => (
+                        <NewsCard
+                            key={news.ID}
+                            news={news}
+                            gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
+                            onOpenPopup={() => setOpenPopupCard(true)}
+                            setSelectedNews={setSelectedNews}
+                        />
+                    ))}
                 </Grid>
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                     <Link to='/news'>
