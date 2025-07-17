@@ -1,7 +1,21 @@
 import { apiUrl } from '../../services/http';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Typography, Avatar, Grid } from '@mui/material';
+import { 
+    Button, 
+    Typography, 
+    Avatar, 
+    Grid, 
+    Paper, 
+    Box, 
+    Card, 
+    CardContent, 
+    Divider, 
+    useTheme,
+    Container,
+    Chip,
+    IconButton,
+} from '@mui/material';
 import '../AddUser/AddUserForm.css';  // Import the updated CSS
 import { GetUserById } from '../../services/http';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
@@ -15,9 +29,25 @@ import { GetUserInterface } from '../../interfaces/IGetUser';
 import { UpdateProfileImage } from '../../services/http/index'
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
+import {
+    faUser,
+    faCamera,
+    faEdit,
+    faIdCard,
+    faEnvelope,
+    faPhone,
+    faVenusMars,
+    faBriefcase,
+    faBuilding,
+    faCrown,
+    faShieldAlt,
+    faInfoCircle,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
 const MyAccount: React.FC = () => {
+    const theme = useTheme();
     const [file, setFile] = useState<File | null>(null);  // Store single file
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);// Fetch data when component mounts
@@ -29,7 +59,6 @@ const MyAccount: React.FC = () => {
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_ACCOUNT,
         onInteractionChange: (count) => {
-            console.log(`[INTERACTION DEBUG] MyAccount - Interaction count updated: ${count}`);
         }
     });
 
@@ -72,9 +101,11 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
             // Call API to update immediately
             const result = await UpdateProfileImage(file);
-            console.log(result)
             if (result && 'status' in result && result.status === 200) {
-                setAlerts([{ type: "success", message: "Profile image updated successfully" }]);
+                setAlerts([{ type: 'success', message: 'Profile image updated successfully' }]);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
                 setAlerts([{ type: "error", message: "Error updating profile image" }]);
             }
@@ -113,10 +144,6 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
                     reader.readAsDataURL(file);
                 }
             }
-            if (user) {
-        console.log("User updated:", user);
-    }
-
         } catch (error) {
             console.error("Error fetching request statuses:", error);
         }
@@ -130,8 +157,6 @@ useEffect(() => {
     const startTime = Date.now();
     let sent = false;
 
-    console.log('[ANALYTICS DEBUG] MyAccount.tsx useEffect triggered - Component mounted');
-
     // ส่ง request ตอนเข้า (duration = 0)
     analyticsService.trackPageVisit({
         user_id: Number(localStorage.getItem('userId')),
@@ -144,17 +169,10 @@ useEffect(() => {
     // ฟังก์ชันส่ง analytics ตอนออก
     const sendAnalyticsOnLeave = (isBounce: boolean) => {
         if (sent) {
-            console.log('[ANALYTICS DEBUG] sendAnalyticsOnLeave called but already sent, skipping...');
             return;
         }
         sent = true;
         const duration = Math.floor((Date.now() - startTime) / 1000);
-        console.log('[ANALYTICS DEBUG] Sending analytics:', {
-            duration,
-            is_bounce: isBounce,
-            timestamp: new Date().toISOString(),
-            component: 'MyAccount.tsx'
-        });
         analyticsService.trackPageVisit({
             user_id: Number(localStorage.getItem('userId')),
             page_path: KEY_PAGES.MY_ACCOUNT,
@@ -167,20 +185,17 @@ useEffect(() => {
 
     // ออกจากหน้าแบบปิด tab/refresh
     const handleBeforeUnload = () => {
-        console.log('[ANALYTICS DEBUG] beforeunload event triggered');
         sendAnalyticsOnLeave(true);
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     // ออกจากหน้าแบบ SPA (React)
     return () => {
-        console.log('[ANALYTICS DEBUG] MyAccount.tsx useEffect cleanup - Component unmounting');
         window.removeEventListener('beforeunload', handleBeforeUnload);
         sendAnalyticsOnLeave(false);
     };
 }, []);
 
-console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
 
     const isValidImage = (file: File) => {
         return file.type.startsWith("image/");
@@ -190,68 +205,108 @@ console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
 
 
     return (
-        <>
-            {/* Show Alerts */}
-            {alerts.map((alert, index) => {
-                return (
-                    <React.Fragment key={index}>
-                        {alert.type === 'success' && (
+
+            
+                <Grid container spacing={4} justifyContent="center">
+                    {alerts.map((alert, index) => (
+                        alert.type === 'success' && (
                             <SuccessAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={Number(index)}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                        {alert.type === 'error' && (
-                            <ErrorAlert
+                                key={index}
                                 message={alert.message}
                                 onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
                                 index={index}
                                 totalAlerts={alerts.length}
                             />
-                        )}
-                        {alert.type === 'warning' && (
-                            <WarningAlert
-                                message={alert.message}
-                                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                                index={index}
-                                totalAlerts={alerts.length}
-                            />
-                        )}
-                    </React.Fragment>
-                );
-            })}
-            <Typography
-                variant="h6"
-                className="title"
-                style={{ marginBottom: '20px', marginTop: '10px' }}
-            >
-                User Information
-            </Typography>
+                        )
+                    ))}
+                    {/* Profile Image Section */}
+                    <Grid size={{ xs: 12, md: 3 }}>
+                        <Card
+                            elevation={3}
+                            sx={{
+                                bgcolor: 'background.paper',
+                                color: 'text.primary',
+                                borderRadius: 3,
+                                boxShadow: 3,
+                                p: 3,
+                                width: '100%',
+                                height: '55%',
+                                mb: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                textAlign: 'center',
+                            }}
+                        >
+                            <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                                <Avatar 
+                                    sx={{ 
+                                        width: 180, 
+                                        height: 180,
+                                        border: `4px solid ${theme.palette.primary.main}20`,
+                                        boxShadow: 3,
+                                    }} 
+                                    src={profileImage || ''} 
+                                />
+                                <IconButton
+                                    component="label"
+                                    sx={{
+                                        position: 'absolute',
+                                        bottom: 8,
+                                        right: 8,
+                                        bgcolor: theme.palette.primary.main,
+                                        color: 'white',
+                                        '&:hover': {
+                                            bgcolor: theme.palette.primary.dark,
+                                        },
+                                        width: 40,
+                                        height: 40,
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faCamera} size="sm" />
+                                    <input type="file" hidden onChange={handleFileChange} />
+                                </IconButton>
+                            </Box>
 
-            <div className="add-user">
-
-                
-
-                    <Grid container spacing={2}>
-
-                        {/* User Type Selection (Internal/External Person) */}
-
-
-
-
-                        {/* Profile Image and Button */}
-                        <Grid size={{ xs: 12, sm: 12 }} container direction="column" justifyContent="center" alignItems="center" textAlign="center">
-                            {/* Display profile image */}
-                            <Avatar sx={{ width: 150, height: 150 }} src={profileImage || ''} />
-
-                            {/* File selection button */}
-                            <Button variant="outlined" component="label" className="upload-button" sx={{ marginTop: 2 }}>
-                                Edit Image
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, justifyContent: 'center', marginBottom: 3 }}>
+                            <Button 
+                                variant="outlined" 
+                                component="label" 
+                                startIcon={<FontAwesomeIcon icon={faEdit} />}
+                                sx={{ 
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                Edit Profile Image
                                 <input type="file" hidden onChange={handleFileChange} />
                             </Button>
-                        </Grid>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, justifyContent: 'center' }}>
+                            <Typography variant="h6" fontWeight={600} color="primary" gutterBottom>
+                                {user?.FirstName} {user?.LastName}
+                            </Typography>
+                            </Box>
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, justifyContent: 'center' }}>
+                            <Chip
+                                label={userType === 'internal' ? 'Internal User' : 'External User'}
+                                color={userType === 'internal' ? 'primary' : 'primary'}
+                                icon={<FontAwesomeIcon icon={userType === 'internal' ? faIdCard : faBuilding} />}
+                                sx={{ mb: 2 }}
+                            />
+                            </Box>
+                            
+                            
+
+
+                            
+                            
+                            
+                            
+                        </Card>
+                    </Grid>
 
 
 
@@ -260,47 +315,102 @@ console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
 
 
 
-                        {/* Name Fields */}
-                        <Grid size={{ xs: 12, sm: 12 }}>
-                            <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, sm: 6 }} >
-                                    <Typography variant="body1" className="title-field">First Name</Typography>
+                    {/* User Information Section */}
+                    <Grid size={{ xs: 12, md: 9 }}>
+                        <Card
+                            elevation={2}
+                            sx={{
+                                bgcolor: 'background.paper',
+                                color: 'text.primary',
+                                borderRadius: 3,
+                                boxShadow: 3,
+                                p: 3,
+                                width: '100%',
+                                px: 2,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                            }}
+                        >
+                            <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
+                                <FontAwesomeIcon icon={faUser} style={{ marginRight: 8 }} />
+                                Personal Information
+                            </Typography>
+
+                            {/* Name Fields */}
+                            <Grid container spacing={3} sx={{ mb: 3 }}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.primary.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            First Name
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
                                         fullWidth
                                         value={String(user?.FirstName || "-")}
-                                        autoFocus
                                         slotProps={{
                                             input: {
                                                 readOnly: true,
                                             },
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
+                                            },
+                                            input: { color: 'text.primary' },
                                         }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
-                                    <Typography variant="body1" className="title-field">Last Name</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.primary.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            Last Name
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
-                                        value={String(user?.LastName || "-")}
                                         fullWidth
+                                        value={String(user?.LastName || "-")}
                                         slotProps={{
                                             input: {
                                                 readOnly: true,
                                             },
                                         }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
+                                            },
+                                            input: { color: 'text.primary' },
+                                        }}
                                     />
                                 </Grid>
                             </Grid>
-                        </Grid>
 
-                        {/* Phone and Email Fields */}
-                        <Grid size={{ xs: 12, sm: 12 }}>
-                            <Grid container spacing={2}>
-                                {/* Gender Dropdown */}
+                            <Divider sx={{ my: 3 }} />
+
+                            {/* Contact Information */}
+                            <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
+                                <FontAwesomeIcon icon={faEnvelope} style={{ marginRight: 8 }} />
+                                Contact Information
+                            </Typography>
+
+                            <Grid container spacing={3} sx={{ mb: 3 }}>
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">Gender</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faVenusMars} size="sm" color={theme.palette.warning.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            Gender
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
                                         fullWidth
                                         value={user?.Gender?.name || "-"}
                                         slotProps={{
@@ -308,12 +418,26 @@ console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
                                                 readOnly: true,
                                             },
                                         }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
+                                            },
+                                            input: { color: 'text.primary' },
+                                        }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">Phone Number</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faPhone} size="sm" color={theme.palette.success.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            Phone Number
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
                                         fullWidth
                                         value={user?.Phone || "-"}
                                         slotProps={{
@@ -321,14 +445,26 @@ console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
                                                 readOnly: true,
                                             },
                                         }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
+                                            },
+                                            input: { color: 'text.primary' },
+                                        }}
                                     />
                                 </Grid>
-
-                                {/* Email Field */}
                                 <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Typography variant="body1" className="title-field">Email</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faEnvelope} size="sm" color={theme.palette.info.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            Email
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
                                         fullWidth
                                         value={user?.Email || "-"}
                                         slotProps={{
@@ -336,127 +472,231 @@ console.log('[ANALYTICS DEBUG] MyAccount.tsx render called');
                                                 readOnly: true,
                                             },
                                         }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
+                                            },
+                                            input: { color: 'text.primary' },
+                                        }}
                                     />
                                 </Grid>
-
-
-
-
                             </Grid>
-                        </Grid>
 
-                        {/* Role Dropdown */}
-                        {userType === 'internal' && (
-                            <Grid size={{ xs: 12, sm: 4 }}>
-                                <Typography variant="body1" className="title-field">Position</Typography>
-                                <TextField
-                                    id="outlined-read-only-input"
-                                    fullWidth
-                                    value={user?.Role?.name || "-"}
-                                    slotProps={{
-                                        input: {
-                                            readOnly: true,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                        )}
+                            {/* Work Information */}
+                            {userType === 'internal' && (
+                                <>
+                                    <Divider sx={{ my: 3 }} />
+                                    <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
+                                        <FontAwesomeIcon icon={faBriefcase} style={{ marginRight: 8 }} />
+                                        Work Information
+                                    </Typography>
 
-                        {/* Conditional Rendering for Manager (RoleID === 3) */}
-                        {userType === 'internal' && (user?.RoleID === 3 || user?.RoleID === 4) && (
-                            <Grid size={{ xs: 12, sm: 4 }}>
-                                <Typography variant="body1" className="title-field">Management</Typography>
-                                <TextField
-                                    id="outlined-read-only-input"
-                                    fullWidth
-                                    value={String(user?.RequestType?.TypeName)}
-                                    slotProps={{
-                                        input: {
-                                            readOnly: true,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                        )}
+                                    <Grid container spacing={3} sx={{ mb: 3 }}>
+                                        <Grid size={{ xs: 12, sm: 4 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faBriefcase} size="sm" color={theme.palette.warning.main} />
+                                                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                    Position
+                                                </Typography>
+                                            </Box>
+                                            <TextField
+                                                fullWidth
+                                                value={user?.Role?.name || "-"}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                    },
+                                                }}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        bgcolor: 'background.default',
+                                                        color: 'text.primary',
+                                                        '& fieldset': {
+                                                            borderColor: 'divider',
+                                                        },
+                                                    },
+                                                    input: { color: 'text.primary' },
+                                                }}
+                                            />
+                                        </Grid>
 
+                                        {(user?.RoleID === 3 || user?.RoleID === 4) && (
+                                            <Grid size={{ xs: 12, sm: 4 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                    <FontAwesomeIcon icon={faShieldAlt} size="sm" color={theme.palette.error.main} />
+                                                    <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                        Management
+                                                    </Typography>
+                                                </Box>
+                                                <TextField
+                                                    fullWidth
+                                                    value={String(user?.RequestType?.TypeName)}
+                                                    slotProps={{
+                                                        input: {
+                                                            readOnly: true,
+                                                        },
+                                                    }}
+                                                    sx={{
+                                                        '& .MuiOutlinedInput-root': {
+                                                            bgcolor: 'background.default',
+                                                            color: 'text.primary',
+                                                            '& fieldset': {
+                                                                borderColor: 'divider',
+                                                            },
+                                                        },
+                                                        input: { color: 'text.primary' },
+                                                    }}
+                                                />
+                                            </Grid>
+                                        )}
 
-                        {/* EmployeeID Field */}
-                        {userType === 'internal' && <Grid size={{ xs: 12, sm: 4 }}>
-                            <Typography variant="body1" className="title-field">Employee ID</Typography>
-                            <TextField
-                                id="outlined-read-only-input"
-                                fullWidth
-                                value={String(user?.EmployeeID || "-")}
-                                slotProps={{
-                                    input: {
-                                        readOnly: true,
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        }
+                                        <Grid size={{ xs: 12, sm: 4 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faIdCard} size="sm" color={theme.palette.info.main} />
+                                                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                    Employee ID
+                                                </Typography>
+                                            </Box>
+                                            <TextField
+                                                fullWidth
+                                                value={String(user?.EmployeeID || "-")}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                    },
+                                                }}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        bgcolor: 'background.default',
+                                                        color: 'text.primary',
+                                                        '& fieldset': {
+                                                            borderColor: 'divider',
+                                                        },
+                                                    },
+                                                    input: { color: 'text.primary' },
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </>
+                            )}
 
+                            {/* Privileges Section */}
+                            <Divider sx={{ my: 3 }} />
+                            <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
+                                <FontAwesomeIcon icon={faCrown} style={{ marginRight: 8 }} />
+                                Account Privileges
+                            </Typography>
 
-                        {/* Package Dropdown */}
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <Typography variant="body1" className="title-field">Privileges</Typography>
-                            <TextField
-                                id="outlined-read-only-input"
-                                fullWidth
-                                value={String(user?.UserPackages && user.UserPackages.length > 0 ? user.UserPackages[0].Package?.package_name || "-" : "-")}
-                                slotProps={{
-                                    input: {
-                                        readOnly: true,
-                                    },
-                                }}
-                            />
-                        </Grid>
-
-                        {/* Conditional Rendering based on User Type */}
-                        {userType === 'external' && (
-                            <>
-                                <Grid size={{ xs: 4 }}>
-                                    <Typography variant="body1" className="title-field">Company Name</Typography>
-
+                            <Grid container spacing={3}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <FontAwesomeIcon icon={faCrown} size="sm" color={theme.palette.warning.main} />
+                                        <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                            Privileges
+                                        </Typography>
+                                    </Box>
                                     <TextField
-                                        id="outlined-read-only-input"
                                         fullWidth
-                                        value={String(user?.CompanyName || "-")}
+                                        value={String(user?.UserPackages && user.UserPackages.length > 0 ? user.UserPackages[0].Package?.package_name || "-" : "-")}
                                         slotProps={{
                                             input: {
                                                 readOnly: true,
                                             },
                                         }}
-                                    />
-                                </Grid>
-
-                                <Grid size={{ xs: 12 }}>
-                                    <Typography variant="body1" className="title-field">Business Description</Typography>
-                                    <TextArea
-                                        id="outlined-read-only-input"
-                                        fullWidth
-                                        value={String(user?.BusinessDetail || "-")}
-                                        multiline
-                                        minRows={2}
-                                        maxRows={5}
-                                        slotProps={{
-                                            input: {
-                                                readOnly: true,
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                bgcolor: 'background.default',
+                                                color: 'text.primary',
+                                                '& fieldset': {
+                                                    borderColor: 'divider',
+                                                },
                                             },
+                                            input: { color: 'text.primary' },
                                         }}
                                     />
-
                                 </Grid>
-                            </>
-                        )}
+                            </Grid>
 
+                            {/* External User Information */}
+                            {userType === 'external' && (
+                                <>
+                                    <Divider sx={{ my: 3 }} />
+                                    <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
+                                        <FontAwesomeIcon icon={faBuilding} style={{ marginRight: 8 }} />
+                                        Company Information
+                                    </Typography>
 
-
-
+                                    <Grid container spacing={3}>
+                                        <Grid size={{ xs: 12, sm: 6 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faBuilding} size="sm" color={theme.palette.secondary.main} />
+                                                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                    Company Name
+                                                </Typography>
+                                            </Box>
+                                            <TextField
+                                                fullWidth
+                                                value={String(user?.CompanyName || "-")}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                    },
+                                                }}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        bgcolor: 'background.default',
+                                                        color: 'text.primary',
+                                                        '& fieldset': {
+                                                            borderColor: 'divider',
+                                                        },
+                                                    },
+                                                    input: { color: 'text.primary' },
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid size={{ xs: 12 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faInfoCircle} size="sm" color={theme.palette.info.main} />
+                                                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                                                    Business Description
+                                                </Typography>
+                                            </Box>
+                                            <TextArea
+                                                fullWidth
+                                                value={String(user?.BusinessDetail || "-")}
+                                                multiline
+                                                minRows={3}
+                                                maxRows={5}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                    },
+                                                }}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        bgcolor: 'background.default',
+                                                        color: 'text.primary',
+                                                        '& fieldset': {
+                                                            borderColor: 'divider',
+                                                        },
+                                                    },
+                                                    input: { color: 'text.primary' },
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </>
+                            )}
+                        </Card>
                     </Grid>
-                
-            </div>
-        </>
+                </Grid>
+            
+        
     );
 };
 

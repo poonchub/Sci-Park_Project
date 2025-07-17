@@ -73,7 +73,7 @@ export const normalizePageName = (name: string) => {
     return name;
 };
 
-function PopularPagesDonutChart({ data, height = 220, totalVisits, title = "Popular Pages", usePeriodSelector = false }: Props) {
+function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popular Pages", usePeriodSelector = false }: Props) {
     const [mode, setMode] = useState<"light" | "dark">(getModeFromClass());
     const [period, setPeriod] = useState<string>("today");
     const [periodData, setPeriodData] = useState<PopularPagesByPeriodData | null>(null);
@@ -255,8 +255,8 @@ function PopularPagesDonutChart({ data, height = 220, totalVisits, title = "Popu
 
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
-            <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <CardContent sx={{ py: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
                     <Typography variant="subtitle1" fontWeight={600}>
                         {title}
                     </Typography>
@@ -279,21 +279,21 @@ function PopularPagesDonutChart({ data, height = 220, totalVisits, title = "Popu
                     )}
                 </Box>
 
-                <Box display="flex" justifyContent="center" alignItems="center" height={height}>
+                <Box display="flex" justifyContent="center" alignItems="center" height={height - 40}>
                     {series.length > 0 ? (
                         <ReactApexChart
                             key={mode}
                             options={options}
                             series={series}
                             type="donut"
-                            height={height}
+                            height={height - 40}
                         />
                     ) : (
                         <Typography color="text.secondary">Loading data...</Typography>
                     )}
                 </Box>
 
-                <Stack spacing={1.5} mt={2}>
+                <Stack spacing={1} mt={1.5}>
                     {(usePeriodSelector && periodData ? periodData.data : data || []).map((pageData: any) => {
                         const pageName = pageData.page_name || pageData.name;
                         const visits = pageData.total_visits || pageData.visits || 0;
@@ -353,9 +353,9 @@ function PopularPagesDonutChart({ data, height = 220, totalVisits, title = "Popu
                                     variant="determinate"
                                     value={(visits / (usePeriodSelector && periodData ? periodData.total_visits : totalVisits || 1)) * 100}
                                     sx={{
-                                        mt: 0.5,
-                                        height: 6,
-                                        borderRadius: 5,
+                                        mt: 0.3,
+                                        height: 4,
+                                        borderRadius: 3,
                                         backgroundColor: '#eee',
                                         '& .MuiLinearProgress-bar': {
                                             backgroundColor: color,

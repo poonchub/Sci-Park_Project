@@ -13,7 +13,7 @@ export const useInteractionTracker = ({ pagePath, onInteractionChange }: UseInte
     // เพิ่ม interaction count
     const incrementInteraction = useCallback(() => {
         interactionCount.current += 1;
-        console.log(`[INTERACTION DEBUG] ${pagePath} - Interaction count: ${interactionCount.current}`);
+        
         onInteractionChange?.(interactionCount.current);
     }, [pagePath, onInteractionChange]);
 
@@ -66,7 +66,7 @@ export const useInteractionTracker = ({ pagePath, onInteractionChange }: UseInte
         document.addEventListener('scroll', handleScroll, { passive: true });
         document.addEventListener('keydown', handleKeyPress);
 
-        console.log(`[INTERACTION DEBUG] ${pagePath} - Interaction tracker initialized`);
+        
 
         // Cleanup
         return () => {
@@ -78,14 +78,14 @@ export const useInteractionTracker = ({ pagePath, onInteractionChange }: UseInte
                 clearTimeout(scrollTimeout.current);
             }
 
-            console.log(`[INTERACTION DEBUG] ${pagePath} - Interaction tracker cleaned up. Final count: ${interactionCount.current}`);
+            
         };
     }, [pagePath, handleClick, handleScroll, handleKeyPress]);
 
     // Reset interaction count
     const resetInteractionCount = useCallback(() => {
         interactionCount.current = 0;
-        console.log(`[INTERACTION DEBUG] ${pagePath} - Interaction count reset to 0`);
+        
         onInteractionChange?.(0);
     }, [pagePath, onInteractionChange]);
 

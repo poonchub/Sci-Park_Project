@@ -76,17 +76,17 @@ const setupTokenTimeout = (expiresAt: number) => {
         handleSessionExpiration();
     }, timeUntilExpiry);
 
-    console.log(`Token will expire in ${Math.floor(timeUntilExpiry / 1000)} seconds`);
+    
 };
 
 // Function to check user activity
 const checkUserActivity = () => {
     const currentTime = Date.now();
     const inactiveTime = currentTime - lastActivityTime;
-    // เปลี่ยนกลับเป็นค่าปกติ
-    const maxInactiveTime = 30 * 60 * 1000; // 30 minutes
+    // เปลี่ยนจาก 30 นาที เป็น 10 วินาที
+    const maxInactiveTime = 30 * 60 * 1000; // 10 seconds ไม่ใช่
 
-    console.log(`Checking activity... Inactive for ${Math.floor(inactiveTime / 1000)} seconds`);
+    
 
     if (inactiveTime > maxInactiveTime) {
         console.log("User inactive for too long, logging out...");
@@ -119,10 +119,10 @@ export const setupSmartSessionMonitoring = (userId: string | null) => {
         setupTokenTimeout(expiresAt);
     }
 
-    // Set up user activity check every 2 seconds (for testing)
+    // Set up user activity check every 5 second (for testing)
     const activityCheckInterval = setInterval(() => {
         checkUserActivity();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5* 60 *1000); // 1 second
 
     // Set up token check with API every 15 minutes (backup)
     const apiCheckInterval = setInterval(async () => {

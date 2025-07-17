@@ -138,22 +138,11 @@ class AnalyticsService {
      * Track a page visit
      */
     async trackPageVisit(data: TrackPageVisitData): Promise<boolean> {
-        console.log('[ANALYTICS DEBUG] analyticsService.trackPageVisit called with data:', {
-            user_id: data.user_id,
-            page_path: data.page_path,
-            page_name: data.page_name,
-            duration: data.duration,
-            is_bounce: data.is_bounce,
-            interaction_count: data.interaction_count, // log interaction_count
-            timestamp: new Date().toISOString()
-        });
-        
         try {
             const response = await trackPageVisit(data);
-            console.log('[ANALYTICS DEBUG] trackPageVisit API response:', response);
             return response !== false;
         } catch (error) {
-            console.error('[ANALYTICS DEBUG] Error tracking page visit:', error);
+            console.error('Error tracking page visit:', error);
             return false;
         }
     }
@@ -234,9 +223,7 @@ class AnalyticsService {
      */
     async getPerformanceAnalytics(start: string, end: string): Promise<PerformanceAnalyticsData | null> {
         try {
-            console.log('Fetching performance analytics for:', { start, end });
             const response = await getPerformanceAnalytics(start, end);
-            console.log('Performance analytics response:', response);
             if (response) {
                 return response;
             }

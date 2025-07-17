@@ -819,7 +819,6 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-request`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -882,7 +881,6 @@ async function CreateMaintenanceImages(data: FormData) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-images`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -902,7 +900,6 @@ async function UpdateMaintenanceImages(data: FormData) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-images`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 200) {
             return res.json();
         } else {
@@ -1012,7 +1009,6 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/manager-approval`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -1078,7 +1074,6 @@ async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/maintenance-task`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -1159,7 +1154,6 @@ async function UpdateHandoverImages(data: FormData) {
     };
 
     let res = await fetch(`${apiUrl}/handover-images`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 200) {
             return res.json();
         } else {
@@ -1201,7 +1195,6 @@ async function CreateInspection(data: InspectionsInterface) {
     };
 
     let res = await fetch(`${apiUrl}/inspection`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {
@@ -1468,34 +1461,15 @@ export async function getDashboardAnalytics() {
 }
 
 export async function trackPageVisit(data: any) {
-    console.log('[ANALYTICS DEBUG] HTTP trackPageVisit called with data:', {
-        user_id: data.user_id,
-        page_path: data.page_path,
-        page_name: data.page_name,
-        duration: data.duration,
-        is_bounce: data.is_bounce,
-        timestamp: new Date().toISOString()
-    });
-    
-    // แสดงสถานะ duration
-    if (data.duration === 0) {
-        console.log('[ANALYTICS DEBUG] Entry request (duration = 0) - will be skipped by backend');
-    } else if (data.duration <= 2) {
-        console.log('[ANALYTICS DEBUG] Short visit (duration <= 2s) - will be skipped by backend');
-    } else {
-        console.log('[ANALYTICS DEBUG] Valid visit (duration > 2s) - will be recorded by backend');
-    }
     
     try {
-        console.log('[ANALYTICS DEBUG] Making API call to /analytics/track');
         const response = await axiosInstance.post('/analytics/track', data);
-        console.log('[ANALYTICS DEBUG] API response received:', response.data);
         return response.data;
     } catch (error: any) {
-        console.error('[ANALYTICS DEBUG] Error tracking page visit:', error);
+        console.error('Error tracking page visit:', error);
         if (error.response) {
-            console.error('[ANALYTICS DEBUG] Response data:', error.response.data);
-            console.error('[ANALYTICS DEBUG] Response status:', error.response.status);
+            console.error('Response data:', error.response.data);
+            console.error('Response status:', error.response.status);
         }
         return false;
     }
@@ -1585,7 +1559,6 @@ async function CreateNews(data: NewsImagesInterface) {
     };
 
     let res = await fetch(`${apiUrl}/news`, requestOptions).then((res) => {
-        console.log(res)
         if (res.status == 201) {
             return res.json();
         } else {

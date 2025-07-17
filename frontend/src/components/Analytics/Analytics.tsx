@@ -9,10 +9,6 @@ import {
     Tab,
     Tabs,
     Typography,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Chip,
     Alert,
     IconButton,
@@ -33,10 +29,12 @@ import {
     Legend,
     ResponsiveContainer,
     Bar,
+    BarChart,
     PieChart,
     Pie,
     Cell,
 } from 'recharts';
+import ApexLineChart from '../ApexLineChart/ApexLineChart';
 import PopularPagesDonutChart from '../PopularPagesDonutChart/PopularPagesDonutChart';
 import {
     faBroom,
@@ -44,10 +42,8 @@ import {
     faUsers,
     faEye,
     faClock,
-    faRotateRight,
     IconDefinition,
     faQuestion,
-    faDownload,
     faBook,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -65,6 +61,9 @@ import {
     KEY_PAGES 
 } from '../../services/analyticsService';
 import { pageConfig, normalizePageName } from '../PopularPagesDonutChart/PopularPagesDonutChart';
+import ReactApexChart from 'react-apexcharts';
+import { ApexOptions } from 'apexcharts';
+import { useTheme } from '@mui/material/styles';
 
 
 const Analytics: React.FC = () => {
@@ -584,77 +583,95 @@ For data interpretation:
         return pageData.filter(page => keyPagePaths.includes(page.page_path as any));
     };
 
-    // New statistics calculations
-    const calculateTimeBasedStats = () => {
-        if (!pageData.length) return null;
-        
-        // Calculate peak hours (mock data for now)
-        const peakHours = [
-            { hour: '09:00-11:00', visits: 45 },
-            { hour: '11:00-13:00', visits: 38 },
-            { hour: '13:00-15:00', visits: 52 },
-            { hour: '15:00-17:00', visits: 41 },
-            { hour: '17:00-19:00', visits: 29 }
-        ];
+    // New component for visits chart using ApexCharts
+    const VisitsApexChart: React.FC<{
+        data: Array<{date: string, total_visits: number}>;
+        height: number;
+    }> = ({ data, height }) => {
+        const theme = useTheme();
+        const chartData = data.map(item => ({
+            date: item.date,
+            visits: item.total_visits
+        }));
 
-        // Calculate session duration distribution
-        const durationDistribution = [
-            { range: '0-30s', count: 25, percentage: 15 },
-            { range: '30s-2m', count: 45, percentage: 27 },
-            { range: '2m-5m', count: 52, percentage: 31 },
-            { range: '5m-10m', count: 28, percentage: 17 },
-            { range: '10m+', count: 18, percentage: 10 }
-        ];
+        // Format date labels like Dashboard (D MMM format)
+        const formatDateLabel = (dateStr: string) => {
+            const date = dayjs(dateStr);
+            if (!date.isValid()) return dateStr;
+            return date.format("D MMM"); // เช่น 14 Jul
+        };
 
-        return { peakHours, durationDistribution };
-    };
+        const options: ApexOptions = {
+            chart: {
+                type: "area" as const,
+                height,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: false,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true,
+                    },
+                },
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: "smooth" },
+            xaxis: {
+                type: "category",
+                categories: chartData.map(item => formatDateLabel(item.date)),
+                labels: {
+                    style: {
+                        fontSize: "14px",
+                        fontFamily: "Noto Sans Thai, sans-serif",
+                    },
+                    rotate: -45,
+                    rotateAlways: false,
+                },
+            },
+            yaxis: {
+                min: 0,
+                forceNiceScale: true,
+                decimalsInFloat: 0,
+                labels: {
+                    style: {
+                        fontSize: "14px",
+                        fontFamily: "Noto Sans Thai, sans-serif",
+                    },
+                },
+            },
+            tooltip: {
+                theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+            },
+            fill: {
+                type: "gradient",
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.3,
+                    opacityTo: 0.1,
+                    stops: [0, 90, 100],
+                },
+            },
+            colors: ["#8884d8"],
+        };
 
-    const calculateUserEngagementStats = () => {
-        if (!pageData.length) return null;
+        const series = [{ name: "Total Visits", data: chartData.map(item => item.visits) }];
 
-        // Calculate engagement metrics
-        const totalVisits = pageData.reduce((sum, page) => sum + page.total_visits, 0);
-        const totalUniqueVisitors = pageData.reduce((sum, page) => sum + page.unique_visitors, 0);
-        const avgBounceRate = pageData.reduce((sum, page) => sum + page.bounce_rate, 0) / pageData.length;
-        const avgDuration = pageData.reduce((sum, page) => sum + page.average_duration, 0) / pageData.length;
-
-        // Engagement Score (0-100)
-        const engagementScore = Math.round(
-            ((100 - avgBounceRate) * 0.4) + 
-            (Math.min(avgDuration / 60, 10) * 6) // Max 10 minutes = 60 points
+        return (
+            <div>
+                <ReactApexChart
+                    options={options}
+                    series={series}
+                    type="area"
+                    height={height}
+                />
+            </div>
         );
-
-        return {
-            totalVisits,
-            totalUniqueVisitors,
-            avgBounceRate: avgBounceRate.toFixed(1),
-            avgDuration: avgDuration.toFixed(2),
-            engagementScore,
-            pagesPerSession: (totalVisits / totalUniqueVisitors).toFixed(2)
-        };
     };
 
-    const calculateBehavioralStats = () => {
-        if (!pageData.length) return null;
-
-        // Calculate behavioral insights
-        const highEngagementPages = pageData
-            .filter(page => page.average_duration > 120 && page.bounce_rate < 30)
-            .sort((a, b) => b.average_duration - a.average_duration)
-            .slice(0, 3);
-
-        const lowEngagementPages = pageData
-            .filter(page => page.average_duration < 30 || page.bounce_rate > 70)
-            .sort((a, b) => a.average_duration - b.average_duration)
-            .slice(0, 3);
-
-        return {
-            highEngagementPages,
-            lowEngagementPages,
-            totalPages: pageData.length,
-            pagesWithGoodPerformance: pageData.filter(page => page.bounce_rate < 50).length
-        };
-    };
 
     // Summary Card Component matching Dashboard style
     const SummaryCard: React.FC<{
@@ -752,8 +769,7 @@ For data interpretation:
         );
     }
 
-    // Use key pages data if available, otherwise use all page data
-    const displayPageData = getKeyPagesData().length > 0 ? getKeyPagesData() : pageData;
+
 
     return (
         <Box className="analytics-page">
@@ -793,9 +809,9 @@ For data interpretation:
                     </Grid>
 
                     <CustomTabPanel value={valueTab} index={0}>
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* Summary Cards */}
-                            <Grid container size={{ xs: 12 }} spacing={3}>
+                            <Grid container size={{ xs: 12 }} spacing={2}>
                                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                     <SummaryCard
                                         title="Today's Visits"
@@ -809,7 +825,7 @@ For data interpretation:
                                     <SummaryCard
                                         title="This Week"
                                         value={analyticsData?.week_visits || 0}
-                                        icon={faUsers}
+                                        icon={faClock}
                                         color="#4caf50"
                                         subtitle="7 days"
                                     />
@@ -827,14 +843,14 @@ For data interpretation:
                                     <SummaryCard
                                         title="Total Users"
                                         value={systemAnalyticsData?.total_users || 0}
-                                        icon={faClock}
+                                        icon={faUsers}
                                         color="#9c27b0"
                                         subtitle="Registered users"
                                     />
                                 </Grid>
                             </Grid>
 
-                            <Grid container size={{ md: 12, lg: 12, xl: 8 }} spacing={3}>
+                            <Grid container size={{ md: 12, lg: 12, xl: 8 }} spacing={2}>
                                 {/* Chart Section */}
                                 <Grid size={{ xs: 12, md: 12 }}>
                                     <Card
@@ -940,47 +956,33 @@ For data interpretation:
                                                     <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
                                                 </Button>
                                             </Grid>
-                                            <Grid size={{ xs: 2, mobileS: 0.5, md: 1 }}>
-                                                <Button
-                                                    onClick={handleDownloadManual}
-                                                    sx={{
-                                                        color:"primary",
-                                                        minWidth: "35px",
-                                                        width: "100%",
-                                                        height: "45px",
-                                                        borderRadius: "10px",
-                                                        border: "1px solid rgb(109, 110, 112, 0.4)",
-                                                        "&:hover": {
-                                                            boxShadow: "none",
-                                                            borderColor: "primary.main",
-                                                            backgroundColor: "transparent",
-                                                        },
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faBook} size="lg" style={{ color: "gray" }} />
-                                                </Button>
-                                            </Grid>
+                                            
                                         </Grid>
                                         
                                         {/* Chart */}
-                                        <Box sx={{ height: 250 }}>
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={visitsRangeData}>
-                                                    <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="date" />
-                                                    <YAxis />
-                                                    <Tooltip />
-                                                    <Legend />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="total_visits"
-                                                        stroke="#8884d8"
-                                                        strokeWidth={2}
-                                                        dot={{ fill: '#8884d8', strokeWidth: 2, r: 4 }}
-                                                        name="Total Visits"
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
+                                        <Box sx={{ height: 280 }}>
+                                            {visitsRangeData && visitsRangeData.length > 0 ? (
+                                                <VisitsApexChart
+                                                    data={visitsRangeData}
+                                                    height={280}
+                                                />
+                                            ) : (
+                                                <Box sx={{ 
+                                                    height: '100%', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center',
+                                                    flexDirection: 'column',
+                                                    color: 'text.secondary'
+                                                }}>
+                                                    <Typography variant="h6" gutterBottom>
+                                                        No Data Available
+                                                    </Typography>
+                                                    <Typography variant="body2">
+                                                        No visit data found for the selected date range
+                                                    </Typography>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </Card>
                                 </Grid>
@@ -989,7 +991,7 @@ For data interpretation:
                             {/* Popular Pages Donut Chart Section */}
                             <Grid size={{ xs: 12, sm: 12, lg: 12, xl: 4 }}>
                                 <PopularPagesDonutChart 
-                                    height={300}
+                                    height={250}
                                     title="Popular Pages"
                                     usePeriodSelector={true}
                                 />
@@ -1252,18 +1254,24 @@ For data interpretation:
                                             {performanceData?.time_slots && performanceData.time_slots.length > 0 ? (
                                                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                                     {/* Bar Chart */}
-                                                    <Box sx={{ height: 250, mb: 2, width: '100%' }}>
+                                                    <Box sx={{ height: 400, mb: 2, width: '100%' }}>
                                                         <ResponsiveContainer width="100%" height="100%">
-                                                            <LineChart data={performanceData.time_slots}>
+                                                            <BarChart 
+                                                                data={performanceData.time_slots}
+                                                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                                            >
                                                                 <CartesianGrid strokeDasharray="3 3" />
                                                                 <XAxis 
                                                                     dataKey="slot" 
                                                                     angle={-45}
                                                                     textAnchor="end"
                                                                     height={80}
-                                                                    fontSize={12}
+                                                                    fontSize={11}
+                                                                    interval={0}
                                                                 />
-                                                                <YAxis />
+                                                                <YAxis 
+                                                                    domain={[0, 'dataMax + 2']}
+                                                                />
                                                                 <Tooltip 
                                                                     formatter={(value) => [`${value} visits`, 'Visits']}
                                                                     labelFormatter={(label) => `Time: ${label}`}
@@ -1273,7 +1281,7 @@ For data interpretation:
                                                                     fill="#8884d8" 
                                                                     radius={[4, 4, 0, 0]}
                                                                 />
-                                                            </LineChart>
+                                                            </BarChart>
                                                         </ResponsiveContainer>
                                                     </Box>
                                                     
@@ -1347,33 +1355,79 @@ For data interpretation:
                                             {performanceData?.session_duration_distribution && performanceData.session_duration_distribution.length > 0 ? (
                                                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                                     {/* Donut Chart */}
-                                                    <Box sx={{ height: 250, mb: 2, width: '100%' }}>
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={performanceData.session_duration_distribution}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    innerRadius={40}
-                                                                    outerRadius={80}
-                                                                    paddingAngle={2}
-                                                                    dataKey="count"
-                                                                >
-                                                                    {performanceData.session_duration_distribution.map((entry, index) => (
-                                                                        <Cell 
-                                                                            key={`cell-${index}`} 
-                                                                            fill={['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#ff0000'][index % 5]} 
-                                                                        />
-                                                                    ))}
-                                                                </Pie>
-                                                                <Tooltip 
-                                                                    formatter={(value, name, props) => [
-                                                                        `${value} (${props.payload.percentage.toFixed(1)}%)`, 
-                                                                        props.payload.range
-                                                                    ]}
-                                                                />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
+                                                    <Box sx={{ height: 300, mb: 2, width: '100%' }}>
+                                                        <ReactApexChart
+                                                            options={{
+                                                                chart: {
+                                                                    type: 'donut',
+                                                                    height: 280,
+                                                                },
+                                                                labels: performanceData.session_duration_distribution.map(item => item.range),
+                                                                colors: ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#ff0000'],
+                                                                legend: {
+                                                                    show: false,
+                                                                },
+                                                                dataLabels: {
+                                                                    enabled: false,
+                                                                },
+                                                                plotOptions: {
+                                                                    pie: {
+                                                                        donut: {
+                                                                            size: '65%',
+                                                                            labels: {
+                                                                                show: true,
+                                                                                name: {
+                                                                                    show: true,
+                                                                                    fontSize: '16px',
+                                                                                    fontWeight: 400,
+                                                                                    offsetY: 20,
+                                                                                    color: '#333',
+                                                                                },
+                                                                                value: {
+                                                                                    show: true,
+                                                                                    fontSize: '24px',
+                                                                                    fontFamily: 'Noto Sans Thai, sans-serif',
+                                                                                    fontWeight: 700,
+                                                                                    offsetY: -20,
+                                                                                    color: '#333',
+                                                                                },
+                                                                                total: {
+                                                                                    show: true,
+                                                                                    showAlways: true,
+                                                                                    label: 'Total Sessions',
+                                                                                    fontSize: '16px',
+                                                                                    fontFamily: 'Noto Sans Thai, sans-serif',
+                                                                                    fontWeight: 500,
+                                                                                    color: 'rgb(129, 129, 129)',
+                                                                                    formatter: () => {
+                                                                                        const total = performanceData.session_duration_distribution.reduce((sum, item) => sum + item.count, 0);
+                                                                                        return total.toLocaleString();
+                                                                                    },
+                                                                                },
+                                                                            },
+                                                                        },
+                                                                    },
+                                                                },
+                                                                tooltip: {
+                                                                    enabled: true,
+                                                                    theme: 'light',
+                                                                    style: {
+                                                                        fontSize: '14px',
+                                                                        fontFamily: 'Noto Sans Thai, sans-serif',
+                                                                    },
+                                                                    y: {
+                                                                        formatter: (value, { seriesIndex }) => {
+                                                                            const data = performanceData.session_duration_distribution[seriesIndex];
+                                                                            if (!data) return value.toString();
+                                                                            return `${value} (${data.percentage.toFixed(1)}%)`;
+                                                                        }
+                                                                    }
+                                                                },
+                                                            }}
+                                                            series={performanceData.session_duration_distribution.map(item => item.count)}
+                                                            type="donut"
+                                                            height={280}
+                                                        />
                                                     </Box>
                                                     
                                                     {/* Table */}

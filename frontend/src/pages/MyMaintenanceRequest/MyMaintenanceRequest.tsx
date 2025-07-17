@@ -48,9 +48,7 @@ function MyMaintenanceRequest() {
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_MAINTENANCE_REQUEST,
-        onInteractionChange: (count) => {
-            console.log(`[INTERACTION DEBUG] MyMaintenanceRequest - Interaction count updated: ${count}`);
-        }
+        
     });
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
@@ -824,9 +822,6 @@ function MyMaintenanceRequest() {
         const startTime = Date.now();
         let sent = false;
 
-        console.log('[ANALYTICS DEBUG] MyMaintenanceRequest.tsx useEffect triggered - Component mounted');
-
-        // ส่ง request ตอนเข้า (duration = 0)
         analyticsService.trackPageVisit({
             user_id: Number(localStorage.getItem('userId')),
             page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
@@ -838,17 +833,10 @@ function MyMaintenanceRequest() {
         // ฟังก์ชันส่ง analytics ตอนออก
         const sendAnalyticsOnLeave = (isBounce: boolean) => {
             if (sent) {
-                console.log('[ANALYTICS DEBUG] sendAnalyticsOnLeave called but already sent, skipping...');
                 return;
             }
             sent = true;
             const duration = Math.floor((Date.now() - startTime) / 1000);
-            console.log('[ANALYTICS DEBUG] Sending analytics:', {
-                duration,
-                is_bounce: isBounce,
-                timestamp: new Date().toISOString(),
-                component: 'MyMaintenanceRequest.tsx'
-            });
             analyticsService.trackPageVisit({
                 user_id: Number(localStorage.getItem('userId')),
                 page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
@@ -861,20 +849,16 @@ function MyMaintenanceRequest() {
 
         // ออกจากหน้าแบบปิด tab/refresh
         const handleBeforeUnload = () => {
-            console.log('[ANALYTICS DEBUG] beforeunload event triggered');
             sendAnalyticsOnLeave(true);
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
 
         // ออกจากหน้าแบบ SPA (React)
         return () => {
-            console.log('[ANALYTICS DEBUG] MyMaintenanceRequest.tsx useEffect cleanup - Component unmounting');
             window.removeEventListener('beforeunload', handleBeforeUnload);
             sendAnalyticsOnLeave(false);
         };
     }, []);
-
-    console.log('[ANALYTICS DEBUG] MyMaintenanceRequest.tsx render called');
 
     useEffect(() => {
         if (requestStatuses) {
