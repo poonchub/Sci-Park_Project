@@ -53,7 +53,7 @@ import { ApexOptions } from "apexcharts";
 import { useTranslation } from "react-i18next";
 
 import { Select } from "../../components/Select/Select";
-import { Activity, LineChart } from "lucide-react";
+import { Activity, BrushCleaning, LineChart } from "lucide-react";
 import { analyticsService } from "../../services/analyticsService";
 
 function Dashboard() {
@@ -629,7 +629,7 @@ function Dashboard() {
                                                             },
                                                         }}
                                                     >
-                                                        <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
+                                                        <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                                     </Button>
                                                 </Grid>
                                             </Grid>

@@ -69,7 +69,7 @@ function AllMaintenanceRequest() {
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-    const [isBottonActive, setIsBottonActive] = useState(false);
+    const [isButtonActive, setIsButtonActive] = useState(false);
     const [isLoadingData, setIsLoadingData] = useState(true);
 
     const navigate = useNavigate();
@@ -757,7 +757,7 @@ function AllMaintenanceRequest() {
 
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         handleActionApproval(statusID, {
             userID: user?.ID,
             selectedRequest,
@@ -769,7 +769,7 @@ function AllMaintenanceRequest() {
             actionType,
             note,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClearFillter = () => {
@@ -887,7 +887,7 @@ function AllMaintenanceRequest() {
                 setSelectedOperator={setSelectedOperator}
                 operators={operators}
                 maintenanceTypeConfig={maintenanceTypeConfig}
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Rejected Confirm */}
@@ -898,7 +898,7 @@ function AllMaintenanceRequest() {
                 title="Confirm Maintenance Request Rejection"
                 message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>

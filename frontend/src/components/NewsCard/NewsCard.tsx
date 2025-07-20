@@ -2,8 +2,7 @@ import { Card, CardContent, Chip, Grid, Typography, Box, Fab, Collapse, Zoom, To
 import React, { useState } from 'react';
 import { NewsInterface } from '../../interfaces/News';
 import { apiUrl, UpdateNewsByID } from '../../services/http';
-import { Pencil, Pin } from 'lucide-react';
-import theme from '../../styles/Theme';
+import { Pencil, Pin, Trash2 } from 'lucide-react';
 import formatNewsDate from '../../utils/formatNewsDate';
 
 interface NewsCardProps {
@@ -13,6 +12,7 @@ interface NewsCardProps {
     gridSize?: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number };
     isEditMode?: boolean;
     setIsClickEdit?: React.Dispatch<React.SetStateAction<boolean>>;
+    setOpenDelete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({
@@ -22,6 +22,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
     gridSize = { xs: 12, sm: 6, md: 6 },
     isEditMode = false,
     setIsClickEdit,
+    setOpenDelete
 }) => {
     const [news, setNews] = useState<NewsInterface>(initialNews);
 
@@ -89,6 +90,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         alt={news.Title}
                     />
 
+                    {/* Pin Button */}
                     <Zoom
                         in={isEditMode}
                         timeout={400}
@@ -100,7 +102,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                 sx={{
                                     position: 'absolute',
                                     top: 16,
-                                    right: 66,
+                                    right: 120,
                                     boxShadow: 3,
                                 }}
                                 color={news.IsPinned ? 'primary' : undefined}
@@ -116,8 +118,36 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                 />
                             </Fab>
                         </Tooltip>
-
                     </Zoom>
+
+                    {/* Delete Button */}
+                    <Zoom
+                        in={isEditMode}
+                        timeout={400}
+                        unmountOnExit
+                    >
+                        <Tooltip title='Delete'>
+                            <Fab
+                                size='small'
+                                sx={{
+                                    position: 'absolute',
+                                    top: 16,
+                                    right: 68,
+                                    boxShadow: 3,
+                                    backgroundColor: 'secondary.main',
+                                    color: 'error.main',
+                                }}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setSelectedNews(news)
+                                    setOpenDelete(true)
+                                }}
+                            >
+                                <Trash2 />
+                            </Fab>
+                        </Tooltip>
+                    </Zoom>
+
                     <Zoom
                         in={isEditMode}
                         timeout={300}
