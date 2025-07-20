@@ -5,9 +5,9 @@ import {
 } from '@mui/material';
 import { NewsInterface } from '../../interfaces/News';
 import Carousel from 'react-material-ui-carousel';
-import { apiUrl, UpdateNewsByID, UpdateNewsImages } from '../../services/http';
+import { apiUrl, DeleteNewsByID, DeleteNewsImagesByNewsID, UpdateNewsByID, UpdateNewsImages } from '../../services/http';
 import formatNewsDate from '../../utils/formatNewsDate';
-import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save } from 'lucide-react';
+import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { TextField } from '../TextField/TextField';
 import { DatePicker } from '../DatePicker/DatePicker';
@@ -17,11 +17,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation, faImage } from '@fortawesome/free-solid-svg-icons';
 import { motion } from "framer-motion";
 import React from 'react';
 import Lottie from 'lottie-react';
 import animationData from '../../../public/lottie/Succes 2.json';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { handleDeleteNews } from '../../utils/handleDeleteNews';
 
 interface NewsDetailPopupProps {
     open: boolean;
@@ -47,10 +49,12 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
     const [openEndPicker, setOpenEndPicker] = useState(false);
     const [openStartPicker, setOpenStartPicker] = useState(false);
     const [isSubmitButtonActive, setIsSubmitButtonActive] = useState(false);
+    const [isDeleteButtonActive, setIsDeleteButtonActive] = useState(false);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loadingStatus, setLoadingStatus] = useState<"idle" | "loading" | "success">("idle");
+    const [openDelete, setOpenDelete] = useState(false)
 
     const handleUpdatePinned = async () => {
         try {
@@ -122,7 +126,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
 
     const handleUpdateNews = async () => {
         setIsSubmitButtonActive(true);
-        setLoadingStatus('loading'); // เริ่มโหลด
+        setLoadingStatus('loading');
 
         if (!validateForm()) {
             setIsSubmitButtonActive(false);
@@ -158,7 +162,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             console.log("The news has been update successfully.")
 
             setTimeout(() => {
-                setLoadingStatus('success'); // 🎯 สำเร็จแล้ว แสดง Lottie ต่อ
+                setLoadingStatus('success');
                 setIsClickEdit?.(false);
                 setAlerts([]);
                 setFiles([]);
@@ -177,6 +181,20 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             setIsSubmitButtonActive(false);
             setLoadingStatus('idle');
         }
+    }
+
+    const handleClickDeleteNews = () => {
+        handleDeleteNews({
+            selectedNews,
+            setIsDeleteButtonActive,
+            setLoadingStatus,
+            handleSetAlert,
+            setIsClickEdit,
+            setAlerts,
+            setFiles,
+            onUpdated,
+            onClose,
+        })
     }
 
     const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
@@ -222,6 +240,17 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
         }
     }, [initialNews.DisplayEnd]);
 
+    let statusMessage = '';
+    if (loadingStatus === 'loading') {
+        if (isSubmitButtonActive) {
+            statusMessage = 'Saving Changes...';
+        } else if (isDeleteButtonActive) {
+            statusMessage = 'Deleting';
+        }
+    } else if (loadingStatus === 'success') {
+        statusMessage = 'Completed!';
+    }
+
     return (
         <Dialog
             open={open}
@@ -243,6 +272,15 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
+            <ConfirmDialog
+                open={openDelete}
+                setOpenConfirm={setOpenDelete}
+                handleFunction={handleClickDeleteNews}
+                title="Confirm News Deletion"
+                message="Are you sure you want to delete this news? This action cannot be undone."
+                buttonActive={isDeleteButtonActive}
+            />
+
             <DialogTitle sx={{
                 display: 'flex',
                 gap: 1,
@@ -258,10 +296,10 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                         {"Latest News"}
                     </Typography>
                 </Box>
-                <Zoom in={isSubmitButtonActive} timeout={300} unmountOnExit>
+                <Zoom in={isSubmitButtonActive || isDeleteButtonActive} timeout={300} unmountOnExit>
                     <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center', position: 'relative' }}>
                         <Typography sx={{ fontWeight: 500, fontSize: 14, color: 'text.secondary' }}>
-                            {loadingStatus === 'loading' ? "Saving Changes..." : loadingStatus === 'success' ? "Completed!" : ""}
+                            {statusMessage}
                         </Typography>
 
                         <Box sx={{ position: 'relative', width: 30, height: 30 }}>
@@ -433,7 +471,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             <Zoom in={isEditMode} timeout={400}>
                                 <motion.div
                                     initial={false}
-                                    animate={{ right: isClickEdit ? 116 : isEditMode ? 66 : 16 }}
+                                    animate={{ right: isClickEdit ? 172 : isEditMode ? 120 : 16 }}
                                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                                     style={{
                                         position: 'absolute',
@@ -485,6 +523,42 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             </Tooltip>
                         </Zoom>
 
+                        {/* Delete Button */}
+                        {
+                            isEditMode &&
+                            <Zoom in={isEditMode} timeout={400}>
+                                <motion.div
+                                    initial={false}
+                                    animate={{ right: isClickEdit ? 120 : isEditMode ? 68 : 16 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 6,
+                                    }}
+                                >
+                                    <Tooltip title="Delete">
+                                        <Fab
+                                            size='small'
+                                            sx={{
+                                                boxShadow: 3,
+                                                backgroundColor: 'secondary.main',
+                                                color: 'error.main',
+                                                "&hover": {
+
+                                                }
+                                            }}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                setOpenDelete(true)
+                                            }}
+                                        >
+                                            <Trash2 />
+                                        </Fab>
+                                    </Tooltip>
+                                </motion.div>
+                            </Zoom>
+                        }
+
                         {/* Save Change Button */}
                         <Zoom in={isClickEdit} timeout={400}>
                             <Tooltip title='Save Change'>
@@ -493,7 +567,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                     sx={{
                                         position: 'absolute',
                                         top: 6,
-                                        right: 66,
+                                        right: 68,
                                         boxShadow: 3,
                                         color: 'secondary.main',
                                         backgroundColor: 'customGreen',
@@ -511,9 +585,9 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             </Tooltip>
                         </Zoom>
 
-                        {/* Reset button */}
+                        {/* Cancel button */}
                         <Zoom in={isClickEdit} timeout={400}>
-                            <Tooltip title='Reset'>
+                            <Tooltip title='Cancel'>
                                 <Fab
                                     size='small'
                                     sx={{

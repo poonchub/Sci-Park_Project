@@ -5,7 +5,7 @@ import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesB
 import { TextField } from '../../components/TextField/TextField';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faGear } from '@fortawesome/free-solid-svg-icons';
-import { CirclePlus } from 'lucide-react';
+import { BrushCleaning, CirclePlus, SquarePlus } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '../../components/DatePicker/DatePicker';
@@ -20,6 +20,8 @@ import NewsCard from '../../components/NewsCard/NewsCard';
 import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
 import { MaterialUISwitch } from '../../components/MaterialUISwitch/MaterialUISwitch';
 import { io } from 'socket.io-client';
+import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
+import { handleDeleteNews } from '../../utils/handleDeleteNews';
 
 function News() {
     const [news, setNews] = useState<NewsInterface[]>([])
@@ -37,6 +39,7 @@ function News() {
     })
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isSubmitButtonActive, setIsSubmitButtonActive] = useState(false);
+    const [isDeleteButtonActive, setIsDeleteButtonActive] = useState(false);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
         start: null,
@@ -48,11 +51,11 @@ function News() {
 
     const [openEndPicker, setOpenEndPicker] = useState(false);
     const [openStartPicker, setOpenStartPicker] = useState(false);
+    const [openDelete, setOpenDelete] = useState(false)
 
     const getNews = async () => {
         try {
             const res = await ListNewsOrdered()
-            console.log("KKKKKKKK", res)
             if (res) {
                 setNews([...res])
             }
@@ -129,6 +132,7 @@ function News() {
             setTimeout(() => {
                 handleResetData()
                 setIsSubmitButtonActive(false)
+                getNews()
             }, 1800);
         } catch (error) {
             console.error("🚨 Error submitting request:", error);
@@ -136,6 +140,19 @@ function News() {
             setIsSubmitButtonActive(false);
         }
     };
+
+    const handleClickDeleteNews = () => {
+        handleDeleteNews({
+            selectedNews,
+            setIsDeleteButtonActive,
+            handleSetAlert,
+            setIsClickEdit,
+            setAlerts,
+            setFiles,
+            onUpdated: getNews,
+            successAlert: true,
+        })
+    }
 
     const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
         setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
@@ -226,7 +243,16 @@ function News() {
                 isEditMode={isEditMode}
                 isClickEdit={isClickEdit}
                 setIsClickEdit={setIsClickEdit}
-                onUpdated={getNews} 
+                onUpdated={getNews}
+            />
+
+            <ConfirmDialog
+                open={openDelete}
+                setOpenConfirm={setOpenDelete}
+                handleFunction={handleClickDeleteNews}
+                title="Confirm News Deletion"
+                message="Are you sure you want to delete this news? This action cannot be undone."
+                buttonActive={isSubmitButtonActive}
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
@@ -473,13 +499,18 @@ function News() {
                                             sx={{ justifyContent: 'flex-end' }}
                                         >
                                             <Box display={'flex'} gap={1.5}>
-                                                <Button variant='outlinedGray'>
-                                                    Cancel
+                                                <Button 
+                                                    variant='outlinedGray'
+                                                    startIcon={<BrushCleaning size={18} strokeWidth={2}/>}
+                                                    onClick={handleResetData}
+                                                >
+                                                    Clear
                                                 </Button>
                                                 <Button
                                                     variant='contained'
                                                     type='submit'
                                                     disabled={isSubmitButtonActive}
+                                                    startIcon={<SquarePlus size={18} strokeWidth={2}/>}
                                                 >
                                                     Create News
                                                 </Button>
@@ -500,6 +531,7 @@ function News() {
                                 onOpenPopup={() => setOpenPopupCard(true)}
                                 setSelectedNews={setSelectedNews}
                                 setIsClickEdit={setIsClickEdit}
+                                setOpenDelete={setOpenDelete}
                             />
                         ))}
                     </Grid>

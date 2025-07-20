@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../DatePicker/DatePicker";
@@ -16,7 +16,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
-import { Activity } from "lucide-react";
+import { Activity, BrushCleaning } from "lucide-react";
 
 
 type Props = {
@@ -149,7 +149,7 @@ const FilterSection = ({
                                 },
                             }}
                         >
-                            <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
+                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                         </Button>
                     </Grid>
                 </Grid>

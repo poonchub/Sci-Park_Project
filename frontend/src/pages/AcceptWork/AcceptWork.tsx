@@ -56,6 +56,7 @@ import { faClock } from "@fortawesome/free-regular-svg-icons";
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
+import { BrushCleaning } from "lucide-react";
 
 function a11yProps(index: number) {
     return {
@@ -1042,7 +1043,7 @@ function AcceptWork() {
                                                 },
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
+                                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                         </Button>
                                     </Grid>
                                 </Grid>
