@@ -4,6 +4,9 @@ import { NewsInterface } from '../../interfaces/News';
 import { apiUrl, UpdateNewsByID } from '../../services/http';
 import { Pencil, Pin, Trash2 } from 'lucide-react';
 import formatNewsDate from '../../utils/formatNewsDate';
+import formatNewsDateRange from '../../utils/formatNewsDateRange';
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
 
 interface NewsCardProps {
     news: NewsInterface;
@@ -12,7 +15,7 @@ interface NewsCardProps {
     gridSize?: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number };
     isEditMode?: boolean;
     setIsClickEdit?: React.Dispatch<React.SetStateAction<boolean>>;
-    setOpenDelete: React.Dispatch<React.SetStateAction<boolean>>;
+    setOpenDelete?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({
@@ -51,6 +54,17 @@ const NewsCard: React.FC<NewsCardProps> = ({
         }
     }
 
+    dayjs.extend(isBetween);
+
+    const isInDisplayPeriod = (displayStart?: string, displayEnd?: string): boolean => {
+        if (!displayStart || !displayEnd) return false;
+
+        const now = dayjs();
+        return now.isBetween(displayStart, displayEnd, null, '[]'); // [] = รวมขอบเขต
+    };
+
+    const enableNews = isInDisplayPeriod(news.DisplayStart, news.DisplayEnd);
+
     return (
         <Grid size={{ ...gridSize }} key={news.ID} >
             <Card
@@ -88,6 +102,9 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                 : 'https://placehold.co/600x400'
                         }
                         alt={news.Title}
+                        style={{
+                            filter: enableNews ? "none" : "grayscale(100%) brightness(70%)",
+                        }}
                     />
 
                     {/* Pin Button */}
@@ -140,7 +157,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     setSelectedNews(news)
-                                    setOpenDelete(true)
+                                    setOpenDelete?.(true)
                                 }}
                             >
                                 <Trash2 />
@@ -148,6 +165,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         </Tooltip>
                     </Zoom>
 
+                    {/* Edit Button */}
                     <Zoom
                         in={isEditMode}
                         timeout={300}
@@ -181,8 +199,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
                             label={formatNewsDate(news.DisplayStart ?? '')}
                             size="small"
                             sx={{
-                                bgcolor: 'primary.light',
-                                color: 'white',
+                                bgcolor: enableNews ? 'primary.main' : '',
+                                color: enableNews ? 'white' : '',
                                 padding: 2,
                                 fontWeight: 600,
                             }}
@@ -205,7 +223,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                     variant="body2"
                                     gutterBottom
                                 >
-                                    {`${formatNewsDate(news.DisplayStart ?? '')} - ${formatNewsDate(news.DisplayStart ?? '')}`}
+                                    {`${formatNewsDateRange(news.DisplayStart || '', news.DisplayEnd || '')}`}
                                 </Typography>
                             </Box>
                         </Collapse>

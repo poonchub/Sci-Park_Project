@@ -1529,7 +1529,13 @@ async function ListNews() {
 
     return res;
 }
-async function ListPinnedNews() {
+async function ListPinnedNews(limit?: number) {
+    const params = new URLSearchParams();
+
+    if (limit && limit > 0) {
+        params.append("limit", limit.toString());
+    }
+
     const requestOptions = {
         method: "GET",
         headers: {
@@ -1538,7 +1544,33 @@ async function ListPinnedNews() {
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/pinned`, requestOptions)
+    let res = await fetch(`${apiUrl}/news/pinned?${params.toString()}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function ListPinnedNewsPeriod(limit?: number) {
+    const params = new URLSearchParams();
+
+    if (limit && limit > 0) {
+        params.append("limit", limit.toString());
+    }
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news/pinned-period?${params.toString()}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1575,6 +1607,32 @@ async function ListUnpinnedNews(limit?: number) {
 
     return res;
 }
+async function ListUnpinnedNewsPeriod(limit?: number) {
+    const params = new URLSearchParams();
+
+    if (limit && limit > 0) {
+        params.append("limit", limit.toString());
+    }
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news/unpinned-period?${params.toString()}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
 async function ListNewsOrdered() {
     const requestOptions = {
         method: "GET",
@@ -1585,6 +1643,26 @@ async function ListNewsOrdered() {
     };
 
     let res = await fetch(`${apiUrl}/news/ordered`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function ListNewsOrderedPeriod() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/news/ordered-period`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1824,8 +1902,11 @@ export {
     // News
     ListNews,
     ListPinnedNews,
+    ListPinnedNewsPeriod,
     ListNewsOrdered,
+    ListNewsOrderedPeriod,
     ListUnpinnedNews,
+    ListUnpinnedNewsPeriod,
     CreateNews,
     UpdateNewsByID,
     DeleteNewsByID,

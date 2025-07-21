@@ -40,6 +40,7 @@ import animationData from "../../../public/lottie/Succes 2.json";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import { handleDeleteNews } from "../../utils/handleDeleteNews";
 import { NewsImagesInterface } from "../../interfaces/NewsImages";
+import formatNewsDateRange from "../../utils/formatNewsDateRange";
 
 interface NewsDetailPopupProps {
     open: boolean;
@@ -788,6 +789,23 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             <Typography variant="h5" fontWeight={600} gutterBottom width={"100%"}>
                                 {initialNews?.Title}
                             </Typography>
+                            <Collapse in={isEditMode} timeout={300}>
+                                <Box display={'flex'} gap={1}>
+                                    <Typography
+                                        variant="body2"
+                                        gutterBottom
+                                        fontWeight={500}
+                                    >
+                                        {'Display Period:'}
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        gutterBottom
+                                    >
+                                        {`${formatNewsDateRange(initialNews.DisplayStart || '', initialNews.DisplayEnd || '')}`}
+                                    </Typography>
+                                </Box>
+                            </Collapse>
                             <Typography variant="body1" fontSize={16} gutterBottom sx={{ whiteSpace: "pre-line" }}>
                                 {initialNews?.Summary}
                             </Typography>

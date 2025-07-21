@@ -146,9 +146,9 @@ func main() {
 
 		// News
 		protected.GET("/news", controller.ListNews)
-		protected.GET("/news/pinned", controller.ListPinnedNews)
-		protected.GET("/news/ordered", controller.ListNewsOrdered)
-		protected.GET("/news/unpinned", controller.ListUnpinnedNews)
+		protected.GET("/news/pinned-period", controller.ListPinnedNewsPeriod)
+		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
+		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -173,6 +173,9 @@ func main() {
 		protected.GET("/booking-rooms", controller.ListBookingRooms)
 
 		// News
+		protected.GET("/news/pinned", controller.ListPinnedNews)
+		protected.GET("/news/unpinned", controller.ListUnpinnedNews)
+		protected.GET("/news/ordered", controller.ListNewsOrdered)
 		protected.POST("/news", controller.CreateNews)
 		protected.PATCH("/news/:id", controller.UpdateNewsByID)
 		protected.DELETE("/news/:id", controller.DeleteNewsByID)
