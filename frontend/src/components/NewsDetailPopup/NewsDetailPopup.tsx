@@ -1,29 +1,45 @@
 import {
-    Box, Button, CardMedia, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent,
-    DialogContentText, DialogTitle, Divider, Fab, Fade, Grid, Tooltip, Typography,
-    Zoom
-} from '@mui/material';
-import { NewsInterface } from '../../interfaces/News';
-import Carousel from 'react-material-ui-carousel';
-import { apiUrl, DeleteNewsByID, DeleteNewsImagesByNewsID, UpdateNewsByID, UpdateNewsImages } from '../../services/http';
-import formatNewsDate from '../../utils/formatNewsDate';
-import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { TextField } from '../TextField/TextField';
-import { DatePicker } from '../DatePicker/DatePicker';
-import { CalendarMonth } from '@mui/icons-material';
-import AlertGroup from '../AlertGroup/AlertGroup';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleExclamation, faImage } from '@fortawesome/free-solid-svg-icons';
+    Box,
+    Button,
+    CardMedia,
+    Chip,
+    CircularProgress,
+    Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Divider,
+    Fab,
+    Fade,
+    Grid,
+    Tooltip,
+    Typography,
+    Zoom,
+} from "@mui/material";
+import { NewsInterface } from "../../interfaces/News";
+import Carousel from "react-material-ui-carousel";
+import { apiUrl, DeleteNewsByID, DeleteNewsImagesByNewsID, UpdateNewsByID, UpdateNewsImages } from "../../services/http";
+import formatNewsDate from "../../utils/formatNewsDate";
+import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { TextField } from "../TextField/TextField";
+import { DatePicker } from "../DatePicker/DatePicker";
+import { CalendarMonth } from "@mui/icons-material";
+import AlertGroup from "../AlertGroup/AlertGroup";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircleExclamation, faImage } from "@fortawesome/free-solid-svg-icons";
 import { motion } from "framer-motion";
-import React from 'react';
-import Lottie from 'lottie-react';
-import animationData from '../../../public/lottie/Succes 2.json';
-import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
-import { handleDeleteNews } from '../../utils/handleDeleteNews';
+import React from "react";
+import Lottie from "lottie-react";
+import animationData from "../../../public/lottie/Succes 2.json";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
+import { handleDeleteNews } from "../../utils/handleDeleteNews";
+import { NewsImagesInterface } from "../../interfaces/NewsImages";
 
 interface NewsDetailPopupProps {
     open: boolean;
@@ -54,37 +70,39 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
     const [files, setFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loadingStatus, setLoadingStatus] = useState<"idle" | "loading" | "success">("idle");
-    const [openDelete, setOpenDelete] = useState(false)
+    const [openDelete, setOpenDelete] = useState(false);
+    const [openImage, setOpenImage] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string>("");
 
     const handleUpdatePinned = async () => {
         try {
             const newsData: NewsInterface = {
-                IsPinned: !initialNews.IsPinned
-            }
-            const resNews = await UpdateNewsByID(newsData, initialNews.ID)
+                IsPinned: !initialNews.IsPinned,
+            };
+            const resNews = await UpdateNewsByID(newsData, initialNews.ID);
             if (resNews) {
                 setInitialNews((prev) => ({
                     ...prev,
-                    IsPinned: !prev.IsPinned
+                    IsPinned: !prev.IsPinned,
                 }));
 
                 if (initialNews.IsPinned) {
-                    console.log("The news has been unpinned from the top.")
+                    console.log("The news has been unpinned from the top.");
                 } else {
-                    console.log("The news has been pinned to the top.")
+                    console.log("The news has been pinned to the top.");
                 }
             } else {
-                console.error("Failed to update news.")
+                console.error("Failed to update news.");
             }
         } catch (error) {
-            console.error("An error occurred while updating the news:", error)
+            console.error("An error occurred while updating the news:", error);
         }
-    }
+    };
 
     const handleDateChange = (field: string, value: dayjs.Dayjs | null) => {
         setInitialNews((prev) => ({
             ...prev,
-            [field]: value && value.isValid() ? value.toISOString() : '',
+            [field]: value && value.isValid() ? value.toISOString() : "",
         }));
     };
 
@@ -126,11 +144,11 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
 
     const handleUpdateNews = async () => {
         setIsSubmitButtonActive(true);
-        setLoadingStatus('loading');
+        setLoadingStatus("loading");
 
         if (!validateForm()) {
             setIsSubmitButtonActive(false);
-            setLoadingStatus('idle');
+            setLoadingStatus("idle");
             return;
         }
 
@@ -139,13 +157,13 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             if (!resUpdateNews) {
                 handleSetAlert("error", resUpdateNews?.Error || "Failed to update news");
                 setIsSubmitButtonActive(false);
-                setLoadingStatus('idle');
+                setLoadingStatus("idle");
                 return;
             }
 
             if (files.length > 0) {
                 const formDataFile = new FormData();
-                const userID = localStorage.getItem("userId") || ''
+                const userID = localStorage.getItem("userId") || "";
                 formDataFile.append("userID", userID);
                 formDataFile.append("newsID", String(initialNews.ID));
                 files.forEach((file) => formDataFile.append("files", file));
@@ -154,15 +172,15 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 if (!resImage || resImage.error) {
                     handleSetAlert("error", resImage?.error || "Failed to upload images");
                     setIsSubmitButtonActive(false);
-                    setLoadingStatus('idle');
+                    setLoadingStatus("idle");
                     return;
                 }
             }
 
-            console.log("The news has been update successfully.")
+            console.log("The news has been update successfully.");
 
             setTimeout(() => {
-                setLoadingStatus('success');
+                setLoadingStatus("success");
                 setIsClickEdit?.(false);
                 setAlerts([]);
                 setFiles([]);
@@ -172,16 +190,15 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 onUpdated?.();
                 setIsSubmitButtonActive(false);
                 onClose();
-                setLoadingStatus('idle');
+                setLoadingStatus("idle");
             }, 2100);
-
         } catch (error) {
             console.error("Error updating news:", error);
             handleSetAlert("error", "An unexpected error occurred.");
             setIsSubmitButtonActive(false);
-            setLoadingStatus('idle');
+            setLoadingStatus("idle");
         }
-    }
+    };
 
     const handleClickDeleteNews = () => {
         handleDeleteNews({
@@ -194,8 +211,8 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             setFiles,
             onUpdated,
             onClose,
-        })
-    }
+        });
+    };
 
     const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
         setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
@@ -217,16 +234,16 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
 
     const handleResetData = () => {
         if (selectedNews) {
-            setInitialNews(selectedNews)
+            setInitialNews(selectedNews);
         }
-        setFiles([])
-    }
+        setFiles([]);
+    };
 
     useEffect(() => {
         if (selectedNews) {
-            setInitialNews(selectedNews)
+            setInitialNews(selectedNews);
         }
-    }, [selectedNews])
+    }, [selectedNews]);
 
     useEffect(() => {
         if (initialNews.DisplayStart && !initialNews.DisplayEnd) {
@@ -240,31 +257,53 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
         }
     }, [initialNews.DisplayEnd]);
 
-    let statusMessage = '';
-    if (loadingStatus === 'loading') {
+    let statusMessage = "";
+    if (loadingStatus === "loading") {
         if (isSubmitButtonActive) {
-            statusMessage = 'Saving Changes...';
+            statusMessage = "Saving Changes...";
         } else if (isDeleteButtonActive) {
-            statusMessage = 'Deleting';
+            statusMessage = "Deleting";
         }
-    } else if (loadingStatus === 'success') {
-        statusMessage = 'Completed!';
+    } else if (loadingStatus === "success") {
+        statusMessage = "Completed!";
     }
+
+    const imagePopup = (
+        <Dialog
+            open={openImage}
+            onClose={() => {
+                setOpenImage(false);
+            }}
+        >
+            <CardMedia
+                component="img"
+                image={selectedImage}
+                alt="image"
+                sx={{
+                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                    borderRadius: 2,
+                }}
+            />
+        </Dialog>
+    );
+
+    console.log(selectedImage)
+    console.log(openImage)
 
     return (
         <Dialog
             open={open}
             onClose={() => {
-                onClose()
-                setIsClickEdit?.(false)
-                handleResetData()
-                setAlerts([])
+                onClose();
+                setIsClickEdit?.(false);
+                handleResetData();
+                setAlerts([]);
             }}
             slotProps={{
                 paper: {
                     sx: {
-                        width: '70%',
-                        maxWidth: '1200px',
+                        width: "70%",
+                        maxWidth: "1200px",
                     },
                 },
             }}
@@ -281,42 +320,40 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 buttonActive={isDeleteButtonActive}
             />
 
-            <DialogTitle sx={{
-                display: 'flex',
-                gap: 1,
-                justifyContent: 'space-between'
-            }}>
-                <Box sx={{
-                    display: 'flex',
+            {imagePopup}
+
+            <DialogTitle
+                sx={{
+                    display: "flex",
                     gap: 1,
-                    alignItems: 'center'
-                }}>
+                    justifyContent: "space-between",
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        gap: 1,
+                        alignItems: "center",
+                    }}
+                >
                     <Newspaper />
-                    <Typography sx={{ fontWeight: 700, fontSize: 22 }}>
-                        {"Latest News"}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: 22 }}>{"Latest News"}</Typography>
                 </Box>
                 <Zoom in={isSubmitButtonActive || isDeleteButtonActive} timeout={300} unmountOnExit>
-                    <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center', position: 'relative' }}>
-                        <Typography sx={{ fontWeight: 500, fontSize: 14, color: 'text.secondary' }}>
-                            {statusMessage}
-                        </Typography>
+                    <Box sx={{ display: "flex", gap: 1.2, alignItems: "center", position: "relative" }}>
+                        <Typography sx={{ fontWeight: 500, fontSize: 14, color: "text.secondary" }}>{statusMessage}</Typography>
 
-                        <Box sx={{ position: 'relative', width: 30, height: 30 }}>
-                            <Zoom in={loadingStatus === 'loading'} timeout={300} unmountOnExit>
+                        <Box sx={{ position: "relative", width: 30, height: 30 }}>
+                            <Zoom in={loadingStatus === "loading"} timeout={300} unmountOnExit>
                                 <CircularProgress
                                     size={30}
-                                    sx={{ color: 'customGreen', position: 'absolute', top: '0%', left: '0%', transform: 'translate(-50%, -50%)' }}
+                                    sx={{ color: "customGreen", position: "absolute", top: "0%", left: "0%", transform: "translate(-50%, -50%)" }}
                                 />
                             </Zoom>
 
-                            <Zoom in={loadingStatus === 'success'} timeout={300} unmountOnExit>
-                                <Box sx={{ position: 'absolute', top: 0, left: 0, width: 40, height: 40 }}>
-                                    <Lottie
-                                        animationData={animationData}
-                                        loop={false}
-                                        style={{ width: 30, height: 30 }}
-                                    />
+                            <Zoom in={loadingStatus === "success"} timeout={300} unmountOnExit>
+                                <Box sx={{ position: "absolute", top: 0, left: 0, width: 40, height: 40 }}>
+                                    <Lottie animationData={animationData} loop={false} style={{ width: 30, height: 30 }} />
                                 </Box>
                             </Zoom>
                         </Box>
@@ -325,9 +362,8 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             </DialogTitle>
             <DialogContent sx={{ minWidth: 350 }}>
                 <Grid container size={{ xs: 12 }}>
-                    <Grid size={{ xs: 12 }} position={'relative'}>
-                        {
-                            isClickEdit &&
+                    <Grid size={{ xs: 12 }} position={"relative"}>
+                        {isClickEdit && (
                             <Box>
                                 <input
                                     type="file"
@@ -338,27 +374,23 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                     hidden
                                 />
 
-                                <Zoom
-                                    in={isClickEdit}
-                                    timeout={300}
-                                    unmountOnExit
-                                >
+                                <Zoom in={isClickEdit} timeout={300} unmountOnExit>
                                     <Fab
                                         variant="extended"
                                         size="small"
                                         sx={{
-                                            position: 'absolute',
-                                            bottom: (files.length > 1 || (initialNews.NewsImages?.length ?? 0) > 1) ? 55 : 30,
+                                            position: "absolute",
+                                            bottom: files.length > 1 || (initialNews.NewsImages?.length ?? 0) > 1 ? 55 : 30,
                                             right: 20,
                                             gap: 1,
                                             px: 2,
-                                            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-                                            borderRadius: '12px',
-                                            border: '1px solid rgba(255, 255, 255, 0.18)',
+                                            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+                                            borderRadius: "12px",
+                                            border: "1px solid rgba(255, 255, 255, 0.18)",
                                             lineHeight: 0,
-                                            '&:hover': {
-                                                color: 'white'
-                                            }
+                                            "&:hover": {
+                                                color: "white",
+                                            },
                                         }}
                                         color="secondary"
                                         onClick={(event) => {
@@ -371,7 +403,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                     </Fab>
                                 </Zoom>
                             </Box>
-                        }
+                        )}
                         <Carousel
                             indicators
                             autoPlay
@@ -379,112 +411,125 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             duration={500}
                             navButtonsAlwaysVisible
                             navButtonsAlwaysInvisible={
-                                files.length > 0 ? (
-                                    !files || files.length == 1
-                                ) : (
-                                    !initialNews?.NewsImages || initialNews.NewsImages.length <= 1
-                                )
+                                files.length > 0 ? !files || files.length == 1 : !initialNews?.NewsImages || initialNews.NewsImages.length <= 1
                             }
                             navButtonsProps={{
                                 style: {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                    backgroundColor: "rgba(0, 0, 0, 0.5)",
                                 },
                             }}
                         >
-                            {
-                                files.length > 1 ? (
-                                    files.map((file, idx) => {
-                                        const imageUrl = URL.createObjectURL(file);
-                                        return (
-                                            <CardMedia
-                                                key={`newfile-${idx}`}
-                                                component="img"
-                                                image={imageUrl}
-                                                alt={`uploaded-image-${idx}`}
-                                                sx={{
-                                                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                                    borderRadius: 2,
-                                                }}
-                                            />
-                                        )
-                                    })
-                                ) : files.length == 1 ? (
-                                    <CardMedia
-                                        component="img"
-                                        image={URL.createObjectURL(files[0])}
-                                        alt='news-image'
-                                        sx={{
-                                            height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                                            borderRadius: 2,
-                                        }}
-                                    />
-                                ) : initialNews?.NewsImages && initialNews.NewsImages.length > 1 ? (
-                                    initialNews.NewsImages.map((image, idx) => (
+                            {files.length > 1 ? (
+                                files.map((file, idx) => {
+                                    const imageUrl = URL.createObjectURL(file);
+                                    return (
                                         <CardMedia
-                                            key={idx}
+                                            key={`newfile-${idx}`}
                                             component="img"
-                                            image={`${apiUrl}/${image?.FilePath}`}
-                                            alt={`news-image-${idx}`}
+                                            image={imageUrl}
+                                            alt={`uploaded-image-${idx}`}
                                             sx={{
                                                 height: { xs: 150, sm: 200, md: 300, lg: 450 },
                                                 borderRadius: 2,
+                                                cursor: "pointer",
+                                            }}
+                                            onClick={() => {
+                                                setSelectedImage(imageUrl)
+                                                setOpenImage(true)
                                             }}
                                         />
-                                    ))
-                                ) : (
+                                    );
+                                })
+                            ) : files.length == 1 ? (
+                                <CardMedia
+                                    component="img"
+                                    image={URL.createObjectURL(files[0])}
+                                    alt="news-image"
+                                    sx={{
+                                        height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                        borderRadius: 2,
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() => setSelectedImage(URL.createObjectURL(files[0]))}
+                                />
+                            ) : initialNews?.NewsImages && initialNews.NewsImages.length > 1 ? (
+                                initialNews.NewsImages.map((image, idx) => (
                                     <CardMedia
+                                        key={idx}
                                         component="img"
-                                        image={
-                                            initialNews?.NewsImages?.[0]?.FilePath
-                                                ? `${apiUrl}/${initialNews.NewsImages[0].FilePath}`
-                                                : 'https://placehold.co/600x400'
-                                        }
-                                        alt="news-image"
+                                        image={`${apiUrl}/${image?.FilePath}`}
+                                        alt={`news-image-${idx}`}
                                         sx={{
                                             height: { xs: 150, sm: 200, md: 300, lg: 450 },
                                             borderRadius: 2,
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={() => {
+                                            setSelectedImage(`${apiUrl}/${image?.FilePath}`)
+                                            setOpenImage(true)
                                         }}
                                     />
-                                )}
+                                ))
+                            ) : (
+                                <CardMedia
+                                    component="img"
+                                    image={
+                                        initialNews?.NewsImages?.[0]?.FilePath
+                                            ? `${apiUrl}/${initialNews.NewsImages[0].FilePath}`
+                                            : "https://placehold.co/600x400"
+                                    }
+                                    alt="news-image"
+                                    sx={{
+                                        height: { xs: 150, sm: 200, md: 300, lg: 450 },
+                                        borderRadius: 2,
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={() => {
+                                        setSelectedImage(initialNews?.NewsImages?.[0]?.FilePath
+                                            ? `${apiUrl}/${initialNews.NewsImages[0].FilePath}`
+                                            : "https://placehold.co/600x400")
+                                        setOpenImage(true)
+                                    }}
+                                />
+                            )}
                         </Carousel>
                     </Grid>
-                    <Grid size={{ xs: 12 }} position={'relative'}>
+                    <Grid size={{ xs: 12 }} position={"relative"}>
                         <Chip
-                            label={formatNewsDate(selectedNews?.DisplayStart ?? '')}
+                            label={formatNewsDate(selectedNews?.DisplayStart ?? "")}
                             size="small"
                             icon={<CalendarDays size={18} style={{ marginRight: 1 }} />}
                             sx={{
-                                bgcolor: 'primary.light',
-                                color: 'white',
+                                bgcolor: "primary.light",
+                                color: "white",
                                 padding: 2,
                                 mt: 1.5,
                                 fontWeight: 600,
-                                '& .MuiChip-icon': {
-                                    color: 'white',
+                                "& .MuiChip-icon": {
+                                    color: "white",
                                 },
                             }}
                         />
 
                         {/* Pin Button */}
-                        {
-                            isEditMode &&
+                        {isEditMode && (
                             <Zoom in={isEditMode} timeout={400}>
                                 <motion.div
                                     initial={false}
                                     animate={{ right: isClickEdit ? 172 : isEditMode ? 120 : 16 }}
-                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
                                     style={{
-                                        position: 'absolute',
+                                        position: "absolute",
                                         top: 6,
                                     }}
                                 >
-                                    <Tooltip title={initialNews.IsPinned ? 'Unpin' : ' Pin to top'}>
+                                    <Tooltip title={initialNews.IsPinned ? "Unpin" : " Pin to top"}>
                                         <Fab
-                                            size='small'
+                                            size="small"
                                             sx={{
                                                 boxShadow: 3,
                                             }}
-                                            color={initialNews?.IsPinned ? 'primary' : undefined}
+                                            color={initialNews?.IsPinned ? "primary" : undefined}
                                             onClick={(event) => {
                                                 event.stopPropagation();
                                                 handleUpdatePinned();
@@ -492,30 +537,30 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                         >
                                             <Pin
                                                 style={{
-                                                    transform: 'rotate(45deg)',
+                                                    transform: "rotate(45deg)",
                                                 }}
                                             />
                                         </Fab>
                                     </Tooltip>
                                 </motion.div>
                             </Zoom>
-                        }
+                        )}
 
                         {/* Edit Button */}
                         <Zoom in={!isClickEdit && isEditMode} timeout={400}>
-                            <Tooltip title='Edit'>
+                            <Tooltip title="Edit">
                                 <Fab
-                                    size='small'
+                                    size="small"
                                     sx={{
-                                        position: 'absolute',
+                                        position: "absolute",
                                         top: 6,
                                         right: 16,
                                         boxShadow: 3,
                                     }}
-                                    color={'secondary'}
+                                    color={"secondary"}
                                     onClick={(event) => {
                                         event.stopPropagation();
-                                        setIsClickEdit?.(true)
+                                        setIsClickEdit?.(true);
                                     }}
                                 >
                                     <Pencil />
@@ -524,32 +569,29 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                         </Zoom>
 
                         {/* Delete Button */}
-                        {
-                            isEditMode &&
+                        {isEditMode && (
                             <Zoom in={isEditMode} timeout={400}>
                                 <motion.div
                                     initial={false}
                                     animate={{ right: isClickEdit ? 120 : isEditMode ? 68 : 16 }}
-                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
                                     style={{
-                                        position: 'absolute',
+                                        position: "absolute",
                                         top: 6,
                                     }}
                                 >
                                     <Tooltip title="Delete">
                                         <Fab
-                                            size='small'
+                                            size="small"
                                             sx={{
                                                 boxShadow: 3,
-                                                backgroundColor: 'secondary.main',
-                                                color: 'error.main',
-                                                "&hover": {
-
-                                                }
+                                                backgroundColor: "secondary.main",
+                                                color: "error.main",
+                                                "&hover": {},
                                             }}
                                             onClick={(event) => {
                                                 event.stopPropagation();
-                                                setOpenDelete(true)
+                                                setOpenDelete(true);
                                             }}
                                         >
                                             <Trash2 />
@@ -557,27 +599,27 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                     </Tooltip>
                                 </motion.div>
                             </Zoom>
-                        }
+                        )}
 
                         {/* Save Change Button */}
                         <Zoom in={isClickEdit} timeout={400}>
-                            <Tooltip title='Save Change'>
+                            <Tooltip title="Save Change">
                                 <Fab
-                                    size='small'
+                                    size="small"
                                     sx={{
-                                        position: 'absolute',
+                                        position: "absolute",
                                         top: 6,
                                         right: 68,
                                         boxShadow: 3,
-                                        color: 'secondary.main',
-                                        backgroundColor: 'customGreen',
-                                        '&:hover': {
-                                            backgroundColor: '#369d33',
-                                        }
+                                        color: "secondary.main",
+                                        backgroundColor: "customGreen",
+                                        "&:hover": {
+                                            backgroundColor: "#369d33",
+                                        },
                                     }}
                                     onClick={(event) => {
                                         event.stopPropagation();
-                                        handleUpdateNews()
+                                        handleUpdateNews();
                                     }}
                                 >
                                     <Save />
@@ -587,21 +629,21 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
 
                         {/* Cancel button */}
                         <Zoom in={isClickEdit} timeout={400}>
-                            <Tooltip title='Cancel'>
+                            <Tooltip title="Cancel">
                                 <Fab
-                                    size='small'
+                                    size="small"
                                     sx={{
-                                        position: 'absolute',
+                                        position: "absolute",
                                         top: 6,
                                         right: 16,
                                         boxShadow: 3,
                                     }}
-                                    color={'secondary'}
+                                    color={"secondary"}
                                     onClick={(event) => {
                                         event.stopPropagation();
-                                        setIsClickEdit?.(false)
-                                        handleResetData()
-                                        setAlerts([])
+                                        setIsClickEdit?.(false);
+                                        handleResetData();
+                                        setAlerts([]);
                                     }}
                                 >
                                     <RotateCcw />
@@ -611,25 +653,23 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                     </Grid>
 
                     <Collapse in={isClickEdit} timeout={400} sx={{ mt: 2 }}>
-                        <Grid container
+                        <Grid
+                            container
                             size={{ xs: 12 }}
                             spacing={2}
                             sx={{
-                                px: 1, mt: 2
+                                px: 1,
+                                mt: 2,
                             }}
                         >
-                            <Grid
-                                container
-                                size={{ xs: 6 }}
-                                spacing={2}
-                            >
-                                <Grid size={{ xs: 12 }} >
+                            <Grid container size={{ xs: 6 }} spacing={2}>
+                                <Grid size={{ xs: 12 }}>
                                     <TextField
-                                        label='Title'
-                                        name='Title'
+                                        label="Title"
+                                        name="Title"
                                         fullWidth
                                         variant="outlined"
-                                        value={initialNews?.Title ?? ''}
+                                        value={initialNews?.Title ?? ""}
                                         onChange={handleInputChange}
                                         placeholder="Enter the news title"
                                         error={!!errors.Title}
@@ -638,13 +678,13 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
                                     <TextField
-                                        label='Summary'
-                                        name='Summary'
+                                        label="Summary"
+                                        name="Summary"
                                         multiline
                                         rows={4}
                                         fullWidth
                                         variant="outlined"
-                                        value={initialNews?.Summary ?? ''}
+                                        value={initialNews?.Summary ?? ""}
                                         onChange={handleInputChange}
                                         placeholder="Enter a short summary of the news"
                                         error={!!errors.Summary}
@@ -657,13 +697,14 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid container
+                            <Grid
+                                container
                                 size={{ xs: 6 }}
                                 sx={{
-                                    border: '1px solid #c5c5c6',
+                                    border: "1px solid #c5c5c6",
                                     borderRadius: "10px",
                                     p: 2,
-                                    minHeight: '100%'
+                                    minHeight: "100%",
                                 }}
                                 spacing={1.2}
                             >
@@ -675,7 +716,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                         <DatePicker
                                             label="Start date"
                                             value={initialNews.DisplayStart ? dayjs(initialNews.DisplayStart) : null}
-                                            onChange={(newValue) => handleDateChange('DisplayStart', newValue)}
+                                            onChange={(newValue) => handleDateChange("DisplayStart", newValue)}
                                             maxDate={initialNews.DisplayEnd ? dayjs(initialNews.DisplayEnd) : undefined}
                                             slots={{
                                                 openPickerIcon: CalendarMonth,
@@ -684,7 +725,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                             open={openStartPicker}
                                             onOpen={() => setOpenStartPicker(true)}
                                             onClose={() => setOpenStartPicker(false)}
-                                            sx={{ width: '100%' }}
+                                            sx={{ width: "100%" }}
                                             slotProps={{
                                                 textField: {
                                                     error: !!errors.DisplayStart,
@@ -699,7 +740,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                         <DatePicker
                                             label="End Date"
                                             value={initialNews.DisplayEnd ? dayjs(initialNews.DisplayEnd) : null}
-                                            onChange={(newValue) => handleDateChange('DisplayEnd', newValue)}
+                                            onChange={(newValue) => handleDateChange("DisplayEnd", newValue)}
                                             minDate={initialNews.DisplayStart ? dayjs(initialNews.DisplayStart) : undefined}
                                             slots={{
                                                 openPickerIcon: CalendarMonth,
@@ -708,7 +749,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                                             open={openEndPicker}
                                             onOpen={() => setOpenEndPicker(true)}
                                             onClose={() => setOpenEndPicker(false)}
-                                            sx={{ width: '100%' }}
+                                            sx={{ width: "100%" }}
                                             slotProps={{
                                                 textField: {
                                                     error: !!errors.DisplayEnd,
@@ -721,13 +762,13 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             </Grid>
                             <Grid size={{ xs: 12 }}>
                                 <TextField
-                                    label='Content'
-                                    name='FullContent'
+                                    label="Content"
+                                    name="FullContent"
                                     multiline
                                     rows={4}
                                     fullWidth
                                     variant="outlined"
-                                    value={initialNews?.FullContent ?? ''}
+                                    value={initialNews?.FullContent ?? ""}
                                     onChange={handleInputChange}
                                     placeholder="Enter the full content of the news"
                                     error={!!errors.FullContent}
@@ -742,21 +783,20 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                         </Grid>
                     </Collapse>
 
-                    <Collapse in={!isClickEdit} timeout={400} sx={{ width: '100%' }}>
+                    <Collapse in={!isClickEdit} timeout={400} sx={{ width: "100%" }}>
                         <Grid size={{ xs: 12 }} sx={{ px: 1, mt: 2 }}>
-                            <Typography variant='h5' fontWeight={600} gutterBottom width={'100%'}>
+                            <Typography variant="h5" fontWeight={600} gutterBottom width={"100%"}>
                                 {initialNews?.Title}
                             </Typography>
-                            <Typography variant='body1' fontSize={16} gutterBottom sx={{ whiteSpace: 'pre-line' }}>
+                            <Typography variant="body1" fontSize={16} gutterBottom sx={{ whiteSpace: "pre-line" }}>
                                 {initialNews?.Summary}
                             </Typography>
                             <Divider sx={{ my: 2 }} />
-                            <Typography variant='body1' fontSize={14} sx={{ whiteSpace: 'pre-line' }}>
+                            <Typography variant="body1" fontSize={14} sx={{ whiteSpace: "pre-line" }}>
                                 {initialNews?.FullContent}
                             </Typography>
                         </Grid>
                     </Collapse>
-
                 </Grid>
             </DialogContent>
 
@@ -764,10 +804,10 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 <Zoom in={open} timeout={400}>
                     <Button
                         onClick={() => {
-                            onClose()
-                            setIsClickEdit?.(false)
-                            handleResetData()
-                            setAlerts([])
+                            onClose();
+                            setIsClickEdit?.(false);
+                            handleResetData();
+                            setAlerts([]);
                         }}
                         variant="outlined"
                         startIcon={<CircleX size={18} />}
