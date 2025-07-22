@@ -10,21 +10,21 @@ import (
 type MaintenanceRequest struct {
 	gorm.Model
 	AreaDetail         string
-	Description        string    `valid:"required~กรุณาระบุคำอธิบาย"`
+	Description        string    `valid:"required~Description is required"`
 	IsAnytimeAvailable bool
 	StartTime          time.Time
 	EndTime            time.Time
 	OtherTypeDetail    string
 
-	UserID            uint              `valid:"required~กรุณาระบุผู้แจ้ง"`
+	UserID            uint              `valid:"required~UserID is required"`
 	User              User              `gorm:"foreignKey:UserID" valid:"-"`
-	RoomID            uint              `valid:"required~กรุณาระบุห้อง"`
+	RoomID            uint              `valid:"required~RoomID is required"`
 	Room              Room              `gorm:"foreignKey:RoomID" valid:"-"`
-	RequestStatusID   uint              `valid:"required~กรุณาระบุสถานะคำขอ"`
+	RequestStatusID   uint              `valid:"required~RequestStatusID is required"`
 	RequestStatus     RequestStatus     `gorm:"foreignKey:RequestStatusID" valid:"-"`
-	AreaID            uint              `valid:"required~กรุณาระบุพื้นที่"`
+	AreaID            uint              `valid:"required~AreaID is required"`
 	Area              Area              `gorm:"foreignKey:AreaID" valid:"-"`
-	MaintenanceTypeID uint              `valid:"required~กรุณาระบุประเภทการซ่อม"`
+	MaintenanceTypeID uint              `valid:"required~MaintenanceTypeID is required"`
 	MaintenanceType   MaintenanceType   `gorm:"foreignKey:MaintenanceTypeID" valid:"-"`
 
 	MaintenanceImages []MaintenanceImage `gorm:"foreignKey:RequestID"`

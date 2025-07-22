@@ -32,6 +32,7 @@ func TestRequestStatusValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(status)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Name is required"))
 	})
 
 	t.Run("Missing Description", func(t *testing.T) {
@@ -43,5 +44,6 @@ func TestRequestStatusValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(status)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Description is required"))
 	})
 }

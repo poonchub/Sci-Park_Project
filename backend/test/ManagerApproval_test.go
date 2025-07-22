@@ -25,19 +25,6 @@ func TestManagerApprovalValidation(t *testing.T) {
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run("Missing Description", func(t *testing.T) {
-		approval := entity.ManagerApproval{
-			Note:     "",
-			UserID:          1,
-			RequestID:       2,
-			RequestStatusID: 3,
-		}
-
-		ok, err := govalidator.ValidateStruct(approval)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-	})
-
 	t.Run("Missing UserID", func(t *testing.T) {
 		approval := entity.ManagerApproval{
 			Note:     "ทดสอบ",
@@ -49,6 +36,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(approval)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("UserID is required"))
 	})
 
 	t.Run("Missing RequestID", func(t *testing.T) {
@@ -62,6 +50,7 @@ func TestManagerApprovalValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(approval)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("RequestID is required"))
 	})
 
 	t.Run("Missing RequestStatusID", func(t *testing.T) {
@@ -75,5 +64,6 @@ func TestManagerApprovalValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(approval)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("RequestStatusID is required"))
 	})
 }

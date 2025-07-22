@@ -30,5 +30,6 @@ func TestRequestTypeValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(rt)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("TypeName is required"))
 	})
 }

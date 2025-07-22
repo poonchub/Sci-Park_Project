@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type Floor struct {
     gorm.Model
-    Number int    `gorm:"not null" valid:"required~หมายเลขชั้นต้องไม่ว่าง"`
+    Number int    `gorm:"not null" valid:"required~Number is required"`
     Rooms  []Room `gorm:"foreignKey:FloorID" valid:"-"`
 }

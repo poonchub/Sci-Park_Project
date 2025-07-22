@@ -275,14 +275,24 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
             onClose={() => {
                 setOpenImage(false);
             }}
+            maxWidth={false}
+            sx={{
+                '& .MuiDialog-paper': {
+                    maxWidth: '70vw',
+                    width: 'auto',
+                    margin: 0,
+                    borderRadius: 0,
+                },
+            }}
         >
             <CardMedia
                 component="img"
                 image={selectedImage}
                 alt="image"
                 sx={{
-                    height: { xs: 150, sm: 200, md: 300, lg: 450 },
-                    borderRadius: 2,
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
                 }}
             />
         </Dialog>

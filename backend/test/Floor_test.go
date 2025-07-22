@@ -28,5 +28,6 @@ func TestFloorValidation(t *testing.T) {
         ok, err := govalidator.ValidateStruct(floor)
         g.Expect(ok).To(BeFalse())
         g.Expect(err).NotTo(BeNil())
+        g.Expect(err.Error()).To(Equal("Number is required"))
     })
 }
