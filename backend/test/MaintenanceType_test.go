@@ -30,5 +30,6 @@ func TestMaintenanceTypeValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(maintenanceType)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("TypeName is required"))
 	})
 }

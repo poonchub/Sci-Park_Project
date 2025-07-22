@@ -4,14 +4,14 @@ import "gorm.io/gorm"
 
 type Notification struct{ 
 	gorm.Model
-	IsRead    bool
+	IsRead   	bool
 
-	RequestID 	uint
-    Request   	MaintenanceRequest	`gorm:"foreignKey:RequestID"`
+	RequestID 	uint	`valid:"required~RequestID is required"`
+    Request   	MaintenanceRequest	`gorm:"foreignKey:RequestID" valid:"-"`
 
-	TaskID 		uint         
-    Task   		MaintenanceTask	`gorm:"foreignKey:TaskID"`
+	TaskID 		uint   	`valid:"required~TaskID is required"`  
+    Task   		MaintenanceTask	`gorm:"foreignKey:TaskID" valid:"-"`
 
-	UserID 		uint
-	User        User          `gorm:"foreignKey:UserID"`
+	UserID 		uint	`valid:"required~UserID is required"`
+	User        User          `gorm:"foreignKey:UserID" valid:"-"`
 }

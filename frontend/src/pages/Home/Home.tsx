@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
-import { apiUrl, ListNews, ListPinnedNews, ListUnpinnedNews } from '../../services/http';
+import { apiUrl, ListNews, ListPinnedNews, ListPinnedNewsPeriod, ListUnpinnedNews, ListUnpinnedNewsPeriod } from '../../services/http';
 import { NewsImagesInterface } from '../../interfaces/NewsImages';
 import { NewsInterface } from '../../interfaces/News';
 import NewsCard from '../../components/NewsCard/NewsCard';
@@ -68,7 +68,7 @@ export default function SciparkHomePage() {
 
     const getNews = async () => {
         try {
-            const pinnedNews = await ListPinnedNews();
+            const pinnedNews = await ListPinnedNewsPeriod();
             if (!pinnedNews) {
                 setNews([]);
                 return;
@@ -76,15 +76,17 @@ export default function SciparkHomePage() {
 
             let combinedNews = [...pinnedNews];
 
+            console.log("combinedNews", combinedNews)
             if (pinnedNews.length < 3) {
                 const needed = 3 - pinnedNews.length;
-                const orderedNews = await ListUnpinnedNews(needed);
-
+                const orderedNews = await ListUnpinnedNewsPeriod(needed);
+                console.log("orderedNews", orderedNews)
                 if (orderedNews) {
                     const pinnedIds = new Set(pinnedNews.map((item: any) => item.ID));
                     const filteredOrderedNews = orderedNews.filter((item: any) => !pinnedIds.has(item.ID));
 
                     combinedNews = combinedNews.concat(filteredOrderedNews.slice(0, needed));
+                    console.log("combinedNews", combinedNews)
                 }
             }
 

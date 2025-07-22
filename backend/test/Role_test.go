@@ -30,5 +30,6 @@ func TestRoleValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(role)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Name is required"))
 	})
 }

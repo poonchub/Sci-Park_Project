@@ -8,15 +8,15 @@ import (
 
 type News struct {
 	gorm.Model
-	Title			string
-	Summary       	string
-	FullContent		string
-	DisplayStart	time.Time
-	DisplayEnd		time.Time
-	IsPinned      bool
+	Title			string	`valid:"required~Title is required"`
+	Summary       	string	`valid:"required~Summary is required"`
+	FullContent		string	`valid:"required~FullContent is required"`
+	DisplayStart	time.Time	`valid:"required~DisplayStart is required"`
+	DisplayEnd		time.Time	`valid:"required~DisplayEnd is required"`
+	IsPinned      	bool
 
-	UserID			uint
-	User        	User          `gorm:"foreignKey:UserID"`
+	UserID			uint		  `valid:"required~UserID is required"`
+	User        	User          `gorm:"foreignKey:UserID" valid:"-"` 
 
 	NewsImages     	[]NewsImage   `gorm:"foreignKey:NewsID"`
 }

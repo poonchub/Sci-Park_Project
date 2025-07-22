@@ -28,15 +28,7 @@ func TestGender(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(gender)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Name is required"))
 	})
 	
-	// t.Run("Invalid Gender Name", func(t *testing.T) {
-	// 	gender := entity.Gender{
-	// 		Name: "Invalid",
-	// 	}
-
-	// 	ok, err := govalidator.ValidateStruct(gender)
-	// 	g.Expect(ok).To(BeFalse())
-	// 	g.Expect(err).NotTo(BeNil())
-	// })
 }

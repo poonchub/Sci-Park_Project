@@ -39,7 +39,7 @@ export const handleDeleteNews = async ({
     setLoadingStatus?.('loading');
 
     if (!selectedNews?.ID) {
-        console.error("News ID is missing. Cannot delete.")
+        console.error("❌ News ID is missing. Cannot delete.")
         setIsDeleteButtonActive(false);
         setLoadingStatus?.('idle');
         return;
@@ -65,7 +65,7 @@ export const handleDeleteNews = async ({
             return;
         }
 
-        console.log("The news has been delete successfully.")
+        console.log("✔️ The news has been deleted successfully.")
 
         setTimeout(() => {
             setLoadingStatus?.('success');
@@ -73,7 +73,7 @@ export const handleDeleteNews = async ({
             setAlerts([]);
             setFiles([]);
             if (successAlert){
-                handleSetAlert("success", "The news has been delete successfully.");
+                handleSetAlert("success", "The news has been deleted successfully.");
             }
         }, 350);
 

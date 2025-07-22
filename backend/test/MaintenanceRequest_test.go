@@ -23,7 +23,7 @@ func TestMaintenanceRequestValidation(t *testing.T) {
 			UserID:             1,
 			RoomID:             2,
 			RequestStatusID:    3,
-			AreaID:             4,
+			AreaID:             1,
 			MaintenanceTypeID:  5,
 		}
 
@@ -32,39 +32,117 @@ func TestMaintenanceRequestValidation(t *testing.T) {
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run("Missing Required Fields", func(t *testing.T) {
+	t.Run("Missing Description", func(t *testing.T) {
 		req := entity.MaintenanceRequest{
-			AreaDetail:  "",
-			Description: "",
-			// StartTime, EndTime are zero by default
-			UserID:            0,
-			RoomID:            0,
-			RequestStatusID:   0,
-			AreaID:            0,
-			MaintenanceTypeID: 0,
-		}
-
-		ok, err := govalidator.ValidateStruct(req)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-	})
-
-	t.Run("Zero StartTime and EndTime", func(t *testing.T) {
-		req := entity.MaintenanceRequest{
-			AreaDetail:         "Lab Room",
-			Description:        "Projector issue",
-			IsAnytimeAvailable: false,
-			StartTime:          time.Time{},
-			EndTime:            time.Time{},
+			AreaDetail:         "",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
 			UserID:             1,
 			RoomID:             2,
 			RequestStatusID:    3,
-			AreaID:             4,
+			AreaID:             1,
 			MaintenanceTypeID:  5,
 		}
 
 		ok, err := govalidator.ValidateStruct(req)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Description is required"))
+	})
+
+	t.Run("Missing UserID", func(t *testing.T) {
+		req := entity.MaintenanceRequest{
+			AreaDetail:         "",
+			Description:        "Air conditioner not working",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
+			RoomID:             2,
+			RequestStatusID:    3,
+			AreaID:             1,
+			MaintenanceTypeID:  5,
+		}
+
+		ok, err := govalidator.ValidateStruct(req)
+		g.Expect(ok).To(BeFalse())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("UserID is required"))
+	})
+
+	t.Run("Missing RoomID", func(t *testing.T) {
+		req := entity.MaintenanceRequest{
+			AreaDetail:         "",
+			Description:        "Air conditioner not working",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
+			UserID:             1,
+			RequestStatusID:    3,
+			AreaID:             1,
+			MaintenanceTypeID:  5,
+		}
+
+		ok, err := govalidator.ValidateStruct(req)
+		g.Expect(ok).To(BeFalse())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("RoomID is required"))
+	})
+
+	t.Run("Missing RequestStatusID", func(t *testing.T) {
+		req := entity.MaintenanceRequest{
+			AreaDetail:         "",
+			Description:        "Air conditioner not working",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
+			UserID:             1,
+			RoomID:             2,
+			AreaID:             1,
+			MaintenanceTypeID:  5,
+		}
+
+		ok, err := govalidator.ValidateStruct(req)
+		g.Expect(ok).To(BeFalse())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("RequestStatusID is required"))
+	})
+
+	t.Run("Missing AreaID", func(t *testing.T) {
+		req := entity.MaintenanceRequest{
+			AreaDetail:         "",
+			Description:        "Air conditioner not working",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
+			UserID:             1,
+			RoomID:             2,
+			RequestStatusID:    3,
+			MaintenanceTypeID:  5,
+		}
+
+		ok, err := govalidator.ValidateStruct(req)
+		g.Expect(ok).To(BeFalse())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("AreaID is required"))
+	})
+
+	t.Run("Missing MaintenanceTypeID", func(t *testing.T) {
+		req := entity.MaintenanceRequest{
+			AreaDetail:         "",
+			Description:        "Air conditioner not working",
+			IsAnytimeAvailable: true,
+			StartTime:          time.Now().Add(1 * time.Hour),
+			EndTime:            time.Now().Add(2 * time.Hour),
+			UserID:             1,
+			RoomID:             2,
+			RequestStatusID:    3,
+			AreaID:             1,
+		}
+
+		ok, err := govalidator.ValidateStruct(req)
+		g.Expect(ok).To(BeFalse())
+		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("MaintenanceTypeID is required"))
 	})
 }

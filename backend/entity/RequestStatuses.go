@@ -5,8 +5,8 @@ import "gorm.io/gorm"
 // RequestStatus คือ entity สำหรับสถานะของคำขอซ่อม
 type RequestStatus struct {
 	gorm.Model
-	Name        string `valid:"required~กรุณาระบุชื่อสถานะ"`
-	Description string `valid:"required~กรุณาระบุคำอธิบาย"`
+	Name        string `valid:"required~Name is required"`
+	Description string `valid:"required~Description is required"`
 
 	Inspections         []Inspection         `gorm:"foreignKey:RequestStatusID"`
 	MaintenanceRequests []MaintenanceRequest `gorm:"foreignKey:RequestStatusID"`

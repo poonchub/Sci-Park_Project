@@ -32,6 +32,7 @@ func TestMaintenanceImageValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(image)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Image URL is required"))
 	})
 
 	t.Run("Invalid Image URL Format", func(t *testing.T) {
@@ -43,16 +44,17 @@ func TestMaintenanceImageValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(image)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("Invalid URL format (example: https://example.com/image.jpg)"))
 	})
 
 	t.Run("Missing RequestID", func(t *testing.T) {
 		image := entity.MaintenanceImage{
 			FilePath:  "https://example.com/image.jpg",
-			RequestID: 0, // Zero = missing
 		}
 
 		ok, err := govalidator.ValidateStruct(image)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
+		g.Expect(err.Error()).To(Equal("RequestID is required"))
 	})
 }
