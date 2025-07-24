@@ -980,7 +980,11 @@ function AllMaintenanceRequest() {
                     /> */}
 
                     {/* Data Table */}
-                    <Grid size={{ xs: 12, md: 12 }}>
+                    <Grid 
+                        size={{ xs: 12, md: 12 }} 
+                        height={'50vh'} 
+                        minHeight={'200px'}
+                    >
                         {!isLoadingData && statusCounts ? (
                             <CustomDataGrid
                                 rows={filteredRequests}

@@ -18,10 +18,30 @@ import {
     Typography,
 } from "@mui/material";
 import { Box } from "@mui/system";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiUrl, ListDeveloperInfo } from "../../services/http";
+import { DeveloperInterface } from "../../interfaces/IDeveloperInfo";
 
 const AboutDeveloper = () => {
     const navigate = useNavigate();
+
+    const [developers, setDevelopers] = useState<DeveloperInterface[]>([])
+
+    const getDeveloperInfo = async () => {
+        try {
+            const res = await ListDeveloperInfo()
+            if (res) {
+                setDevelopers(res)
+            }
+        } catch (error) {
+            console.error("Error fetching organization info:", error);
+        }
+    }
+
+    useEffect(() => {
+        getDeveloperInfo()
+    }, [])
 
     const teamMembers = {
         students: [
@@ -74,6 +94,137 @@ const AboutDeveloper = () => {
             email: "paphakorn@sut.ac.th",
         },
     };
+
+    const DevCard = ({
+        developer,
+    }: {
+        developer: DeveloperInterface
+    }) => (
+        <Grid size={{ xs: 4 }}>
+            <Card sx={{ height: "100%" }}>
+                <CardContent
+                    sx={{
+                        flexGrow: 1,
+                        textAlign: "center",
+                        p: 4,
+                        gap: 1.2,
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
+                >
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            mb: 1,
+                        }}
+                    >
+                        <Avatar
+                            src={`${apiUrl}/${developer.ProfilePath}`}
+                            alt={developer.Name}
+                            sx={{ width: 64, height: 64 }}
+                        />
+                    </Box>
+
+                    <Box>
+                        <Typography variant="body1">{developer.Name}</Typography>
+
+                        <Box
+                            sx={{
+                                bgcolor: "rgba(128, 128, 128, 0.18)",
+                                px: 1.5,
+                                py: 0.25,
+                                borderRadius: 5,
+                                display: "inline-block",
+                            }}
+                        >
+                            <Typography
+                                variant="caption"
+                                sx={{ lineHeight: 1, fontWeight: 500 }}
+                            >
+                                {developer.Role}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <p>{developer.Bio}</p>
+
+                    <Box
+                        sx={{
+                            display: "flex",
+                            gap: 1,
+                            justifyContent: "center",
+                        }}
+                    >
+                        {developer.Email && (
+                            <Tooltip title={developer.Email}>
+                                <a href={`mailto:${developer.Email}`}>
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: "primary.main",
+                                            color: "white",
+                                            "&:hover": {
+                                                color: 'text.primary'
+                                            }
+                                        }}
+                                    >
+                                        <Email />
+                                    </IconButton>
+                                </a>
+                            </Tooltip>
+                        )}
+
+                        {developer.GithubUrl && (
+                            <Tooltip title={developer.GithubUrl}>
+                                <a
+                                    href={developer.GithubUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: "primary.main",
+                                            color: "white",
+                                            "&:hover": {
+                                                color: 'text.primary'
+                                            }
+                                        }}
+                                    >
+                                        <GitHub />
+                                    </IconButton>
+                                </a>
+                            </Tooltip>
+                        )}
+                        {developer.FacebookUrl && (
+                            <Tooltip title={developer.FacebookUrl}>
+                                <a
+                                    href={developer.FacebookUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1"
+                                >
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: "primary.main",
+                                            color: "white",
+                                            "&:hover": {
+                                                color: 'text.primary'
+                                            }
+                                        }}
+                                    >
+                                        <Facebook />
+                                    </IconButton>
+                                </a>
+                            </Tooltip>
+                        )}
+                    </Box>
+                </CardContent>
+            </Card>
+        </Grid>
+    );
 
     const PersonCard = ({
         person,
@@ -201,6 +352,8 @@ const AboutDeveloper = () => {
         </Grid>
     );
 
+    console.log(developers)
+
     return (
         <div className="about-developer-page">
 
@@ -241,8 +394,8 @@ const AboutDeveloper = () => {
                             <Typography variant="h6">Developers</Typography>
                         </Grid>
                         <Grid container size={{ xs: 12 }}>
-                            {teamMembers.students.map((student, index) => (
-                                <PersonCard key={index} person={student} />
+                            {developers.map((developer, index) => (
+                                <DevCard key={index} developer={developer} />
                             ))}
                         </Grid>
                     </Grid>

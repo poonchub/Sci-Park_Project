@@ -1,10 +1,30 @@
-import { Facebook, Instagram, Twitter } from '@mui/icons-material';
-import { Box, Divider, Grid, IconButton, List, ListItem, ListItemText, Typography } from '@mui/material';
+import { Email, Facebook, Instagram, Twitter } from '@mui/icons-material';
+import { Box, CardMedia, Divider, Grid, IconButton, List, ListItem, ListItemText, Tooltip, Typography } from '@mui/material';
 import { Container } from '@mui/system';
 import { FlaskConical } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { OrganizationInfoInterface } from '../../interfaces/IOrganizationInfo';
+import { apiUrl, GetOrganizationInfo } from '../../services/http';
 
 function Footer() {
+    const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>()
+
+    const getOrganizationInfo = async () => {
+        try {
+            const res = await GetOrganizationInfo()
+            if (res) {
+                setOrganizationInfo(res)
+            }
+        } catch (error) {
+            console.error("Error fetching organization info:", error);
+        }
+    }
+
+    useEffect(() => {
+        getOrganizationInfo()
+    }, [])
+
     return (
         <Box sx={{
             bgcolor: 'background.secondary',
@@ -17,26 +37,26 @@ function Footer() {
             <Container maxWidth={'xl'}>
                 <Grid container spacing={4}>
                     <Grid size={{ xs: 12, md: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <FlaskConical size={24} />
-                            <Typography variant="h6" sx={{ ml: 1, fontWeight: 'bold' }}>
-                                SCIPARK
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            mb: 3,
+                            gap: 2
+                        }}>
+                            <CardMedia
+                                component="img"
+                                image={`${apiUrl}/${organizationInfo?.LogoPath}`}
+                                alt={`logo`}
+                                sx={{
+                                    width: 150,
+                                    backgroundColor: "rgba(255, 255, 255, 1)",
+                                    padding: 1,
+                                    borderRadius: 1.5
+                                }}
+                            />
+                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                {organizationInfo?.NameEN}
                             </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                            A leading science and technology center, dedicated to creating innovation and supporting efficient work.
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                            {/* Social Media Icons */}
-                            <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Facebook />
-                            </IconButton>
-                            <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Instagram />
-                            </IconButton>
-                            <IconButton size="small" sx={{ bgcolor: 'primary.main', color: 'white' }}>
-                                <Twitter />
-                            </IconButton>
                         </Box>
                     </Grid>
 
@@ -110,7 +130,7 @@ function Footer() {
 
                     <Grid size={{ xs: 6, md: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                            นโยบาย
+                            Policy
                         </Typography>
                         <List dense disablePadding>
                             <ListItem disableGutters>
@@ -130,12 +150,45 @@ function Footer() {
                             Contact Us
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Science Center Building<br />
-                            No. 123 Science Road<br />
-                            Bangkok 10900<br />
-                            Tel: 02-123-4567<br />
-                            Email: contact@scipark.org
+                            {organizationInfo?.Address}
                         </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {`Phone: ${organizationInfo?.Phone}`}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                            {/* Social Media Icons */}
+                            <Tooltip title={organizationInfo?.Email}>
+                                <a href={`mailto:${organizationInfo?.Email}`}>
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: "primary.main",
+                                            color: "white",
+                                        }}
+                                    >
+                                        <Email />
+                                    </IconButton>
+                                </a>
+                            </Tooltip>
+                            <Tooltip title={organizationInfo?.FacebookUrl}>
+                                <a
+                                    href={organizationInfo?.FacebookUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1"
+                                >
+                                    <IconButton
+                                        size="small"
+                                        sx={{
+                                            bgcolor: "primary.main",
+                                            color: "white",
+                                        }}
+                                    >
+                                        <Facebook />
+                                    </IconButton>
+                                </a>
+                            </Tooltip>
+                        </Box>
                     </Grid>
                 </Grid>
 

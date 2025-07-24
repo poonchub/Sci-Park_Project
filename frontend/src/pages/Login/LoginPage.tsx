@@ -53,7 +53,8 @@ const LoginPage: React.FC = () => {
           if (response.Role) {
             redirectPath = "/";
           }
-          navigate(redirectPath);
+          navigate(redirectPath, { replace: true });
+          window.location.reload();
           setLoading(false);  // Stop loading after navigation
         }, 2000);  // 2 seconds delay
       } else {
@@ -223,10 +224,10 @@ const LoginPage: React.FC = () => {
                   </Typography>
                 </Divider>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px' }}>
-  <Link href="/register" className="forgot-link">Create an Account</Link>
-  <span className='forgot-link' style={{color: 'gray' , opacity: "50%"}}>|</span>  {/* เส้นคั่นตรงกลาง */}
-  <Link href="/reset-password" className="forgot-link">Forgot Password?</Link>
-</div>
+                  <Link href="/register" className="forgot-link">Create an Account</Link>
+                  <span className='forgot-link' style={{ color: 'gray', opacity: "50%" }}>|</span>  {/* เส้นคั่นตรงกลาง */}
+                  <Link href="/reset-password" className="forgot-link">Forgot Password?</Link>
+                </div>
               </form>
             </div>
           </motion.div>

@@ -1062,7 +1062,10 @@ function AcceptWork() {
                                 <Tab label="Completed" {...a11yProps(2)} />
                             </Tabs>
                         </Grid>
-                        <CustomTabPanel value={valueTab} index={0}>
+                        <CustomTabPanel 
+                            value={valueTab} 
+                            index={0}
+                        >
                             <MaintenanceTaskTable
                                 title="Pending"
                                 rows={filteredTasks}

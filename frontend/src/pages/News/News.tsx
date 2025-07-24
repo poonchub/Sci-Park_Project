@@ -571,7 +571,7 @@ function News() {
                         <Collapse in={isEditMode} timeout={400} unmountOnExit>
                             <Select
                                 startAdornment={
-                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                    <InputAdornment position="start" sx={{ pl: 0.5, cursor: 'pointer' }}>
                                         <TextSearch size={18} strokeWidth={3} />
                                     </InputAdornment>
                                 }

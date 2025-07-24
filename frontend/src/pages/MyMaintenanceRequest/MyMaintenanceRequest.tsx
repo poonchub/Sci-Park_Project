@@ -990,7 +990,11 @@ function MyMaintenanceRequest() {
                     </Grid>
 
                     {/* Data Table */}
-                    <Grid size={{ xs: 12, md: 12 }}>
+                    <Grid 
+                        size={{ xs: 12, md: 12 }}
+                        height={'65vh'} 
+                        minHeight={'200px'}
+                    >
                         {isLoadingData ? (
                             <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
                         ) : (

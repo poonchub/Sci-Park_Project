@@ -41,6 +41,12 @@ func main() {
 		//Register
 		public.POST("/register", controller.CreateUserExternalOnly)
 
+		// OrganizationInfo
+		public.GET("/organization-info", controller.GetOrganizationInfo)
+
+		// DeveloperInfo
+		public.GET("/developer-info", controller.GetDevaloperInfo)
+
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)
@@ -149,6 +155,7 @@ func main() {
 		protected.GET("/news/pinned-period", controller.ListPinnedNewsPeriod)
 		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
 		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token

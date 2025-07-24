@@ -87,6 +87,8 @@ func SetupDatabase() {
 		&entity.SystemAnalytics{},
 		&entity.News{},
 		&entity.NewsImage{},
+		&entity.OrganizationInfo{},
+		&entity.DevaloperInfo{},
 	)
 
 	if err != nil {
@@ -848,6 +850,60 @@ func SeedDatabase() {
 	for _, n := range news {
 		db.FirstOrCreate(&n, entity.News{
 			Title: n.Title,
+		})
+	}
+
+	// 🔹 ข้อมูล OrganizationInfo
+	orInfo := entity.OrganizationInfo{
+		NameTH:      "อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2",
+		NameEN:      "Regional Science Park Northeast 2",
+		Slogan:      "A leading science and technology center committed to innovation and supporting efficient work processes.",
+		LogoPath:    "images/organization/logo/logo_1.png",
+		Description: "Dedicated to developing and supporting research in science and technology to enhance quality of life and drive the nation's economy. We provide a comprehensive support system including repair requests, meeting room bookings, and many other services to enable personnel to work at their highest efficiency.",
+		Address:     "Science Center Building \nNo. 123 Science Road \nBangkok 10900",
+		Phone:       "02-123-4567",
+		Email:       "contact@scipark.org",
+		FacebookUrl: "https://www.facebook.com/RSPNortheast2",
+	}
+	db.FirstOrCreate(&orInfo, entity.RequestType{})
+
+	// 🔹 ข้อมูล DevaloperInfo
+	devInfos := []entity.DevaloperInfo{
+		{
+			Name:        "Mr. Warawut Mueanduang",
+			Email:       "ohmjares.22@gmail.com",
+			GithubUrl:   "https://github.com/jares22",
+			FacebookUrl: "https://www.facebook.com/ome.warawut.9",
+			Phone:       "",
+			ProfilePath: "images/organization/developers/Warawut_Mueanduang.jpg",
+			Role:        "Full Stack Developer",
+			Bio:         "Passionate Full Stack Developer with a growth mindset, focused on clean architecture, seamless web apps, and always ready to collaborate.",
+		},
+		{
+			Name:        "Mr. Chanchai Lertsri",
+			Email:       "chanchai.radsee@gmail.com",
+			GithubUrl:   "https://github.com/Chanchai2004",
+			FacebookUrl: "https://www.facebook.com/got.chanchai.2025",
+			Phone:       "",
+			ProfilePath: "images/organization/developers/Chanchai_Lertsri.jpg",
+			Role:        "Full Stack Developer",
+			Bio:         "Full Stack Developer with a growth mindset, dedicated to crafting high-quality web applications with clean architecture and seamless user experiences.",
+		},
+		{
+			Name:        "Mr. Poonchub Nanawan",
+			Email:       "poonchubnanawan310@gmail.com",
+			GithubUrl:   "https://github.com/poonchub",
+			FacebookUrl: "https://www.facebook.com/poonsub.nanawan/",
+			Phone:       "",
+			ProfilePath: "images/organization/developers/Poonchub_Nanawan.jpg",
+			Role:        "Full Stack Developer",
+			Bio:         "Full Stack Developer with a passion for creating clean, efficient, and user-friendly web applications.",
+		},
+	}
+	for _, devInfo := range devInfos {
+		db.FirstOrCreate(&devInfo, entity.DevaloperInfo{
+			Name: devInfo.Name,
+			Email: devInfo.Email,
 		})
 	}
 }

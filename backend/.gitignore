@@ -7,4 +7,7 @@ sci-park_web-application.db
 # Ignore images folder containing profile pictures
 /images/Profiles/*
 
-/images
+/images/maintenance-request
+/images/maintenance-task
+/images/news
+/images/roomtype-image
