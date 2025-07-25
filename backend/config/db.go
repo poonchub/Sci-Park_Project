@@ -88,7 +88,8 @@ func SetupDatabase() {
 		&entity.News{},
 		&entity.NewsImage{},
 		&entity.OrganizationInfo{},
-		&entity.DevaloperInfo{},
+		&entity.Contributor{},
+		&entity.ContributorType{},
 	)
 
 	if err != nil {
@@ -867,41 +868,78 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&orInfo, entity.RequestType{})
 
-	// 🔹 ข้อมูล DevaloperInfo
-	devInfos := []entity.DevaloperInfo{
+	// 🔹 ข้อมูล ContributorType
+	contributorTypes := []entity.ContributorType{
+		{ Name: "Developer"},
+		{ Name: "Supervisor"},
+		{ Name: "Sponsor"},
+	}
+	for _, contributorType := range contributorTypes {
+		db.FirstOrCreate(&contributorType, entity.Contributor{
+			Name: contributorType.Name,
+		})
+	}
+
+	// 🔹 ข้อมูล Contributor
+	devInfos := []entity.Contributor{
 		{
 			Name:        "Mr. Warawut Mueanduang",
 			Email:       "ohmjares.22@gmail.com",
 			GithubUrl:   "https://github.com/jares22",
 			FacebookUrl: "https://www.facebook.com/ome.warawut.9",
-			Phone:       "",
+			Phone:       "064-317-7232",
 			ProfilePath: "images/organization/developers/Warawut_Mueanduang.jpg",
 			Role:        "Full Stack Developer",
 			Bio:         "Passionate Full Stack Developer with a growth mindset, focused on clean architecture, seamless web apps, and always ready to collaborate.",
+			ContributorTypeID: 1,
 		},
 		{
 			Name:        "Mr. Chanchai Lertsri",
 			Email:       "chanchai.radsee@gmail.com",
 			GithubUrl:   "https://github.com/Chanchai2004",
 			FacebookUrl: "https://www.facebook.com/got.chanchai.2025",
-			Phone:       "",
+			Phone:       "093-304-3468",
 			ProfilePath: "images/organization/developers/Chanchai_Lertsri.jpg",
 			Role:        "Full Stack Developer",
 			Bio:         "Full Stack Developer with a growth mindset, dedicated to crafting high-quality web applications with clean architecture and seamless user experiences.",
+			ContributorTypeID: 1,
 		},
 		{
 			Name:        "Mr. Poonchub Nanawan",
 			Email:       "poonchubnanawan310@gmail.com",
 			GithubUrl:   "https://github.com/poonchub",
 			FacebookUrl: "https://www.facebook.com/poonsub.nanawan/",
-			Phone:       "",
+			Phone:       "098-594-4576",
 			ProfilePath: "images/organization/developers/Poonchub_Nanawan.jpg",
 			Role:        "Full Stack Developer",
 			Bio:         "Full Stack Developer with a passion for creating clean, efficient, and user-friendly web applications.",
+			ContributorTypeID: 1,
+		},
+		{
+			Name:        "Dr. Komsan Srivisut",
+			Email:       "komsan@sut.ac.th",
+			GithubUrl:   "",
+			FacebookUrl: "https://www.facebook.com/srivisut",
+			Phone:       "",
+			ProfilePath: "images/organization/supervisors/Komsan_Srivisut.jpg",
+			Role:        "Supervisor",
+			Bio:         "",
+			ContributorTypeID: 2,
+		},
+		{
+			Name:        "Asst. Prof. Dr. Paphakorn Pittayachaval",
+			Email:       "paphakorn@sut.ac.th",
+			GithubUrl:   "",
+			FacebookUrl: "https://www.facebook.com/srivisut",
+			Phone:       "",
+			ProfilePath: "images/organization/sponsors/Paphakorn_Pittayachaval.jpg",
+			Role:        "Industry Sponsor",
+			Bio:         "Director of the Regional Science Park Northeast 2 and Lecturer in Industrial Engineering, School of Engineering",
+			ContributorTypeID: 3,
 		},
 	}
 	for _, devInfo := range devInfos {
-		db.FirstOrCreate(&devInfo, entity.DevaloperInfo{
+		db.FirstOrCreate(&devInfo, entity.Contributor{
 			Name: devInfo.Name,
 			Email: devInfo.Email,
 		})

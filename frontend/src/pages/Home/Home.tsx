@@ -20,19 +20,12 @@ import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
-import { apiUrl, ListNews, ListPinnedNews, ListPinnedNewsPeriod, ListUnpinnedNews, ListUnpinnedNewsPeriod } from '../../services/http';
+import { apiUrl, GetOrganizationInfo, ListNews, ListPinnedNews, ListPinnedNewsPeriod, ListUnpinnedNews, ListUnpinnedNewsPeriod } from '../../services/http';
 import { NewsImagesInterface } from '../../interfaces/NewsImages';
 import { NewsInterface } from '../../interfaces/News';
 import NewsCard from '../../components/NewsCard/NewsCard';
 import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
-
-// ข้อมูลองค์กร
-const organizationInfo = {
-    name: "Regional Science Park Northeast 2",
-    description: "A leading science and technology center committed to innovation and supporting efficient work processes.",
-    mission: "Dedicated to developing and supporting research in science and technology to enhance quality of life and drive the nation's economy.",
-    about: "We provide a comprehensive support system including repair requests, meeting room bookings, and many other services to enable personnel to work at their highest efficiency."
-};
+import { OrganizationInfoInterface } from '../../interfaces/IOrganizationInfo';
 
 // ฟีเจอร์หลักของระบบ
 const mainFeatures = [
@@ -56,6 +49,7 @@ export default function SciparkHomePage() {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [openPopupCard, setOpenPopupCard] = useState<boolean>(false)
     const [selectedNews, setSelectedNews] = useState<NewsInterface>({})
+    const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>({})
 
     const startTimeRef = useRef(Date.now());
     const sentRef = useRef(false);
@@ -65,6 +59,17 @@ export default function SciparkHomePage() {
         pagePath: KEY_PAGES.HOME,
         
     });
+
+    const getOrganizationInfo = async () => {
+        try {
+            const res = await GetOrganizationInfo()
+            if (res) {
+                setOrganizationInfo(res)
+            }
+        } catch (error) {
+            console.error("Error fetching organization info:", error);
+        }
+    }
 
     const getNews = async () => {
         try {
@@ -99,7 +104,10 @@ export default function SciparkHomePage() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getNews()]);
+                await Promise.all([
+                    getNews(),
+                    getOrganizationInfo(),
+                ]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -191,10 +199,10 @@ export default function SciparkHomePage() {
                                 gutterBottom
                                 sx={{ fontWeight: 'bold' }}
                             >
-                                {organizationInfo.name}
+                                {organizationInfo.NameEN}
                             </Typography>
                             <Typography variant="h5">
-                                {organizationInfo.description}
+                                {organizationInfo.Slogan}
                             </Typography>
                         </Grid>
                     </Grid>
@@ -282,22 +290,12 @@ export default function SciparkHomePage() {
                 >
                     <Grid container spacing={4} alignItems="center">
                         <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-                                About {organizationInfo.name}
+                            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                {organizationInfo.NameEN}
                             </Typography>
                             <Typography variant="body1">
-                                {organizationInfo.mission}
+                                {organizationInfo.Description}
                             </Typography>
-                            <Typography variant="body1">
-                                {organizationInfo.about}
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                endIcon={<ArrowRight />}
-                                sx={{ mt: 2 }}
-                            >
-                                Read More
-                            </Button>
                         </Grid>
                         <Grid size={{ xs: 12, md: 6 }}>
                             <Box

@@ -45,7 +45,7 @@ func main() {
 		public.GET("/organization-info", controller.GetOrganizationInfo)
 
 		// DeveloperInfo
-		public.GET("/developer-info", controller.GetDevaloperInfo)
+		public.GET("/contributors", controller.ListContributors)
 
 	}
 

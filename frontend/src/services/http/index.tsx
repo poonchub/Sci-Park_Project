@@ -1816,8 +1816,8 @@ async function GetOrganizationInfo() {
     return res;
 }
 
-// DeveloperInfo
-async function ListDeveloperInfo() {
+// Contributors
+async function ListContributors() {
     const requestOptions = {
         method: "GET",
         headers: {
@@ -1826,7 +1826,7 @@ async function ListDeveloperInfo() {
         },
     };
 
-    let res = await fetch(`${apiUrl}/developer-info`, requestOptions)
+    let res = await fetch(`${apiUrl}/contributors`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -1964,7 +1964,7 @@ export {
     GetOrganizationInfo,
 
     // DeveloperInfo
-    ListDeveloperInfo,
+    ListContributors,
 
     
 }

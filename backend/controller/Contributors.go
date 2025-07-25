@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GET /developer-info
-func GetDevaloperInfo(c *gin.Context) {
-	var devInfo []entity.DevaloperInfo
+// GET /contributors 
+func ListContributors(c *gin.Context) {
+	var devInfo []entity.Contributor
 
 	db := config.DB()
 
-	db.Find(&devInfo)
+	db.Preload("ContributorType").Find(&devInfo)
 
 	c.JSON(http.StatusOK, &devInfo)
 }

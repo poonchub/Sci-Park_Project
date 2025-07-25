@@ -1,4 +1,6 @@
-export interface DeveloperInterface {
+import { ContributorTypeInterface } from "./IContributorTypes"
+
+export interface ContributorInterface {
     Name?:          string
 	Email?:         string
 	GithubUrl?:     string
@@ -7,4 +9,7 @@ export interface DeveloperInterface {
 	ProfilePath?:   string
 	Role?:          string
 	Bio?:			string
+
+	ContributorTypeID?:	number
+	ContributorType?:	ContributorTypeInterface
 }

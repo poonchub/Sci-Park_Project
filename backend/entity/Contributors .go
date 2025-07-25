@@ -2,7 +2,7 @@ package entity
 
 import "gorm.io/gorm"
 
-type DevaloperInfo struct {
+type Contributor struct {
 	gorm.Model
 	Name        string
 	Email       string
@@ -12,4 +12,7 @@ type DevaloperInfo struct {
 	ProfilePath string
 	Role        string
 	Bio			string
+
+	ContributorTypeID	uint
+	ContributorType		ContributorType	`gorm:"foreignKey:ContributorTypeID"`
 }

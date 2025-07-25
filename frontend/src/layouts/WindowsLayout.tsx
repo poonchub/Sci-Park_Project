@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Box from "@mui/material/Box";
-import { apiUrl } from '../services/http/index';
+import { apiUrl, GetOrganizationInfo } from '../services/http/index';
 import {
     GetUnreadNotificationCountsByUserID,
     GetUserById,
@@ -11,7 +11,7 @@ import { UserInterface } from "../interfaces/IUser";
 import Footer from "../components/Footer/Footer";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
-import {MaintenaceImagesInterface} from '../interfaces/IMaintenaceImages'
+import { MaintenaceImagesInterface } from '../interfaces/IMaintenaceImages'
 import { Container, Chip, useTheme } from '@mui/material';
 
 
@@ -31,8 +31,9 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench,ShieldUser,ChartPie, Newspaper   } from "lucide-react";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench, ShieldUser, ChartPie, Newspaper } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
+import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -67,13 +68,14 @@ const WindowsLayout: React.FC = (props: any) => {
     const [user, setUser] = useState<UserInterface>();
     const [notificationCounts, setNotificationCounts] =
         useState<NotificationCountsInterface>();
+    const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>()
 
     // Role of current user (from localStorage)
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
 
-    
-    
+
+
     const iconSize = 24
 
     const { t } = useTranslation();
@@ -135,7 +137,7 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "analytics",
             title: "Analytics",
-            icon: <ChartPie  />,
+            icon: <ChartPie />,
         },
         {
             segment: "maintenance",
@@ -244,7 +246,7 @@ const WindowsLayout: React.FC = (props: any) => {
         {
             segment: "my-account",
             title: "My Account",
-            icon: <ShieldUser  />,
+            icon: <ShieldUser />,
         },
     ];
 
@@ -293,7 +295,7 @@ const WindowsLayout: React.FC = (props: any) => {
         ],
         User: [
             "home",
-            "booking-room", 
+            "booking-room",
             "maintenance/my-maintenance-request",
             "my-account",
             "news",
@@ -322,69 +324,65 @@ const WindowsLayout: React.FC = (props: any) => {
         });
     }
 
-    
     const [profileImage, setProfileImage] = useState<string | null>(null);
 
     const convertPathsToBase64 = async (images: MaintenaceImagesInterface[]): Promise<string | null> => {
-    if (images.length === 0) return null;
+        if (images.length === 0) return null;
 
-    const img = images[0]; // ✅ ดึงแค่ไฟล์แรก
-    const url = apiUrl + "/" + img.FilePath;
+        const img = images[0]; // ✅ ดึงแค่ไฟล์แรก
+        const url = apiUrl + "/" + img.FilePath;
 
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-
-        return await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (error) {
-        console.error('Error converting image to base64: ', error);
-        return null;
-    }
-};
-
-
-    useEffect(() => {
-    const loadUserAndImage = async () => {
         try {
-            const res = await GetUserById(Number(userId));
-            if (res) {
-                const imagePathArray = [{ ID: 0, FilePath: String(res?.ProfilePath) }];
-                const base64Image = await convertPathsToBase64(imagePathArray);
+            const response = await fetch(url);
+            const blob = await response.blob();
 
-                // เซ็ต session หลังจากได้ user และ image
-                setSession({
-                    user: {
-                        name: `${res.FirstName} ${res.LastName}`,
-                        email: res.Email,
-                        image: base64Image || "",
-                    },
-                });
-
-                setUser(res);
-                setProfileImage(base64Image);
-                getUnreadNotificationCounts(); // ดึงเฉพาะหลังจากเซ็ต session เสร็จ
-            }
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
         } catch (error) {
-            console.error("Error loading user or image:", error);
+            console.error('Error converting image to base64: ', error);
+            return null;
         }
     };
 
-    loadUserAndImage();
-}, []);
+
+    useEffect(() => {
+        const loadUserAndImage = async () => {
+            try {
+                const res = await GetUserById(Number(userId));
+                if (res) {
+                    const imagePathArray = [{ ID: 0, FilePath: String(res?.ProfilePath) }];
+                    const base64Image = await convertPathsToBase64(imagePathArray);
+
+                    // เซ็ต session หลังจากได้ user และ image
+                    setSession({
+                        user: {
+                            name: `${res.FirstName} ${res.LastName}`,
+                            email: res.Email,
+                            image: base64Image || "",
+                        },
+                    });
+
+                    setUser(res);
+                    setProfileImage(base64Image);
+                    getUnreadNotificationCounts(); // ดึงเฉพาะหลังจากเซ็ต session เสร็จ
+                }
+            } catch (error) {
+                console.error("Error loading user or image:", error);
+            }
+        };
+
+        loadUserAndImage();
+    }, []);
 
 
     const navigation = getNavigationByRole(role);
     const navigateUrl = useNavigate();
 
     const [session, setSession] = React.useState<Session | null>(null);
-
-    
-
 
     const authentication = React.useMemo(() => {
         return {
@@ -437,6 +435,21 @@ const WindowsLayout: React.FC = (props: any) => {
         }
     };
 
+    const getOrganizationInfo = async () => {
+        try {
+            const res = await GetOrganizationInfo()
+            if (res) {
+                setOrganizationInfo(res)
+            }
+        } catch (error) {
+            console.error("Error fetching organization info:", error);
+        }
+    }
+
+    useEffect(() => {
+        getOrganizationInfo()
+    }, [])
+
     useEffect(() => {
         if (!user?.ID) return;
         if (user && profileImage) {
@@ -478,8 +491,16 @@ const WindowsLayout: React.FC = (props: any) => {
             authentication={authentication}
             session={session}
             branding={{
-                logo: <img src="/images/RSP2.png" alt="MUI logo" />,
-                title: "RSP Northeast 2",
+                logo: <img 
+                    src={`${apiUrl}/${organizationInfo?.LogoPath}`} 
+                    alt=" RSP Northeast 2"
+                    style={{
+                        backgroundColor: '#fff',
+                        padding: "3px 10px",
+                        borderRadius: 5,
+                    }} 
+                />,
+                title: "",
                 homeUrl: "/home",
             }}
         >

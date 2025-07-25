@@ -36,12 +36,13 @@ function Footer() {
         >
             <Container maxWidth={'xl'}>
                 <Grid container spacing={4}>
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 4, lg: 4 }}>
                         <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
                             mb: 3,
-                            gap: 2
+                            gap: 2,
+                            flexWrap: 'wrap'
                         }}>
                             <CardMedia
                                 component="img"
@@ -60,7 +61,7 @@ function Footer() {
                         </Box>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 2 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
                             Main Features
                         </Typography>
@@ -94,7 +95,7 @@ function Footer() {
                         </List>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 2 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
                             About Us
                         </Typography>
@@ -128,7 +129,7 @@ function Footer() {
                         </List>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 2 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
                             Policy
                         </Typography>
@@ -145,7 +146,7 @@ function Footer() {
                         </List>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 2 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
                             Contact Us
                         </Typography>
