@@ -191,6 +191,9 @@ func main() {
 		protected.POST("/news-images", controller.CreateNewsImages)
 		protected.PATCH("/news-images", controller.UpdateNewsImages)
 		protected.DELETE("/news-images/:newsID", controller.DeleteNewsImagesByNewsID)
+
+		// OrganizationInfo
+		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

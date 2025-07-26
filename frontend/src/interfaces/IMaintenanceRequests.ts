@@ -32,7 +32,7 @@ export interface MaintenanceRequestsInterface {
 
     ManagerApproval?:   ManagerApprovalsInterface;
     MaintenanceTask?:   MaintenanceTasksInterface;
-    Inspection?:        InspectionsInterface;
+    Inspection?:        InspectionsInterface[];
     MaintenanceImages?:  MaintenaceImagesInterface[];
     Notifications?:     NotificationsInterface[];
 }

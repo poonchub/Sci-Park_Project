@@ -42,6 +42,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { ClipboardList } from "lucide-react";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -904,14 +905,15 @@ function AllMaintenanceRequest() {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid className="title-box" size={{ xs: 12, md: 12 }}>
-                        <Typography
-                            variant="h5"
-                            className="title"
-                            sx={{
-                                fontWeight: 700,
-                            }}
-                        >
+                    <Grid 
+                        container 
+                        className="title-box" 
+                        direction={'row'} 
+                        size={{ xs: 5, sm: 5 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <ClipboardList size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Maintenance Request List
                         </Typography>
                     </Grid>

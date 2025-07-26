@@ -31,7 +31,7 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench, ShieldUser, ChartPie, Newspaper } from "lucide-react";
+import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench, ShieldUser, ChartPie, Newspaper, Building2 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
 
@@ -248,6 +248,11 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "My Account",
             icon: <ShieldUser />,
         },
+        {
+            segment: "organization-info",
+            title: "Organization Info",
+            icon: <Building2 />,
+        },
     ];
 
     const accessibleSegments: Record<Role, string[]> = {
@@ -263,6 +268,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "all-booking-room",
             "my-account",
             "news",
+            "organization-info",
 
             "all-maintenance-request",
             "manage-room",
@@ -279,6 +285,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "all-booking-room",
             "my-account",
             "news",
+            "organization-info",
 
             "all-maintenance-request",
         ],
@@ -347,7 +354,6 @@ const WindowsLayout: React.FC = (props: any) => {
             return null;
         }
     };
-
 
     useEffect(() => {
         const loadUserAndImage = async () => {
@@ -492,7 +498,7 @@ const WindowsLayout: React.FC = (props: any) => {
             session={session}
             branding={{
                 logo: <img 
-                    src={`${apiUrl}/${organizationInfo?.LogoPath}`} 
+                    src={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`} 
                     alt=" RSP Northeast 2"
                     style={{
                         backgroundColor: '#fff',

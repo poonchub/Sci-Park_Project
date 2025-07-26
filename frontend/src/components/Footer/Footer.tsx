@@ -46,7 +46,7 @@ function Footer() {
                         }}>
                             <CardMedia
                                 component="img"
-                                image={`${apiUrl}/${organizationInfo?.LogoPath}`}
+                                image={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`}
                                 alt={`logo`}
                                 sx={{
                                     width: 150,

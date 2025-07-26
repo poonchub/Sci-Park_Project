@@ -1815,6 +1815,26 @@ async function GetOrganizationInfo() {
 
     return res;
 }
+async function UpdateOrganizationInfo(data: FormData, id: number) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/organization-info/${id}`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 
 // Contributors
 async function ListContributors() {
@@ -1962,6 +1982,7 @@ export {
 
     // OrganizationInfo
     GetOrganizationInfo,
+    UpdateOrganizationInfo,
 
     // DeveloperInfo
     ListContributors,

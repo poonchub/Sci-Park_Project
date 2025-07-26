@@ -19,6 +19,7 @@ import MyAccount from "../pages/MyAccount/MyAccount";
 import AddUserFormByCsv from "../pages/AddUser/AddUserFormByCsv";
 import Analytics from "../components/Analytics/Analytics";
 import News from "../pages/News/News";
+import OrganizationInfo from "../pages/OrganizationInfo/OrganizationInfo";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -97,6 +98,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/news",
 				element: <News/>
+			},
+			{
+				path: "/organization-info",
+				element: <OrganizationInfo/>
 			},
 			{
 				path: "",

@@ -59,7 +59,10 @@ func CreateInspection(c *gin.Context) {
 	}
 
 	if err := db.FirstOrCreate(&tsk, entity.Inspection{
+		Note: inspection.Note,
+		UserID: inspection.UserID,
 		RequestID: inspection.RequestID,
+		RequestStatusID: inspection.RequestStatusID,
 	}).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

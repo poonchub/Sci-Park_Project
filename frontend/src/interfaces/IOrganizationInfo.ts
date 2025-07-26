@@ -1,4 +1,5 @@
 export interface OrganizationInfoInterface {
+    ID?:            number
     NameTH?:        string
     NameEN?:        string
     Slogan?:        string

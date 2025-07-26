@@ -9,12 +9,15 @@ import {
     Button,
     Paper,
     Chip,
+    Skeleton,
 } from '@mui/material';
 
 import {
     Wrench,
     DoorOpen,
     ArrowRight,
+    BookMarked,
+    Newspaper,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
@@ -57,7 +60,7 @@ export default function SciparkHomePage() {
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.HOME,
-        
+
     });
 
     const getOrganizationInfo = async () => {
@@ -169,235 +172,261 @@ export default function SciparkHomePage() {
                 selectedNews={selectedNews}
             />
 
-            {/* Hero Section */}
-            <Box
-                sx={{
-                    position: 'relative',
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    pt: 8,
-                    pb: 6,
-                    overflow: 'hidden'
-                }}
-            >
-                <Container maxWidth={'xl'}>
-                    <Grid container spacing={4} alignItems="center">
-                        <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography
-                                component="h2"
-                                variant="h4"
-                                align="left"
-                                gutterBottom
-                                sx={{ fontWeight: 'bold' }}
-                            >
-                                Welcome to
-                            </Typography>
-                            <Typography
-                                component="h1"
-                                variant="h2"
-                                align="left"
-                                gutterBottom
-                                sx={{ fontWeight: 'bold' }}
-                            >
-                                {organizationInfo.NameEN}
-                            </Typography>
-                            <Typography variant="h5">
-                                {organizationInfo.Slogan}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Container>
-
-                {/* ลวดลายเพิ่มความสวยงาม */}
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: -100,
-                        right: -100,
-                        width: 300,
-                        height: 300,
-                        borderRadius: '50%',
-                        bgcolor: 'rgba(255,255,255,0.05)',
-                        zIndex: 0,
-                    }}
-                />
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        bottom: -50,
-                        left: -50,
-                        width: 200,
-                        height: 200,
-                        borderRadius: '50%',
-                        bgcolor: 'rgba(255,255,255,0.07)',
-                        zIndex: 0,
-                    }}
-                />
-            </Box>
-
-            {/* Main Content */}
-            <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
-                {/* Quick Access Cards */}
-                <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 6, mb: 3, fontWeight: 'bold' }}>
-                    Main Features
-                </Typography>
-
-                <Grid container spacing={4}>
-                    {mainFeatures.map((feature, index) => (
-                        <Grid size={{ xs: 12, md: (12 / mainFeatures.length) }} key={index}>
-                            <Link to={feature.path}>
-                                <Card
-                                    sx={{
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        transition: 'transform 0.3s, box-shadow 0.3s',
-                                        '&:hover': {
-                                            transform: 'translateY(-5px)',
-                                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                                        }
-                                    }}
-                                >
-                                    <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 3 }}>
-                                        <Box sx={{ color: 'primary.main', mb: 2 }}>
-                                            {feature.icon}
-                                        </Box>
-                                        <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'bold' }}>
-                                            {feature.title}
+            {
+                isLoadingData ? (
+                    <Skeleton variant="rectangular" width="100%" height={"87vh"} sx={{ borderRadius: 2 }} />
+                ) : (
+                    <>
+                        {/* Hero Section */}
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                pt: 8,
+                                pb: 6,
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <Container maxWidth={'xl'}>
+                                <Grid container spacing={4} alignItems="center">
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                        <Typography
+                                            component="h2"
+                                            variant="h4"
+                                            align="left"
+                                            gutterBottom
+                                            sx={{ fontWeight: 'bold' }}
+                                        >
+                                            Welcome to
                                         </Typography>
-                                        <Typography variant="body1" color="text.secondary">
-                                            {feature.description}
+                                        <Typography
+                                            component="h1"
+                                            variant="h2"
+                                            align="left"
+                                            gutterBottom
+                                            sx={{ fontWeight: 'bold' }}
+                                        >
+                                            {organizationInfo.NameEN}
                                         </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        </Grid>
-                    ))}
-                </Grid>
+                                        <Typography variant="h5">
+                                            {organizationInfo.Slogan}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Container>
 
-                {/* About Organization */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        mt: 8,
-                        mb: 8,
-                        p: 4,
-                        borderRadius: 2,
-                        bgcolor: 'background.paper',
-                        border: '1px solid',
-                        borderColor: 'divider'
-                    }}
-                >
-                    <Grid container spacing={4} alignItems="center">
-                        <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-                                {organizationInfo.NameEN}
-                            </Typography>
-                            <Typography variant="body1">
-                                {organizationInfo.Description}
-                            </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
+                            {/* ลวดลายเพิ่มความสวยงาม */}
                             <Box
-                                component="img"
-                                src="./background/SP_NON.jpg"
-                                alt="About Scipark"
                                 sx={{
-                                    width: '100%',
-                                    borderRadius: 2,
+                                    position: 'absolute',
+                                    top: -100,
+                                    right: -100,
+                                    width: 300,
+                                    height: 300,
+                                    borderRadius: '50%',
+                                    bgcolor: 'rgba(255,255,255,0.05)',
+                                    zIndex: 0,
                                 }}
                             />
-                        </Grid>
-                    </Grid>
-                </Paper>
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: -50,
+                                    left: -50,
+                                    width: 200,
+                                    height: 200,
+                                    borderRadius: '50%',
+                                    bgcolor: 'rgba(255,255,255,0.07)',
+                                    zIndex: 0,
+                                }}
+                            />
+                        </Box>
 
-                {/* Latest News */}
-                <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 8, mb: 3, fontWeight: 'bold' }}>
-                    Latest News
-                </Typography>
-
-                <Grid container spacing={4}>
-                    {news.map((news) => (
-                        <NewsCard
-                            key={news.ID}
-                            news={news}
-                            gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
-                            onOpenPopup={() => setOpenPopupCard(true)}
-                            setSelectedNews={setSelectedNews}
-                        />
-                    ))}
-                </Grid>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <Link to='/news'>
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            endIcon={<ArrowRight />}
-                        >
-                            View All News
-                        </Button>
-                    </Link>
-                </Box>
-
-                {/* Statistics & Highlights */}
-                <Box
-                    sx={{
-                        mt: 8,
-                        mb: 8,
-                        p: 6,
-                        borderRadius: 2,
-                        bgcolor: 'primary.main',
-                        color: 'white'
-                    }}
-                >
-                    <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 'bold' }}>
-                        Service Statistics
-                    </Typography>
-
-                    <Grid container spacing={4} justifyContent="center">
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                    150+
-                                </Typography>
-                                <Typography variant="body1">
-                                    Meeting Rooms Available
+                        {/* Main Content */}
+                        <Container maxWidth={'xl'} sx={{ padding: '0px 0px !important' }}>
+                            {/* Quick Access Cards */}
+                            <Box sx={{
+                                display: 'flex',
+                                gap: 1,
+                                mt: 6,
+                                mb: 2
+                            }}>
+                                <BookMarked size={34}/>
+                                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                    Main Features
                                 </Typography>
                             </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                    9,800+
-                                </Typography>
-                                <Typography variant="body1">
-                                    Completed Repair Requests
+
+
+                            <Grid container spacing={4}>
+                                {mainFeatures.map((feature, index) => (
+                                    <Grid size={{ xs: 12, md: (12 / mainFeatures.length) }} key={index}>
+                                        <Link to={feature.path}>
+                                            <Card
+                                                sx={{
+                                                    height: '100%',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    transition: 'transform 0.3s, box-shadow 0.3s',
+                                                    '&:hover': {
+                                                        transform: 'translateY(-5px)',
+                                                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+                                                    }
+                                                }}
+                                            >
+                                                <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: 3 }}>
+                                                    <Box sx={{ color: 'primary.main', mb: 2 }}>
+                                                        {feature.icon}
+                                                    </Box>
+                                                    <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 'bold' }}>
+                                                        {feature.title}
+                                                    </Typography>
+                                                    <Typography variant="body1" color="text.secondary">
+                                                        {feature.description}
+                                                    </Typography>
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
+                                    </Grid>
+                                ))}
+                            </Grid>
+
+                            {/* About Organization */}
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    mt: 8,
+                                    mb: 8,
+                                    p: 4,
+                                    borderRadius: 2,
+                                    bgcolor: 'background.paper',
+                                    border: '1px solid',
+                                    borderColor: 'divider'
+                                }}
+                            >
+                                <Grid container spacing={4} alignItems="center">
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                            {organizationInfo.NameEN}
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {organizationInfo.Description}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                        <Box
+                                            component="img"
+                                            src="./background/SP_NON.jpg"
+                                            alt="About Scipark"
+                                            sx={{
+                                                width: '100%',
+                                                borderRadius: 2,
+                                            }}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Paper>
+
+                            {/* Latest News */}
+                            <Box sx={{
+                                display: 'flex',
+                                gap: 1,
+                                mt: 6,
+                                mb: 2
+                            }}>
+                                <Newspaper size={34}/>
+                                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                    Latest News
                                 </Typography>
                             </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                    98%
-                                </Typography>
-                                <Typography variant="body1">
-                                    Customer Satisfaction
-                                </Typography>
+
+                            <Grid container spacing={4}>
+                                {news.map((news) => (
+                                    <NewsCard
+                                        key={news.ID}
+                                        news={news}
+                                        gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
+                                        onOpenPopup={() => setOpenPopupCard(true)}
+                                        setSelectedNews={setSelectedNews}
+                                    />
+                                ))}
+                            </Grid>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                                <Link to='/news'>
+                                    <Button
+                                        variant="outlined"
+                                        color="primary"
+                                        endIcon={<ArrowRight />}
+                                    >
+                                        View All News
+                                    </Button>
+                                </Link>
                             </Box>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                    24/7
+
+                            {/* Statistics & Highlights */}
+                            {/* <Box
+                                sx={{
+                                    mt: 8,
+                                    mb: 8,
+                                    p: 6,
+                                    borderRadius: 2,
+                                    bgcolor: 'primary.main',
+                                    color: 'white'
+                                }}
+                            >
+                                <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 'bold' }}>
+                                    Service Statistics
                                 </Typography>
-                                <Typography variant="body1">
-                                    Support Service
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Container>
+
+                                <Grid container spacing={4} justifyContent="center">
+                                    <Grid size={{ xs: 6, md: 3 }}>
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                                                150+
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Meeting Rooms Available
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                    <Grid size={{ xs: 6, md: 3 }}>
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                                                9,800+
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Completed Repair Requests
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                    <Grid size={{ xs: 6, md: 3 }}>
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                                                98%
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Customer Satisfaction
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                    <Grid size={{ xs: 6, md: 3 }}>
+                                        <Box sx={{ textAlign: 'center' }}>
+                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
+                                                24/7
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                Support Service
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </Box> */}
+                        </Container>
+                    </>
+                )
+            }
+
         </Box>
     );
 }

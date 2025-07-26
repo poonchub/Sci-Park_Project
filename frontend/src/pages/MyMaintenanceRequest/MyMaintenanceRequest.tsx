@@ -39,6 +39,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
+import { Wrench } from "lucide-react";
 
 function MyMaintenanceRequest() {
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
@@ -939,7 +940,14 @@ function MyMaintenanceRequest() {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid className="title-box" size={{ xs: 5, sm: 5 }}>
+                    <Grid 
+                        container 
+                        className="title-box" 
+                        direction={'row'} 
+                        size={{ xs: 5, sm: 5 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <Wrench size={26}/>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             My Maintenance Requests
                         </Typography>
