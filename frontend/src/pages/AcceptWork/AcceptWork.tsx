@@ -56,7 +56,7 @@ import { faClock } from "@fortawesome/free-regular-svg-icons";
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
-import { BrushCleaning } from "lucide-react";
+import { BrushCleaning, HardHat } from "lucide-react";
 
 function a11yProps(index: number) {
     return {
@@ -99,6 +99,8 @@ function AcceptWork() {
     const [isBottonActive, _setIsBottonActive] = useState(false);
 
     const navigate = useNavigate();
+
+    console.log(maintenanceTasks)
 
     const columnVisibilityModel = {
         Requester: valueTab !== 2,
@@ -496,12 +498,13 @@ function AcceptWork() {
                     flex: 1.6,
                     renderCell: (params) => {
                         const task = params.row;
-                        const inspection = params.row.MaintenanceRequest?.Inspection;
+                        const inspection = params.row.MaintenanceRequest?.Inspection.at(-1);
                         const user = inspection?.User;
                         const name = `${user?.FirstName} ${user?.LastName}`;
                         const date = dateFormat(inspection?.CreatedAt || "");
                         const time = timeFormat(inspection?.CreatedAt || "");
-                        return inspection ? (
+
+                        return inspection && inspection.RequestStatus.Name !== "Rework Requested" ? (
                             <Box>
                                 <Typography
                                     sx={{
@@ -953,7 +956,14 @@ function AcceptWork() {
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
-                    <Grid className="title-box" size={{ xs: 10, md: 12 }}>
+                    <Grid 
+                        container 
+                        className="title-box" 
+                        direction={'row'} 
+                        size={{ xs: 10, md: 12 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <HardHat size={26}/>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             My Work
                         </Typography>
@@ -1062,7 +1072,10 @@ function AcceptWork() {
                                 <Tab label="Completed" {...a11yProps(2)} />
                             </Tabs>
                         </Grid>
-                        <CustomTabPanel value={valueTab} index={0}>
+                        <CustomTabPanel 
+                            value={valueTab} 
+                            index={0}
+                        >
                             <MaintenanceTaskTable
                                 title="Pending"
                                 rows={filteredTasks}

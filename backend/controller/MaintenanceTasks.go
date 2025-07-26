@@ -89,6 +89,7 @@ func GetMaintenanceTaskByID(c *gin.Context) {
 		Preload("MaintenanceRequest.Area").
 		Preload("MaintenanceRequest.Room.Floor").
 		Preload("MaintenanceRequest.Inspection.User").
+		Preload("MaintenanceRequest.Inspection.RequestStatus").
 		First(&task, ID)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
@@ -179,6 +180,7 @@ func GetMaintenanceTasksByOperatorID(c *gin.Context) {
 		Preload("MaintenanceRequest.Room.Floor").
 		Preload("MaintenanceRequest.Room.RoomType").
 		Preload("MaintenanceRequest.Inspection.User").
+		Preload("MaintenanceRequest.Inspection.RequestStatus").
 		Preload("MaintenanceRequest.User").
 		Preload("Notifications")
 

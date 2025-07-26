@@ -10,7 +10,12 @@ export default function CustomTabPanel(props: TabPanelProps) {
 	const { children, value, index, ...other } = props;
 
 	return (
-		<Grid size={{ xs: 12, md: 12 }} sx={{ display: (value !== index) ? 'none' : '' }}>
+		<Grid 
+			size={{ xs: 12, md: 12 }} 
+			sx={{ 
+				display: (value !== index) ? 'none' : '',
+			}}
+		>
 			<div
 				role="tabpanel"
 				id={`full-width-tabpanel-${index}`}
@@ -18,7 +23,10 @@ export default function CustomTabPanel(props: TabPanelProps) {
 				{...other}
 			>
 				{value === index && (
-					<Grid>
+					<Grid
+						height={'62vh'} 
+                        minHeight={'200px'}
+					>
 						{children}
 					</Grid>
 				)}

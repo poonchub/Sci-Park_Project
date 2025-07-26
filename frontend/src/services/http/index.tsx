@@ -1794,6 +1794,70 @@ async function DeleteNewsImagesByNewsID(newsID: number | undefined) {
     return res;
 }
 
+// OrganizationInfo
+async function GetOrganizationInfo() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/organization-info`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+async function UpdateOrganizationInfo(data: FormData, id: number) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/organization-info/${id}`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+// Contributors
+async function ListContributors() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/contributors`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -1915,6 +1979,15 @@ export {
     CreateNewsImages,
     UpdateNewsImages,
     DeleteNewsImagesByNewsID,
+
+    // OrganizationInfo
+    GetOrganizationInfo,
+    UpdateOrganizationInfo,
+
+    // DeveloperInfo
+    ListContributors,
+
+    
 }
 
 

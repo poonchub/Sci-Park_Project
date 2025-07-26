@@ -5,7 +5,7 @@ import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesB
 import { TextField } from '../../components/TextField/TextField';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faGear } from '@fortawesome/free-solid-svg-icons';
-import { BrushCleaning, CirclePlus, SquarePlus, TextSearch } from 'lucide-react';
+import { BrushCleaning, CirclePlus, Newspaper, SquarePlus, TextSearch } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '../../components/DatePicker/DatePicker';
@@ -306,7 +306,14 @@ function News() {
                         alignItems: 'flex-start'
                     }}
                 >
-                    <Grid className="title-box" size={{ xs: 4 }}>
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={'row'}
+                        size={{ xs: 4 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <Newspaper size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Latest News
                         </Typography>
@@ -571,7 +578,7 @@ function News() {
                         <Collapse in={isEditMode} timeout={400} unmountOnExit>
                             <Select
                                 startAdornment={
-                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                    <InputAdornment position="start" sx={{ pl: 0.5, cursor: 'pointer' }}>
                                         <TextSearch size={18} strokeWidth={3} />
                                     </InputAdornment>
                                 }

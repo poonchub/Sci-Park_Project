@@ -70,6 +70,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { MobileTimePicker } from "../../components/MobileTimePicker/MobileTimePicker";
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TimePickerField from "../../components/TimePickerField/TimePickerField";
+import { NotebookPen } from "lucide-react";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -459,40 +460,22 @@ function CreateMaintenanceRequestPage() {
         }
     }, [formData.IsAnytimeAvailable]);
 
-    const CustomActionBar = ({ onAccept, onCancel }: any) => {
-        return (
-            <DialogActions sx={{ mb: 1 }}>
-                <Button
-                    onClick={onCancel}
-                    variant="outlinedGray"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={onAccept}
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#F26522',
-                        '&:hover': {
-                            backgroundColor: '#d2551d',
-                        },
-                    }}
-                >
-                    OK
-                </Button>
-            </DialogActions>
-        );
-    };
-
     return (
         <Box className="create-maintenance-request-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-                <Grid container spacing={2}>
+                <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid className="title-box" size={{ sm: 5, md: 5 }}>
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={'row'}
+                        size={{ xs: 5 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <NotebookPen size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Create Maintenance Request
                         </Typography>

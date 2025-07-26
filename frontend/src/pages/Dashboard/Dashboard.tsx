@@ -53,7 +53,7 @@ import { ApexOptions } from "apexcharts";
 import { useTranslation } from "react-i18next";
 
 import { Select } from "../../components/Select/Select";
-import { Activity, BrushCleaning, LineChart } from "lucide-react";
+import { Activity, BrushCleaning, Layout, LayoutDashboard, LineChart } from "lucide-react";
 import { analyticsService } from "../../services/analyticsService";
 
 function Dashboard() {
@@ -494,7 +494,14 @@ function Dashboard() {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid className="title-box" size={{ xs: 12, md: 12 }}>
+                    <Grid 
+                        container 
+                        className="title-box" 
+                        direction={'row'} 
+                        size={{ xs: 12, md: 12 }}
+                        sx={{ gap: 1 }}
+                    >
+                        <LayoutDashboard size={26}/>
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Dashboard
                         </Typography>

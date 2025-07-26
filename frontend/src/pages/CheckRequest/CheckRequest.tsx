@@ -36,6 +36,7 @@ import { io } from "socket.io-client";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
+import { NotebookText } from "lucide-react";
 
 function CheckRequest() {
     // Request data
@@ -406,7 +407,14 @@ function CheckRequest() {
 
             {/* Header section with title and back button */}
             <Grid container spacing={2}>
-                <Grid className="title-box" size={{ xs: 5, md: 5 }}>
+                <Grid
+                    container
+                    className="title-box"
+                    direction={'row'}
+                    size={{ xs: 5 }}
+                    sx={{ gap: 1 }}
+                >
+                    <NotebookText size={26} />
                     <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                         Maintenance Request Review
                     </Typography>

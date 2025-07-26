@@ -122,14 +122,14 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
 
                 {/* Rework Description information */}
                 {
-                    data.Inspection?.Note &&
+                    data.Inspection?.at(-1)?.Note &&
                     <TableRow>
                         <TableCell>
                             <Typography className="title-list">Rework Notes</Typography>
                         </TableCell>
                         <TableCell>
                             <Typography>
-                                {data.Inspection?.Note}
+                                {data.Inspection?.at(-1)?.Note}
                             </Typography>
                         </TableCell>
                     </TableRow>
