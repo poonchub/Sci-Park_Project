@@ -68,7 +68,6 @@ function Dashboard() {
 
     const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
 
-    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
     const [selectedDateOption, setSelectedDateOption] = useState<string>('daily')
 
     const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
@@ -145,11 +144,7 @@ function Dashboard() {
     }, []);
 
     useEffect(() => {
-        getMaintenanceRequests();
-    }, [selectedDate]);
-
-    useEffect(() => {
-        if (dateRange.start && dateRange.end) {
+        if ((dateRange.start && dateRange.end) || (!dateRange.start && !dateRange.end)) {
             getMaintenanceRequests()
         }
     }, [dateRange])
@@ -547,7 +542,7 @@ function Dashboard() {
                                         >
                                             <Grid size={{ xs: 12, sm: 12, sm650: 4 }}>
                                                 <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                                    Monthly Requests
+                                                    Requests
                                                 </Typography>
                                                 <Typography variant="h4" fontWeight={800} color="primary">
                                                     <Box component="span" >

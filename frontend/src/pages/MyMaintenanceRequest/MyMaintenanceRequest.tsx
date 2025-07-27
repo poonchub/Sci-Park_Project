@@ -1000,7 +1000,7 @@ function MyMaintenanceRequest() {
                     {/* Data Table */}
                     <Grid 
                         size={{ xs: 12, md: 12 }}
-                        height={'65vh'} 
+                        // height={'65vh'} 
                         minHeight={'200px'}
                     >
                         {isLoadingData ? (
