@@ -27,8 +27,7 @@ func ListRoomTypes(c *gin.Context) {
         result = append(result, map[string]interface{}{
             "ID":          roomType.ID,
             "TypeName":    roomType.TypeName,
-            "HalfDayRate": roomType.HalfDayRate,
-            "FullDayRate": roomType.FullDayRate,
+           
         })
     }
 
@@ -59,8 +58,6 @@ func ListRoomTypesForBooking(c *gin.Context) {
         result = append(result, map[string]interface{}{
             "ID":          roomType.ID,
             "TypeName":    roomType.TypeName,
-            "HalfDayRate": roomType.HalfDayRate,
-            "FullDayRate": roomType.FullDayRate,
 			"RoomSize":    roomType.RoomSize,
 			"RoomTypeLayouts":	roomType.RoomTypeLayouts,
 			"RoomTypeImages": 	roomType.RoomTypeImages,
@@ -94,10 +91,10 @@ func CreateRoomType(c *gin.Context) {
 	}
 
 	// ตรวจสอบค่าของ HalfDayRate และ FullDayRate ว่ามีค่าหรือไม่
-	if roomType.HalfDayRate <= 0 || roomType.FullDayRate <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Rates must be positive values"})
-		return
-	}
+	// if roomType.HalfDayRate <= 0 || roomType.FullDayRate <= 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Rates must be positive values"})
+	// 	return
+	// }
 
 	// บันทึกข้อมูล RoomType ใหม่ลงในฐานข้อมูล
 	if err := db.Create(&roomType).Error; err != nil {
@@ -135,10 +132,10 @@ func UpdateRoomType(c *gin.Context) {
 	}
 
 	// ตรวจสอบค่าของ HalfDayRate และ FullDayRate ว่ามีค่าหรือไม่
-	if roomType.HalfDayRate <= 0 || roomType.FullDayRate <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Rates must be positive values"})
-		return
-	}
+	// if roomType.HalfDayRate <= 0 || roomType.FullDayRate <= 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Rates must be positive values"})
+	// 	return
+	// }
 
 	// หาข้อมูล RoomType ที่ต้องการอัพเดท
 	var roomTypeToUpdate entity.RoomType
@@ -150,8 +147,6 @@ func UpdateRoomType(c *gin.Context) {
 	// อัพเดทข้อมูล RoomType
 	if err := db.Model(&roomTypeToUpdate).Updates(entity.RoomType{
 		TypeName:    roomType.TypeName,
-		HalfDayRate: roomType.HalfDayRate,
-		FullDayRate: roomType.FullDayRate,
 	}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Unable to update room type: %v", err)})
 		return
@@ -162,4 +157,28 @@ func UpdateRoomType(c *gin.Context) {
 		"message":    "Room type updated successfully",
 		"room_type":  roomTypeToUpdate,
 	})
+}
+
+
+
+// GET /room-types/:id
+func GetRoomTypeByID(c *gin.Context) {
+    id := c.Param("id")
+
+    db := config.DB()
+
+    var roomType entity.RoomType
+    // preload ข้อมูลที่เกี่ยวข้องทั้งหมด
+    if err := db.
+        Preload("RoomTypeLayouts.RoomLayout").
+        Preload("RoomEquipments.Equipment").
+        Preload("RoomTypeImages").
+        Preload("RoomPrices").
+        First(&roomType, id).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Room type not found"})
+        return
+    }
+
+    // ส่งข้อมูลกลับ
+    c.JSON(http.StatusOK, roomType)
 }

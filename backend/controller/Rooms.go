@@ -237,3 +237,20 @@ func GetRoomByID(c *gin.Context) {
     })
 }
 
+// handler.go
+
+func GetRoomsByRoomTypeID(c *gin.Context) {
+    var rooms []entity.Room
+    id := c.Param("id")
+
+    if err := config.DB().
+        Preload("RoomStatus").
+        Preload("Floor").
+        Where("room_type_id = ?", id).
+        Find(&rooms).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, rooms)
+}

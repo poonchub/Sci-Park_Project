@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/controller"
 	"sci-park_web-application/middlewares"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,6 +49,13 @@ func main() {
 		// DeveloperInfo
 		public.GET("/contributors", controller.ListContributors)
 
+		public.GET("/get-timeslots-roomprices/:id", controller.GetRoomByIDwithBookings)
+
+		public.POST("/booking-rooms", controller.CreateBookingRoom)
+		public.POST("/cancel-expired", controller.CancelExpiredBookingsHandler)
+		public.GET("/pending-payments", controller.GetPendingPayments)
+		public.PUT("/update-payment", controller.UpdatePaymentStatus)
+		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)
@@ -71,6 +80,9 @@ func main() {
 		protected.GET("/analytics/popular-pages-by-period", controller.GetPopularPagesByPeriod)
 		protected.GET("/analytics/performance", controller.GetPerformanceAnalytics)
 
+		protected.GET("/get-quota/:id", controller.GetRoomDiscountByID)
+		protected.GET("/rooms/roomtype/:id", controller.GetRoomsByRoomTypeID)
+
 		// Areas
 		protected.GET("/areas", controller.ListAreas)
 
@@ -83,6 +95,7 @@ func main() {
 		// RoomTypes
 		protected.GET("/room-types", controller.ListRoomTypes)
 		protected.GET("/room-types-for-booking", controller.ListRoomTypesForBooking)
+		protected.GET("/room-type/:id", controller.GetRoomTypeByID)
 
 		// RoomStatuses
 		protected.GET("/room-status", controller.ListRoomStatus)
@@ -198,6 +211,9 @@ func main() {
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
 	{
+		// Users
+		protected.GET("/users", controller.ListUsers)
+
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)
 		protected.POST("/create-room", controller.CreateRoom)
@@ -217,6 +233,21 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute) // ตั้งเวลาให้รันทุก 1 นาที
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				log.Println("Background job: CancelExpiredBookings start")
+				controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
+				log.Println("Background job: CancelExpiredBookings finished")
+			}
+		}
+	}()
+	// --- จบส่วน background scheduler ---
 
 	// 🚀 Start Server
 	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น

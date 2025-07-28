@@ -40,10 +40,16 @@ import { faExpand } from '@fortawesome/free-solid-svg-icons';
 import { Clock12, CloudSun, Cloudy, Sun, Users, XCircle } from 'lucide-react';
 import Carousel from 'react-material-ui-carousel';
 import { equipmentConfig } from '../../constants/equipmentConfig';
+import { Link, useNavigate } from 'react-router-dom';
+import { set } from 'react-hook-form';
+import { Base64 } from 'js-base64';
 
-const BookingRoom = () => {
+const BookingRoom = ({ onConfirmRoom }: { onConfirmRoom?: (room: RoomtypesInterface) => void }) => {
     const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([])
     const [selectedRoomtypes, setSelectedRoomTypes] = useState<RoomtypesInterface>()
+
+
+
 
     const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -62,6 +68,7 @@ const BookingRoom = () => {
     const getRoomTypes = async () => {
         try {
             const res = await ListRoomTypesForBooking();
+            console.log("res", res)
             if (res) {
                 setRoomTypes(res);
             }
@@ -144,10 +151,15 @@ const BookingRoom = () => {
     const handleClickCard = (data: RoomtypesInterface) => {
         setOpenPopupCard(true)
         setSelectedRoomTypes(data)
+
     };
 
-    const handleClickButton = () => {
-
+    const navigate = useNavigate();
+    const handleClickButton = (data: RoomtypesInterface) => {
+        if (data) {
+            const encodedId = Base64.encode(String(data.ID));
+            navigate(`/room-booking-form?roomtype_id=${encodeURIComponent(encodedId)}`);
+        }
     };
 
     const filteredRoomTypes = roomTypes.filter((roomType) => {
@@ -161,7 +173,7 @@ const BookingRoom = () => {
 
     const roomTypeItemCard = filteredRoomTypes.map((item, index) => {
         const roomSizeStr = `Size: ${item.RoomSize} sqm`
-        const halfDayPriceStr = `Half-day: ฿${item.HalfDayRate?.toLocaleString('th-TH')}`
+        const halfDayPriceStr = `Half-day: ฿${item.RoomPrices[0]?.toLocaleString('th-TH')}`
         const fullDayPriceStr = `Full-day: ฿${item.FullDayRate?.toLocaleString('th-TH')}`
 
         return (
@@ -348,7 +360,13 @@ const BookingRoom = () => {
                         </CardContent>
                     </CardActionArea>
                     <CardActions sx={{ mb: 0.8, px: 2.6 }}>
-                        <Button variant='contained' sx={{ width: '100%', py: 1.2 }}>
+                        <Button
+                            onClick={() => {
+                                setOpenPopupCard(false);
+                                handleClickButton(item);
+                            }}
+                            variant="contained"
+                        >
                             Booking Room
                         </Button>
                     </CardActions>
@@ -678,9 +696,9 @@ const BookingRoom = () => {
                     <Button
                         onClick={() => {
                             setOpenPopupCard(false);
+                            handleClickButton(selectedRoomtypes   || {});
                         }}
                         variant="contained"
-                    // disabled={buttonActive}
                     >
                         Booking Room
                     </Button>
@@ -698,7 +716,7 @@ const BookingRoom = () => {
 
                             }
                         }}>
-                            การจองห้องประชุม
+                            Meeting Room Booking
                         </Typography>
                     </Grid>
 
