@@ -12,6 +12,7 @@ type Payment struct {
 	Amount      float64
 	SlipPath    string
 	Note    string
+	Status        string    `gorm:"type:varchar(20);default:'pending'"` // pending, paid, cancelled
 	UserID      uint
 	User        User `gorm:"foreignKey:UserID"`
 	BookingRoomID uint

@@ -198,46 +198,32 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล RoomType
 	roomTypes := []entity.RoomType{
 		{
-			TypeName:    "Small Meeting Room",
-			RoomSize:    18,
-			HalfDayRate: 500.0,
-			FullDayRate: 1000.0,
+			TypeName: "Small Meeting Room", // ห้องประชุมขนาดเล็ก
+			RoomSize: 18,
 		},
 		{
-			TypeName:    "Medium Meeting Room",
-			RoomSize:    63,
-			HalfDayRate: 1000.0,
-			FullDayRate: 2000.0,
+			TypeName: "Medium Meeting Room", // ห้องประชุมขนาดกลาง
+			RoomSize: 63,
 		},
 		{
-			TypeName:    "Medium Training / Seminar Room",
-			RoomSize:    135,
-			HalfDayRate: 6000.0,
-			FullDayRate: 12000.0,
+			TypeName: "Medium Seminar Room", // ห้องอบรม สัมมนา ขนาดกลาง
+			RoomSize: 135,
 		},
 		{
-			TypeName:    "Large Training / Seminar Room",
-			RoomSize:    273,
-			HalfDayRate: 7500.0,
-			FullDayRate: 15000.0,
+			TypeName: "Large Seminar Room", // ห้องอบรม สัมมนา ขนาดใหญ่
+			RoomSize: 273,
 		},
 		{
-			TypeName:    "Event Hall",
-			RoomSize:    1218,
-			HalfDayRate: 25000.0,
-			FullDayRate: 50000.0,
+			TypeName: "EVENT HALL",
+			RoomSize: 1218,
 		},
 		{
-			TypeName:    "NE2 Hall 1",
-			RoomSize:    1180,
-			HalfDayRate: 32500.0,
-			FullDayRate: 65000.0,
+			TypeName: "NE2 HALL 1",
+			RoomSize: 1180,
 		},
 		{
-			TypeName:    "NE2 Hall 2",
-			RoomSize:    487,
-			HalfDayRate: 17500.0,
-			FullDayRate: 35000.0,
+			TypeName: "NE2 HALL 2",
+			RoomSize: 487,
 		},
 	}
 	for _, roomType := range roomTypes {
@@ -519,8 +505,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Rooms
 	rooms := []entity.Room{
-		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
-		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
+		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 19},
+		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 30},
 		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
 		{RoomNumber: "A306", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A307", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
@@ -796,6 +782,35 @@ func SeedDatabase() {
 			Amount:        p.Amount,
 		})
 		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
+	}
+
+	// ✅ สมมุติว่า Room ID = 1, TimeSlot ID = 1, 2, 3 มีอยู่แล้ว
+	bookings := []entity.BookingRoom{
+		{
+			RoomID:     1,
+			Date:       time.Date(2025, 7, 20, 0, 0, 0, 0, time.Local),
+			TimeSlotID: 1, // เช้า
+		},
+		{
+			RoomID:     1,
+			Date:       time.Date(2025, 7, 21, 0, 0, 0, 0, time.Local),
+			TimeSlotID: 2, // บ่าย
+		},
+		{
+			RoomID:     1,
+			Date:       time.Date(2025, 7, 22, 0, 0, 0, 0, time.Local),
+			TimeSlotID: 3, // เต็มวัน
+		},
+	}
+
+	for _, b := range bookings {
+		result := db.FirstOrCreate(&b, entity.BookingRoom{
+			RoomID:     b.RoomID,
+			Date:       b.Date,
+			TimeSlotID: b.TimeSlotID,
+		})
+		fmt.Printf("📅 Booking: RoomID=%d Date=%s Slot=%d | RowsAffected: %d\n",
+			b.RoomID, b.Date.Format("2006-01-02"), b.TimeSlotID, result.RowsAffected)
 	}
 
 	fmt.Println("✅ Sample data added successfully!")
