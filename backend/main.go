@@ -63,12 +63,14 @@ func main() {
 	protected.Use(middlewares.Authorizes(middlewares.User)) // ✅ Middleware ตรวจสอบ Token
 	{
 		// Users
-		protected.GET("/users", controller.ListUsers)
 		protected.GET("/user/:id", controller.GetUserByID)
-		protected.POST("/user", controller.CreateUser)
+		protected.POST("/create-user", controller.CreateUser)
 		protected.PATCH("/user/:id", controller.UpdateUserByID)
-
+		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
+		protected.GET("/operators", controller.ListOperators)
+		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
+		protected.PATCH("/change-password", controller.ChangePassword)
 
 		// Analytics
 		protected.POST("/analytics/track", controller.TrackPageVisit)
@@ -100,13 +102,6 @@ func main() {
 		// RoomStatuses
 		protected.GET("/room-status", controller.ListRoomStatus)
 
-		// Users
-		protected.POST("/create-user", controller.CreateUser)
-		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
-
-		protected.PATCH("/change-password", controller.ChangePassword)
-		protected.GET("/operators", controller.ListOperators)
-		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
