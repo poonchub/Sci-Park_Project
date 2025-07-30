@@ -53,6 +53,9 @@ import { Base64 } from "js-base64";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { set } from "react-hook-form";
 import { RoomsInterface } from "../../interfaces/IRooms";
+import './RoomBookingForm.css'
+import './Calendar.css';
+
 interface RoomBookingFormProps {
   room?: {
     id: number;
@@ -675,38 +678,26 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     };
 
 
+
+    // ... other imports
+
     return (
-      <Paper sx={{
-        p: { xs: 2, sm: 3 },
-        bgcolor: 'secondary.main',
-        borderRadius: 3,
-        maxWidth: "100%",
-        overflowX: "auto",
-      }}>
+      <Paper
+        className="calendar-container"
+        sx={{
+          bgcolor: 'secondary.main',
+        }}
+      >
         {/* Header */}
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          gap={2}
-          mb={3}
-          flexDirection={{ xs: "column", sm: "row" }} // 💡 เพิ่ม
-        >
+        <Box className="calendar-header">
           <Calendar />
           <Typography variant="h6" fontWeight="600">
             Select Date
           </Typography>
         </Box>
 
-
         {/* Month and Year selector */}
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          gap={2}  // เว้นระยะห่างระหว่าง element
-          mb={3}
-        >
+        <Box className="month-year-selector">
           <Button
             variant="outlined"
             color="primary"
@@ -722,11 +713,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               }
             }}
             disabled={year === currentYear && month === currentMonth}
-            sx={{
-              minWidth: 36,
-              borderRadius: 2,
-              "&:hover": { backgroundColor: "#e3f2fd" },
-            }}
+            className="nav-button"
           >
             <ArrowBackIosNewIcon fontSize="small" />
           </Button>
@@ -736,11 +723,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             value={month}
             onChange={(event) => handleMonthChange(event as SelectChangeEvent<number | string>)}
             size="small"
-            sx={{
-              minWidth: { xs: 110, sm: 130 },
-              borderRadius: 2,
-              "& .MuiSelect-select": { py: 1 },
-            }}
+            className="month-select"
           >
             {monthNames.map((name, idx) => {
               const disabled = year === currentYear && idx < currentMonth;
@@ -749,11 +732,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                   key={idx}
                   value={idx}
                   disabled={disabled}
-                  sx={{
-                    minWidth: { xs: 110, sm: 130 },
-                    borderRadius: 2,
-                    "& .MuiSelect-select": { py: 1 },
-                  }}
+                  className="month-menu-item"
                 >
                   {name.charAt(0).toUpperCase() + name.slice(1)}
                 </MenuItem>
@@ -766,14 +745,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             value={year}
             onChange={(event) => handleYearChange(event as SelectChangeEvent<number | string>)}
             size="small"
-            sx={{
-              minWidth: 90,
-              borderRadius: 2,
-              "& .MuiSelect-select": { py: 1 },
-            }}
+            className="year-select"
           >
             {futureYears.map((y) => (
-              <MenuItem key={y} value={y} sx={{ fontWeight: "600" }}>
+              <MenuItem key={y} value={y} className="year-menu-item">
                 {y}
               </MenuItem>
             ))}
@@ -785,25 +760,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             size="small"
             onClick={() => setCurrentMonth(new Date(year, month + 1))}
             disabled={year === futureYears[futureYears.length - 1] && month === 11}
-            sx={{
-              minWidth: 36,
-              borderRadius: 2,
-              "&:hover": { backgroundColor: "#e3f2fd" },
-            }}
+            className="nav-button"
           >
             <ArrowForwardIosIcon fontSize="small" />
           </Button>
         </Box>
 
-        {/* ส่วนแสดงวันในเดือน (เหมือนเดิม) */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            textAlign: "center",
-            mb: 2,
-          }}
-        >
+        {/* ส่วนแสดงวันในเดือน */}
+        <Box className="day-names-grid">
           {dayNames.map((day) => (
             <Typography
               key={day}
@@ -815,7 +779,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             </Typography>
           ))}
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1 }}>
+
+        <Box className="calendar-grid">
           {Array.from({ length: firstDay }).map((_, i) => <Box key={`empty-${i}`} />)}
 
           {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -826,36 +791,43 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             const booking = bookedDates[dateString];
             const isBooked = isFullyBooked(dateString);
             const isPartially =
-              booking && (booking.morning || booking.afternoon) && !isBooked; // ✅ บางช่วง
+              booking && (booking.morning || booking.afternoon) && !isBooked;
             const isSelected = selectedDates.includes(dateString);
             const bookingDetails = getBookingDetails(dateString);
             const isAvailable = isSlotAvailable(dateString);
 
-            const bgColor = isBooked
-              ? "#fdecea"
-              : isSelected
-                ? "#f57c00"
-                : isPartially
-                  ? "#fffde7"
-                  : "#ffffff";
+            // Determine CSS classes based on state
+            const getCellClasses = () => {
+              let classes = 'day-cell';
 
-            const textColor = isBooked
-              ? "#d32f2f"
-              : isSelected
-                ? "#fff"
-                : isPartially
-                  ? "#f57c00"
-                  : isPast
-                    ? "#ccc"
-                    : "#000";
+              if (isBooked) {
+                classes += ' day-cell-booked';
+              } else if (isSelected) {
+                classes += ' day-cell-selected';
+              } else if (isPartially) {
+                classes += ' day-cell-partially';
+              } else {
+                classes += ' day-cell-available';
+              }
+
+              if (isPast) {
+                classes += ' day-cell-past';  // ← เพิ่มบรรทัดนี้
+              }
+
+              if (!isAvailable) {
+                classes += ' day-cell-not-available';
+              }
+
+              return classes;
+            };
 
             return (
               <Tooltip
                 key={dateString}
                 title={
                   bookingDetails.length > 0 ? (
-                    <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    <Box className="tooltip-content">
+                      <Typography variant="subtitle2" className="tooltip-title">
                         Bookings on {dateString}
                       </Typography>
                       {bookingDetails.map((b, i) => (
@@ -885,39 +857,15 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                     if (!isPast && isAvailable) {
                       toggleDateSelection(dateString);
                     } else if (!isAvailable && !isPast) {
-                      showDateDetails(dateString); // 👉 If not available, show details
+                      showDateDetails(dateString);
                     }
                   }}
-                  sx={{
-                    height: { xs: 45, md: 50 },
-                    backgroundColor: bgColor,
-                    color: textColor,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    cursor: !isAvailable || isPast ? "not-allowed" : "pointer",
-                    position: "relative",
-                    borderRadius: 2,
-                    fontSize: { xs: 14, md: 16 },
-                    fontWeight: isSelected ? "600" : "400",
-                    opacity: isPast ? 0.5 : 1,
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      transform: !isBooked && !isPast ? "scale(1.05)" : "none",
-                      boxShadow: !isBooked && !isPast ? 3 : 1,
-                    },
-                  }}
+                  className={getCellClasses()}
+                  sx={isPast ? { color: '#ccc !important' } : {}}
                 >
                   {day}
                   {bookingDetails.length > 0 && (
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 2,
-                        left: 2,
-                        fontSize: 10,
-                      }}
-                    >
+                    <Box className="booking-count">
                       {bookingDetails.length}
                     </Box>
                   )}
@@ -926,8 +874,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             );
           })}
         </Box>
-        {/* ... แสดงวันในเดือน (ตามโค้ดของคุณที่มีอยู่) */}
-        {/* อย่าลืมเอา currentMonthState ไปแทน currentMonth ที่ใช้ในฟังก์ชันอื่นๆ */}
       </Paper>
     );
   };
@@ -1075,28 +1021,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
 
 
+
   return (
-    <Box
-      sx={{
-        py: 4,
-        px: { xs: 2, md: 3 },
-        width: '100%',
-      }}
-    >
+    <Box className="booking-container">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
       {/* Header */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          mb: 4,
-          backgroundColor: '#f26522',
-          color: 'white',
-          borderRadius: 3
-        }}
-      >
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+      <Paper elevation={2} className="header-paper">
+        <Box className="header-content">
           <Box>
             <Typography variant="h4" fontWeight="bold" mb={1}>
               {roomData.TypeName}
@@ -1109,11 +1041,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             startIcon={<ArrowLeft />}
             onClick={onBack || (() => window.history.back())}
             variant="outlined"
-            sx={{
-              color: 'white',
-              borderColor: 'white',
-              '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)' }
-            }}
+            className="back-button"
           >
             Back
           </Button>
@@ -1135,36 +1063,28 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               duration={500}
               navButtonsAlwaysVisible={true}
               navButtonsProps={{
-                style: {
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                }
+                className: 'nav-button'
               }}
             >
               <CardMedia
                 component="img"
                 image="https://www.executivecentre.com/_next/image/?url=%2F_next%2Fstatic%2Fmedia%2FplanOverview-mr-meetingRoom.1f2225da.jpg&w=3840&q=75"
-                sx={{
-                  height: { xs: 200, sm: 250, md: 300, lg: 350 },
-                  borderRadius: 2
-                }}
+                className="carousel-image"
               />
               <CardMedia
                 component="img"
                 image="https://www.webex.com/content/dam/www/us/en/images/workspaces/large-meeting-room/modular/large-modular-hero-new.jpg"
                 alt="large meeting room"
-                sx={{
-                  height: { xs: 200, sm: 250, md: 300, lg: 350 },
-                  borderRadius: 2
-                }}
+                className="carousel-image"
               />
             </Carousel>
           </Grid>
 
           {/* Room Selection */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} sx={{ p: 3, mt: 3, borderRadius: 3, minHeight: { lg: 190 } }}>
-              <Box display="flex" alignItems="center" mb={3}>
-                <Building2 style={{ marginRight: 8, color: '#1976d2' }} />
+            <Paper elevation={2} className="section-paper room-selection-paper">
+              <Box className="section-header">
+                <Building2 className="section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Room</Typography>
               </Box>
 
@@ -1172,7 +1092,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 <FormLabel sx={{ mb: 1 }}>Choose Sub-room In {roomtype.TypeName} category</FormLabel>
                 <Select
                   startAdornment={
-                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                    <InputAdornment position="start" className="input-adornment">
                       <Building2 size={18} strokeWidth={3} />
                     </InputAdornment>
                   }
@@ -1202,21 +1122,21 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
           {/* Time Selection */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} sx={{ p: 3, mt: 3, borderRadius: 3, minHeight: { lg: 635 } }}>
-              <Box display="flex" alignItems="center" mb={3}>
-                <Clock style={{ marginRight: 8, color: '#1976d2' }} />
+            <Paper elevation={2} className="section-paper time-selection-paper">
+              <Box className="section-header">
+                <Clock className="section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Duration & Time</Typography>
               </Box>
 
               {loading && !pricing ? (
-                <Box display="flex" alignItems="center" justifyContent="center" py={4}>
-                  <CircularProgress size={24} sx={{ mr: 2 }} />
-                  <Typography>Loading Prices...</Typography>
+                <Box className="loading-container">
+                  <CircularProgress size={24} />
+                  <Typography className="loading-text">Loading Prices...</Typography>
                 </Box>
               ) : (
                 <>
-                  <FormControl component="fieldset" sx={{ mb: 3 }}>
-                    <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>
+                  <FormControl component="fieldset" className="duration-options">
+                    <FormLabel component="legend" className="duration-legend">
                       Duration Options
                     </FormLabel>
                     <RadioGroup
@@ -1251,9 +1171,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                   </FormControl>
 
                   {/* Time Slot Selection */}
-                  <Divider sx={{ my: 2 }} />
+                  <Divider className="time-divider" />
                   <FormControl component="fieldset">
-                    <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>
+                    <FormLabel component="legend" className="time-legend">
                       Time Slot {timeOption === "full" && "(Full day covers both slots)"}
                     </FormLabel>
                     <RadioGroup
@@ -1288,9 +1208,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
           {/* Calendar */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 3, minHeight: { lg: 450 } }}>
-              <Box display="flex" alignItems="center" mb={3}>
-                <Calendar style={{ marginRight: 8, color: '#1976d2' }} />
+            <Paper elevation={2} className="section-paper calendar-paper">
+              <Box className="section-header">
+                <Calendar className="section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Dates</Typography>
               </Box>
               {renderCalendar()}
@@ -1303,8 +1223,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               maxWidth="sm"
               fullWidth
             >
-              <DialogTitle sx={{ pb: 1 }}>
-                <Box display="flex" alignItems="center" gap={1}>
+              <DialogTitle className="dialog-title">
+                <Box className="dialog-header">
                   <Calendar size={20} />
                   <Typography variant="h6">Booking Details</Typography>
                 </Box>
@@ -1317,7 +1237,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                     </Typography>
                     {selectedDateDetails.bookings.length > 0 ? (
                       selectedDateDetails.bookings.map((booking, index) => (
-                        <Card key={index} sx={{ mb: 2 }}>
+                        <Card key={index} className="booking-card">
                           <CardContent>
                             <Typography variant="subtitle2" fontWeight="bold">
                               {booking.time}
@@ -1349,20 +1269,15 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
           <Grid size={{ xs: 12 }}>
             <Paper
               elevation={3}
-              sx={{
-                p: 3,
-                mt: 3,
-                borderRadius: 3,
-                backgroundColor: 'secondary.main',
-                height: 'fit-content',
-              }}
+              className="booking-summary-paper"
+              sx={{ backgroundColor: 'secondary.main' }}
             >
               <Typography variant="h6" fontWeight="bold" mb={3} color="primary">
                 Booking Summary
               </Typography>
 
               {/* Room Type */}
-              <Box mb={2}>
+              <Box className="summary-section">
                 <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
                 <Typography variant="subtitle1" fontWeight="600">
                   {roomData?.TypeName || '-'}
@@ -1370,7 +1285,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Selected Room */}
-              <Box mb={2}>
+              <Box className="summary-section">
                 <Typography variant="body2" color="text.secondary">Selected Room</Typography>
                 <Typography variant="subtitle1" fontWeight="600">
                   {roomsOfSameType.find(r => r.id === selectedRoomId)?.roomnumber || '-'}
@@ -1378,7 +1293,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Duration & Time */}
-              <Box mb={2}>
+              <Box className="summary-section">
                 <Typography variant="body2" color="text.secondary">Duration & Time</Typography>
                 <Typography fontWeight="600">
                   {timeOption ? getTimeLabel() : '-'}
@@ -1391,7 +1306,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Number of Days */}
-              <Box mb={2}>
+              <Box className="summary-section">
                 <Typography variant="body2" color="text.secondary">Number of Days</Typography>
                 <Chip
                   label={`${selectedDates?.length || 0} days`}
@@ -1401,10 +1316,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Selected Dates */}
-              <Box mb={3}>
+              <Box className="summary-dates">
                 <Typography variant="body2" color="text.secondary" mb={1}>Selected Dates</Typography>
                 {selectedDates && selectedDates.length > 0 ? (
-                  <Box display="flex" flexWrap="wrap" gap={1}>
+                  <Box className="dates-container">
                     {selectedDates.slice(0, 4).map((date) => (
                       <Chip key={date} label={new Date(date).toLocaleDateString('en-US')} size="small" />
                     ))}
@@ -1417,22 +1332,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 )}
               </Box>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider className="summary-divider" />
 
               {/* Price Summary */}
-              <Paper
-                elevation={1}
-                sx={{
-                  p: 2,
-                  background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                  borderRadius: 2,
-                  textAlign: 'center',
-                }}
-              >
+              <Paper elevation={1} className="price-summary">
                 {loading ? (
-                  <Box display="flex" alignItems="center" justifyContent="center">
-                    <CircularProgress size={60} sx={{ mr: 1 }} />
-                    <Typography>Calculating Price...</Typography>
+                  <Box className="price-loading">
+                    <CircularProgress size={60} />
+                    <Typography className="price-loading-text">Calculating Price...</Typography>
                   </Box>
                 ) : (
                   <>
@@ -1445,7 +1352,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Paper>
 
               {/* Discount Section */}
-              <Box mt={2}>
+              <Box className="discount-section">
                 <Typography variant="body2" color="primary">
                   💎 You have {discount?.remaining ?? 0} free booking(s) left
                 </Typography>
@@ -1461,7 +1368,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                     }));
                     setCalculatedPrice(0);
                   }}
-                  sx={{ mt: 1 }}
+                  className="discount-button"
                 >
                   🎉 Use Free Credit
                 </Button>
@@ -1473,30 +1380,30 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
         {/* Full Width Contact Form - Bottom Section */}
         <Grid size={{ xs: 12 }}>
-          <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mt: 4 }}>
+          <Paper elevation={3} className="contact-form-paper">
             {/* Header Section */}
-            <Box textAlign="center" mb={4}>
-              <Typography variant="h5" fontWeight="700" color="primary" mb={1}>
+            <Box className="form-header">
+              <Typography variant="h5" fontWeight="700" color="primary" className="form-title">
                 Complete Your Booking
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Fill in the details below to confirm your room reservation
               </Typography>
-              <Divider sx={{ mt: 2, mx: 'auto', width: '60px', height: '3px', backgroundColor: 'primary.main' }} />
+              <Divider className="form-divider" sx={{ backgroundColor: 'primary.main' }} />
             </Box>
 
             <Grid container spacing={4}>
               {/* Left Side - Contact Information */}
               <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={1} sx={{ p: 3, borderRadius: 2, height: 'fit-content' }}>
-                  <Box display="flex" alignItems="center" mb={7}>
-                    <User size={24} style={{ marginRight: 12, color: '#1976d2' }} />
+                <Paper elevation={1} className="info-section-paper">
+                  <Box className="info-section-header">
+                    <User size={24} className="info-section-icon" />
                     <Typography variant="h6" fontWeight="600" color="primary">
                       Your Information
                     </Typography>
                   </Box>
 
-                  <Box display="flex" flexDirection="column" gap={5}>
+                  <Box className="info-fields">
                     <TextField
                       label="Full Name"
                       fullWidth
@@ -1505,15 +1412,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       InputProps={{
                         startAdornment: <User size={20} style={{ marginRight: 8, color: "#666" }} />,
                         readOnly: true,
-                        inputProps: { style: { color: '#999' } },
+                        inputProps: { className: 'readonly-input' },
                       }}
-                      sx={{
-                        '& .MuiInputLabel-root': { color: '#999' },
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(0,0,0,0.02)',
-                          '& fieldset': { borderColor: '#e0e0e0' }
-                        }
-                      }}
+                      className="readonly-field"
                     />
                     <TextField
                       label="Phone Number"
@@ -1523,15 +1424,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       InputProps={{
                         startAdornment: <Phone size={20} style={{ marginRight: 8, color: "#666" }} />,
                         readOnly: true,
-                        inputProps: { style: { color: '#999' } },
+                        inputProps: { className: 'readonly-input' },
                       }}
-                      sx={{
-                        '& .MuiInputLabel-root': { color: '#999' },
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(0,0,0,0.02)',
-                          '& fieldset': { borderColor: '#e0e0e0' }
-                        }
-                      }}
+                      className="readonly-field"
                     />
                     <TextField
                       label="Email Address"
@@ -1541,33 +1436,25 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       InputProps={{
                         startAdornment: <Mail size={20} style={{ marginRight: 8, color: "#666" }} />,
                         readOnly: true,
-                        inputProps: { style: { color: '#999' } },
+                        inputProps: { className: 'readonly-input' },
                       }}
-                      sx={{
-                        '& .MuiInputLabel-root': { color: '#999' },
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: 'rgba(0,0,0,0.02)',
-                          '& fieldset': { borderColor: '#e0e0e0' }
-                        }
-                      }}
+                      className="readonly-field"
                     />
                   </Box>
-
-
                 </Paper>
               </Grid>
 
               {/* Right Side - Booking Details */}
               <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={1} sx={{ p: 3, borderRadius: 2, height: 'fit-content' }}>
-                  <Box display="flex" alignItems="center" mb={4}  >
-                    <Calendar size={24} style={{ marginRight: 12, }} />
+                <Paper elevation={1} className="info-section-paper">
+                  <Box className="details-section-header">
+                    <Calendar size={24} />
                     <Typography variant="h6" fontWeight="600" color="primary">
                       Booking Details
                     </Typography>
                   </Box>
 
-                  <Box display="flex" flexDirection="column" gap={3}>
+                  <Box className="details-fields">
                     <TextField
                       label="Purpose of Booking"
                       fullWidth
@@ -1579,17 +1466,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       placeholder="e.g. team planning meeting, client presentation, training session, etc."
                       error={!purpose}
                       helperText={!purpose ? "Please describe the purpose of your booking." : ""}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& textarea': {
-                            minHeight: '80px',
-                            maxHeight: '80px',
-                            resize: 'none',
-                          },
-                          // '&:hover fieldset': { borderColor: '#1976d2' },
-                          // '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-                        }
-                      }}
+                      className="textarea-field"
                     />
 
                     <TextField
@@ -1600,49 +1477,28 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       value={additionalInfo}
                       onChange={(e) => setAdditionalInfo(e.target.value)}
                       placeholder="e.g. Room setup style, required equipment, special requests, etc."
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& textarea': {
-                            minHeight: '80px',
-                            maxHeight: '80px',
-                            resize: 'none',
-                          },
-                          // '&:hover fieldset': { borderColor: '#1976d2' },
-                          // '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-                        }
-                      }}
+                      className="textarea-field"
                     />
                   </Box>
-
-
-
-
                 </Paper>
-
               </Grid>
             </Grid>
 
             {/* Action Section */}
-            <Box mt={5}>
-              <Divider sx={{ mb: 4 }} />
+            <Box className="action-section">
+              <Divider className="action-divider" />
 
               {selectedDates.length === 0 && (
                 <Alert
                   severity="info"
-                  sx={{
-                    mb: 3,
-                    borderRadius: 2,
-                    backgroundColor: '#F26522',
-                    color: '#fff', // สีตัวอักษร
-                    border: '1px solid #e04e1a',
-                  }}
+                  className="date-alert"
                 >
                   📅 Please select your booking dates from the calendar above to proceed
                 </Alert>
               )}
 
               {/* Confirmation Button */}
-              <Box textAlign="center">
+              <Box className="confirmation-section">
                 <Button
                   variant="contained"
                   size="large"
@@ -1655,73 +1511,33 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                     purpose.trim() === "" ||
                     !isAllowedToBookLargeRoom
                   }
-
-                  sx={{
-                    py: 2,
-                    px: 6,
-                    borderRadius: 3,
-                    fontWeight: 700,
-                    fontSize: "1.2rem",
-                    minWidth: { xs: '100%', sm: '400px' },
-                    background: 'linear-gradient(45deg, #F26522 30%, #FFA347 90%)',
-                    boxShadow: '0 6px 20px rgba(242, 101, 34, 0.3)',
-                    '&:hover': {
-                      background: 'linear-gradient(45deg, #E0551C 30%, #F26522 90%)',
-                      boxShadow: '0 8px 25px rgba(242, 101, 34, 0.4)',
-                      transform: 'translateY(-2px)',
-                    },
-
-                    '&:disabled': {
-                      background: 'linear-gradient(45deg, #797472ff 30%, #55504eff 90%)',
-                      boxShadow: 'none',
-                      transform: 'none',
-                    },
-                    transition: 'all 0.3s ease',
-                  }}
+                  className="confirm-button"
                   startIcon={loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <Check size={24} />}
                 >
                   {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice.toLocaleString()}`}
                 </Button>
 
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary" className="confirmation-note">
                   🔒 Your booking will be confirmed immediately after payment
                 </Typography>
               </Box>
+
               {!isAllowedToBookLargeRoom && (
-                <Box display="flex" justifyContent="center" mt={3}>
+                <Box className="error-alert-container">
                   <Alert
                     severity="error"
-                    sx={{
-                      fontSize: '1rem',
-                      fontWeight: 'bold',
-                      width: '100%',
-                      maxWidth: '500px',
-                      textAlign: 'center',
-                    }}
+                    className="error-alert"
                   >
                     ⚠️ This room exceeds the seat capacity allowed for online booking. Please call the Science Park staff to make a reservation.
-                    {/* 
-                    <Box mt={2}>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        href="tel:021234567"
-                        startIcon={<Phone />}
-                        fullWidth
-                      >
-                         Call the Science Park staff
-                      </Button>
-                    </Box> */}
                   </Alert>
                 </Box>
               )}
-
             </Box>
           </Paper>
         </Grid>
 
       </Grid>
-    </Box >
+    </Box>
   );
 
 };
