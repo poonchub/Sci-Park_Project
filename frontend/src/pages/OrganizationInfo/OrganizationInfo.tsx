@@ -288,7 +288,7 @@ function OrganizationInfo() {
                                 </Grid>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="body1" className="title-field">
-                                        Name Thai
+                                        Thai Name
                                     </Typography>
                                     <TextField
                                         name="NameTH"
@@ -312,7 +312,7 @@ function OrganizationInfo() {
                                 </Grid>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="body1" className="title-field">
-                                        Name English
+                                        English Name 
                                     </Typography>
                                     <TextField
                                         name="NameEN"

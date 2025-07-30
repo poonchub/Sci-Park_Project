@@ -477,7 +477,7 @@ function News() {
                                                     <Grid size={{ xs: 6 }}>
                                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                             <DatePicker
-                                                                label="Start date"
+                                                                label="Start Date"
                                                                 value={formData.DisplayStart ? dayjs(formData.DisplayStart) : null}
                                                                 onChange={(newValue) => handleDateChange('DisplayStart', newValue)}
                                                                 maxDate={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : undefined}
