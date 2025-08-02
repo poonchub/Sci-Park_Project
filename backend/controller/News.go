@@ -8,6 +8,7 @@ import (
 	"sci-park_web-application/services"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -222,6 +223,11 @@ func CreateNews(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&news); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(&news); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 		return
 	}
 

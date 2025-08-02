@@ -23,7 +23,7 @@ func TestNewsImageValidation(t *testing.T) {
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run("Missing Image URL", func(t *testing.T) {
+	t.Run("Missing File Path", func(t *testing.T) {
 		image := entity.NewsImage{
 			FilePath: "",
 			NewsID:   1,
@@ -32,19 +32,7 @@ func TestNewsImageValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(image)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("Image URL is required"))
-	})
-
-	t.Run("Invalid Image URL", func(t *testing.T) {
-		image := entity.NewsImage{
-			FilePath: "not-a-valid-url",
-			NewsID:   1,
-		}
-
-		ok, err := govalidator.ValidateStruct(image)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("Invalid URL format (example: https://example.com/image.jpg)"))
+		g.Expect(err.Error()).To(Equal("Image file path is required"))
 	})
 
 	t.Run("Missing NewsID", func(t *testing.T) {
