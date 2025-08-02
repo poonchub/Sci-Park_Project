@@ -56,8 +56,9 @@ func main() {
 		// Users
 		protected.GET("/users", controller.ListUsers)
 		protected.GET("/user/:id", controller.GetUserByID)
-		protected.POST("/user", controller.CreateUser)
 		protected.PATCH("/user/:id", controller.UpdateUserByID)
+		protected.POST("/create-user", controller.CreateUser)
+		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 
 		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
 
@@ -87,9 +88,7 @@ func main() {
 		// RoomStatuses
 		protected.GET("/room-status", controller.ListRoomStatus)
 
-		// Users
-		protected.POST("/create-user", controller.CreateUser)
-		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
+
 
 		protected.PATCH("/change-password", controller.ChangePassword)
 		protected.GET("/operators", controller.ListOperators)
