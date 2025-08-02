@@ -6,9 +6,14 @@ import {
     Card,
     CardContent,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Divider,
     FormControl,
     Grid,
+    IconButton,
     InputAdornment,
     List,
     ListItem,
@@ -32,7 +37,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { CalendarMonth, CalendarToday, CheckCircle, Error, Notifications } from "@mui/icons-material";
+import { CalendarMonth, CalendarToday, CheckCircle, Close, Error, HelpOutline, Notifications } from "@mui/icons-material";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import {
     faBroom,
@@ -55,6 +60,8 @@ import { useTranslation } from "react-i18next";
 import { Select } from "../../components/Select/Select";
 import { Activity, BrushCleaning, Layout, LayoutDashboard, LineChart } from "lucide-react";
 import { analyticsService } from "../../services/analyticsService";
+import ExpandableText from "../../components/ExpandableText/ExpandableText";
+import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -68,7 +75,6 @@ function Dashboard() {
 
     const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]);
 
-    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
     const [selectedDateOption, setSelectedDateOption] = useState<string>('daily')
 
     const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
@@ -77,6 +83,7 @@ function Dashboard() {
     });
 
     const [valueTab, setValueTab] = useState(0);
+    const [open, setOpen] = useState(false);
 
     const { t } = useTranslation();
 
@@ -122,10 +129,20 @@ function Dashboard() {
     };
 
     const handleClearFillter = () => {
-        setDateRange({
-            start: null,
-            end: null,
-        })
+        if (selectedDateOption === 'hourly') {
+            const today = dayjs().startOf('day')
+            setDateRange((prev) => ({
+                ...prev,
+                start: today,
+                end: null,
+            }));
+        }
+        else {
+            setDateRange({
+                start: null,
+                end: null,
+            })
+        }
     }
 
     function a11yProps(index: number) {
@@ -139,20 +156,36 @@ function Dashboard() {
         getMaintenanceRequests();
         getUser();
         getMaintenanceTypes();
-        
+
         // Remove analytics tracking from Dashboard
         // analyticsService.trackKeyPageVisit('DASHBOARD', 'Dashboard');
     }, []);
 
     useEffect(() => {
-        getMaintenanceRequests();
-    }, [selectedDate]);
-
-    useEffect(() => {
-        if (dateRange.start && dateRange.end) {
+        if ((dateRange.start && selectedDateOption === 'hourly') || (dateRange.start && dateRange.end) || (!dateRange.start && !dateRange.end)) {
             getMaintenanceRequests()
         }
     }, [dateRange])
+
+    useEffect(() => {
+        if (selectedDateOption === 'hourly') {
+            const today = dayjs().startOf('day')
+            setDateRange((prev) => ({
+                ...prev,
+                start: today,
+                end: null,
+            }));
+        }
+        else {
+            setDateRange((prev) => ({
+                ...prev,
+                start: null,
+                end: null,
+            }));
+        }
+        getMaintenanceRequests()
+
+    }, [selectedDateOption])
 
     useEffect(() => {
         if (!maintenanceTypes?.length) return;
@@ -221,14 +254,14 @@ function Dashboard() {
     const [openStartPicker, setOpenStartPicker] = useState(false);
 
     useEffect(() => {
-        if (dateRange.start && !dateRange.end) {
-            setTimeout(() => setOpenEndPicker(true), 200);
+        if (dateRange.start && !dateRange.end && selectedDateOption !== 'hourly') {
+            setTimeout(() => setOpenEndPicker(true), 100);
         }
     }, [dateRange.start]);
 
     useEffect(() => {
-        if (dateRange.end && !dateRange.start) {
-            setTimeout(() => setOpenStartPicker(true), 200);
+        if (dateRange.end && !dateRange.start && selectedDateOption !== 'hourly') {
+            setTimeout(() => setOpenStartPicker(true), 100);
         }
     }, [dateRange.end]);
 
@@ -489,19 +522,51 @@ function Dashboard() {
         </Card>
     );
 
+    const timeFrameOptions = [
+        { label: 'Hourly', value: 'hourly' },
+        { label: 'Daily', value: 'daily' },
+        { label: 'Weekly', value: 'weekly' },
+        { label: 'Monthly', value: 'monthly' },
+        { label: 'Yearly', value: 'yearly' },
+    ];
+
+    const chartUsageNote = {
+        title: "How to Use the Line Chart",
+        points: [
+            "Select Time Range:",
+            "   • If you choose Hourly, you will see a single date picker to select the specific day (default is today).",
+            "   • For other options like Daily, Weekly, Monthly, or Yearly, you will see two date pickers to select a Start Date and an End Date.",
+            "Reading the Chart:",
+            "   • The line shows the trend of maintenance requests over the selected time period.",
+            "   • The X-axis (horizontal) represents the selected time intervals (hours, days, weeks, etc.).",
+            "   • The Y-axis (vertical) shows the number of requests in each time interval.",
+            "View Details of Each Point:",
+            "• Hover over any point on the line to see details such as the exact time/date and the number of requests for that interval.",
+            "Interpreting the Chart:",
+            "   • Rising lines indicate an increase in requests.",
+            "   • Falling lines indicate a decrease in requests.",
+            "   • Peaks show times of highest request volume.",
+            "   • Flat lines indicate periods with few or no requests.",
+        ],
+        notes: [
+            "If there is no data for the selected period, the chart may show gaps or appear empty.",
+            "Adjust the time range or filters to get a clearer view of the data.",
+        ],
+    };
+
     return (
         <Box className="dashboard-page">
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid 
-                        container 
-                        className="title-box" 
-                        direction={'row'} 
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={'row'}
                         size={{ xs: 12, md: 12 }}
                         sx={{ gap: 1 }}
                     >
-                        <LayoutDashboard size={26}/>
+                        <LayoutDashboard size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Dashboard
                         </Typography>
@@ -547,7 +612,7 @@ function Dashboard() {
                                         >
                                             <Grid size={{ xs: 12, sm: 12, sm650: 4 }}>
                                                 <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                                    Monthly Requests
+                                                    Requests
                                                 </Typography>
                                                 <Typography variant="h4" fontWeight={800} color="primary">
                                                     <Box component="span" >
@@ -561,7 +626,7 @@ function Dashboard() {
                                                 </Typography>
                                             </Grid>
                                             <Grid container size={{ xs: 12, sm: 12, sm650: 8 }} spacing={1}>
-                                                <Grid size={{ xs: 12, sm: 12, sm650: 3 }}>
+                                                <Grid size={{ xs: 12, sm: 12, sm650: selectedDateOption === 'hourly' ? 4 : 3 }}>
                                                     <FormControl fullWidth>
                                                         <Select
                                                             startAdornment={
@@ -574,53 +639,83 @@ function Dashboard() {
                                                                 setSelectedDateOption(value.target.value as string)
                                                             }}
                                                         >
-                                                            <MenuItem value={'daily'}>Daily</MenuItem>
-                                                            <MenuItem value={'weekly'}>Weekly</MenuItem>
-                                                            <MenuItem value={'monthly'}>Monthly</MenuItem>
-                                                            <MenuItem value={'yearly'}>Yearly</MenuItem>
+                                                            {
+                                                                timeFrameOptions.map((item, index) => {
+                                                                    return (
+                                                                        <MenuItem key={index} value={item.value}>{item.label}</MenuItem>
+                                                                    )
+                                                                })
+                                                            }
                                                         </Select>
                                                     </FormControl>
                                                 </Grid>
 
-                                                <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
-                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                        <DatePicker
-                                                            label="Start Date"
-                                                            value={dateRange.start ?? null}
-                                                            onChange={(newValue) =>
-                                                                setDateRange((prev) => ({ ...prev, start: newValue ?? null }))
-                                                            }
-                                                            maxDate={dateRange.end ?? undefined}
-                                                            slots={{
-                                                                openPickerIcon: CalendarMonth,
-                                                            }}
-                                                            format="DD/MM/YYYY"
-                                                            open={openStartPicker}
-                                                            onOpen={() => setOpenStartPicker(true)}
-                                                            onClose={() => setOpenStartPicker(false)}
-                                                        />
-                                                    </LocalizationProvider>
-                                                </Grid>
-                                                <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
-                                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                        <DatePicker
-                                                            label="End Date"
-                                                            value={dateRange.end ?? null}
-                                                            onChange={(newValue) =>
-                                                                setDateRange((prev) => ({ ...prev, end: newValue ?? null }))
-                                                            }
-                                                            minDate={dateRange.start ?? undefined}
-                                                            slots={{
-                                                                openPickerIcon: CalendarMonth,
-                                                            }}
-                                                            format="DD/MM/YYYY"
-                                                            open={openEndPicker}
-                                                            onOpen={() => setOpenEndPicker(true)}
-                                                            onClose={() => setOpenEndPicker(false)}
-                                                        />
-                                                    </LocalizationProvider>
-                                                </Grid>
-                                                <Grid size={{ xs: 12, sm: 2  }}>
+                                                {
+                                                    selectedDateOption === 'hourly' ? (
+                                                        <Grid size={{ xs: 6, sm: 5, sm650: 6 }}>
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    label="Date"
+                                                                    value={dateRange.start ?? null}
+                                                                    onChange={(newValue) =>
+                                                                        setDateRange((prev) => ({ ...prev, start: newValue ?? null }))
+                                                                    }
+                                                                    maxDate={dateRange.end ?? undefined}
+                                                                    slots={{
+                                                                        openPickerIcon: CalendarMonth,
+                                                                    }}
+                                                                    format="DD/MM/YYYY"
+                                                                    open={openStartPicker}
+                                                                    onOpen={() => setOpenStartPicker(true)}
+                                                                    onClose={() => setOpenStartPicker(false)}
+                                                                />
+                                                            </LocalizationProvider>
+                                                        </Grid>
+                                                    ) : (
+                                                        <>
+                                                            <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                    <DatePicker
+                                                                        label="Start Date"
+                                                                        value={dateRange.start ?? null}
+                                                                        onChange={(newValue) =>
+                                                                            setDateRange((prev) => ({ ...prev, start: newValue ?? null }))
+                                                                        }
+                                                                        maxDate={dateRange.end ?? undefined}
+                                                                        slots={{
+                                                                            openPickerIcon: CalendarMonth,
+                                                                        }}
+                                                                        format="DD/MM/YYYY"
+                                                                        open={openStartPicker}
+                                                                        onOpen={() => setOpenStartPicker(true)}
+                                                                        onClose={() => setOpenStartPicker(false)}
+                                                                    />
+                                                                </LocalizationProvider>
+                                                            </Grid>
+                                                            <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                    <DatePicker
+                                                                        label="End Date"
+                                                                        value={dateRange.end ?? null}
+                                                                        onChange={(newValue) =>
+                                                                            setDateRange((prev) => ({ ...prev, end: newValue ?? null }))
+                                                                        }
+                                                                        minDate={dateRange.start ?? undefined}
+                                                                        slots={{
+                                                                            openPickerIcon: CalendarMonth,
+                                                                        }}
+                                                                        format="DD/MM/YYYY"
+                                                                        open={openEndPicker}
+                                                                        onOpen={() => setOpenEndPicker(true)}
+                                                                        onClose={() => setOpenEndPicker(false)}
+                                                                    />
+                                                                </LocalizationProvider>
+                                                            </Grid>
+                                                        </>
+                                                    )
+                                                }
+
+                                                <Grid size={{ xs: 12, sm: 2 }}>
                                                     <Button
                                                         onClick={handleClearFillter}
                                                         sx={{
@@ -642,6 +737,83 @@ function Dashboard() {
                                             </Grid>
                                         </Grid>
                                         <ApexLineChart selectedDateOption={selectedDateOption} data={filteredRequest} height={250} dateRange={dateRange} />
+
+                                        <Button
+                                            startIcon={<HelpOutline />}
+                                            variant="outlined"
+                                            onClick={() => setOpen(true)}
+                                        >
+                                            How to use this chart
+                                        </Button>
+
+                                        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth>
+                                            <DialogTitle
+                                                sx={{
+                                                    fontWeight: 700,
+                                                    color: 'primary.main',
+                                                    textAlign: 'center'
+                                                }}
+                                            >
+                                                <FontAwesomeIcon icon={faCircleQuestion} size="lg" style={{ marginRight: '10px' }} />
+                                                Chart Usage Guide
+                                                <IconButton
+                                                    aria-label="close"
+                                                    onClick={() => setOpen(false)}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        right: 8,
+                                                        top: 8,
+                                                    }}
+                                                >
+                                                    <Close />
+                                                </IconButton>
+                                            </DialogTitle>
+
+                                            <DialogContent dividers sx={{ px: 5 }}>
+                                                <Typography
+                                                    sx={{
+                                                        whiteSpace: "pre-line",
+                                                        fontSize: 18,
+                                                        fontWeight: 600
+                                                    }}
+                                                    gutterBottom
+                                                >
+                                                    {chartUsageNote.title}
+                                                </Typography>
+                                                {chartUsageNote.points.map((line, index) => {
+                                                    const trimmed = line.trimStart();
+                                                    const isBullet = trimmed.startsWith('•');
+
+                                                    return (
+                                                        <Typography
+                                                            key={index}
+                                                            component="div"
+                                                            sx={{
+                                                                pl: isBullet ? 3 : 0, // ใส่ padding-left ถ้าเป็นบูลเล็ท
+                                                                whiteSpace: 'normal',
+                                                                mb: 0.5,
+                                                                color: isBullet ? 'text.secondary' : 'text.primary'
+                                                            }}
+                                                        >
+                                                            {line}
+                                                        </Typography>
+                                                    );
+                                                })}
+                                                <Box mt={2}>
+                                                    {chartUsageNote.notes.map((note, idx) => (
+                                                        <Typography key={idx} sx={{ whiteSpace: 'normal', mb: 0.5 }}>
+                                                            {note}
+                                                        </Typography>
+                                                    ))}
+                                                </Box>
+                                            </DialogContent>
+
+                                            <DialogActions>
+                                                <Button onClick={() => setOpen(false)} variant="outlined">
+                                                    Close
+                                                </Button>
+                                            </DialogActions>
+                                        </Dialog>
                                     </Card>
                                 </Grid>
                             </Grid>

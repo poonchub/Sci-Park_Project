@@ -1,0 +1,232 @@
+/* Calendar Component Styles */
+
+.calendar-container {
+  border-radius: 24px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .calendar-container {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 600px) {
+  .calendar-container {
+    padding: 24px;
+  }
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  .calendar-header {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 600px) {
+  .calendar-header {
+    flex-direction: row;
+  }
+}
+
+.month-year-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.nav-button {
+  min-width: 36px;
+  border-radius: 16px;
+}
+
+.nav-button:hover {
+  background-color: #e3f2fd;
+}
+
+.month-select {
+  border-radius: 16px;
+}
+
+@media (max-width: 600px) {
+  .month-select {
+    min-width: 110px;
+  }
+}
+
+@media (min-width: 600px) {
+  .month-select {
+    min-width: 130px;
+  }
+}
+
+.month-select .MuiSelect-select {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.month-menu-item {
+  border-radius: 16px;
+}
+
+@media (max-width: 600px) {
+  .month-menu-item {
+    min-width: 110px;
+  }
+}
+
+@media (min-width: 600px) {
+  .month-menu-item {
+    min-width: 130px;
+  }
+}
+
+.month-menu-item .MuiSelect-select {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.year-select {
+  min-width: 90px;
+  border-radius: 16px;
+}
+
+.year-select .MuiSelect-select {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.year-menu-item {
+  font-weight: 600;
+}
+
+.day-names-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.day-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 960px) {
+  .day-cell {
+    height: 45px;
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 960px) {
+  .day-cell {
+    height: 50px;
+    font-size: 16px;
+  }
+}
+
+.day-cell-booked {
+  background-color: #fdecea !important;
+  color: #d32f2f !important;
+  cursor: not-allowed !important;
+  font-weight: 400 !important;
+}
+
+.day-cell-selected {
+  background-color: #f57c00 !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.day-cell-partially {
+  background-color: #fffde7 !important;
+  color: #f57c00 !important;
+  cursor: pointer !important;
+  font-weight: 400 !important;
+}
+.day-cell-available {
+  background-color: #ffffff;
+  color: #000;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.day-cell-past {
+  color: #6d6d6d !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Past date combinations */
+.day-cell-past.day-cell-booked {
+  background-color: #fdecea;
+  color: #ccc !important;
+}
+
+.day-cell-past.day-cell-partially {
+  background-color: #fffde7;
+  color: #ccc !important;
+}
+
+.day-cell-past.day-cell-available {
+  background-color: #ffffff;
+  color: #ccc !important;
+}
+
+.day-cell-not-available {
+  cursor: not-allowed;
+}
+
+.day-cell:hover:not(.day-cell-booked):not(.day-cell-past) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.day-cell:hover.day-cell-booked {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.day-cell:hover.day-cell-past {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.booking-count {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  font-size: 10px;
+}
+
+.tooltip-content {
+  padding: 8px;
+}
+
+.tooltip-title {
+  margin-bottom: 8px;
+}

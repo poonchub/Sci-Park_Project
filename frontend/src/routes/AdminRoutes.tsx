@@ -20,6 +20,8 @@ import AddUserFormByCsv from "../pages/AddUser/AddUserFormByCsv";
 import Analytics from "../components/Analytics/Analytics";
 import News from "../pages/News/News";
 import OrganizationInfo from "../pages/OrganizationInfo/OrganizationInfo";
+import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
+
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -33,6 +35,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/booking-room",
 				element: <BookingRoom/>
+			},
+			{
+				path: "/room-booking-form",
+				element: <RoomBookingForm roomsOfSameType={[]}/>
 			},
 			{
 				path: "/maintenance/all-maintenance-request",

@@ -13,6 +13,7 @@ import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { handleSessionExpiration } from "../../utils/sessionManager";
 import { NewsImagesInterface } from "../../interfaces/NewsImages";
+import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -43,10 +44,10 @@ axiosInstance.interceptors.response.use(
         // ตรวจสอบว่าเป็น error 401 (Unauthorized) หรือ token หมดอายุ
         if (error.response?.status === 401) {
             const errorMessage = error.response?.data?.error || error.response?.data?.Error;
-            
+
             // ตรวจสอบว่าเป็น token หมดอายุหรือไม่
             if (errorMessage && (
-                errorMessage.includes("JWT is expired") || 
+                errorMessage.includes("JWT is expired") ||
                 errorMessage.includes("expired") ||
                 errorMessage.includes("token") ||
                 errorMessage.includes("unauthorized")
@@ -110,7 +111,7 @@ async function ChangePassword(data: any) {
 }
 
 
-async function GetUserById(id:number) {
+async function GetUserById(id: number) {
     try {
         const response = await axiosInstance.get(`/user/${id}`);
         return response.data;
@@ -125,13 +126,13 @@ async function ListUsers(data: QuarryInterface) {
     try {
         // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
         const params = new URLSearchParams();
-        
+
         // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
         if (data.roleID && data.roleID > 0) params.append("role_id", String(data.roleID));
         if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
         params.append("page", String(data.page));  // แปลง page เป็น string
         params.append("limit", String(data.limit));  // แปลง limit เป็น string
-        if (data.isemployee!== undefined) {
+        if (data.isemployee !== undefined) {
             params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
         }
 
@@ -205,7 +206,7 @@ async function CreateUser(data: any) {
             };
         }
     }
-    
+
 }
 
 
@@ -234,7 +235,7 @@ async function UpdateUserbyID(data: any) {
     const UserID = data.UserID;
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
-    const token = localStorage.getItem("token");  
+    const token = localStorage.getItem("token");
     const requestOptions = {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -242,7 +243,7 @@ async function UpdateUserbyID(data: any) {
     };
 
 
-        
+
     try {
         // Send FormData with requestOptions
         const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
@@ -281,7 +282,7 @@ async function UpdateUserbyID(data: any) {
             };
         }
     }
-    
+
 }
 
 
@@ -300,20 +301,20 @@ async function CreateUserExternalOnly(data: any) {
 
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
-  
+
     const requestOptions = {
         headers: {
-            
+
         },
     };
 
-    
 
 
-        
+
+
     try {
         // Send FormData with requestOptions
-        
+
         const response = await axios.post(`${apiUrl}/register`, formData, requestOptions);
 
         // Handle the response and return a custom object
@@ -350,7 +351,7 @@ async function CreateUserExternalOnly(data: any) {
             };
         }
     }
-    
+
 }
 
 async function GetOperators() {
@@ -396,7 +397,7 @@ async function GetRooms() {
     }
 }
 
-async function CreateRoom(roomData:RoomsInterface) {
+async function CreateRoom(roomData: RoomsInterface) {
     const requestOptions = {
         method: "POST",
         headers: {
@@ -444,7 +445,7 @@ async function UpdateProfileImage(file: File) {
 }
 
 
-async function UpdateRoom(roomData:RoomsInterface) {
+async function UpdateRoom(roomData: RoomsInterface) {
     const requestOptions = {
         method: "PATCH",
         headers: {
@@ -466,14 +467,14 @@ async function UpdateRoom(roomData:RoomsInterface) {
     return res;
 }
 
-async function GetRoomByID(id:number) {
-    const requestOptions = {   
+async function GetRoomByID(id: number) {
+    const requestOptions = {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
-    };      
+    };
 
     let res = await fetch(`${apiUrl}/room/${id}`, requestOptions)
         .then((res) => {
@@ -491,7 +492,7 @@ async function GetRoomByID(id:number) {
 
 
 // RoomTypes
-async function CreateRoomType(roomTypeData:RoomtypesInterface) {
+async function CreateRoomType(roomTypeData: RoomtypesInterface) {
     const requestOptions = {
         method: "POST",
         headers: {
@@ -513,7 +514,7 @@ async function CreateRoomType(roomTypeData:RoomtypesInterface) {
     return res;
 }
 
-async function UpdateRoomType(roomTypeData:RoomtypesInterface) {
+async function UpdateRoomType(roomTypeData: RoomtypesInterface) {
     const requestOptions = {
         method: "PATCH",
         headers: {
@@ -566,6 +567,27 @@ async function ListRoomTypesForBooking() {
     };
 
     let res = await fetch(`${apiUrl}/room-types-for-booking`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+async function GetRoomTypesByID(id: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-type/${id}`, requestOptions)
         .then((res) => {
             if (res.status == 200) {
                 return res.json();
@@ -711,7 +733,7 @@ async function ListMaintenanceRequests() {
     return res;
 }
 async function ListMaintenanceRequestsByDateRange(
-    startDate: string | null , 
+    startDate: string | null,
     endDate: string | null
 ) {
     const requestOptions = {
@@ -734,10 +756,10 @@ async function ListMaintenanceRequestsByDateRange(
     return res;
 }
 async function GetMaintenanceRequestsForUser(
-    statusID: string, 
-    page: number, 
-    limit: number, 
-    createdAt?: string | undefined, 
+    statusID: string,
+    page: number,
+    limit: number,
+    createdAt?: string | undefined,
     userId?: number | undefined
 ) {
     const requestOptions = {
@@ -760,12 +782,12 @@ async function GetMaintenanceRequestsForUser(
     return res;
 }
 async function GetMaintenanceRequestsForAdmin(
-    statusID: string, 
-    page: number, 
-    limit: number, 
-    maintenanceType: number, 
-    createdAt?: string | undefined, 
-    requestType?: string | undefined, 
+    statusID: string,
+    page: number,
+    limit: number,
+    maintenanceType: number,
+    createdAt?: string | undefined,
+    requestType?: string | undefined,
     userId?: number | undefined
 ) {
     const requestOptions = {
@@ -825,7 +847,7 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
             return false;
         }
     });
-    
+
 
     return res;
 }
@@ -1462,7 +1484,7 @@ export async function getDashboardAnalytics() {
 }
 
 export async function trackPageVisit(data: any) {
-    
+
     try {
         const response = await axiosInstance.post('/analytics/track', data);
         return response.data;
@@ -1693,6 +1715,109 @@ async function CreateNews(data: NewsImagesInterface) {
 
     return res;
 }
+
+
+async function GetTimeSlots(id?: number) {
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            // "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+
+    };
+
+    let res = await fetch(`${apiUrl}/get-timeslots-roomprices/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status == 200) {
+                return res.json();
+            } else {
+                return false;
+            }
+        });
+
+    return res;
+}
+
+async function GetRoomQuota(userId?: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ เพิ่ม Token ถ้ามี
+        },
+    };
+
+    const res = await fetch(`${apiUrl}/get-quota/${userId}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json();
+            } else {
+                console.error("โหลดสิทธิ์ไม่สำเร็จ", res.status);
+                return false;
+            }
+        })
+        .catch((error) => {
+            console.error("Fetch error:", error);
+            return false;
+        });
+
+    return res;
+}
+
+
+async function GetRoomsByRoomTypeID(roomTypeId?: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    const res = await fetch(`${apiUrl}/rooms/roomtype/${roomTypeId}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json();
+            } else {
+                console.error("ไม่สามารถโหลดห้องได้", res.status);
+                return false;
+            }
+        })
+        .catch((error) => {
+            console.error("Fetch error:", error);
+            return false;
+        });
+
+    return res;
+}
+
+async function CreateBookingRoom(data: BookingRoomsInterface[]) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+    const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
+
+    if (res.status === 200 || res.status === 201 || res.status === 204) {
+        try {
+            const json = await res.json().catch(() => null);
+            return { status: res.status, data: json };
+        } catch {
+            return { status: res.status, data: null };
+        }
+    } else {
+        return { status: res.status, data: null };
+    }
+}
+
+
+
 async function UpdateNewsByID(data: NewsImagesInterface, id: Number | undefined) {
     const requestOptions = {
         method: "PATCH",
@@ -1858,6 +1983,9 @@ async function ListContributors() {
     return res;
 }
 
+
+
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -1926,7 +2054,7 @@ export {
 
     // Roles
     ListRoles,
-    
+
     // ManagerApprovals
     CreateManagerApproval,
 
@@ -1944,7 +2072,7 @@ export {
 
     // Inspections
     CreateInspection,
-  
+
     ListSetRooms,
 
     // Email
@@ -1987,7 +2115,13 @@ export {
     // DeveloperInfo
     ListContributors,
 
-    
+
+    GetTimeSlots,
+    GetRoomQuota,
+    GetRoomsByRoomTypeID,
+    CreateBookingRoom,
+    GetRoomTypesByID
+
 }
 
 

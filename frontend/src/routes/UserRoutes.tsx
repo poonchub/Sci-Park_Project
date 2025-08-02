@@ -9,6 +9,7 @@ import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
+import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -22,6 +23,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/booking-room",
 				element: <BookingRoom/>
+			},
+			{
+				path: "/room-booking-form",
+				element: <RoomBookingForm roomsOfSameType={[]}/>
 			},
 			{
 				path: "/maintenance/my-maintenance-request",

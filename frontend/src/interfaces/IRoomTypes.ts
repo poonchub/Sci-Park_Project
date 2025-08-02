@@ -4,6 +4,7 @@ import { RoomTypeImagesInterface } from "./IRoomTypeImages";
 import { RoomTypeLayouts } from "./IRoomtypeLayouts";
 
 export interface RoomtypesInterface {
+    [x: string]: any;
     ID?:            number;
     TypeName?:      string;
     HalfDayRate?:   number;
