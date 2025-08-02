@@ -179,7 +179,7 @@ func main() {
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
-	{	
+	{
 		// Maintenance
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
 		protected.GET("/maintenance-requests/by-date", controller.ListMaintenanceRequestsByDateRange)
@@ -233,16 +233,13 @@ func main() {
 		ticker := time.NewTicker(1 * time.Minute) // ตั้งเวลาให้รันทุก 1 นาที
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				log.Println("Background job: CancelExpiredBookings start")
-				controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
-				log.Println("Background job: CancelExpiredBookings finished")
-			}
+		for range ticker.C {
+			log.Println("Background job: CancelExpiredBookings start")
+			controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
+			log.Println("Background job: CancelExpiredBookings finished")
 		}
 	}()
-	// --- จบส่วน background scheduler ---
+	
 
 	// 🚀 Start Server
 	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น
