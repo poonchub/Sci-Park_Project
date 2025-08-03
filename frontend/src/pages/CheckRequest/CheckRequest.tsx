@@ -367,7 +367,7 @@ function CheckRequest() {
                 setOpenConfirm={setOpenConfirmAccepted}
                 handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
                 title="Confirm Maintenance Request Processing"
-                message="Are you sure you want to proceed with this maintenance request? This action cannot be undone."
+                message="Are you sure you want to start this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 

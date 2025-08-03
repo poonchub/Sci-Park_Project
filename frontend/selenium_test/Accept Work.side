@@ -1,0 +1,318 @@
+{
+  "id": "e94740ec-da0f-4735-9cb9-1fcf726cebd6",
+  "version": "2.0",
+  "name": "Accept Work",
+  "url": "http://localhost:5173/maintenance/check-requests?request_id=NA%3D%3D",
+  "tests": [{
+    "id": "718a5132-fe88-4e79-a946-778e14685cd9",
+    "name": "Submit Work Unsuccessfully (Image Required)",
+    "commands": [{
+      "id": "dee38875-3377-4f71-9546-f5f6acff0102",
+      "comment": "",
+      "command": "open",
+      "target": "/maintenance/check-requests?request_id=NA%3D%3D",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "e4daec03-dee5-46f1-a731-8e6c7c249d0b",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "862a6155-e3c4-46ca-8f59-8cac28e2ab46",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-containedBlue > .MuiTypography-root",
+      "targets": [
+        ["css=.MuiButton-containedBlue > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[6]/div/div/div[4]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "7a9a3b27-ea07-4235-ab48-6e5f26277137",
+      "comment": "",
+      "command": "mouseOver",
+      "target": "css=.MuiDialogActions-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiDialogActions-root > .MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "240851c5-7f6a-45e0-a543-ba9a394e095d",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiDialogActions-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiDialogActions-root > .MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "be09ad07-f402-4b36-96bf-99e4929b2d04",
+      "comment": "",
+      "command": "mouseOut",
+      "target": "css=.MuiDialogActions-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiDialogActions-root > .MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[12]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "a9928831-3312-4509-987c-69b944d88ead",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [],
+      "value": "Warning\\nNo images uploaded"
+    }]
+  }, {
+    "id": "a444ce4f-5214-4f64-bfb0-f784cf1f9049",
+    "name": "Submit Work Successfully",
+    "commands": [{
+      "id": "27482008-679f-40a2-967e-17964c945223",
+      "comment": "",
+      "command": "open",
+      "target": "/maintenance/check-requests?request_id=NA%3D%3D",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "508a30c0-878b-4d7b-95bc-e083928bdfd5",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "70ef5889-1ad2-48f9-a60b-0df8ef9463bd",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-containedBlue > .MuiTypography-root",
+      "targets": [
+        ["css=.MuiButton-containedBlue > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[6]/div/div/div[4]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "b0d3648a-57cd-483d-92c3-a9733294d7b2",
+      "comment": "",
+      "command": "type",
+      "target": "name=imageUploader",
+      "targets": [],
+      "value": "E:\\My_Works_Programer\\My_Coding_Practice\\Sci-Park_Project\\frontend\\selenium_test\\images\\submit_work.jpg"
+    }, {
+      "id": "041e8237-53eb-4af8-aa63-b5371fb6cd1f",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-contained:nth-child(2)",
+      "targets": [
+        ["css=.MuiButton-contained:nth-child(2)", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6e2b9e36-8ca2-4f63-8061-60b9bfc6395e",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nWork submitted successfully"
+    }]
+  }, {
+    "id": "2c9fc1d7-ed6a-4262-8325-0a47961db76b",
+    "name": "Start Work Successfully",
+    "commands": [{
+      "id": "ccd74c94-3575-47b5-a1cc-16bdcfd9d05a",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/check-requests?request_id=NA%3D%3D",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "86bfa8d7-cdc5-40e7-a6c2-5b102672e278",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "31847ecd-0f5c-4a84-8ade-2f2c8c342f63",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-containedBlue > .MuiTypography-root",
+      "targets": [
+        ["css=.MuiButton-containedBlue > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[6]/div/div/div[4]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Start')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "c0daeb7b-e38d-41f7-8e51-0311dddbec43",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-contained",
+      "targets": [
+        ["css=.MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "431c8a5c-67eb-4904-b2c1-120c7b719bdb",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nRequest accepted successfully"
+    }]
+  }, {
+    "id": "749f35f2-0cfc-4759-a628-70ee53d8ef05",
+    "name": "Cancel Work Successfully",
+    "commands": [{
+      "id": "05c76666-76ea-4597-abfc-cf0984b47768",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/check-requests?request_id=NA%3D%3D",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "0b219faf-5211-4e68-a8ea-a6831c1bcb36",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "a43604df-be94-4f60-856b-db1c342f0284",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-containedCancel",
+      "targets": [
+        ["css=.MuiButton-containedCancel", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[6]/div/div/div[4]/div/button", "xpath:idRelative"],
+        ["xpath=//div[4]/div/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Cancel')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "745b399e-43aa-441f-b4f6-a38e28b8debd",
+      "comment": "",
+      "command": "type",
+      "target": "name=note",
+      "targets": [],
+      "value": "Note"
+    }, {
+      "id": "7bfceaa6-86eb-454b-84a8-94fda0d0b222",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-contained",
+      "targets": [
+        ["css=.MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "b7c0d440-d0db-420f-b082-e41d3248fb10",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nRequest cancelled successfully"
+    }]
+  }, {
+    "id": "957654c2-7a8a-4cde-9ef0-50b85817d5e8",
+    "name": "Cancel Work Unsuccessfully (Note Required)",
+    "commands": [{
+      "id": "75800154-0944-456d-804c-eb284ec110a6",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/check-requests?request_id=NA%3D%3D",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "bf9cd125-675a-4223-945e-457cebec2a5d",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "83b78697-ba5d-4bab-8bf9-41622b2fae6c",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-containedCancel",
+      "targets": [
+        ["css=.MuiButton-containedCancel", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[6]/div/div/div[4]/div/button", "xpath:idRelative"],
+        ["xpath=//div[4]/div/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Cancel')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "0da381c9-706b-4b46-bcdf-1b614f0e5268",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-contained",
+      "targets": [
+        ["css=.MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[11]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "cb28e90f-1758-4e8f-94d6-06175710d242",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Warning\\nPlease enter a reason before cancel requested."
+    }]
+  }],
+  "suites": [{
+    "id": "914b56c5-cca7-4757-9cf7-84bdd29b3fc2",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["718a5132-fe88-4e79-a946-778e14685cd9"]
+  }],
+  "urls": ["http://localhost:5173/", "http://localhost:5173/maintenance/check-requests?request_id=NA%3D%3D"],
+  "plugins": []
+}

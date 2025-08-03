@@ -100,8 +100,6 @@ function AcceptWork() {
 
     const navigate = useNavigate();
 
-    console.log(maintenanceTasks)
-
     const columnVisibilityModel = {
         Requester: valueTab !== 2,
         Inspection: valueTab === 2,
@@ -939,7 +937,7 @@ function AcceptWork() {
                 setOpenConfirm={setOpenConfirmAccepted}
                 handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
                 title="Confirm Maintenance Request Processing"
-                message="Are you sure you want to proceed with this maintenance request? This action cannot be undone."
+                message="Are you sure you want to start this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 

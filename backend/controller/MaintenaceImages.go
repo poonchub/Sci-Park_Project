@@ -10,6 +10,7 @@ import (
 	"sci-park_web-application/entity"
 	"strconv"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,6 +63,11 @@ func CreateMaintenanceImages(c *gin.Context) {
 		image := entity.MaintenanceImage{
 			FilePath:  fullPath,
 			RequestID: uint(requestID),
+		}
+
+		if ok, err := govalidator.ValidateStruct(&image); !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+			return
 		}
 
 		// ป้องกันข้อมูลซ้ำ

@@ -11,6 +11,7 @@ import (
 	"sci-park_web-application/services"
 	"strconv"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,8 +63,8 @@ func CreateNewsImages(c *gin.Context) {
 		}
 
 		image := entity.NewsImage{
-			FilePath:  fullPath,
-			NewsID: uint(newsID),
+			FilePath: fullPath,
+			NewsID:   uint(newsID),
 		}
 
 		// ป้องกันข้อมูลซ้ำ
@@ -78,8 +79,8 @@ func CreateNewsImages(c *gin.Context) {
 	services.NotifySocketEvent("news_images_created", savedImages)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": 		"อัปโหลดสำเร็จ",
-		"newsImages": 	savedImages,
+		"message":    "อัปโหลดสำเร็จ",
+		"newsImages": savedImages,
 	})
 }
 
@@ -148,8 +149,13 @@ func UpdateNewsImages(c *gin.Context) {
 		}
 
 		image := entity.NewsImage{
-			FilePath:  fullPath,
-			NewsID: uint(newsID),
+			FilePath: fullPath,
+			NewsID:   uint(newsID),
+		}
+
+		if ok, err := govalidator.ValidateStruct(&image); !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+			return
 		}
 
 		if err := db.Create(&image).Error; err != nil {
@@ -163,7 +169,7 @@ func UpdateNewsImages(c *gin.Context) {
 	services.NotifySocketEvent("news_images_updated", newsImages)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":          "อัปเดตรูปภาพสำเร็จ",
+		"message":   "อัปเดตรูปภาพสำเร็จ",
 		"newsImage": newsImages,
 	})
 }

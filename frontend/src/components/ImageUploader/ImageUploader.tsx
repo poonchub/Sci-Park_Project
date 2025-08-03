@@ -89,6 +89,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     <FontAwesomeIcon icon={faImage} size="lg" />
                     <Typography variant="textButtonClassic" >Click to select image files</Typography>
                     <input
+                        name="imageUploader"
                         accept="image/png, image/jpeg, image/jpg"
                         type="file"
                         multiple

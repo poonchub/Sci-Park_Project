@@ -15,6 +15,7 @@ interface TimePickerFieldProps {
     helperText?: string;
     minTime?: string;
     maxTime?: string;
+    name?: string;
 }
 
 const TimePickerField: React.FC<TimePickerFieldProps> = ({
@@ -26,6 +27,7 @@ const TimePickerField: React.FC<TimePickerFieldProps> = ({
     helperText = '',
     minTime,
     maxTime,
+    name = ''
 }) => {
     const CustomActionBar = ({ onAccept, onCancel }: any) => {
         return (
@@ -54,6 +56,7 @@ const TimePickerField: React.FC<TimePickerFieldProps> = ({
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <MobileTimePicker
+                name={name}
                 label={label}
                 value={value ? dayjs(value, 'HH:mm') : null}
                 onChange={(newValue: Dayjs | null) => {
@@ -73,6 +76,7 @@ const TimePickerField: React.FC<TimePickerFieldProps> = ({
                         fullWidth: true,
                         error: error,
                         helperText: helperText,
+                        readOnly: false,
                         InputProps: {
                             endAdornment: (
                                 <InputAdornment position="end">

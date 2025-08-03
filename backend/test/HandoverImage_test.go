@@ -23,7 +23,7 @@ func TestHandoverImageValidation(t *testing.T) {
 		g.Expect(err).To(BeNil())
 	})
 
-	t.Run("Missing Image URL", func(t *testing.T) {
+	t.Run("Missing File Path", func(t *testing.T) {
 		handoverImage := entity.HandoverImage{
 			FilePath: "",
 			TaskID:   1,
@@ -32,24 +32,12 @@ func TestHandoverImageValidation(t *testing.T) {
 		ok, err := govalidator.ValidateStruct(handoverImage)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("Image URL is required"))
-	})
-
-	t.Run("Invalid Image URL", func(t *testing.T) {
-		handoverImage := entity.HandoverImage{
-			FilePath: "not-a-valid-url",
-			TaskID:   1,
-		}
-
-		ok, err := govalidator.ValidateStruct(handoverImage)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("Invalid URL format (example: https://example.com/image.jpg)"))
+		g.Expect(err.Error()).To(Equal("Image file path is required"))
 	})
 
 	t.Run("Missing TaskID", func(t *testing.T) {
         handoverImage := entity.HandoverImage{
-            FilePath: "https://example.com/image.jpg",
+            FilePath: "images/image.jpg",
         }
 
         ok, err := govalidator.ValidateStruct(handoverImage)

@@ -62,7 +62,7 @@ const handleActionAcception = async (
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
-                { type: "success", message: actionType === "accept" ? "Acception successful" : "Cancellation successful" },
+                { type: "success", message: actionType === "accept" ? "Request accepted successfully" : "Request cancelled successfully" },
             ]);
 
             setOpenConfirmAccepted(false);
