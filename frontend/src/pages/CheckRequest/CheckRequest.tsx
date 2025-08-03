@@ -237,7 +237,7 @@ function CheckRequest() {
             if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
 
             setTimeout(() => {
-                setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
+                setAlerts((prev) => [...prev, { type: "success", message: "Request cancelled successfully" }]);
 
                 setOpenConfirmCancelledFromOwnRequest(false);
                 setIsBottonActive(false)

@@ -771,7 +771,7 @@ function MyMaintenanceRequest() {
                 throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
             setTimeout(() => {
-                setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
+                setAlerts((prev) => [...prev, { type: "success", message: "Request cancelled successfully" }]);
 
                 setOpenConfirmCancelled(false);
                 setIsBottonActive(false);

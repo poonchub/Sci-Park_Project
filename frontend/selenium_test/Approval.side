@@ -97,7 +97,7 @@
         ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
         ["xpath=//div/div/div/div/div[2]", "xpath:position"]
       ],
-      "value": "Success\\nApproval successful"
+      "value": "Success\\nRequest approved successfully"
     }]
   }, {
     "id": "7cd3c06c-5867-476b-8a09-bc3342daee1e",
@@ -167,7 +167,7 @@
         ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
         ["xpath=//div/div/div/div/div[2]", "xpath:position"]
       ],
-      "value": "Success\\nRejection successful"
+      "value": "Success\\nRequest rejected successfully"
     }]
   }, {
     "id": "7002d723-bcfe-46e0-a481-6ec63be87bbc",
