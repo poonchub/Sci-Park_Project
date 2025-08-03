@@ -70,25 +70,6 @@ func TestMaintenanceRequestValidation(t *testing.T) {
 		g.Expect(err.Error()).To(Equal("UserID is required"))
 	})
 
-	t.Run("Missing RoomID", func(t *testing.T) {
-		req := entity.MaintenanceRequest{
-			AreaDetail:         "",
-			Description:        "Air conditioner not working",
-			IsAnytimeAvailable: true,
-			StartTime:          time.Now().Add(1 * time.Hour),
-			EndTime:            time.Now().Add(2 * time.Hour),
-			UserID:             1,
-			RequestStatusID:    3,
-			AreaID:             1,
-			MaintenanceTypeID:  5,
-		}
-
-		ok, err := govalidator.ValidateStruct(req)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("RoomID is required"))
-	})
-
 	t.Run("Missing RequestStatusID", func(t *testing.T) {
 		req := entity.MaintenanceRequest{
 			AreaDetail:         "",

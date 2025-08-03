@@ -62,6 +62,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
                 {showNoteField && (
                     <TextField
+                        name="note"
                         fullWidth
                         placeholder="Enter reason"
                         value={note}

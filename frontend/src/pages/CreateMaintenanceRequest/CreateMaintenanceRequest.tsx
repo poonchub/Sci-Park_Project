@@ -65,10 +65,10 @@ import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import dayjs from "dayjs";
-import { LocalizationProvider, PickersActionBar } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider, PickersActionBar } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { MobileTimePicker } from "../../components/MobileTimePicker/MobileTimePicker";
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TimePickerField from "../../components/TimePickerField/TimePickerField";
 import { NotebookPen } from "lucide-react";
 
@@ -79,13 +79,19 @@ function CreateMaintenanceRequestPage() {
     const [rooms, setRooms] = useState<RoomsInterface[]>([]);
     const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
-    const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
-    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
+    const [maintenanceTypes, setMaintenanceTypes] = useState<
+        MaintenanceTypesInteface[]
+    >([]);
+    const [requestStatuses, setRequestStatuses] = useState<
+        RequestStatusesInterface[]
+    >([]);
 
     const [selectedRoomtype, setSelectedRoomtype] = useState(0);
     const [selectedFloor, setSelectedFloor] = useState(0);
 
-    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+    const [alerts, setAlerts] = useState<
+        { type: "warning" | "error" | "success"; message: string }[]
+    >([]);
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -112,10 +118,11 @@ function CreateMaintenanceRequestPage() {
 
     const [isLoadingData, setIsLoadingData] = useState(true);
 
-
     const getUser = async () => {
         try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
+            const res = await GetUserById(
+                Number(localStorage.getItem("userId"))
+            );
             if (res) {
                 setUser(res);
             }
@@ -210,13 +217,22 @@ function CreateMaintenanceRequestPage() {
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = event.target;
 
+        const numberFields = ["AreaID", "RoomID", "MaintenanceTypeID"];
+
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "checkbox" ? checked : value,
+            [name]:
+                type === "checkbox"
+                    ? checked
+                    : numberFields.includes(name)
+                      ? Number(value)
+                      : value,
         }));
     };
 
-    const handleUserDataChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUserDataChange = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
         const { name, value, type, checked } = event.target;
 
         setUser((prev) => ({
@@ -226,35 +242,38 @@ function CreateMaintenanceRequestPage() {
     };
 
     const handleUpdateUser = async () => {
-        setIsEditButtonActive(true)
+        setIsEditButtonActive(true);
         if (!user?.ID) {
             handleSetAlert("error", "User not found");
-            setIsEditButtonActive(false)
+            setIsEditButtonActive(false);
             return;
         }
 
         if (!validateUserData()) {
-            setIsEditButtonActive(false)
-            return
-        };
+            setIsEditButtonActive(false);
+            return;
+        }
 
         try {
             const data = { ...user, UserID: user.ID };
             const resUser = await UpdateUserbyID(data);
 
             if (resUser.status === "error") {
-                handleSetAlert("error", resUser.message || "Failed to update user");
-                setIsEditButtonActive(false)
+                handleSetAlert(
+                    "error",
+                    resUser.message || "Failed to update user"
+                );
+                setIsEditButtonActive(false);
                 return;
             }
 
             handleSetAlert("success", resUser.message);
             setOnEdit(false);
-            setIsEditButtonActive(false)
+            setIsEditButtonActive(false);
         } catch (error) {
             console.error("🚨 Error update user:", error);
             handleSetAlert("error", "An unexpected error occurred");
-            setIsEditButtonActive(false)
+            setIsEditButtonActive(false);
         }
     };
 
@@ -282,14 +301,21 @@ function CreateMaintenanceRequestPage() {
             ...formData,
             AreaID: Number(formData.AreaID),
             UserID: user.ID,
-            StartTime: formData.IsAnytimeAvailable ? undefined : `0001-01-01T${formData.StartTime}:00Z`,
-            EndTime: formData.IsAnytimeAvailable ? undefined : `0001-01-01T${formData.EndTime}:00Z`,
+            StartTime: formData.IsAnytimeAvailable
+                ? undefined
+                : `0001-01-01T${formData.StartTime}:00Z`,
+            EndTime: formData.IsAnytimeAvailable
+                ? undefined
+                : `0001-01-01T${formData.EndTime}:00Z`,
         };
 
         try {
             const resRequest = await CreateMaintenanceRequest(requestPayload);
             if (!resRequest) {
-                handleSetAlert("error", resRequest?.Error || "Failed to create request");
+                handleSetAlert(
+                    "error",
+                    resRequest?.Error || "Failed to create request"
+                );
                 setIsSubmitButtonActive(false);
                 return;
             }
@@ -303,7 +329,10 @@ function CreateMaintenanceRequestPage() {
 
                 const resImage = await CreateMaintenanceImages(formDataFile);
                 if (!resImage) {
-                    handleSetAlert("error", resImage?.Error || "Failed to upload images");
+                    handleSetAlert(
+                        "error",
+                        resImage?.Error || "Failed to upload images"
+                    );
                     setIsSubmitButtonActive(false);
                     return;
                 }
@@ -315,15 +344,20 @@ function CreateMaintenanceRequestPage() {
 
             const resNotification = await CreateNotification(notificationData);
             if (!resNotification) {
-                handleSetAlert("error", resNotification?.Error || "Failed to create notification");
+                handleSetAlert(
+                    "error",
+                    resNotification?.Error || "Failed to create notification"
+                );
                 return;
             }
 
-            handleSetAlert("success", "Maintenance request submitted successfully");
+            handleSetAlert(
+                "success",
+                "Maintenance request submitted successfully"
+            );
             setTimeout(() => {
                 navigate("/maintenance/my-maintenance-request");
             }, 1800);
-
         } catch (error) {
             console.error("🚨 Error submitting request:", error);
             handleSetAlert("error", "An unexpected error occurred");
@@ -331,7 +365,10 @@ function CreateMaintenanceRequestPage() {
         }
     };
 
-    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
+    const handleSetAlert = (
+        type: "success" | "error" | "warning",
+        message: string
+    ) => {
         setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
     };
 
@@ -379,7 +416,8 @@ function CreateMaintenanceRequestPage() {
         } else {
             const phonePattern = /^0[0-9]{9}$/;
             if (!phonePattern.test(user.Phone.trim())) {
-                newErrors.Phone = "Phone number must be 10 digits starting with 0.";
+                newErrors.Phone =
+                    "Phone number must be 10 digits starting with 0.";
             }
         }
 
@@ -390,35 +428,48 @@ function CreateMaintenanceRequestPage() {
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
 
-        const otherAreaID = areas?.find((item) => item.Name === "Other Areas")?.ID || 0;
+        const otherAreaID =
+            areas?.find((item) => item.Name === "Other Areas")?.ID || 0;
 
         if (!formData.AreaID) {
-            newErrors.AreaID = "Please select the maintenance area.";
-        } else if (formData.AreaID == otherAreaID && !formData.AreaDetail?.trim()) {
+            newErrors.AreaID = "Please select a maintenance area.";
+        } else if (
+            formData.AreaID == otherAreaID &&
+            !formData.AreaDetail?.trim()
+        ) {
             newErrors.AreaDetail = "Please specify additional area details.";
         } else if (formData.AreaID !== otherAreaID && selectedRoomtype == 0) {
-            newErrors.RoomTypeID = "Please specify room type.";
+            newErrors.RoomTypeID = "Please select a room type.";
         } else if (formData.AreaID !== otherAreaID && selectedFloor == 0) {
-            newErrors.FloorID = "Please specify floor or location.";
+            newErrors.FloorID = "Please select a floor or location.";
         } else if (formData.AreaID !== otherAreaID && !formData.RoomID) {
-            newErrors.RoomID = "Please select room number.";
+            newErrors.RoomID = "Please select a room number.";
         } else if (!formData.MaintenanceTypeID) {
-            newErrors.MaintenanceTypeID = "Please select problem type.";
-        } else if (formData.MaintenanceTypeID === 6 && !formData.OtherTypeDetail?.trim()) {
-            newErrors.OtherTypeDetail = "Please specify additional problem type.";
+            newErrors.MaintenanceTypeID = "Please select a maintenance type.";
+        } else if (
+            formData.MaintenanceTypeID === 6 &&
+            !formData.OtherTypeDetail?.trim()
+        ) {
+            newErrors.OtherTypeDetail =
+                "Please specify the additional maintenance type.";
         } else if (!formData.Description?.trim()) {
-            newErrors.Description = "Please provide description.";
+            newErrors.Description =
+                "Please provide a description of the problem.";
         } else if (!formData.IsAnytimeAvailable) {
-            if (!formData.StartTime) newErrors.StartTime = "Please specify start time";
-            if (!formData.EndTime) newErrors.EndTime = "Please specify end time";
+            if (!formData.StartTime)
+                newErrors.StartTime = "Please specify the start time.";
+            if (!formData.EndTime)
+                newErrors.EndTime = "Please specify the end time.";
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const filteredRooms = rooms.filter((room) => {
-        return room.FloorID === selectedFloor && room.RoomTypeID === selectedRoomtype;
+        return (
+            room.FloorID === selectedFloor &&
+            room.RoomTypeID === selectedRoomtype
+        );
     });
 
     useEffect(() => {
@@ -471,471 +522,882 @@ function CreateMaintenanceRequestPage() {
                     <Grid
                         container
                         className="title-box"
-                        direction={'row'}
+                        direction={"row"}
                         size={{ xs: 5 }}
                         sx={{ gap: 1 }}
                     >
                         <NotebookPen size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                        <Typography
+                            variant="h5"
+                            className="title"
+                            sx={{ fontWeight: 700 }}
+                        >
                             Create Maintenance Request
                         </Typography>
                     </Grid>
-                    <Grid container size={{ sm: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
-                        <Link to="/maintenance/my-maintenance-request" style={{ textAlign: "center" }}>
+                    <Grid
+                        container
+                        size={{ sm: 7, md: 7 }}
+                        sx={{ justifyContent: "flex-end" }}
+                    >
+                        <Link
+                            to="/maintenance/my-maintenance-request"
+                            style={{ textAlign: "center" }}
+                        >
                             <Button variant="outlined">
                                 <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                                <Typography sx={{ fontSize: 14, ml: 0.6 }}>Back</Typography>
+                                <Typography sx={{ fontSize: 14, ml: 0.6 }}>
+                                    Back
+                                </Typography>
                             </Button>
                         </Link>
                     </Grid>
 
                     {/* Stepper showing request progress */}
                     <Grid size={{ xs: 12, md: 12 }}>
-                        {
-                            isLoadingData ? (
-                                <Skeleton variant="rectangular" width="100%" height={120} sx={{ borderRadius: 2 }} />
-                            ) : (
-                                <RequestStepper requestStatuses={requestStatuses} requestStatusID={0} />
-                            )
-                        }
+                        {isLoadingData ? (
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height={120}
+                                sx={{ borderRadius: 2 }}
+                            />
+                        ) : (
+                            <RequestStepper
+                                requestStatuses={requestStatuses}
+                                requestStatusID={0}
+                            />
+                        )}
                     </Grid>
 
                     {/* Form Card Section */}
-                    {
-                        isLoadingData ? (
-                            <Skeleton variant="rectangular" width="100%" height={500} sx={{ borderRadius: 2 }} />
-                        ) : (
-                            <Card className="status-card" sx={{ width: "100%", borderRadius: 2 }}>
-                                <CardContent>
+                    {isLoadingData ? (
+                        <Skeleton
+                            variant="rectangular"
+                            width="100%"
+                            height={500}
+                            sx={{ borderRadius: 2 }}
+                        />
+                    ) : (
+                        <Card
+                            className="status-card"
+                            sx={{ width: "100%", borderRadius: 2 }}
+                        >
+                            <CardContent>
+                                <Grid
+                                    container
+                                    component="form"
+                                    spacing={{
+                                        xs: 3,
+                                        md: 8,
+                                    }}
+                                    sx={{
+                                        px: {
+                                            xs: 2,
+                                            md: 6,
+                                        },
+                                        py: {
+                                            xs: 1,
+                                            md: 4,
+                                        },
+                                        alignItems: "flex-start",
+                                    }}
+                                    onSubmit={handleSubmit}
+                                >
+                                    {/* Left Section (Form Inputs) */}
                                     <Grid
                                         container
-                                        component="form"
-                                        spacing={{
-                                            xs: 3,
-                                            md: 8,
-                                        }}
-                                        sx={{
-                                            px: {
-                                                xs: 2,
-                                                md: 6,
-                                            },
-                                            py: {
-                                                xs: 1,
-                                                md: 4,
-                                            },
-                                            alignItems: "flex-start",
-                                        }}
-                                        onSubmit={handleSubmit}
+                                        size={{ xs: 12, lg: 6 }}
+                                        spacing={3}
                                     >
-                                        {/* Left Section (Form Inputs) */}
-                                        <Grid container size={{ xs: 12, lg: 6 }} spacing={3}>
-                                            {/* Area Selection */}
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Maintenance Area
-                                                </Typography>
-                                                <FormControl>
-                                                    <RadioGroup row name="AreaID" value={formData.AreaID} onChange={handleInputChange}>
-                                                        {areas.map((item, index) => {
+                                        {/* Area Selection */}
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Maintenance Area
+                                            </Typography>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    row
+                                                    name="AreaID"
+                                                    value={formData.AreaID}
+                                                    onChange={handleInputChange}
+                                                >
+                                                    {areas.map(
+                                                        (item, index) => {
                                                             return (
                                                                 <FormControlLabel
                                                                     key={index}
-                                                                    value={item.ID}
-                                                                    control={<Radio sx={{ color: "#6D6E70" }} />}
-                                                                    label={item.Name}
+                                                                    value={
+                                                                        item.ID
+                                                                    }
+                                                                    control={
+                                                                        <Radio
+                                                                            sx={{
+                                                                                color: "#6D6E70",
+                                                                            }}
+                                                                        />
+                                                                    }
+                                                                    label={
+                                                                        item.Name
+                                                                    }
                                                                 />
                                                             );
-                                                        })}
-                                                    </RadioGroup>
-                                                </FormControl>
-                                            </Grid>
+                                                        }
+                                                    )}
+                                                </RadioGroup>
+                                            </FormControl>
+                                        </Grid>
 
-                                            {formData.AreaID == 2 ? (
+                                        {formData.AreaID == 2 ? (
+                                            <>
+                                                {/* Area Detail Input */}
+                                                <Grid size={{ xs: 12, md: 12 }}>
+                                                    <TextField
+                                                        multiline
+                                                        rows={2}
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        name="AreaDetail"
+                                                        value={
+                                                            formData.AreaDetail
+                                                        }
+                                                        onChange={
+                                                            handleInputChange
+                                                        }
+                                                        placeholder="Enter area for maintenance."
+                                                        error={
+                                                            !!errors.AreaDetail
+                                                        }
+                                                        helperText={
+                                                            errors.AreaDetail
+                                                        }
+                                                        slotProps={{
+                                                            input: {
+                                                                className:
+                                                                    "custom-input",
+                                                            },
+                                                        }}
+                                                    />
+                                                </Grid>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Room Type Selection */}
+                                                <Grid size={{ xs: 12, md: 12 }}>
+                                                    <Typography
+                                                        variant="body1"
+                                                        className="title-field"
+                                                    >
+                                                        Room Type
+                                                    </Typography>
+                                                    <FormControl
+                                                        fullWidth
+                                                        error={
+                                                            !!errors.RoomTypeID
+                                                        }
+                                                    >
+                                                        <Select
+                                                            name="RoomTypeID"
+                                                            displayEmpty
+                                                            defaultValue={0}
+                                                            value={
+                                                                selectedRoomtype
+                                                            }
+                                                            onChange={(e) =>
+                                                                handleSelectedFilter(
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    ),
+                                                                    "roomtype"
+                                                                )
+                                                            }
+                                                        >
+                                                            <MenuItem value={0}>
+                                                                <em>
+                                                                    {
+                                                                        "-- Select Room Type --"
+                                                                    }
+                                                                </em>
+                                                            </MenuItem>
+                                                            {roomTypes.map(
+                                                                (
+                                                                    item,
+                                                                    index
+                                                                ) => {
+                                                                    return (
+                                                                        <MenuItem
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            value={
+                                                                                item.ID
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                item.TypeName
+                                                                            }
+                                                                        </MenuItem>
+                                                                    );
+                                                                }
+                                                            )}
+                                                        </Select>
+                                                        {errors.RoomTypeID && (
+                                                            <FormHelperText>
+                                                                {
+                                                                    errors.RoomTypeID
+                                                                }
+                                                            </FormHelperText>
+                                                        )}
+                                                    </FormControl>
+                                                </Grid>
+
+                                                {/* Floor Number Selection */}
+                                                <Grid size={{ xs: 6, md: 6 }}>
+                                                    <Typography
+                                                        variant="body1"
+                                                        className="title-field"
+                                                    >
+                                                        Location / Floor
+                                                    </Typography>
+                                                    <FormControl
+                                                        fullWidth
+                                                        error={!!errors.FloorID}
+                                                    >
+                                                        <Select
+                                                            name="FloorNumber"
+                                                            displayEmpty
+                                                            defaultValue={""}
+                                                            value={
+                                                                selectedRoomtype ===
+                                                                0
+                                                                    ? 0
+                                                                    : selectedFloor
+                                                            }
+                                                            disabled={
+                                                                selectedRoomtype ===
+                                                                0
+                                                            }
+                                                            onChange={(e) =>
+                                                                handleSelectedFilter(
+                                                                    Number(
+                                                                        e.target
+                                                                            .value
+                                                                    ),
+                                                                    "floorNumber"
+                                                                )
+                                                            }
+                                                        >
+                                                            <MenuItem value={0}>
+                                                                <em>
+                                                                    {
+                                                                        "-- Select Location or Floor --"
+                                                                    }
+                                                                </em>
+                                                            </MenuItem>
+                                                            {floors.map(
+                                                                (
+                                                                    item,
+                                                                    index
+                                                                ) => {
+                                                                    return (
+                                                                        <MenuItem
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            value={
+                                                                                item.ID
+                                                                            }
+                                                                        >{`Floor ${item.Number}`}</MenuItem>
+                                                                    );
+                                                                }
+                                                            )}
+                                                        </Select>
+                                                        {errors.FloorID && (
+                                                            <FormHelperText>
+                                                                {errors.FloorID}
+                                                            </FormHelperText>
+                                                        )}
+                                                    </FormControl>
+                                                </Grid>
+
+                                                {/* Room Number Selection */}
+                                                <Grid size={{ xs: 6, md: 6 }}>
+                                                    <Typography
+                                                        variant="body1"
+                                                        className="title-field"
+                                                    >
+                                                        Room Number
+                                                    </Typography>
+                                                    <FormControl
+                                                        fullWidth
+                                                        error={!!errors.RoomID}
+                                                    >
+                                                        <Select
+                                                            name="RoomID"
+                                                            value={
+                                                                selectedFloor ===
+                                                                    0 ||
+                                                                selectedRoomtype ===
+                                                                    0
+                                                                    ? 0
+                                                                    : String(
+                                                                          formData.RoomID
+                                                                      )
+                                                            }
+                                                            onChange={
+                                                                handleSelectChange
+                                                            }
+                                                            displayEmpty
+                                                            disabled={
+                                                                selectedFloor ===
+                                                                    0 ||
+                                                                selectedRoomtype ===
+                                                                    0
+                                                            }
+                                                        >
+                                                            <MenuItem value={0}>
+                                                                <em>
+                                                                    {
+                                                                        "-- Select Room Number --"
+                                                                    }
+                                                                </em>
+                                                            </MenuItem>
+                                                            {filteredRooms.map(
+                                                                (
+                                                                    item,
+                                                                    index
+                                                                ) => {
+                                                                    return (
+                                                                        <MenuItem
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            value={
+                                                                                item.ID
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                item.RoomNumber
+                                                                            }
+                                                                        </MenuItem>
+                                                                    );
+                                                                }
+                                                            )}
+                                                        </Select>
+                                                        {errors.RoomID && (
+                                                            <FormHelperText>
+                                                                {errors.RoomID}
+                                                            </FormHelperText>
+                                                        )}
+                                                    </FormControl>
+                                                </Grid>
+                                            </>
+                                        )}
+
+                                        {/* Maintenance Type Selection */}
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Maintenance Type
+                                            </Typography>
+                                            <FormControl
+                                                fullWidth
+                                                error={
+                                                    !!errors.MaintenanceTypeID
+                                                }
+                                            >
+                                                <Select
+                                                    name="MaintenanceTypeID"
+                                                    value={Number(
+                                                        formData.MaintenanceTypeID
+                                                    )}
+                                                    onChange={
+                                                        handleSelectChange
+                                                    }
+                                                    displayEmpty
+                                                >
+                                                    <MenuItem value={0}>
+                                                        <em>
+                                                            {
+                                                                "-- Select Maintenance Type --"
+                                                            }
+                                                        </em>
+                                                    </MenuItem>
+                                                    {maintenanceTypes.map(
+                                                        (item, index) => {
+                                                            return (
+                                                                <MenuItem
+                                                                    key={index}
+                                                                    value={
+                                                                        item.ID
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        item.TypeName
+                                                                    }
+                                                                </MenuItem>
+                                                            );
+                                                        }
+                                                    )}
+                                                </Select>
+                                                {errors.MaintenanceTypeID && (
+                                                    <FormHelperText>
+                                                        {
+                                                            errors.MaintenanceTypeID
+                                                        }
+                                                    </FormHelperText>
+                                                )}
+                                            </FormControl>
+                                            {formData.MaintenanceTypeID == 6 ? (
                                                 <>
-                                                    {/* Area Detail Input */}
-                                                    <Grid size={{ xs: 12, md: 12 }}>
+                                                    {/* OtherType Detail Input */}
+                                                    <Grid
+                                                        size={{
+                                                            xs: 12,
+                                                            md: 12,
+                                                        }}
+                                                    >
                                                         <TextField
                                                             multiline
                                                             rows={2}
                                                             fullWidth
                                                             variant="outlined"
-                                                            name="AreaDetail"
-                                                            value={formData.AreaDetail}
-                                                            onChange={handleInputChange}
-                                                            placeholder="Enter area for maintenance."
-                                                            error={!!errors.AreaDetail}
-                                                            helperText={errors.AreaDetail}
+                                                            name="OtherTypeDetail"
+                                                            value={
+                                                                formData.OtherTypeDetail
+                                                            }
+                                                            onChange={
+                                                                handleInputChange
+                                                            }
+                                                            placeholder="Enter maintenance type."
+                                                            error={
+                                                                !!errors.OtherTypeDetail
+                                                            }
+                                                            helperText={
+                                                                errors.OtherTypeDetail
+                                                            }
                                                             slotProps={{
                                                                 input: {
-                                                                    className: "custom-input",
+                                                                    className:
+                                                                        "custom-input",
                                                                 },
                                                             }}
+                                                            sx={{ mt: 1 }}
                                                         />
                                                     </Grid>
                                                 </>
                                             ) : (
-                                                <>
-                                                    {/* Room Type Selection */}
-                                                    <Grid size={{ xs: 12, md: 12 }}>
-                                                        <Typography variant="body1" className="title-field">
-                                                            Room Type
-                                                        </Typography>
-                                                        <FormControl fullWidth error={!!errors.RoomTypeID}>
-                                                            <Select
-                                                                name="RoomTypeID"
-                                                                displayEmpty
-                                                                defaultValue={0}
-                                                                value={selectedRoomtype}
-                                                                onChange={(e) => handleSelectedFilter(Number(e.target.value), "roomtype")}
-                                                            >
-                                                                <MenuItem value={0}>
-                                                                    <em>{"-- Select Room Type --"}</em>
-                                                                </MenuItem>
-                                                                {roomTypes.map((item, index) => {
-                                                                    return (
-                                                                        <MenuItem key={index} value={item.ID}>
-                                                                            {item.TypeName}
-                                                                        </MenuItem>
-                                                                    );
-                                                                })}
-                                                            </Select>
-                                                            {errors.RoomTypeID && <FormHelperText>{errors.RoomTypeID}</FormHelperText>}
-                                                        </FormControl>
-                                                    </Grid>
-
-                                                    {/* Floor Number Selection */}
-                                                    <Grid size={{ xs: 6, md: 6 }}>
-                                                        <Typography variant="body1" className="title-field">
-                                                            Location / Floor
-                                                        </Typography>
-                                                        <FormControl fullWidth error={!!errors.FloorID}>
-                                                            <Select
-                                                                name="FloorNumber"
-                                                                displayEmpty
-                                                                defaultValue={""}
-                                                                value={selectedRoomtype === 0 ? 0 : selectedFloor}
-                                                                disabled={selectedRoomtype === 0}
-                                                                onChange={(e) => handleSelectedFilter(Number(e.target.value), "floorNumber")}
-                                                            >
-                                                                <MenuItem value={0}>
-                                                                    <em>{"-- Select Location or Floor --"}</em>
-                                                                </MenuItem>
-                                                                {floors.map((item, index) => {
-                                                                    return <MenuItem key={index} value={item.ID}>{`Floor ${item.Number}`}</MenuItem>;
-                                                                })}
-                                                            </Select>
-                                                            {errors.FloorID && <FormHelperText>{errors.FloorID}</FormHelperText>}
-                                                        </FormControl>
-                                                    </Grid>
-
-                                                    {/* Room Number Selection */}
-                                                    <Grid size={{ xs: 6, md: 6 }}>
-                                                        <Typography variant="body1" className="title-field">
-                                                            Room Number
-                                                        </Typography>
-                                                        <FormControl fullWidth error={!!errors.RoomID}>
-                                                            <Select
-                                                                name="RoomID"
-                                                                value={selectedFloor === 0 || selectedRoomtype === 0 ? 0 : String(formData.RoomID)}
-                                                                onChange={handleSelectChange}
-                                                                displayEmpty
-                                                                disabled={selectedFloor === 0 || selectedRoomtype === 0}
-                                                            >
-                                                                <MenuItem value={0}>
-                                                                    <em>{"-- Select Room Number --"}</em>
-                                                                </MenuItem>
-                                                                {filteredRooms.map((item, index) => {
-                                                                    return (
-                                                                        <MenuItem key={index} value={item.ID}>
-                                                                            {item.RoomNumber}
-                                                                        </MenuItem>
-                                                                    );
-                                                                })}
-                                                            </Select>
-                                                            {errors.RoomID && <FormHelperText>{errors.RoomID}</FormHelperText>}
-                                                        </FormControl>
-                                                    </Grid>
-                                                </>
+                                                <></>
                                             )}
+                                        </Grid>
 
-                                            {/* Maintenance Type Selection */}
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Maintenance Type
-                                                </Typography>
-                                                <FormControl fullWidth error={!!errors.MaintenanceTypeID}>
-                                                    <Select
-                                                        name="MaintenanceTypeID"
-                                                        value={Number(formData.MaintenanceTypeID)}
-                                                        onChange={handleSelectChange}
-                                                        displayEmpty
-                                                    >
-                                                        <MenuItem value={0}>
-                                                            <em>{"-- Select Maintenance Type --"}</em>
-                                                        </MenuItem>
-                                                        {maintenanceTypes.map((item, index) => {
-                                                            return (
-                                                                <MenuItem key={index} value={item.ID}>
-                                                                    {item.TypeName}
-                                                                </MenuItem>
-                                                            );
-                                                        })}
-                                                    </Select>
-                                                    {errors.MaintenanceTypeID && <FormHelperText>{errors.MaintenanceTypeID}</FormHelperText>}
-                                                </FormControl>
-                                                {formData.MaintenanceTypeID == 6 ? (
-                                                    <>
-                                                        {/* OtherType Detail Input */}
-                                                        <Grid size={{ xs: 12, md: 12 }}>
-                                                            <TextField
-                                                                multiline
-                                                                rows={2}
-                                                                fullWidth
-                                                                variant="outlined"
-                                                                name="OtherTypeDetail"
-                                                                value={formData.OtherTypeDetail}
-                                                                onChange={handleInputChange}
-                                                                placeholder="Enter maintenance type."
-                                                                error={!!errors.OtherTypeDetail}
-                                                                helperText={errors.OtherTypeDetail}
-                                                                slotProps={{
-                                                                    input: {
-                                                                        className: "custom-input",
-                                                                    },
+                                        {/* Description Input */}
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Description
+                                            </Typography>
+                                            <TextField
+                                                multiline
+                                                rows={4}
+                                                fullWidth
+                                                variant="outlined"
+                                                name="Description"
+                                                value={formData.Description}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter maintenance description."
+                                                error={!!errors.Description}
+                                                helperText={errors.Description}
+                                                slotProps={{
+                                                    input: {
+                                                        className:
+                                                            "custom-input",
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+
+                                        {/* Time Input */}
+                                        <Grid
+                                            container
+                                            size={{ xs: 12, md: 12 }}
+                                            spacing={0}
+                                        >
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Available Time Slots
+                                            </Typography>
+
+                                            <Grid
+                                                size={{ xs: 12, md: 12 }}
+                                                marginBottom={1.5}
+                                            >
+                                                <FormGroup>
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                name="IsAnytimeAvailable"
+                                                                checked={
+                                                                    formData.IsAnytimeAvailable
+                                                                }
+                                                                onChange={
+                                                                    handleInputChange
+                                                                }
+                                                                sx={{
+                                                                    color: "#6D6E70",
                                                                 }}
-                                                                sx={{ mt: 1 }}
                                                             />
-                                                        </Grid>
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
+                                                        }
+                                                        label="Any time"
+                                                    />
+                                                </FormGroup>
                                             </Grid>
 
-                                            {/* Description Input */}
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Description
-                                                </Typography>
-                                                <TextField
-                                                    multiline
-                                                    rows={4}
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    name="Description"
-                                                    value={formData.Description}
-                                                    onChange={handleInputChange}
-                                                    placeholder="Enter maintenance description."
-                                                    error={!!errors.Description}
-                                                    helperText={errors.Description}
-                                                    slotProps={{
-                                                        input: {
-                                                            className: "custom-input",
-                                                        },
-                                                    }}
-                                                />
-                                            </Grid>
-
-                                            {/* Time Input */}
-                                            <Grid container size={{ xs: 12, md: 12 }} spacing={0}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Available Time Slots
-                                                </Typography>
-
-                                                <Grid size={{ xs: 12, md: 12 }} marginBottom={1.5}>
-                                                    <FormGroup>
-                                                        <FormControlLabel
-                                                            control={
-                                                                <Checkbox
-                                                                    name="IsAnytimeAvailable"
-                                                                    checked={formData.IsAnytimeAvailable}
-                                                                    onChange={handleInputChange}
-                                                                    sx={{ color: "#6D6E70" }}
-                                                                />
-                                                            }
-                                                            label="Any time"
-                                                        />
-                                                    </FormGroup>
-                                                </Grid>
-
+                                            <Grid
+                                                container
+                                                size={{ xs: 12, md: 12 }}
+                                                sx={{
+                                                    justifyContent:
+                                                        "space-between",
+                                                }}
+                                            >
                                                 <Grid
-                                                    container
-                                                    size={{ xs: 12, md: 12 }}
+                                                    size={{ xs: 5.5, md: 5.5 }}
+                                                >
+                                                    <TimePickerField
+                                                        name="StartTime"
+                                                        label="Start Time"
+                                                        value={
+                                                            formData.StartTime ??
+                                                            ""
+                                                        }
+                                                        onChange={(value) =>
+                                                            setFormData(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    StartTime:
+                                                                        value,
+                                                                })
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            formData.IsAnytimeAvailable
+                                                        }
+                                                        error={
+                                                            !!errors.StartTime
+                                                        }
+                                                        helperText={
+                                                            errors.StartTime
+                                                        }
+                                                        maxTime={
+                                                            formData.EndTime
+                                                        }
+                                                    />
+                                                </Grid>
+                                                <Typography
+                                                    variant="body1"
                                                     sx={{
-                                                        justifyContent: "space-between",
+                                                        alignItems: "center",
+                                                        display: "flex",
                                                     }}
                                                 >
-                                                    <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                        <TimePickerField
-                                                            label="Start Time"
-                                                            value={formData.StartTime ?? ''}
-                                                            onChange={(value) =>
-                                                                setFormData((prev) => ({
+                                                    to
+                                                </Typography>
+                                                <Grid
+                                                    size={{ xs: 5.5, md: 5.5 }}
+                                                >
+                                                    <TimePickerField
+                                                        name="EndTime"
+                                                        label="End Time"
+                                                        value={
+                                                            formData.EndTime ??
+                                                            ""
+                                                        }
+                                                        onChange={(value) =>
+                                                            setFormData(
+                                                                (prev) => ({
                                                                     ...prev,
-                                                                    StartTime: value,
-                                                                }))
-                                                            }
-                                                            disabled={formData.IsAnytimeAvailable}
-                                                            error={!!errors.StartTime}
-                                                            helperText={errors.StartTime}
-                                                            maxTime={formData.EndTime}
-                                                        />
-                                                    </Grid>
-                                                    <Typography variant="body1" sx={{ alignItems: "center", display: "flex" }}>
-                                                        to
-                                                    </Typography>
-                                                    <Grid size={{ xs: 5.5, md: 5.5 }}>
-                                                        <TimePickerField
-                                                            label="End Time"
-                                                            value={formData.EndTime ?? ''}
-                                                            onChange={(value) =>
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    EndTime: value,
-                                                                }))
-                                                            }
-                                                            disabled={formData.IsAnytimeAvailable}
-                                                            error={!!errors.EndTime}
-                                                            helperText={errors.EndTime}
-                                                            minTime={formData.StartTime}
-                                                        />
-                                                    </Grid>
+                                                                    EndTime:
+                                                                        value,
+                                                                })
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            formData.IsAnytimeAvailable
+                                                        }
+                                                        error={!!errors.EndTime}
+                                                        helperText={
+                                                            errors.EndTime
+                                                        }
+                                                        minTime={
+                                                            formData.StartTime
+                                                        }
+                                                    />
                                                 </Grid>
                                             </Grid>
                                         </Grid>
+                                    </Grid>
 
-                                        {/* Right Section (User Info & Upload) */}
-                                        <Grid container size={{ xs: 12, lg: 6 }} spacing={3}>
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Request Creator
-                                                </Typography>
+                                    {/* Right Section (User Info & Upload) */}
+                                    <Grid
+                                        container
+                                        size={{ xs: 12, lg: 6 }}
+                                        spacing={3}
+                                    >
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Request Creator
+                                            </Typography>
+                                            <TextField
+                                                fullWidth
+                                                variant="outlined"
+                                                value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
+                                                slotProps={{
+                                                    input: {
+                                                        readOnly: true,
+                                                        startAdornment: (
+                                                            <InputAdornment
+                                                                position="start"
+                                                                sx={{ mr: 1.6 }}
+                                                            >
+                                                                <FontAwesomeIcon
+                                                                    icon={
+                                                                        faUserTie
+                                                                    }
+                                                                    size="lg"
+                                                                />
+                                                            </InputAdornment>
+                                                        ),
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Typography
+                                                variant="body1"
+                                                className="title-field"
+                                            >
+                                                Contact Information
+                                            </Typography>
+                                            <Grid container spacing={1}>
                                                 <TextField
+                                                    name="Phone"
                                                     fullWidth
                                                     variant="outlined"
-                                                    value={`${user?.EmployeeID} ${user?.FirstName} ${user?.LastName}`}
+                                                    value={
+                                                        user ? user.Phone : ""
+                                                    }
+                                                    onChange={
+                                                        handleUserDataChange
+                                                    }
+                                                    error={!!errors.Phone}
+                                                    helperText={errors.Phone}
                                                     slotProps={{
                                                         input: {
-                                                            readOnly: true,
+                                                            readOnly: !onEdit,
                                                             startAdornment: (
-                                                                <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                                    <FontAwesomeIcon icon={faUserTie} size="lg" />
+                                                                <InputAdornment
+                                                                    position="start"
+                                                                    sx={{
+                                                                        mr: 1.6,
+                                                                    }}
+                                                                >
+                                                                    <FontAwesomeIcon
+                                                                        icon={
+                                                                            faPhone
+                                                                        }
+                                                                        size="lg"
+                                                                    />
+                                                                </InputAdornment>
+                                                            ),
+                                                        },
+                                                    }}
+                                                />
+                                                <TextField
+                                                    name="Email"
+                                                    fullWidth
+                                                    variant="outlined"
+                                                    value={
+                                                        user ? user.Email : ""
+                                                    }
+                                                    onChange={
+                                                        handleUserDataChange
+                                                    }
+                                                    error={!!errors.Email}
+                                                    helperText={errors.Email}
+                                                    slotProps={{
+                                                        input: {
+                                                            readOnly: !onEdit,
+                                                            startAdornment: (
+                                                                <InputAdornment
+                                                                    position="start"
+                                                                    sx={{
+                                                                        mr: 1.6,
+                                                                    }}
+                                                                >
+                                                                    <FontAwesomeIcon
+                                                                        icon={
+                                                                            faEnvelope
+                                                                        }
+                                                                        size="lg"
+                                                                    />
                                                                 </InputAdornment>
                                                             ),
                                                         },
                                                     }}
                                                 />
                                             </Grid>
-
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Typography variant="body1" className="title-field">
-                                                    Contact Information
-                                                </Typography>
-                                                <Grid container spacing={1}>
-                                                    <TextField
-                                                        name="Phone"
-                                                        fullWidth
-                                                        variant="outlined"
-                                                        value={user ? user.Phone : ""}
-                                                        onChange={handleUserDataChange}
-                                                        error={!!errors.Phone}
-                                                        helperText={errors.Phone}
-                                                        slotProps={{
-                                                            input: {
-                                                                readOnly: !onEdit,
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                                        <FontAwesomeIcon icon={faPhone} size="lg" />
-                                                                    </InputAdornment>
-                                                                ),
-                                                            },
-                                                        }}
-                                                    />
-                                                    <TextField
-                                                        name="Email"
-                                                        fullWidth
-                                                        variant="outlined"
-                                                        value={user ? user.Email : ""}
-                                                        onChange={handleUserDataChange}
-                                                        error={!!errors.Email}
-                                                        helperText={errors.Email}
-                                                        slotProps={{
-                                                            input: {
-                                                                readOnly: !onEdit,
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start" sx={{ mr: 1.6 }}>
-                                                                        <FontAwesomeIcon icon={faEnvelope} size="lg" />
-                                                                    </InputAdornment>
-                                                                ),
-                                                            },
-                                                        }}
-                                                    />
-                                                </Grid>
-                                                <Grid container size={{ xs: 12, md: 12 }} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                                    {!onEdit ? (
-                                                        <Button variant="containedBlue" onClick={() => setOnEdit(!onEdit)}>
-                                                            <FontAwesomeIcon icon={faPencil} />
-                                                            <Typography variant="textButtonClassic">Edit Info</Typography>
-                                                        </Button>
-                                                    ) : (
-                                                        <Box sx={{ display: "flex", gap: 1 }}>
-                                                            <Button
-                                                                variant="outlined"
-                                                                onClick={() => {
-                                                                    getUser;
-                                                                    setOnEdit(false);
-                                                                }}
-                                                            >
-                                                                <FontAwesomeIcon icon={faUndo} />
-                                                                <Typography variant="textButtonClassic">Cancel</Typography>
-                                                            </Button>
-                                                            <Button variant="contained" onClick={handleUpdateUser} disabled={isEditButtonActive}>
-                                                                <FontAwesomeIcon icon={faFloppyDisk} />
-                                                                <Typography variant="textButtonClassic">Save</Typography>
-                                                            </Button>
-                                                        </Box>
-                                                    )}
-                                                </Grid>
-                                            </Grid>
-
-                                            <Grid size={{ xs: 12, md: 12 }}>
-                                                <Box display={"flex"}>
-                                                    <Typography variant="body1" className="title-field">
-                                                        Request Images
-                                                    </Typography>
-                                                    <Typography
-                                                        variant="body1"
+                                            <Grid
+                                                container
+                                                size={{ xs: 12, md: 12 }}
+                                                sx={{
+                                                    justifyContent: "flex-end",
+                                                    mt: 1,
+                                                }}
+                                            >
+                                                {!onEdit ? (
+                                                    <Button
+                                                        variant="containedBlue"
+                                                        onClick={() =>
+                                                            setOnEdit(!onEdit)
+                                                        }
+                                                    >
+                                                        <FontAwesomeIcon
+                                                            icon={faPencil}
+                                                        />
+                                                        <Typography variant="textButtonClassic">
+                                                            Edit Info
+                                                        </Typography>
+                                                    </Button>
+                                                ) : (
+                                                    <Box
                                                         sx={{
-                                                            ml: 0.5,
-                                                            color: "gray",
+                                                            display: "flex",
+                                                            gap: 1,
                                                         }}
                                                     >
-                                                        (maximum 3 files)
-                                                    </Typography>
-                                                </Box>
-
-                                                <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
+                                                        <Button
+                                                            variant="outlined"
+                                                            onClick={() => {
+                                                                getUser;
+                                                                setOnEdit(
+                                                                    false
+                                                                );
+                                                            }}
+                                                        >
+                                                            <FontAwesomeIcon
+                                                                icon={faUndo}
+                                                            />
+                                                            <Typography variant="textButtonClassic">
+                                                                Cancel
+                                                            </Typography>
+                                                        </Button>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={
+                                                                handleUpdateUser
+                                                            }
+                                                            disabled={
+                                                                isEditButtonActive
+                                                            }
+                                                        >
+                                                            <FontAwesomeIcon
+                                                                icon={
+                                                                    faFloppyDisk
+                                                                }
+                                                            />
+                                                            <Typography variant="textButtonClassic">
+                                                                Save
+                                                            </Typography>
+                                                        </Button>
+                                                    </Box>
+                                                )}
                                             </Grid>
                                         </Grid>
 
-                                        {/* Buttom Section */}
-                                        <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end" }}>
-                                            <Box sx={{ gap: 1, display: "flex" }}>
-                                                <Button variant="outlined" sx={{ minHeight: "37px" }} onClick={() => handleResetData()}>
-                                                    <FontAwesomeIcon icon={faRotateRight} />
-                                                    <Typography variant="textButtonClassic">Reset Data</Typography>
-                                                </Button>
-                                                <Button variant="contained" sx={{ px: 4, py: 1 }} type="submit" disabled={isSubmitButtonActive}>
-                                                    <FontAwesomeIcon icon={faUpload} />
-                                                    <Typography variant="textButtonClassic">Submit Request</Typography>
-                                                </Button>
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Box display={"flex"}>
+                                                <Typography
+                                                    variant="body1"
+                                                    className="title-field"
+                                                >
+                                                    Request Images
+                                                </Typography>
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        ml: 0.5,
+                                                        color: "gray",
+                                                    }}
+                                                >
+                                                    (maximum 3 files)
+                                                </Typography>
                                             </Box>
+
+                                            <ImageUploader
+                                                value={files}
+                                                onChange={setFiles}
+                                                setAlerts={setAlerts}
+                                                maxFiles={3}
+                                            />
                                         </Grid>
                                     </Grid>
-                                </CardContent>
-                            </Card>
-                        )
-                    }
+
+                                    {/* Buttom Section */}
+                                    <Grid
+                                        container
+                                        size={{ xs: 12, md: 12 }}
+                                        spacing={2}
+                                        sx={{ justifyContent: "flex-end" }}
+                                    >
+                                        <Box sx={{ gap: 1, display: "flex" }}>
+                                            <Button
+                                                variant="outlined"
+                                                sx={{ minHeight: "37px" }}
+                                                onClick={() =>
+                                                    handleResetData()
+                                                }
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faRotateRight}
+                                                />
+                                                <Typography variant="textButtonClassic">
+                                                    Reset Data
+                                                </Typography>
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                sx={{ px: 4, py: 1 }}
+                                                type="submit"
+                                                disabled={isSubmitButtonActive}
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faUpload}
+                                                />
+                                                <Typography variant="textButtonClassic">
+                                                    Submit Request
+                                                </Typography>
+                                            </Button>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    )}
                 </Grid>
             </Container>
         </Box>
