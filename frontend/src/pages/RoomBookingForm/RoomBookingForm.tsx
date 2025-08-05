@@ -55,6 +55,7 @@ import { set } from "react-hook-form";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import './RoomBookingForm.css'
 import './Calendar.css';
+import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 
 interface RoomBookingFormProps {
   room?: {
@@ -136,6 +137,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   console.log("roomDat.Capacity:", roomDat?.Capacity);
   console.log("role:", role);
   console.log("isAllowedToBookLargeRoom:", isAllowedToBookLargeRoom);
+
+  const [openPopupCard, setOpenPopupCard] = useState<boolean>(false)
+  const [slipfile, setSlipFile] = useState<File | null>(null);
+
+  console.log("slipfile:", slipfile);
 
   const getRoomtype = async () => {
     try {
@@ -688,6 +694,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
           bgcolor: 'secondary.main',
         }}
       >
+
         {/* Header */}
         <Box className="calendar-header">
           <Calendar />
@@ -1025,6 +1032,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   return (
     <Box className="booking-container">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+      
+        <PaymentPopup
+          open={openPopupCard}
+          onClose={() => setOpenPopupCard(false)}
+          amount={calculatedPrice}
+          onChangeFile={setSlipFile}
+        />
 
       {/* Header */}
       <Paper elevation={2} className="header-paper">
@@ -1502,7 +1516,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={handleSubmitBooking}
+                  onClick={() => setOpenPopupCard(true)}
                   disabled={
                     loading ||
                     !calculatedPrice ||

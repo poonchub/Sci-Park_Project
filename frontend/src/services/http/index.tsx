@@ -1982,7 +1982,27 @@ async function ListContributors() {
     return res;
 }
 
+// Payment
+async function CreatePayment(data: FormData) {
+    const requestOptions = {
+        method: "PATCH",
+        body: data,
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
 
+    let res = await fetch(`${apiUrl}/payment`, requestOptions).then((res) => {
+        console.log(res)
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 
 
 export {
@@ -2119,8 +2139,10 @@ export {
     GetRoomQuota,
     GetRoomsByRoomTypeID,
     CreateBookingRoom,
-    GetRoomTypesByID
+    GetRoomTypesByID,
 
+    // Payment
+    CreatePayment,
 }
 
 

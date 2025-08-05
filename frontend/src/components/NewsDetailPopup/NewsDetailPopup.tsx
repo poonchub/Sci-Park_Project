@@ -298,9 +298,6 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
         </Dialog>
     );
 
-    console.log(selectedImage)
-    console.log(openImage)
-
     return (
         <Dialog
             open={open}

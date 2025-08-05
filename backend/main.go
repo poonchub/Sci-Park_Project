@@ -55,7 +55,7 @@ func main() {
 		public.POST("/cancel-expired", controller.CancelExpiredBookingsHandler)
 		public.GET("/pending-payments", controller.GetPendingPayments)
 		public.PUT("/update-payment", controller.UpdatePaymentStatus)
-		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
+		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)		
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)
@@ -163,6 +163,9 @@ func main() {
 		protected.GET("/news/pinned-period", controller.ListPinnedNewsPeriod)
 		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
 		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
+
+		// Payment
+		protected.POST("/payment", controller.CreatePayment)
 
 	}
 

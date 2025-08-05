@@ -58,6 +58,10 @@ func UpdateOrganizationInfoByID(c *gin.Context) {
 		if len(files) > 0 {
 			file := files[0]
 
+			if organization.LogoPath != "" {
+                os.Remove(organization.LogoPath)
+            }
+
 			// เตรียมโฟลเดอร์
 			folderPath := "images/organization/logo"
 			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
