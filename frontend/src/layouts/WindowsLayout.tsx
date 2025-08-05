@@ -12,7 +12,7 @@ import Footer from "../components/Footer/Footer";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
 import { MaintenaceImagesInterface } from "../interfaces/IMaintenaceImages";
-import { Container, Chip, useTheme } from "@mui/material";
+import { Container, Chip, useTheme, Skeleton } from "@mui/material";
 
 import { Role } from "../constants/navigationConfig";
 
@@ -83,6 +83,7 @@ const WindowsLayout: React.FC = (props: any) => {
         useState<NotificationCountsInterface>();
     const [organizationInfo, setOrganizationInfo] =
         useState<OrganizationInfoInterface>();
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // Role of current user (from localStorage)
     const role = (localStorage.getItem("role") || "Guest") as Role;
@@ -374,37 +375,32 @@ const WindowsLayout: React.FC = (props: any) => {
         }
     };
 
-    useEffect(() => {
-        const loadUserAndImage = async () => {
-            try {
-                const res = await GetUserById(Number(userId));
-                if (res) {
-                    const imagePathArray = [
-                        { ID: 0, FilePath: String(res?.ProfilePath) },
-                    ];
-                    const base64Image =
-                        await convertPathsToBase64(imagePathArray);
+    const loadUserAndImage = async () => {
+        try {
+            const res = await GetUserById(Number(userId));
+            if (res) {
+                const imagePathArray = [
+                    { ID: 0, FilePath: String(res?.ProfilePath) },
+                ];
+                const base64Image = await convertPathsToBase64(imagePathArray);
 
-                    // เซ็ต session หลังจากได้ user และ image
-                    setSession({
-                        user: {
-                            name: `${res.FirstName} ${res.LastName}`,
-                            email: res.Email,
-                            image: base64Image || "",
-                        },
-                    });
+                // เซ็ต session หลังจากได้ user และ image
+                setSession({
+                    user: {
+                        name: `${res.FirstName} ${res.LastName}`,
+                        email: res.Email,
+                        image: base64Image || "",
+                    },
+                });
 
-                    setUser(res);
-                    setProfileImage(base64Image);
-                    getUnreadNotificationCounts(); // ดึงเฉพาะหลังจากเซ็ต session เสร็จ
-                }
-            } catch (error) {
-                console.error("Error loading user or image:", error);
+                setUser(res);
+                setProfileImage(base64Image);
+                getUnreadNotificationCounts(); // ดึงเฉพาะหลังจากเซ็ต session เสร็จ
             }
-        };
-
-        loadUserAndImage();
-    }, []);
+        } catch (error) {
+            console.error("Error loading user or image:", error);
+        }
+    };
 
     const navigation = getNavigationByRole(role);
     const navigateUrl = useNavigate();
@@ -478,7 +474,16 @@ const WindowsLayout: React.FC = (props: any) => {
     };
 
     useEffect(() => {
-        getOrganizationInfo();
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getOrganizationInfo(), loadUserAndImage()]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -522,7 +527,13 @@ const WindowsLayout: React.FC = (props: any) => {
             authentication={authentication}
             session={session}
             branding={{
-                logo: (
+                logo: isLoadingData ? (
+                    <Skeleton
+                        variant="rectangular"
+                        height={'100%'}
+                        sx={{ borderRadius: 2 }}
+                    />
+                ) : (
                     <img
                         src={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`}
                         alt=" RSP Northeast 2"
