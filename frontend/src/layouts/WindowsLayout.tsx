@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Box from "@mui/material/Box";
-import { apiUrl, GetOrganizationInfo } from '../services/http/index';
+import { apiUrl, GetOrganizationInfo } from "../services/http/index";
 import {
     GetUnreadNotificationCountsByUserID,
     GetUserById,
@@ -11,9 +11,8 @@ import { UserInterface } from "../interfaces/IUser";
 import Footer from "../components/Footer/Footer";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
-import { MaintenaceImagesInterface } from '../interfaces/IMaintenaceImages'
-import { Container, Chip, useTheme } from '@mui/material';
-
+import { MaintenaceImagesInterface } from "../interfaces/IMaintenaceImages";
+import { Container, Chip, useTheme } from "@mui/material";
 
 import { Role } from "../constants/navigationConfig";
 
@@ -31,7 +30,21 @@ import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
 import { isAdmin, isManager, isOperator } from "../routes";
-import { ClipboardList, DoorOpen, HardHat, Home, LayoutDashboard, UserCog, UserRound, UserRoundPlus, Wrench, ShieldUser, ChartPie, Newspaper, Building2 } from "lucide-react";
+import {
+    ClipboardList,
+    DoorOpen,
+    HardHat,
+    Home,
+    LayoutDashboard,
+    UserCog,
+    UserRound,
+    UserRoundPlus,
+    Wrench,
+    ShieldUser,
+    ChartPie,
+    Newspaper,
+    Building2,
+} from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
 
@@ -68,15 +81,14 @@ const WindowsLayout: React.FC = (props: any) => {
     const [user, setUser] = useState<UserInterface>();
     const [notificationCounts, setNotificationCounts] =
         useState<NotificationCountsInterface>();
-    const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>()
+    const [organizationInfo, setOrganizationInfo] =
+        useState<OrganizationInfoInterface>();
 
     // Role of current user (from localStorage)
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
 
-
-
-    const iconSize = 24
+    const iconSize = 24;
 
     const { t } = useTranslation();
 
@@ -85,7 +97,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
     useEffect(() => {
         if (containerRef.current) {
-            containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
         }
     }, [location.pathname]);
 
@@ -139,52 +151,57 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "Analytics",
             icon: <ChartPie />,
         },
+        // {
+        //     segment: "maintenance",
+        //     title: t("maintenance"),
+        //     icon: <Wrench size={iconSize} />,
+        //     action:
+        //         notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
+        //             <Chip
+        //                 label={notificationCounts.UnreadRequests}
+        //                 color="primary"
+        //                 size="small"
+        //             />
+        //         ) : notificationCounts?.UnreadTasks && notificationCounts?.UnreadTasks && isOperator ? (
+        //             <Chip
+        //                 label={notificationCounts.UnreadTasks}
+        //                 color="primary"
+        //                 size="small"
+        //             />
+        //         ) : null,
+        //     children: [
+
+        //     ],
+        // },
         {
-            segment: "maintenance",
-            title: t("maintenance"),
-            icon: <Wrench size={iconSize} />,
+            segment: "maintenance/all-maintenance-request",
+            title: t("requestList"),
+            icon: <ClipboardList size={iconSize} />,
             action:
-                notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
+                notificationCounts?.UnreadRequests &&
+                notificationCounts?.UnreadRequests > 0 &&
+                (isAdmin || isManager) ? (
                     <Chip
                         label={notificationCounts.UnreadRequests}
                         color="primary"
                         size="small"
                     />
-                ) : notificationCounts?.UnreadTasks && notificationCounts?.UnreadTasks && isOperator ? (
+                ) : null,
+        },
+        {
+            segment: "maintenance/accept-work",
+            title: "My Work",
+            icon: <HardHat />,
+            action:
+                notificationCounts?.UnreadTasks &&
+                notificationCounts.UnreadTasks &&
+                isOperator ? (
                     <Chip
                         label={notificationCounts.UnreadTasks}
                         color="primary"
                         size="small"
                     />
                 ) : null,
-            children: [
-                {
-                    segment: "all-maintenance-request",
-                    title: t("requestList"),
-                    icon: <ClipboardList size={iconSize} />,
-                    action:
-                        notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && (isAdmin || isManager) ? (
-                            <Chip
-                                label={notificationCounts.UnreadRequests}
-                                color="primary"
-                                size="small"
-                            />
-                        ) : null,
-                },
-                {
-                    segment: "accept-work",
-                    title: "My Work",
-                    icon: <HardHat />,
-                    action:
-                        notificationCounts?.UnreadTasks && notificationCounts.UnreadTasks && isOperator ? (
-                            <Chip
-                                label={notificationCounts.UnreadTasks}
-                                color="primary"
-                                size="small"
-                            />
-                        ) : null,
-                },
-            ],
         },
         {
             segment: "user",
@@ -270,7 +287,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
             "organization-info",
 
-            "all-maintenance-request",
+            "maintenance/all-maintenance-request",
             "manage-room",
             "manage-user",
             "add-user",
@@ -287,7 +304,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
             "organization-info",
 
-            "all-maintenance-request",
+            "maintenance/all-maintenance-request",
         ],
         Operator: [
             "home",
@@ -298,7 +315,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "my-account",
             "news",
 
-            "accept-work",
+            "maintenance/accept-work",
         ],
         User: [
             "home",
@@ -333,7 +350,9 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const [profileImage, setProfileImage] = useState<string | null>(null);
 
-    const convertPathsToBase64 = async (images: MaintenaceImagesInterface[]): Promise<string | null> => {
+    const convertPathsToBase64 = async (
+        images: MaintenaceImagesInterface[]
+    ): Promise<string | null> => {
         if (images.length === 0) return null;
 
         const img = images[0]; // ✅ ดึงแค่ไฟล์แรก
@@ -350,7 +369,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 reader.readAsDataURL(blob);
             });
         } catch (error) {
-            console.error('Error converting image to base64: ', error);
+            console.error("Error converting image to base64: ", error);
             return null;
         }
     };
@@ -360,8 +379,11 @@ const WindowsLayout: React.FC = (props: any) => {
             try {
                 const res = await GetUserById(Number(userId));
                 if (res) {
-                    const imagePathArray = [{ ID: 0, FilePath: String(res?.ProfilePath) }];
-                    const base64Image = await convertPathsToBase64(imagePathArray);
+                    const imagePathArray = [
+                        { ID: 0, FilePath: String(res?.ProfilePath) },
+                    ];
+                    const base64Image =
+                        await convertPathsToBase64(imagePathArray);
 
                     // เซ็ต session หลังจากได้ user และ image
                     setSession({
@@ -383,7 +405,6 @@ const WindowsLayout: React.FC = (props: any) => {
 
         loadUserAndImage();
     }, []);
-
 
     const navigation = getNavigationByRole(role);
     const navigateUrl = useNavigate();
@@ -416,7 +437,9 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const getUnreadNotificationCounts = async () => {
         try {
-            const resCounts = await GetUnreadNotificationCountsByUserID(user?.ID);
+            const resCounts = await GetUnreadNotificationCountsByUserID(
+                user?.ID
+            );
             if (resCounts) {
                 setNotificationCounts(resCounts);
             }
@@ -428,7 +451,9 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const getNewUnreadNotificationCounts = async () => {
         try {
-            const resCounts = await GetUnreadNotificationCountsByUserID(user?.ID);
+            const resCounts = await GetUnreadNotificationCountsByUserID(
+                user?.ID
+            );
             if (resCounts) {
                 setNotificationCounts((prev) => ({
                     ...prev,
@@ -443,18 +468,18 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const getOrganizationInfo = async () => {
         try {
-            const res = await GetOrganizationInfo()
+            const res = await GetOrganizationInfo();
             if (res) {
-                setOrganizationInfo(res)
+                setOrganizationInfo(res);
             }
         } catch (error) {
             console.error("Error fetching organization info:", error);
         }
-    }
+    };
 
     useEffect(() => {
-        getOrganizationInfo()
-    }, [])
+        getOrganizationInfo();
+    }, []);
 
     useEffect(() => {
         if (!user?.ID) return;
@@ -497,32 +522,32 @@ const WindowsLayout: React.FC = (props: any) => {
             authentication={authentication}
             session={session}
             branding={{
-                logo: <img 
-                    src={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`} 
-                    alt=" RSP Northeast 2"
-                    style={{
-                        backgroundColor: '#fff',
-                        padding: "3px 10px",
-                        borderRadius: 5,
-                    }} 
-                />,
+                logo: (
+                    <img
+                        src={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`}
+                        alt=" RSP Northeast 2"
+                        style={{
+                            backgroundColor: "#fff",
+                            padding: "3px 10px",
+                            borderRadius: 5,
+                        }}
+                    />
+                ),
                 title: "",
                 homeUrl: "/home",
             }}
         >
-            <DashboardLayout
-                sidebarExpandedWidth={260}
-            >
+            <DashboardLayout sidebarExpandedWidth={260}>
                 {/* Main content area */}
                 <Container
                     maxWidth={false}
-                    sx={{ p: '0px !important', overflow: 'auto' }}
-                    className='content-box'
+                    sx={{ p: "0px !important", overflow: "auto" }}
+                    className="content-box"
                     ref={containerRef}
                 >
                     <Box
                         sx={{
-                            minHeight: '95vh',
+                            minHeight: "95vh",
                             p: 4,
                         }}
                     >
@@ -532,7 +557,6 @@ const WindowsLayout: React.FC = (props: any) => {
                 </Container>
             </DashboardLayout>
         </AppProvider>
-
     );
 };
 
