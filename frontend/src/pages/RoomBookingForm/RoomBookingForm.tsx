@@ -1153,22 +1153,24 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
         formData.append('files', slipfile as File);
 
         const resPayment = await CreatePayment(formData)
-        console.log("Payment response:", resPayment);
+        if (!resPayment) {
+          console.error("❌ Payment creation failed");
+        }
 
-        // await fetchBookingMapOnly(roomData.id);
+        await fetchBookingMapOnly(roomData.id);
 
-        // // รีเซ็ตฟอร์ม
-        // setSelectedDates([]);
-        // setName(name);
-        // setPhone(phone);
-        // setEmail(email);
-        // setAdditionalNote('');
-        // setPurpose('');
-        // const val = Number(selectedRoomId);
-        // setSelectedRoomId(val);
-        // fetchBookingMapOnly(val);
+        // รีเซ็ตฟอร์ม
+        setSelectedDates([]);
+        setName(name);
+        setPhone(phone);
+        setEmail(email);
+        setAdditionalNote('');
+        setPurpose('');
+        const val = Number(selectedRoomId);
+        setSelectedRoomId(val);
+        fetchBookingMapOnly(val);
 
-        // handleSetAlert("success", "Booking created successfully.");
+        handleSetAlert("success", "Booking created successfully.");
       }
     } catch (err) {
       console.error("Booking Error:", err);
