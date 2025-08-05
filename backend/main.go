@@ -164,6 +164,13 @@ func main() {
 		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
 		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
 
+		// RequestServiceArea & AboutCompany
+		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
+		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
+		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
+		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
+		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -239,7 +246,6 @@ func main() {
 			log.Println("Background job: CancelExpiredBookings finished")
 		}
 	}()
-	
 
 	// 🚀 Start Server
 	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น

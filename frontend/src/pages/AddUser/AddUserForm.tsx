@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio, Grid } from '@mui/material';
+import { Button, MenuItem, InputLabel, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio, Grid, Box } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import './AddUserForm.css';  // Import the updated CSS
 import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes } from '../../services/http';  // Assuming these are your API functions
@@ -18,7 +18,12 @@ import { TextField } from "../../components/TextField/TextField";
 import { TextArea } from '../../components/TextField/TextArea';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight, faBook } from "@fortawesome/free-solid-svg-icons";
+import {
 
+
+  UserRoundPlus,
+
+} from "lucide-react";
 
 const AddUserForm: React.FC = () => {
   const { control, handleSubmit, reset, formState: { errors }, watch } = useForm();
@@ -162,12 +167,10 @@ const AddUserForm: React.FC = () => {
         );
       })}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '10px' }}>
-        <Typography
-          variant="h6"
-          className="title"
-        >
-          Add User
-        </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <UserRoundPlus size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+                    </Box>
         <Button
           variant="outlined"
           startIcon={<FontAwesomeIcon icon={faBook} />}

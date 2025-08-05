@@ -124,7 +124,9 @@ function CreateMaintenanceRequestPage() {
                 Number(localStorage.getItem("userId"))
             );
             if (res) {
-                setUser(res);
+                // Remove password from user data for security
+                const { Password, ...userWithoutPassword } = res;
+                setUser(userWithoutPassword);
             }
         } catch (error) {
             console.error("Error fetching user:", error);

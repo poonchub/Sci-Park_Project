@@ -19,6 +19,9 @@ import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
+import {
+    UserCog,
+} from "lucide-react";
 // Remove analytics import - no longer needed
 // import { analyticsService } from "../../services/analyticsService";
 
@@ -114,35 +117,19 @@ function ManageUsers() {
     ];
 
     const handleClearFillter = () => {
-        window.location.reload();
-
+        setSearchText('');
+        setSelectRole(0);
+        setSelectPackage(0);
+        setIsEmployee(undefined);
+        setPage(1);
+        setLimit(10);
     }
 
-    // Search function
+    // Search function - now triggers API call with search parameter
     const handleSearch = () => {
-        let filteredUsers = users;
-
-
-        // Filter data from search text
-        if (searchText !== '') {
-            filteredUsers = filteredUsers.filter((user) =>
-                (user.UserNameCombined && user.UserNameCombined.toLowerCase().includes(searchText.toLowerCase())) ||
-                (user.EmployeeID && user.EmployeeID.toLowerCase().includes(searchText.toLowerCase())) ||
-                (user.Email && user.Email.toLowerCase().includes(searchText.toLowerCase()))
-            );
-        }
-
-        // Filter data by position (role) if position is selected
-        if (selectrole !== 0) {
-            filteredUsers = filteredUsers.filter((user) => user.RoleID === selectrole);
-        }
-
-        // Filter data by privileges (package) if privileges are selected
-        if (selectpackage !== 0) {
-            filteredUsers = filteredUsers.filter((user) => user.UserPackageID === selectpackage);
-        }
-
-        setUsers(filteredUsers);  // Set filtered results
+        // Reset to page 1 when searching
+        setPage(1);
+        // The actual search will be handled by the useEffect that watches debouncedSearchText
     };
 
     const handleOpenPopup = (userId: number) => {
@@ -163,9 +150,7 @@ function ManageUsers() {
         setSelectRole(0);  // Reset selectrole when popup is closed
         
         setSelectedUserId(null); // Reset selectedUserId when popup is closed
-        setSearchText('');  // Reset search text if needed
         setPage(1);         // Reset to page 1
-
     };
 
     // Fetch users from the API
@@ -177,6 +162,7 @@ function ManageUsers() {
                 page: page,
                 limit: limit,
                 isemployee: isEmployee,
+                search: debouncedSearchText, // Add search parameter
             });  // Call the API to get users data
             if (res) {
                 setUsers(res.data);  // Set the fetched users to state
@@ -228,7 +214,7 @@ function ManageUsers() {
 
     useEffect(() => {
         getUsers();
-    }, [selectrole, selectpackage, isEmployee, page, limit]);
+    }, [selectrole, selectpackage, isEmployee, page, limit, debouncedSearchText]);
 
 
     return (
@@ -252,7 +238,11 @@ function ManageUsers() {
 
             <Grid container spacing={3}>
                 <Grid className='title-box' size={{ xs: 10, md: 12 }} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6" className="title">Manage Users</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <UserCog size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Users</Typography>
+                    </Box>
+
                     <Button
                         variant="outlined"
                         size="small"
@@ -294,12 +284,16 @@ function ManageUsers() {
                                 onChange={(e) => {
                                     setSearchText(e.target.value);  // set searchText value
                                 }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSearch();
+                                    }
+                                }}
                                 slotProps={{
                                     input: {
                                         startAdornment: (
                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
                                                 <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
-
                                             </InputAdornment>
                                         ),
                                     }

@@ -92,6 +92,8 @@ func SetupDatabase() {
 		&entity.ContributorType{},
 		&entity.RequestServiceArea{},
 		&entity.AboutCompany{},
+		&entity.RequestServiceArea{},
+		&entity.AboutCompany{},
 	)
 
 	if err != nil {

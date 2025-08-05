@@ -135,6 +135,9 @@ async function ListUsers(data: QuarryInterface) {
         if (data.isemployee !== undefined) {
             params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
         }
+        if (data.search && data.search.trim() !== '') {
+            params.append("search", data.search.trim());  // เพิ่ม search parameter
+        }
 
         const response = await axiosInstance.get(`/users?${params.toString()}`);
         return response.data;
@@ -219,8 +222,8 @@ async function UpdateUserbyID(data: any) {
     formData.append("last_name", data.LastName || "");
     formData.append("gender_id", data.GenderID.toString());
     formData.append("email", data.Email || "");
-    // Only append password if user entered a new password
-    if (data.Password) {
+    // Only append password if user entered a new password (explicitly provided)
+    if (data.Password && data.Password.trim() !== "") {
         formData.append("password", data.Password);
     }
     formData.append("phone", data.Phone || "");
