@@ -167,6 +167,7 @@ function Dashboard() {
         }
     }, [dateRange])
 
+    const prevDateOption = useRef<string>(selectedDateOption);
     useEffect(() => {
         if (selectedDateOption === 'hourly') {
             const today = dayjs().startOf('day')
@@ -177,14 +178,16 @@ function Dashboard() {
             }));
         }
         else {
-            setDateRange((prev) => ({
-                ...prev,
-                start: null,
-                end: null,
-            }));
+            if (prevDateOption.current === "hourly") {
+                setDateRange((prev) => ({
+                    ...prev,
+                    start: null,
+                    end: null,
+                }));
+            };
         }
         getMaintenanceRequests()
-
+        prevDateOption.current = selectedDateOption;
     }, [selectedDateOption])
 
     useEffect(() => {

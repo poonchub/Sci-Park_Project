@@ -141,6 +141,7 @@ function News() {
         try {
             const resNews = await CreateNews(formData)
             if (!resNews) {
+                console.error("🚨 Error creating news:", resNews);
                 handleSetAlert("error", resNews?.Error || "Failed to create news");
                 setIsSubmitButtonActive(false);
                 return;
@@ -477,6 +478,7 @@ function News() {
                                                     <Grid size={{ xs: 6 }}>
                                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                             <DatePicker
+                                                                name='DisplayStart'
                                                                 label="Start Date"
                                                                 value={formData.DisplayStart ? dayjs(formData.DisplayStart) : null}
                                                                 onChange={(newValue) => handleDateChange('DisplayStart', newValue)}
@@ -501,6 +503,7 @@ function News() {
                                                     <Grid size={{ xs: 6 }}>
                                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                             <DatePicker
+                                                                name='DisplayEnd'
                                                                 label="End Date"
                                                                 value={formData.DisplayEnd ? dayjs(formData.DisplayEnd) : null}
                                                                 onChange={(newValue) => handleDateChange('DisplayEnd', newValue)}

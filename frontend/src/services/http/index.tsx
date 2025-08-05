@@ -1716,7 +1716,6 @@ async function CreateNews(data: NewsImagesInterface) {
     return res;
 }
 
-
 async function GetTimeSlots(id?: number) {
 
     const requestOptions = {

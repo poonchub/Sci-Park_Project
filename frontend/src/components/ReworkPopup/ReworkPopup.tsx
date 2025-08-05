@@ -70,6 +70,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
 
                 {showNoteField && (
                     <TextField
+                        name="note"
                         fullWidth
                         placeholder="Enter reason"
                         value={note}

@@ -1,6 +1,23 @@
-import { faCheck, faEye, faFileLines, faQuestionCircle, faRepeat, faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+    faCheck,
+    faEye,
+    faFileLines,
+    faQuestionCircle,
+    faRepeat,
+    faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Button, Container, Divider, Grid, Skeleton, Tooltip, Typography, useMediaQuery } from "@mui/material";
+import {
+    Box,
+    Button,
+    Container,
+    Divider,
+    Grid,
+    Skeleton,
+    Tooltip,
+    Typography,
+    useMediaQuery,
+} from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -42,14 +59,18 @@ import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 import { Wrench } from "lucide-react";
 
 function MyMaintenanceRequest() {
-    const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
-    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
-    const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
+    const [maintenanceRequests, setMaintenanceRequests] = useState<
+        MaintenanceRequestsInterface[]
+    >([]);
+    const [requestStatuses, setRequestStatuses] = useState<
+        RequestStatusesInterface[]
+    >([]);
+    const [selectedRequest, setSelectedRequest] =
+        useState<MaintenanceRequestsInterface>({});
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_MAINTENANCE_REQUEST,
-        
     });
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
@@ -57,17 +78,21 @@ function MyMaintenanceRequest() {
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
     const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
     const [isLoadingData, setIsLoadingData] = useState(true);
-    const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
+    const [openConfirmInspection, setOpenConfirmInspection] =
+        useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
-    const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+    const [openConfirmCancelled, setOpenConfirmCancelled] =
+        useState<boolean>(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
-    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+    const [alerts, setAlerts] = useState<
+        { type: "warning" | "error" | "success"; message: string }[]
+    >([]);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
     const [isBottonActive, setIsBottonActive] = useState(false);
@@ -83,8 +108,10 @@ function MyMaintenanceRequest() {
                     flex: 1,
                     renderCell: (params) => {
                         const data = params.row;
-                        const statusName = params.row.RequestStatus?.Name || "Pending";
-                        const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
+                        const statusName =
+                            params.row.RequestStatus?.Name || "Pending";
+                        const statusKey = params.row.RequestStatus
+                            ?.Name as keyof typeof statusConfig;
                         const {
                             color: statusColor,
                             colorLite: statusColorLite,
@@ -104,25 +131,39 @@ function MyMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
-                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
-                            color: "#000",
-                            colorLite: "#000",
-                            icon: faQuestionCircle,
-                        };
+                        const typeName =
+                            params.row.MaintenanceType?.TypeName ||
+                            "Electrical Work";
+                        const maintenanceKey = params.row.MaintenanceType
+                            ?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color: typeColor, icon: typeIcon } =
+                            maintenanceTypeConfig[maintenanceKey] ?? {
+                                color: "#000",
+                                colorLite: "#000",
+                                icon: faQuestionCircle,
+                            };
 
-                        const showButtonConfirm = params.row.RequestStatus?.Name === "Waiting For Review";
-                        const showButtonCancel = params.row.RequestStatus?.Name === "Pending";
+                        const showButtonConfirm =
+                            params.row.RequestStatus?.Name ===
+                            "Waiting For Review";
+                        const showButtonCancel =
+                            params.row.RequestStatus?.Name === "Pending";
 
-                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
+                        const cardItem = document.querySelector(
+                            ".card-item-container"
+                        ) as HTMLElement;
                         let width;
                         if (cardItem) {
                             width = cardItem.offsetWidth;
                         }
 
                         return (
-                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container">
+                            <Grid
+                                container
+                                size={{ xs: 12 }}
+                                sx={{ px: 1 }}
+                                className="card-item-container"
+                            >
                                 <Grid size={{ xs: 7 }}>
                                     <Typography
                                         sx={{
@@ -133,10 +174,27 @@ function MyMaintenanceRequest() {
                                             maxWidth: "100%",
                                         }}
                                     >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
+                                        {areaID === 2
+                                            ? `${areaDetail}`
+                                            : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                     </Typography>
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
-                                        <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                    <Box
+                                        sx={{
+                                            color: "text.secondary",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.4,
+                                            my: 0.8,
+                                        }}
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faClock}
+                                            style={{
+                                                width: "12px",
+                                                height: "12px",
+                                                paddingBottom: "4px",
+                                            }}
+                                        />
                                         <Typography
                                             sx={{
                                                 fontSize: 13,
@@ -172,11 +230,22 @@ function MyMaintenanceRequest() {
                                         }}
                                     >
                                         <FontAwesomeIcon icon={typeIcon} />
-                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {typeName}
+                                        </Typography>
                                     </Box>
                                 </Grid>
 
-                                <Grid size={{ xs: 5 }} container direction="column">
+                                <Grid
+                                    size={{ xs: 5 }}
+                                    container
+                                    direction="column"
+                                >
                                     <Box
                                         sx={{
                                             bgcolor: statusColorLite,
@@ -218,19 +287,33 @@ function MyMaintenanceRequest() {
                                         }}
                                     >
                                         {showButtonConfirm ? (
-                                            <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid
+                                                container
+                                                spacing={0.8}
+                                                size={{ xs: 12 }}
+                                            >
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title={"Confirm"}>
                                                         <Button
                                                             variant="containedBlue"
                                                             onClick={() => {
-                                                                setOpenConfirmInspection(true);
-                                                                setSelectedRequest(data);
+                                                                setOpenConfirmInspection(
+                                                                    true
+                                                                );
+                                                                setSelectedRequest(
+                                                                    data
+                                                                );
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <FontAwesomeIcon
+                                                                icon={faCheck}
+                                                                size="lg"
+                                                            />
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Confirm
                                                             </Typography>
                                                         </Button>
@@ -241,13 +324,23 @@ function MyMaintenanceRequest() {
                                                         <Button
                                                             variant="outlined"
                                                             onClick={() => {
-                                                                setOpenConfirmRework(true);
-                                                                setSelectedRequest(data);
+                                                                setOpenConfirmRework(
+                                                                    true
+                                                                );
+                                                                setSelectedRequest(
+                                                                    data
+                                                                );
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faRepeat} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <FontAwesomeIcon
+                                                                icon={faRepeat}
+                                                                size="lg"
+                                                            />
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Rework
                                                             </Typography>
                                                         </Button>
@@ -258,37 +351,61 @@ function MyMaintenanceRequest() {
                                                         <Button
                                                             variant="outlinedGray"
                                                             onClick={() => {
-                                                                handleClickCheck(data);
+                                                                handleClickCheck(
+                                                                    data
+                                                                );
                                                             }}
                                                             sx={{
-                                                                minWidth: "42px",
+                                                                minWidth:
+                                                                    "42px",
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faEye} size="lg" />
-                                                            {width && width > 530 && (
-                                                                <Typography variant="textButtonClassic" className="text-btn">
-                                                                    Details
-                                                                </Typography>
-                                                            )}
+                                                            <FontAwesomeIcon
+                                                                icon={faEye}
+                                                                size="lg"
+                                                            />
+                                                            {width &&
+                                                                width > 530 && (
+                                                                    <Typography
+                                                                        variant="textButtonClassic"
+                                                                        className="text-btn"
+                                                                    >
+                                                                        Details
+                                                                    </Typography>
+                                                                )}
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
                                             </Grid>
                                         ) : showButtonCancel ? (
-                                            <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid
+                                                container
+                                                spacing={0.8}
+                                                size={{ xs: 12 }}
+                                            >
                                                 <Grid size={{ xs: 7 }}>
                                                     <Tooltip title={"Cancel"}>
                                                         <Button
                                                             variant="containedCancel"
                                                             onClick={() => {
-                                                                setOpenConfirmCancelled(true);
-                                                                setSelectedRequest(data);
+                                                                setOpenConfirmCancelled(
+                                                                    true
+                                                                );
+                                                                setSelectedRequest(
+                                                                    data
+                                                                );
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <FontAwesomeIcon
+                                                                icon={faXmark}
+                                                                size="lg"
+                                                            />
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Cancel
                                                             </Typography>
                                                         </Button>
@@ -299,19 +416,29 @@ function MyMaintenanceRequest() {
                                                         <Button
                                                             variant="outlinedGray"
                                                             onClick={() => {
-                                                                handleClickCheck(data);
+                                                                handleClickCheck(
+                                                                    data
+                                                                );
                                                             }}
                                                             sx={{
-                                                                minWidth: "42px",
+                                                                minWidth:
+                                                                    "42px",
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faEye} size="lg" />
-                                                            {width && width > 250 && (
-                                                                <Typography variant="textButtonClassic" className="text-btn">
-                                                                    Details
-                                                                </Typography>
-                                                            )}
+                                                            <FontAwesomeIcon
+                                                                icon={faEye}
+                                                                size="lg"
+                                                            />
+                                                            {width &&
+                                                                width > 250 && (
+                                                                    <Typography
+                                                                        variant="textButtonClassic"
+                                                                        className="text-btn"
+                                                                    >
+                                                                        Details
+                                                                    </Typography>
+                                                                )}
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
@@ -329,8 +456,14 @@ function MyMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon icon={faEye} size="lg" />
-                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                    <FontAwesomeIcon
+                                                        icon={faEye}
+                                                        size="lg"
+                                                    />
+                                                    <Typography
+                                                        variant="textButtonClassic"
+                                                        className="text-btn"
+                                                    >
                                                         Details
                                                     </Typography>
                                                 </Button>
@@ -377,9 +510,18 @@ function MyMaintenanceRequest() {
                         const roomNum = params.row.Room?.RoomNumber;
                         const roomFloor = params.row.Room?.Floor?.Number;
 
-                        const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
-                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? { color: "#000", colorLite: "#000", icon: faQuestionCircle };
+                        const typeName =
+                            params.row.MaintenanceType?.TypeName ||
+                            "Electrical Work";
+                        const maintenanceKey = params.row.MaintenanceType
+                            ?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const { color, icon } = maintenanceTypeConfig[
+                            maintenanceKey
+                        ] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
 
                         return (
                             <Box
@@ -399,7 +541,9 @@ function MyMaintenanceRequest() {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
+                                    {areaID === 2
+                                        ? `${areaDetail}`
+                                        : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -424,7 +568,11 @@ function MyMaintenanceRequest() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
+                                    <Typography
+                                        sx={{ fontSize: 14, fontWeight: 600 }}
+                                    >
+                                        {typeName}
+                                    </Typography>
                                 </Box>
                             </Box>
                         );
@@ -480,9 +628,13 @@ function MyMaintenanceRequest() {
                     type: "string",
                     flex: 1,
                     renderCell: (params) => {
-                        const statusName = params.row.RequestStatus?.Name || "Pending";
-                        const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
-                        const { color, colorLite, icon } = statusConfig[statusKey] ?? {
+                        const statusName =
+                            params.row.RequestStatus?.Name || "Pending";
+                        const statusKey = params.row.RequestStatus
+                            ?.Name as keyof typeof statusConfig;
+                        const { color, colorLite, icon } = statusConfig[
+                            statusKey
+                        ] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
@@ -535,8 +687,11 @@ function MyMaintenanceRequest() {
                     flex: 1,
                     renderCell: (item) => {
                         const data = item.row;
-                        const showButtonConfirm = item.row.RequestStatus?.Name === "Waiting For Review";
-                        const showButtonCancel = item.row.RequestStatus?.Name === "Pending";
+                        const showButtonConfirm =
+                            item.row.RequestStatus?.Name ===
+                            "Waiting For Review";
+                        const showButtonCancel =
+                            item.row.RequestStatus?.Name === "Pending";
                         return (
                             <Box
                                 className="container-btn"
@@ -555,15 +710,23 @@ function MyMaintenanceRequest() {
                                                 className="btn-confirm"
                                                 variant="containedBlue"
                                                 onClick={() => {
-                                                    setOpenConfirmInspection(true);
+                                                    setOpenConfirmInspection(
+                                                        true
+                                                    );
                                                     setSelectedRequest(data);
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                <FontAwesomeIcon
+                                                    icon={faCheck}
+                                                    size="lg"
+                                                />
+                                                <Typography
+                                                    variant="textButtonClassic"
+                                                    className="text-btn"
+                                                >
                                                     Confirm
                                                 </Typography>
                                             </Button>
@@ -580,8 +743,14 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faRepeat} size="lg" />
-                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                <FontAwesomeIcon
+                                                    icon={faRepeat}
+                                                    size="lg"
+                                                />
+                                                <Typography
+                                                    variant="textButtonClassic"
+                                                    className="text-btn"
+                                                >
                                                     Rework
                                                 </Typography>
                                             </Button>
@@ -597,8 +766,14 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faEye} size="lg" />
-                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                <FontAwesomeIcon
+                                                    icon={faEye}
+                                                    size="lg"
+                                                />
+                                                <Typography
+                                                    variant="textButtonClassic"
+                                                    className="text-btn"
+                                                >
                                                     Details
                                                 </Typography>
                                             </Button>
@@ -611,15 +786,23 @@ function MyMaintenanceRequest() {
                                                 className="btn-confirm"
                                                 variant="containedCancel"
                                                 onClick={() => {
-                                                    setOpenConfirmCancelled(true);
+                                                    setOpenConfirmCancelled(
+                                                        true
+                                                    );
                                                     setSelectedRequest(data);
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                <FontAwesomeIcon
+                                                    icon={faXmark}
+                                                    size="lg"
+                                                />
+                                                <Typography
+                                                    variant="textButtonClassic"
+                                                    className="text-btn"
+                                                >
                                                     Cancel
                                                 </Typography>
                                             </Button>
@@ -635,8 +818,14 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faEye} size="lg" />
-                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                <FontAwesomeIcon
+                                                    icon={faEye}
+                                                    size="lg"
+                                                />
+                                                <Typography
+                                                    variant="textButtonClassic"
+                                                    className="text-btn"
+                                                >
                                                     Details
                                                 </Typography>
                                             </Button>
@@ -654,8 +843,14 @@ function MyMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={faEye} size="lg" />
-                                            <Typography variant="textButtonClassic" className="text-btn">
+                                            <FontAwesomeIcon
+                                                icon={faEye}
+                                                size="lg"
+                                            />
+                                            <Typography
+                                                variant="textButtonClassic"
+                                                className="text-btn"
+                                            >
                                                 Details
                                             </Typography>
                                         </Button>
@@ -669,9 +864,11 @@ function MyMaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
+    const getMaintenanceRequests = async (
+        pageNum: number = 1,
+        setTotalFlag = false
+    ) => {
         try {
-            setIsLoadingData(true);
             const userId = localStorage.getItem("userId");
             const statusFormat = selectedStatuses.join(",");
             const res = await GetMaintenanceRequestsForUser(
@@ -686,10 +883,13 @@ function MyMaintenanceRequest() {
                 setMaintenanceRequests(res.data);
                 if (setTotalFlag) setTotal(res.total);
 
-                const formatted = res.statusCounts.reduce((acc: any, item: any) => {
-                    acc[item.status_name] = item.count;
-                    return acc;
-                }, {});
+                const formatted = res.statusCounts.reduce(
+                    (acc: any, item: any) => {
+                        acc[item.status_name] = item.count;
+                        return acc;
+                    },
+                    {}
+                );
                 setStatusCounts(formatted);
                 setIsLoadingData(false);
             }
@@ -713,7 +913,9 @@ function MyMaintenanceRequest() {
         try {
             const res = await GetMaintenanceRequestByID(ID);
             if (res) {
-                setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+                setMaintenanceRequests((prev) =>
+                    prev.map((item) => (item.ID === res.ID ? res : item))
+                );
             }
         } catch (error) {
             console.error("Error updating maintenance request:", error);
@@ -729,13 +931,20 @@ function MyMaintenanceRequest() {
     const handleClickCheck = (data: MaintenanceRequestsInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.ID));
-            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
+            navigate(
+                `/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`
+            );
         }
     };
 
-    const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
+    const handleClickInspection = (
+        statusName: "Completed" | "Rework Requested",
+        actionType: "confirm" | "rework",
+        note?: string
+    ) => {
         setIsBottonActive(true);
-        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+        const statusID =
+            requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
         const userID = Number(localStorage.getItem("userId"));
 
         handleActionInspection(statusID, {
@@ -754,24 +963,44 @@ function MyMaintenanceRequest() {
     const handleClickCancel = async () => {
         try {
             setIsBottonActive(true);
-            const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
+            const statusID =
+                requestStatuses?.find((item) => item.Name === "Unsuccessful")
+                    ?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
                 RequestStatusID: statusID,
             };
 
-            const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
-            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status.");
+            const resRequest = await UpdateMaintenanceRequestByID(
+                request,
+                selectedRequest?.ID
+            );
+            if (!resRequest || resRequest.error)
+                throw new Error(
+                    resRequest?.error || "Failed to update request status."
+                );
 
             const notificationDataUpdate: NotificationsInterface = {
                 IsRead: true,
             };
-            const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
+            const resUpdateNotification = await UpdateNotificationsByRequestID(
+                notificationDataUpdate,
+                selectedRequest.ID
+            );
             if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+                throw new Error(
+                    resUpdateNotification?.error ||
+                        "Failed to update notification."
+                );
 
             setTimeout(() => {
-                setAlerts((prev) => [...prev, { type: "success", message: "Cancellation successful" }]);
+                setAlerts((prev) => [
+                    ...prev,
+                    {
+                        type: "success",
+                        message: "Request cancelled successfully",
+                    },
+                ]);
 
                 setOpenConfirmCancelled(false);
                 setIsBottonActive(false);
@@ -779,15 +1008,19 @@ function MyMaintenanceRequest() {
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
-            setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
+            setAlerts((prev) => [
+                ...prev,
+                { type: "error", message: errMessage },
+            ]);
             setIsBottonActive(false);
         }
     };
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = String(request.ID);
-        const roomTypeName = request.Room?.RoomType?.TypeName?.toLowerCase() || "";
-        const floor = `ชั้น ${request.Room?.Floor?.Number}`;
+        const roomTypeName =
+            request.Room?.RoomType?.TypeName?.toLowerCase() || "";
+        const floor = `Floor ${request.Room?.Floor?.Number}`;
         const roomNumber = String(request.Room?.RoomNumber).toLowerCase() || "";
 
         const matchText =
@@ -800,65 +1033,33 @@ function MyMaintenanceRequest() {
         return matchText;
     });
 
-    const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
+    const convertPathsToFiles = async (
+        images: MaintenaceImagesInterface[]
+    ): Promise<File[]> => {
         return await Promise.all(
             images.map(async (img, index) => {
                 const url = apiUrl + "/" + img.FilePath;
                 const response = await fetch(url);
                 const blob = await response.blob();
                 const fileType = blob.type || "image/jpeg";
-                const fileName = img.FilePath?.split("/").pop() || `image${index + 1}.jpg`;
+                const fileName =
+                    img.FilePath?.split("/").pop() || `image${index + 1}.jpg`;
                 return new File([blob], fileName, { type: fileType });
             })
         );
     };
 
     useEffect(() => {
-        getMaintenanceRequests(1, true);
-        getRequestStatuses();
-    }, []);
-
-    // Analytics tracking
-    useEffect(() => {
-        const startTime = Date.now();
-        let sent = false;
-
-        analyticsService.trackPageVisit({
-            user_id: Number(localStorage.getItem('userId')),
-            page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
-            page_name: 'My Maintenance Request',
-            duration: 0, // ตอนเข้า duration = 0
-            is_bounce: false,
-        });
-
-        // ฟังก์ชันส่ง analytics ตอนออก
-        const sendAnalyticsOnLeave = (isBounce: boolean) => {
-            if (sent) {
-                return;
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getRequestStatuses()]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
             }
-            sent = true;
-            const duration = Math.floor((Date.now() - startTime) / 1000);
-            analyticsService.trackPageVisit({
-                user_id: Number(localStorage.getItem('userId')),
-                page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
-                page_name: 'My Maintenance Request',
-                duration,
-                is_bounce: isBounce,
-                interaction_count: getInteractionCount(),
-            });
         };
 
-        // ออกจากหน้าแบบปิด tab/refresh
-        const handleBeforeUnload = () => {
-            sendAnalyticsOnLeave(true);
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        // ออกจากหน้าแบบ SPA (React)
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            sendAnalyticsOnLeave(false);
-        };
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -872,6 +1073,49 @@ function MyMaintenanceRequest() {
             getMaintenanceRequests(1, true);
         }
     }, [selectedStatuses, selectedDate]);
+
+    // Analytics tracking
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem("userId")),
+            page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
+            page_name: "My Maintenance Request",
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem("userId")),
+                page_path: KEY_PAGES.MY_MAINTENANCE_REQUEST,
+                page_name: "My Maintenance Request",
+                duration,
+                is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
+    }, []);
 
     const maintenanceImages = selectedRequest?.MaintenanceImages;
     useEffect(() => {
@@ -908,7 +1152,9 @@ function MyMaintenanceRequest() {
             <ConfirmDialog
                 open={openConfirmInspection}
                 setOpenConfirm={setOpenConfirmInspection}
-                handleFunction={() => handleClickInspection("Completed", "confirm")}
+                handleFunction={() =>
+                    handleClickInspection("Completed", "confirm")
+                }
                 title="Confirm Maintenance Inspection"
                 message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
@@ -918,7 +1164,9 @@ function MyMaintenanceRequest() {
             <ReworkPopup
                 open={openConfirmRework}
                 setOpenConfirm={setOpenConfirmRework}
-                handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
+                handleFunction={(note) =>
+                    handleClickInspection("Rework Requested", "rework", note)
+                }
                 setAlerts={setAlerts}
                 title="Confirm Rework Request"
                 message="Are you sure you want to request a rework for this maintenance job? This action cannot be undone."
@@ -940,24 +1188,34 @@ function MyMaintenanceRequest() {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid 
-                        container 
-                        className="title-box" 
-                        direction={'row'} 
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={"row"}
                         size={{ xs: 5, sm: 5 }}
                         sx={{ gap: 1 }}
                     >
-                        <Wrench size={26}/>
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                        <Wrench size={26} />
+                        <Typography
+                            variant="h5"
+                            className="title"
+                            sx={{ fontWeight: 700 }}
+                        >
                             My Maintenance Requests
                         </Typography>
                     </Grid>
 
-                    <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
+                    <Grid
+                        container
+                        size={{ xs: 7, sm: 7 }}
+                        sx={{ justifyContent: "flex-end" }}
+                    >
                         <Link to="/maintenance/create-maintenance-request">
                             <Button variant="containedBlue">
                                 <FontAwesomeIcon icon={faFileLines} size="lg" />
-                                <Typography variant="textButtonClassic">Create Request</Typography>
+                                <Typography variant="textButtonClassic">
+                                    Create Request
+                                </Typography>
                             </Button>
                         </Link>
                     </Grid>
@@ -965,7 +1223,12 @@ function MyMaintenanceRequest() {
                     <Grid container size={{ xs: 12 }} spacing={2}>
                         {/* Count Status Section */}
                         {!statusCounts ? (
-                            <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height={50}
+                                sx={{ borderRadius: 2 }}
+                            />
                         ) : (
                             <Grid
                                 container
@@ -976,13 +1239,20 @@ function MyMaintenanceRequest() {
                                     height: "auto",
                                 }}
                             >
-                                <RequestStatusStack statusCounts={statusCounts || {}} />
+                                <RequestStatusStack
+                                    statusCounts={statusCounts || {}}
+                                />
                             </Grid>
                         )}
 
                         {/* Filters Section */}
                         {!statusCounts ? (
-                            <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height={70}
+                                sx={{ borderRadius: 2 }}
+                            />
                         ) : (
                             <FilterSection
                                 searchText={searchText}
@@ -998,13 +1268,18 @@ function MyMaintenanceRequest() {
                     </Grid>
 
                     {/* Data Table */}
-                    <Grid 
+                    <Grid
                         size={{ xs: 12, md: 12 }}
-                        // height={'65vh'} 
-                        minHeight={'200px'}
+                        // height={'65vh'}
+                        minHeight={"200px"}
                     >
                         {isLoadingData ? (
-                            <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height={200}
+                                sx={{ borderRadius: 2 }}
+                            />
                         ) : (
                             <CustomDataGrid
                                 rows={filteredRequests}

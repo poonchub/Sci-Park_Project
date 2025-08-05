@@ -12,13 +12,14 @@ dayjs.extend(isBetween);
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
 
-
 type CountItem =
     | { day: string; count: number }
     | { month: string; count: number };
 
 const getModeFromClass = () => {
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+    return document.documentElement.classList.contains("dark")
+        ? "dark"
+        : "light";
 };
 
 function ApexLineChart(props: {
@@ -26,17 +27,17 @@ function ApexLineChart(props: {
     height: number;
     dateRange?: { start: Dayjs | null; end: Dayjs | null };
     counts?: CountItem[];
-    selectedDateOption: string
+    selectedDateOption: string;
 }) {
     const { data, height, dateRange, counts, selectedDateOption } = props;
     const [mode, setMode] = useState<"light" | "dark">(getModeFromClass());
     const theme = useTheme();
-    const isXs = useMediaQuery(theme.breakpoints.up('xs'));
-    const isMobile = useMediaQuery(theme.breakpoints.up('mobileS'));
-    const isSm = useMediaQuery(theme.breakpoints.up('sm'));
-    const isSm650 = useMediaQuery(theme.breakpoints.up('sm650'));
-    const isMd = useMediaQuery(theme.breakpoints.up('md'));
-    const isMd1000 = useMediaQuery(theme.breakpoints.up('md1000'));
+    const isXs = useMediaQuery(theme.breakpoints.up("xs"));
+    const isMobile = useMediaQuery(theme.breakpoints.up("mobileS"));
+    const isSm = useMediaQuery(theme.breakpoints.up("sm"));
+    const isSm650 = useMediaQuery(theme.breakpoints.up("sm650"));
+    const isMd = useMediaQuery(theme.breakpoints.up("md"));
+    const isMd1000 = useMediaQuery(theme.breakpoints.up("md1000"));
 
     // ติดตามการเปลี่ยน theme
     useEffect(() => {
@@ -52,109 +53,8 @@ function ApexLineChart(props: {
         return () => observer.disconnect();
     }, []);
 
-    // const countRequests = useMemo(() => {
-    //     const option = selectedDateOption ?? 'daily';
-    //     const now = dayjs();
-
-    //     let start: dayjs.Dayjs;
-    //     let end: dayjs.Dayjs;
-
-    //     // ✅ ถ้ามี dateRange ใช้จาก user
-    //     if (dateRange?.start && dateRange?.end) {
-    //         start = dateRange.start.startOf('day');
-    //         end = dateRange.end.endOf('day');
-    //     } else {
-    //         // ✅ กำหนดช่วง default ถ้าไม่มี dateRange
-    //         switch (option) {
-    //             case 'daily':
-    //                 end = now.endOf('day');
-    //                 start = end.subtract(15, 'day'); // รวมวันนี้ = 16 วัน
-    //                 break;
-    //             case 'weekly':
-    //                 end = now.endOf('isoWeek');
-    //                 start = end.subtract(11, 'week'); // รวมวันนี้ = 12 สัปดาห์
-    //                 break;
-    //             case 'monthly':
-    //                 end = now.endOf('month');
-    //                 start = end.subtract(11, 'month'); // รวมวันนี้ = 12 เดือน
-    //                 break;
-    //             case 'yearly':
-    //                 end = now.endOf('year');
-    //                 start = end.subtract(5, 'year'); // รวมวันนี้ = 6 ปี
-    //                 break;
-    //             default:
-    //                 end = now.endOf('day');
-    //                 start = end.subtract(15, 'day');
-    //                 break;
-    //         }
-    //     }
-
-    //     const countR: Record<string, number> = {};
-
-    //     // ✅ ฟิลเตอร์ข้อมูลให้อยู่ในช่วงเวลาที่สนใจ
-    //     const filteredData = data?.filter((item) => {
-    //         const created = dayjs(item.CreatedAt);
-    //         return created.isBetween(start, end, null, '[]'); // inclusive
-    //     }) ?? [];
-
-    //     // ✅ สร้าง key ตาม option
-    //     function formatKey(date: dayjs.Dayjs) {
-    //         switch (option) {
-    //             case 'daily':
-    //                 return date.format('YYYY-MM-DD');
-    //             case 'weekly':
-    //                 return date.startOf("isoWeek").format('YYYY-MM-DD');
-    //             case 'monthly':
-    //                 return date.format('YYYY-MM');
-    //             case 'yearly':
-    //                 return date.format('YYYY');
-    //             default:
-    //                 return date.format('YYYY-MM-DD');
-    //         }
-    //     }
-
-    //     // ✅ สร้าง count เริ่มจากข้อมูลจริง
-    //     filteredData.forEach((item) => {
-    //         const created = dayjs(item.CreatedAt);
-    //         const key = formatKey(created);
-    //         countR[key] = (countR[key] || 0) + 1;
-    //     });
-
-    //     // ✅ เติม key ที่ไม่มีข้อมูลให้ครบ
-    //     let cursor = start.clone();
-
-    //     while (cursor.isBefore(end) || cursor.isSame(end, 'day')) {
-    //         const key = formatKey(cursor);
-    //         if (!(key in countR)) {
-    //             countR[key] = 0;
-    //         }
-
-    //         // เพิ่ม cursor ไปข้างหน้าตาม option
-    //         switch (option) {
-    //             case 'daily':
-    //                 cursor = cursor.add(1, 'day');
-    //                 break;
-    //             case 'weekly':
-    //                 cursor = cursor.add(1, 'week');
-    //                 break;
-    //             case 'monthly':
-    //                 cursor = cursor.add(1, 'month');
-    //                 break;
-    //             case 'yearly':
-    //                 cursor = cursor.add(1, 'year');
-    //                 break;
-    //         }
-    //     }
-
-    //     // ✅ เรียง key ตามเวลา
-    //     return Object.fromEntries(
-    //         Object.entries(countR).sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-    //     );
-
-    // }, [data, dateRange, selectedDateOption]);
-
     const countRequests = useMemo(() => {
-        const option = selectedDateOption ?? 'daily';
+        const option = selectedDateOption ?? "daily";
         const now = dayjs();
 
         let start: dayjs.Dayjs;
@@ -162,59 +62,60 @@ function ApexLineChart(props: {
 
         // ✅ กำหนดช่วงเวลา
         if (dateRange?.start) {
-            start = dateRange.start.startOf('day');
-            end = dateRange.end?.endOf('day') ?? start.endOf('day');
+            start = dateRange.start.startOf("day");
+            end = dateRange.end?.endOf("day") ?? start.endOf("day");
         } else {
             switch (option) {
-                case 'hourly':
-                    start = now.startOf('day');
-                    end = now.endOf('day');
+                case "hourly":
+                    start = now.startOf("day");
+                    end = now.endOf("day");
                     break;
-                case 'daily':
-                    end = now.endOf('day');
-                    start = end.subtract(15, 'day');
+                case "daily":
+                    end = now.endOf("day");
+                    start = end.subtract(15, "day");
                     break;
-                case 'weekly':
-                    end = now.endOf('isoWeek');
-                    start = end.subtract(11, 'week');
+                case "weekly":
+                    end = now.endOf("isoWeek");
+                    start = end.subtract(11, "week");
                     break;
-                case 'monthly':
-                    end = now.endOf('month');
-                    start = end.subtract(11, 'month');
+                case "monthly":
+                    end = now.endOf("month");
+                    start = end.subtract(11, "month");
                     break;
-                case 'yearly':
-                    end = now.endOf('year');
-                    start = end.subtract(5, 'year');
+                case "yearly":
+                    end = now.endOf("year");
+                    start = end.subtract(5, "year");
                     break;
                 default:
-                    end = now.endOf('day');
-                    start = end.subtract(15, 'day');
+                    end = now.endOf("day");
+                    start = end.subtract(15, "day");
             }
         }
 
         const countR: Record<string, number> = {};
 
         // ✅ กรองข้อมูลในช่วงเวลา
-        const filteredData = data?.filter((item) => {
-            const created = dayjs(item.CreatedAt);
-            return created.isBetween(start, end, null, '[]');
-        }) ?? [];
+        const filteredData =
+            data?.filter((item) => {
+                const created = dayjs(item.CreatedAt);
+                return created.isBetween(start, end, null, "[]");
+            }) ?? [];
 
         // ✅ ฟอร์แมตรูปแบบ key
         function formatKey(date: dayjs.Dayjs) {
             switch (option) {
-                case 'hourly':
-                    return date.format('h A'); // เช่น 3 PM
-                case 'daily':
-                    return date.format('YYYY-MM-DD');
-                case 'weekly':
-                    return date.startOf('isoWeek').format('YYYY-MM-DD');
-                case 'monthly':
-                    return date.format('YYYY-MM');
-                case 'yearly':
-                    return date.format('YYYY');
+                case "hourly":
+                    return date.format("h A"); // เช่น 3 PM
+                case "daily":
+                    return date.format("YYYY-MM-DD");
+                case "weekly":
+                    return date.startOf("isoWeek").format("YYYY-MM-DD");
+                case "monthly":
+                    return date.format("YYYY-MM");
+                case "yearly":
+                    return date.format("YYYY");
                 default:
-                    return date.format('YYYY-MM-DD');
+                    return date.format("YYYY-MM-DD");
             }
         }
 
@@ -227,27 +128,30 @@ function ApexLineChart(props: {
 
         // ✅ เติมค่า key ที่ไม่มีให้ครบ
         let cursor = start.clone();
-        while (cursor.isBefore(end) || cursor.isSame(end, option === 'hourly' ? 'hour' : 'day')) {
+        while (
+            cursor.isBefore(end) ||
+            cursor.isSame(end, option === "hourly" ? "hour" : "day")
+        ) {
             const key = formatKey(cursor);
             if (!(key in countR)) {
                 countR[key] = 0;
             }
 
             switch (option) {
-                case 'hourly':
-                    cursor = cursor.add(1, 'hour');
+                case "hourly":
+                    cursor = cursor.add(1, "hour");
                     break;
-                case 'daily':
-                    cursor = cursor.add(1, 'day');
+                case "daily":
+                    cursor = cursor.add(1, "day");
                     break;
-                case 'weekly':
-                    cursor = cursor.add(1, 'week');
+                case "weekly":
+                    cursor = cursor.add(1, "week");
                     break;
-                case 'monthly':
-                    cursor = cursor.add(1, 'month');
+                case "monthly":
+                    cursor = cursor.add(1, "month");
                     break;
-                case 'yearly':
-                    cursor = cursor.add(1, 'year');
+                case "yearly":
+                    cursor = cursor.add(1, "year");
                     break;
             }
         }
@@ -255,21 +159,21 @@ function ApexLineChart(props: {
         // ✅ เรียง key ตามลำดับเวลา
         return Object.fromEntries(
             Object.entries(countR).sort(([a], [b]) => {
-                if (option === 'hourly') {
-                    const parseTime = (t: string) => dayjs(t, 'h A').toDate().getTime();
+                if (option === "hourly") {
+                    const parseTime = (t: string) =>
+                        dayjs(t, "h A").toDate().getTime();
                     return parseTime(a) - parseTime(b);
                 } else {
                     return new Date(a).getTime() - new Date(b).getTime();
                 }
             })
         );
-
     }, [data, dateRange, selectedDateOption]);
 
-
     const chartConfig = useMemo(() => {
+        type DateOption = "daily" | "weekly" | "monthly" | "yearly" | "hourly";
+        const option = (selectedDateOption ?? "daily") as DateOption;
         const categories = Object.keys(countRequests);
-        const option = selectedDateOption ?? 'daily'; // fallback daily
         const dataSeries = categories.map((key) => countRequests[key]);
 
         // ฟังก์ชัน format label แกน x ตาม option
@@ -278,16 +182,16 @@ function ApexLineChart(props: {
             if (!d.isValid()) return dateStr;
 
             switch (option) {
-                case 'daily':
+                case "daily":
                     return d.format("D MMM"); // เช่น 14 Jul
-                case 'weekly':
+                case "weekly":
                     const endWeek = d.endOf("isoWeek");
                     return `${endWeek.format("D MMM")}`;
-                case 'monthly':
+                case "monthly":
                     return d.format("MMM YYYY"); // Jul 2025
-                case 'yearly':
+                case "yearly":
                     return d.format("YYYY"); // 2025
-                case 'hourly':
+                case "hourly":
                     return d.format("HH:mm"); // เช่น 08:00
                 default:
                     return d.format("D MMM");
@@ -295,6 +199,17 @@ function ApexLineChart(props: {
         }
 
         const formattedCategories = categories.map(formatLabel);
+
+        const rangeMap = {
+            daily: isMd ? 15 : isSm650 ? 9 : isMobile ? 7 : 4,
+            weekly: isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3,
+            monthly: isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3,
+            yearly: isMd ? 5 : isSm650 ? 5 : isMobile ? 4 : 3,
+            hourly: isMd ? 11 : isSm650 ? 8 : isMobile ? 5 : 4,
+        };
+
+        const desiredRange = rangeMap[option] ?? categories.length;
+        const xRange = Math.min(desiredRange, categories.length - 1);
 
         const options: ApexOptions = {
             chart: {
@@ -319,18 +234,7 @@ function ApexLineChart(props: {
                 type: "category",
                 categories: formattedCategories,
                 tickPlacement: "on",
-                range:
-                    option === "daily"
-                        ? (isMd ? 15 : isSm650 ? 9 : isMobile ? 7 : 4)
-                        : option === "weekly"
-                            ? (isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3)
-                            : option === "monthly"
-                                ? (isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3)
-                                : option === "yearly"
-                                    ? (isMd ? 5 : isSm650 ? 5 : isMobile ? 4 : 3)
-                                    : option === "hourly"
-                                        ? (isMd ? 11 : isSm650 ? 8 : isMobile ? 5 : 4)
-                                        : undefined,
+                range: xRange,
                 labels: {
                     style: {
                         fontSize: "14px",
@@ -359,7 +263,9 @@ function ApexLineChart(props: {
                 theme: mode,
                 custom: function ({ series, seriesIndex, dataPointIndex, w }) {
                     const value = series[seriesIndex][dataPointIndex]; // ค่า Y
-                    const label = w.globals.categoryLabels?.[dataPointIndex] || "ไม่ทราบเวลา";
+                    const label =
+                        w.globals.categoryLabels?.[dataPointIndex] ||
+                        "ไม่ทราบเวลา";
                     return `
                     <div style="
                         padding: 10px 16px;

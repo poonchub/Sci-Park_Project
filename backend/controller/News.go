@@ -250,12 +250,19 @@ func CreateNews(c *gin.Context) {
 		UserID:       news.UserID,
 	}
 
-	if err := db.FirstOrCreate(&n, entity.News{
-		Title: news.Title,
-	}).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var existing entity.News
+	if err := db.Where(
+		"title = ? AND summary = ? AND full_content = ? AND display_start = ? AND display_end = ?",
+		news.Title, news.Summary, news.FullContent, news.DisplayStart.In(loc), news.DisplayEnd.In(loc)).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "News already exists"})
 		return
 	}
+
+	if err := db.Create(&n).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create news"})
+        return
+    }
 
 	services.NotifySocketEvent("news_created", n)
 
