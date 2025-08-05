@@ -18,7 +18,7 @@
   }
 }
 
-.calendar-header {
+.calendar-container .calendar-header {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,7 +38,7 @@
   }
 }
 
-.month-year-selector {
+.calendar-container .month-year-selector {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -46,16 +46,16 @@
   margin-bottom: 24px;
 }
 
-.nav-button {
+.calendar-container .nav-button {
   min-width: 36px;
   border-radius: 16px;
 }
 
-.nav-button:hover {
+.calendar-container .nav-button:hover {
   background-color: #e3f2fd;
 }
 
-.month-select {
+.calendar-container .month-select {
   border-radius: 16px;
 }
 
@@ -71,12 +71,12 @@
   }
 }
 
-.month-select .MuiSelect-select {
+.calendar-container .month-select .MuiSelect-select {
   padding-top: 8px;
   padding-bottom: 8px;
 }
 
-.month-menu-item {
+.calendar-container .month-menu-item {
   border-radius: 16px;
 }
 
@@ -92,39 +92,39 @@
   }
 }
 
-.month-menu-item .MuiSelect-select {
+.calendar-container .month-menu-item .MuiSelect-select {
   padding-top: 8px;
   padding-bottom: 8px;
 }
 
-.year-select {
+.calendar-container .year-select {
   min-width: 90px;
   border-radius: 16px;
 }
 
-.year-select .MuiSelect-select {
+.calendar-container .year-select .MuiSelect-select {
   padding-top: 8px;
   padding-bottom: 8px;
 }
 
-.year-menu-item {
+.calendar-container .year-menu-item {
   font-weight: 600;
 }
 
-.day-names-grid {
+.calendar-container .day-names-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   margin-bottom: 16px;
 }
 
-.calendar-grid {
+.calendar-container .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
 }
 
-.day-cell {
+.calendar-container .day-cell {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -147,14 +147,14 @@
   }
 }
 
-.day-cell-booked {
+.calendar-container .day-cell-booked {
   background-color: #fdecea !important;
   color: #d32f2f !important;
   cursor: not-allowed !important;
   font-weight: 400 !important;
 }
 
-.day-cell-selected {
+.calendar-container .day-cell-selected {
   background-color: #f57c00 !important;
   color: #fff !important;
   cursor: pointer !important;
@@ -162,71 +162,71 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
-.day-cell-partially {
+.calendar-container .day-cell-partially {
   background-color: #fffde7 !important;
   color: #f57c00 !important;
   cursor: pointer !important;
   font-weight: 400 !important;
 }
-.day-cell-available {
+.calendar-container .day-cell-available {
   background-color: #ffffff;
   color: #000;
   cursor: pointer;
   font-weight: 400;
 }
 
-.day-cell-past {
+.calendar-container .day-cell-past {
   color: #6d6d6d !important;
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Past date combinations */
-.day-cell-past.day-cell-booked {
+.calendar-container .day-cell-past.day-cell-booked {
   background-color: #fdecea;
   color: #ccc !important;
 }
 
-.day-cell-past.day-cell-partially {
+.calendar-container .day-cell-past.day-cell-partially {
   background-color: #fffde7;
   color: #ccc !important;
 }
 
-.day-cell-past.day-cell-available {
+.calendar-container .day-cell-past.day-cell-available {
   background-color: #ffffff;
   color: #ccc !important;
 }
 
-.day-cell-not-available {
+.calendar-container .day-cell-not-available {
   cursor: not-allowed;
 }
 
-.day-cell:hover:not(.day-cell-booked):not(.day-cell-past) {
+.calendar-container .day-cell:hover:not(.day-cell-booked):not(.day-cell-past) {
   transform: scale(1.05);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.day-cell:hover.day-cell-booked {
+.calendar-container .day-cell:hover.day-cell-booked {
   transform: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.day-cell:hover.day-cell-past {
+.calendar-container .day-cell:hover.day-cell-past {
   transform: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.booking-count {
+.calendar-container .booking-count {
   position: absolute;
   bottom: 2px;
   left: 2px;
   font-size: 10px;
 }
 
-.tooltip-content {
+.calendar-container .tooltip-content {
   padding: 8px;
 }
 
-.tooltip-title {
+.calendar-container .tooltip-title {
   margin-bottom: 8px;
 }

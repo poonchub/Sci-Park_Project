@@ -56,6 +56,10 @@ func main() {
 		public.GET("/pending-payments", controller.GetPendingPayments)
 		public.PUT("/update-payment", controller.UpdatePaymentStatus)
 		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
+		public.GET("/roomtypes/:id/equipment", controller.GetEquipmentByRoomType)
+		public.PATCH("/user-packages/use-quota", controller.UseRoomQuota)
+		public.GET("/roomlayouts", controller.GetAllRoomLayouts)
+
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)
@@ -233,16 +237,12 @@ func main() {
 		ticker := time.NewTicker(1 * time.Minute) // ตั้งเวลาให้รันทุก 1 นาที
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				log.Println("Background job: CancelExpiredBookings start")
-				controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
-				log.Println("Background job: CancelExpiredBookings finished")
-			}
-		}
+		for range ticker.C {
+    log.Println("Background job: CancelExpiredBookings start")
+    controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
+    log.Println("Background job: CancelExpiredBookings finished")
+}
 	}()
-	// --- จบส่วน background scheduler ---
 
 	// 🚀 Start Server
 	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น

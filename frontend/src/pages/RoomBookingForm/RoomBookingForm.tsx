@@ -26,7 +26,9 @@ import {
   DialogTitle,
   MenuItem,
   SelectChangeEvent,
-  InputAdornment
+  InputAdornment,
+  Checkbox,
+  FormGroup
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -38,12 +40,10 @@ import {
   Phone,
   ArrowLeft,
   Check,
-  X,
-  Type,
   Building2,
 } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
-import { GetTimeSlots, GetRoomQuota, GetRoomsByRoomTypeID, CreateBookingRoom, GetUserById, GetRoomTypesByID } from "../../services/http/index";
+import { GetTimeSlots, GetRoomQuota, GetRoomsByRoomTypeID, CreateBookingRoom, GetUserById, GetRoomTypesByID, GetEquipmentByRoomType, UseRoomQuota, GetAllRoomLayouts } from "../../services/http/index";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
@@ -51,10 +51,12 @@ import { Select } from "../../components/Select/Select";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { Base64 } from "js-base64";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import { set } from "react-hook-form";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import './RoomBookingForm.css'
 import './Calendar.css';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import { IconButton } from '@mui/material';
+
 
 interface RoomBookingFormProps {
   room?: {
@@ -65,15 +67,15 @@ interface RoomBookingFormProps {
   onBack?: () => void;
 }
 
-interface discount {
-  type: "free-use";
-  name: string;
-  description: string;
-  totalAllowed: number;   // สิทธิ์ทั้งหมด
-  usedCount: number;      // จำนวนครั้งที่ใช้ไปแล้ว
-  remaining: number;      // สิทธิ์ที่เหลือ
-  used: boolean;          // ใช้ในการจองนี้หรือยัง
-}
+// interface discount {
+//   type: "free-use";
+//   name: string;
+//   description: string;
+//   totalAllowed: number;   // สิทธิ์ทั้งหมด
+//   usedCount: number;      // จำนวนครั้งที่ใช้ไปแล้ว
+//   remaining: number;      // สิทธิ์ที่เหลือ
+//   used: boolean;          // ใช้ในการจองนี้หรือยัง
+// }
 
 interface BookingDetail {
   time: string;
@@ -112,30 +114,27 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   const [email, setEmail] = useState('');
   const [purpose, setPurpose] = useState('');
   const [loading, setLoading] = useState(false);
-  const [calculatedPrice, setCalculatedPrice] = useState(0);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
   const [bookedDates, setBookedDates] = useState<BookedDates>({});
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [pricing, setPricing] = useState<RoomPriceInterface[]>([]);
   const [roomsOfSameType, setRoomsOfSameType] = useState<{ id: number; roomnumber: string }[]>([]);
-  const [additionalInfo, setAdditionalInfo] = useState("");
   const [bookingMap, setBookingMap] = useState<{ [date: string]: BookingDetail[] }>({});
   const [selectedDateDetails, setSelectedDateDetails] = useState<{ date: string, bookings: BookingDetail[] } | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const location = useLocation();
-  // console.log("selectedRoomtypes111:", selectedRoomtypes);
   const [selectedRoomId, setSelectedRoomId] = useState(0); // ค่าตั้งต้นคือ 0
-  console.log("selectedRoomId:", selectedRoomId);
   const roomtype = location.state?.selectedRoomtypes || {};
-  // console.log("room:", room);
   const [roomDat, setRoomData] = React.useState<RoomsInterface>({});
   const [roomType, setRoomType] = useState<RoomtypesInterface>({});
   const [role, setRole] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const isAllowedToBookLargeRoom = (roomDat?.Capacity ?? 0) <= 20 || role === 3 || role === 4;
-  console.log("roomDat.Capacity:", roomDat?.Capacity);
-  console.log("role:", role);
-  console.log("isAllowedToBookLargeRoom:", isAllowedToBookLargeRoom);
+  const [setupStyles, setSetupStyles] = useState<{ ID: number; LayoutName: string }[]>([]);
+  const [selectedStyle, setSelectedStyle] = useState<string>('');
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
+  const [additionalNote, setAdditionalNote] = useState("");
+  const [equipmentList, setEquipmentList] = useState<string[]>([]);
 
   const getRoomtype = async () => {
     try {
@@ -151,22 +150,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     }
   };
 
-
-
   const roomData = {
     id: roomtype.id,
     TypeName: roomType.TypeName,
     image: roomtype.image || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
   };
 
-  const mockBookedDates: BookedDates = {
-    "2025-07-05": { morning: true, afternoon: false },
-    "2025-07-08": { morning: true, afternoon: true },
-    "2025-07-12": { morning: false, afternoon: true },
-    "2025-07-15": { morning: true, afternoon: true },
-    "2025-07-20": { morning: true, afternoon: false },
-    "2025-07-25": { morning: false, afternoon: true },
-  };
+  // const mockBookedDates: BookedDates = {
+  //   "2025-07-05": { morning: true, afternoon: false },
+  //   "2025-07-08": { morning: true, afternoon: true },
+  //   "2025-07-12": { morning: false, afternoon: true },
+  //   "2025-07-15": { morning: true, afternoon: true },
+  //   "2025-07-20": { morning: true, afternoon: false },
+  //   "2025-07-25": { morning: false, afternoon: true },
+  // };
 
   const [discount, setDiscount] = useState<{
     type: "free-use";
@@ -185,6 +182,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     remaining: 1,
     used: false,
   });
+
+
+
+
+
+  useEffect(() => {
+    if (discount.used) {
+      setCalculatedPrice(0);
+    } else {
+      setCalculatedPrice(pricing.length > 0 ? (pricing[0].Price ?? 0) : 0);
+    }
+  }, [discount.used, pricing]);
+
+
 
   async function fetchUserData(userId: number) {
     console.log("userId:", userId);
@@ -243,8 +254,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
   };
 
-
-
   const fetchRoomPricing = async (roomId: number) => {
     console.log("roomId:", roomId);
     setLoading(true);
@@ -288,6 +297,23 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     getRoomtype()
   }, []);
 
+
+
+  useEffect(() => {
+    if (roomType?.ID) {
+      GetEquipmentByRoomType(roomType.ID).then((data) => {
+        if (data) {
+          const formatted = data.map((item: any) => item.EquipmentName);
+          setEquipmentList(formatted);
+        }
+      });
+    }
+  }, [roomType?.ID]);
+
+  console.log("equipmentList:", equipmentList);
+
+
+
   useEffect(() => {
     const loadQuota = async () => {
       const userId = parseInt(localStorage.getItem("userId") || "");
@@ -308,12 +334,35 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   }, []);
 
   useEffect(() => {
+    GetAllRoomLayouts().then((data) => {
+      setSetupStyles(data);
+    });
+  }, []);
+
+  console.log("setupStyles:", setupStyles);
+
+
+  useEffect(() => {
     if (selectedDates.length > 0) {
       calculatePrice(selectedDates, timeOption, timeRange);
     } else {
       setCalculatedPrice(0);
     }
   }, [selectedDates, timeOption, timeRange, pricing]);
+
+  const handleUseQuota = async () => {
+    const result = await UseRoomQuota({
+      user_id: parseInt(localStorage.getItem("userId") || ""),
+      room_type: "meeting",
+    });
+
+    if (result.status === 200) {
+      console.log("ใช้โควตาสำเร็จ", result.data);
+    } else {
+      console.error("เกิดข้อผิดพลาด", result.data);
+    }
+  };
+
 
   const convertBookedDates = (bookedDatesObj: any): { [date: string]: BookingDetail[] } => {
     console.log("bookedDatesObj input:", bookedDatesObj);
@@ -383,7 +432,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
       let totalPrice = 0;
 
-      dates.forEach((date) => {
+      dates.forEach(() => {
         // ✅ กำหนดชื่อช่วงเวลา
         const timeSlotMap = {
           full: "เต็มวัน",
@@ -895,9 +944,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     }
   };
 
-
-
-
   const getTimeLabel = () =>
     timeOption === "half" ? "Half Day" : "Full Day";
   const getTimeRangeLabel = () =>
@@ -971,9 +1017,22 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
   };
 
+  const handleEquipmentChange = (e: React.ChangeEvent<HTMLInputElement>, item: string) => {
+    if (e.target.checked) {
+      setSelectedEquipment([...selectedEquipment, item]);
+    } else {
+      setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item));
+    }
+  };
+
   const handleSubmitBooking = async () => {
     if (!User || !roomData || !purpose || !selectedDates.length || !getTimeSlotId) {
       alert("Please fill in all the required fields.");
+      return;
+    }
+
+    if (calculatedPrice === 0 && !discount.used) {
+      alert("ราคาที่คำนวณได้เป็น 0 โปรดตรวจสอบส่วนลดหรือข้อมูลการจอง");
       return;
     }
 
@@ -982,41 +1041,80 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
       RoomID: selectedRoomId,
       TimeSlotID: getTimeSlotId(),
       Purpose: purpose,
-      AdditionalInfo: additionalInfo, // 👈 เพิ่มตรงนี้
-      Dates: selectedDates, // กรณีหลายวัน
-      // CustomerName: name,
-      // CustomerPhone: phone,
-      // CustomerEmail: email,
+      AdditionalInfo: JSON.stringify({
+        setupStyle: selectedStyle,  // เพิ่มตรงนี้
+        equipment: selectedEquipment,
+        additionalNote,
+      }),
+      Dates: selectedDates,
     }];
 
     try {
       console.log("Booking data to send:", bookingData);
       const res = await CreateBookingRoom(bookingData);
       console.log("cd", res);
-      if (res.status === 200) {
 
-        await fetchBookingMapOnly(roomData.id);  // ถ้าจองเกี่ยวกับห้องนี้
+      if (res.status === 200) {
+        console.log("✅ Booking success", res.data);
+      } else {
+        console.error("❌ Booking failed", res.status, res.data?.error);
+        alert(res.data?.error || "เกิดข้อผิดพลาดในการจอง");
+      }
+
+      if (res.status === 200) {
+        // เรียก API ลดโควต้าหลังจองสำเร็จ
+        const userId = parseInt(localStorage.getItem("userId") || "0");
+        const roomTypeKey = getRoomTypeKey(roomData.TypeName || "");
+
+
+        const quotaRes = await UseRoomQuota({
+          user_id: userId,
+          room_type: roomTypeKey,
+        });
+
+        if (quotaRes.status === 200) {
+          console.log("ลดโควต้าห้องเรียบร้อย:", quotaRes.data);
+        } else {
+          console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
+        }
+
+        await fetchBookingMapOnly(roomData.id);
+
         // รีเซ็ตฟอร์ม
         setSelectedDates([]);
         setName(name);
-        setPhone(phone)
+        setPhone(phone);
         setEmail(email);
-        setAdditionalInfo("");
+        setAdditionalNote('');
         setPurpose('');
-        // renderCalendar();
         const val = Number(selectedRoomId);
         setSelectedRoomId(val);
         fetchBookingMapOnly(val);
 
         handleSetAlert("success", "Booking created successfully.");
-
       }
     } catch (err) {
       console.error("Booking Error:", err);
       handleSetAlert("error", "An unexpected error occurred during create booking.");
     }
-
   };
+
+  // ตัวอย่างฟังก์ชันแปลงประเภทห้องให้ตรง backend
+  function getRoomTypeKey(roomType: string): "meeting" | "training" | "multi" {
+    switch (roomType.toLowerCase()) {
+      case "meetingroom":
+      case "meeting":
+        return "meeting";
+      case "trainingroom":
+      case "training":
+        return "training";
+      case "multifunctionroom":
+      case "multi":
+        return "multi";
+      default:
+        return "meeting"; // หรือจัดการ error ตามที่ต้องการ
+    }
+  }
 
 
 
@@ -1027,8 +1125,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
       {/* Header */}
-      <Paper elevation={2} className="header-paper">
-        <Box className="header-content">
+      <Paper elevation={2} className="booking-header-paper">
+        <Box className="booking-header-content">
           <Box>
             <Typography variant="h4" fontWeight="bold" mb={1}>
               {roomData.TypeName}
@@ -1041,7 +1139,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             startIcon={<ArrowLeft />}
             onClick={onBack || (() => window.history.back())}
             variant="outlined"
-            className="back-button"
+            className="button-back-button"
           >
             Back
           </Button>
@@ -1063,7 +1161,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               duration={500}
               navButtonsAlwaysVisible={true}
               navButtonsProps={{
-                className: 'nav-button'
+                className: 'button-nav-button'
               }}
             >
               <CardMedia
@@ -1082,9 +1180,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
           {/* Room Selection */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} className="section-paper room-selection-paper">
-              <Box className="section-header">
-                <Building2 className="section-icon" />
+            <Paper elevation={2} className="booking-section paper-room-selection-paper"
+              sx={{
+                backgroundColor: 'secondary.main',  // หรือ '#fff'
+                borderRadius: '24px',
+                padding: '24px',
+                my: 7,
+
+              }}>
+              <Box className="booking-section-header">
+                <Building2 className="booking-section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Room</Typography>
               </Box>
 
@@ -1092,7 +1197,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 <FormLabel sx={{ mb: 1 }}>Choose Sub-room In {roomtype.TypeName} category</FormLabel>
                 <Select
                   startAdornment={
-                    <InputAdornment position="start" className="input-adornment">
+                    <InputAdornment position="start" className="booking-input-adornment">
                       <Building2 size={18} strokeWidth={3} />
                     </InputAdornment>
                   }
@@ -1122,21 +1227,27 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
           {/* Time Selection */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} className="section-paper time-selection-paper">
-              <Box className="section-header">
-                <Clock className="section-icon" />
+            <Paper elevation={2} className="booking-section-paper time-selection-paper"
+              sx={{
+                backgroundColor: 'secondary.main',  // หรือ '#fff'
+                borderRadius: '24px',
+                padding: '24px',
+                mt: 3
+              }}>
+              <Box className="booking-section-header">
+                <Clock className="booking-section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Duration & Time</Typography>
               </Box>
 
               {loading && !pricing ? (
-                <Box className="loading-container">
+                <Box className="booking-loading-container">
                   <CircularProgress size={24} />
-                  <Typography className="loading-text">Loading Prices...</Typography>
+                  <Typography className="booking-loading-text">Loading Prices...</Typography>
                 </Box>
               ) : (
                 <>
-                  <FormControl component="fieldset" className="duration-options">
-                    <FormLabel component="legend" className="duration-legend">
+                  <FormControl component="fieldset" className="booking-duration-options">
+                    <FormLabel component="legend" className="booking-duration-legend">
                       Duration Options
                     </FormLabel>
                     <RadioGroup
@@ -1171,9 +1282,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                   </FormControl>
 
                   {/* Time Slot Selection */}
-                  <Divider className="time-divider" />
+                  <Divider className="booking-time-divider" />
                   <FormControl component="fieldset">
-                    <FormLabel component="legend" className="time-legend">
+                    <FormLabel component="legend" className="booking-time-legend">
                       Time Slot {timeOption === "full" && "(Full day covers both slots)"}
                     </FormLabel>
                     <RadioGroup
@@ -1208,9 +1319,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
 
           {/* Calendar */}
           <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} className="section-paper calendar-paper">
-              <Box className="section-header">
-                <Calendar className="section-icon" />
+            <Paper elevation={2} className="booking-section-paper calendar-paper">
+              <Box className="booking-section-header">
+                <Calendar className="booking-section-icon" />
                 <Typography variant="h6" fontWeight="600">Select Dates</Typography>
               </Box>
               {renderCalendar()}
@@ -1223,8 +1334,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               maxWidth="sm"
               fullWidth
             >
-              <DialogTitle className="dialog-title">
-                <Box className="dialog-header">
+              <DialogTitle className="booking-dialog-title">
+                <Box className="booking-dialog-header">
                   <Calendar size={20} />
                   <Typography variant="h6">Booking Details</Typography>
                 </Box>
@@ -1270,14 +1381,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
             <Paper
               elevation={3}
               className="booking-summary-paper"
-              sx={{ backgroundColor: 'secondary.main' }}
+              sx={{
+                backgroundColor: 'secondary.main', borderRadius: '24px',
+                padding: '24px',
+                mt: 3
+              }}
             >
               <Typography variant="h6" fontWeight="bold" mb={3} color="primary">
                 Booking Summary
               </Typography>
 
               {/* Room Type */}
-              <Box className="summary-section">
+              <Box className="booking-summary-section">
                 <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
                 <Typography variant="subtitle1" fontWeight="600">
                   {roomData?.TypeName || '-'}
@@ -1285,7 +1400,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Selected Room */}
-              <Box className="summary-section">
+              <Box className="booking-summary-section">
                 <Typography variant="body2" color="text.secondary">Selected Room</Typography>
                 <Typography variant="subtitle1" fontWeight="600">
                   {roomsOfSameType.find(r => r.id === selectedRoomId)?.roomnumber || '-'}
@@ -1293,7 +1408,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Duration & Time */}
-              <Box className="summary-section">
+              <Box className="booking-summary-section">
                 <Typography variant="body2" color="text.secondary">Duration & Time</Typography>
                 <Typography fontWeight="600">
                   {timeOption ? getTimeLabel() : '-'}
@@ -1306,7 +1421,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Number of Days */}
-              <Box className="summary-section">
+              <Box className="booking-summary-section">
                 <Typography variant="body2" color="text.secondary">Number of Days</Typography>
                 <Chip
                   label={`${selectedDates?.length || 0} days`}
@@ -1316,10 +1431,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Box>
 
               {/* Selected Dates */}
-              <Box className="summary-dates">
+              <Box className="booking-summary-dates">
                 <Typography variant="body2" color="text.secondary" mb={1}>Selected Dates</Typography>
                 {selectedDates && selectedDates.length > 0 ? (
-                  <Box className="dates-container">
+                  <Box className="booking-dates-container">
                     {selectedDates.slice(0, 4).map((date) => (
                       <Chip key={date} label={new Date(date).toLocaleDateString('en-US')} size="small" />
                     ))}
@@ -1332,14 +1447,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 )}
               </Box>
 
-              <Divider className="summary-divider" />
+              <Divider className="booking-summary-divider" />
 
               {/* Price Summary */}
-              <Paper elevation={1} className="price-summary">
+              <Paper elevation={1} className="booking-price-summary">
                 {loading ? (
-                  <Box className="price-loading">
+                  <Box className="booking-price-loading">
                     <CircularProgress size={60} />
-                    <Typography className="price-loading-text">Calculating Price...</Typography>
+                    <Typography className="booking-price-loading-text">Calculating Price...</Typography>
                   </Box>
                 ) : (
                   <>
@@ -1352,27 +1467,43 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               </Paper>
 
               {/* Discount Section */}
-              <Box className="discount-section">
-                <Typography variant="body2" color="primary">
-                  💎 You have {discount?.remaining ?? 0} free booking(s) left
+              <Box className="booking-discount-section" display="flex" alignItems="center" gap={1}>
+                <IconButton size="small" color="primary" disabled={discount.remaining <= 0 && !discount.used}>
+                  <LocalOfferIcon />
+                </IconButton>
+                <Typography variant="body2" color="primary" flexGrow={1}>
+                  You have {discount?.remaining ?? 0} free booking{discount?.remaining === 1 ? '' : 's'} left
                 </Typography>
                 <Button
-                  variant="outlined"
+                  variant={discount.used ? "contained" : "outlined"}
                   size="small"
-                  disabled={discount.used || discount.remaining <= 0}
+                  disabled={discount.remaining <= 0 && !discount.used} // ป้องกันคลิกตอนหมดสิทธิ์
                   onClick={() => {
-                    setDiscount((prev) => ({
-                      ...prev,
-                      used: true,
-                      remaining: prev.remaining - 1,
-                    }));
-                    setCalculatedPrice(0);
+                    setDiscount((prev) => {
+                      if (prev.used) {
+                        // ✅ ยกเลิกส่วนลด → คืนสิทธิ์กลับ 1
+                        return {
+                          ...prev,
+                          used: false,
+                          remaining: prev.remaining + 1,
+                          usedCount: prev.usedCount - 1,
+                        };
+                      }
+                      // ✅ ใช้ส่วนลด → ลด remaining และเพิ่ม usedCount
+                      return {
+                        ...prev,
+                        used: true,
+                        remaining: prev.remaining - 1,
+                        usedCount: prev.usedCount + 1,
+                      };
+                    });
                   }}
-                  className="discount-button"
+                  className="booking-discount-button"
                 >
-                  🎉 Use Free Credit
+                  {discount.used ? "Cancel Free Credit" : "Use Free Credit"}
                 </Button>
               </Box>
+
             </Paper>
           </Grid>
 
@@ -1392,7 +1523,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               <Divider className="form-divider" sx={{ backgroundColor: 'primary.main' }} />
             </Box>
 
-            <Grid container spacing={4}>
+            <Grid container spacing={3}>
               {/* Left Side - Contact Information */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={1} className="info-section-paper">
@@ -1441,6 +1572,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       className="readonly-field"
                     />
                   </Box>
+
+
                 </Paper>
               </Grid>
 
@@ -1448,7 +1581,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={1} className="info-section-paper">
                   <Box className="details-section-header">
-                    <Calendar size={24} />
+                    <Calendar size={24} className="info-section-icon" />
                     <Typography variant="h6" fontWeight="600" color="primary">
                       Booking Details
                     </Typography>
@@ -1460,7 +1593,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       fullWidth
                       required
                       multiline
-                      rows={1}
+                      rows={2}
                       value={purpose}
                       onChange={(e) => setPurpose(e.target.value)}
                       placeholder="e.g. team planning meeting, client presentation, training session, etc."
@@ -1469,16 +1602,80 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                       className="textarea-field"
                     />
 
+                    <FormControl fullWidth className="form-control">
+                      <FormLabel>Room Setup Style</FormLabel>
+                      <Box className="equipment-section">
+                        <RadioGroup
+                          row
+                          value={selectedStyle}
+                          onChange={(e) => setSelectedStyle(e.target.value)}
+                          sx={{ mt: 1 }}
+                        >
+                          {setupStyles?.map((item) => (
+                            <FormControlLabel
+                              key={item.ID}
+                              value={item.LayoutName}
+                              control={<Radio />}
+                              label={item.LayoutName}
+                            />
+                          ))}
+
+                        </RadioGroup>
+                      </Box>
+                    </FormControl>
+
+
+
+                    <FormControl component="fieldset" className="form-control">
+                      <FormLabel component="legend">Required Equipment</FormLabel>
+                      <Box className="equipment-section">
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={selectedEquipment.length === equipmentList.length}
+                              indeterminate={
+                                selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedEquipment(equipmentList);
+                                } else {
+                                  setSelectedEquipment([]);
+                                }
+                              }}
+                            />
+                          }
+                          label="Select All"
+                          sx={{ fontWeight: 600, mb: 1 }}
+                        />
+                        <Box className="equipment-grid">
+                          {equipmentList.map((item: string) => (
+                            <FormControlLabel
+                              key={item}
+                              control={
+                                <Checkbox
+                                  checked={selectedEquipment.includes(item)}
+                                  onChange={(e) => handleEquipmentChange(e, item)}
+                                />
+                              }
+                              label={item}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    </FormControl>
+
                     <TextField
-                      label="Additional Information (Optional)"
+                      label="Additional Special Requests (Optional)"
                       fullWidth
                       multiline
-                      rows={1}
-                      value={additionalInfo}
-                      onChange={(e) => setAdditionalInfo(e.target.value)}
-                      placeholder="e.g. Room setup style, required equipment, special requests, etc."
+                      rows={2}
+                      value={additionalNote}
+                      onChange={(e) => setAdditionalNote(e.target.value)}
+                      placeholder="Special equipment, catering arrangements, or other requests"
                       className="textarea-field"
                     />
+
                   </Box>
                 </Paper>
               </Grid>
@@ -1505,7 +1702,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                   onClick={handleSubmitBooking}
                   disabled={
                     loading ||
-                    !calculatedPrice ||
+                    !calculatedPrice == null ||
+                    calculatedPrice === undefined ||
                     selectedDates.length === 0 ||
                     !selectedRoomId ||
                     purpose.trim() === "" ||
@@ -1514,7 +1712,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                   className="confirm-button"
                   startIcon={loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : <Check size={24} />}
                 >
-                  {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice.toLocaleString()}`}
+                  {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || '0'}`}
                 </Button>
 
                 <Typography variant="body2" color="text.secondary" className="confirmation-note">
@@ -1536,14 +1734,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
           </Paper>
         </Grid>
 
-      </Grid>
-    </Box>
+
+      </Grid >
+    </Box >
   );
 
 };
 
 export default RoomBookingForm;
 
-function bookingMapOnlyRefetch() {
-  throw new Error("Function not implemented.");
-}

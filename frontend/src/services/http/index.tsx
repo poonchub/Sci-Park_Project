@@ -14,6 +14,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { handleSessionExpiration } from "../../utils/sessionManager";
 import { NewsImagesInterface } from "../../interfaces/NewsImages";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
+import { IUserPackages } from "../../interfaces/IUserPackages";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -1813,8 +1814,58 @@ async function CreateBookingRoom(data: BookingRoomsInterface[]) {
         }
     } else {
         return { status: res.status, data: null };
+        
     }
 }
+
+async function GetEquipmentByRoomType(id: number): Promise<{ EquipmentName: string }[]> {
+  try {
+    const response = await axiosInstance.get(`/roomtypes/${id}/equipment`);
+    return response.data.equipment;  // คืนค่าเฉพาะ array equipment
+  } catch (error) {
+    console.error("Error fetching equipment by room type:", error);
+    return [];
+  }
+}
+
+async function GetAllRoomLayouts(): Promise<{ ID: number; LayoutName: string }[]> {
+  try {
+    const response = await axiosInstance.get("/roomlayouts");
+    console.log("fffff",response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching room layouts:", error);
+    return [];
+  }
+}
+
+
+async function UseRoomQuota(data: IUserPackages) {
+  const requestOptions = {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(data),
+  };
+
+  const res = await fetch(`http://localhost:8000/user-packages/use-quota`, requestOptions);
+
+  if (res.status === 200 || res.status === 204) {
+    try {
+      const json = await res.json().catch(() => null);
+      return { status: res.status, data: json };
+    } catch {
+      return { status: res.status, data: null };
+    }
+  } else {
+    const error = await res.json().catch(() => null);
+    return { status: res.status, data: error };
+  }
+}
+
+
 
 
 
@@ -2120,7 +2171,10 @@ export {
     GetRoomQuota,
     GetRoomsByRoomTypeID,
     CreateBookingRoom,
-    GetRoomTypesByID
+    GetRoomTypesByID,
+    GetEquipmentByRoomType,
+    UseRoomQuota,
+    GetAllRoomLayouts
 
 }
 

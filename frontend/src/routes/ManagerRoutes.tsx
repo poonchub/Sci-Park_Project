@@ -14,6 +14,7 @@ import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
+import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 const ManagerRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -26,6 +27,10 @@ const ManagerRoutes = (): RouteObject => {
             {
                 path: "/booking-room",
                 element: <BookingRoom />
+            },
+            {
+                path: "/room-booking-form",
+                element: <RoomBookingForm roomsOfSameType={[]} />
             },
             {
                 path: "/maintenance/all-maintenance-request",

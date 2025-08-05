@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
@@ -64,6 +65,9 @@ func CreateBookingRoom(c *gin.Context) {
 			return
 		}
 
+		log.Printf("🔍 UserID %d Role: %s", user.ID, user.Role.Name)
+
+
 		// ✅ ตรวจสอบเงื่อนไขกรณีห้องใหญ่กว่า 20 และไม่ใช่ admin/manager
 		if room.Capacity > 20 {
 			// ดึง user พร้อม role
@@ -73,7 +77,7 @@ func CreateBookingRoom(c *gin.Context) {
 				return
 			}
 
-			if user.Role.Name != "admin" && user.Role.Name != "manager" {
+			if user.Role.Name != "admin" && user.Role.Name != "Manager" {
 				c.JSON(http.StatusForbidden, gin.H{
 					"error": "ห้องนี้ต้องติดต่อเจ้าหน้าที่อุทยานวิทเท่านั้น ไม่สามารถจองด้วยตนเองได้",
 				})
