@@ -92,8 +92,7 @@ func SetupDatabase() {
 		&entity.ContributorType{},
 		&entity.RequestServiceArea{},
 		&entity.AboutCompany{},
-		&entity.RequestServiceArea{},
-		&entity.AboutCompany{},
+		&entity.PaymentStatus{},
 	)
 
 	if err != nil {
@@ -763,20 +762,22 @@ func SeedDatabase() {
 	fmt.Println("📌 Seeding Payments")
 	payments := []entity.Payment{
 		{
-			PaymentsDate:  "2025-06-25",
+			PaymentDate:  "2025-06-25",
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
 			UserID:        users[6].ID, // internaluser1
 			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
+			StatusID: 	   1,
 		},
 		{
-			PaymentsDate:  "2025-06-26",
+			PaymentDate:  "2025-06-26",
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
 			UserID:        users[7].ID, // internaluser2
 			BookingRoomID: 2,
+			StatusID: 	   2,
 		},
 	}
 	for _, p := range payments {
@@ -961,6 +962,17 @@ func SeedDatabase() {
 		db.FirstOrCreate(&devInfo, entity.Contributor{
 			Name: devInfo.Name,
 			Email: devInfo.Email,
+		})
+	}
+
+	// PaymentStatus
+	paymentStatuses := []entity.PaymentStatus{
+		{Name: "Pending"},
+		{Name: "Completed"},
+	}
+	for _, status := range paymentStatuses {
+		db.FirstOrCreate(&status, entity.PaymentStatus{
+			Name: status.Name,
 		})
 	}
 }

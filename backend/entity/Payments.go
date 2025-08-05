@@ -4,18 +4,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// Areas คือ entity สำหรับบทบาทของผู้ใช้
+// Payment คือ entity สำหรับบันทึกการชำระเงิน
 type Payment struct {
-    gorm.Model
-	
-	PaymentsDate string
-	Amount      float64
-	SlipPath    string
-	Note    string
-	Status        string    `gorm:"type:varchar(20);default:'pending'"` // pending, paid, cancelled
-	UserID      uint
-	User        User `gorm:"foreignKey:UserID"`
+	gorm.Model
+
+	PaymentDate string
+	Amount       float64
+	SlipPath     string
+	Note         string
+
+	StatusID      uint
+	Status        PaymentStatus `gorm:"foreignKey:StatusID"`
+	UserID        uint
+	User          User `gorm:"foreignKey:UserID"`
 	BookingRoomID uint
-	BookingRoom BookingRoom `gorm:"foreignKey:BookingRoomID"`
-	
+	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID"`
 }
