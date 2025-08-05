@@ -658,7 +658,8 @@ const AddUserFormByCsv: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <UserRoundPlus size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
-                    </Box>
+        </Box>
+        
         </Grid>
 
         {/* Upload Section */}
