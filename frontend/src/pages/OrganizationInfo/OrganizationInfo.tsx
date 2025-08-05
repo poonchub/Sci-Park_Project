@@ -44,12 +44,12 @@ function OrganizationInfo() {
 
         // NameTH
         if (!organizationInfo?.NameTH?.trim()) {
-            newErrors.NameTH = "Please enter the organization name (TH).";
+            newErrors.NameTH = "Please enter the organization's Thai name.";
         }
 
         // NameEN
         if (!organizationInfo?.NameEN?.trim()) {
-            newErrors.NameEN = "Please enter the organization name (EN).";
+            newErrors.NameEN = "Please enter the organization's English name.";
         }
 
         // Slogan (optional but check empty string)
@@ -73,6 +73,8 @@ function OrganizationInfo() {
             if (!facebookPattern.test(organizationInfo.FacebookUrl.trim())) {
                 newErrors.FacebookUrl = "Invalid Facebook URL.";
             }
+        } else {
+            newErrors.FacebookUrl = "Please enter a Facebook URL.";
         }
 
         // Phone
@@ -288,7 +290,7 @@ function OrganizationInfo() {
                                 </Grid>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="body1" className="title-field">
-                                        Name Thai
+                                        Thai Name
                                     </Typography>
                                     <TextField
                                         name="NameTH"
@@ -312,7 +314,7 @@ function OrganizationInfo() {
                                 </Grid>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <Typography variant="body1" className="title-field">
-                                        Name English
+                                        English Name 
                                     </Typography>
                                     <TextField
                                         name="NameEN"

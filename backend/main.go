@@ -68,9 +68,10 @@ func main() {
 	{
 		// Users
 		protected.GET("/user/:id", controller.GetUserByID)
-		protected.POST("/create-user", controller.CreateUser)
 		protected.PATCH("/user/:id", controller.UpdateUserByID)
+		protected.POST("/create-user", controller.CreateUser)
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
+
 		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
 		protected.GET("/operators", controller.ListOperators)
 		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
@@ -105,7 +106,6 @@ func main() {
 
 		// RoomStatuses
 		protected.GET("/room-status", controller.ListRoomStatus)
-
 
 		// MaintenanceRequests
 		protected.GET("/maintenance-requests", controller.ListMaintenanceRequests)
@@ -168,6 +168,13 @@ func main() {
 		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
 		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
 
+		// RequestServiceArea & AboutCompany
+		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
+		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
+		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
+		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
+		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -183,7 +190,7 @@ func main() {
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
-	{	
+	{
 		// Maintenance
 		protected.GET("/maintenance-requests-option-for-admin", controller.GetMaintenanceRequestsForAdmin)
 		protected.GET("/maintenance-requests/by-date", controller.ListMaintenanceRequestsByDateRange)
@@ -238,10 +245,10 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-    log.Println("Background job: CancelExpiredBookings start")
-    controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
-    log.Println("Background job: CancelExpiredBookings finished")
-}
+			log.Println("Background job: CancelExpiredBookings start")
+			controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
+			log.Println("Background job: CancelExpiredBookings finished")
+		}
 	}()
 
 	// 🚀 Start Server

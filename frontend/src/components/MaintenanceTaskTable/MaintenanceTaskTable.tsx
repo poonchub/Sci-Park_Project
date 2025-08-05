@@ -31,7 +31,7 @@ const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
     columnVisibilityModel
 }) => {
     return (
-        <Box sx={{ width: '100%', height: '100%' }}>
+        <Box sx={{ width: '100%' }}>
             <Typography variant="subtitle1" fontWeight={600} marginBottom={1.4}>
                 {title}
             </Typography>
@@ -43,7 +43,7 @@ const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
                         rows={rows}
                         columns={columns}
                         rowCount={rowCount}
-                        page={page}
+                        page={page > 0 ? page - 1 : 0}
                         limit={limit}
                         onPageChange={onPageChange}
                         onLimitChange={onLimitChange}

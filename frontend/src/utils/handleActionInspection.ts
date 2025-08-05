@@ -112,7 +112,7 @@ const handleActionInspection = async (
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
-                { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework Requested successful" },
+                { type: "success", message: actionType === "confirm" ? "Inspection successful" : "Rework requested successfully" },
             ]);
 
             setOpenConfirmInspection(false);

@@ -27,13 +27,26 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
 }) => {
 
     return (
-        <Dialog open={open} onClose={onClose}>
+        <Dialog 
+            open={open} 
+            onClose={onClose}
+            maxWidth={false}
+            sx={{
+                '& .MuiDialog-paper': {
+                    minWidth: '350px',
+                    maxWidth: '70vw',
+                    width: 'auto',
+                    margin: 0,
+                    borderRadius: 0,
+                },
+            }}
+        >
             {/* Dialog title */}
             <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
                 Submit Maintenance Work
             </DialogTitle>
 
-            <DialogContent sx={{ minWidth: 350 }}>
+            <DialogContent >
                 <Box display={'flex'}>
                     <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach image</Typography>
                     <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'text.secondary' }}>(maximum 3 files)</Typography>

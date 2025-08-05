@@ -99,7 +99,7 @@ const handleActionApproval = async (
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
-                { type: "success", message: actionType === "approve" ? "Approval successful" : "Rejection successful" }
+                { type: "success", message: actionType === "approve" ? "Request approved successfully" : "Request rejected successfully" }
             ]);
             
             setSelectedOperator(0)

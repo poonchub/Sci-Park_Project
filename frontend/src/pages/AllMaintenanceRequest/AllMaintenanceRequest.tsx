@@ -700,7 +700,10 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
+    const getMaintenanceRequests = async (
+        pageNum: number = 1, 
+        setTotalFlag = false
+    ) => {
         try {
             const reqType = user?.RequestType?.TypeName || "";
             const statusFormat = selectedStatuses.join(",");
@@ -715,11 +718,6 @@ function AllMaintenanceRequest() {
 
             if (res) {
                 setMaintenanceRequests(res.data);
-                // setCounts(res.counts);
-
-                // const totalCount = res.counts.reduce((sum: number, item: { count: number }) => sum + item.count, 0);
-                // setTotalAll(totalCount);
-
                 if (setTotalFlag) setTotal(res.total);
 
                 const formatted = res.statusCounts.reduce((acc: any, item: any) => {
@@ -832,7 +830,11 @@ function AllMaintenanceRequest() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getUser(), getRequestStatuses(), getOperators()]);
+                await Promise.all([
+                    getUser(), 
+                    getRequestStatuses(), 
+                    getOperators(),
+                ]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -984,7 +986,7 @@ function AllMaintenanceRequest() {
                     {/* Data Table */}
                     <Grid 
                         size={{ xs: 12, md: 12 }} 
-                        height={'50vh'} 
+                        // height={'50vh'} 
                         minHeight={'200px'}
                     >
                         {!isLoadingData && statusCounts ? (

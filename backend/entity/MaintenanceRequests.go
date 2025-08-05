@@ -18,7 +18,7 @@ type MaintenanceRequest struct {
 
 	UserID            uint            `valid:"required~UserID is required"`
 	User              User            `gorm:"foreignKey:UserID" valid:"-"`
-	RoomID            uint            `valid:"required~RoomID is required"`
+	RoomID            uint            
 	Room              Room            `gorm:"foreignKey:RoomID" valid:"-"`
 	RequestStatusID   uint            `valid:"required~RequestStatusID is required"`
 	RequestStatus     RequestStatus   `gorm:"foreignKey:RequestStatusID" valid:"-"`

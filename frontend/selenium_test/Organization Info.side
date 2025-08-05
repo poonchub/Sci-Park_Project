@@ -1,0 +1,527 @@
+{
+  "id": "2ca57d76-1df3-48ae-ba96-6f410cdc31e5",
+  "version": "2.0",
+  "name": "Organization Info",
+  "url": "http://localhost:5173",
+  "tests": [{
+    "id": "9adeb53a-fb84-4d7a-a53b-29e5f2274df0",
+    "name": "Update Organization Info Unsuccessful (Thai Name Required)",
+    "commands": [{
+      "id": "b3f3747b-a7fd-4dd0-b4f4-c2ca0950b8be",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "f307dcb4-5863-4865-b946-a3172ab4dd77",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "fe24f448-e512-487f-8740-cf9c0f82eeff",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f73bf868-eaa4-4cb3-a099-de3adfab8861",
+      "comment": "",
+      "command": "type",
+      "target": "name=NameTH",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "c49aceed-4833-4031-8ebb-7ada564e49b5",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "a0b317e9-fad7-42b0-9c7d-91cc96f2c5b5",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rh:-helper-text",
+      "targets": [
+        ["id=:rh:-helper-text", "id"],
+        ["css=#\\3Arh\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rh:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[3]/div/div/div[2]/div/p", "xpath:position"]
+      ],
+      "value": "Please enter the organization's Thai name."
+    }]
+  }, {
+    "id": "a6779947-fc97-4da3-8a82-bbca2839a703",
+    "name": "Update Organization Info Unsuccessful (English Name Required)",
+    "commands": [{
+      "id": "db3b021e-581e-4535-a28d-37974e061973",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "03e9ed10-2170-469e-b2fd-ea031deae423",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "6678d7b0-464a-4f6d-aa6f-d9711bf28853",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "85d3cac9-acf2-4a6b-8994-776cc15a70f3",
+      "comment": "",
+      "command": "type",
+      "target": "name=NameEN",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ae0b708b-9208-4a55-ac10-99a383fefef6",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6e28d4c3-cbdf-4002-bc3e-0fd9fcf0b79c",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rj:-helper-text",
+      "targets": [
+        ["id=:rj:-helper-text", "id"],
+        ["css=#\\3Arj\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rj:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[3]/div/p", "xpath:idRelative"],
+        ["xpath=//div[3]/div/p", "xpath:position"]
+      ],
+      "value": "Please enter the organization's English name."
+    }]
+  }, {
+    "id": "ead933ab-dc52-4db7-937f-599de0dcb097",
+    "name": "Update Organization Info Unsuccessful (Slogan Required)",
+    "commands": [{
+      "id": "32f75827-685c-44aa-9979-253a10ad4a89",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "fba36ac9-b880-42cf-be4c-a16f0e2c15c8",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "47ad72a4-2a0f-4afa-9c50-82e1ea4d5578",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c7007945-6fde-4644-9ce7-4ad57ac153b6",
+      "comment": "",
+      "command": "type",
+      "target": "name=Slogan",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "c21fea8e-4ec5-4e60-b39f-69da7b5f4368",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "dbfe48fc-bc69-4fce-8c24-76d6283f52ab",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rl:-helper-text",
+      "targets": [
+        ["id=:rl:-helper-text", "id"],
+        ["css=#\\3Arl\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rl:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[4]/div/p", "xpath:idRelative"],
+        ["xpath=//div[4]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter a slogan.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter a slogan."
+    }]
+  }, {
+    "id": "f5b6f392-a7c2-4d94-b5d3-66bb0a684304",
+    "name": "Update Organization Info Unsuccessful (Description Required)",
+    "commands": [{
+      "id": "e85a42af-f25c-4676-9bff-969f93355753",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "663bd403-31fe-4c2a-882d-8ffd4b7675fd",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "6a290cf8-8bbb-4797-9f4a-a03a23bc902c",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "4cdab120-caa7-4a5e-b94d-4fc5f9875755",
+      "comment": "",
+      "command": "type",
+      "target": "name=Description",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "26c63a0a-72e5-49c3-a882-76956ba925c2",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "3ce95923-99cb-4347-bfc8-345db62e7fd7",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rn:-helper-text",
+      "targets": [
+        ["id=:rn:-helper-text", "id"],
+        ["css=#\\3Arn\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rn:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[5]/div/p", "xpath:idRelative"],
+        ["xpath=//div[5]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter a description.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter a description."
+    }]
+  }, {
+    "id": "640c9c8c-077b-4345-aa83-44e7fda5dc0b",
+    "name": "Update Organization Info Unsuccessful (Phone Required)",
+    "commands": [{
+      "id": "bafd8b9a-296d-44dc-a5ac-f9a46ee23e8d",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "1f42d4e5-03f8-4efb-96bd-748cce83d121",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "5c51c844-32bb-4e9f-8d68-02c629f24587",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "3abbf6df-345a-4d5b-ba8c-0ff36f479051",
+      "comment": "",
+      "command": "type",
+      "target": "name=Phone",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "8905e5a6-81c0-4a67-bfcc-bf4521403f4c",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "1fc3fcd1-756e-46de-b6e1-776ba552f5f9",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rp:-helper-text",
+      "targets": [
+        ["id=:rp:-helper-text", "id"],
+        ["css=#\\3Arp\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rp:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[6]/div/p", "xpath:idRelative"],
+        ["xpath=//div[6]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter your phone number.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter your phone number."
+    }]
+  }, {
+    "id": "071d1f44-2c90-45c5-bd01-5e42c154d881",
+    "name": "Update Organization Info Unsuccessful (Email Required)",
+    "commands": [{
+      "id": "192bd57f-48c1-447a-baa9-8cffe6496eb7",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "230be37f-76a3-4bb7-b18b-51f262a70582",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "b15ba534-ef29-4a01-97f4-fb17bb902beb",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "1d614e7a-8133-485a-844e-91e47eb78c36",
+      "comment": "",
+      "command": "type",
+      "target": "name=Email",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "165cb2e5-6028-4226-8812-5b6f821abbc7",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "edd5cc49-5888-4cc5-9982-c085a083eb33",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rr:-helper-text",
+      "targets": [
+        ["id=:rr:-helper-text", "id"],
+        ["css=#\\3Arr\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rr:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[7]/div/p", "xpath:idRelative"],
+        ["xpath=//div[7]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter your email.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter your email."
+    }]
+  }, {
+    "id": "c578967c-16c3-4a08-b412-56a6ee21131b",
+    "name": "Update Organization Info Unsuccessful (Facebook Url Required)",
+    "commands": [{
+      "id": "0678a14f-73d4-4a48-ad7e-7c5026fb3da6",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "431abf30-b639-4924-878c-80836bbd36cb",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "8de448ed-1fa2-4ce8-ba82-db96e5eef256",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c37fd038-5618-462b-948b-1d5821b1a0a8",
+      "comment": "",
+      "command": "type",
+      "target": "name=FacebookUrl",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "3b4cb5fb-84e2-49af-ad3a-5d68cb7a4659",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "8da1ba71-5161-45de-a1c0-bf1123ec85b9",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rt:-helper-text",
+      "targets": [
+        ["id=:rt:-helper-text", "id"],
+        ["css=#\\3Art\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rt:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[8]/div/p", "xpath:idRelative"],
+        ["xpath=//div[8]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter a Facebook URL.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter a Facebook URL."
+    }]
+  }, {
+    "id": "e5586578-b901-45b2-b0c4-b29238a1c988",
+    "name": "Update Organization Info Unsuccessful (Address Required)",
+    "commands": [{
+      "id": "69258ac9-67c0-402e-afe2-1b0b5cc5f413",
+      "comment": "",
+      "command": "open",
+      "target": "/organization-info",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d74b0c11-044e-41b4-beea-7ba768a7c6ba",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "fcf81272-e060-4152-b16e-acb68bd3f660",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "fc30de85-f7c1-4dec-a255-48a911d0cda3",
+      "comment": "",
+      "command": "type",
+      "target": "name=Address",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "a69717cd-4920-4e0d-b469-076a915b8c58",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root",
+      "targets": [
+        ["css=.MuiButton-root", "css:finder"],
+        ["xpath=(//button[@type='button'])[6]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[10]/button", "xpath:idRelative"],
+        ["xpath=//div[10]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Save')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "c9784288-ec55-4cdb-96cd-9cb7e4cdb039",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:rv:-helper-text",
+      "targets": [
+        ["id=:rv:-helper-text", "id"],
+        ["css=#\\3Arv\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':rv:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[3]/div/div/div[9]/div/p", "xpath:idRelative"],
+        ["xpath=//div[9]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter an address.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter an address."
+    }]
+  }],
+  "suites": [{
+    "id": "6eeeee22-647c-4eda-ab38-207d93b9b6f6",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["9adeb53a-fb84-4d7a-a53b-29e5f2274df0"]
+  }],
+  "urls": ["http://localhost:5173/"],
+  "plugins": []
+}

@@ -34,6 +34,11 @@ import {
     Pie,
     Cell,
 } from 'recharts';
+import {
+
+    ChartPie,
+
+} from "lucide-react";
 import ApexLineChart from '../ApexLineChart/ApexLineChart';
 import PopularPagesDonutChart from '../PopularPagesDonutChart/PopularPagesDonutChart';
 import {
@@ -777,9 +782,14 @@ For data interpretation:
                 <Grid container spacing={3}>
                     {/* Header Section */}
                     <Grid className="title-box" size={{ xs: 8, md: 10 }}>
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            System Analytics Dashboard
-                        </Typography>
+
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ChartPie size={26} />
+                            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                                System Analytics Dashboard
+                            </Typography>
+                        </Box>
                     </Grid>
                     <Grid size={{ xs: 4, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <Button

@@ -40,4 +40,6 @@ type User struct {
 	BookingRoom         []BookingRoom        `gorm:"foreignKey:UserID" valid:"-"`
 	Payments            []Payment            `gorm:"foreignKey:UserID" valid:"-"`
 	News                []News               `gorm:"foreignKey:UserID" valid:"-"`
+	RequestServiceAreas []RequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
+	AboutCompany        *AboutCompany        `gorm:"foreignKey:UserID" valid:"-"`
 }

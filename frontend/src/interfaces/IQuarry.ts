@@ -4,6 +4,7 @@ export interface QuarryInterface {
     page?: number;
     limit?: number;
     isemployee?: boolean;
+    search?: string;
 
     floor?: number;
     roomType?: number;

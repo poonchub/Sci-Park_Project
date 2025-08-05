@@ -1,0 +1,1902 @@
+{
+  "id": "28d6f804-8cd7-417d-9c5b-1e2e3c6baf40",
+  "version": "2.0",
+  "name": "Scipark",
+  "url": "http://localhost:5173/maintenance/create-maintenance-request",
+  "tests": [{
+    "id": "a10d9dc0-d644-419e-9eff-805f3dadecd8",
+    "name": "Create Maintenance Request Successful (case 1)",
+    "commands": [{
+      "id": "7e9695d5-a927-49f9-b1cc-101d5cfa4a03",
+      "comment": "",
+      "command": "open",
+      "target": "/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "b20e57fd-c1e2-49ab-945f-65c0744f555f",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "67b80bc9-26ab-4db6-b5bd-05bde138e79e",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "e42b8fd5-fcff-484b-918d-ecbf9dced09c",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "8607e551-102a-44c7-9263-069e86cbe000",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "e01f4685-f3ee-4328-a7e5-d25351468774",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bded0e1a-4242-4852-8a2e-c9e6c8c90333",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "id=mui-component-select-FloorNumber",
+      "targets": [
+        ["id=mui-component-select-FloorNumber", "id"],
+        ["css=#mui-component-select-FloorNumber", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[3]/div/div/div", "xpath:idRelative"],
+        ["xpath=//form/div/div[3]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "bf82e73f-1254-4233-bd66-58d62c288990",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "d4ed9cd3-1da6-4a94-9f46-e2b711b402f2",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "d83d6027-07ad-44b1-a64c-bab358a728e1",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bf7825d5-8cd9-4173-80ab-30b82e886d02",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "id=mui-component-select-RoomID",
+      "targets": [
+        ["id=mui-component-select-RoomID", "id"],
+        ["css=#mui-component-select-RoomID", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[4]/div/div/div", "xpath:idRelative"],
+        ["xpath=//div[4]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "6a0bcc31-6379-467a-acb1-5c2b61391cf3",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f7a0a9b6-efe5-4d0f-b58d-850341b737cd",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c262811e-f741-49bf-a83b-814b9d1a1539",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "32c4cc98-5956-463e-b3f5-0cbdc49d591e",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6b3be1f8-3779-470a-b0c4-a7e0eb40cf07",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "b8261cea-e910-4446-9c8e-8bcc2edbc7fc",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "bedfc563-dba9-4aaa-93b3-c309a54d375f",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Electrical Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "c28933fc-3f98-477d-9e31-0695a57648ff",
+      "comment": "",
+      "command": "type",
+      "target": "name=Description  ",
+      "targets": [],
+      "value": "description"
+    }, {
+      "id": "5cb6b035-f05c-4802-b2eb-911736c188b1",
+      "comment": "",
+      "command": "click",
+      "target": "name=IsAnytimeAvailable",
+      "targets": [
+        ["name=IsAnytimeAvailable", "name"],
+        ["css=.MuiCheckbox-root > .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@name='IsAnytimeAvailable']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[7]/div/div/label/span/input", "xpath:idRelative"],
+        ["xpath=//div[7]/div/div/label/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "ec961226-62c7-4064-a74a-95b89799d02e",
+      "comment": "",
+      "command": "type",
+      "target": "name=StartTime",
+      "targets": [],
+      "value": "08:30 AM"
+    }, {
+      "id": "cf51aab1-c78a-4317-8079-f50dee88d184",
+      "comment": "",
+      "command": "type",
+      "target": "name=EndTime",
+      "targets": [],
+      "value": "01:30 PM"
+    }, {
+      "id": "58a2d06d-fd52-4bb6-9dd8-e1001267c4ef",
+      "comment": "",
+      "command": "type",
+      "target": "name=imageUploader",
+      "targets": [],
+      "value": "E:\\My_Works_Programer\\My_Coding_Practice\\Sci-Park_Project\\frontend\\selenium_test\\images\\create_maintenance.jpg"
+    }, {
+      "id": "8e769eb8-b91d-4aef-8f6f-48ff7cdea432",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "585d0c05-5319-4a34-b7f1-c2155eb8d771",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nMaintenance request submitted successfully"
+    }]
+  }, {
+    "id": "6ca68101-f0df-4364-8ba1-fcb082516e58",
+    "name": "Create Maintenance Request Successful (case 2)",
+    "commands": [{
+      "id": "173a92f2-7a33-42fd-8250-eca4113e5218",
+      "comment": "",
+      "command": "open",
+      "target": "/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "68945c96-3920-4b44-8cda-12efa673b2be",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ede2b71a-3c56-43bd-9f0c-1f33cac8c600",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiFormControlLabel-root:nth-child(2) .PrivateSwitchBase-input",
+      "targets": [
+        ["css=.MuiFormControlLabel-root:nth-child(2) .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=(//input[@name='AreaID'])[2]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div/div/div/label[2]/span/input", "xpath:idRelative"],
+        ["xpath=//label[2]/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "5d3bcd7e-778b-4e7d-89d0-fd26a0090155",
+      "comment": "",
+      "command": "type",
+      "target": "name=AreaDetail",
+      "targets": [],
+      "value": "Area Detail"
+    }, {
+      "id": "f3dfe56e-c664-4861-8d17-851c673aec5d",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "2be4e325-ce4e-4894-8a50-be5b128637ba",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "0c36b61f-603e-4298-8cec-b99f7a4d6987",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "30010cf8-1678-4117-9799-4fb92a12e388",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButtonBase-root:nth-child(7)",
+      "targets": [
+        ["css=.MuiButtonBase-root:nth-child(7)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[7]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[7]", "xpath:position"],
+        ["xpath=//li[contains(.,'Other Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "7843b808-d695-4487-844e-f02da8325480",
+      "comment": "",
+      "command": "type",
+      "target": "name=OtherTypeDetail",
+      "targets": [],
+      "value": "Other Type Detail"
+    }, {
+      "id": "08ed473d-9c71-4c4d-b2a8-b22d9f29ffd8",
+      "comment": "",
+      "command": "type",
+      "target": "name=Description  ",
+      "targets": [],
+      "value": "description"
+    }, {
+      "id": "5d52fb58-3595-4087-8a98-5975f4c77e59",
+      "comment": "",
+      "command": "click",
+      "target": "name=IsAnytimeAvailable",
+      "targets": [
+        ["name=IsAnytimeAvailable", "name"],
+        ["css=.MuiCheckbox-root > .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@name='IsAnytimeAvailable']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[7]/div/div/label/span/input", "xpath:idRelative"],
+        ["xpath=//div[7]/div/div/label/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "a1538a15-3f1d-4e95-89a7-bfcdfd341b7c",
+      "comment": "",
+      "command": "type",
+      "target": "name=StartTime",
+      "targets": [],
+      "value": "08:30 AM"
+    }, {
+      "id": "151f8d46-2a57-49ad-a94e-be750525a260",
+      "comment": "",
+      "command": "type",
+      "target": "name=EndTime",
+      "targets": [],
+      "value": "02:30 PM"
+    }, {
+      "id": "26cfe8e3-d619-4b98-98bd-247112ecef53",
+      "comment": "",
+      "command": "type",
+      "target": "name=imageUploader",
+      "targets": [],
+      "value": "E:\\My_Works_Programer\\My_Coding_Practice\\Sci-Park_Project\\frontend\\selenium_test\\images\\create_maintenance.jpg"
+    }, {
+      "id": "f75e27e9-043d-420e-8594-87e5f1d06639",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "58fd29c1-bd16-4283-974a-468878d0efc2",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nMaintenance request submitted successfully"
+    }]
+  }, {
+    "id": "4e5f0db1-b198-4e18-abb3-2301245b2b34",
+    "name": "Create Maintenance Request Unsuccessful (Area Detail Required)",
+    "commands": [{
+      "id": "fc0265c4-9c6d-46e2-ac8c-100a307e8589",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d8c03a4f-edc9-46f2-a002-8e0d98c910a8",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "9daf3fd8-9b86-4a29-8ddd-2513ea66a840",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiFormControlLabel-root:nth-child(2) .PrivateSwitchBase-input",
+      "targets": [
+        ["css=.MuiFormControlLabel-root:nth-child(2) .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=(//input[@name='AreaID'])[2]", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div/div/div/label[2]/span/input", "xpath:idRelative"],
+        ["xpath=//label[2]/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "fdefad20-e7e2-4079-acbe-513346fd7525",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "71ea0869-a52e-45c3-b20b-4865f2597e9f",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r25:-helper-text",
+      "targets": [
+        ["id=:r25:-helper-text", "id"],
+        ["css=#\\3Ar25\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r25:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please specify additional area details.')]", "xpath:innerText"]
+      ],
+      "value": "Please specify additional area details."
+    }]
+  }, {
+    "id": "2b27827d-9547-4b7b-a55d-48badf11a176",
+    "name": "Create Maintenance Request Unsuccessful (Room Type Required)",
+    "commands": [{
+      "id": "f9928cf3-94e2-42a8-ba5a-4a807ccdb009",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "1602a17f-d34e-4387-ae1c-0bee62d9957a",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ede1bf98-aef8-4fe7-8cfa-00210f8dda75",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "9713a9cd-01e2-4f29-906b-fe83a0d2141a",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiFormHelperText-root",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a room type.')]", "xpath:innerText"]
+      ],
+      "value": "Please select a room type."
+    }]
+  }, {
+    "id": "028f65ae-d6a0-4fd6-a1a1-a15483e2e62c",
+    "name": "Create Maintenance Request Unsuccessful (Floor Required)",
+    "commands": [{
+      "id": "7ec76e60-8060-48e8-b072-8d513d879cda",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "f2a79717-229e-4ea6-9349-2b3d6012d362",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "0672c398-d65d-482d-8316-59bd71c24609",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "e74305e2-2eac-48eb-963c-9e247973ec73",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "d1a81362-df5f-4e2a-a2b2-544cea4f6730",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "2c5a0bd0-ea23-424b-971c-c25e13b51d6f",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "2453bba5-6dc8-4749-9489-108e21e378da",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bb82e045-645f-4a7c-9961-5f0334e097df",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiFormHelperText-root",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[3]/div/p", "xpath:idRelative"],
+        ["xpath=//div[3]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a floor or location.')]", "xpath:innerText"]
+      ],
+      "value": "Please select a floor or location."
+    }]
+  }, {
+    "id": "7a49a233-c8a3-4b7b-bbd5-38e7a8acc697",
+    "name": "Create Maintenance Request Unsuccessful (Room Number Required)",
+    "commands": [{
+      "id": "6074cfb1-1722-488b-82d3-1f0f5f58efeb",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "e3ec0144-2e3b-4106-af95-096de277057b",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "47169e14-f5cf-4892-bd65-5ed5b1947b09",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "b3c14284-7a26-436a-89cc-cd8ba78a6962",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "bacdc95f-2bd5-4aee-827d-83d492ec9e30",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c33fb4af-552d-4124-8984-74a4d83d3eca",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "d207efe1-b08b-4015-9c0e-dd1fe722103c",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "7e286bce-a38e-428f-90ef-f708d48a7bb1",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "d09cbf36-5cb3-4636-aead-c7bd083e0895",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9f3811d1-cebd-4873-87ca-9435d1bc0a05",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "703e2b3a-d0f5-4ec0-ba9b-fb9ef423d0ee",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "c046dad6-e1d8-492e-ba15-cc16005b8538",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiFormHelperText-root",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[4]/div/p", "xpath:idRelative"],
+        ["xpath=//div[4]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a room number.')]", "xpath:innerText"]
+      ],
+      "value": "Please select a room number."
+    }]
+  }, {
+    "id": "fc6070df-fc43-4c60-9dd9-02b5844d637d",
+    "name": "Create Maintenance Request Unsuccessful (Maintenance Type Required)",
+    "commands": [{
+      "id": "4e8b3db8-614c-47f9-a9c1-c85529b70eea",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "964fc1c2-1134-48d4-b510-0565684d46c2",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "96ac8def-2d87-4806-b54f-4fe7a8f5be97",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "ab136b2a-73e1-4cab-b633-b4af4e518700",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c42bf151-1a6c-43ce-a96d-ad6564704b0b",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "47af0201-8c6a-4e02-a2c3-837f17d2b25c",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "50c36bec-1efb-4cfc-a66d-d90b8964e43a",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "22ffddb7-694a-49d1-b780-dfa01e61b7f7",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "3a74b8a7-9214-4155-8543-67caeb77bb09",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9f9cd9df-a9d1-43c2-b2a7-8a80cf162066",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "58d8a788-da61-49ce-9f21-cacd7d7fed87",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Number --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "36607994-1600-4063-aff8-d786220cfd38",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "eac41c4c-3752-400e-9ea1-d1dd1cc6954d",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "877b2e0c-0ee2-47a3-ae6f-39eef1a44fd8",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "36e95109-85b4-480a-8fe7-66ee8b9e3766",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "14822ba4-d462-41de-8b4b-1776ec6cbbbf",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiFormHelperText-root",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[5]/div/p", "xpath:idRelative"],
+        ["xpath=//div[5]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a maintenance type.')]", "xpath:innerText"]
+      ],
+      "value": "Please select a maintenance type."
+    }]
+  }, {
+    "id": "284fac69-5a3c-41ac-9422-3059d3c3076d",
+    "name": "Create Maintenance Request Unsuccessful (Other Type Detail Required)",
+    "commands": [{
+      "id": "34d47915-dcfa-4c00-96c8-497e3d20720f",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ca9b8bfc-983f-4ea2-8157-504d47b4e2ed",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "f4392f72-77e7-46e8-90b4-e4b7716548aa",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "65729173-b0db-4daa-9672-2659371f1824",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "1431f823-d961-43eb-b860-6970120aaec8",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "ef74f3d6-fef0-4c6f-a52d-e6f4b17c142e",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "0bf3d968-965f-4d64-a2ad-6568b5b16a39",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "14c358ec-3a92-47a5-bb65-d2317732c4ec",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "38f43c50-2cea-4e27-9919-4327726043e8",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "70dd03c2-5310-4dd5-ae9d-778b72f571d2",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bbf7f9a7-4a83-4135-9a58-f5efc3b02ff8",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Number --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "963e9e8a-75c2-4816-8b01-791044e95f33",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "fdd329a6-032d-47b9-9819-4c32828e1b31",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "7df260ac-f804-4218-b40c-38146616878a",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "89b78ebc-ef23-4c76-afcf-b85ab7dfc9d8",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "3eea5405-fd8f-4844-a252-12176ead34b1",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "889cd968-3550-44bf-b86a-078622d8ddd3",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "2f244526-214d-4409-97c3-1533acac4da3",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButtonBase-root:nth-child(7)",
+      "targets": [
+        ["css=.MuiButtonBase-root:nth-child(7)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[7]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[7]", "xpath:position"],
+        ["xpath=//li[contains(.,'Other Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "0fd0725e-e6e7-47a0-b42c-5f00e1ce80f1",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "149276cb-b616-4d9f-a42f-35d5e941a848",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r25:-helper-text",
+      "targets": [
+        ["id=:r25:-helper-text", "id"],
+        ["css=#\\3Ar25\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r25:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[5]/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please specify the additional maintenance type.')]", "xpath:innerText"]
+      ],
+      "value": "Please specify the additional maintenance type."
+    }]
+  }, {
+    "id": "47fad85d-dfa1-4fde-a6b2-d3a2b5193e1f",
+    "name": "Create Maintenance Request Unsuccessful (Description Required)",
+    "commands": [{
+      "id": "4e2591b8-06c6-4f7a-a302-589318b46746",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "7ef5925f-3a71-4825-b13f-4d64c9545547",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "2b6c20a6-51ed-4351-a029-1f80797b9bae",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6bf9ced8-8665-4f55-8b02-2fad56267bb1",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "a8ee4667-29d8-491a-b835-f671eb8e4b8c",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "02bb11de-7e72-40ef-8055-289378b64f26",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "7987105d-8390-4e46-8c8b-ccd732c02369",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "db7295f5-6996-4b32-8c37-7585da6a7ad9",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c3eb61e0-e899-4da4-b710-39b1a5688e54",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "37a6cf6e-d8f3-4871-8a5a-51c26fa94ecc",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "899d44d7-71ae-4aec-9abc-364ee8013175",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Number --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6f388da0-0d71-4be5-80c5-d1fe81a052da",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "7e3177c8-3ce3-41c5-bda4-f5536cd5a38c",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "89b2045c-c0c7-4dc2-aef8-823f7f733411",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "6982c218-0762-4afe-9d97-95ddaf5db448",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "76cd31cf-aec7-460f-a94a-92b4383963d9",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9b19262e-92b7-42d4-8a0b-077721733d99",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f533388e-29c7-48e4-9bf6-e99b235a8f52",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Electrical Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "a7dd7f51-e543-4274-8465-19e0efbe1407",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "27f560d2-aa8b-408d-a6dd-ad449b64eaed",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r15:-helper-text",
+      "targets": [
+        ["id=:r15:-helper-text", "id"],
+        ["css=#\\3Ar15\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r15:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[6]/div/p", "xpath:idRelative"],
+        ["xpath=//div[6]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please provide a description of the problem.')]", "xpath:innerText"]
+      ],
+      "value": "Please provide a description of the problem."
+    }]
+  }, {
+    "id": "69a9a2a9-f459-4b0b-a818-d20cbea2e826",
+    "name": "Create Maintenance Request Unsuccessful (Time Required)",
+    "commands": [{
+      "id": "1383a82b-e996-4271-8e58-334dc7460dd0",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d3f03b73-2594-41cc-8d31-36de9fd8aa05",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "86917ce5-2275-46c1-b752-9c749f5ff4d7",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "f2944e8c-769a-4063-ac4f-ef4e3d702287",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "448bab56-1951-4fa1-9bd5-91e8bc41e024",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9416651d-cf00-43f0-a80f-57c8f8d2d801",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "8adbbea0-a017-4066-8324-4c1c8fa89f9b",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bd9ac890-a64e-401d-a816-7bf89cda8df1",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "6b17592f-36be-4e89-890a-1c891566b32c",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "18fae8eb-cfe9-46f3-987a-d05a64802d9c",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "38647076-c760-4dee-936b-d962543eb994",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Number --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "77e81017-ab40-4c65-a4cd-881d78fc0444",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "8f0ee3d7-da9a-43b5-9c89-259fa13ea25e",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "362c1942-10f2-40c7-aa87-3767271e09f9",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "d99e9c5a-4ea3-482a-984e-f956d1cd56dd",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "5b995309-a463-48d2-929c-7a8f9cbbb129",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "08dbef97-3de9-4699-90c6-53a2e5cf6068",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "e1d1b558-e1c7-4a81-9cd4-c0dd3fa343e1",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Electrical Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "aa5467d6-afc6-4a71-ad71-df3837c8e8a8",
+      "comment": "",
+      "command": "type",
+      "target": "name=Description",
+      "targets": [],
+      "value": "Description"
+    }, {
+      "id": "c223e116-5172-4cdd-8c91-c18968f3d923",
+      "comment": "",
+      "command": "click",
+      "target": "name=IsAnytimeAvailable",
+      "targets": [
+        ["name=IsAnytimeAvailable", "name"],
+        ["css=.MuiCheckbox-root > .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@name='IsAnytimeAvailable']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[7]/div/div/label/span/input", "xpath:idRelative"],
+        ["xpath=//div[7]/div/div/label/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "b516faf7-dcb0-446a-a3d4-040c338bf61a",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "321cbe4f-c8e8-4974-9084-cc25d9563cbd",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r19:-helper-text",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a room type.')]", "xpath:innerText"]
+      ],
+      "value": "Please specify the start time."
+    }, {
+      "id": "65179326-0e7b-4ebf-9251-0d500204e541",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r1f:-helper-text",
+      "targets": [
+        ["css=.MuiFormHelperText-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select a room type.')]", "xpath:innerText"]
+      ],
+      "value": "Please specify the end time."
+    }]
+  }, {
+    "id": "11038419-f2cd-4ce1-a672-d1ea4a3364a0",
+    "name": "Create Maintenance Request Unsuccessful (Image Required)",
+    "commands": [{
+      "id": "0a0b4ba1-c64b-4dcb-a1ee-4aef0ad822c1",
+      "comment": "",
+      "command": "open",
+      "target": "http://localhost:5173/maintenance/create-maintenance-request",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "cb47509a-5e20-4a6e-832c-d4032a938080",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1920x1080",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d5112847-2309-4729-9cfe-20c77aef276b",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "de658fe0-d999-42a1-bab7-4ced6c61220e",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "88722c24-61c8-4aee-8429-73c8fb0fc842",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "87269470-39a8-4985-85ff-716e24b95760",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rt:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Small Meeting Room')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "e6efde83-8c05-49a6-b990-dc7d16c9d068",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-FloorNumber > em",
+      "targets": [
+        ["css=#mui-component-select-FloorNumber > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-FloorNumber']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Location or Floor --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "305c88a1-d550-4be0-bb2c-faef4c72b4e3",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-FloorNumber']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "0a4aa0e8-c786-49e6-871a-96ea2b8001fc",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "58667eb9-13cc-4d2f-a249-5e860193a271",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':rv:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Floor 1')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "f54dc5a8-1317-40b3-8fb0-5a718e40e91e",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-RoomID > em",
+      "targets": [
+        ["css=#mui-component-select-RoomID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-RoomID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Room Number --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "47a42461-d4d0-4b35-97ee-4d2905a24a6d",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-RoomID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "30859f81-e8c1-402c-a743-c45f90927f9f",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "60a35892-9eb1-4e3a-8f2f-6709377c920f",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r11:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'A302')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "bde627c1-a57d-4367-8c88-c6bf95c1a81d",
+      "comment": "",
+      "command": "mouseDown",
+      "target": "css=#mui-component-select-MaintenanceTypeID > em",
+      "targets": [
+        ["css=#mui-component-select-MaintenanceTypeID > em", "css:finder"],
+        ["xpath=//div[@id='mui-component-select-MaintenanceTypeID']/em", "xpath:idRelative"],
+        ["xpath=//em", "xpath:position"],
+        ["xpath=//em[contains(.,'-- Select Maintenance Type --')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "f504454b-6968-46d3-b8ea-a6d5c879886b",
+      "comment": "",
+      "command": "mouseUp",
+      "target": "css=.MuiBackdrop-invisible",
+      "targets": [
+        ["css=.MuiBackdrop-invisible", "css:finder"],
+        ["xpath=//div[@id='menu-MaintenanceTypeID']/div", "xpath:idRelative"],
+        ["xpath=//body/div[3]/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9a946c32-a6ab-42e3-852c-716f0e05200e",
+      "comment": "",
+      "command": "click",
+      "target": "css=body",
+      "targets": [
+        ["css=body", "css:finder"],
+        ["xpath=//body", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f9806b28-4434-43ba-9531-311b3b09e78e",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiMenuItem-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiMenuItem-root:nth-child(2)", "css:finder"],
+        ["xpath=//ul[@id=':r13:']/li[2]", "xpath:idRelative"],
+        ["xpath=//div[3]/ul/li[2]", "xpath:position"],
+        ["xpath=//li[contains(.,'Electrical Work')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "fe0ab74c-17ad-4568-997a-2119fd0b4b28",
+      "comment": "",
+      "command": "type",
+      "target": "name=Description",
+      "targets": [],
+      "value": "Description"
+    }, {
+      "id": "a099b00f-8e49-4f22-adb3-1efc6ec0c7b8",
+      "comment": "",
+      "command": "click",
+      "target": "name=IsAnytimeAvailable",
+      "targets": [
+        ["name=IsAnytimeAvailable", "name"],
+        ["css=.MuiCheckbox-root > .PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@name='IsAnytimeAvailable']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div/div[7]/div/div/label/span/input", "xpath:idRelative"],
+        ["xpath=//div[7]/div/div/label/span/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "e41e1f8c-21c2-45d1-b591-3115213f08a6",
+      "comment": "",
+      "command": "type",
+      "target": "name=StartTime",
+      "targets": [],
+      "value": "08:30 AM"
+    }, {
+      "id": "2d44f49e-3588-48d2-9332-b62ecad67569",
+      "comment": "",
+      "command": "type",
+      "target": "name=EndTime",
+      "targets": [],
+      "value": "10:30 AM"
+    }, {
+      "id": "dae3ea04-868e-4533-b9c6-f31942687d3c",
+      "comment": "",
+      "command": "mouseOver",
+      "target": "linkText=Maintenance",
+      "targets": [
+        ["linkText=Maintenance", "linkText"],
+        ["css=.MuiDrawer-root:nth-child(3) > .MuiPaper-root:nth-child(1) .MuiListItem-root:nth-child(4) > .MuiButtonBase-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[2]/div/nav/ul/li[4]/a", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '/maintenance/my-maintenance-request')])[2]", "xpath:href"],
+        ["xpath=//div[2]/div/nav/ul/li[4]/a", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "15d0fc97-7345-4caf-8836-9dc93fc7e5b0",
+      "comment": "",
+      "command": "click",
+      "target": "css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root",
+      "targets": [
+        ["css=.css-1i0de53-MuiButtonBase-root-MuiButton-root > .MuiTypography-root", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/form/div[3]/div/button[2]/span", "xpath:idRelative"],
+        ["xpath=//button[2]/span", "xpath:position"],
+        ["xpath=//span[contains(.,'Submit Request')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "5d7d5257-d46c-4a68-87ec-a64218482323",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Warning\\nNo images uploaded"
+    }]
+  }],
+  "suites": [{
+    "id": "a43d49a8-eff1-451a-996e-87a89e037599",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["a10d9dc0-d644-419e-9eff-805f3dadecd8"]
+  }],
+  "urls": ["http://localhost:5173/", "http://localhost:5173/maintenance/create-maintenance-request"],
+  "plugins": []
+}

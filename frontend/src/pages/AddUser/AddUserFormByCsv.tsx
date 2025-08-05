@@ -21,7 +21,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faCheck, faTimes, faFileCsv, faRotateRight, faBook } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
-import { UserInterface } from '../../interfaces/IUser';
+import {
+
+
+  UserRoundPlus,
+
+} from "lucide-react";
 import { TextArea } from '../../components/TextField/TextArea';
 import { RolesInterface } from '../../interfaces/IRoles';
 import { GendersInterface } from '../../interfaces/IGenders';
@@ -650,7 +655,11 @@ const AddUserFormByCsv: React.FC = () => {
 
       <Grid container spacing={3}>
         <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-          <Typography variant="h6" className="title">Add Users from CSV</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <UserRoundPlus size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+        </Box>
+        
         </Grid>
 
         {/* Upload Section */}

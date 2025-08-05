@@ -324,8 +324,32 @@ func GetUserByID(c *gin.Context) {
 		return
 	}
 
-	// ส่งข้อมูลผู้ใช้กลับไปในรูปแบบ JSON
-	c.JSON(http.StatusOK, user)
+	// สร้าง response object ที่ไม่มี password
+	userResponse := gin.H{
+		"ID":             user.ID,
+		"EmployeeID":     user.EmployeeID,
+		"CompanyName":    user.CompanyName,
+		"BusinessDetail": user.BusinessDetail,
+		"FirstName":      user.FirstName,
+		"LastName":       user.LastName,
+		"GenderID":       user.GenderID,
+		"Gender":         user.Gender,
+		"Email":          user.Email,
+		"Phone":          user.Phone,
+		"ProfilePath":    user.ProfilePath,
+		"UserPackageID":  user.UserPackageID,
+		"RoleID":         user.RoleID,
+		"Role":           user.Role,
+		"IsEmployee":     user.IsEmployee,
+		"RequestTypeID":  user.RequestTypeID,
+		"RequestType":    user.RequestType,
+		"UserPackages":   user.UserPackages,
+		"CreatedAt":      user.CreatedAt,
+		"UpdatedAt":      user.UpdatedAt,
+	}
+
+	// ส่งข้อมูลผู้ใช้กลับไปในรูปแบบ JSON (ไม่มี password)
+	c.JSON(http.StatusOK, userResponse)
 }
 
 func ChangePassword(c *gin.Context) {
@@ -393,6 +417,7 @@ func ListUsers(c *gin.Context) {
 	packageID, _ := strconv.Atoi(c.DefaultQuery("package_id", "0"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	search := c.DefaultQuery("search", "") // รับค่า search จาก query parameter
 
 	// รับค่า IsEmployee (true หรือ false) จาก Query Parameters
 	isEmployeeStr := c.DefaultQuery("isemployee", "") // ถ้าไม่มีค่า จะเป็นค่าว่าง
@@ -433,6 +458,13 @@ func ListUsers(c *gin.Context) {
 		db = db.Where("is_employee = ?", *isEmployee)
 	}
 
+	// การกรองตาม search (ถ้ามีค่า)
+	if search != "" {
+		searchTerm := "%" + search + "%"
+		db = db.Where("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR employee_id LIKE ?)",
+			searchTerm, searchTerm, searchTerm, searchTerm)
+	}
+
 	// ดึงข้อมูลผู้ใช้จากฐานข้อมูล
 	query := db.Preload("UserPackages").Preload("UserPackages.Package").Preload("Role")
 
@@ -457,6 +489,13 @@ func ListUsers(c *gin.Context) {
 
 	if isEmployee != nil {
 		countQuery = countQuery.Where("is_employee = ?", *isEmployee)
+	}
+
+	// การกรองตาม search สำหรับ count query (ถ้ามีค่า)
+	if search != "" {
+		searchTerm := "%" + search + "%"
+		countQuery = countQuery.Where("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR employee_id LIKE ?)",
+			searchTerm, searchTerm, searchTerm, searchTerm)
 	}
 
 	countQuery.Count(&total)

@@ -66,7 +66,7 @@ const handleSubmitWork = async (
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request.");
 
         setTimeout(() => {
-            setAlerts((prev) => [...prev, { type: 'success', message: 'Assignment completed' }]);
+            setAlerts((prev) => [...prev, { type: 'success', message: 'Work submitted successfully' }]);
             setFiles([])
 
             setOpenPopupSubmit(false);

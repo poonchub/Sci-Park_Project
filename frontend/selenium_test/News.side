@@ -1,0 +1,632 @@
+{
+  "id": "9a6e911b-a609-40d1-bc97-6eb296624b0b",
+  "version": "2.0",
+  "name": "News",
+  "url": "http://localhost:5173",
+  "tests": [{
+    "id": "9ce520b7-0c01-424a-9739-0f304805fccc",
+    "name": "Create News Unsuccessful (Title Required)",
+    "commands": [{
+      "id": "553cc097-91ab-4bb5-9703-a62c045f6097",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "8918fae1-83ce-44ab-91a6-625bf2722d5a",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "2c2012f0-7ac7-407f-967d-f9ebbbc4d14e",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "0ff63b7d-61e2-4136-bf11-cfae5f558fd3",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "550d22a0-a791-404d-98fa-faef8c4124c8",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r11:-helper-text",
+      "targets": [
+        ["id=:r11:-helper-text", "id"],
+        ["css=#\\3Ar11\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r11:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div/div/div/p", "xpath:idRelative"],
+        ["xpath=//form/div/div/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter a news title.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter a news title."
+    }]
+  }, {
+    "id": "b5f04d96-adb9-4622-9229-7461b41d2ac8",
+    "name": "Create News Unsuccessful (Summary Required)",
+    "commands": [{
+      "id": "3933ad0f-cd50-428b-a7c5-0c7950b55eaa",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "1a08df33-5ba5-4a46-9860-ce2b1b3eeb99",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "82cd1768-58d1-4516-915e-c9bb039185e9",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "84c20f89-2427-4a60-bc9e-7269ae8927b4",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "98367ef7-c2d2-414e-b91b-084b87b4a4f3",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "1f148ae5-7918-4d8b-9d27-3280f4eb03ce",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r13:-helper-text",
+      "targets": [
+        ["id=:r13:-helper-text", "id"],
+        ["css=#\\3Ar13\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r13:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//form/div/div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please provide a short summary of the news.')]", "xpath:innerText"]
+      ],
+      "value": "Please provide a short summary of the news."
+    }]
+  }, {
+    "id": "cf376d8e-77fd-4aec-afbf-aa553d055d1f",
+    "name": "Create News Unsuccessful (Content Required)",
+    "commands": [{
+      "id": "ed25261c-6f7a-4d3e-80d6-46cb9f597d69",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "f9496f44-6ced-4e1d-939a-0c92086b3a26",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "e3caba08-fad9-46fb-a830-60ceb84558ff",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9e6b6b37-a301-48e5-a2e7-a2daedb64cb9",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "d6aceab4-c204-41b4-861a-98f744f2a050",
+      "comment": "",
+      "command": "type",
+      "target": "name=Summary",
+      "targets": [],
+      "value": "Summary"
+    }, {
+      "id": "1ea4ea38-2235-4c0e-9ecc-53f84d8ec5ea",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "e0dbae5c-570f-4544-bd54-704386670d10",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r15:-helper-text",
+      "targets": [
+        ["id=:r15:-helper-text", "id"],
+        ["css=#\\3Ar15\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r15:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div/div[3]/div/p", "xpath:idRelative"],
+        ["xpath=//div[3]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please enter the full content of the news.')]", "xpath:innerText"]
+      ],
+      "value": "Please enter the full content of the news."
+    }]
+  }, {
+    "id": "c36016b8-1ffc-42c7-a5dc-2eba69fcd981",
+    "name": "Create News Unsuccessful (Start Time Required)",
+    "commands": [{
+      "id": "425a6714-3c31-4cb0-a4d3-d0a974fb078b",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "2a697172-cf9d-4a4e-bff4-d05e7d5a9fa2",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "f1edb19f-3402-4b4c-90e5-199f188f4e8e",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "5b09adbe-c233-41dc-b882-5b7998d1084a",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "ce08e133-ce9e-4856-aedd-a44d3897608c",
+      "comment": "",
+      "command": "type",
+      "target": "name=Summary",
+      "targets": [],
+      "value": "Summary"
+    }, {
+      "id": "04d8af79-22db-4f0b-b465-dfc89e1820dd",
+      "comment": "",
+      "command": "type",
+      "target": "name=FullContent",
+      "targets": [],
+      "value": "Content"
+    }, {
+      "id": "c2b4506c-f190-4212-8180-d6a96db9e923",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "59b8ba3e-e6f9-4790-8d3e-50ca1ce74846",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r17:-helper-text",
+      "targets": [
+        ["id=:r17:-helper-text", "id"],
+        ["css=#\\3Ar17\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r17:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[2]/div/div/div/div/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/div/div/div/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select the start date for displaying the news.')]", "xpath:innerText"]
+      ],
+      "value": "Please select the start date for displaying the news."
+    }]
+  }, {
+    "id": "3e557c64-2239-43bd-a590-61d576c2636f",
+    "name": "Create News Unsuccessful (End Time Required)",
+    "commands": [{
+      "id": "4359ffe6-f250-4a4c-978d-8aec472d8283",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "85e0426b-08be-46a7-a3f0-1fc266de6bde",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "4610848d-9a88-4aa0-9c8d-9d6219f2708d",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "202c409c-b4af-496b-88ef-023976d851a1",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "36b1c3c2-f6c3-40bb-89ff-ddded243ca74",
+      "comment": "",
+      "command": "type",
+      "target": "name=Summary",
+      "targets": [],
+      "value": "Summary"
+    }, {
+      "id": "eca95cf3-6f70-4c30-9dfd-c6e9df6c599f",
+      "comment": "",
+      "command": "type",
+      "target": "name=FullContent",
+      "targets": [],
+      "value": "Content"
+    }, {
+      "id": "ccf8dad2-fcdd-4844-9e56-937731298e28",
+      "comment": "",
+      "command": "type",
+      "target": "name=DisplayStart",
+      "targets": [],
+      "value": "02/08/2025"
+    }, {
+      "id": "7a5925c9-037f-41eb-8e8f-d943aba3f7e5",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "2f14e768-2e96-435f-a602-108f8b3df396",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "3cffa2db-53c5-46f9-8d6e-70fe4ccbefbc",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=:r1d:-helper-text",
+      "targets": [
+        ["id=:r1d:-helper-text", "id"],
+        ["css=#\\3Ar1d\\3A-helper-text", "css:finder"],
+        ["xpath=//p[@id=':r1d:-helper-text']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[2]/div/div/div/div[2]/div/p", "xpath:idRelative"],
+        ["xpath=//div[2]/div/div/div/div[2]/div/p", "xpath:position"],
+        ["xpath=//p[contains(.,'Please select the end date for displaying the news.')]", "xpath:innerText"]
+      ],
+      "value": "Please select the end date for displaying the news."
+    }]
+  }, {
+    "id": "a87a2ee1-d91d-47fc-bd01-50a762922eee",
+    "name": "Create News Unsuccessful (Image Required)",
+    "commands": [{
+      "id": "2b9bf1b0-b260-41e1-a4c2-691b55463705",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "7fe151fb-9e0b-462f-a605-d8a426c2733f",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "9019efe7-3e6c-425a-ab0b-e03ca2ff1688",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "dbd7c82b-3d89-4afb-a288-e2e8bca2e63b",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "87ee1406-fad4-4ceb-9243-28812441e2a5",
+      "comment": "",
+      "command": "type",
+      "target": "name=Summary",
+      "targets": [],
+      "value": "Summary"
+    }, {
+      "id": "8bca2215-5f7e-4b78-8cda-a761254ef71d",
+      "comment": "",
+      "command": "type",
+      "target": "name=FullContent",
+      "targets": [],
+      "value": "Content"
+    }, {
+      "id": "006c5b68-6902-44bf-9623-26581c4ca86d",
+      "comment": "",
+      "command": "type",
+      "target": "name=DisplayStart",
+      "targets": [],
+      "value": "02/08/2025"
+    }, {
+      "id": "7422a4af-77bc-4b57-b97b-6e698ab85946",
+      "comment": "",
+      "command": "type",
+      "target": "name=DisplayEnd",
+      "targets": [],
+      "value": "02/09/2025"
+    }, {
+      "id": "dfdb70d7-0a60-464d-8547-225976518679",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiBox-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiBox-root > .MuiButton-contained", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "d18b29d2-2a99-40a2-af03-09f234a811e6",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Warning\\nNo images uploaded"
+    }]
+  }, {
+    "id": "1c41e4cf-75a7-4073-8ddf-ce8e67a9a3b0",
+    "name": "Create News Successful",
+    "commands": [{
+      "id": "14c5a1d4-33a2-44fd-b9f0-ec4d4505d81a",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "9ba25951-8786-4658-9d46-16bf8456587d",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "fb720caf-8790-4daa-9a0e-1951363be43b",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "cc38f01e-8d9a-4140-9bdb-8e633da8d049",
+      "comment": "",
+      "command": "type",
+      "target": "name=Title",
+      "targets": [],
+      "value": "Title"
+    }, {
+      "id": "781f0ef1-27f2-40ba-b012-3c1724207ae6",
+      "comment": "",
+      "command": "type",
+      "target": "name=Summary",
+      "targets": [],
+      "value": "Summary"
+    }, {
+      "id": "878cb3af-5c52-4ae9-97c1-29dafc42574b",
+      "comment": "",
+      "command": "type",
+      "target": "name=FullContent",
+      "targets": [],
+      "value": "Content"
+    }, {
+      "id": "c967d8fa-6ade-4d95-97f0-68ed2b618698",
+      "comment": "",
+      "command": "type",
+      "target": "name=DisplayStart",
+      "targets": [],
+      "value": "02/08/2025"
+    }, {
+      "id": "762576a2-b65d-449a-9f21-48a9830ce121",
+      "comment": "",
+      "command": "type",
+      "target": "name=DisplayEnd",
+      "targets": [],
+      "value": "02/09/2025"
+    }, {
+      "id": "58ef4aee-85b2-4a4e-a814-ae01e768c4c5",
+      "comment": "",
+      "command": "type",
+      "target": "name=imageUploader",
+      "targets": [],
+      "value": "E:\\My_Works_Programer\\My_Coding_Practice\\Sci-Park_Project\\frontend\\selenium_test\\images\\create_news.jpg"
+    }, {
+      "id": "ed81e0a8-7baa-4cf3-ba78-e90d4daeb164",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiButton-root:nth-child(2)",
+      "targets": [
+        ["css=.MuiButton-root:nth-child(2)", "css:finder"],
+        ["xpath=//button[@type='submit']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[4]/div/div/div/div/form/div[3]/div/button[2]", "xpath:idRelative"],
+        ["xpath=//button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Create News')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "9e8d5620-d471-45e4-b6fe-0aeefe0d000f",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nThe news has been created successfully."
+    }]
+  }, {
+    "id": "ef7365ce-85c2-47d4-816c-ec1b266a3cb0",
+    "name": "Delete News Successful",
+    "commands": [{
+      "id": "9ecc200e-b094-4f3f-8302-49dadf8a35b6",
+      "comment": "",
+      "command": "open",
+      "target": "/news",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "ef0d0961-695b-45c7-aaa3-a51b4cefedad",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1936x1096",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "eceddb01-5781-4394-b4b9-11a70b0d8366",
+      "comment": "",
+      "command": "click",
+      "target": "css=.PrivateSwitchBase-input",
+      "targets": [
+        ["css=.PrivateSwitchBase-input", "css:finder"],
+        ["xpath=//input[@type='checkbox']", "xpath:attributes"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div/div[2]/div/span/span/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "9a6eb5b2-8576-415c-b329-f489788f9e9a",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiGrid-root:nth-child(1) > .MuiPaper-root .MuiButtonBase-root:nth-child(3) path:nth-child(2)",
+      "targets": [
+        ["css=.MuiGrid-root:nth-child(1) > .MuiPaper-root .MuiButtonBase-root:nth-child(3) path:nth-child(2)", "css:finder"]
+      ],
+      "value": ""
+    }, {
+      "id": "4c421822-c8be-4f9a-a06a-0e532e33fff2",
+      "comment": "",
+      "command": "click",
+      "target": "css=.MuiDialogActions-root > .MuiButton-contained",
+      "targets": [
+        ["css=.MuiDialogActions-root > .MuiButton-contained", "css:finder"],
+        ["xpath=(//button[@type='button'])[29]", "xpath:attributes"],
+        ["xpath=//div[2]/button[2]", "xpath:position"],
+        ["xpath=//button[contains(.,'Confirm')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "4280918f-216f-46c0-b059-522469b130bd",
+      "comment": "",
+      "command": "assertText",
+      "target": "css=.MuiAlert-message",
+      "targets": [
+        ["css=.MuiAlert-message", "css:finder"],
+        ["xpath=//div[@id='root']/div/div/div[3]/main/div/div/div/div/div[2]", "xpath:idRelative"],
+        ["xpath=//div/div/div/div/div[2]", "xpath:position"]
+      ],
+      "value": "Success\\nThe news has been deleted successfully."
+    }]
+  }],
+  "suites": [{
+    "id": "f25d6a09-6bfd-4e8e-b76b-11b469fc5b43",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["9ce520b7-0c01-424a-9739-0f304805fccc"]
+  }],
+  "urls": ["http://localhost:5173/", "http://localhost:5173/news"],
+  "plugins": []
+}
