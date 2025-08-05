@@ -43,7 +43,7 @@ import {
   Building2,
 } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
-import { GetTimeSlots, GetRoomQuota, GetRoomsByRoomTypeID, CreateBookingRoom, GetUserById, GetRoomTypesByID, GetEquipmentByRoomType, UseRoomQuota, GetAllRoomLayouts } from "../../services/http/index";
+import { GetTimeSlots, GetRoomQuota, GetRoomsByRoomTypeID, CreateBookingRoom, GetUserById, GetRoomTypesByID, GetEquipmentByRoomType, UseRoomQuota, GetAllRoomLayouts, GetQuota, CheckSlip, CreatePayment } from "../../services/http/index";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
@@ -58,6 +58,8 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { IconButton } from '@mui/material';
 
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
+import { PaymentInterface } from "../../interfaces/IPayments";
+import formatToLocalWithTimezone from "../../utils/formatToLocalWithTimezone";
 
 interface RoomBookingFormProps {
   room?: {
@@ -1032,7 +1034,57 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     }
   };
 
-  const handleSubmitBooking = async () => {
+  async function checkSlip() {
+    if (!slipfile) {
+      console.log("ไม่มีไฟล์สลิป");
+      return false;
+    }
+
+    try {
+      // ตรวจสอบโควต้าก่อน
+      const resQuota = await GetQuota();
+      if (resQuota.data.quota === 0) {
+        console.log("โควต้าไม่เพียงพอ");
+        return false;
+      }
+
+      // ตรวจสอบสลิป
+      const formData = new FormData();
+      formData.append('files', slipfile as File);
+      const resCheckSlip = await CheckSlip(formData);
+
+      console.log(resCheckSlip.data);
+      if (resCheckSlip.success === true) {
+
+        const transDateTime = new Date(resCheckSlip.data.transTimestamp);
+        const now = new Date();
+        const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+
+        console.log("ตรวจสอบเวลา:", transDateTime, "ปัจจุบัน:", now, "ก่อน 15 นาที:", fifteenMinutesAgo);
+
+        if (
+          resCheckSlip.data.amount === 1 &&
+          resCheckSlip.data.receiver.displayName === "นายพูลทรัพย์ น"
+          // transDateTime >= fifteenMinutesAgo && transDateTime <= now
+        ) {
+          console.log("สลิปถูกต้อง");
+          return {
+            success: true,
+            message: "สลิปถูกต้อง",
+            data: resCheckSlip.data,
+          };
+        } else {
+          console.log("สลิปไม่ถูกต้อง");
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking slip:", error);
+      return false;
+    }
+  }
+
+  const handleSubmitBooking = async (resCheckSlip: any) => {
     if (!User || !roomData || !purpose || !selectedDates.length || !getTimeSlotId) {
       alert("Please fill in all the required fields.");
       return;
@@ -1057,18 +1109,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     }];
 
     try {
-      console.log("Booking data to send:", bookingData);
-      const res = await CreateBookingRoom(bookingData);
-      console.log("cd", res);
+      const resBooking = await CreateBookingRoom(bookingData);
 
-      if (res.status === 200) {
-        console.log("✅ Booking success", res.data);
+      if (resBooking.status === 200) {
+        console.log("✅ Booking success", resBooking.data);
       } else {
-        console.error("❌ Booking failed", res.status, res.data?.error);
-        alert(res.data?.error || "เกิดข้อผิดพลาดในการจอง");
+        console.error("❌ Booking failed", resBooking.status, resBooking.data?.error);
+        alert(resBooking.data?.error || "เกิดข้อผิดพลาดในการจอง");
       }
 
-      if (res.status === 200) {
+      if (resBooking.status === 200) {
         // เรียก API ลดโควต้าหลังจองสำเร็จ
         const userId = parseInt(localStorage.getItem("userId") || "0");
         const roomTypeKey = getRoomTypeKey(roomData.TypeName || "");
@@ -1083,6 +1133,28 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
           console.log("ลดโควต้าห้องเรียบร้อย:", quotaRes.data);
         } else {
           console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
+        }
+
+        const paymentData: PaymentInterface = {
+          PaymentDate: formatToLocalWithTimezone(resCheckSlip.data.transTimestamp),
+          Amount: calculatedPrice,
+          UserID: userId,
+          BookingRoomID: 1,
+        }
+
+        const formData = new FormData();
+
+        for (const [key, value] of Object.entries(paymentData)) {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        }
+
+        formData.append('files', slipfile as File);
+
+        const resPayment = await CreatePayment(formData)
+        if (!resPayment) {
+          console.error("❌ Payment creation failed");
         }
 
         await fetchBookingMapOnly(roomData.id);
@@ -1123,20 +1195,31 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
     }
   }
 
+  useEffect(() => {
+    async function doCheckSlip() {
+      const resCheckSlip = await checkSlip();
+      console.log("Slip check result:", resCheckSlip);
 
+      if (resCheckSlip) {
+        handleSubmitBooking(resCheckSlip);
+      }
+    }
 
-
+    if (slipfile) {
+      doCheckSlip();
+    }
+  }, [slipfile]);
 
   return (
     <Box className="booking-container">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
-      
-        <PaymentPopup
-          open={openPopupCard}
-          onClose={() => setOpenPopupCard(false)}
-          amount={calculatedPrice}
-          onChangeFile={setSlipFile}
-        />
+
+      <PaymentPopup
+        open={openPopupCard}
+        onClose={() => setOpenPopupCard(false)}
+        amount={calculatedPrice}
+        onChangeFile={setSlipFile}
+      />
 
       {/* Header */}
       <Paper elevation={2} className="booking-header-paper">

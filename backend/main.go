@@ -178,6 +178,9 @@ func main() {
 		// Payment
 		protected.POST("/payment", controller.CreatePayment)
 
+		// SlipOK
+		protected.POST("/proxy/slipok", controller.ProxySlipOK)
+		protected.GET("/proxy/slipok/quota", controller.ProxySlipOKQuota)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -263,7 +266,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-authorization")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, PATCH, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {

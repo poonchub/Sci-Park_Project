@@ -134,6 +134,7 @@ func CreateBookingRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "จองห้องสำเร็จ",
 		"count":   len(bookings),
+		"data":   bookings,
 	})
 }
 
