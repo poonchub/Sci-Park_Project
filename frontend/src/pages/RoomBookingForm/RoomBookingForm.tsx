@@ -57,6 +57,7 @@ import './Calendar.css';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { IconButton } from '@mui/material';
 
+import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 
 interface RoomBookingFormProps {
   room?: {
@@ -135,6 +136,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [additionalNote, setAdditionalNote] = useState("");
   const [equipmentList, setEquipmentList] = useState<string[]>([]);
+
+  const [openPopupCard, setOpenPopupCard] = useState<boolean>(false)
+  const [slipfile, setSlipFile] = useState<File | null>(null);
+
+  console.log("slipfile:", slipfile);
 
   const getRoomtype = async () => {
     try {
@@ -737,6 +743,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
           bgcolor: 'secondary.main',
         }}
       >
+
         {/* Header */}
         <Box className="calendar-header">
           <Calendar />
@@ -1123,6 +1130,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
   return (
     <Box className="booking-container">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+      
+        <PaymentPopup
+          open={openPopupCard}
+          onClose={() => setOpenPopupCard(false)}
+          amount={calculatedPrice}
+          onChangeFile={setSlipFile}
+        />
 
       {/* Header */}
       <Paper elevation={2} className="booking-header-paper">
@@ -1699,7 +1713,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={handleSubmitBooking}
+                  onClick={() => setOpenPopupCard(true)}
                   disabled={
                     loading ||
                     !calculatedPrice == null ||

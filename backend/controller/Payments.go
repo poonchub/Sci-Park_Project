@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 
@@ -56,8 +59,6 @@ func UpdatePaymentStatus(c *gin.Context) {
         return
     }
 
-    payment.Status = input.Status
-
     if err := db.Save(&payment).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถอัปเดตสถานะได้"})
         return
@@ -100,4 +101,151 @@ func CancelExpiredBookings() {
 func CancelExpiredBookingsHandler(c *gin.Context) {
     CancelExpiredBookings() // เรียกฟังก์ชันเดิม
     c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกการจองที่หมดอายุแล้วเรียบร้อย"})
+}
+
+// POST /payments
+func CreatePayment(c *gin.Context) {
+    db := config.DB()
+
+    var payment entity.Payment
+    if err := c.ShouldBindJSON(&payment); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    var user entity.User
+	if err := db.First(&user, payment.UserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+    var booking entity.BookingRoom
+    if err := db.First(&booking, payment.BookingRoomID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "booking not found"})
+        return
+    }
+
+    form, err := c.MultipartForm()
+	if err == nil {
+		files := form.File["files"]
+		if len(files) > 0 {
+			file := files[0]
+
+			// เตรียมโฟลเดอร์
+			folderPath := fmt.Sprintf("images/payment/user%d", user.ID)
+			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
+				return
+			}
+
+			// สร้างชื่อไฟล์ใหม่
+			ext := ".png"
+			newFileName := fmt.Sprintf("slip_room_booking%d%s", booking.ID, ext)
+			fullPath := path.Join(folderPath, newFileName)
+
+			// บันทึกไฟล์
+			if err := c.SaveUploadedFile(file, fullPath); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save file"})
+				return
+			}
+
+			// บันทึก path ไฟล์ลงใน database
+			payment.SlipPath = fullPath // หรือใช้ URL prefix ตามเว็บคุณ
+		}
+	}
+
+    pm := entity.Payment{
+        PaymentDate: payment.PaymentDate,
+        Amount: payment.Amount,
+        SlipPath: payment.SlipPath,
+        Note: payment.Note,
+        StatusID: payment.StatusID,
+        UserID: payment.UserID,
+        BookingRoomID: payment.BookingRoomID,
+    }
+
+    var existing entity.Payment
+    if err := db.Where("user_id = ? AND booking_room_id = ?", pm.UserID, pm.BookingRoomID).First(&existing).Error; err == nil {
+        c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this user and booking"})
+        return
+    }
+
+    if err := db.Create(&pm).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusCreated, gin.H{"message": "Payment created successfully", "payment": pm})
+}
+
+// PATCH  /payment:id
+func UpdatePaymentByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	db := config.DB()
+
+	var payment entity.Payment
+	if err := db.First(&payment, ID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
+		return
+	}
+
+	// ข้อมูล JSON ที่ไม่รวมไฟล์
+	var input entity.Payment
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	// อัปเดต field ทีละตัว เพื่อไม่ให้ overwrite ด้วยค่า default
+	payment.PaymentDate = input.PaymentDate
+    payment.Amount = input.Amount
+    payment.Note = input.Note
+    payment.StatusID = input.StatusID
+
+	// อัปโหลดไฟล์รูปภาพ
+    form, err := c.MultipartForm()
+	if err == nil {
+		files := form.File["files"]
+		if len(files) > 0 {
+			file := files[0]
+
+            // ลบไฟล์เดิมถ้ามี
+            if payment.SlipPath != "" {
+                os.Remove(payment.SlipPath)
+            }
+
+			// เตรียมโฟลเดอร์
+			folderPath := fmt.Sprintf("images/payment/user%d", payment.UserID)
+			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
+				return
+			}
+
+			// สร้างชื่อไฟล์ใหม่
+			ext := ".png"
+			newFileName := fmt.Sprintf("slip_room_booking%d%s", payment.BookingRoomID, ext)
+			fullPath := path.Join(folderPath, newFileName)
+
+			// บันทึกไฟล์
+			if err := c.SaveUploadedFile(file, fullPath); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save file"})
+				return
+			}
+
+			// บันทึก path ไฟล์ลงใน database
+			payment.SlipPath = fullPath // หรือใช้ URL prefix ตามเว็บคุณ
+		}
+	}
+
+	// บันทึกข้อมูลทั้งหมด
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update payment"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Update successful",
+		"data":    payment,
+	})
 }

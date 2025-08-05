@@ -4,11 +4,9 @@ import {
     Box,
     Card,
     CardContent,
-    CardMedia,
     Grid,
     Button,
     Paper,
-    Chip,
     Skeleton,
 } from '@mui/material';
 
@@ -23,8 +21,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
-import { apiUrl, GetOrganizationInfo, ListNews, ListPinnedNews, ListPinnedNewsPeriod, ListUnpinnedNews, ListUnpinnedNewsPeriod } from '../../services/http';
-import { NewsImagesInterface } from '../../interfaces/NewsImages';
+import { GetOrganizationInfo, ListPinnedNewsPeriod, ListUnpinnedNewsPeriod } from '../../services/http';
 import { NewsInterface } from '../../interfaces/News';
 import NewsCard from '../../components/NewsCard/NewsCard';
 import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
@@ -54,9 +51,6 @@ export default function SciparkHomePage() {
     const [selectedNews, setSelectedNews] = useState<NewsInterface>({})
     const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>({})
 
-    const startTimeRef = useRef(Date.now());
-    const sentRef = useRef(false);
-
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.HOME,
@@ -83,8 +77,6 @@ export default function SciparkHomePage() {
             }
 
             let combinedNews = [...pinnedNews];
-
-            console.log("combinedNews", combinedNews)
             if (pinnedNews.length < 3) {
                 const needed = 3 - pinnedNews.length;
                 const orderedNews = await ListUnpinnedNewsPeriod(needed);
@@ -94,7 +86,6 @@ export default function SciparkHomePage() {
                     const filteredOrderedNews = orderedNews.filter((item: any) => !pinnedIds.has(item.ID));
 
                     combinedNews = combinedNews.concat(filteredOrderedNews.slice(0, needed));
-                    console.log("combinedNews", combinedNews)
                 }
             }
 
