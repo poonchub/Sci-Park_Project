@@ -2039,7 +2039,7 @@ async function ListContributors() {
 // Payment
 async function CreatePayment(data: FormData) {
     const requestOptions = {
-        method: "PATCH",
+        method: "POST",
         body: data,
         headers: {
             "Authorization": `Bearer ${localStorage.getItem("token")}`,
@@ -2056,6 +2056,48 @@ async function CreatePayment(data: FormData) {
     });
 
     return res;
+}
+async function CheckSlip(data: FormData) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: data,
+    };
+
+    let res = await fetch(`${apiUrl}/proxy/slipok`, requestOptions).then((res) => {
+        if (res.ok) {
+            return res.json();
+        } else {
+            return res.json();
+        }
+    });
+
+    return res;
+}
+async function GetQuota() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    try {
+        const response = await fetch(`${apiUrl}/proxy/slipok/quota`, requestOptions);
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else {
+            console.error("Error:", response.status, response.statusText);
+            return false;
+        }
+    } catch (error) {
+        console.error("Fetch error:", error);
+        return false;
+    }
 }
 
 
@@ -2200,6 +2242,8 @@ export {
 
     // Payment
     CreatePayment,
+    CheckSlip,
+    GetQuota,
 }
 
 

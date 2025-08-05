@@ -14,9 +14,9 @@ type Payment struct {
 	Note         string
 
 	StatusID      uint
-	Status        PaymentStatus `gorm:"foreignKey:StatusID"`
+	Status        PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
 	UserID        uint
-	User          User `gorm:"foreignKey:UserID"`
+	User          User `gorm:"foreignKey:UserID" valid:"-"`
 	BookingRoomID uint
-	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID"`
+	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
 }
