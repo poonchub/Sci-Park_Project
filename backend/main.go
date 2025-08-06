@@ -168,13 +168,31 @@ func main() {
 		protected.GET("/news/ordered-period", controller.ListNewsOrderedPeriod)
 		protected.GET("/news/unpinned-period", controller.ListUnpinnedNewsPeriod)
 
+		// BusinessGroups
+		protected.GET("/business-groups", controller.ListBusinessGroups)
+		protected.GET("/business-groups/:id", controller.GetBusinessGroupByID)
+
+		// CompanySizes
+		protected.GET("/company-sizes", controller.ListCompanySizes)
+		protected.GET("/company-sizes/:id", controller.GetCompanySizeByID)
+
+		// ServiceUserTypes
+		protected.GET("/service-user-types", controller.ListServiceUserTypes)
+		protected.GET("/service-user-types/:id", controller.GetServiceUserTypeByID)
+
+		// ServiceAreaDocuments
+		protected.POST("/service-area-documents/:request_service_area_id", controller.CreateServiceAreaDocument)
+		protected.GET("/service-area-documents/:request_service_area_id", controller.GetServiceAreaDocumentByRequestID)
+		protected.PUT("/service-area-documents/:request_service_area_id", controller.UpdateServiceAreaDocument)
+		protected.DELETE("/service-area-documents/:request_service_area_id", controller.DeleteServiceAreaDocument)
+
 		// RequestServiceArea & AboutCompany
 		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
 		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
-		
+
 		// Payment
 		protected.POST("/payment", controller.CreatePayment)
 

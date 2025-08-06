@@ -91,8 +91,14 @@ func SetupDatabase() {
 		&entity.Contributor{},
 		&entity.ContributorType{},
 		&entity.RequestServiceArea{},
+		&entity.BusinessGroup{},
+		&entity.CompanySize{},
 		&entity.AboutCompany{},
 		&entity.PaymentStatus{},
+		&entity.BusinessGroup{},
+		&entity.CompanySize{},
+		&entity.ServiceUserType{},
+		&entity.ServiceAreaDocument{},
 	)
 
 	if err != nil {
@@ -762,22 +768,22 @@ func SeedDatabase() {
 	fmt.Println("📌 Seeding Payments")
 	payments := []entity.Payment{
 		{
-			PaymentDate:  "2025-06-25",
+			PaymentDate:   "2025-06-25",
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
 			UserID:        users[6].ID, // internaluser1
 			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
-			StatusID: 	   1,
+			StatusID:      1,
 		},
 		{
-			PaymentDate:  "2025-06-26",
+			PaymentDate:   "2025-06-26",
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
 			UserID:        users[7].ID, // internaluser2
 			BookingRoomID: 2,
-			StatusID: 	   2,
+			StatusID:      2,
 		},
 	}
 	for _, p := range payments {
@@ -888,11 +894,49 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&orInfo, entity.RequestType{})
 
+	// 🔹 ข้อมูล BusinessGroup
+	businessGroups := []entity.BusinessGroup{
+		{Name: "Technology"},
+		{Name: "Healthcare"},
+		{Name: "Manufacturing"},
+		{Name: "Finance"},
+		{Name: "Education"},
+		{Name: "Retail"},
+		{Name: "Consulting"},
+		{Name: "Research & Development"},
+		{Name: "Other"},
+	}
+	for _, businessGroup := range businessGroups {
+		db.FirstOrCreate(&businessGroup, entity.BusinessGroup{Name: businessGroup.Name})
+	}
+
+	// 🔹 ข้อมูล CompanySize
+	companySizes := []entity.CompanySize{
+		{Name: "Small (1-50 employees)"},
+		{Name: "Medium (51-200 employees)"},
+		{Name: "Large (201-1000 employees)"},
+		{Name: "Enterprise (1000+ employees)"},
+	}
+	for _, companySize := range companySizes {
+		db.FirstOrCreate(&companySize, entity.CompanySize{Name: companySize.Name})
+	}
+
+	// 🔹 ข้อมูล ServiceUserType
+	serviceUserTypes := []entity.ServiceUserType{
+		{Name: "Direct R&D", Description: "ผู้ใช้บริการวิจัยและพัฒนาระยะตรง"},
+		{Name: "R&D Support", Description: "ผู้ใช้บริการสนับสนุนการวิจัยและพัฒนา"},
+		{Name: "Strategic Partners", Description: "พันธมิตรเชิงกลยุทธ์"},
+		{Name: "Ecosystem", Description: "ผู้ใช้บริการในระบบนิเวศ"},
+	}
+	for _, serviceUserType := range serviceUserTypes {
+		db.FirstOrCreate(&serviceUserType, entity.ServiceUserType{Name: serviceUserType.Name})
+	}
+
 	// 🔹 ข้อมูล ContributorType
 	contributorTypes := []entity.ContributorType{
-		{ Name: "Developer"},
-		{ Name: "Supervisor"},
-		{ Name: "Sponsor"},
+		{Name: "Developer"},
+		{Name: "Supervisor"},
+		{Name: "Sponsor"},
 	}
 	for _, contributorType := range contributorTypes {
 		db.FirstOrCreate(&contributorType, entity.Contributor{
@@ -903,64 +947,64 @@ func SeedDatabase() {
 	// 🔹 ข้อมูล Contributor
 	devInfos := []entity.Contributor{
 		{
-			Name:        "Mr. Warawut Mueanduang",
-			Email:       "ohmjares.22@gmail.com",
-			GithubUrl:   "https://github.com/jares22",
-			FacebookUrl: "https://www.facebook.com/ome.warawut.9",
-			Phone:       "064-317-7232",
-			ProfilePath: "images/organization/developers/Warawut_Mueanduang.jpg",
-			Role:        "Full Stack Developer",
-			Bio:         "Passionate Full Stack Developer with a growth mindset, focused on clean architecture, seamless web apps, and always ready to collaborate.",
+			Name:              "Mr. Warawut Mueanduang",
+			Email:             "ohmjares.22@gmail.com",
+			GithubUrl:         "https://github.com/jares22",
+			FacebookUrl:       "https://www.facebook.com/ome.warawut.9",
+			Phone:             "064-317-7232",
+			ProfilePath:       "images/organization/developers/Warawut_Mueanduang.jpg",
+			Role:              "Full Stack Developer",
+			Bio:               "Passionate Full Stack Developer with a growth mindset, focused on clean architecture, seamless web apps, and always ready to collaborate.",
 			ContributorTypeID: 1,
 		},
 		{
-			Name:        "Mr. Chanchai Lertsri",
-			Email:       "chanchai.radsee@gmail.com",
-			GithubUrl:   "https://github.com/Chanchai2004",
-			FacebookUrl: "https://www.facebook.com/got.chanchai.2025",
-			Phone:       "093-304-3468",
-			ProfilePath: "images/organization/developers/Chanchai_Lertsri.jpg",
-			Role:        "Full Stack Developer",
-			Bio:         "Full Stack Developer with a growth mindset, dedicated to crafting high-quality web applications with clean architecture and seamless user experiences.",
+			Name:              "Mr. Chanchai Lertsri",
+			Email:             "chanchai.radsee@gmail.com",
+			GithubUrl:         "https://github.com/Chanchai2004",
+			FacebookUrl:       "https://www.facebook.com/got.chanchai.2025",
+			Phone:             "093-304-3468",
+			ProfilePath:       "images/organization/developers/Chanchai_Lertsri.jpg",
+			Role:              "Full Stack Developer",
+			Bio:               "Full Stack Developer with a growth mindset, dedicated to crafting high-quality web applications with clean architecture and seamless user experiences.",
 			ContributorTypeID: 1,
 		},
 		{
-			Name:        "Mr. Poonchub Nanawan",
-			Email:       "poonchubnanawan310@gmail.com",
-			GithubUrl:   "https://github.com/poonchub",
-			FacebookUrl: "https://www.facebook.com/poonsub.nanawan/",
-			Phone:       "098-594-4576",
-			ProfilePath: "images/organization/developers/Poonchub_Nanawan.jpg",
-			Role:        "Full Stack Developer",
-			Bio:         "Full Stack Developer with a passion for creating clean, efficient, and user-friendly web applications.",
+			Name:              "Mr. Poonchub Nanawan",
+			Email:             "poonchubnanawan310@gmail.com",
+			GithubUrl:         "https://github.com/poonchub",
+			FacebookUrl:       "https://www.facebook.com/poonsub.nanawan/",
+			Phone:             "098-594-4576",
+			ProfilePath:       "images/organization/developers/Poonchub_Nanawan.jpg",
+			Role:              "Full Stack Developer",
+			Bio:               "Full Stack Developer with a passion for creating clean, efficient, and user-friendly web applications.",
 			ContributorTypeID: 1,
 		},
 		{
-			Name:        "Dr. Komsan Srivisut",
-			Email:       "komsan@sut.ac.th",
-			GithubUrl:   "",
-			FacebookUrl: "https://www.facebook.com/srivisut",
-			Phone:       "",
-			ProfilePath: "images/organization/supervisors/Komsan_Srivisut.jpg",
-			Role:        "Supervisor",
-			Bio:         "",
+			Name:              "Dr. Komsan Srivisut",
+			Email:             "komsan@sut.ac.th",
+			GithubUrl:         "",
+			FacebookUrl:       "https://www.facebook.com/srivisut",
+			Phone:             "",
+			ProfilePath:       "images/organization/supervisors/Komsan_Srivisut.jpg",
+			Role:              "Supervisor",
+			Bio:               "",
 			ContributorTypeID: 2,
 		},
 		{
-			Name:        "Asst. Prof. Dr. Paphakorn Pittayachaval",
-			Email:       "paphakorn@sut.ac.th",
-			GithubUrl:   "",
-			FacebookUrl: "https://www.facebook.com/srivisut",
-			Phone:       "",
-			ProfilePath: "images/organization/sponsors/Paphakorn_Pittayachaval.jpg",
-			Role:        "Industry Sponsor",
-			Bio:         "Director of the Regional Science Park Northeast 2 and Lecturer in Industrial Engineering, School of Engineering",
+			Name:              "Asst. Prof. Dr. Paphakorn Pittayachaval",
+			Email:             "paphakorn@sut.ac.th",
+			GithubUrl:         "",
+			FacebookUrl:       "https://www.facebook.com/srivisut",
+			Phone:             "",
+			ProfilePath:       "images/organization/sponsors/Paphakorn_Pittayachaval.jpg",
+			Role:              "Industry Sponsor",
+			Bio:               "Director of the Regional Science Park Northeast 2 and Lecturer in Industrial Engineering, School of Engineering",
 			ContributorTypeID: 3,
 		},
 	}
 	for _, devInfo := range devInfos {
 		db.FirstOrCreate(&devInfo, entity.Contributor{
-			Name: devInfo.Name,
+			Name:  devInfo.Name,
 			Email: devInfo.Email,
 		})
 	}

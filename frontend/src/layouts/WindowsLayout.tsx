@@ -560,6 +560,7 @@ const WindowsLayout: React.FC = (props: any) => {
                         sx={{
                             minHeight: "95vh",
                             p: 4,
+                            mb: 4, // เพิ่ม margin-bottom เพื่อให้มีระยะห่างจาก footer
                         }}
                     >
                         <Outlet />

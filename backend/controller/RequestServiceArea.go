@@ -8,6 +8,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -38,19 +39,29 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		}
 	}()
 
-	// สร้าง RequestServiceArea
+	// ===== REQUEST SERVICE AREA =====
+	// สร้าง RequestServiceArea ใหม่เสมอ
 	requestServiceArea := entity.RequestServiceArea{
 		UserID:                             uint(userID),
+		RequestStatusID:                    2, // Status เริ่มต้นเป็น ID 2
 		PurposeOfUsingSpace:                c.PostForm("purpose_of_using_space"),
 		NumberOfEmployees:                  parseInt(c.PostForm("number_of_employees")),
 		ActivitiesInBuilding:               c.PostForm("activities_in_building"),
 		CollaborationPlan:                  c.PostForm("collaboration_plan"),
 		CollaborationBudget:                parseFloat(c.PostForm("collaboration_budget")),
-		ProjectDuration:                    c.PostForm("project_duration"),
+		ProjectStartDate:                   parseDate(c.PostForm("project_start_date")),
+		ProjectEndDate:                     parseDate(c.PostForm("project_end_date")),
 		SupportingActivitiesForSciencePark: c.PostForm("supporting_activities_for_science_park"),
 	}
 
-	// จัดการไฟล์ ServiceRequestDocument
+	// บันทึก RequestServiceArea (สร้างใหม่เสมอ) ก่อนเพื่อได้ ID
+	if err := tx.Create(&requestServiceArea).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request service area"})
+		return
+	}
+
+	// จัดการไฟล์ ServiceRequestDocument (หลังจากได้ Request ID แล้ว)
 	file, err := c.FormFile("service_request_document")
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์
@@ -65,7 +76,8 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		}
 
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d%s", userID, fileExtension))
+		// ใช้ UserID + RequestID เพื่อป้องกันไฟล์ซ้ำ
+		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d_%d%s", userID, requestServiceArea.ID, fileExtension))
 		requestServiceArea.ServiceRequestDocument = filePath
 
 		// บันทึกไฟล์
@@ -74,33 +86,86 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 			return
 		}
+
+		// อัพเดท path ในฐานข้อมูล
+		if err := tx.Save(&requestServiceArea).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update file path"})
+			return
+		}
 	}
 
-	// บันทึก RequestServiceArea
-	if err := tx.Create(&requestServiceArea).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request service area"})
-		return
+	// ===== ABOUT COMPANY =====
+	// แปลง BusinessGroupID และ CompanySizeID
+	var businessGroupID *uint
+	if businessGroupIDStr := c.PostForm("business_group_id"); businessGroupIDStr != "" {
+		if id, err := strconv.ParseUint(businessGroupIDStr, 10, 32); err == nil {
+			tempID := uint(id)
+			businessGroupID = &tempID
+		}
 	}
 
-	// สร้าง AboutCompany
-	aboutCompany := entity.AboutCompany{
-		UserID:                      uint(userID),
-		CorporateRegistrationNumber: c.PostForm("corporate_registration_number"),
-		BusinessGroup:               c.PostForm("business_group"),
-		CompanySize:                 c.PostForm("company_size"),
-		MainServices:                c.PostForm("main_services"),
-		RegisteredCapital:           parseInt(c.PostForm("registered_capital")),
-		HiringRate:                  parseInt(c.PostForm("hiring_rate")),
-		ResearchInvestmentValue:     parseInt(c.PostForm("research_investment_value")),
-		ThreeYearGrowthForecast:     c.PostForm("three_year_growth_forecast"),
+	var companySizeID *uint
+	if companySizeIDStr := c.PostForm("company_size_id"); companySizeIDStr != "" {
+		if id, err := strconv.ParseUint(companySizeIDStr, 10, 32); err == nil {
+			tempID := uint(id)
+			companySizeID = &tempID
+		}
 	}
 
-	// บันทึก AboutCompany
-	if err := tx.Create(&aboutCompany).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create about company"})
-		return
+	// ตรวจสอบว่า AboutCompany มีอยู่แล้วหรือไม่
+	var existingAboutCompany entity.AboutCompany
+	var isUpdate bool
+	if err := tx.Where("user_id = ?", userID).First(&existingAboutCompany).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// ไม่มีอยู่ → สร้างใหม่
+			isUpdate = false
+		} else {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing about company"})
+			return
+		}
+	} else {
+		// มีอยู่แล้ว → อัพเดท
+		isUpdate = true
+	}
+
+	if isUpdate {
+		// อัพเดท AboutCompany ที่มีอยู่
+		existingAboutCompany.CorporateRegistrationNumber = c.PostForm("corporate_registration_number")
+		existingAboutCompany.BusinessGroupID = businessGroupID
+		existingAboutCompany.CompanySizeID = companySizeID
+		existingAboutCompany.MainServices = c.PostForm("main_services")
+		existingAboutCompany.RegisteredCapital = parseFloat(c.PostForm("registered_capital"))
+		existingAboutCompany.HiringRate = parseInt(c.PostForm("hiring_rate"))
+		existingAboutCompany.ResearchInvestmentValue = parseFloat(c.PostForm("research_investment_value"))
+		existingAboutCompany.ThreeYearGrowthForecast = c.PostForm("three_year_growth_forecast")
+
+		if err := tx.Save(&existingAboutCompany).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update about company"})
+			return
+		}
+	} else {
+		// สร้าง AboutCompany ใหม่
+		newAboutCompany := entity.AboutCompany{
+			UserID:                      uint(userID),
+			CorporateRegistrationNumber: c.PostForm("corporate_registration_number"),
+			BusinessGroupID:             businessGroupID,
+			CompanySizeID:               companySizeID,
+			MainServices:                c.PostForm("main_services"),
+			RegisteredCapital:           parseFloat(c.PostForm("registered_capital")),
+			HiringRate:                  parseInt(c.PostForm("hiring_rate")),
+			ResearchInvestmentValue:     parseFloat(c.PostForm("research_investment_value")),
+			ThreeYearGrowthForecast:     c.PostForm("three_year_growth_forecast"),
+		}
+
+		if err := tx.Create(&newAboutCompany).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create about company"})
+			return
+		}
+		existingAboutCompany = newAboutCompany
 	}
 
 	// Commit transaction
@@ -109,11 +174,17 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		return
 	}
 
+	action := "created"
+	if isUpdate {
+		action = "updated"
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Request service area and about company created successfully",
+		"message": fmt.Sprintf("Request service area created and about company %s successfully", action),
 		"data": gin.H{
 			"request_service_area": requestServiceArea,
-			"about_company":        aboutCompany,
+			"about_company":        existingAboutCompany,
+			"about_company_action": action,
 		},
 	})
 }
@@ -128,7 +199,7 @@ func GetRequestServiceAreaByUserID(c *gin.Context) {
 	}
 
 	var requestServiceAreas []entity.RequestServiceArea
-	if err := config.DB().Where("user_id = ?", userID).Find(&requestServiceAreas).Error; err != nil {
+	if err := config.DB().Preload("RequestStatus").Where("user_id = ?", userID).Find(&requestServiceAreas).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service areas"})
 		return
 	}
@@ -148,7 +219,7 @@ func GetAboutCompanyByUserID(c *gin.Context) {
 	}
 
 	var aboutCompany entity.AboutCompany
-	if err := config.DB().Where("user_id = ?", userID).First(&aboutCompany).Error; err != nil {
+	if err := config.DB().Preload("BusinessGroup").Preload("CompanySize").Where("user_id = ?", userID).First(&aboutCompany).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "About company not found for this user"})
 		} else {
@@ -178,6 +249,11 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	}
 
 	// อัปเดตข้อมูล
+	if requestStatusIDStr := c.PostForm("request_status_id"); requestStatusIDStr != "" {
+		if requestStatusID, err := strconv.ParseUint(requestStatusIDStr, 10, 32); err == nil {
+			requestServiceArea.RequestStatusID = uint(requestStatusID)
+		}
+	}
 	if purpose := c.PostForm("purpose_of_using_space"); purpose != "" {
 		requestServiceArea.PurposeOfUsingSpace = purpose
 	}
@@ -193,8 +269,11 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	if budget := c.PostForm("collaboration_budget"); budget != "" {
 		requestServiceArea.CollaborationBudget = parseFloat(budget)
 	}
-	if duration := c.PostForm("project_duration"); duration != "" {
-		requestServiceArea.ProjectDuration = duration
+	if startDate := c.PostForm("project_start_date"); startDate != "" {
+		requestServiceArea.ProjectStartDate = parseDate(startDate)
+	}
+	if endDate := c.PostForm("project_end_date"); endDate != "" {
+		requestServiceArea.ProjectEndDate = parseDate(endDate)
 	}
 	if activities := c.PostForm("supporting_activities_for_science_park"); activities != "" {
 		requestServiceArea.SupportingActivitiesForSciencePark = activities
@@ -252,23 +331,29 @@ func UpdateAboutCompany(c *gin.Context) {
 	if regNumber := c.PostForm("corporate_registration_number"); regNumber != "" {
 		aboutCompany.CorporateRegistrationNumber = regNumber
 	}
-	if businessGroup := c.PostForm("business_group"); businessGroup != "" {
-		aboutCompany.BusinessGroup = businessGroup
+	if businessGroupIDStr := c.PostForm("business_group_id"); businessGroupIDStr != "" {
+		if id, err := strconv.ParseUint(businessGroupIDStr, 10, 32); err == nil {
+			tempID := uint(id)
+			aboutCompany.BusinessGroupID = &tempID
+		}
 	}
-	if companySize := c.PostForm("company_size"); companySize != "" {
-		aboutCompany.CompanySize = companySize
+	if companySizeIDStr := c.PostForm("company_size_id"); companySizeIDStr != "" {
+		if id, err := strconv.ParseUint(companySizeIDStr, 10, 32); err == nil {
+			tempID := uint(id)
+			aboutCompany.CompanySizeID = &tempID
+		}
 	}
 	if mainServices := c.PostForm("main_services"); mainServices != "" {
 		aboutCompany.MainServices = mainServices
 	}
 	if registeredCapital := c.PostForm("registered_capital"); registeredCapital != "" {
-		aboutCompany.RegisteredCapital = parseInt(registeredCapital)
+		aboutCompany.RegisteredCapital = parseFloat(registeredCapital)
 	}
 	if hiringRate := c.PostForm("hiring_rate"); hiringRate != "" {
 		aboutCompany.HiringRate = parseInt(hiringRate)
 	}
 	if researchInvestment := c.PostForm("research_investment_value"); researchInvestment != "" {
-		aboutCompany.ResearchInvestmentValue = parseInt(researchInvestment)
+		aboutCompany.ResearchInvestmentValue = parseFloat(researchInvestment)
 	}
 	if growthForecast := c.PostForm("three_year_growth_forecast"); growthForecast != "" {
 		aboutCompany.ThreeYearGrowthForecast = growthForecast
@@ -300,4 +385,15 @@ func parseFloat(s string) float64 {
 	}
 	f, _ := strconv.ParseFloat(s, 64)
 	return f
+}
+
+func parseDate(s string) time.Time {
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
 }

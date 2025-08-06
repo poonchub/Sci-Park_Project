@@ -15,6 +15,8 @@ import { handleSessionExpiration } from "../../utils/sessionManager";
 import { NewsImagesInterface } from "../../interfaces/NewsImages";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 import { IUserPackages } from "../../interfaces/IUserPackages";
+import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
+import { CompanySizeInterface } from "../../interfaces/ICompanySize";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -2100,6 +2102,48 @@ async function GetQuota() {
     }
 }
 
+// BusinessGroup functions
+async function ListBusinessGroups(): Promise<BusinessGroupInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/business-groups`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching business groups:", error);
+        throw error;
+    }
+}
+
+async function GetBusinessGroupByID(id: number): Promise<BusinessGroupInterface> {
+    try {
+        const response = await axiosInstance.get(`/business-groups/${id}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching business group:", error);
+        throw error;
+    }
+}
+
+// CompanySize functions
+async function ListCompanySizes(): Promise<CompanySizeInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/company-sizes`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching company sizes:", error);
+        throw error;
+    }
+}
+
+async function GetCompanySizeByID(id: number): Promise<CompanySizeInterface> {
+    try {
+        const response = await axiosInstance.get(`/company-sizes/${id}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching company size:", error);
+        throw error;
+    }
+}
+
 
 export {
     // RequestStatuses
@@ -2244,6 +2288,14 @@ export {
     CreatePayment,
     CheckSlip,
     GetQuota,
+
+    // BusinessGroups
+    ListBusinessGroups,
+    GetBusinessGroupByID,
+
+    // CompanySizes
+    ListCompanySizes,
+    GetCompanySizeByID,
 }
 
 
