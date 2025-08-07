@@ -10,6 +10,7 @@ import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
 import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
+import CreateServiceAreaForm from "../pages/CreateRequestServiceArea/CreateServiceAreaForm";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -51,6 +52,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/news",
 				element: <News/>
+			},
+			{
+				path: "/create-service-area-request",
+				element: <CreateServiceAreaForm/>
 			},
 			{
 				path: "",

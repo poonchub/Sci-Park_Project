@@ -17,6 +17,10 @@ import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 import { IUserPackages } from "../../interfaces/IUserPackages";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 import { CompanySizeInterface } from "../../interfaces/ICompanySize";
+import { AboutCompanyInterface } from "../../interfaces/IAboutCompany";
+import { RequestServiceAreaInterface } from "../../interfaces/IRequestServiceArea";
+import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocument";
+import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -2144,6 +2148,145 @@ async function GetCompanySizeByID(id: number): Promise<CompanySizeInterface> {
     }
 }
 
+// ServiceUserType functions
+async function ListServiceUserTypes(): Promise<ServiceUserTypeInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/service-user-types`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching service user types:", error);
+        throw error;
+    }
+}
+
+async function GetServiceUserTypeByID(id: number): Promise<ServiceUserTypeInterface> {
+    try {
+        const response = await axiosInstance.get(`/service-user-types/${id}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching service user type:", error);
+        throw error;
+    }
+}
+
+// ServiceAreaDocument functions
+async function CreateServiceAreaDocument(requestServiceAreaID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.post(`/service-area-documents/${requestServiceAreaID}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating service area document:", error);
+        throw error;
+    }
+}
+
+async function GetServiceAreaDocumentByRequestID(requestServiceAreaID: number): Promise<ServiceAreaDocumentInterface> {
+    try {
+        const response = await axiosInstance.get(`/service-area-documents/${requestServiceAreaID}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching service area document:", error);
+        throw error;
+    }
+}
+
+async function UpdateServiceAreaDocument(requestServiceAreaID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.put(`/service-area-documents/${requestServiceAreaID}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating service area document:", error);
+        throw error;
+    }
+}
+
+async function DeleteServiceAreaDocument(requestServiceAreaID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/service-area-documents/${requestServiceAreaID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting service area document:", error);
+        throw error;
+    }
+}
+
+// RequestServiceArea functions
+async function CreateRequestServiceAreaAndAboutCompany(userID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.post(`/request-service-area/${userID}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating request service area and about company:", error);
+        throw error;
+    }
+}
+
+async function GetRequestServiceAreaByUserID(userID: number): Promise<RequestServiceAreaInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/request-service-area/${userID}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching request service area by user ID:", error);
+        throw error;
+    }
+}
+
+async function UpdateRequestServiceArea(requestID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/request-service-area/${requestID}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating request service area:", error);
+        throw error;
+    }
+}
+
+// AboutCompany functions
+async function GetAboutCompanyByUserID(userID: number): Promise<AboutCompanyInterface> {
+    try {
+        const response = await axiosInstance.get(`/about-company/${userID}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching about company by user ID:", error);
+        throw error;
+    }
+}
+
+async function UpdateAboutCompany(userID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/about-company/${userID}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating about company:", error);
+        throw error;
+    }
+}
+
 
 export {
     // RequestStatuses
@@ -2274,7 +2417,6 @@ export {
     // DeveloperInfo
     ListContributors,
 
-
     GetTimeSlots,
     GetRoomQuota,
     GetRoomsByRoomTypeID,
@@ -2296,6 +2438,25 @@ export {
     // CompanySizes
     ListCompanySizes,
     GetCompanySizeByID,
+
+    // ServiceUserTypes
+    ListServiceUserTypes,
+    GetServiceUserTypeByID,
+
+    // ServiceAreaDocuments
+    CreateServiceAreaDocument,
+    GetServiceAreaDocumentByRequestID,
+    UpdateServiceAreaDocument,
+    DeleteServiceAreaDocument,
+
+    // RequestServiceArea
+    CreateRequestServiceAreaAndAboutCompany,
+    GetRequestServiceAreaByUserID,
+    UpdateRequestServiceArea,
+
+    // AboutCompany
+    GetAboutCompanyByUserID,
+    UpdateAboutCompany,
 }
 
 

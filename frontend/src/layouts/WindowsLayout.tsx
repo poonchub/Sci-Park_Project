@@ -136,6 +136,11 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <Newspaper size={iconSize} />,
         },
         {
+            segment: "create-service-area-request",  // เปลี่ยนจาก "create-service-area"
+            title: "Create Service Area",
+            icon: <Building2 size={iconSize} />,
+        },
+        {
             kind: "divider",
         },
         {
@@ -189,6 +194,7 @@ const WindowsLayout: React.FC = (props: any) => {
                     />
                 ) : null,
         },
+        
         {
             segment: "maintenance/accept-work",
             title: "My Work",
@@ -324,6 +330,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "maintenance/my-maintenance-request",
             "my-account",
             "news",
+            "create-service-area-request",
         ],
     };
 
