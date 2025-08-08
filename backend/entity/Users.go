@@ -42,4 +42,6 @@ type User struct {
 	News                []News               `gorm:"foreignKey:UserID" valid:"-"`
 	RequestServiceAreas []RequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
 	AboutCompany        *AboutCompany        `gorm:"foreignKey:UserID" valid:"-"`
+	InvoicesAsCustomer 	[]Invoice 			 `gorm:"foreignKey:CustomerID" valid:"-"`
+    InvoicesAsCreator  	[]Invoice 			 `gorm:"foreignKey:CreatorID" valid:"-"`
 }

@@ -765,10 +765,9 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
-	fmt.Println("📌 Seeding Payments")
 	payments := []entity.Payment{
 		{
-			PaymentDate:   "2025-06-25",
+			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
@@ -777,7 +776,7 @@ func SeedDatabase() {
 			StatusID:      1,
 		},
 		{
-			PaymentDate:   "2025-06-26",
+			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
