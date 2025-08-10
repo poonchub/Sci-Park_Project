@@ -8,7 +8,7 @@ import (
 
 type Invoice struct {
 	gorm.Model
-	InvoiceNuber  string
+	InvoiceNumber  string
 	IssueDate     time.Time
 	DueDate       time.Time
 	BillingPeriod time.Time

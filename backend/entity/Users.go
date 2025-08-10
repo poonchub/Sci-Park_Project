@@ -19,6 +19,7 @@ type User struct {
 	Phone          string `valid:"phone,required"`
 	ProfilePath    string
 	IsEmployee     bool
+	IsBusinessOwner bool
 
 	UserPackageID *uint
 	RoleID        uint
@@ -43,5 +44,5 @@ type User struct {
 	RequestServiceAreas []RequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
 	AboutCompany        *AboutCompany        `gorm:"foreignKey:UserID" valid:"-"`
 	InvoicesAsCustomer 	[]Invoice 			 `gorm:"foreignKey:CustomerID" valid:"-"`
-    InvoicesAsCreator  	[]Invoice 			 `gorm:"foreignKey:CreatorID" valid:"-"`
+    InvoicesAsCreator  	[]Invoice 			 `gorm:"foreignKey:CreaterID" valid:"-"`
 }

@@ -99,6 +99,8 @@ func SetupDatabase() {
 		&entity.CompanySize{},
 		&entity.ServiceUserType{},
 		&entity.ServiceAreaDocument{},
+		&entity.Invoice{},
+		&entity.InvoiceItem{},
 	)
 
 	if err != nil {
@@ -1016,6 +1018,46 @@ func SeedDatabase() {
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{
 			Name: status.Name,
+		})
+	}
+
+	// Invoice
+	invoices := []entity.Invoice{
+		{
+			InvoiceNumber: "INV-2025-001",
+			IssueDate:     time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
+			DueDate:       time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
+			BillingPeriod: time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC),
+			TotalAmount:   18000.00,
+			StatusID:      1,
+			CreaterID:     1,
+			CustomerID:    2,
+		},
+	}
+	for _, invoice := range invoices {
+		db.FirstOrCreate(&invoice, entity.Invoice{InvoiceNumber: invoice.InvoiceNumber})
+	}
+
+	// Invoice Items
+	invoiceItems := []entity.InvoiceItem{
+		{
+			Description: "ค่าพื้นที่", 
+			UnitPrice: 15000, 
+			Amount: 15000,
+			InvoiceID: 1,
+		},
+		{
+			Description: "ค่าไฟ", 
+			UnitPrice: 3000, 
+			Amount: 3000,
+			InvoiceID: 1,
+		},
+	}
+	for _, item := range invoiceItems {
+		db.FirstOrCreate(&item, entity.InvoiceItem{
+			Description: item.Description,
+			UnitPrice:   item.UnitPrice,
+			Amount:      item.Amount,
 		})
 	}
 }
