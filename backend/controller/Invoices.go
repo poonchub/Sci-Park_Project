@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	// "os/exec"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 
@@ -24,6 +25,8 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
+
+	// wkhtmltopdf "github.com/SebastiaanKlippert/go-wkhtmltopdf"
 )
 
 // GET /invoces
@@ -58,88 +61,240 @@ func GetInvoiceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoice)
 }
 
-
 func add(a, b int) int {
-    return a + b
+	return a + b
 }
 
 // GET /invoice/:id/pdf
+// func GetInvoicePDF(c *gin.Context) {
+//     id := c.Param("id")
+//     db := config.DB()
+
+//     var invoice entity.Invoice
+//     result := db.Preload("Items").Preload("Customer").Preload("Creater").First(&invoice, id)
+//     if result.Error != nil {
+//         c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+//         return
+//     }
+
+//     funcMap := template.FuncMap{
+//         "add":               add,
+//         "ThaiDateFull":      ThaiDateFull,
+//         "ThaiDateMonthYear": ThaiDateMonthYear,
+//     }
+
+//     tmpl, err := template.New("invoice.html").Funcs(funcMap).ParseFiles("templates/invoice.html")
+//     if err != nil {
+//         log.Printf("Template load error: %v", err)
+//         c.String(http.StatusInternalServerError, "Template load error")
+//         return
+//     }
+
+//     var htmlBuf bytes.Buffer
+//     if err := tmpl.Execute(&htmlBuf, invoice); err != nil {
+//         log.Printf("Template execute error: %v", err)
+//         c.String(http.StatusInternalServerError, "Template execute error")
+//         return
+//     }
+
+//     // สร้างตัวแปลง PDF
+//     pdfg, err := wkhtmltopdf.NewPDFGenerator()
+//     if err != nil {
+//         log.Printf("Failed to create PDF generator: %v", err)
+//         c.String(http.StatusInternalServerError, "PDF generator error")
+//         return
+//     }
+
+//     // สร้าง page จาก HTML string
+//     page := wkhtmltopdf.NewPageReader(bytes.NewReader(htmlBuf.Bytes()))
+//     page.EnableLocalFileAccess.Set(true) // เปิดถ้าใช้รูปจากไฟล์ local
+
+//     // ตั้งค่าต่างๆ เพิ่มเติมได้ เช่น
+//     page.NoBackground.Set(false) // ต้องการ background
+//     page.Zoom.Set(1.0)
+
+//     pdfg.AddPage(page)
+
+//     // สร้าง PDF (sync)
+//     err = pdfg.Create()
+//     if err != nil {
+//         log.Printf("PDF creation error: %v", err)
+//         c.String(http.StatusInternalServerError, "PDF creation error")
+//         return
+//     }
+
+//     // ส่ง PDF กลับ client
+//     c.Header("Content-Type", "application/pdf")
+//     c.Header("Content-Disposition", "attachment; filename=invoice_"+invoice.InvoiceNumber+".pdf")
+//     c.Data(http.StatusOK, "application/pdf", pdfg.Bytes())
+// }
+
+// func GetInvoicePDF(c *gin.Context) {
+//     id := c.Param("id")
+//     db := config.DB()
+
+//     var invoice entity.Invoice
+//     result := db.Preload("Items").Preload("Customer").Preload("Creater").First(&invoice, id)
+//     if result.Error != nil {
+//         c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+//         return
+//     }
+
+//     funcMap := template.FuncMap{
+//         "add":               add,
+//         "ThaiDateFull":      ThaiDateFull,
+//         "ThaiDateMonthYear": ThaiDateMonthYear,
+//     }
+
+//     tmpl, err := template.New("invoice.html").Funcs(funcMap).ParseFiles("templates/invoice.html")
+//     if err != nil {
+//         log.Printf("Template load error: %v", err)
+//         c.String(http.StatusInternalServerError, "Template load error")
+//         return
+//     }
+
+//     var htmlBuf bytes.Buffer
+//     if err := tmpl.Execute(&htmlBuf, invoice); err != nil {
+//         log.Printf("Template execute error: %v", err)
+//         c.String(http.StatusInternalServerError, "Template execute error")
+//         return
+//     }
+
+//     // สร้างไฟล์ HTML ชั่วคราว
+//     htmlFile, err := os.CreateTemp("", "invoice_*.html")
+//     if err != nil {
+//         log.Printf("Temp file create error: %v", err)
+//         c.String(http.StatusInternalServerError, "Temp file error")
+//         return
+//     }
+//     defer os.Remove(htmlFile.Name()) // ลบหลังใช้เสร็จ
+
+//     if _, err := htmlFile.Write(htmlBuf.Bytes()); err != nil {
+//         log.Printf("Write HTML error: %v", err)
+//         c.String(http.StatusInternalServerError, "Write HTML error")
+//         return
+//     }
+//     htmlFile.Close()
+
+//     // สร้างไฟล์ PDF ชั่วคราว
+//     pdfFile, err := os.CreateTemp("", "invoice_*.pdf")
+//     if err != nil {
+//         log.Printf("Temp PDF create error: %v", err)
+//         c.String(http.StatusInternalServerError, "Temp file error")
+//         return
+//     }
+//     defer os.Remove(pdfFile.Name())
+
+//     // เรียก wkhtmltopdf
+//     cmd := exec.Command("wkhtmltopdf",
+//         "--enable-local-file-access", // ให้โหลดไฟล์ CSS/IMG จาก local ได้
+//         htmlFile.Name(),
+//         pdfFile.Name(),
+//     )
+
+//     if err := cmd.Run(); err != nil {
+//         log.Printf("wkhtmltopdf error: %v", err)
+//         c.String(http.StatusInternalServerError, "PDF generation error")
+//         return
+//     }
+
+//     // โหลด PDF กลับมา
+//     pdfData, err := os.ReadFile(pdfFile.Name())
+//     if err != nil {
+//         log.Printf("Read PDF error: %v", err)
+//         c.String(http.StatusInternalServerError, "PDF read error")
+//         return
+//     }
+
+//     // ส่ง PDF ให้ดาวน์โหลด
+//     c.Header("Content-Type", "application/pdf")
+//     c.Header("Content-Disposition", "attachment; filename=invoice_"+invoice.InvoiceNumber+".pdf")
+//     c.Data(http.StatusOK, "application/pdf", pdfData)
+// }
+
 func GetInvoicePDF(c *gin.Context) {
-    id := c.Param("id")
-    db := config.DB()
+	id := c.Param("id")
+	db := config.DB()
 
-    var invoice entity.Invoice
-    result := db.Preload("Items").Preload("Customer").Preload("Creater").First(&invoice, id)
-    if result.Error != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
-        return
-    }
+	var invoice entity.Invoice
+	result := db.Preload("Items").Preload("Customer").Preload("Creater.Role").Preload("Creater.Prefix").First(&invoice, id)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		return
+	}
 
-    funcMap := template.FuncMap{
-        "add":              add,
-        "ThaiDateFull":     ThaiDateFull,
-        "ThaiDateMonthYear": ThaiDateMonthYear,
-    }
+	funcMap := template.FuncMap{
+		"add":               add,
+		"ThaiDateFull":      ThaiDateFull,
+		"ThaiDateMonthYear": ThaiDateMonthYear,
+	}
 
-    tmpl, err := template.New("invoice.html").Funcs(funcMap).ParseFiles("templates/invoice.html")
-    if err != nil {
-        log.Printf("Template load error: %v", err)
-        c.String(http.StatusInternalServerError, "Template load error")
-        return
-    }
+	tmpl, err := template.New("invoice.html").Funcs(funcMap).ParseFiles("templates/invoice.html")
+	if err != nil {
+		log.Printf("Template load error: %v", err)
+		c.String(http.StatusInternalServerError, "Template load error")
+		return
+	}
 
-    var htmlBuf bytes.Buffer
-    if err := tmpl.Execute(&htmlBuf, invoice); err != nil {
-        log.Printf("Template execute error: %v", err)
-        c.String(http.StatusInternalServerError, "Template execute error")
-        return
-    }
+	var htmlBuf bytes.Buffer
+	if err := tmpl.Execute(&htmlBuf, invoice); err != nil {
+		log.Printf("Template execute error: %v", err)
+		c.String(http.StatusInternalServerError, "Template execute error")
+		return
+	}
 
-    // หา Chrome ใน Windows
-    chromePath := `C:\Program Files\Google\Chrome\Application\chrome.exe`
-    if _, err := os.Stat(chromePath); os.IsNotExist(err) {
-        chromePath = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
-    }
+	// หา Chrome ใน Windows
+	chromePath := `C:\Program Files\Google\Chrome\Application\chrome.exe`
+	if _, err := os.Stat(chromePath); os.IsNotExist(err) {
+		chromePath = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
+	}
 
-    opts := append(chromedp.DefaultExecAllocatorOptions[:],
-        chromedp.ExecPath(chromePath),
-        chromedp.NoFirstRun,
-        chromedp.NoDefaultBrowserCheck,
-        chromedp.Headless,
-        chromedp.DisableGPU,
-    )
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath(chromePath),
+		chromedp.NoFirstRun,
+		chromedp.NoDefaultBrowserCheck,
+		chromedp.Headless,
+		chromedp.DisableGPU,
+	)
 
-    allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-    defer cancel()
+	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
+	chromeCtx, _ := chromedp.NewContext(allocCtx)
 
-    ctx, cancel := chromedp.NewContext(allocCtx)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(chromeCtx, 10*time.Second)
+	defer cancel()
 
-    // แปลง HTML เป็น URL-safe data URI
-    encodedHTML := "data:text/html;charset=utf-8," + url.PathEscape(htmlBuf.String())
+	// allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	// defer cancel()
 
-    var pdfBuf []byte
-    err = chromedp.Run(ctx,
-        chromedp.Navigate(encodedHTML),
-        chromedp.WaitReady("body", chromedp.ByQuery), // รอให้ body พร้อม
-        chromedp.Sleep(500*time.Millisecond),         // กันเหนียวเผื่อมี CSS/JS
-        chromedp.ActionFunc(func(ctx context.Context) error {
-            var err error
-            pdfBuf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
-            return err
-        }),
-    )
-    if err != nil {
-        log.Printf("PDF generation error: %v", err)
-        c.String(http.StatusInternalServerError, "PDF generation error")
-        return
-    }
+	// ctx, cancel := chromedp.NewContext(allocCtx)
+	// defer cancel()
 
-    // ส่ง PDF กลับ
-    c.Header("Content-Type", "application/pdf")
-    c.Header("Content-Disposition", "attachment; filename=invoice_"+invoice.InvoiceNumber+".pdf")
-    c.Data(http.StatusOK, "application/pdf", pdfBuf)
+	// แปลง HTML เป็น URL-safe data URI
+	encodedHTML := "data:text/html;charset=utf-8," + url.PathEscape(htmlBuf.String())
+
+	var pdfBuf []byte
+	err = chromedp.Run(ctx,
+		chromedp.Navigate(encodedHTML),
+		chromedp.WaitReady("body", chromedp.ByQuery), // รอให้ body พร้อม
+		chromedp.Sleep(500*time.Millisecond),         // กันเหนียวเผื่อมี CSS/JS
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			pdfBuf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
+			return err
+		}),
+	)
+	if err != nil {
+		log.Printf("PDF generation error: %v", err)
+		c.String(http.StatusInternalServerError, "PDF generation error")
+		return
+	}
+
+	// ส่ง PDF กลับ
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", "attachment; filename=invoice_"+invoice.InvoiceNumber+".pdf")
+	c.Data(http.StatusOK, "application/pdf", pdfBuf)
 }
+
 // func GetInvoicePDF(c *gin.Context) {
 // 	id := c.Param("id")
 

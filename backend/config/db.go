@@ -101,6 +101,7 @@ func SetupDatabase() {
 		&entity.ServiceAreaDocument{},
 		&entity.Invoice{},
 		&entity.InvoiceItem{},
+		&entity.TitlePrefix{},
 	)
 
 	if err != nil {
@@ -132,6 +133,20 @@ func SeedDatabase() {
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
+	}
+
+	// 🔹 ข้อมูล TitlePrefix
+	titlePrefixes := []entity.TitlePrefix{
+		{PrefixTH: "นาย", PrefixEN: "Mr."},
+		{PrefixTH: "นาง", PrefixEN: "Mrs."},
+		{PrefixTH: "นางสาว", PrefixEN: "Ms."},
+		{PrefixTH: "ดร.", PrefixEN: "Dr."},
+	}
+	for _, prefix := range titlePrefixes {
+		db.FirstOrCreate(&prefix, entity.TitlePrefix{
+			PrefixTH: prefix.PrefixTH,
+			PrefixEN: prefix.PrefixEN,
+		})
 	}
 
 	// 🔹 ข้อมูล RequestType
@@ -377,10 +392,12 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
+			SignaturePath:  "images/users/user_1/signature.jpg",
 			RoleID:         4,
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  3,
+			PrefixID:       1,
 		},
 		{
 			CompanyName:    "Regional Science Park Northeast 2",
@@ -1041,16 +1058,16 @@ func SeedDatabase() {
 	// Invoice Items
 	invoiceItems := []entity.InvoiceItem{
 		{
-			Description: "ค่าพื้นที่", 
-			UnitPrice: 15000, 
-			Amount: 15000,
-			InvoiceID: 1,
+			Description: "ค่าพื้นที่",
+			UnitPrice:   15000,
+			Amount:      15000,
+			InvoiceID:   1,
 		},
 		{
-			Description: "ค่าไฟ", 
-			UnitPrice: 3000, 
-			Amount: 3000,
-			InvoiceID: 1,
+			Description: "ค่าไฟ",
+			UnitPrice:   3000,
+			Amount:      3000,
+			InvoiceID:   1,
 		},
 	}
 	for _, item := range invoiceItems {
