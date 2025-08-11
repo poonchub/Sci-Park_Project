@@ -8,7 +8,6 @@ import {
     CardContent,
     Checkbox,
     Container,
-    DialogActions,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -474,6 +473,11 @@ function CreateMaintenanceRequestPage() {
         );
     });
 
+    const handleBack = () => {
+        localStorage.removeItem("requestID");
+        navigate(-1);
+    };
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -537,22 +541,13 @@ function CreateMaintenanceRequestPage() {
                             Create Maintenance Request
                         </Typography>
                     </Grid>
-                    <Grid
-                        container
-                        size={{ sm: 7, md: 7 }}
-                        sx={{ justifyContent: "flex-end" }}
-                    >
-                        <Link
-                            to="/maintenance/my-maintenance-request"
-                            style={{ textAlign: "center" }}
-                        >
-                            <Button variant="outlined">
+                    <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
+                        <Box>
+                            <Button variant="outlined" onClick={handleBack}>
                                 <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                                <Typography sx={{ fontSize: 14, ml: 0.6 }}>
-                                    Back
-                                </Typography>
+                                <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
-                        </Link>
+                        </Box>
                     </Grid>
 
                     {/* Stepper showing request progress */}
@@ -1208,9 +1203,9 @@ function CreateMaintenanceRequestPage() {
                                                     }
                                                     error={!!errors.Phone}
                                                     helperText={errors.Phone}
+                                                    readOnly={!onEdit}
                                                     slotProps={{
                                                         input: {
-                                                            readOnly: !onEdit,
                                                             startAdornment: (
                                                                 <InputAdornment
                                                                     position="start"
@@ -1241,9 +1236,9 @@ function CreateMaintenanceRequestPage() {
                                                     }
                                                     error={!!errors.Email}
                                                     helperText={errors.Email}
+                                                    readOnly={!onEdit}
                                                     slotProps={{
                                                         input: {
-                                                            readOnly: !onEdit,
                                                             startAdornment: (
                                                                 <InputAdornment
                                                                     position="start"

@@ -2,7 +2,9 @@ import { styled, TextField as MuiTextField } from "@mui/material";
 
 
 // Custom styled TextField component
-export const TextField = styled(MuiTextField)(() => ({
+export const TextField = styled(MuiTextField, {
+    shouldForwardProp: (prop) => prop !== "readOnly"
+})(({ readOnly }: { readOnly?: boolean }) => ({
     borderRadius: "10px",
 
     // Custom styling for input
@@ -35,6 +37,11 @@ export const TextField = styled(MuiTextField)(() => ({
             borderColor: "rgb(242, 101, 34)",
             borderWidth: "2px",
         },
+
+        ...(readOnly && {
+            pointerEvents: "none",
+            backgroundColor: "transparent",
+        }),
     },
 
     "& .MuiInputLabel-root": {

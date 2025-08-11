@@ -10,6 +10,7 @@ import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
+import EditProfile from "../pages/EditProfile/EditProfile";
 const OperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -44,9 +45,13 @@ const OperatorRoutes = (): RouteObject => {
                 element: <AboutDeveloper />
             },
             {
-                path: "my-account",
-                element: <MyAccount />
-            },
+				path: "/my-account",
+				element: <MyAccount/>
+			},
+			{
+				path: "/my-account/edit-profile",
+				element: <EditProfile/>
+			},
             {
                 path: "/news",
                 element: <News />

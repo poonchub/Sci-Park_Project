@@ -44,6 +44,7 @@ import {
     ChartPie,
     Newspaper,
     Building2,
+    NotebookPen,
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
@@ -126,9 +127,9 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <DoorOpen size={iconSize} />,
         },
         {
-            segment: "maintenance/my-maintenance-request",
+            segment: "maintenance/create-maintenance-request",
             title: t("maintenance"),
-            icon: <Wrench size={iconSize} />,
+            icon: <NotebookPen size={iconSize} />,
         },
         {
             segment: "news",
@@ -286,7 +287,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "analytics",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "room",
             "user",
             "all-booking-room",
@@ -305,7 +306,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "dashboard",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "all-booking-room",
             "my-account",
             "news",
@@ -317,7 +318,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "home",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "room",
             "my-account",
             "news",
@@ -327,7 +328,7 @@ const WindowsLayout: React.FC = (props: any) => {
         User: [
             "home",
             "booking-room",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "my-account",
             "news",
             "create-service-area-request",

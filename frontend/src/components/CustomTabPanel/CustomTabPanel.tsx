@@ -25,6 +25,8 @@ export default function CustomTabPanel(props: TabPanelProps) {
 				{value === index && (
 					<Grid
                         minHeight={'200px'}
+						container
+						spacing={3}
 					>
 						{children}
 					</Grid>

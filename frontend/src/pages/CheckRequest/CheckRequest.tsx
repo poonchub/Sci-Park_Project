@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Card, CardContent, Grid, Skeleton, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Container, Grid, Skeleton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faCheck, faPaperPlane, faRepeat, faXmark } from "@fortawesome/free-solid-svg-icons";
@@ -89,8 +89,8 @@ function CheckRequest() {
             ? maintenanceTask?.Note
                 ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}`
                 : managerApproval?.Note
-                    ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
-                    : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
+                  ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
+                  : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
             : "";
 
     const cancelDate =
@@ -98,8 +98,8 @@ function CheckRequest() {
             ? maintenanceTask?.Note
                 ? dateFormat(maintenanceTask?.UpdatedAt || "")
                 : managerApproval?.Note
-                    ? dateFormat(managerApproval?.UpdatedAt || "")
-                    : dateFormat(maintenanceRequest?.UpdatedAt || "")
+                  ? dateFormat(managerApproval?.UpdatedAt || "")
+                  : dateFormat(maintenanceRequest?.UpdatedAt || "")
             : "";
 
     const userID = Number(localStorage.getItem("userId"));
@@ -157,11 +157,11 @@ function CheckRequest() {
 
     // Handle sumitting task to an operator
     const onClickSubmit = () => {
-        setIsBottonActive(true)
+        setIsBottonActive(true);
 
         if (!maintenanceRequest) {
             setAlerts((prev) => [...prev, { type: "error", message: "Selected maintenance request not found" }]);
-            setIsBottonActive(false)
+            setIsBottonActive(false);
             return;
         }
 
@@ -173,13 +173,13 @@ function CheckRequest() {
             files: submitfiles,
             setFiles: setSubmitFiles,
         });
-        setIsBottonActive(false)
+        setIsBottonActive(false);
     };
 
     // Handle approval or rejection
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true)
+        setIsBottonActive(true);
         handleActionApproval(statusID, {
             userID: Number(userID),
             selectedRequest: maintenanceRequest || {},
@@ -191,12 +191,12 @@ function CheckRequest() {
             actionType,
             note,
         });
-        setIsBottonActive(false)
+        setIsBottonActive(false);
     };
 
     const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true)
+        setIsBottonActive(true);
         handleActionAcception(statusID, {
             selectedTask: maintenanceTask,
             setAlerts,
@@ -205,12 +205,12 @@ function CheckRequest() {
             actionType,
             note,
         });
-        setIsBottonActive(false)
+        setIsBottonActive(false);
     };
 
     const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true)
+        setIsBottonActive(true);
         handleActionInspection(statusID, {
             userID,
             selectedRequest: maintenanceRequest,
@@ -221,12 +221,12 @@ function CheckRequest() {
             note,
             files: requestfiles,
         });
-        setIsBottonActive(false)
+        setIsBottonActive(false);
     };
 
     const handleClickCancel = async () => {
         try {
-            setIsBottonActive(true)
+            setIsBottonActive(true);
             const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
@@ -240,13 +240,13 @@ function CheckRequest() {
                 setAlerts((prev) => [...prev, { type: "success", message: "Request cancelled successfully" }]);
 
                 setOpenConfirmCancelledFromOwnRequest(false);
-                setIsBottonActive(false)
+                setIsBottonActive(false);
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
-            setIsBottonActive(false)
+            setIsBottonActive(false);
         }
     };
 
@@ -273,11 +273,7 @@ function CheckRequest() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([
-                    getMaintenanceRequest(),
-                    getRequestStatuses(),
-                    getOperators(),
-                ]);
+                await Promise.all([getMaintenanceRequest(), getRequestStatuses(), getOperators()]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -285,7 +281,6 @@ function CheckRequest() {
         };
 
         fetchInitialData();
-
     }, []);
 
     useEffect(() => {
@@ -318,14 +313,7 @@ function CheckRequest() {
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             {/* Popup for submiting work */}
-            <SubmitPopup
-                open={openPopupSubmit}
-                onClose={() => setOpenPopupSubmit(false)}
-                onConfirm={onClickSubmit}
-                setAlerts={setAlerts}
-                files={submitfiles}
-                onChange={setSubmitFiles}
-            />
+            <SubmitPopup open={openPopupSubmit} onClose={() => setOpenPopupSubmit(false)} onConfirm={onClickSubmit} setAlerts={setAlerts} files={submitfiles} onChange={setSubmitFiles} />
 
             {/* Cancellation From OwnRequest Confirm */}
             <ConfirmDialog
@@ -406,245 +394,241 @@ function CheckRequest() {
             />
 
             {/* Header section with title and back button */}
-            <Grid container spacing={2}>
-                <Grid
-                    container
-                    className="title-box"
-                    direction={'row'}
-                    size={{ xs: 5 }}
-                    sx={{ gap: 1 }}
-                >
-                    <NotebookText size={26} />
-                    <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                        Maintenance Request Review
-                    </Typography>
-                </Grid>
-                <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
-                    <Box>
-                        <Button variant="outlined" onClick={handleBack}>
-                            <FontAwesomeIcon icon={faAngleLeft} size="lg" />
-                            <Typography variant="textButtonClassic">Back</Typography>
-                        </Button>
-                    </Box>
-                </Grid>
+            <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+                <Grid container spacing={3}>
+                    <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
+                        <NotebookText size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                            Maintenance Request Review
+                        </Typography>
+                    </Grid>
+                    <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
+                        <Box>
+                            <Button variant="outlined" onClick={handleBack}>
+                                <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                                <Typography variant="textButtonClassic">Back</Typography>
+                            </Button>
+                        </Box>
+                    </Grid>
 
-                {isLoadingData ? (
-                    <Skeleton variant="rectangular" width="100%" height={140} sx={{ borderRadius: 2 }} />
-                ) : (
-                    <>
-                        {/* Stepper showing request progress */}
-                        <Grid size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
-                            <RequestStepper requestStatuses={requestStatuses} requestStatusID={requestStatusID} />
-                        </Grid>
+                    {isLoadingData ? (
+                        <Skeleton variant="rectangular" width="100%" height={140} sx={{ borderRadius: 2 }} />
+                    ) : (
+                        <>
+                            {/* Stepper showing request progress */}
+                            <Grid size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
+                                <RequestStepper requestStatuses={requestStatuses} requestStatusID={requestStatusID} />
+                            </Grid>
 
-                        {/* Info cards for approval and assignment */}
-                        {maintenanceRequest && !isUnsuccessful ? (
-                            <>
-                                <InfoCard type="approved" title="Approved By" name={managerName} date={approvalDate} />
+                            {/* Info cards for approval and assignment */}
+                            {maintenanceRequest && !isUnsuccessful ? (
+                                <>
+                                    <InfoCard type="approved" title="Approved By" name={managerName} date={approvalDate} />
 
-                                <InfoCard type="assigned" title="Assigned To" name={operatorName} date={assignDate} />
-                            </>
-                        ) : (
-                            <InfoCard type="unsuccessful" title="Cancelled By" name={cancellerName} date={cancelDate} />
-                        )}
-                    </>
-                )}
+                                    <InfoCard type="assigned" title="Assigned To" name={operatorName} date={assignDate} />
+                                </>
+                            ) : (
+                                <InfoCard type="unsuccessful" title="Cancelled By" name={cancellerName} date={cancelDate} />
+                            )}
+                        </>
+                    )}
 
-                {/* Main data section */}
-                {isLoadingData ? (
-                    <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: 2 }} />
-                ) : (
-                    <Card className="data-card" sx={{ width: "100%", borderRadius: 2 }}>
-                        <CardContent>
-                            <Grid
-                                container
-                                spacing={{
-                                    xs: 3,
-                                }}
-                                sx={{
-                                    px: {
-                                        xs: 2,
-                                        md: 6,
-                                    },
-                                    py: {
-                                        xs: 1,
-                                        md: 4,
-                                    },
-                                }}
-                            >
-                                <Grid size={{ xs: 12, md: 12 }}>
-                                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
-                                        Information
-                                    </Typography>
-                                </Grid>
+                    {/* Main data section */}
+                    {isLoadingData ? (
+                        <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: 2 }} />
+                    ) : (
+                        <Card className="data-card" sx={{ width: "100%", borderRadius: 2 }}>
+                            <CardContent>
+                                <Grid
+                                    container
+                                    spacing={{
+                                        xs: 3,
+                                    }}
+                                    sx={{
+                                        px: {
+                                            xs: 2,
+                                            md: 6,
+                                        },
+                                        py: {
+                                            xs: 1,
+                                            md: 4,
+                                        },
+                                    }}
+                                >
+                                    <Grid size={{ xs: 12, md: 12 }}>
+                                        <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
+                                            Information
+                                        </Typography>
+                                    </Grid>
 
-                                <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-                                    <RequestInfoTable data={maintenanceRequest} />
-                                </Grid>
+                                    <Grid size={{ xs: 12, md: 12, lg: 6 }}>
+                                        <RequestInfoTable data={maintenanceRequest} />
+                                    </Grid>
 
-                                <Grid container size={{ xs: 12, md: 12, lg: 6 }} direction="column">
-                                    {!isNotApproved && maintenanceRequest ? (
-                                        <Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
-                                            <Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
-                                                Task Operation
-                                            </Typography>
-                                            <Box sx={{ border: "1px solid #08aff1", borderRadius: 2, px: 2 }}>
-                                                <TaskInfoTable data={maintenanceRequest} />
-                                            </Box>
+                                    <Grid container size={{ xs: 12, md: 12, lg: 6 }} direction="column">
+                                        {!isNotApproved && maintenanceRequest ? (
+                                            <Grid size={{ xs: 12, md: 12 }} sx={{ pt: 2 }}>
+                                                <Typography className="title-list" variant="body1" sx={{ pb: 1 }}>
+                                                    Task Operation
+                                                </Typography>
+                                                <Box sx={{ border: "1px solid #08aff1", borderRadius: 2, px: 2 }}>
+                                                    <TaskInfoTable data={maintenanceRequest} />
+                                                </Box>
+                                            </Grid>
+                                        ) : (
+                                            <></>
+                                        )}
+
+                                        <Grid container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
+                                            {taskImages && taskImages.length !== 0 && !isRework ? (
+                                                <Box>
+                                                    <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
+                                                        Handover Images
+                                                    </Typography>
+                                                    <RequestImages images={maintenanceTask?.HandoverImages ?? []} apiUrl={apiUrl} />
+                                                </Box>
+                                            ) : maintenanceImages && maintenanceImages?.length !== 0 ? (
+                                                <Box>
+                                                    <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
+                                                        Request Images
+                                                    </Typography>
+                                                    <RequestImages images={maintenanceImages ?? []} apiUrl={apiUrl} />
+                                                </Box>
+                                            ) : (
+                                                <></>
+                                            )}
                                         </Grid>
-                                    ) : (
-                                        <></>
-                                    )}
+                                    </Grid>
 
-                                    <Grid container size={{ xs: 12, md: 12 }} spacing={1} sx={{ pt: isNotApproved ? 1.2 : 0 }}>
-                                        {taskImages && taskImages.length !== 0 && !isRework ? (
-                                            <Box>
-                                                <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
-                                                    Handover Images
-                                                </Typography>
-                                                <RequestImages images={maintenanceTask?.HandoverImages ?? []} apiUrl={apiUrl} />
-                                            </Box>
-                                        ) : maintenanceImages && maintenanceImages?.length !== 0 ? (
-                                            <Box>
-                                                <Typography className="title-list" variant="body1" sx={{ width: "100%", mb: 1 }}>
-                                                    Request Images
-                                                </Typography>
-                                                <RequestImages images={maintenanceImages ?? []} apiUrl={apiUrl} />
+                                    <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
+                                        {isPending && (isAdmin || isManager) ? (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                {/* Reject button */}
+                                                <Button
+                                                    variant="containedCancel"
+                                                    onClick={() => setOpenConfirmRejected(true)}
+                                                    sx={{
+                                                        minWidth: "0px",
+                                                        px: 2,
+                                                        py: 1,
+                                                    }}
+                                                >
+                                                    <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                    <Typography variant="textButtonClassic">Reject</Typography>
+                                                </Button>
+
+                                                {/* Approve button */}
+                                                <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
+                                                    <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                    <Typography variant="textButtonClassic">Approve</Typography>
+                                                </Button>
                                             </Box>
                                         ) : (
                                             <></>
                                         )}
-                                    </Grid>
-                                </Grid>
 
-                                <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                    {isPending && (isAdmin || isManager) ? (
-                                        <Box sx={{ gap: 1, display: "flex" }}>
-                                            {/* Reject button */}
-                                            <Button
-                                                variant="containedCancel"
-                                                onClick={() => setOpenConfirmRejected(true)}
+                                        {(isOwnRequest || isAdmin || isManager) && (
+                                            <Grid
+                                                container
+                                                size={{ xs: 12, md: 12 }}
                                                 sx={{
-                                                    minWidth: "0px",
-                                                    px: 2,
-                                                    py: 1,
+                                                    justifyContent: "flex-end",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                <Typography variant="textButtonClassic">Reject</Typography>
-                                            </Button>
+                                                {isOwnRequest && isPending ? (
+                                                    <Button
+                                                        variant="containedCancel"
+                                                        onClick={() => {
+                                                            setOpenConfirmCancelledFromOwnRequest(true);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "0px",
+                                                            px: 4,
+                                                            py: 1,
+                                                        }}
+                                                    >
+                                                        <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                        <Typography variant="textButtonClassic">Cancel</Typography>
+                                                    </Button>
+                                                ) : isWaitingForReview ? (
+                                                    <Box sx={{ gap: 1, display: "flex" }}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            onClick={() => {
+                                                                setOpenConfirmRework(true);
+                                                            }}
+                                                        >
+                                                            <FontAwesomeIcon icon={faRepeat} />
+                                                            <Typography variant="textButtonClassic">Rework</Typography>
+                                                        </Button>
 
-                                            {/* Approve button */}
-                                            <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
-                                                <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                <Typography variant="textButtonClassic">Approve</Typography>
-                                            </Button>
-                                        </Box>
-                                    ) : (
-                                        <></>
-                                    )}
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={() => {
+                                                                setOpenConfirmInspection(true);
+                                                            }}
+                                                            sx={{ px: 4, py: 1 }}
+                                                        >
+                                                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                            <Typography variant="textButtonClassic">Confirm</Typography>
+                                                        </Button>
+                                                    </Box>
+                                                ) : (
+                                                    <></>
+                                                )}
+                                            </Grid>
+                                        )}
 
-                                    {(isOwnRequest || isAdmin || isManager) && (
-                                        <Grid
-                                            container
-                                            size={{ xs: 12, md: 12 }}
-                                            sx={{
-                                                justifyContent: "flex-end",
-                                            }}
-                                        >
-                                            {isOwnRequest && isPending ? (
+                                        {(isApproved || isInProgress || isRework) && isOperator && isOwnTask && (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
                                                 <Button
                                                     variant="containedCancel"
                                                     onClick={() => {
-                                                        setOpenConfirmCancelledFromOwnRequest(true);
+                                                        setOpenConfirmCancelledFromOperator(true);
                                                     }}
                                                     sx={{
                                                         minWidth: "0px",
-                                                        px: 4,
+                                                        px: 2,
                                                         py: 1,
                                                     }}
                                                 >
                                                     <FontAwesomeIcon icon={faXmark} size="lg" />
                                                     <Typography variant="textButtonClassic">Cancel</Typography>
                                                 </Button>
-                                            ) : isWaitingForReview ? (
-                                                <Box sx={{ gap: 1, display: "flex" }}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        onClick={() => {
-                                                            setOpenConfirmRework(true);
-                                                        }}
-                                                    >
-                                                        <FontAwesomeIcon icon={faRepeat} />
-                                                        <Typography variant="textButtonClassic">Rework</Typography>
-                                                    </Button>
 
+                                                {isApproved || isRework ? (
                                                     <Button
-                                                        variant="contained"
+                                                        variant="containedBlue"
                                                         onClick={() => {
-                                                            setOpenConfirmInspection(true);
+                                                            setOpenConfirmAccepted(true);
                                                         }}
                                                         sx={{ px: 4, py: 1 }}
                                                     >
                                                         <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                        <Typography variant="textButtonClassic">Confirm</Typography>
+                                                        <Typography variant="textButtonClassic">Start</Typography>
                                                     </Button>
-                                                </Box>
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </Grid>
-                                    )}
-
-                                    {(isApproved || isInProgress || isRework) && isOperator && isOwnTask && (
-                                        <Box sx={{ gap: 1, display: "flex" }}>
-                                            <Button
-                                                variant="containedCancel"
-                                                onClick={() => {
-                                                    setOpenConfirmCancelledFromOperator(true);
-                                                }}
-                                                sx={{
-                                                    minWidth: "0px",
-                                                    px: 2,
-                                                    py: 1,
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                <Typography variant="textButtonClassic">Cancel</Typography>
-                                            </Button>
-
-                                            {isApproved || isRework ? (
-                                                <Button
-                                                    variant="containedBlue"
-                                                    onClick={() => {
-                                                        setOpenConfirmAccepted(true);
-                                                    }}
-                                                    sx={{ px: 4, py: 1 }}
-                                                >
-                                                    <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                    <Typography variant="textButtonClassic">Start</Typography>
-                                                </Button>
-                                            ) : isInProgress || isWaitingForReview ? (
-                                                <Button
-                                                    variant="containedBlue"
-                                                    onClick={() => {
-                                                        setOpenPopupSubmit(true);
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faPaperPlane} />
-                                                    <Typography variant="textButtonClassic">Submit</Typography>
-                                                </Button>
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </Box>
-                                    )}
+                                                ) : isInProgress || isWaitingForReview ? (
+                                                    <Button
+                                                        variant="containedBlue"
+                                                        onClick={() => {
+                                                            setOpenPopupSubmit(true);
+                                                        }}
+                                                    >
+                                                        <FontAwesomeIcon icon={faPaperPlane} />
+                                                        <Typography variant="textButtonClassic">Submit</Typography>
+                                                    </Button>
+                                                ) : (
+                                                    <></>
+                                                )}
+                                            </Box>
+                                        )}
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
-                )}
-            </Grid>
+                            </CardContent>
+                        </Card>
+                    )}
+                </Grid>
+            </Container>
         </Box>
     );
 }

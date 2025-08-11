@@ -92,6 +92,7 @@ const FilterSection = ({
                                 slots={{
                                     openPickerIcon: CalendarMonth,
                                 }}
+                                sx={{ width: '100%'}}
                             />
                         </LocalizationProvider>
                     </Grid>

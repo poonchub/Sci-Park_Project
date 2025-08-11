@@ -22,6 +22,7 @@ import News from "../pages/News/News";
 import OrganizationInfo from "../pages/OrganizationInfo/OrganizationInfo";
 import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import CreateInvoice from "../pages/CreateInvoice/CreateInvoice";
+import EditProfile from "../pages/EditProfile/EditProfile";
 
 
 const AdminRoutes = (): RouteObject => {
@@ -99,8 +100,12 @@ const AdminRoutes = (): RouteObject => {
 				element: <AllBookingRoom/>
 			},
 			{
-				path: "my-account",
+				path: "/my-account",
 				element: <MyAccount/>
+			},
+			{
+				path: "/my-account/edit-profile",
+				element: <EditProfile/>
 			},
 			{
 				path: "/news",

@@ -1,4 +1,5 @@
 import { RequestTypeInterface } from "./IRequestTypes";
+import { RolesInterface } from "./IRoles";
 
 export interface UserInterface {
     ID?: number;
@@ -14,7 +15,7 @@ export interface UserInterface {
     ProfilePath?: string;
     UserPackageID?: number;
     RoleID?: number;
-    Role?: string;
+    Role?: RolesInterface;
     Password?: string;
     Profile_Image?: File;
     Token?: string;
