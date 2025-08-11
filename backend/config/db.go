@@ -99,6 +99,9 @@ func SetupDatabase() {
 		&entity.CompanySize{},
 		&entity.ServiceUserType{},
 		&entity.ServiceAreaDocument{},
+		&entity.Invoice{},
+		&entity.InvoiceItem{},
+		&entity.TitlePrefix{},
 	)
 
 	if err != nil {
@@ -130,6 +133,20 @@ func SeedDatabase() {
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
+	}
+
+	// 🔹 ข้อมูล TitlePrefix
+	titlePrefixes := []entity.TitlePrefix{
+		{PrefixTH: "นาย", PrefixEN: "Mr."},
+		{PrefixTH: "นาง", PrefixEN: "Mrs."},
+		{PrefixTH: "นางสาว", PrefixEN: "Ms."},
+		{PrefixTH: "ดร.", PrefixEN: "Dr."},
+	}
+	for _, prefix := range titlePrefixes {
+		db.FirstOrCreate(&prefix, entity.TitlePrefix{
+			PrefixTH: prefix.PrefixTH,
+			PrefixEN: prefix.PrefixEN,
+		})
 	}
 
 	// 🔹 ข้อมูล RequestType
@@ -375,10 +392,12 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
+			SignaturePath:  "images/users/user_1/signature.jpg",
 			RoleID:         4,
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  3,
+			PrefixID:       1,
 		},
 		{
 			CompanyName:    "Regional Science Park Northeast 2",
@@ -765,10 +784,9 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
-	fmt.Println("📌 Seeding Payments")
 	payments := []entity.Payment{
 		{
-			PaymentDate:   "2025-06-25",
+			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
@@ -777,7 +795,7 @@ func SeedDatabase() {
 			StatusID:      1,
 		},
 		{
-			PaymentDate:   "2025-06-26",
+			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
@@ -1017,6 +1035,46 @@ func SeedDatabase() {
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{
 			Name: status.Name,
+		})
+	}
+
+	// Invoice
+	invoices := []entity.Invoice{
+		{
+			InvoiceNumber: "INV-2025-001",
+			IssueDate:     time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
+			DueDate:       time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
+			BillingPeriod: time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC),
+			TotalAmount:   18000.00,
+			StatusID:      1,
+			CreaterID:     1,
+			CustomerID:    2,
+		},
+	}
+	for _, invoice := range invoices {
+		db.FirstOrCreate(&invoice, entity.Invoice{InvoiceNumber: invoice.InvoiceNumber})
+	}
+
+	// Invoice Items
+	invoiceItems := []entity.InvoiceItem{
+		{
+			Description: "ค่าพื้นที่",
+			UnitPrice:   15000,
+			Amount:      15000,
+			InvoiceID:   1,
+		},
+		{
+			Description: "ค่าไฟ",
+			UnitPrice:   3000,
+			Amount:      3000,
+			InvoiceID:   1,
+		},
+	}
+	for _, item := range invoiceItems {
+		db.FirstOrCreate(&item, entity.InvoiceItem{
+			Description: item.Description,
+			UnitPrice:   item.UnitPrice,
+			Amount:      item.Amount,
 		})
 	}
 }

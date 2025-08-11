@@ -74,7 +74,7 @@ import { UserInterface } from "../../interfaces/IUser";
 import { BrushCleaning, HardHat } from "lucide-react";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 
-function a11yProps(index: number) {
+export function a11yProps(index: number) {
     return {
         id: `simple-tab-${index}`,
         "aria-controls": `simple-tabpanel-${index}`,

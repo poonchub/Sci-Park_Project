@@ -107,15 +107,10 @@ func CancelExpiredBookingsHandler(c *gin.Context) {
 func CreatePayment(c *gin.Context) {
 	db := config.DB()
 
-	paymentDate := c.PostForm("PaymentDate")
+	paymentDateStr := c.PostForm("PaymentDate")
 	amountStr := c.PostForm("Amount")
 	userIDStr := c.PostForm("UserID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
-
-	fmt.Println("PaymentDate:", paymentDate)
-	fmt.Println("Amount:", amountStr)
-	fmt.Println("UserID:", userIDStr)
-	fmt.Println("BookingRoomID:", bookingRoomIDStr)
 
 	// แปลง string เป็นค่าที่ต้องการ (เช่น float, uint)
 	amount, err := strconv.ParseFloat(amountStr, 64)
@@ -131,6 +126,11 @@ func CreatePayment(c *gin.Context) {
 	bookingRoomID, err := strconv.ParseUint(bookingRoomIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BookingRoomID"})
+		return
+	}
+	paymentDate, err := time.Parse(time.RFC3339Nano, paymentDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment date format"})
 		return
 	}
 

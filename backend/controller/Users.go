@@ -124,7 +124,7 @@ func CreateUser(c *gin.Context) {
 	file, err := c.FormFile("profile_image") // 'profile_image' คือชื่อฟิลด์ในฟอร์ม
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
-		profileFolder := "./images/Profiles"
+		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
 		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
 			err := os.MkdirAll(profileFolder, os.ModePerm)
 			if err != nil {
@@ -136,7 +136,7 @@ func CreateUser(c *gin.Context) {
 		fileExtension := path.Ext(file.Filename)
 
 		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
-		filePath := path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
+		filePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
 		if filePath != "" {
 			user.ProfilePath = filePath
 		}
@@ -228,7 +228,7 @@ func CreateUserExternalOnly(c *gin.Context) {
 	// อัปโหลดรูปโปรไฟล์ (ถ้ามี)
 	file, err := c.FormFile("profile_image")
 	if err == nil {
-		profileFolder := "./images/Profiles"
+		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
 		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
 			err := os.MkdirAll(profileFolder, os.ModePerm)
 			if err != nil {
@@ -238,7 +238,7 @@ func CreateUserExternalOnly(c *gin.Context) {
 		}
 
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
+		filePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
 		if filePath != "" {
 			user.ProfilePath = filePath
 		}
@@ -678,7 +678,7 @@ func UpdateUserByID(c *gin.Context) {
 		}
 
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
-		profileFolder := "./images/Profiles"
+		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
 		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
 			err := os.MkdirAll(profileFolder, os.ModePerm)
 			if err != nil {
@@ -691,8 +691,7 @@ func UpdateUserByID(c *gin.Context) {
 		fileExtension := path.Ext(file.Filename)
 
 		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
-		newProfilePath := path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
-
+		newProfilePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, newProfilePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new profile image"})
@@ -733,7 +732,7 @@ func UpdateProfileImage(c *gin.Context) {
 	}
 
 	// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
-	profileFolder := "./images/Profiles"
+	profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
 	if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
 		if err := os.MkdirAll(profileFolder, os.ModePerm); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
@@ -743,10 +742,9 @@ func UpdateProfileImage(c *gin.Context) {
 
 	fileExtension := path.Ext(file.Filename)
 	var filePath string
-
 	if user.ProfilePath == "" {
 		// ถ้ายังไม่มี path → สร้างชื่อใหม่เหมือนใน CreateUser
-		filePath = path.Join(profileFolder, fmt.Sprintf("%s%s", user.Email, fileExtension))
+		filePath = path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
 		user.ProfilePath = filePath
 	} else {
 		// ถ้ามี path แล้ว → ใช้ path เดิม

@@ -199,6 +199,17 @@ func main() {
 		// SlipOK
 		protected.POST("/proxy/slipok", controller.ProxySlipOK)
 		protected.GET("/proxy/slipok/quota", controller.ProxySlipOKQuota)
+
+		// Invoice
+		protected.GET("/invoces", controller.ListInvoices)
+		protected.GET("/invoice/:id", controller.GetInvoiceByID)
+		protected.GET("/invoice/:id/pdf", controller.GetInvoicePDF)
+		protected.POST("/invoice", controller.CreateInvoice)
+
+		// InvoiceItems
+		protected.GET("/invoice-items", controller.ListInvoiceItems)
+		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
+		protected.POST("/invoice-item", controller.CreateInvoiceItem)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
