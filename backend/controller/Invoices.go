@@ -1,11 +1,15 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
+
 	// "os/exec"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
@@ -14,6 +18,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+
 	// "github.com/johnfercher/maroto/pkg/color"
 	// "github.com/johnfercher/maroto/pkg/consts"
 	// "github.com/johnfercher/maroto/pkg/pdf"
@@ -25,7 +31,6 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
-
 	// wkhtmltopdf "github.com/SebastiaanKlippert/go-wkhtmltopdf"
 )
 
@@ -260,7 +265,7 @@ func GetInvoicePDF(c *gin.Context) {
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
 	chromeCtx, _ := chromedp.NewContext(allocCtx)
 
-	ctx, cancel := context.WithTimeout(chromeCtx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(chromeCtx, 30*time.Second)
 	defer cancel()
 
 	// allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
@@ -275,8 +280,8 @@ func GetInvoicePDF(c *gin.Context) {
 	var pdfBuf []byte
 	err = chromedp.Run(ctx,
 		chromedp.Navigate(encodedHTML),
-		chromedp.WaitReady("body", chromedp.ByQuery), // รอให้ body พร้อม
-		chromedp.Sleep(500*time.Millisecond),         // กันเหนียวเผื่อมี CSS/JS
+		chromedp.WaitReady("body", chromedp.ByQuery),
+		chromedp.Sleep(500*time.Millisecond),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			var err error
 			pdfBuf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
@@ -593,8 +598,15 @@ func CreateInvoice(c *gin.Context) {
 
 	db := config.DB()
 
+	nextInvoiceNumber, err := GenerateNextInvoiceNumber(db)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	invoice.InvoiceNumber = nextInvoiceNumber
+
 	var status entity.PaymentStatus
-	if err := db.First(&status, "Pending").Error; err != nil {
+	if err := db.Where("name = ?", "Pending").First(&status).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending' not found"})
 		return
 	}
@@ -612,10 +624,9 @@ func CreateInvoice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
 	}
 
-	result := db.Create(&invoice)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+	var room entity.Room
+	if err := db.First(&room, invoice.RoomID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Room not found"})
 	}
 
 	invoiceData := entity.Invoice{
@@ -624,6 +635,7 @@ func CreateInvoice(c *gin.Context) {
 		DueDate:       invoice.DueDate,
 		BillingPeriod: invoice.BillingPeriod,
 		TotalAmount:   invoice.TotalAmount,
+		RoomID: 	   invoice.RoomID,	
 		StatusID:      invoice.StatusID,
 		CreaterID:     invoice.CreaterID,
 		CustomerID:    invoice.CustomerID,
@@ -640,7 +652,10 @@ func CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, &invoice)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Create success",
+		"data":    invoiceData,
+	})
 
 }
 
@@ -663,4 +678,36 @@ func ThaiDateMonthYear(t time.Time) string {
 	month := months[t.Month()-1]
 	year := t.Year() + 543
 	return fmt.Sprintf("%s %d", month, year)
+}
+
+func GenerateNextInvoiceNumber(db *gorm.DB) (string, error) {
+	var lastInvoice entity.Invoice
+	// ดึง Invoice ล่าสุดที่ขึ้นต้นด้วย NE2/ ตามลำดับเลขมากที่สุด
+	if err := db.Where("invoice_number LIKE ?", "NE2/%").
+		Order("id DESC"). // หรือ order ตาม created_at ก็ได้
+		First(&lastInvoice).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "NE2/001", nil // กรณีไม่มีข้อมูลเลย
+		}
+		return "", err
+	}
+
+	// แยกส่วนเลขจาก invoice_number
+	parts := strings.Split(lastInvoice.InvoiceNumber, "/")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid invoice number format")
+	}
+
+	lastNum, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return "", err
+	}
+
+	nextNum := lastNum + 1
+	// ถ้าอยากให้มี leading zero เฉพาะเลข <= 999 ให้ใช้:
+	if nextNum <= 999 {
+		return fmt.Sprintf("NE2/%03d", nextNum), nil
+	}
+	// ถ้าเกิน 999 ก็ไม่ต้อง zero padding
+	return fmt.Sprintf("NE2/%d", nextNum), nil
 }

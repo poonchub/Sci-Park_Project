@@ -88,6 +88,9 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                     "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
                         outline: "none",
                     },
+                    "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+                        outline: "none",
+                    },
                     "& .MuiDataGrid-virtualScroller": {
                         overflowY: "hidden",
                     },

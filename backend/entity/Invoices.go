@@ -14,6 +14,8 @@ type Invoice struct {
 	BillingPeriod time.Time
 	TotalAmount   float64
 
+	RoomID     uint            
+	Room       Room          `gorm:"foreignKey:RoomID" valid:"-"`
 	StatusID   uint
 	Status     PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
 	CreaterID  uint

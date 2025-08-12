@@ -1,6 +1,7 @@
 import { InvoiceItemInterface } from "./IInvoiceItems";
 import { PaymentInterface } from "./IPayments";
 import { PaymentStatusInterface } from "./IPaymentStatuses";
+import { RoomsInterface } from "./IRooms";
 import { UserInterface } from "./IUser";
 
 export interface InvoiceInterface {
@@ -10,6 +11,8 @@ export interface InvoiceInterface {
     DueDate?:       string;
     BillingPeriod?: string;
     TotalAmount?:   number;
+    RoomID?:        number;
+    Room?:          RoomsInterface;
     StatusID?:      number;
     Status?:        PaymentStatusInterface;
     CreaterID?:     number;

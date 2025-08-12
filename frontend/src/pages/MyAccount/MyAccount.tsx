@@ -986,123 +986,127 @@ const MyAccount: React.FC = () => {
                         </Link>
                     </Grid>
 
-                    <Card
-                        sx={{
-                            py: 3,
-                            px: 4,
-                            borderRadius: 2,
-                            width: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 4,
-                        }}
-                    >
-                        <Box sx={{ display: "flex", gap: "30px" }}>
-                            <Box
-                                sx={{
-                                    minHeight: "100%",
-                                    width: 120,
-                                    display: "flex",
-                                    alignItems: "center",
-                                }}
-                            >
-                                <Avatar
+                    {user ? (
+                        <Card
+                            sx={{
+                                py: 3,
+                                px: 4,
+                                borderRadius: 2,
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 4,
+                            }}
+                        >
+                            <Box sx={{ display: "flex", gap: "30px" }}>
+                                <Box
                                     sx={{
+                                        minHeight: "100%",
                                         width: 120,
-                                        height: 120,
-                                        boxShadow: 3,
-                                    }}
-                                    src={`${apiUrl}/${profileImage}` || ""}
-                                />
-                            </Box>
-                            <Box
-                                sx={{
-                                    width: "calc(100% - 120px)",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <Typography
-                                    sx={{
-                                        fontSize: 22,
-                                        fontWeight: 600,
-                                        width: "100%",
+                                        display: "flex",
+                                        alignItems: "center",
                                     }}
                                 >
-                                    {user?.FirstName} {user?.LastName}
-                                </Typography>
-                                <Typography
+                                    <Avatar
+                                        sx={{
+                                            width: 120,
+                                            height: 120,
+                                            boxShadow: 3,
+                                        }}
+                                        src={`${apiUrl}/${profileImage}` || ""}
+                                    />
+                                </Box>
+                                <Box
                                     sx={{
-                                        fontSize: 18,
-                                        fontWeight: 500,
+                                        width: "calc(100% - 120px)",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "center",
                                     }}
-                                    gutterBottom
-                                >
-                                    {user?.CompanyName}
-                                </Typography>
-                                <Grid container size={{ xs: 12 }} spacing={10} sx={{ mt: 2 }}>
-                                    <Grid>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 16,
-                                                fontWeight: 500,
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            Role
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 18,
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            {user?.Role?.Name}
-                                        </Typography>
+                                >   
+                                    <Typography
+                                        sx={{
+                                            fontSize: 22,
+                                            fontWeight: 600,
+                                            width: "100%",
+                                        }}
+                                    >
+                                        {user?.FirstName} {user?.LastName}
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 18,
+                                            fontWeight: 500,
+                                        }}
+                                        gutterBottom
+                                    >
+                                        {user?.CompanyName}
+                                    </Typography>
+                                    <Grid container size={{ xs: 12 }} columnSpacing={10} rowSpacing={1.2} sx={{ mt: 2 }}>
+                                        <Grid>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 16,
+                                                    fontWeight: 500,
+                                                    color: "text.secondary",
+                                                }}
+                                            >
+                                                Role
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 18,
+                                                    fontWeight: 500,
+                                                }}
+                                            >
+                                                {user?.Role?.Name}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 16,
+                                                    fontWeight: 500,
+                                                    color: "text.secondary",
+                                                }}
+                                            >
+                                                Email Address
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 18,
+                                                    fontWeight: 500,
+                                                }}
+                                            >
+                                                {user?.Email}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 16,
+                                                    fontWeight: 500,
+                                                    color: "text.secondary",
+                                                }}
+                                            >
+                                                Phone Number
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 18,
+                                                    fontWeight: 500,
+                                                }}
+                                            >
+                                                {user?.Phone}
+                                            </Typography>
+                                        </Grid>
                                     </Grid>
-                                    <Grid>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 16,
-                                                fontWeight: 500,
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            Email Address
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 18,
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            {user?.Email}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 16,
-                                                fontWeight: 500,
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            Phone Number
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 18,
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            {user?.Phone}
-                                        </Typography>
-                                    </Grid>
-                                </Grid>
+                                </Box>
                             </Box>
-                        </Box>
-                    </Card>
+                        </Card>
+                    ) : (
+                        <Skeleton variant="rectangular" width="100%" height={182} sx={{ borderRadius: 2 }} />
+                    )}
 
                     <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
                         <Grid size={{ xs: 6 }}>

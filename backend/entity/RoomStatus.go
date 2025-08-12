@@ -9,7 +9,7 @@ import (
 
 type RoomStatus struct {
     gorm.Model
-    StatusName string `json:"status_name" valid:"required~กรุณาระบุสถานะของห้อง,customstring~สถานะของห้องต้องไม่ใช่เลข"`
+    StatusName string `valid:"required~กรุณาระบุสถานะของห้อง,customstring~สถานะของห้องต้องไม่ใช่เลข"`
     Rooms      []Room `gorm:"foreignKey:RoomStatusID" valid:"-"` // Exclude from validation
 
 }
