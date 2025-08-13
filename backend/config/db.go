@@ -1170,35 +1170,25 @@ func SeedDatabase() {
 		{
 			UserID:                             1,
 			RequestStatusID:                    2,
-			PurposeOfUsingSpace:                "ทำงานวิจัยและพัฒนา",
+			PurposeOfUsingSpace:                "Project Alpha",
 			NumberOfEmployees:                  5,
-			ActivitiesInBuilding:               "ประชุมและทดลองผลิตภัณฑ์",
-			CollaborationPlan:                  "ร่วมมือกับบริษัทในเครือ",
-			CollaborationBudget:                50000,
-			ProjectStartDate:                   time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
-			ProjectEndDate:                     time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC),
-			SupportingActivitiesForSciencePark: "จัด workshop และ training",
-			ServiceRequestDocument:             "/files/service_request/request1.pdf",
+			ActivitiesInBuilding:               "Research and Development",
+			SupportingActivitiesForSciencePark: "Collaboration with startups",
+			ServiceRequestDocument:             "/files/service_requests/request1.pdf",
 		},
 		{
 			UserID:                             2,
-			RequestStatusID:                    1,
-			PurposeOfUsingSpace:                "พัฒนาผลิตภัณฑ์ใหม่",
+			RequestStatusID:                    2,
+			PurposeOfUsingSpace:                "Project Beta",
 			NumberOfEmployees:                  3,
-			ActivitiesInBuilding:               "ออกแบบและทดสอบต้นแบบ",
-			CollaborationPlan:                  "ร่วมมือกับนักวิจัยภายนอก",
-			CollaborationBudget:                30000,
-			ProjectStartDate:                   time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC),
-			ProjectEndDate:                     time.Date(2026, 2, 28, 0, 0, 0, 0, time.UTC),
-			SupportingActivitiesForSciencePark: "จัดสัมมนาและ workshop",
-			ServiceRequestDocument:             "/files/service_request/request2.pdf",
+			ActivitiesInBuilding:               "Workshop and prototyping",
+			SupportingActivitiesForSciencePark: "Innovation lab support",
+			ServiceRequestDocument:             "/files/service_requests/request2.pdf",
 		},
 	}
-
 	for _, req := range requestServiceAreas {
 		db.FirstOrCreate(&req, entity.RequestServiceArea{
-			UserID:           req.UserID,
-			ProjectStartDate: req.ProjectStartDate,
+			UserID: req.UserID,
 		})
 	}
 
