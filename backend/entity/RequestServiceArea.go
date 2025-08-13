@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -15,13 +13,12 @@ type RequestServiceArea struct {
 	PurposeOfUsingSpace                string        `gorm:"type:text"`
 	NumberOfEmployees                  int
 	ActivitiesInBuilding               string `gorm:"type:text"`
-	CollaborationPlan                  string `gorm:"type:text"`
-	CollaborationBudget                float64
-	ProjectStartDate                   time.Time
-	ProjectEndDate                     time.Time
 	SupportingActivitiesForSciencePark string `gorm:"type:text"`
 	ServiceRequestDocument             string `gorm:"type:varchar(255)"`
 
 	// 1:1 relationship with ServiceAreaDocument
 	ServiceAreaDocument *ServiceAreaDocument `gorm:"foreignKey:RequestServiceAreaID"`
+
+	// 1:Many relationship with CollaborationPlan
+	CollaborationPlans []CollaborationPlan `gorm:"foreignKey:RequestServiceAreaID"`
 }

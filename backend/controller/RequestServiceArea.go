@@ -66,10 +66,6 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		PurposeOfUsingSpace:                c.PostForm("purpose_of_using_space"),
 		NumberOfEmployees:                  parseInt(c.PostForm("number_of_employees")),
 		ActivitiesInBuilding:               c.PostForm("activities_in_building"),
-		CollaborationPlan:                  c.PostForm("collaboration_plan"),
-		CollaborationBudget:                parseFloat(c.PostForm("collaboration_budget")),
-		ProjectStartDate:                   parseDate(c.PostForm("project_start_date")),
-		ProjectEndDate:                     parseDate(c.PostForm("project_end_date")),
 		SupportingActivitiesForSciencePark: c.PostForm("supporting_activities_for_science_park"),
 	}
 
@@ -82,6 +78,61 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		return
 	}
 	fmt.Printf("RequestServiceArea created with ID: %d\n", requestServiceArea.ID)
+
+	// ===== COLLABORATION PLANS =====
+	// รับข้อมูล Collaboration Plans จาก form array
+	collaborationPlans := c.PostFormArray("collaboration_plan[]")
+	collaborationBudgets := c.PostFormArray("collaboration_budgets[]")
+	projectStartDates := c.PostFormArray("project_start_dates[]")
+
+	fmt.Printf("Received %d collaboration plans\n", len(collaborationPlans))
+	fmt.Printf("Collaboration plans: %v\n", collaborationPlans)
+	fmt.Printf("Collaboration budgets: %v\n", collaborationBudgets)
+	fmt.Printf("Project start dates: %v\n", projectStartDates)
+
+	// Debug: ตรวจสอบข้อมูลทั้งหมดที่ส่งมา
+	fmt.Println("=== All form data ===")
+	for key, values := range c.Request.PostForm {
+		fmt.Printf("%s: %v\n", key, values)
+	}
+	fmt.Println("=== End form data ===")
+
+	// สร้าง CollaborationPlan สำหรับแต่ละ index
+	for i := 0; i < len(collaborationPlans); i++ {
+		fmt.Printf("Processing collaboration plan %d: %s\n", i+1, collaborationPlans[i])
+		if collaborationPlans[i] != "" {
+			// ตรวจสอบว่าข้อมูล budget และ date มีอยู่หรือไม่
+			var budget float64
+			var startDate time.Time
+
+			if i < len(collaborationBudgets) {
+				budget = parseFloat(collaborationBudgets[i])
+			}
+
+			if i < len(projectStartDates) {
+				startDate = parseDate(projectStartDates[i])
+			}
+
+			collaborationPlan := entity.CollaborationPlan{
+				RequestServiceAreaID: requestServiceArea.ID,
+				CollaborationPlan:    collaborationPlans[i],
+				CollaborationBudget:  budget,
+				ProjectStartDate:     startDate,
+			}
+
+			fmt.Printf("Creating collaboration plan: %+v\n", collaborationPlan)
+
+			if err := tx.Create(&collaborationPlan).Error; err != nil {
+				fmt.Printf("Error creating CollaborationPlan %d: %v\n", i+1, err)
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create collaboration plan %d", i+1)})
+				return
+			}
+			fmt.Printf("CollaborationPlan %d created with ID: %d\n", i+1, collaborationPlan.ID)
+		} else {
+			fmt.Printf("Skipping empty collaboration plan %d\n", i+1)
+		}
+	}
 
 	// จัดการไฟล์ ServiceRequestDocument (หลังจากได้ Request ID แล้ว)
 	file, err := c.FormFile("service_request_document")
@@ -205,6 +256,21 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	fmt.Printf("RequestServiceArea ID: %d\n", requestServiceArea.ID)
 	fmt.Printf("AboutCompany action: %s\n", action)
 
+	// โหลด CollaborationPlans ที่เพิ่งสร้าง
+	var loadedCollaborationPlans []entity.CollaborationPlan
+	if err := config.DB().Where("request_service_area_id = ?", requestServiceArea.ID).Find(&loadedCollaborationPlans).Error; err != nil {
+		fmt.Printf("Error loading collaboration plans: %v\n", err)
+	}
+
+	fmt.Printf("Loaded %d collaboration plans from database\n", len(loadedCollaborationPlans))
+	for i, plan := range loadedCollaborationPlans {
+		fmt.Printf("CollaborationPlan %d: ID=%d, Plan=%s, Budget=%.2f, StartDate=%s\n",
+			i+1, plan.ID, plan.CollaborationPlan, plan.CollaborationBudget, plan.ProjectStartDate.Format("2006-01-02"))
+	}
+
+	// อัปเดต requestServiceArea ให้มี CollaborationPlans
+	requestServiceArea.CollaborationPlans = loadedCollaborationPlans
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": fmt.Sprintf("Request service area created and about company %s successfully", action),
 		"data": gin.H{
@@ -225,7 +291,7 @@ func GetRequestServiceAreaByUserID(c *gin.Context) {
 	}
 
 	var requestServiceAreas []entity.RequestServiceArea
-	if err := config.DB().Preload("RequestStatus").Where("user_id = ?", userID).Find(&requestServiceAreas).Error; err != nil {
+	if err := config.DB().Preload("RequestStatus").Preload("CollaborationPlans").Where("user_id = ?", userID).Find(&requestServiceAreas).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service areas"})
 		return
 	}
@@ -289,18 +355,6 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	if activities := c.PostForm("activities_in_building"); activities != "" {
 		requestServiceArea.ActivitiesInBuilding = activities
 	}
-	if plan := c.PostForm("collaboration_plan"); plan != "" {
-		requestServiceArea.CollaborationPlan = plan
-	}
-	if budget := c.PostForm("collaboration_budget"); budget != "" {
-		requestServiceArea.CollaborationBudget = parseFloat(budget)
-	}
-	if startDate := c.PostForm("project_start_date"); startDate != "" {
-		requestServiceArea.ProjectStartDate = parseDate(startDate)
-	}
-	if endDate := c.PostForm("project_end_date"); endDate != "" {
-		requestServiceArea.ProjectEndDate = parseDate(endDate)
-	}
 	if activities := c.PostForm("supporting_activities_for_science_park"); activities != "" {
 		requestServiceArea.SupportingActivitiesForSciencePark = activities
 	}
@@ -330,6 +384,36 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	if err := config.DB().Save(&requestServiceArea).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request service area"})
 		return
+	}
+
+	// อัปเดต CollaborationPlans (ถ้ามีการส่งมา)
+	collaborationPlans := c.PostFormArray("collaboration_plans[]")
+	collaborationBudgets := c.PostFormArray("collaboration_budgets[]")
+	projectStartDates := c.PostFormArray("project_start_dates[]")
+
+	if len(collaborationPlans) > 0 {
+		// ลบ CollaborationPlans เดิม
+		if err := config.DB().Where("request_service_area_id = ?", requestServiceArea.ID).Delete(&entity.CollaborationPlan{}).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete existing collaboration plans"})
+			return
+		}
+
+		// สร้าง CollaborationPlans ใหม่
+		for i := 0; i < len(collaborationPlans); i++ {
+			if collaborationPlans[i] != "" {
+				collaborationPlan := entity.CollaborationPlan{
+					RequestServiceAreaID: requestServiceArea.ID,
+					CollaborationPlan:    collaborationPlans[i],
+					CollaborationBudget:  parseFloat(collaborationBudgets[i]),
+					ProjectStartDate:     parseDate(projectStartDates[i]),
+				}
+
+				if err := config.DB().Create(&collaborationPlan).Error; err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create collaboration plan %d", i+1)})
+					return
+				}
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

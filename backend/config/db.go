@@ -104,6 +104,7 @@ func SetupDatabase() {
 		&entity.TitlePrefix{},
 		&entity.BookingDate{}, // ← ✅ ต้องใส่ให้ migrate ตาราง booking_dates
 		&entity.BookingStatus{},
+		&entity.CollaborationPlan{},
 	)
 
 	if err != nil {

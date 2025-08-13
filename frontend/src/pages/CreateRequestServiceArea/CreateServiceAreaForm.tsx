@@ -26,19 +26,21 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { validateCorporateRegistrationNumber } from '../../utils/corporateRegistrationValidator';
 
+interface CollaborationPlanData {
+  plan: string;
+  budget: number;
+  startDate: string;
+}
+
 interface ServiceAreaFormData {
   PurposeOfUsingSpace: string;
   NumberOfEmployees: number;
   ActivitiesInBuilding: string;
-  CollaborationPlan: string;
-  CollaborationBudget: number;
-  ProjectStartDate: string;
-  ProjectEndDate: string;
   SupportingActivitiesForSciencePark: string;
   ServiceRequestDocument?: File;
   CorporateRegistrationNumber: string;
-  BusinessGroupID: number;
-  CompanySizeID: number;
+  BusinessGroupID: number | null;
+  CompanySizeID: number | null;
   MainServices: string;
   RegisteredCapital: number;
   HiringRate: number;
@@ -54,6 +56,10 @@ const CreateServiceAreaForm: React.FC = () => {
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1 = Company Info, 2 = Service Area Request
+  const [collaborationPlans, setCollaborationPlans] = useState<CollaborationPlanData[]>([
+    { plan: '', budget: 0, startDate: '' }
+  ]);
+  const [collaborationPlanErrors, setCollaborationPlanErrors] = useState<{ [key: number]: { plan?: string; budget?: string; startDate?: string } }>({});
   
   // Watch all form fields for real-time validation
   const watchedFields = watch();
@@ -93,12 +99,7 @@ const CreateServiceAreaForm: React.FC = () => {
     }
   }, [watchedFields.NumberOfEmployees, trigger]);
 
-  // Real-time validation for Collaboration Budget
-  useEffect(() => {
-    if (watchedFields.CollaborationBudget !== undefined && watchedFields.CollaborationBudget !== 0) {
-      trigger('CollaborationBudget');
-    }
-  }, [watchedFields.CollaborationBudget, trigger]);
+
 
   // Real-time validation for text fields with minimum length
   useEffect(() => {
@@ -126,12 +127,6 @@ const CreateServiceAreaForm: React.FC = () => {
   }, [watchedFields.ActivitiesInBuilding, trigger]);
 
   useEffect(() => {
-    if (watchedFields.CollaborationPlan && watchedFields.CollaborationPlan.length >= 20) {
-      trigger('CollaborationPlan');
-    }
-  }, [watchedFields.CollaborationPlan, trigger]);
-
-  useEffect(() => {
     if (watchedFields.SupportingActivitiesForSciencePark && watchedFields.SupportingActivitiesForSciencePark.length >= 20) {
       trigger('SupportingActivitiesForSciencePark');
     }
@@ -139,29 +134,16 @@ const CreateServiceAreaForm: React.FC = () => {
 
   // Real-time validation for dropdown fields
   useEffect(() => {
-    if (watchedFields.BusinessGroupID !== undefined && watchedFields.BusinessGroupID !== 0) {
+    if (watchedFields.BusinessGroupID !== undefined && watchedFields.BusinessGroupID !== null && watchedFields.BusinessGroupID !== 0) {
       trigger('BusinessGroupID');
     }
   }, [watchedFields.BusinessGroupID, trigger]);
 
   useEffect(() => {
-    if (watchedFields.CompanySizeID !== undefined && watchedFields.CompanySizeID !== 0) {
+    if (watchedFields.CompanySizeID !== undefined && watchedFields.CompanySizeID !== null && watchedFields.CompanySizeID !== 0) {
       trigger('CompanySizeID');
     }
   }, [watchedFields.CompanySizeID, trigger]);
-
-  // Real-time validation for dates
-  useEffect(() => {
-    if (watchedFields.ProjectStartDate) {
-      trigger('ProjectStartDate');
-    }
-  }, [watchedFields.ProjectStartDate, trigger]);
-
-  useEffect(() => {
-    if (watchedFields.ProjectEndDate && watchedFields.ProjectStartDate) {
-      trigger('ProjectEndDate');
-    }
-  }, [watchedFields.ProjectEndDate, watchedFields.ProjectStartDate, trigger]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,7 +168,79 @@ const CreateServiceAreaForm: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
+  const addCollaborationPlan = () => {
+    setCollaborationPlans([...collaborationPlans, { plan: '', budget: 0, startDate: '' }]);
+  };
+
+  const removeCollaborationPlan = (index: number) => {
+    if (collaborationPlans.length > 1) {
+      setCollaborationPlans(collaborationPlans.filter((_, i) => i !== index));
+      
+      // Remove errors for the deleted plan
+      if (collaborationPlanErrors[index]) {
+        const updatedErrors = { ...collaborationPlanErrors };
+        delete updatedErrors[index];
+        // Reindex the errors
+        const reindexedErrors: { [key: number]: { plan?: string; budget?: string; startDate?: string } } = {};
+        Object.keys(updatedErrors).forEach(key => {
+          const oldIndex = parseInt(key);
+          if (oldIndex > index) {
+            reindexedErrors[oldIndex - 1] = updatedErrors[oldIndex];
+          } else {
+            reindexedErrors[oldIndex] = updatedErrors[oldIndex];
+          }
+        });
+        setCollaborationPlanErrors(reindexedErrors);
+      }
+    }
+  };
+
+  const updateCollaborationPlan = (index: number, field: keyof CollaborationPlanData, value: string | number) => {
+    const updatedPlans = [...collaborationPlans];
+    updatedPlans[index] = { ...updatedPlans[index], [field]: value };
+    setCollaborationPlans(updatedPlans);
+    
+    // Clear error for this field when user starts typing
+    if (collaborationPlanErrors[index]) {
+      const updatedErrors = { ...collaborationPlanErrors };
+      delete updatedErrors[index][field];
+      if (Object.keys(updatedErrors[index]).length === 0) {
+        delete updatedErrors[index];
+      }
+      setCollaborationPlanErrors(updatedErrors);
+    }
+  };
+
+  const validateCollaborationPlans = () => {
+    const errors: { [key: number]: { plan?: string; budget?: string; startDate?: string } } = {};
+    
+    collaborationPlans.forEach((plan, index) => {
+      const planErrors: { plan?: string; budget?: string; startDate?: string } = {};
+      
+      if (!plan.plan.trim()) {
+        planErrors.plan = 'Please enter collaboration plan description';
+      } else if (plan.plan.length < 20) {
+        planErrors.plan = 'Collaboration plan must be at least 20 characters long';
+      }
+      
+      if (plan.budget < 0) {
+        planErrors.budget = 'Budget cannot be negative';
+      }
+      
+      if (!plan.startDate) {
+        planErrors.startDate = 'Please select project start year';
+      }
+      
+      if (Object.keys(planErrors).length > 0) {
+        errors[index] = planErrors;
+      }
+    });
+    
+    setCollaborationPlanErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNext = async () => {
     // Trigger validation for all fields in step 1
     const step1Fields = [
       'CorporateRegistrationNumber',
@@ -199,62 +253,12 @@ const CreateServiceAreaForm: React.FC = () => {
       'ThreeYearGrowthForecast'
     ] as const;
     
-    // Check if all required fields in step 1 are valid
-    const step1Errors = step1Fields.map(field => {
-      const fieldValue = watch(field);
-      const fieldError = errors[field];
-      
-      // Check if field is empty or has validation errors
-      if (fieldError) {
-        return fieldError;
-      }
-      
-      // Additional validation for specific fields
-      if (field === 'BusinessGroupID' && (!fieldValue || fieldValue === 0)) {
-        return { message: 'Please select business group' };
-      }
-      
-      if (field === 'CompanySizeID' && (!fieldValue || fieldValue === 0)) {
-        return { message: 'Please select company size' };
-      }
-      
-      if (field === 'CorporateRegistrationNumber' && !fieldValue) {
-        return { message: 'Please enter corporate registration number' };
-      }
-      
-      if (field === 'CorporateRegistrationNumber' && fieldValue && !validateCorporateRegistrationNumber(fieldValue)) {
-        return { message: 'Invalid corporate registration number. Please check the 13-digit number.' };
-      }
-      
-      if (field === 'MainServices' && !fieldValue) {
-        return { message: 'Please enter main services' };
-      }
-      
-      if (field === 'RegisteredCapital' && (!fieldValue || (typeof fieldValue === 'number' && fieldValue < 10))) {
-        return { message: 'Registered capital must be at least 10 THB' };
-      }
-      
-      if (field === 'HiringRate' && (typeof fieldValue === 'number' && fieldValue < 0)) {
-        return { message: 'Hiring rate cannot be negative' };
-      }
-      
-      if (field === 'ResearchInvestmentValue' && (!fieldValue || (typeof fieldValue === 'number' && fieldValue < 1))) {
-        return { message: 'Research investment value must be at least 1 THB' };
-      }
-      
-      if (field === 'ThreeYearGrowthForecast' && !fieldValue) {
-        return { message: 'Please enter three year growth forecast' };
-      }
-      
-      return null;
-    }).filter(error => error !== null);
+    // Trigger validation for all step 1 fields
+    const isValid = await trigger(step1Fields);
     
-    if (step1Errors.length > 0) {
-      // Show error alert if there are validation errors
-      setAlerts([{ 
-        type: 'error', 
-        message: 'Please complete all required fields in Company Information before proceeding.' 
-      }]);
+    if (!isValid) {
+      // If validation fails, the form will show red error messages automatically
+      // No need to show alert - just return and let the form display the errors
       return;
     }
     
@@ -295,12 +299,18 @@ const CreateServiceAreaForm: React.FC = () => {
           'PurposeOfUsingSpace',
           'NumberOfEmployees',
           'ActivitiesInBuilding',
-          'CollaborationPlan',
-          'CollaborationBudget',
-          'ProjectStartDate',
-          'ProjectEndDate',
           'SupportingActivitiesForSciencePark'
         ] as const;
+        
+        // Check if document is uploaded
+        if (!documentFile) {
+          setAlerts([{ 
+            type: 'error', 
+            message: 'Please upload a service request document before submitting.' 
+          }]);
+          setIsSubmitting(false);
+          return;
+        }
         
         const step2Errors = step2Fields.map(field => {
           const fieldValue = data[field];
@@ -318,7 +328,12 @@ const CreateServiceAreaForm: React.FC = () => {
           return null;
         }).filter(error => error !== null);
         
-        if (step2Errors.length > 0) {
+        // Validate collaboration plans
+        const isCollaborationPlansValid = validateCollaborationPlans();
+        
+        const allErrors = [...step2Errors];
+        
+        if (allErrors.length > 0 || !isCollaborationPlansValid) {
           setAlerts([{ 
             type: 'error', 
             message: 'Please complete all required fields in Service Area Request before submitting.' 
@@ -332,19 +347,24 @@ const CreateServiceAreaForm: React.FC = () => {
       formData.append('purpose_of_using_space', data.PurposeOfUsingSpace);
       formData.append('number_of_employees', data.NumberOfEmployees.toString());
       formData.append('activities_in_building', data.ActivitiesInBuilding);
-      formData.append('collaboration_plan', data.CollaborationPlan);
-      formData.append('collaboration_budget', data.CollaborationBudget.toString());
-      formData.append('project_start_date', data.ProjectStartDate);
-      formData.append('project_end_date', data.ProjectEndDate);
       formData.append('supporting_activities_for_science_park', data.SupportingActivitiesForSciencePark);
+      
+      // Add collaboration plans as arrays
+      collaborationPlans.forEach((plan, index) => {
+        if (plan.plan.trim()) {
+          formData.append('collaboration_plan[]', plan.plan);
+          formData.append('collaboration_budgets[]', plan.budget.toString());
+          formData.append('project_start_dates[]', plan.startDate);
+        }
+      });
       
       if (documentFile) {
         formData.append('service_request_document', documentFile);
       }
       
       formData.append('corporate_registration_number', data.CorporateRegistrationNumber);
-      formData.append('business_group_id', data.BusinessGroupID.toString());
-      formData.append('company_size_id', data.CompanySizeID.toString());
+      formData.append('business_group_id', (data.BusinessGroupID || 0).toString());
+      formData.append('company_size_id', (data.CompanySizeID || 0).toString());
       formData.append('main_services', data.MainServices);
       formData.append('registered_capital', data.RegisteredCapital.toString());
       formData.append('hiring_rate', data.HiringRate.toString());
@@ -378,6 +398,8 @@ const CreateServiceAreaForm: React.FC = () => {
         setAlerts([{ type: 'success', message: response.message || 'Service area request created successfully!' }]);
         reset();
         setDocumentFile(null);
+        setCollaborationPlans([{ plan: '', budget: 0, startDate: '' }]);
+        setCollaborationPlanErrors({});
         setCurrentStep(1); // Reset to first step
       } else {
         setAlerts([{ type: 'error', message: 'Failed to create request. Please try again.' }]);
@@ -590,7 +612,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="BusinessGroupID"
                     control={control}
-                    defaultValue={1}
+                    defaultValue={null}
                     rules={{ 
                       required: 'Please select business group',
                       validate: (value) => {
@@ -602,17 +624,17 @@ const CreateServiceAreaForm: React.FC = () => {
                       <FormControl fullWidth error={!!errors.BusinessGroupID}>
                         <Select
                           {...field}
-                          value={field.value || 0}
+                          value={field.value || ""}
                           displayEmpty
                           renderValue={(value) => {
-                            if (value === 0 || !value) {
+                            if (!value || value === 0) {
                               return <em>-- Please select business group --</em>;
                             }
                             const selectedGroup = businessGroups.find(group => group.ID === value);
                             return selectedGroup ? selectedGroup.Name : <em>-- Please select business group --</em>;
                           }}
                         >
-                          <MenuItem value={0}>
+                          <MenuItem value="">
                             <em>-- Please select business group --</em>
                           </MenuItem>
                           {businessGroups.map((group) => (
@@ -625,8 +647,6 @@ const CreateServiceAreaForm: React.FC = () => {
                             ✓ Business group selected
                           </FormHelperText>
                         )}
-                        {/* Hide the default field value display */}
-                        <div style={{ display: 'none' }}>{field.value}</div>
                       </FormControl>
                     )}
                   />
@@ -638,7 +658,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="CompanySizeID"
                     control={control}
-                    defaultValue={1}
+                    defaultValue={null}
                     rules={{ 
                       required: 'Please select company size',
                       validate: (value) => {
@@ -650,7 +670,7 @@ const CreateServiceAreaForm: React.FC = () => {
                       <FormControl fullWidth error={!!errors.CompanySizeID}>
                         <Select
                           {...field}
-                          value={field.value || 0}
+                          value={field.value || ""}
                           displayEmpty
                           renderValue={(value) => {
                             if (!value || value === 0) {
@@ -660,7 +680,7 @@ const CreateServiceAreaForm: React.FC = () => {
                             return selectedSize ? selectedSize.Name : <em>-- Please select company size --</em>;
                           }}
                         >
-                          <MenuItem value={0}>
+                          <MenuItem value="">
                             <em>-- Please select company size --</em>
                           </MenuItem>
                           {companySizes.map((size) => (
@@ -673,8 +693,6 @@ const CreateServiceAreaForm: React.FC = () => {
                             ✓ Company size selected
                           </FormHelperText>
                         )}
-                        {/* Hide the default field value display */}
-                        <div style={{ display: 'none' }}>{field.value}</div>
                       </FormControl>
                     )}
                   />
@@ -759,26 +777,26 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Hiring Rate */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Hiring Rate (per person) *</Typography>
+                  <Typography variant="body1" className="title-field">Hiring Rate (number of people) *</Typography>
                   <Controller
                     name="HiringRate"
                     control={control}
                     defaultValue={0}
                     rules={{
                       required: 'Please enter hiring rate',
-                      min: { value: 0, message: 'Hiring rate cannot be negative' }
+                      min: { value: 0, message: 'Number of people to hire cannot be negative' }
                     }}
                     render={({ field }) => (
                       <TextField
                         {...field}
                         type="number"
-                        label="Enter hiring rate per person"
+                        label="Enter number of people to hire"
                         fullWidth
                         error={!!errors.HiringRate}
                         helperText={
                           errors.HiringRate?.message || 
                           (field.value && field.value >= 0 ? 
-                            `✓ Valid hiring rate: ${field.value.toLocaleString()} THB per person` : 
+                            `✓ Valid hiring rate: ${field.value.toLocaleString()} people` : 
                             "")
                         }
                         slotProps={{
@@ -812,7 +830,14 @@ const CreateServiceAreaForm: React.FC = () => {
                         label="Enter annual R&D investment in THB"
                         fullWidth
                         error={!!errors.ResearchInvestmentValue}
-                        helperText={String(errors.ResearchInvestmentValue?.message || "")}
+                        helperText={
+                          errors.ResearchInvestmentValue?.message || 
+                          (field.value && field.value >= 1 ? 
+                            `✓ Valid amount: ${field.value.toLocaleString()} THB` : 
+                            field.value && field.value > 0 ? 
+                              `Current: ${field.value.toLocaleString()} THB (minimum: 1 THB)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
                         }}
@@ -973,43 +998,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Collaboration Budget (THB) *</Typography>
-                  <Controller
-                    name="CollaborationBudget"
-                    control={control}
-                    defaultValue={0}
-                    rules={{
-                      required: 'Please enter collaboration budget',
-                      min: { value: 1000, message: 'Collaboration budget must be at least 1,000 THB' }
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        type="number"
-                        label="Enter collaboration budget in THB"
-                        fullWidth
-                        error={!!errors.CollaborationBudget}
-                        helperText={
-                          errors.CollaborationBudget?.message || 
-                          (field.value && field.value >= 1000 ? 
-                            `✓ Valid budget: ${field.value.toLocaleString()} THB` : 
-                            field.value && field.value > 0 ? 
-                              `Current: ${field.value.toLocaleString()} THB (minimum: 1,000 THB)` : 
-                              "")
-                        }
-                        slotProps={{
-                          inputLabel: { sx: { color: '#6D6E70' } }
-                        }}
-                        sx={{
-                          '& .MuiFormHelperText-root': {
-                            color: field.value && field.value >= 1000 ? 'green' : undefined
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
+
 
                 {/* Activities in Building */}
                 <Grid size={{ xs: 12 }}>
@@ -1051,123 +1040,129 @@ const CreateServiceAreaForm: React.FC = () => {
                   />
                 </Grid>
 
-                {/* Collaboration Plan */}
+                {/* Collaboration Plans */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Collaboration Plan *</Typography>
-                  <Controller
-                    name="CollaborationPlan"
-                    control={control}
-                    defaultValue=""
-                    rules={{ 
-                      required: 'Please enter collaboration plan',
-                      minLength: { value: 20, message: 'Collaboration plan must be at least 20 characters long' }
-                    }}
-                    render={({ field }) => (
-                      <TextArea
-                        {...field}
-                        label="Please describe your plan for collaboration with Science Park"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        error={!!errors.CollaborationPlan}
-                        helperText={
-                          errors.CollaborationPlan?.message || 
-                          (field.value && field.value.length >= 20 ? 
-                            `✓ Valid (${field.value.length} characters)` : 
-                            field.value && field.value.length > 0 ? 
-                              `${field.value.length}/20 characters (minimum required)` : 
-                              "")
-                        }
-                        slotProps={{
-                          inputLabel: { sx: { color: '#6D6E70' } }
-                        }}
-                        sx={{
-                          '& .MuiFormHelperText-root': {
-                            color: field.value && field.value.length >= 20 ? 'green' : undefined
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="body1" className="title-field">Collaboration Plans *</Typography>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="small"
+                      onClick={addCollaborationPlan}
+                      sx={{ backgroundColor: '#ff6f00', color: 'white', '&:hover': { backgroundColor: '#e65100' } }}
+                    >
+                      Add Plan
+                    </Button>
+                  </Box>
+                  
+                  {collaborationPlans.map((plan, index) => (
+                    <Box key={index} sx={{ border: '1px solid #ddd', borderRadius: 2, p: 2, mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="h6" sx={{ color: '#ff6f00' }}>
+                          Collaboration Plan {index + 1}
+                        </Typography>
+                        {collaborationPlans.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            size="small"
+                            color="error"
+                            onClick={() => removeCollaborationPlan(index)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Box>
+                      
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <TextField
+                            label="Project Start Year"
+                            type="number"
+                            value={plan.startDate ? dayjs(plan.startDate).year() : ''}
+                            onChange={(e) => {
+                              const year = parseInt(e.target.value);
+                              const currentYear = dayjs().year();
+                              const maxYear = currentYear + 5;
+                              if (year && year >= currentYear && year <= maxYear) {
+                                const date = dayjs().year(year).startOf('year');
+                                updateCollaborationPlan(index, 'startDate', date.format('YYYY-MM-DD'));
+                              } else if (e.target.value === '') {
+                                updateCollaborationPlan(index, 'startDate', '');
+                              }
+                            }}
+                            inputProps={{
+                              min: dayjs().year(),
+                              max: dayjs().year() + 5,
+                              step: 1
+                            }}
+                            fullWidth
+                            error={!!collaborationPlanErrors[index]?.startDate}
+                            helperText={
+                              collaborationPlanErrors[index]?.startDate || 
+                              (plan.startDate ? 
+                                `✓ Start year: ${dayjs(plan.startDate).year()}` : 
+                                `Please enter project start year (${dayjs().year()}-${dayjs().year() + 5})`)
+                            }
+                            sx={{
+                              '& .MuiFormHelperText-root': {
+                                color: collaborationPlanErrors[index]?.startDate ? 'red' : (plan.startDate ? 'green' : undefined)
+                              }
+                            }}
+                          />
+                        </Grid>
 
-                {/* Project Dates */}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Project Start Date *</Typography>
-                  <Controller
-                    name="ProjectStartDate"
-                    control={control}
-                    defaultValue=""
-                    rules={{
-                      required: 'Please select project start date',
-                      validate: (value) => {
-                        if (!value) return 'Please select project start date';
-                        const startDate = dayjs(value);
-                        const today = dayjs();
-                        if (startDate.isBefore(today, 'day')) {
-                          return 'Project start date must be in the future';
-                        }
-                        return true;
-                      }
-                    }}
-                    render={({ field }) => (
-                      <>
-                        <DatePicker
-                          {...field}
-                          value={field.value ? dayjs(field.value) : null}
-                          onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                          label="Select project start date"
-                        />
-                        {errors.ProjectStartDate && (
-                          <FormHelperText error>{errors.ProjectStartDate.message}</FormHelperText>
-                        )}
-                        {!errors.ProjectStartDate && field.value && (
-                          <FormHelperText sx={{ color: 'green' }}>
-                            ✓ Project start date selected: {dayjs(field.value).format('DD/MM/YYYY')}
-                          </FormHelperText>
-                        )}
-                      </>
-                    )}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Project End Date *</Typography>
-                  <Controller
-                    name="ProjectEndDate"
-                    control={control}
-                    defaultValue=""
-                    rules={{
-                      required: 'Please select project end date',
-                      validate: (value) => {
-                        if (!value) return 'Please select project end date';
-                        const endDate = dayjs(value);
-                        const startDate = dayjs(watch('ProjectStartDate'));
-                        if (endDate.isBefore(startDate, 'day')) {
-                          return 'Project end date must be after start date';
-                        }
-                        return true;
-                      }
-                    }}
-                    render={({ field }) => (
-                      <>
-                        <DatePicker
-                          {...field}
-                          value={field.value ? dayjs(field.value) : null}
-                          onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                          label="Select project end date"
-                        />
-                        {errors.ProjectEndDate && (
-                          <FormHelperText error>{errors.ProjectEndDate.message}</FormHelperText>
-                        )}
-                        {!errors.ProjectEndDate && field.value && (
-                          <FormHelperText sx={{ color: 'green' }}>
-                            ✓ Project end date selected: {dayjs(field.value).format('DD/MM/YYYY')}
-                          </FormHelperText>
-                        )}
-                      </>
-                    )}
-                  />
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <TextField
+                            label="Budget (THB)"
+                            type="number"
+                            value={plan.budget}
+                            onChange={(e) => updateCollaborationPlan(index, 'budget', parseFloat(e.target.value) || 0)}
+                            fullWidth
+                            error={!!collaborationPlanErrors[index]?.budget}
+                            helperText={
+                              collaborationPlanErrors[index]?.budget || 
+                              (plan.budget >= 0 ? 
+                                `✓ Valid budget: ${plan.budget.toLocaleString()} THB` : 
+                                "Please enter collaboration budget (cannot be negative)")
+                            }
+                            sx={{
+                              '& .MuiFormHelperText-root': {
+                                color: collaborationPlanErrors[index]?.budget ? 'red' : (plan.budget >= 0 ? 'green' : undefined)
+                              }
+                            }}
+                          />
+                        </Grid>
+                        
+                        <Grid size={{ xs: 12 }}>
+                          <TextArea
+                            label="Collaboration Plan Description"
+                            value={plan.plan}
+                            onChange={(e) => updateCollaborationPlan(index, 'plan', e.target.value)}
+                            fullWidth
+                            multiline
+                            rows={3}
+                            error={!!collaborationPlanErrors[index]?.plan}
+                            helperText={
+                              collaborationPlanErrors[index]?.plan || 
+                              (plan.plan.length >= 20 ? 
+                                `✓ Valid (${plan.plan.length} characters)` : 
+                                plan.plan.length > 0 ? 
+                                  `${plan.plan.length}/20 characters (minimum required)` : 
+                                  "Please describe your collaboration plan (minimum 20 characters)")
+                            }
+                            sx={{
+                              '& .MuiFormHelperText-root': {
+                                color: collaborationPlanErrors[index]?.plan ? 'red' : (plan.plan.length >= 20 ? 'green' : undefined)
+                              }
+                            }}
+                          />
+                        </Grid>
+                        
+                        
+                      </Grid>
+                    </Box>
+                  ))}
                 </Grid>
 
                 {/* Supporting Activities */}
@@ -1212,7 +1207,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Document Upload */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Service Request Document (Optional)</Typography>
+                  <Typography variant="body1" className="title-field">Service Request Document *</Typography>
                   <Button
                     variant="outlined"
                     component="label"
@@ -1227,9 +1222,13 @@ const CreateServiceAreaForm: React.FC = () => {
                       onChange={handleDocumentChange}
                     />
                   </Button>
-                  {documentFile && (
+                  {documentFile ? (
                     <Typography variant="body2" sx={{ mt: 1, color: 'green' }}>
-                      Selected file: {documentFile.name}
+                      ✓ Selected file: {documentFile.name}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" sx={{ mt: 1, color: '#666' }}>
+                      Please upload a service request document (.pdf, .doc, .docx)
                     </Typography>
                   )}
                 </Grid>
