@@ -75,17 +75,24 @@ func CancelExpiredBookings() {
 
 	var expiredBookings []entity.BookingRoom
 
-	// preload payments ที่สถานะยืนยันแล้ว
-	err := db.Preload("Payments", "status = ?", "confirmed").
-		Where("created_at <= ?", cutoffTime).
-		Find(&expiredBookings).Error
+	// ดึง BookingRoom ที่สร้างเก่ากว่า cutoffTime
+	err := db.Where("created_at <= ?", cutoffTime).Find(&expiredBookings).Error
 	if err != nil {
 		log.Println("Error fetching expired bookings:", err)
 		return
 	}
 
 	for _, booking := range expiredBookings {
-		if len(booking.Payments) == 0 {
+		var confirmedPayments []entity.Payment
+		err := db.Joins("JOIN payment_statuses ON payment_statuses.id = payments.status_id").
+			Where("payments.booking_room_id = ? AND payment_statuses.name = ?", booking.ID, "confirmed").
+			Find(&confirmedPayments).Error
+		if err != nil {
+			log.Println("Error fetching payments for booking", booking.ID, err)
+			continue
+		}
+
+		if len(confirmedPayments) == 0 {
 			log.Println("Booking", booking.ID, "ไม่มี payment confirmed")
 			if err := db.Delete(&booking).Error; err != nil {
 				log.Println("Error cancelling booking ID", booking.ID, err)
@@ -98,6 +105,7 @@ func CancelExpiredBookings() {
 	}
 }
 
+
 func CancelExpiredBookingsHandler(c *gin.Context) {
 	CancelExpiredBookings() // เรียกฟังก์ชันเดิม
 	c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกการจองที่หมดอายุแล้วเรียบร้อย"})
@@ -107,15 +115,10 @@ func CancelExpiredBookingsHandler(c *gin.Context) {
 func CreatePayment(c *gin.Context) {
 	db := config.DB()
 
-	paymentDate := c.PostForm("PaymentDate")
+	paymentDateStr := c.PostForm("PaymentDate")
 	amountStr := c.PostForm("Amount")
 	userIDStr := c.PostForm("UserID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
-
-	fmt.Println("PaymentDate:", paymentDate)
-	fmt.Println("Amount:", amountStr)
-	fmt.Println("UserID:", userIDStr)
-	fmt.Println("BookingRoomID:", bookingRoomIDStr)
 
 	// แปลง string เป็นค่าที่ต้องการ (เช่น float, uint)
 	amount, err := strconv.ParseFloat(amountStr, 64)
@@ -131,6 +134,11 @@ func CreatePayment(c *gin.Context) {
 	bookingRoomID, err := strconv.ParseUint(bookingRoomIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BookingRoomID"})
+		return
+	}
+	paymentDate, err := time.Parse(time.RFC3339Nano, paymentDateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment date format"})
 		return
 	}
 

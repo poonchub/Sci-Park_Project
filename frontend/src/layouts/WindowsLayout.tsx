@@ -39,11 +39,12 @@ import {
     UserCog,
     UserRound,
     UserRoundPlus,
-    Wrench,
     ShieldUser,
     ChartPie,
     Newspaper,
     Building2,
+    NotebookPen,
+    DoorClosed,
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
@@ -126,9 +127,9 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <DoorOpen size={iconSize} />,
         },
         {
-            segment: "maintenance/my-maintenance-request",
+            segment: "maintenance/create-maintenance-request",
             title: t("maintenance"),
-            icon: <Wrench size={iconSize} />,
+            icon: <NotebookPen size={iconSize} />,
         },
         {
             segment: "news",
@@ -253,6 +254,11 @@ const WindowsLayout: React.FC = (props: any) => {
                     icon: <ClipboardList />,
                 },
                 {
+                    segment: "rental-space",
+                    title: "Rental Space",
+                    icon: <DoorClosed />,
+                },
+                {
                     segment: "traffic",
                     title: "Traffic",
                     icon: <ClipboardList />,
@@ -286,7 +292,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "analytics",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "room",
             "user",
             "all-booking-room",
@@ -299,35 +305,38 @@ const WindowsLayout: React.FC = (props: any) => {
             "manage-user",
             "add-user",
             "add-user-by-csv",
+            "rental-space",
         ],
         Manager: [
             "home",
             "dashboard",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "all-booking-room",
             "my-account",
             "news",
             "organization-info",
 
             "maintenance/all-maintenance-request",
+            "rental-space",
         ],
         Operator: [
             "home",
             "booking-room",
             "maintenance",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "room",
             "my-account",
             "news",
 
             "maintenance/accept-work",
+            "rental-space",
         ],
         User: [
             "home",
             "booking-room",
-            "maintenance/my-maintenance-request",
+            "maintenance/create-maintenance-request",
             "my-account",
             "news",
             "create-service-area-request",

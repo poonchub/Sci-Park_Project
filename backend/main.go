@@ -199,6 +199,17 @@ func main() {
 		// SlipOK
 		protected.POST("/proxy/slipok", controller.ProxySlipOK)
 		protected.GET("/proxy/slipok/quota", controller.ProxySlipOKQuota)
+
+		// Invoice
+		protected.GET("/invoces", controller.ListInvoices)
+		protected.GET("/invoice/:id", controller.GetInvoiceByID)
+		protected.GET("/invoice/:id/pdf", controller.GetInvoicePDF)
+		protected.POST("/invoice", controller.CreateInvoice)
+
+		// InvoiceItems
+		protected.GET("/invoice-items", controller.ListInvoiceItems)
+		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
+		protected.POST("/invoice-items", controller.CreateInvoiceItem)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -211,6 +222,9 @@ func main() {
 
 		// HondoverImages
 		protected.POST("/handover-images", controller.CreateHandoverImages)
+
+		// Room
+		protected.GET("/room-rental-space-option", controller.GetRoomRentalSpaceByOption)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
@@ -237,6 +251,7 @@ func main() {
 
 		// OrganizationInfo
 		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

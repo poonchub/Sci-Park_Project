@@ -99,6 +99,11 @@ func SetupDatabase() {
 		&entity.CompanySize{},
 		&entity.ServiceUserType{},
 		&entity.ServiceAreaDocument{},
+		&entity.Invoice{},
+		&entity.InvoiceItem{},
+		&entity.TitlePrefix{},
+		&entity.BookingDate{}, // ← ✅ ต้องใส่ให้ migrate ตาราง booking_dates
+		&entity.BookingStatus{},
 	)
 
 	if err != nil {
@@ -130,6 +135,20 @@ func SeedDatabase() {
 	}
 	for _, role := range roles {
 		db.FirstOrCreate(&role, entity.Role{Name: role.Name})
+	}
+
+	// 🔹 ข้อมูล TitlePrefix
+	titlePrefixes := []entity.TitlePrefix{
+		{PrefixTH: "นาย", PrefixEN: "Mr."},
+		{PrefixTH: "นาง", PrefixEN: "Mrs."},
+		{PrefixTH: "นางสาว", PrefixEN: "Ms."},
+		{PrefixTH: "ดร.", PrefixEN: "Dr."},
+	}
+	for _, prefix := range titlePrefixes {
+		db.FirstOrCreate(&prefix, entity.TitlePrefix{
+			PrefixTH: prefix.PrefixTH,
+			PrefixEN: prefix.PrefixEN,
+		})
 	}
 
 	// 🔹 ข้อมูล RequestType
@@ -195,13 +214,16 @@ func SeedDatabase() {
 		db.FirstOrCreate(&status, entity.RequestStatus{Name: status.Name})
 	}
 
-	// 🔹 ข้อมูล RoomStatus
+	// 🔹 RoomStatus Data
 	roomStatuses := []entity.RoomStatus{
-		{StatusName: "Reserved"},
-		{StatusName: "Not Reserved"},
+		{StatusName: "Available", Code: "available"},
+		{StatusName: "Under Maintenance", Code: "maintenance"},
+		{StatusName: "Unavailable", Code: "unavailable"},
+		{StatusName: "Damaged", Code: "damaged"},
 	}
+
 	for _, status := range roomStatuses {
-		db.FirstOrCreate(&status, entity.RoomStatus{StatusName: status.StatusName})
+		db.FirstOrCreate(&status, entity.RoomStatus{Code: status.Code})
 	}
 
 	// 🔹 ข้อมูล RoomType
@@ -233,6 +255,11 @@ func SeedDatabase() {
 		{
 			TypeName: "NE2 HALL 2",
 			RoomSize: 487,
+		},
+		{
+			TypeName: "Rental Space",
+			ForRental: true,
+			HasMultipleSizes: true,
 		},
 	}
 	for _, roomType := range roomTypes {
@@ -375,10 +402,12 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
+			SignaturePath:  "images/users/user_1/signature.jpg",
 			RoleID:         4,
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  3,
+			PrefixID:       1,
 		},
 		{
 			CompanyName:    "Regional Science Park Northeast 2",
@@ -514,9 +543,45 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Rooms
 	rooms := []entity.Room{
+		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+		{RoomNumber: "A110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A111", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A112", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+
+		{RoomNumber: "B101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+
+		{RoomNumber: "A201", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A202", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A203", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A204", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A205", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A206", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+		{RoomNumber: "A207", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A208", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A209", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 216},
+
 		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 19},
 		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 30},
-		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
+		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A306", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A307", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A308", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
@@ -669,9 +734,19 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล TimeSlot
 	timeSlots := []entity.TimeSlot{
-		{TimeSlotName: "เช้า", StartTime: parseTime("08:00"), EndTime: parseTime("12:00")},
-		{TimeSlotName: "บ่าย", StartTime: parseTime("13:00"), EndTime: parseTime("17:00")},
-		{TimeSlotName: "เต็มวัน", StartTime: parseTime("08:00"), EndTime: parseTime("17:00")},
+		{TimeSlotName: "morning", StartTime: parseTime("08:00"), EndTime: parseTime("12:00")},
+		{TimeSlotName: "afternoon", StartTime: parseTime("13:00"), EndTime: parseTime("17:00")},
+		{TimeSlotName: "fullDay", StartTime: parseTime("08:00"), EndTime: parseTime("17:00")},
+		{TimeSlotName: "08:00-09:00", StartTime: parseTime("08:00"), EndTime: parseTime("09:00")},
+		{TimeSlotName: "09:00-10:00", StartTime: parseTime("09:00"), EndTime: parseTime("10:00")},
+		{TimeSlotName: "10:00-11:00", StartTime: parseTime("10:00"), EndTime: parseTime("11:00")},
+		{TimeSlotName: "11:00-12:00", StartTime: parseTime("11:00"), EndTime: parseTime("12:00")},
+		{TimeSlotName: "12:00-13:00", StartTime: parseTime("12:00"), EndTime: parseTime("13:00")},
+		{TimeSlotName: "13:00-14:00", StartTime: parseTime("13:00"), EndTime: parseTime("14:00")},
+		{TimeSlotName: "14:00-15:00", StartTime: parseTime("14:00"), EndTime: parseTime("15:00")},
+		{TimeSlotName: "15:00-16:00", StartTime: parseTime("15:00"), EndTime: parseTime("16:00")},
+		{TimeSlotName: "16:00-17:00", StartTime: parseTime("16:00"), EndTime: parseTime("17:00")},
+		
 	}
 	fmt.Println("📌 Seeding TimeSlots")
 	for _, slot := range timeSlots {
@@ -685,6 +760,7 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Roomprice (สมมุติว่าห้องขนาดเล็ก = RoomTypeID 1, TimeSlotID ตามข้างบน)
 	roomPrices := []entity.RoomPrice{
+		// ✅ เดิม (3 แบบ: เช้า/บ่าย/เต็มวัน)
 		{Price: 500, TimeSlotID: 1, RoomTypeID: 1},  // เช้า
 		{Price: 500, TimeSlotID: 2, RoomTypeID: 1},  // บ่าย
 		{Price: 1000, TimeSlotID: 3, RoomTypeID: 1}, // เต็มวัน
@@ -692,7 +768,26 @@ func SeedDatabase() {
 		{Price: 1000, TimeSlotID: 1, RoomTypeID: 2}, // เช้า
 		{Price: 1000, TimeSlotID: 2, RoomTypeID: 2}, // บ่าย
 		{Price: 2000, TimeSlotID: 3, RoomTypeID: 2}, // เต็มวัน
+
+		// ✅ ใหม่: รายชั่วโมงสำหรับ RoomTypeID 1
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 1},  // 09:00–10:00
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 1},  // 10:00–11:00
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 1},  // 11:00–12:00
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 1},  // 13:00–14:00
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 1},  // 14:00–15:00
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 1},  // 15:00–16:00
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 1}, // 16:00–17:00
+
+		// ✅ ใหม่: รายชั่วโมงสำหรับ RoomTypeID 2
+		{Price: 400, TimeSlotID: 4, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 5, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 6, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 7, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 8, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 9, RoomTypeID: 2},
+		{Price: 400, TimeSlotID: 10, RoomTypeID: 2},
 	}
+
 	fmt.Println("📌 Seeding Roomprices")
 	for _, rp := range roomPrices {
 		result := db.FirstOrCreate(&rp, entity.RoomPrice{
@@ -704,35 +799,15 @@ func SeedDatabase() {
 			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
 	}
 
-	// 🔹 ข้อมูล BookingRoom (User: users[6] คือ Internal 1, Room: rooms[0] = A302, TimeSlot: 1 = เช้า)
-	bookingRooms := []entity.BookingRoom{
-		{
-			Date:       parseDate("2025-06-25"),
-			Purpose:    "ประชุมแผนงานวิจัย",
-			UserID:     users[6].ID,
-			RoomID:     rooms[0].ID,
-			TimeSlotID: 1,
-		},
-		{
-			Date:       parseDate("2025-06-26"),
-			Purpose:    "อบรมพนักงานใหม่",
-			UserID:     users[7].ID,
-			RoomID:     rooms[1].ID,
-			TimeSlotID: 2,
-		},
-	}
+	
 
-	fmt.Println("📌 Seeding BookingRooms")
-	for _, br := range bookingRooms {
-		result := db.FirstOrCreate(&br, entity.BookingRoom{
-			Date:       br.Date,
-			RoomID:     br.RoomID,
-			UserID:     br.UserID,
-			TimeSlotID: br.TimeSlotID,
-			Purpose:    br.Purpose,
-		})
-		fmt.Printf("🧪 BookingRoom: Date=%s RoomID=%d TimeSlotID=%d UserID=%d | RowsAffected: %d | Error: %v\n",
-			br.Date, br.RoomID, br.TimeSlotID, br.UserID, result.RowsAffected, result.Error)
+	bookingStatus := []entity.BookingStatus{
+		{StatusName: "confirmed"},
+		{StatusName: "unconfirmed"},
+		{StatusName: "canceled"},
+	}
+	for _, bs := range bookingStatus {
+		db.FirstOrCreate(&bs, entity.BookingStatus{StatusName: bs.StatusName})
 	}
 
 	// 🔹 ข้อมูล Equipment
@@ -765,10 +840,10 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
-	fmt.Println("📌 Seeding Payments")
 	payments := []entity.Payment{
 		{
-			PaymentDate:   "2025-06-25",
+			
+			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
@@ -777,7 +852,7 @@ func SeedDatabase() {
 			StatusID:      1,
 		},
 		{
-			PaymentDate:   "2025-06-26",
+			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
@@ -795,36 +870,69 @@ func SeedDatabase() {
 		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
 	}
 
-	// ✅ สมมุติว่า Room ID = 1, TimeSlot ID = 1, 2, 3 มีอยู่แล้ว
-	bookings := []entity.BookingRoom{
+	// สมมติ TimeSlotID 1=เช้า, 2=บ่าย, 3=เต็มวัน
+	type SeedBooking struct {
+		RoomID     uint
+		Date       time.Time
+		TimeSlotIDs []uint
+	}
+
+	bookings := []SeedBooking{
 		{
 			RoomID:     1,
 			Date:       time.Date(2025, 7, 20, 0, 0, 0, 0, time.Local),
-			TimeSlotID: 1, // เช้า
+			TimeSlotIDs: []uint{1, 2},  // เช้า + บ่าย
 		},
 		{
 			RoomID:     1,
 			Date:       time.Date(2025, 7, 21, 0, 0, 0, 0, time.Local),
-			TimeSlotID: 2, // บ่าย
+			TimeSlotIDs: []uint{2},     // เช้า: 2, // บ่าย
 		},
 		{
 			RoomID:     1,
 			Date:       time.Date(2025, 7, 22, 0, 0, 0, 0, time.Local),
-			TimeSlotID: 3, // เต็มวัน
+			 TimeSlotIDs: []uint{3},     // เต็มวัน
 		},
 	}
 
 	for _, b := range bookings {
-		result := db.FirstOrCreate(&b, entity.BookingRoom{
+		// สร้าง BookingRoom ก่อน
+		bookingRoom := entity.BookingRoom{
 			RoomID:     b.RoomID,
-			Date:       b.Date,
-			TimeSlotID: b.TimeSlotID,
-		})
-		fmt.Printf("📅 Booking: RoomID=%d Date=%s Slot=%d | RowsAffected: %d\n",
-			b.RoomID, b.Date.Format("2006-01-02"), b.TimeSlotID, result.RowsAffected)
-	}
+			 TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
+			StatusID:   1,
+			// ใส่ข้อมูลอื่น ๆ เช่น UserID, Purpose ตามจำเป็น
+		}
 
-	fmt.Println("✅ Sample data added successfully!")
+		result := db.FirstOrCreate(&bookingRoom, entity.BookingRoom{
+			RoomID:     b.RoomID,
+			 TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
+		})
+
+		if result.Error != nil {
+			fmt.Printf("❌ Error creating BookingRoom: %v\n", result.Error)
+			continue
+		}
+
+		// สร้าง BookingDate เชื่อมกับ BookingRoom
+		bookingDate := entity.BookingDate{
+			Date:          b.Date,
+			BookingRoomID: bookingRoom.ID,
+		}
+
+		err := db.FirstOrCreate(&bookingDate, entity.BookingDate{
+			Date:          b.Date,
+			BookingRoomID: bookingRoom.ID,
+		}).Error
+
+		if err != nil {
+			fmt.Printf("❌ Error creating BookingDate: %v\n", err)
+			continue
+		}
+
+		fmt.Printf("📅 Booking created: RoomID=%d Date=%s Slot=%d\n",
+			b.RoomID, b.Date.Format("2006-01-02"), b.TimeSlotIDs)
+	}
 
 	// 🔹 ข้อมูล News
 	news := []entity.News{
@@ -1017,6 +1125,46 @@ func SeedDatabase() {
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{
 			Name: status.Name,
+		})
+	}
+
+	// Invoice
+	invoices := []entity.Invoice{
+		{
+			InvoiceNumber: "NE2/001",
+			IssueDate:     time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
+			DueDate:       time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
+			BillingPeriod: time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC),
+			TotalAmount:   18000.00,
+			StatusID:      1,
+			CreaterID:     1,
+			CustomerID:    2,
+		},
+	}
+	for _, invoice := range invoices {
+		db.FirstOrCreate(&invoice, entity.Invoice{InvoiceNumber: invoice.InvoiceNumber})
+	}
+
+	// Invoice Items
+	invoiceItems := []entity.InvoiceItem{
+		{
+			Description: "ค่าพื้นที่",
+			UnitPrice:   15000,
+			Amount:      15000,
+			InvoiceID:   1,
+		},
+		{
+			Description: "ค่าไฟ",
+			UnitPrice:   3000,
+			Amount:      3000,
+			InvoiceID:   1,
+		},
+	}
+	for _, item := range invoiceItems {
+		db.FirstOrCreate(&item, entity.InvoiceItem{
+			Description: item.Description,
+			UnitPrice:   item.UnitPrice,
+			Amount:      item.Amount,
 		})
 	}
 }

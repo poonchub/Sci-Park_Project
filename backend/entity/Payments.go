@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -8,7 +10,7 @@ import (
 type Payment struct {
 	gorm.Model
 
-	PaymentDate string
+	PaymentDate  time.Time
 	Amount       float64
 	SlipPath     string
 	Note         string
@@ -19,4 +21,6 @@ type Payment struct {
 	User          User `gorm:"foreignKey:UserID" valid:"-"`
 	BookingRoomID uint
 	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
+	InvoiceID     uint
+	Invoice       Invoice `gorm:"foreignKey:InvoiceID" valid:"-"`
 }

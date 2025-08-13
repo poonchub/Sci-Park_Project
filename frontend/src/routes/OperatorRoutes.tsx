@@ -10,6 +10,8 @@ import CheckRequests from "../pages/CheckRequest/CheckRequest";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
+import EditProfile from "../pages/EditProfile/EditProfile";
+import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 const OperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -17,49 +19,57 @@ const OperatorRoutes = (): RouteObject => {
         children: [
             {
                 path: "/home",
-                element: <Home />
+                element: <Home />,
             },
             {
                 path: "/booking-room",
-                element: <BookingRoom />
+                element: <BookingRoom />,
             },
             {
                 path: "/maintenance/accept-work",
-                element: <AcceptWork />
+                element: <AcceptWork />,
             },
             {
                 path: "/maintenance/my-maintenance-request",
-                element: <MyMaintenanceRequest />
+                element: <MyMaintenanceRequest />,
             },
             {
                 path: "/maintenance/create-maintenance-request",
-                element: <CreateMaintenanceRequestPage />
+                element: <CreateMaintenanceRequestPage />,
             },
             {
                 path: "/maintenance/check-requests",
-                element: <CheckRequests />
+                element: <CheckRequests />,
             },
             {
                 path: "/about-developer",
-                element: <AboutDeveloper />
+                element: <AboutDeveloper />,
             },
             {
-                path: "my-account",
-                element: <MyAccount />
+                path: "/my-account",
+                element: <MyAccount />,
+            },
+            {
+                path: "/my-account/edit-profile",
+                element: <EditProfile />,
             },
             {
                 path: "/news",
-                element: <News />
+                element: <News />,
+            },
+            {
+                path: "/room/rental-space",
+                element: <RoomRentalSpace />,
             },
             {
                 path: "",
-                element: <Home />
+                element: <Home />,
             },
             {
                 path: "*",
-                element: <Home />
+                element: <Home />,
             },
-        ]
-    }
-}
+        ],
+    };
+};
 export default OperatorRoutes;

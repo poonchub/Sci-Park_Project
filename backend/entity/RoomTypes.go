@@ -8,6 +8,8 @@ type RoomType struct {
     gorm.Model
     TypeName    string
     RoomSize    float32
+    ForRental   bool
+    HasMultipleSizes bool
 
     Rooms               []Room  `gorm:"foreignKey:RoomTypeID"`
     RoomTypeLayouts     []RoomTypeLayout  `gorm:"foreignKey:RoomTypeID"`

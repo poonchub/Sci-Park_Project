@@ -18,7 +18,7 @@ export interface GetUserInterface {
     UserPackageID?: number;
     RoleID?: number;
     Role?: {
-        name:string;
+        Name:string;
     };
     Password?: string;
     Profile_Image?: File;

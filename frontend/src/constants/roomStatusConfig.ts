@@ -11,7 +11,7 @@ export interface RoomStatusConfig {
 
 // Mapping different room statuses to their respective configuration
 export const roomStatusConfig: Record<string, RoomStatusConfig> = {
-    "Reserved": {
+    "Available": {
         color: "#007BFF", // Blue color for Reserved
         colorLite: "rgb(202, 227, 255)", // Light blue background for Reserved
         icon: faCheck // Check icon for Reserved
@@ -20,5 +20,11 @@ export const roomStatusConfig: Record<string, RoomStatusConfig> = {
         color: "#28A745", // Green color for Not Reserved (Available)
         colorLite: "rgb(202, 255, 202)", // Light green background for Not Reserved
         icon: faDoorOpen  // Circle icon for Not Reserved (Available)
+    },
+
+    "Under Maintenance": {
+        color: "#FF0000", // Red color for Un Available
+        colorLite: "rgb(255, 202, 202)", // Light red background for Un Available
+        icon: faDoorOpen  // Circle icon for Un Available
     },
 };

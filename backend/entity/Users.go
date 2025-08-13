@@ -18,7 +18,9 @@ type User struct {
 	Password       string `valid:"required,password"`
 	Phone          string `valid:"phone,required"`
 	ProfilePath    string
+	SignaturePath  string
 	IsEmployee     bool
+	IsBusinessOwner bool
 
 	UserPackageID *uint
 	RoleID        uint
@@ -27,6 +29,8 @@ type User struct {
 	Gender        Gender `gorm:"foreignKey:GenderID" valid:"-"`
 	RequestTypeID uint
 	RequestType   RequestType `gorm:"foreignKey:RequestTypeID" valid:"-"`
+	PrefixID      uint
+	Prefix  	  TitlePrefix `gorm:"foreignKey:PrefixID" valid:"-"`
 
 	ResetToken       string
 	ResetTokenExpiry time.Time
@@ -42,4 +46,6 @@ type User struct {
 	News                []News               `gorm:"foreignKey:UserID" valid:"-"`
 	RequestServiceAreas []RequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
 	AboutCompany        *AboutCompany        `gorm:"foreignKey:UserID" valid:"-"`
+	InvoicesAsCustomer 	[]Invoice 			 `gorm:"foreignKey:CustomerID" valid:"-"`
+    InvoicesAsCreator  	[]Invoice 			 `gorm:"foreignKey:CreaterID" valid:"-"`
 }

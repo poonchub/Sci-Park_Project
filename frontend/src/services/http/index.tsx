@@ -7,7 +7,7 @@ import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import axios from 'axios';
+import axios from "axios";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
@@ -21,6 +21,8 @@ import { AboutCompanyInterface } from "../../interfaces/IAboutCompany";
 import { RequestServiceAreaInterface } from "../../interfaces/IRequestServiceArea";
 import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocument";
 import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
+import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -53,12 +55,7 @@ axiosInstance.interceptors.response.use(
             const errorMessage = error.response?.data?.error || error.response?.data?.Error;
 
             // ตรวจสอบว่าเป็น token หมดอายุหรือไม่
-            if (errorMessage && (
-                errorMessage.includes("JWT is expired") ||
-                errorMessage.includes("expired") ||
-                errorMessage.includes("token") ||
-                errorMessage.includes("unauthorized")
-            )) {
+            if (errorMessage && (errorMessage.includes("JWT is expired") || errorMessage.includes("expired") || errorMessage.includes("token") || errorMessage.includes("unauthorized"))) {
                 // ใช้ utility function สำหรับจัดการ session หมดอายุ
                 handleSessionExpiration();
             }
@@ -108,7 +105,7 @@ async function ChangePassword(data: any) {
     const requestOptions = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
     return await axios
@@ -116,7 +113,6 @@ async function ChangePassword(data: any) {
         .then((res) => res)
         .catch((e) => e.response);
 }
-
 
 async function GetUserById(id: number) {
     try {
@@ -128,7 +124,6 @@ async function GetUserById(id: number) {
     }
 }
 
-
 async function ListUsers(data: QuarryInterface) {
     try {
         // สร้าง query string ตามค่าที่ส่งมาจาก function parameters
@@ -137,13 +132,13 @@ async function ListUsers(data: QuarryInterface) {
         // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
         if (data.roleID && data.roleID > 0) params.append("role_id", String(data.roleID));
         if (data.packageID && data.packageID > 0) params.append("package_id", String(data.packageID));
-        params.append("page", String(data.page));  // แปลง page เป็น string
-        params.append("limit", String(data.limit));  // แปลง limit เป็น string
+        params.append("page", String(data.page)); // แปลง page เป็น string
+        params.append("limit", String(data.limit)); // แปลง limit เป็น string
         if (data.isemployee !== undefined) {
-            params.append("isemployee", String(data.isemployee));  // เช็คว่า isEmployee มีค่าหรือไม่
+            params.append("isemployee", String(data.isemployee)); // เช็คว่า isEmployee มีค่าหรือไม่
         }
-        if (data.search && data.search.trim() !== '') {
-            params.append("search", data.search.trim());  // เพิ่ม search parameter
+        if (data.search && data.search.trim() !== "") {
+            params.append("search", data.search.trim()); // เพิ่ม search parameter
         }
 
         const response = await axiosInstance.get(`/users?${params.toString()}`);
@@ -153,8 +148,6 @@ async function ListUsers(data: QuarryInterface) {
         return false;
     }
 }
-
-
 
 async function CreateUser(data: any) {
     const formData = new FormData();
@@ -171,7 +164,6 @@ async function CreateUser(data: any) {
     formData.append("is_employee", data.IsEmployee || "");
     formData.append("request_type_id", (data.RequestTypeID ?? 1).toString());
 
-
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
     }
@@ -185,43 +177,40 @@ async function CreateUser(data: any) {
         // Handle the response and return a custom object
         if (response.status === 201) {
             return {
-                status: 'success',
-                message: 'User created successfully',
-                data: response.data,  // You can return response data
+                status: "success",
+                message: "User created successfully",
+                data: response.data, // You can return response data
             };
         } else {
             return {
-                status: 'error',
-                message: 'Failed to create user',
-                data: response.data,  // Include error data in response
+                status: "error",
+                message: "Failed to create user",
+                data: response.data, // Include error data in response
             };
         }
     } catch (error) {
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message
-            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+            const errorMessage = error.response?.data?.error || error.message || "An error occurred while creating the user";
 
             return {
-                status: 'error',
+                status: "error",
                 message: errorMessage,
                 data: null,
             };
         } else {
             // If the error is not from axios, handle it here
             return {
-                status: 'error',
-                message: 'An unexpected error occurred',
+                status: "error",
+                message: "An unexpected error occurred",
                 data: null,
             };
         }
     }
-
 }
 
-
 async function UpdateUserbyID(data: any) {
-
     const formData = new FormData();
     formData.append("company_name", data.CompanyName || "");
     formData.append("business_detail", data.BusinessDetail || "");
@@ -252,8 +241,6 @@ async function UpdateUserbyID(data: any) {
         },
     };
 
-
-
     try {
         // Send FormData with requestOptions
         const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
@@ -261,40 +248,38 @@ async function UpdateUserbyID(data: any) {
         // Handle the response and return a custom object
         if (response.status === 200) {
             return {
-                status: 'success',
-                message: 'User updated successfully',
-                data: response.data,  // You can return response data
+                status: "success",
+                message: "User updated successfully",
+                data: response.data, // You can return response data
             };
         } else {
             return {
-                status: 'error',
-                message: 'Failed to updated user',
-                data: response.data,  // Include error data in response
+                status: "error",
+                message: "Failed to updated user",
+                data: response.data, // Include error data in response
             };
         }
     } catch (error) {
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message
-            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+            const errorMessage = error.response?.data?.error || error.message || "An error occurred while creating the user";
 
             return {
-                status: 'error',
+                status: "error",
                 message: errorMessage,
                 data: null,
             };
         } else {
             // If the error is not from axios, handle it here
             return {
-                status: 'error',
-                message: 'An unexpected error occurred',
+                status: "error",
+                message: "An unexpected error occurred",
                 data: null,
             };
         }
     }
-
 }
-
 
 async function CreateUserExternalOnly(data: any) {
     const formData = new FormData();
@@ -308,19 +293,11 @@ async function CreateUserExternalOnly(data: any) {
     formData.append("phone", data.Phone || "");
     formData.append("role_id", (1).toString());
 
-
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
-
     const requestOptions = {
-        headers: {
-
-        },
+        headers: {},
     };
-
-
-
-
 
     try {
         // Send FormData with requestOptions
@@ -330,38 +307,37 @@ async function CreateUserExternalOnly(data: any) {
         // Handle the response and return a custom object
         if (response.status === 201) {
             return {
-                status: 'success',
-                message: 'User created successfully',
-                data: response.data,  // You can return response data
+                status: "success",
+                message: "User created successfully",
+                data: response.data, // You can return response data
             };
         } else {
             return {
-                status: 'error',
-                message: 'Failed to create user',
-                data: response.data,  // Include error data in response
+                status: "error",
+                message: "Failed to create user",
+                data: response.data, // Include error data in response
             };
         }
     } catch (error) {
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message
-            const errorMessage = error.response?.data?.error || error.message || 'An error occurred while creating the user';
+            const errorMessage = error.response?.data?.error || error.message || "An error occurred while creating the user";
 
             return {
-                status: 'error',
+                status: "error",
                 message: errorMessage,
                 data: null,
             };
         } else {
             // If the error is not from axios, handle it here
             return {
-                status: 'error',
-                message: 'An unexpected error occurred',
+                status: "error",
+                message: "An unexpected error occurred",
                 data: null,
             };
         }
     }
-
 }
 
 async function GetOperators() {
@@ -406,25 +382,33 @@ async function GetRooms() {
         return false;
     }
 }
+async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?: number, roomStatusId?: number){
+    try {
+        const response = await axiosInstance.get(`/room-rental-space-option?floorId=${floorId}&roomStatusId=${roomStatusId}&page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
+    }
+}
 
 async function CreateRoom(roomData: RoomsInterface) {
     const requestOptions = {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(roomData)
+        body: JSON.stringify(roomData),
     };
 
-    let res = await fetch(`${apiUrl}/create-room`, requestOptions)
-        .then((res) => {
-            if (res) {
-                return res.json(); // Success: Return the created room data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/create-room`, requestOptions).then((res) => {
+        if (res) {
+            return res.json(); // Success: Return the created room data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
@@ -436,43 +420,39 @@ async function UpdateProfileImage(file: File) {
     const requestOptions = {
         method: "PATCH",
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: formData,
     };
 
-    let res = await fetch(`${apiUrl}/update-profile/${localStorage.getItem("userId")}`, requestOptions)
-        .then((res) => {
-            if (res) {
-                return res; // Success: Return the updated room data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/update-profile/${localStorage.getItem("userId")}`, requestOptions).then((res) => {
+        if (res) {
+            return res; // Success: Return the updated room data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
-
 
 async function UpdateRoom(roomData: RoomsInterface) {
     const requestOptions = {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(roomData)
+        body: JSON.stringify(roomData),
     };
 
-    let res = await fetch(`${apiUrl}/update-room/${roomData.ID}`, requestOptions)
-        .then((res) => {
-            if (res) {
-                return res.json(); // Success: Return the updated room data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/update-room/${roomData.ID}`, requestOptions).then((res) => {
+        if (res) {
+            return res.json(); // Success: Return the updated room data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
@@ -482,24 +462,20 @@ async function GetRoomByID(id: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/room/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/room/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
-
-
-
 
 // RoomTypes
 async function CreateRoomType(roomTypeData: RoomtypesInterface) {
@@ -507,19 +483,18 @@ async function CreateRoomType(roomTypeData: RoomtypesInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(roomTypeData)
+        body: JSON.stringify(roomTypeData),
     };
 
-    let res = await fetch(`${apiUrl}/create-room-type`, requestOptions)
-        .then((res) => {
-            if (res) {
-                return res.json(); // Success: Return the created room type data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/create-room-type`, requestOptions).then((res) => {
+        if (res) {
+            return res.json(); // Success: Return the created room type data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
@@ -529,19 +504,18 @@ async function UpdateRoomType(roomTypeData: RoomtypesInterface) {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(roomTypeData)
+        body: JSON.stringify(roomTypeData),
     };
 
-    let res = await fetch(`${apiUrl}/update-room-type/${roomTypeData.ID}`, requestOptions)
-        .then((res) => {
-            if (res.status === 200) {
-                return res.json(); // Success: Return the updated room type data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/update-room-type/${roomTypeData.ID}`, requestOptions).then((res) => {
+        if (res.status === 200) {
+            return res.json(); // Success: Return the updated room type data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
@@ -552,18 +526,17 @@ async function GetRoomTypes() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/room-types`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/room-types`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -572,18 +545,17 @@ async function ListRoomTypesForBooking() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/room-types-for-booking`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/room-types-for-booking`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -593,18 +565,17 @@ async function GetRoomTypesByID(id: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/room-type/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/room-type/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -615,18 +586,17 @@ async function GetRoomStatus() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/room-status`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/room-status`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -637,18 +607,17 @@ async function GetFloors() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/floors`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/floors`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -658,19 +627,18 @@ async function CreateFloor(floorData: FloorsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(floorData)
+        body: JSON.stringify(floorData),
     };
 
-    let res = await fetch(`${apiUrl}/create-floor`, requestOptions)
-        .then((res) => {
-            if (res) {
-                return res.json(); // Success: Return the created floor data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/create-floor`, requestOptions).then((res) => {
+        if (res) {
+            return res.json(); // Success: Return the created floor data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
@@ -680,24 +648,21 @@ async function UpdateFloor(floorData: FloorsInterface) {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(floorData)
+        body: JSON.stringify(floorData),
     };
 
-    let res = await fetch(`${apiUrl}/update-floor/${floorData.ID}`, requestOptions)
-        .then((res) => {
-            if (res.status === 200) {
-                return res.json(); // Success: Return the updated floor data
-            } else {
-                return false; // Failure
-            }
-        });
+    let res = await fetch(`${apiUrl}/update-floor/${floorData.ID}`, requestOptions).then((res) => {
+        if (res.status === 200) {
+            return res.json(); // Success: Return the updated floor data
+        } else {
+            return false; // Failure
+        }
+    });
 
     return res;
 }
-
-
 
 // MaintenanceTypes
 async function GetMaintenanceTypes() {
@@ -705,18 +670,17 @@ async function GetMaintenanceTypes() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-types`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-types`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -727,67 +691,55 @@ async function ListMaintenanceRequests() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-requests`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
-async function ListMaintenanceRequestsByDateRange(
-    startDate: string | null,
-    endDate: string | null
-) {
+async function ListMaintenanceRequestsByDateRange(startDate: string | null, endDate: string | null) {
     const requestOptions = {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests/by-date?start_date=${startDate}&end_date=${endDate}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-requests/by-date?start_date=${startDate}&end_date=${endDate}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
-async function GetMaintenanceRequestsForUser(
-    statusID: string,
-    page: number,
-    limit: number,
-    createdAt?: string | undefined,
-    userId?: number | undefined
-) {
+async function GetMaintenanceRequestsForUser(statusID: string, page: number, limit: number, createdAt?: string | undefined, userId?: number | undefined) {
     const requestOptions = {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests-option-for-user?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-requests-option-for-user?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -804,18 +756,20 @@ async function GetMaintenanceRequestsForAdmin(
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-requests-option-for-admin?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&userId=${userId}&requestType=${requestType}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(
+        `${apiUrl}/maintenance-requests-option-for-admin?status=${statusID}&page=${page}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt}&userId=${userId}&requestType=${requestType}`,
+        requestOptions
+    ).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -824,19 +778,17 @@ async function GetMaintenanceRequestByID(id: Number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions).then(
-        (res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
+    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
         }
-    );
+    });
 
     return res;
 }
@@ -845,7 +797,7 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -858,7 +810,6 @@ async function CreateMaintenanceRequest(data: MaintenanceRequestsInterface) {
         }
     });
 
-
     return res;
 }
 async function UpdateMaintenanceRequestByID(data: MaintenanceRequestsInterface, id: Number | undefined) {
@@ -866,19 +817,18 @@ async function UpdateMaintenanceRequestByID(data: MaintenanceRequestsInterface, 
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-request/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -887,7 +837,7 @@ async function DeleteMaintenanceRequestByID(bookingID: number | undefined) {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -908,7 +858,7 @@ async function CreateMaintenanceImages(data: FormData) {
         method: "POST",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -927,7 +877,7 @@ async function UpdateMaintenanceImages(data: FormData) {
         method: "PATCH",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -948,18 +898,17 @@ async function ListGenders() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/genders`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/genders`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -970,18 +919,17 @@ async function ListRoles() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/roles`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/roles`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -991,18 +939,17 @@ async function ListRequestTypes() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/request-types`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/request-types`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1013,18 +960,17 @@ async function ListPackages() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/packages`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/packages`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1035,7 +981,7 @@ async function CreateManagerApproval(data: ManagerApprovalsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -1057,20 +1003,22 @@ async function GetMaintenanceTask(statusID: string, page: number, limit: number,
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    const userID = localStorage.getItem('userId')
+    const userID = localStorage.getItem("userId");
 
-    let res = await fetch(`${apiUrl}/maintenance-tasks-option-id?page=${page}&status=${statusID}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt || ''}&operator=${userID}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(
+        `${apiUrl}/maintenance-tasks-option-id?page=${page}&status=${statusID}&limit=${limit}&maintenanceType=${maintenanceType}&createdAt=${createdAt || ""}&operator=${userID}`,
+        requestOptions
+    ).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1079,19 +1027,17 @@ async function GetMaintenanceTaskByID(id: Number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions).then(
-        (res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
+    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
         }
-    );
+    });
 
     return res;
 }
@@ -1100,7 +1046,7 @@ async function CreateMaintenanceTask(data: ManagerApprovalsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -1120,19 +1066,18 @@ async function UpdateMaintenanceTaskByID(data: MaintenanceTasksInterface, id: Nu
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/maintenance-task/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1141,7 +1086,7 @@ async function DeleteMaintenanceTaskByID(taskID: number | undefined) {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1162,7 +1107,7 @@ async function CreateHandoverImages(data: FormData) {
         method: "POST",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1181,7 +1126,7 @@ async function UpdateHandoverImages(data: FormData) {
         method: "PATCH",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1200,7 +1145,7 @@ async function DeleteHandoverImagesByTaskID(taskID: number | undefined) {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1221,7 +1166,7 @@ async function CreateInspection(data: InspectionsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -1242,11 +1187,11 @@ async function ListSetRooms(data: QuarryInterface) {
     const params = new URLSearchParams();
 
     // ตรวจสอบและแปลงค่าก่อนเพิ่มลงใน query string
-    if (data.floor && data.floor > 0) params.append("floor", String(data.floor));  // กรองตาม floor
-    if (data.roomType && data.roomType > 0) params.append("room_type", String(data.roomType));  // กรองตาม room_type
-    if (data.roomStatus && data.roomStatus > 0) params.append("room_status", String(data.roomStatus));  // กรองตาม room_status
-    params.append("page", String(data.page));  // แปลง page เป็น string
-    params.append("limit", String(data.limit));  // แปลง limit เป็น string
+    if (data.floor && data.floor > 0) params.append("floor", String(data.floor)); // กรองตาม floor
+    if (data.roomType && data.roomType > 0) params.append("room_type", String(data.roomType)); // กรองตาม room_type
+    if (data.roomStatus && data.roomStatus > 0) params.append("room_status", String(data.roomStatus)); // กรองตาม room_status
+    params.append("page", String(data.page)); // แปลง page เป็น string
+    params.append("limit", String(data.limit)); // แปลง limit เป็น string
 
     // ถ้า isEmployee มีค่า (true/false) ให้เพิ่มลงใน query string
 
@@ -1254,19 +1199,38 @@ async function ListSetRooms(data: QuarryInterface) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,  // การส่ง token เพื่อให้สิทธิการเข้าถึง
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // การส่ง token เพื่อให้สิทธิการเข้าถึง
         },
     };
 
     // ใช้ fetch กับ URL ที่ประกอบไปด้วย query parameters
-    let res = await fetch(`${apiUrl}/listset-room?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status === 200) {
-                return res.json();  // ถ้าสถานะเป็น 200 OK ให้ return ข้อมูล JSON
-            } else {
-                return false;  // ถ้ามีข้อผิดพลาดใน API
-            }
-        });
+    let res = await fetch(`${apiUrl}/listset-room?${params.toString()}`, requestOptions).then((res) => {
+        if (res.status === 200) {
+            return res.json(); // ถ้าสถานะเป็น 200 OK ให้ return ข้อมูล JSON
+        } else {
+            return false; // ถ้ามีข้อผิดพลาดใน API
+        }
+    });
+
+    return res;
+}
+
+async function GetRoomCapacity(id: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-capacity`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1277,7 +1241,7 @@ async function SendMaintenanceStatusEmail(id: number) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1298,23 +1262,22 @@ async function ListNotifications() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/notifications`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/notifications`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
 async function GetUnreadNotificationCountsByUserID(id?: number) {
-    if (!id) return
+    if (!id) return;
     try {
         const response = await axiosInstance.get(`/notifications/count/${id}`);
         return response.data;
@@ -1328,19 +1291,17 @@ async function GetNotificationsByRequestAndUser(request_id?: number, user_id?: n
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/notification/by-request/${request_id}/${user_id}`, requestOptions).then(
-        (res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
+    let res = await fetch(`${apiUrl}/notification/by-request/${request_id}/${user_id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
         }
-    );
+    });
 
     return res;
 }
@@ -1349,19 +1310,17 @@ async function GetNotificationsByTaskAndUser(task_id?: number, user_id?: number)
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/notification/by-task/${task_id}/${user_id}`, requestOptions).then(
-        (res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
+    let res = await fetch(`${apiUrl}/notification/by-task/${task_id}/${user_id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
         }
-    );
+    });
 
     return res;
 }
@@ -1370,7 +1329,7 @@ async function CreateNotification(data: NotificationsInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -1390,19 +1349,18 @@ async function UpdateNotificationByID(data: NotificationsInterface, id: Number |
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/notification/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/notification/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1412,19 +1370,18 @@ async function UpdateNotificationsByRequestID(data: NotificationsInterface, requ
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/notifications/request/${request_id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/notifications/request/${request_id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1433,19 +1390,18 @@ async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/notifications/task/${task_id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/notifications/task/${task_id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1456,18 +1412,17 @@ async function ListBookingRooms() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-    }
+    };
 
-    let res = await fetch(`${apiUrl}/booking-rooms`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/booking-rooms`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1475,34 +1430,33 @@ async function ListBookingRooms() {
 // Analytics API
 export async function getSystemAnalytics() {
     try {
-        const response = await axiosInstance.get('/analytics/system');
+        const response = await axiosInstance.get("/analytics/system");
         return response.data;
     } catch (error) {
-        console.error('Error fetching system analytics:', error);
+        console.error("Error fetching system analytics:", error);
         return false;
     }
 }
 
 export async function getDashboardAnalytics() {
     try {
-        const response = await axiosInstance.get('/analytics/dashboard');
+        const response = await axiosInstance.get("/analytics/dashboard");
         return response.data;
     } catch (error) {
-        console.error('Error fetching dashboard analytics:', error);
+        console.error("Error fetching dashboard analytics:", error);
         return false;
     }
 }
 
 export async function trackPageVisit(data: any) {
-
     try {
-        const response = await axiosInstance.post('/analytics/track', data);
+        const response = await axiosInstance.post("/analytics/track", data);
         return response.data;
     } catch (error: any) {
-        console.error('Error tracking page visit:', error);
+        console.error("Error tracking page visit:", error);
         if (error.response) {
-            console.error('Response data:', error.response.data);
-            console.error('Response status:', error.response.status);
+            console.error("Response data:", error.response.data);
+            console.error("Response status:", error.response.status);
         }
         return false;
     }
@@ -1513,7 +1467,7 @@ export async function getVisitsRange(start: string, end: string) {
         const response = await axiosInstance.get(`/analytics/visits-range?start=${start}&end=${end}`);
         return response.data;
     } catch (error) {
-        console.error('Error fetching visits range:', error);
+        console.error("Error fetching visits range:", error);
         return false;
     }
 }
@@ -1523,19 +1477,19 @@ export async function getPopularPagesByPeriod(period: string) {
         const response = await axiosInstance.get(`/analytics/popular-pages-by-period?period=${period}`);
         return response.data;
     } catch (error) {
-        console.error('Error fetching popular pages by period:', error);
+        console.error("Error fetching popular pages by period:", error);
         return false;
     }
 }
 
 export async function getPerformanceAnalytics(start: string, end: string) {
     try {
-        console.log('HTTP: Calling performance analytics API with:', { start, end });
+        console.log("HTTP: Calling performance analytics API with:", { start, end });
         const response = await axiosInstance.get(`/analytics/performance?start=${start}&end=${end}`);
-        console.log('HTTP: Performance analytics API response:', response.data);
+        console.log("HTTP: Performance analytics API response:", response.data);
         return response.data;
     } catch (error) {
-        console.error('Error fetching performance analytics:', error);
+        console.error("Error fetching performance analytics:", error);
         return false;
     }
 }
@@ -1546,18 +1500,17 @@ async function ListNews() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1572,18 +1525,17 @@ async function ListPinnedNews(limit?: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/pinned?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/pinned?${params.toString()}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1598,18 +1550,17 @@ async function ListPinnedNewsPeriod(limit?: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/pinned-period?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/pinned-period?${params.toString()}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1624,18 +1575,17 @@ async function ListUnpinnedNews(limit?: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/unpinned?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/unpinned?${params.toString()}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1650,18 +1600,17 @@ async function ListUnpinnedNewsPeriod(limit?: number) {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/unpinned-period?${params.toString()}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/unpinned-period?${params.toString()}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1670,18 +1619,17 @@ async function ListNewsOrdered() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/ordered`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/ordered`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1690,18 +1638,17 @@ async function ListNewsOrderedPeriod() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/news/ordered-period`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/ordered-period`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1710,7 +1657,7 @@ async function CreateNews(data: NewsImagesInterface) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
@@ -1727,24 +1674,21 @@ async function CreateNews(data: NewsImagesInterface) {
 }
 
 async function GetTimeSlots(id?: number) {
-
     const requestOptions = {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             // "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
-
     };
 
-    let res = await fetch(`${apiUrl}/get-timeslots-roomprices/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/get-timeslots-roomprices/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1776,14 +1720,14 @@ async function GetRoomQuota(userId?: number) {
 }
 
 
-async function GetRoomsByRoomTypeID(roomTypeId?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
+async function GetRoomsByRoomTypeID(roomTypeId?: number): Promise<RoomsInterface[]> {
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  };
 
     const res = await fetch(`${apiUrl}/rooms/roomtype/${roomTypeId}`, requestOptions)
         .then((res) => {
@@ -1802,65 +1746,19 @@ async function GetRoomsByRoomTypeID(roomTypeId?: number) {
     return res;
 }
 
-async function CreateBookingRoom(data: BookingRoomsInterface[]) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-    const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
-
-    if (res.status === 200 || res.status === 201 || res.status === 204) {
-        try {
-            const json = await res.json().catch(() => null);
-            return { status: res.status, data: json };
-        } catch {
-            return { status: res.status, data: null };
-        }
-    } else {
-        return { status: res.status, data: null };
-        
-    }
-}
-
-async function GetEquipmentByRoomType(id: number): Promise<{ EquipmentName: string }[]> {
-  try {
-    const response = await axiosInstance.get(`/roomtypes/${id}/equipment`);
-    return response.data.equipment;  // คืนค่าเฉพาะ array equipment
-  } catch (error) {
-    console.error("Error fetching equipment by room type:", error);
-    return [];
-  }
-}
-
-async function GetAllRoomLayouts(): Promise<{ ID: number; LayoutName: string }[]> {
-  try {
-    const response = await axiosInstance.get("/roomlayouts");
-    console.log("fffff",response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching room layouts:", error);
-    return [];
-  }
-}
-
-
-async function UseRoomQuota(data: IUserPackages) {
+async function CreateBookingRoom(data: BookingRoomsInterface) {
+console.log("56",data);
   const requestOptions = {
-    method: "PATCH",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
     body: JSON.stringify(data),
   };
+  const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
 
-  const res = await fetch(`http://localhost:8000/user-packages/use-quota`, requestOptions);
-
-  if (res.status === 200 || res.status === 204) {
+  if (res.status === 200 || res.status === 201 || res.status === 204) {
     try {
       const json = await res.json().catch(() => null);
       return { status: res.status, data: json };
@@ -1868,33 +1766,74 @@ async function UseRoomQuota(data: IUserPackages) {
       return { status: res.status, data: null };
     }
   } else {
-    const error = await res.json().catch(() => null);
-    return { status: res.status, data: error };
+    return { status: res.status, data: null };
   }
 }
 
 
+async function GetEquipmentByRoomType(id: number): Promise<{ EquipmentName: string }[]> {
+    try {
+        const response = await axiosInstance.get(`/roomtypes/${id}/equipment`);
+        return response.data.equipment; // คืนค่าเฉพาะ array equipment
+    } catch (error) {
+        console.error("Error fetching equipment by room type:", error);
+        return [];
+    }
+}
 
+async function GetAllRoomLayouts(): Promise<{ ID: number; LayoutName: string }[]> {
+    try {
+        const response = await axiosInstance.get("/roomlayouts");
+        console.log("fffff", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room layouts:", error);
+        return [];
+    }
+}
 
+async function UseRoomQuota(data: IUserPackages) {
+    const requestOptions = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    const res = await fetch(`http://localhost:8000/user-packages/use-quota`, requestOptions);
+
+    if (res.status === 200 || res.status === 204) {
+        try {
+            const json = await res.json().catch(() => null);
+            return { status: res.status, data: json };
+        } catch {
+            return { status: res.status, data: null };
+        }
+    } else {
+        const error = await res.json().catch(() => null);
+        return { status: res.status, data: error };
+    }
+}
 
 async function UpdateNewsByID(data: NewsImagesInterface, id: Number | undefined) {
     const requestOptions = {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
     };
 
-    let res = await fetch(`${apiUrl}/news/${id}`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/news/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -1903,7 +1842,7 @@ async function DeleteNewsByID(id: number | undefined) {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1924,7 +1863,7 @@ async function CreateNewsImages(data: FormData) {
         method: "POST",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1943,12 +1882,12 @@ async function UpdateNewsImages(data: FormData) {
         method: "PATCH",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
     let res = await fetch(`${apiUrl}/news-images`, requestOptions).then((res) => {
-        console.log(res)
+        console.log(res);
         if (res.status == 200) {
             return res.json();
         } else {
@@ -1963,7 +1902,7 @@ async function DeleteNewsImagesByNewsID(newsID: number | undefined) {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -1984,18 +1923,17 @@ async function GetOrganizationInfo() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/organization-info`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/organization-info`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -2004,12 +1942,12 @@ async function UpdateOrganizationInfo(data: FormData, id: number) {
         method: "PATCH",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
     let res = await fetch(`${apiUrl}/organization-info/${id}`, requestOptions).then((res) => {
-        console.log(res)
+        console.log(res);
         if (res.status == 200) {
             return res.json();
         } else {
@@ -2026,18 +1964,17 @@ async function ListContributors() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
-    let res = await fetch(`${apiUrl}/contributors`, requestOptions)
-        .then((res) => {
-            if (res.status == 200) {
-                return res.json();
-            } else {
-                return false;
-            }
-        });
+    let res = await fetch(`${apiUrl}/contributors`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
 
     return res;
 }
@@ -2048,12 +1985,12 @@ async function CreatePayment(data: FormData) {
         method: "POST",
         body: data,
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
     let res = await fetch(`${apiUrl}/payment`, requestOptions).then((res) => {
-        console.log(res)
+        console.log(res);
         if (res.status == 200) {
             return res.json();
         } else {
@@ -2067,7 +2004,7 @@ async function CheckSlip(data: FormData) {
     const requestOptions = {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: data,
     };
@@ -2087,7 +2024,7 @@ async function GetQuota() {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     };
 
@@ -2174,8 +2111,8 @@ async function CreateServiceAreaDocument(requestServiceAreaID: number, formData:
     try {
         const response = await axiosInstance.post(`/service-area-documents/${requestServiceAreaID}`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
         });
         return response.data;
@@ -2199,8 +2136,8 @@ async function UpdateServiceAreaDocument(requestServiceAreaID: number, formData:
     try {
         const response = await axiosInstance.put(`/service-area-documents/${requestServiceAreaID}`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
         });
         return response.data;
@@ -2261,8 +2198,8 @@ async function UpdateRequestServiceArea(requestID: number, formData: FormData): 
     try {
         const response = await axiosInstance.patch(`/request-service-area/${requestID}`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
         });
         return response.data;
@@ -2287,8 +2224,8 @@ async function UpdateAboutCompany(userID: number, formData: FormData): Promise<a
     try {
         const response = await axiosInstance.patch(`/about-company/${userID}`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
         });
         return response.data;
@@ -2298,6 +2235,66 @@ async function UpdateAboutCompany(userID: number, formData: FormData): Promise<a
     }
 }
 
+// Invoice
+async function ListInvoices(): Promise<InvoiceInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/invoices`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching invoice:", error);
+        throw error;
+    }
+}
+async function GetInvoiceByID(id: number): Promise<InvoiceInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/invoice/${id}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
+    }
+}
+async function GetInvoicePDF(id: number): Promise<Blob> {
+    try {
+        const response = await axiosInstance.get(`/invoice/${id}/pdf`, {
+            responseType: "blob",
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice pdf by id:", error);
+        throw error;
+    }
+}
+async function CreateInvoice(data: InvoiceInterface) {
+    try {
+        const response = await axiosInstance.post(`/invoice`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
+
+// InvoiceItems
+async function CreateInvoiceItems(data: InvoiceItemInterface) {
+    try {
+        const response = await axiosInstance.post(`/invoice-items`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice items:", error);
+        throw error;
+    }
+}
 
 export {
     // RequestStatuses
@@ -2324,6 +2321,7 @@ export {
     CreateRoom,
     UpdateRoom,
     GetRoomByID,
+    GetRoomRentalSpaceByOption,
 
     // RoomTypes
     GetRoomTypes,
@@ -2385,7 +2383,6 @@ export {
 
     // Inspections
     CreateInspection,
-
     ListSetRooms,
 
     // Email
@@ -2427,7 +2424,6 @@ export {
 
     // DeveloperInfo
     ListContributors,
-
     GetTimeSlots,
     GetRoomQuota,
     GetRoomsByRoomTypeID,
@@ -2468,7 +2464,13 @@ export {
     // AboutCompany
     GetAboutCompanyByUserID,
     UpdateAboutCompany,
-}
 
+    // Invoices
+    ListInvoices,
+    GetInvoiceByID,
+    GetInvoicePDF,
+    CreateInvoice,
 
-
+    // InvoiceItems
+    CreateInvoiceItems,
+};
