@@ -39,12 +39,12 @@ import {
     UserCog,
     UserRound,
     UserRoundPlus,
-    Wrench,
     ShieldUser,
     ChartPie,
     Newspaper,
     Building2,
     NotebookPen,
+    DoorClosed,
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
@@ -254,6 +254,11 @@ const WindowsLayout: React.FC = (props: any) => {
                     icon: <ClipboardList />,
                 },
                 {
+                    segment: "rental-space",
+                    title: "Rental Space",
+                    icon: <DoorClosed />,
+                },
+                {
                     segment: "traffic",
                     title: "Traffic",
                     icon: <ClipboardList />,
@@ -300,6 +305,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "manage-user",
             "add-user",
             "add-user-by-csv",
+            "rental-space",
         ],
         Manager: [
             "home",
@@ -313,6 +319,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "organization-info",
 
             "maintenance/all-maintenance-request",
+            "rental-space",
         ],
         Operator: [
             "home",
@@ -324,6 +331,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
 
             "maintenance/accept-work",
+            "rental-space",
         ],
         User: [
             "home",

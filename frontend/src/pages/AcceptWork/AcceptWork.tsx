@@ -24,7 +24,6 @@ import {
     faMagnifyingGlass,
     faPaperPlane,
     faQuestionCircle,
-    faRotateRight,
     faToolbox,
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -72,7 +71,6 @@ import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
 import { BrushCleaning, HardHat } from "lucide-react";
-import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 
 export function a11yProps(index: number) {
     return {

@@ -23,6 +23,7 @@ import OrganizationInfo from "../pages/OrganizationInfo/OrganizationInfo";
 import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import CreateInvoice from "../pages/CreateInvoice/CreateInvoice";
 import EditProfile from "../pages/EditProfile/EditProfile";
+import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 
 
 const AdminRoutes = (): RouteObject => {
@@ -118,6 +119,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/create-invoice",
 				element: <CreateInvoice/>
+			},
+			{
+				path: "/room/rental-space",
+				element: <RoomRentalSpace/>
 			},
 			{
 				path: "",

@@ -11,6 +11,7 @@ type Room struct {
 
     RoomNumber string `valid:"required~กรุณาระบุหมายเลขห้อง"`
     Capacity   int    `valid:"required~กรุณาระบุความจุ"`
+    RoomSize    float32
 
     RoomStatusID uint       `valid:"required~กรุณาระบุสถานะของห้อง"`
     RoomStatus   RoomStatus `gorm:"foreignKey:RoomStatusID" valid:"-"`
@@ -22,5 +23,5 @@ type Room struct {
     RoomType    RoomType `gorm:"foreignKey:RoomTypeID" valid:"-"`
 
     BookingRoom []BookingRoom `gorm:"foreignKey:RoomID"`
-    
+    Invoice     []Invoice     `gorm:"foreignKey:RoomID"`
 }

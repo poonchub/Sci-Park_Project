@@ -1,7 +1,26 @@
 import { apiUrl } from "../../services/http";
 
-import React, { useState, useEffect } from "react";
-import { Button, Typography, Avatar, Grid, Paper, Box, Card, CardContent, Divider, useTheme, Container, Chip, IconButton } from "@mui/material";
+import React, { useState, useEffect, useRef } from "react";
+import {
+    Button,
+    Typography,
+    Avatar,
+    Grid,
+    Paper,
+    Box,
+    Card,
+    CardContent,
+    Divider,
+    useTheme,
+    Container,
+    Chip,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Zoom,
+} from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
@@ -19,6 +38,8 @@ import { faUser, faCamera, faEdit, faIdCard, faEnvelope, faPhone, faVenusMars, f
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Close } from "@mui/icons-material";
+import SignatureCanvas from "react-signature-canvas";
 
 const EditProfile: React.FC = () => {
     const theme = useTheme();
@@ -29,6 +50,10 @@ const EditProfile: React.FC = () => {
     const [userType, setUserType] = useState<string>("internal");
     const [img, setImg] = useState<MaintenaceImagesInterface | null>();
     const navigate = useNavigate();
+    const [openPopup, setOpenPopup] = useState(false);
+    const [isButtonActive, setIsButtonActive] = useState(false);
+    const sigRef = useRef<SignatureCanvas>(null);
+    const [signatureFile, setSignatureFile] = useState<File | null>(null);
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
@@ -173,6 +198,32 @@ const EditProfile: React.FC = () => {
         navigate(-1);
     };
 
+    const handleClear = () => {
+        sigRef.current?.clear();
+        setSignatureFile(null);
+    };
+
+    const handleSave = () => {
+        if (sigRef.current?.isEmpty()) {
+            // alert("กรุณาลงลายเซ็นก่อน");
+            return;
+        }
+        const dataUrl = sigRef.current?.getTrimmedCanvas().toDataURL("image/png");
+
+        if (dataUrl) {
+            const arr = dataUrl.split(",");
+            const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            const file = new File([u8arr], "signature.png", { type: mime });
+            setSignatureFile(file);
+        }
+    };
+
     return (
         <Box className="edit-profile-page">
             {alerts.map(
@@ -181,6 +232,61 @@ const EditProfile: React.FC = () => {
                         <SuccessAlert key={index} message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
                     )
             )}
+
+            <Dialog open={openPopup} onClose={() => setOpenPopup(false)}>
+                <DialogTitle
+                    sx={{
+                        fontWeight: 700,
+                        color: "primary.main",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                    }}
+                >
+                    {/* <ScrollText size={26} /> */}
+                    Create Signature
+                    <IconButton
+                        aria-label="close"
+                        onClick={() => setOpenPopup(false)}
+                        sx={{
+                            position: "absolute",
+                            right: 8,
+                            top: 8,
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
+                    <Grid container size={{ xs: 12 }} spacing={2} sx={{ display: "flex", justifyContent: "center" }}>
+                        <SignatureCanvas
+                            ref={sigRef}
+                            penColor="black"
+                            canvasProps={{
+                                width: 400,
+                                height: 300,
+                                style: { border: "2px solid #000", borderRadius: "8px" },
+                            }}
+                        />
+                    </Grid>
+                </DialogContent>
+
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Zoom in={openPopup} timeout={400}>
+                        <Button onClick={handleClear}>Clear</Button>
+                    </Zoom>
+                    <Zoom in={openPopup} timeout={400}>
+                        <Button
+                            onClick={handleSave}
+                            variant="contained"
+                            disabled={isButtonActive}
+                            // startIcon={<CircleX size={18} />}
+                        >
+                            Save
+                        </Button>
+                    </Zoom>
+                </DialogActions>
+            </Dialog>
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3} justifyContent="center">
                     <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
@@ -657,6 +763,8 @@ const EditProfile: React.FC = () => {
                             )}
                         </Card>
                     </Grid>
+
+                    <Button variant="contained" onClick={()=> setOpenPopup(true)}>Create Signature</Button>
                 </Grid>
             </Container>
         </Box>

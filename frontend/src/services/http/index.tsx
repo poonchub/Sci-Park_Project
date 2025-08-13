@@ -22,6 +22,7 @@ import { RequestServiceAreaInterface } from "../../interfaces/IRequestServiceAre
 import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocument";
 import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -379,6 +380,15 @@ async function GetRooms() {
     } catch (error) {
         console.error("Error fetching rooms:", error);
         return false;
+    }
+}
+async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?: number, roomStatusId?: number){
+    try {
+        const response = await axiosInstance.get(`/room-rental-space-option?floorId=${floorId}&roomStatusId=${roomStatusId}&page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
     }
 }
 
@@ -2221,6 +2231,36 @@ async function GetInvoicePDF(id: number): Promise<Blob> {
         throw error;
     }
 }
+async function CreateInvoice(data: InvoiceInterface) {
+    try {
+        const response = await axiosInstance.post(`/invoice`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
+
+// InvoiceItems
+async function CreateInvoiceItems(data: InvoiceItemInterface) {
+    try {
+        const response = await axiosInstance.post(`/invoice-items`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice items:", error);
+        throw error;
+    }
+}
 
 export {
     // RequestStatuses
@@ -2247,6 +2287,7 @@ export {
     CreateRoom,
     UpdateRoom,
     GetRoomByID,
+    GetRoomRentalSpaceByOption,
 
     // RoomTypes
     GetRoomTypes,
@@ -2390,8 +2431,12 @@ export {
     GetAboutCompanyByUserID,
     UpdateAboutCompany,
 
-    // Invoice
+    // Invoices
     ListInvoices,
     GetInvoiceByID,
     GetInvoicePDF,
+    CreateInvoice,
+
+    // InvoiceItems
+    CreateInvoiceItems,
 };

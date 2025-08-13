@@ -251,6 +251,11 @@ func SeedDatabase() {
 			TypeName: "NE2 HALL 2",
 			RoomSize: 487,
 		},
+		{
+			TypeName: "Rental Space",
+			ForRental: true,
+			HasMultipleSizes: true,
+		},
 	}
 	for _, roomType := range roomTypes {
 		db.FirstOrCreate(&roomType, entity.RoomType{
@@ -533,6 +538,42 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Rooms
 	rooms := []entity.Room{
+		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+		{RoomNumber: "A110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A111", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A112", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+
+		{RoomNumber: "B101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+
+		{RoomNumber: "A201", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A202", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A203", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A204", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A205", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A206", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+		{RoomNumber: "A207", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A208", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A209", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 216},
+
 		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 19},
 		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 30},
 		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
@@ -1041,7 +1082,7 @@ func SeedDatabase() {
 	// Invoice
 	invoices := []entity.Invoice{
 		{
-			InvoiceNumber: "INV-2025-001",
+			InvoiceNumber: "NE2/001",
 			IssueDate:     time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
 			DueDate:       time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
 			BillingPeriod: time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC),

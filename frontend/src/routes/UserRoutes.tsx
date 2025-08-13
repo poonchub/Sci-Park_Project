@@ -12,6 +12,7 @@ import News from "../pages/News/News";
 import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import CreateServiceAreaForm from "../pages/CreateRequestServiceArea/CreateServiceAreaForm";
 import EditProfile from "../pages/EditProfile/EditProfile";
+import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -61,6 +62,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/create-service-area-request",
 				element: <CreateServiceAreaForm/>
+			},
+			{
+				path: "/room/rental-space",
+				element: <RoomRentalSpace/>
 			},
 			{
 				path: "",

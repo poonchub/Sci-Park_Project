@@ -557,6 +557,7 @@ func UpdateUserByID(c *gin.Context) {
 		PackageID      uint   `form:"package_id"`
 		ProfileCheck   string `form:"profile_check"` // สำหรับรับโปรไฟล์ภาพจาก form-data
 		RequestTypeID  uint   `form:"request_type_id"`
+		SignatureCheck string `form:"signature_check"`
 	}
 
 	// Bind form-data ที่รับมา
@@ -700,6 +701,51 @@ func UpdateUserByID(c *gin.Context) {
 
 		// อัปเดต path ของโปรไฟล์ในฐานข้อมูล
 		user.ProfilePath = newProfilePath
+	}
+
+	if updateUserData.SignatureCheck != "" {
+		// ลบไฟล์เก่าถ้ามี
+		if user.SignaturePath != "" {
+			err := os.Remove(user.SignaturePath)
+			if err != nil {
+				// ถ้าลบไฟล์เก่าไม่ได้ ให้ข้ามขั้นตอนนี้ไป และไม่ต้องตอบกลับ error
+				fmt.Println("Failed to delete old signature image, but continuing...")
+			}
+		}
+
+		// รับไฟล์โปรไฟล์จาก form-data (ไฟล์เป็น optional)
+		file, err := c.FormFile("signature_image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+			return
+		}
+
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
+		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
+		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(profileFolder, os.ModePerm)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				return
+			}
+		}
+
+		// กำหนด path ของไฟล์ที่จะเก็บ
+		fileExtension := path.Ext(file.Filename)
+		if fileExtension == "" {
+			fileExtension = ".jpg"
+		}
+
+		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
+		newSignaturePath := path.Join(profileFolder, fmt.Sprintf("signature%s", fileExtension))
+		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
+		if err := c.SaveUploadedFile(file, newSignaturePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new signature image"})
+			return
+		}
+
+		// อัปเดต path ของโปรไฟล์ในฐานข้อมูล
+		user.ProfilePath = newSignaturePath
 	}
 
 	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล
