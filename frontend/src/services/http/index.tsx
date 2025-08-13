@@ -1215,6 +1215,26 @@ async function ListSetRooms(data: QuarryInterface) {
     return res;
 }
 
+async function GetRoomCapacity(id: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-capacity`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
 // Email
 async function SendMaintenanceStatusEmail(id: number) {
     const requestOptions = {
@@ -1699,14 +1719,15 @@ async function GetRoomQuota(userId?: number) {
     return res;
 }
 
-async function GetRoomsByRoomTypeID(roomTypeId?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
+
+async function GetRoomsByRoomTypeID(roomTypeId?: number): Promise<RoomsInterface[]> {
+  const requestOptions = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  };
 
     const res = await fetch(`${apiUrl}/rooms/roomtype/${roomTypeId}`, requestOptions)
         .then((res) => {
@@ -1725,28 +1746,30 @@ async function GetRoomsByRoomTypeID(roomTypeId?: number) {
     return res;
 }
 
-async function CreateBookingRoom(data: BookingRoomsInterface[]) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-    const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
+async function CreateBookingRoom(data: BookingRoomsInterface) {
+console.log("56",data);
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(data),
+  };
+  const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
 
-    if (res.status === 200 || res.status === 201 || res.status === 204) {
-        try {
-            const json = await res.json().catch(() => null);
-            return { status: res.status, data: json };
-        } catch {
-            return { status: res.status, data: null };
-        }
-    } else {
-        return { status: res.status, data: null };
+  if (res.status === 200 || res.status === 201 || res.status === 204) {
+    try {
+      const json = await res.json().catch(() => null);
+      return { status: res.status, data: json };
+    } catch {
+      return { status: res.status, data: null };
     }
+  } else {
+    return { status: res.status, data: null };
+  }
 }
+
 
 async function GetEquipmentByRoomType(id: number): Promise<{ EquipmentName: string }[]> {
     try {

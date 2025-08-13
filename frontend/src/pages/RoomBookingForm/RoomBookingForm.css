@@ -94,6 +94,7 @@
     display: flex;
     align-items: center;
     margin-bottom: 24px;
+   
 }
 
 .booking-container .booking-section-icon {
@@ -107,7 +108,8 @@
 
 @media (min-width: 1280px) {
     .time-selection-paper {
-        min-height: 635px;
+
+        min-height: 650px;
     }
 }
 
@@ -303,7 +305,7 @@
 .booking-container .form-control .MuiFormLabel-root {
     font-weight: 600;
     margin-bottom: 8px;
-    color: #1976d2;
+    color: #000000;
 }
 
 .booking-container .equipment-section {

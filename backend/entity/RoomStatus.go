@@ -9,10 +9,11 @@ import (
 
 type RoomStatus struct {
     gorm.Model
-    StatusName string `valid:"required~กรุณาระบุสถานะของห้อง,customstring~สถานะของห้องต้องไม่ใช่เลข"`
-    Rooms      []Room `gorm:"foreignKey:RoomStatusID" valid:"-"` // Exclude from validation
-
+    StatusName string `json:"status_name" valid:"required~กรุณาระบุสถานะของห้อง"`
+    Code       string `json:"code"` // เช่น "available", "maintenance", "closed"
+    Rooms      []Room `gorm:"foreignKey:RoomStatusID"`
 }
+
 
 func init() {
 	// Register custom validator under the tag "customstring"

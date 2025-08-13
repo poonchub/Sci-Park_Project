@@ -73,10 +73,11 @@ function ManageRooms() {
             renderCell: (params) => {
                 const statusName = params.row.RoomStatus || "Not Reserved";  // Default to "Not Reserved" if not found
                 const statusKey = params.row.RoomStatus as keyof typeof roomStatusConfig;
-                const { color, colorLite, icon } = roomStatusConfig[statusKey] ?? { 
-                    color: "#000", 
+                const { color, colorLite, icon, } = roomStatusConfig[statusKey] ?? { 
+                    color: "#FFF", 
                     colorLite: "#000", 
-                    icon: faCircleXmark 
+                    icon: faCircleXmark ,
+                    
                 };
             
                 return (
@@ -216,13 +217,24 @@ function ManageRooms() {
             const res = await GetRoomStatus();  // Fetch room status data from API
             if (res) {
                 setRoomStatus(res);  // Set fetched room status data
-                console.log(res); // Log the fetched data
+                console.log("romstatus", res); // Log the fetched data
             }
         } catch (error) {
             console.error("Error fetching room status:", error);
         }
     }
 
+    // const FecthRoomCapacity = async () => {
+    //     try {
+    //         const res = await GetRoomCapacity();  // Fetch room capacity data from API
+    //         if (res) {
+    //             setRoomCapacity(res);  // Set fetched room capacity data
+    //             console.log(res); // Log the fetched data
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching room capacity:", error);
+    //     }
+    // }
 
 
 
@@ -251,10 +263,12 @@ function ManageRooms() {
                 roomStatus: selectRoomStatus,
             });  // Call the API to get users data
             if (res) {
+                  console.log("API response:", res);
                 setRooms(res.data);  // Set the fetched users to state
                 console.log(res.data); // Log the fetched data
                 setTotal(res.total);  // Set the total number of users
             }
+        console.log(res);
         } catch (error) {
             console.error("Error fetching users:", error);
         }
@@ -279,6 +293,10 @@ function ManageRooms() {
     useEffect(() => {
         handleSearch();
     }, [debouncedSearchText]);
+    useEffect(() => {
+    console.log("Rooms data:", rooms);
+}, [rooms]);
+
 
     const handleClearFillter = () => {
         setSelectRoomType(0);  // Reset the selected role to 0 (default value)
@@ -419,7 +437,7 @@ function ManageRooms() {
                                     <MenuItem value={0}>{'All Status'}</MenuItem>
                                     {
                                         roomStatus.length > 0 ? roomStatus.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}>{item.StatusName}</MenuItem>
+                                            <MenuItem key={index} value={item.ID}  style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
                                         )) : null
                                     }
                                 </Select>

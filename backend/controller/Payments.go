@@ -75,17 +75,24 @@ func CancelExpiredBookings() {
 
 	var expiredBookings []entity.BookingRoom
 
-	// preload payments ที่สถานะยืนยันแล้ว
-	err := db.Preload("Payments", "status = ?", "confirmed").
-		Where("created_at <= ?", cutoffTime).
-		Find(&expiredBookings).Error
+	// ดึง BookingRoom ที่สร้างเก่ากว่า cutoffTime
+	err := db.Where("created_at <= ?", cutoffTime).Find(&expiredBookings).Error
 	if err != nil {
 		log.Println("Error fetching expired bookings:", err)
 		return
 	}
 
 	for _, booking := range expiredBookings {
-		if len(booking.Payments) == 0 {
+		var confirmedPayments []entity.Payment
+		err := db.Joins("JOIN payment_statuses ON payment_statuses.id = payments.status_id").
+			Where("payments.booking_room_id = ? AND payment_statuses.name = ?", booking.ID, "confirmed").
+			Find(&confirmedPayments).Error
+		if err != nil {
+			log.Println("Error fetching payments for booking", booking.ID, err)
+			continue
+		}
+
+		if len(confirmedPayments) == 0 {
 			log.Println("Booking", booking.ID, "ไม่มี payment confirmed")
 			if err := db.Delete(&booking).Error; err != nil {
 				log.Println("Error cancelling booking ID", booking.ID, err)
@@ -97,6 +104,7 @@ func CancelExpiredBookings() {
 		}
 	}
 }
+
 
 func CancelExpiredBookingsHandler(c *gin.Context) {
 	CancelExpiredBookings() // เรียกฟังก์ชันเดิม
