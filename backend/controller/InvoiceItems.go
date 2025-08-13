@@ -58,7 +58,6 @@ func CreateInvoiceItem(c *gin.Context) {
 
 	invoiceItemData := entity.InvoiceItem{
 		Description: invoiceItem.Description,
-		UnitPrice:  invoiceItem.UnitPrice,
 		Amount:     invoiceItem.Amount,
 		InvoiceID:  invoiceItem.InvoiceID,
 	}

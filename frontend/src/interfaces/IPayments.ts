@@ -10,7 +10,10 @@ export interface PaymentInterface {
     Note?:          string
     UserID?:        number
     
-    User?:          UserInterface
+    PayerID?:       number
+    Payer?:         UserInterface
+    ApproverID?:    number
+    Approver?:      UserInterface
     BookingRoomID?: number
     BookingRoom?:   BookingRoomsInterface
     StatusID?:      number

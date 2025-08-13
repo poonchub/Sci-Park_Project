@@ -258,8 +258,8 @@ func SeedDatabase() {
 			RoomSize: 487,
 		},
 		{
-			TypeName: "Rental Space",
-			ForRental: true,
+			TypeName:         "Rental Space",
+			ForRental:        true,
 			HasMultipleSizes: true,
 		},
 	}
@@ -747,7 +747,6 @@ func SeedDatabase() {
 		{TimeSlotName: "14:00-15:00", StartTime: parseTime("14:00"), EndTime: parseTime("15:00")},
 		{TimeSlotName: "15:00-16:00", StartTime: parseTime("15:00"), EndTime: parseTime("16:00")},
 		{TimeSlotName: "16:00-17:00", StartTime: parseTime("16:00"), EndTime: parseTime("17:00")},
-		
 	}
 	fmt.Println("📌 Seeding TimeSlots")
 	for _, slot := range timeSlots {
@@ -800,8 +799,6 @@ func SeedDatabase() {
 			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
 	}
 
-	
-
 	bookingStatus := []entity.BookingStatus{
 		{StatusName: "confirmed"},
 		{StatusName: "unconfirmed"},
@@ -843,12 +840,12 @@ func SeedDatabase() {
 
 	payments := []entity.Payment{
 		{
-			
+
 			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
-			UserID:        users[6].ID, // internaluser1
+			PayerID:       users[6].ID, // internaluser1
 			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
 			StatusID:      1,
 		},
@@ -857,7 +854,7 @@ func SeedDatabase() {
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
-			UserID:        users[7].ID, // internaluser2
+			PayerID:       users[7].ID, // internaluser2
 			BookingRoomID: 2,
 			StatusID:      2,
 		},
@@ -865,7 +862,7 @@ func SeedDatabase() {
 	for _, p := range payments {
 		result := db.FirstOrCreate(&p, entity.Payment{
 			BookingRoomID: p.BookingRoomID,
-			UserID:        p.UserID,
+			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
 		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
@@ -873,41 +870,41 @@ func SeedDatabase() {
 
 	// สมมติ TimeSlotID 1=เช้า, 2=บ่าย, 3=เต็มวัน
 	type SeedBooking struct {
-		RoomID     uint
-		Date       time.Time
+		RoomID      uint
+		Date        time.Time
 		TimeSlotIDs []uint
 	}
 
 	bookings := []SeedBooking{
 		{
-			RoomID:     1,
-			Date:       time.Date(2025, 7, 20, 0, 0, 0, 0, time.Local),
-			TimeSlotIDs: []uint{1, 2},  // เช้า + บ่าย
+			RoomID:      1,
+			Date:        time.Date(2025, 7, 20, 0, 0, 0, 0, time.Local),
+			TimeSlotIDs: []uint{1, 2}, // เช้า + บ่าย
 		},
 		{
-			RoomID:     1,
-			Date:       time.Date(2025, 7, 21, 0, 0, 0, 0, time.Local),
-			TimeSlotIDs: []uint{2},     // เช้า: 2, // บ่าย
+			RoomID:      1,
+			Date:        time.Date(2025, 7, 21, 0, 0, 0, 0, time.Local),
+			TimeSlotIDs: []uint{2}, // เช้า: 2, // บ่าย
 		},
 		{
-			RoomID:     1,
-			Date:       time.Date(2025, 7, 22, 0, 0, 0, 0, time.Local),
-			 TimeSlotIDs: []uint{3},     // เต็มวัน
+			RoomID:      1,
+			Date:        time.Date(2025, 7, 22, 0, 0, 0, 0, time.Local),
+			TimeSlotIDs: []uint{3}, // เต็มวัน
 		},
 	}
 
 	for _, b := range bookings {
 		// สร้าง BookingRoom ก่อน
 		bookingRoom := entity.BookingRoom{
-			RoomID:     b.RoomID,
-			 TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
-			StatusID:   1,
+			RoomID:    b.RoomID,
+			TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
+			StatusID:  1,
 			// ใส่ข้อมูลอื่น ๆ เช่น UserID, Purpose ตามจำเป็น
 		}
 
 		result := db.FirstOrCreate(&bookingRoom, entity.BookingRoom{
-			RoomID:     b.RoomID,
-			 TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
+			RoomID:    b.RoomID,
+			TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
 		})
 
 		if result.Error != nil {
@@ -1139,7 +1136,8 @@ func SeedDatabase() {
 			TotalAmount:   18000.00,
 			StatusID:      1,
 			CreaterID:     1,
-			CustomerID:    2,
+			CustomerID:    1,
+			RoomID:        1,
 		},
 	}
 	for _, invoice := range invoices {
@@ -1150,13 +1148,11 @@ func SeedDatabase() {
 	invoiceItems := []entity.InvoiceItem{
 		{
 			Description: "ค่าพื้นที่",
-			UnitPrice:   15000,
 			Amount:      15000,
 			InvoiceID:   1,
 		},
 		{
 			Description: "ค่าไฟ",
-			UnitPrice:   3000,
 			Amount:      3000,
 			InvoiceID:   1,
 		},
@@ -1164,8 +1160,73 @@ func SeedDatabase() {
 	for _, item := range invoiceItems {
 		db.FirstOrCreate(&item, entity.InvoiceItem{
 			Description: item.Description,
-			UnitPrice:   item.UnitPrice,
 			Amount:      item.Amount,
+			InvoiceID:   item.InvoiceID,
 		})
 	}
+
+	// Request Service Area
+	requestServiceAreas := []entity.RequestServiceArea{
+		{
+			UserID:                             1,
+			RequestStatusID:                    2,
+			PurposeOfUsingSpace:                "ทำงานวิจัยและพัฒนา",
+			NumberOfEmployees:                  5,
+			ActivitiesInBuilding:               "ประชุมและทดลองผลิตภัณฑ์",
+			CollaborationPlan:                  "ร่วมมือกับบริษัทในเครือ",
+			CollaborationBudget:                50000,
+			ProjectStartDate:                   time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
+			ProjectEndDate:                     time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC),
+			SupportingActivitiesForSciencePark: "จัด workshop และ training",
+			ServiceRequestDocument:             "/files/service_request/request1.pdf",
+		},
+		{
+			UserID:                             2,
+			RequestStatusID:                    1,
+			PurposeOfUsingSpace:                "พัฒนาผลิตภัณฑ์ใหม่",
+			NumberOfEmployees:                  3,
+			ActivitiesInBuilding:               "ออกแบบและทดสอบต้นแบบ",
+			CollaborationPlan:                  "ร่วมมือกับนักวิจัยภายนอก",
+			CollaborationBudget:                30000,
+			ProjectStartDate:                   time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC),
+			ProjectEndDate:                     time.Date(2026, 2, 28, 0, 0, 0, 0, time.UTC),
+			SupportingActivitiesForSciencePark: "จัดสัมมนาและ workshop",
+			ServiceRequestDocument:             "/files/service_request/request2.pdf",
+		},
+	}
+
+	for _, req := range requestServiceAreas {
+		db.FirstOrCreate(&req, entity.RequestServiceArea{
+			UserID:           req.UserID,
+			ProjectStartDate: req.ProjectStartDate,
+		})
+	}
+
+	// Service Area Document
+	serviceAreaDocuments := []entity.ServiceAreaDocument{
+		{
+			RequestServiceAreaID:    1,
+			ServiceContractDocument: "/files/contracts/contract1.pdf",
+			AreaHandoverDocument:    "/files/handover/handover1.pdf",
+			QuotationDocument:       "/files/quotation/quotation1.pdf",
+			RoomID:                  1,
+			ServiceUserTypeID:       1,
+		},
+		{
+			RequestServiceAreaID:    2,
+			ServiceContractDocument: "/files/contracts/contract2.pdf",
+			AreaHandoverDocument:    "/files/handover/handover2.pdf",
+			QuotationDocument:       "/files/quotation/quotation2.pdf",
+			RoomID:                  2,
+			ServiceUserTypeID:       2,
+		},
+	}
+
+	for _, doc := range serviceAreaDocuments {
+		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
+			RequestServiceAreaID: doc.RequestServiceAreaID,
+			RoomID:               doc.RoomID,
+		})
+	}
+
 }

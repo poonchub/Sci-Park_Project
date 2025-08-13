@@ -295,7 +295,10 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 		query = query.Where("room_status_id = ?", roomStatusID)
 	}
 
-	query = query.Preload("Floor").Preload("RoomStatus")
+	query = query.
+		Preload("Floor").
+		Preload("RoomStatus").
+		Preload("Invoice")
 
 	if err := query.Limit(limit).Offset(offset).Find(&rooms).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

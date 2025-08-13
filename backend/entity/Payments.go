@@ -17,8 +17,10 @@ type Payment struct {
 
 	StatusID      uint
 	Status        PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
-	UserID        uint
-	User          User `gorm:"foreignKey:UserID" valid:"-"`
+	PayerID 	  uint
+    Payer   	  User `gorm:"foreignKey:PayerID" valid:"-"`
+	ApproverID 	  uint
+    Approver      User  `gorm:"foreignKey:ApproverID" valid:"-"`
 	BookingRoomID uint
 	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
 	InvoiceID     uint
