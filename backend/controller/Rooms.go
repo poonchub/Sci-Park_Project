@@ -298,7 +298,8 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 	query = query.
 		Preload("Floor").
 		Preload("RoomStatus").
-		Preload("Invoice")
+		Preload("ServiceAreaDocument.RequestServiceArea.User").
+		Preload("ServiceAreaDocument.ServiceUserType")
 
 	if err := query.Limit(limit).Offset(offset).Find(&rooms).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

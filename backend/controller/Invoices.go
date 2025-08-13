@@ -66,6 +66,61 @@ func GetInvoiceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoice)
 }
 
+// GET /room-invoice-option
+func GetInvoiceByOption(c *gin.Context) {
+	var invoices []entity.Invoice
+	db := config.DB()
+
+	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
+	statusID, _ := strconv.Atoi(c.DefaultQuery("statusId", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	query := db.Model(&entity.Invoice{})
+
+	if statusID != 0 {
+		query = query.Where("status_id = ?", statusID)
+	}
+	if roomID != 0 {
+		query = query.Where("room_id = ?", roomID)
+	}
+
+	query = query.
+		Preload("Payments").
+		Preload("Status")
+		
+	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var total int64
+	countQuery := db.Model(&entity.Invoice{})
+	if statusID != 0 {
+		countQuery = countQuery.Where("status_id = ?", statusID)
+	}
+	if roomID != 0 {
+		countQuery = countQuery.Where("room_id = ?", roomID)
+	}
+	countQuery.Count(&total)
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       invoices,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	})
+}
+
 func add(a, b int) int {
 	return a + b
 }
@@ -226,7 +281,7 @@ func GetInvoicePDF(c *gin.Context) {
 		Preload("Items").
 		Preload("Creater.Role").
 		Preload("Creater.Prefix").
-		// Preload("Room.Prefix.ServiceAreaDocument").
+		Preload("Customer").
 		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
@@ -650,7 +705,7 @@ func CreateInvoice(c *gin.Context) {
 	}
 
 	var exiting entity.Invoice
-	if err := db.Where("invoice_number = ?", invoiceData.InvoiceNumber).First(&exiting).Error; err == nil {
+	if err := db.Where("invoice_number = ? AND billing_period = ?", invoiceData.InvoiceNumber, invoiceData.BillingPeriod).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Invoice with this number already exists"})
 		return
 	}
@@ -718,4 +773,39 @@ func GenerateNextInvoiceNumber(db *gorm.DB) (string, error) {
 	}
 	// ถ้าเกิน 999 ก็ไม่ต้อง zero padding
 	return fmt.Sprintf("NE2/%d", nextNum), nil
+}
+
+// DELETE /invoice/:id
+func DeleteInvoiceByID(c *gin.Context) {
+    ID := c.Param("id")
+    db := config.DB()
+
+    tx := db.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    var invoice entity.Invoice
+    if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+        return
+    }
+
+    if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
+        return
+    }
+
+    if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
+        return
+    }
+
+    tx.Commit()
+    c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
 }

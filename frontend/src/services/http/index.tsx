@@ -2279,6 +2279,24 @@ async function CreateInvoice(data: InvoiceInterface) {
         throw error;
     }
 }
+async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number){
+    try {
+        const response = await axiosInstance.get(`/room-invoice-option?roomId=${roomId}&statusId=${statusId}&page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
+    }
+}
+async function DeleteInvoiceByID(invoiceID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/invoice/${invoiceID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting service area document:", error);
+        throw error;
+    }
+}
 
 // InvoiceItems
 async function CreateInvoiceItems(data: InvoiceItemInterface) {
@@ -2470,6 +2488,8 @@ export {
     GetInvoiceByID,
     GetInvoicePDF,
     CreateInvoice,
+    GetInvoiceByOption,
+    DeleteInvoiceByID,
 
     // InvoiceItems
     CreateInvoiceItems,
