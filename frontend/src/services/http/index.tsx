@@ -2223,12 +2223,23 @@ async function DeleteServiceAreaDocument(requestServiceAreaID: number): Promise<
 // RequestServiceArea functions
 async function CreateRequestServiceAreaAndAboutCompany(userID: number, formData: FormData): Promise<any> {
     try {
+        console.log('Making API call to create request service area...');
+        console.log('User ID:', userID);
+        console.log('FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+        
+        const token = localStorage.getItem("token");
+        console.log('Token exists:', !!token);
+        
         const response = await axiosInstance.post(`/request-service-area/${userID}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem("token")}`,
+                'Authorization': `Bearer ${token}`,
             },
         });
+        console.log('API call successful:', response);
         return response.data;
     } catch (error) {
         console.error("Error creating request service area and about company:", error);

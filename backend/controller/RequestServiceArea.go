@@ -16,20 +16,29 @@ import (
 
 // CreateRequestServiceAreaAndAboutCompany สร้างข้อมูล RequestServiceArea และ AboutCompany พร้อมกัน
 func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
+	fmt.Println("=== CreateRequestServiceAreaAndAboutCompany called ===")
+
 	// รับ user_id จาก path parameter
 	userIDStr := c.Param("user_id")
+	fmt.Printf("User ID from param: %s\n", userIDStr)
+
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
+		fmt.Printf("Error parsing user_id: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
 		return
 	}
+	fmt.Printf("Parsed User ID: %d\n", userID)
 
 	// ตรวจสอบว่า User มีอยู่จริงหรือไม่
+	fmt.Println("Checking if user exists...")
 	var user entity.User
 	if err := config.DB().First(&user, userID).Error; err != nil {
+		fmt.Printf("User not found error: %v\n", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
+	fmt.Printf("User found: %s %s\n", user.FirstName, user.LastName)
 
 	// เริ่ม transaction
 	tx := config.DB().Begin()
@@ -40,6 +49,16 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	}()
 
 	// ===== REQUEST SERVICE AREA =====
+	fmt.Println("Creating RequestServiceArea...")
+	fmt.Printf("Purpose: %s\n", c.PostForm("purpose_of_using_space"))
+	fmt.Printf("Employees: %s\n", c.PostForm("number_of_employees"))
+	fmt.Printf("Activities: %s\n", c.PostForm("activities_in_building"))
+	fmt.Printf("Plan: %s\n", c.PostForm("collaboration_plan"))
+	fmt.Printf("Budget: %s\n", c.PostForm("collaboration_budget"))
+	fmt.Printf("Start Date: %s\n", c.PostForm("project_start_date"))
+	fmt.Printf("End Date: %s\n", c.PostForm("project_end_date"))
+	fmt.Printf("Supporting Activities: %s\n", c.PostForm("supporting_activities_for_science_park"))
+
 	// สร้าง RequestServiceArea ใหม่เสมอ
 	requestServiceArea := entity.RequestServiceArea{
 		UserID:                             uint(userID),
@@ -55,11 +74,14 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	}
 
 	// บันทึก RequestServiceArea (สร้างใหม่เสมอ) ก่อนเพื่อได้ ID
+	fmt.Println("Saving RequestServiceArea to database...")
 	if err := tx.Create(&requestServiceArea).Error; err != nil {
+		fmt.Printf("Error creating RequestServiceArea: %v\n", err)
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request service area"})
 		return
 	}
+	fmt.Printf("RequestServiceArea created with ID: %d\n", requestServiceArea.ID)
 
 	// จัดการไฟล์ ServiceRequestDocument (หลังจากได้ Request ID แล้ว)
 	file, err := c.FormFile("service_request_document")
@@ -178,6 +200,10 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	if isUpdate {
 		action = "updated"
 	}
+
+	fmt.Printf("=== Success: Request service area created and about company %s ===\n", action)
+	fmt.Printf("RequestServiceArea ID: %d\n", requestServiceArea.ID)
+	fmt.Printf("AboutCompany action: %s\n", action)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": fmt.Sprintf("Request service area created and about company %s successfully", action),

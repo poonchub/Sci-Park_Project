@@ -238,8 +238,8 @@ const CreateServiceAreaForm: React.FC = () => {
         return { message: 'Hiring rate cannot be negative' };
       }
       
-      if (field === 'ResearchInvestmentValue' && (!fieldValue || (typeof fieldValue === 'number' && fieldValue < 10000))) {
-        return { message: 'Research investment value must be at least 10,000 THB' };
+      if (field === 'ResearchInvestmentValue' && (!fieldValue || (typeof fieldValue === 'number' && fieldValue < 1))) {
+        return { message: 'Research investment value must be at least 1 THB' };
       }
       
       if (field === 'ThreeYearGrowthForecast' && !fieldValue) {
@@ -267,12 +267,65 @@ const CreateServiceAreaForm: React.FC = () => {
   };
 
   const onSubmit = async (data: ServiceAreaFormData) => {
+    console.log('Form submission started...', data);
+    console.log('Form errors:', errors);
+    
+    // Check if there are any form validation errors
+    if (Object.keys(errors).length > 0) {
+      console.log('Form has validation errors:', errors);
+      setAlerts([{ 
+        type: 'error', 
+        message: 'Please fix all validation errors before submitting.' 
+      }]);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
         setAlerts([{ type: 'error', message: 'User not authenticated.' }]);
         return;
+      }
+      console.log('User ID:', userId);
+
+      // Check if we're on step 2 and validate required fields
+      if (currentStep === 2) {
+        const step2Fields = [
+          'PurposeOfUsingSpace',
+          'NumberOfEmployees',
+          'ActivitiesInBuilding',
+          'CollaborationPlan',
+          'CollaborationBudget',
+          'ProjectStartDate',
+          'ProjectEndDate',
+          'SupportingActivitiesForSciencePark'
+        ] as const;
+        
+        const step2Errors = step2Fields.map(field => {
+          const fieldValue = data[field];
+          const fieldError = errors[field];
+          
+          if (fieldError) {
+            return fieldError;
+          }
+          
+          if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '') || 
+              (typeof fieldValue === 'number' && fieldValue === 0)) {
+            return { message: `Please complete ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}` };
+          }
+          
+          return null;
+        }).filter(error => error !== null);
+        
+        if (step2Errors.length > 0) {
+          setAlerts([{ 
+            type: 'error', 
+            message: 'Please complete all required fields in Service Area Request before submitting.' 
+          }]);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const formData = new FormData();
@@ -298,19 +351,60 @@ const CreateServiceAreaForm: React.FC = () => {
       formData.append('research_investment_value', data.ResearchInvestmentValue.toString());
       formData.append('three_year_growth_forecast', data.ThreeYearGrowthForecast);
 
-      const response = await CreateRequestServiceAreaAndAboutCompany(parseInt(userId), formData);
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
 
-      if (response.status === 201 || response.status === 200) {
-        setAlerts([{ type: 'success', message: 'Service area request created successfully!' }]);
+          console.log('Submitting from step:', currentStep);
+    
+    // Trigger validation for all fields before submitting
+    const isValid = await trigger();
+    if (!isValid) {
+      console.log('Form validation failed');
+      setAlerts([{ 
+        type: 'error', 
+        message: 'Please fix all validation errors before submitting.' 
+      }]);
+      setIsSubmitting(false);
+      return;
+    }
+    
+    const response = await CreateRequestServiceAreaAndAboutCompany(parseInt(userId), formData);
+    console.log('API Response:', response);
+
+      // Check if response exists and has data
+      if (response && response.message) {
+        setAlerts([{ type: 'success', message: response.message || 'Service area request created successfully!' }]);
         reset();
         setDocumentFile(null);
         setCurrentStep(1); // Reset to first step
       } else {
-        setAlerts([{ type: 'error', message: response.message || 'Failed to create request.' }]);
+        setAlerts([{ type: 'error', message: 'Failed to create request. Please try again.' }]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      setAlerts([{ type: 'error', message: 'An unexpected error occurred.' }]);
+      if (error.response) {
+        // Server responded with error
+        console.error('Server error:', error.response.data);
+        setAlerts([{ 
+          type: 'error', 
+          message: error.response.data?.error || error.response.data?.message || 'Server error occurred.' 
+        }]);
+      } else if (error.request) {
+        // Network error
+        console.error('Network error:', error.request);
+        setAlerts([{ 
+          type: 'error', 
+          message: 'Network error. Please check your connection and try again.' 
+        }]);
+      } else {
+        // Other error
+        setAlerts([{ 
+          type: 'error', 
+          message: 'An unexpected error occurred. Please try again.' 
+        }]);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -496,7 +590,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="BusinessGroupID"
                     control={control}
-                    defaultValue={0}
+                    defaultValue={1}
                     rules={{ 
                       required: 'Please select business group',
                       validate: (value) => {
@@ -633,7 +727,7 @@ const CreateServiceAreaForm: React.FC = () => {
                     defaultValue={0}
                     rules={{
                       required: 'Please enter registered capital',
-                      min: { value: 100000, message: 'Registered capital must be at least 100,000 THB' }
+                      min: { value: 10, message: 'Registered capital must be at least 10 THB' }
                     }}
                     render={({ field }) => (
                       <TextField
@@ -644,10 +738,10 @@ const CreateServiceAreaForm: React.FC = () => {
                         error={!!errors.RegisteredCapital}
                         helperText={
                           errors.RegisteredCapital?.message || 
-                          (field.value && field.value >= 100000 ? 
+                          (field.value && field.value >= 10 ? 
                             `Valid amount: ${field.value.toLocaleString()} THB` : 
                             field.value && field.value > 0 ? 
-                              `Current: ${field.value.toLocaleString()} THB (minimum: 100,000 THB)` : 
+                              `Current: ${field.value.toLocaleString()} THB (minimum: 10 THB)` : 
                               "")
                         }
                         slotProps={{
@@ -655,7 +749,7 @@ const CreateServiceAreaForm: React.FC = () => {
                         }}
                         sx={{
                           '& .MuiFormHelperText-root': {
-                            color: field.value && field.value >= 100000 ? 'green' : undefined
+                            color: field.value && field.value >= 10 ? 'green' : undefined
                           }
                         }}
                       />
@@ -681,9 +775,19 @@ const CreateServiceAreaForm: React.FC = () => {
                         label="Enter hiring rate per person"
                         fullWidth
                         error={!!errors.HiringRate}
-                        helperText={String(errors.HiringRate?.message || "")}
+                        helperText={
+                          errors.HiringRate?.message || 
+                          (field.value && field.value >= 0 ? 
+                            `✓ Valid hiring rate: ${field.value.toLocaleString()} THB per person` : 
+                            "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value >= 0 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -699,7 +803,7 @@ const CreateServiceAreaForm: React.FC = () => {
                     defaultValue={0}
                     rules={{
                       required: 'Please enter research investment value',
-                      min: { value: 10000, message: 'Research investment value must be at least 10,000 THB' }
+                      min: { value: 1, message: 'Research investment value must be at least 1 THB' }
                     }}
                     render={({ field }) => (
                       <TextField
@@ -711,6 +815,11 @@ const CreateServiceAreaForm: React.FC = () => {
                         helperText={String(errors.ResearchInvestmentValue?.message || "")}
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value >= 1 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -736,9 +845,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         multiline
                         rows={3}
                         error={!!errors.ThreeYearGrowthForecast}
-                        helperText={String(errors.ThreeYearGrowthForecast?.message || "")}
+                        helperText={
+                          errors.ThreeYearGrowthForecast?.message || 
+                          (field.value && field.value.length >= 10 ? 
+                            `✓ Valid (${field.value.length} characters)` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/10 characters (minimum required)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 10 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -831,9 +952,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         label="Enter number of employees"
                         fullWidth
                         error={!!errors.NumberOfEmployees}
-                        helperText={String(errors.NumberOfEmployees?.message || "")}
+                        helperText={
+                          errors.NumberOfEmployees?.message || 
+                          (field.value && field.value >= 1 && field.value <= 1000 ? 
+                            `✓ Valid: ${field.value.toLocaleString()} employees` : 
+                            field.value && field.value > 0 ? 
+                              `Current: ${field.value.toLocaleString()} employees (range: 1-1000)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value >= 1 && field.value <= 1000 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -857,9 +990,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         label="Enter collaboration budget in THB"
                         fullWidth
                         error={!!errors.CollaborationBudget}
-                        helperText={String(errors.CollaborationBudget?.message || "")}
+                        helperText={
+                          errors.CollaborationBudget?.message || 
+                          (field.value && field.value >= 1000 ? 
+                            `✓ Valid budget: ${field.value.toLocaleString()} THB` : 
+                            field.value && field.value > 0 ? 
+                              `Current: ${field.value.toLocaleString()} THB (minimum: 1,000 THB)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value >= 1000 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -885,9 +1030,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         multiline
                         rows={3}
                         error={!!errors.ActivitiesInBuilding}
-                        helperText={String(errors.ActivitiesInBuilding?.message || "")}
+                        helperText={
+                          errors.ActivitiesInBuilding?.message || 
+                          (field.value && field.value.length >= 10 ? 
+                            `✓ Valid (${field.value.length} characters)` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/10 characters (minimum required)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 10 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -913,9 +1070,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         multiline
                         rows={4}
                         error={!!errors.CollaborationPlan}
-                        helperText={String(errors.CollaborationPlan?.message || "")}
+                        helperText={
+                          errors.CollaborationPlan?.message || 
+                          (field.value && field.value.length >= 20 ? 
+                            `✓ Valid (${field.value.length} characters)` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/20 characters (minimum required)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 20 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
@@ -942,12 +1111,22 @@ const CreateServiceAreaForm: React.FC = () => {
                       }
                     }}
                     render={({ field }) => (
-                      <DatePicker
-                        {...field}
-                        value={field.value ? dayjs(field.value) : null}
-                        onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                        label="Select project start date"
-                      />
+                      <>
+                        <DatePicker
+                          {...field}
+                          value={field.value ? dayjs(field.value) : null}
+                          onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                          label="Select project start date"
+                        />
+                        {errors.ProjectStartDate && (
+                          <FormHelperText error>{errors.ProjectStartDate.message}</FormHelperText>
+                        )}
+                        {!errors.ProjectStartDate && field.value && (
+                          <FormHelperText sx={{ color: 'green' }}>
+                            ✓ Project start date selected: {dayjs(field.value).format('DD/MM/YYYY')}
+                          </FormHelperText>
+                        )}
+                      </>
                     )}
                   />
                 </Grid>
@@ -971,12 +1150,22 @@ const CreateServiceAreaForm: React.FC = () => {
                       }
                     }}
                     render={({ field }) => (
-                      <DatePicker
-                        {...field}
-                        value={field.value ? dayjs(field.value) : null}
-                        onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                        label="Select project end date"
-                      />
+                      <>
+                        <DatePicker
+                          {...field}
+                          value={field.value ? dayjs(field.value) : null}
+                          onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                          label="Select project end date"
+                        />
+                        {errors.ProjectEndDate && (
+                          <FormHelperText error>{errors.ProjectEndDate.message}</FormHelperText>
+                        )}
+                        {!errors.ProjectEndDate && field.value && (
+                          <FormHelperText sx={{ color: 'green' }}>
+                            ✓ Project end date selected: {dayjs(field.value).format('DD/MM/YYYY')}
+                          </FormHelperText>
+                        )}
+                      </>
                     )}
                   />
                 </Grid>
@@ -1000,9 +1189,21 @@ const CreateServiceAreaForm: React.FC = () => {
                         multiline
                         rows={4}
                         error={!!errors.SupportingActivitiesForSciencePark}
-                        helperText={String(errors.SupportingActivitiesForSciencePark?.message || "")}
+                        helperText={
+                          errors.SupportingActivitiesForSciencePark?.message || 
+                          (field.value && field.value.length >= 20 ? 
+                            `✓ Valid (${field.value.length} characters)` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/20 characters (minimum required)` : 
+                              "")
+                        }
                         slotProps={{
                           inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 20 ? 'green' : undefined
+                          }
                         }}
                       />
                     )}
