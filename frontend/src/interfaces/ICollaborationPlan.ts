@@ -8,3 +8,9 @@ export interface CollaborationPlanInterface {
   UpdatedAt: string;
   DeletedAt?: string;
 }
+
+export interface CollaborationPlanData {
+  plan: string;
+  budget: number;
+  startDate: string;
+}

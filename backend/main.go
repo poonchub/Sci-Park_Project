@@ -73,6 +73,7 @@ func main() {
 		protected.PATCH("/update-user/:id", controller.UpdateUserByID)
 
 		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
+		protected.POST("/user/upload-signature/:id", controller.UpdateSignatureImage)
 		protected.GET("/operators", controller.ListOperators)
 		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
 		protected.PATCH("/change-password", controller.ChangePassword)

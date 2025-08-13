@@ -1,14 +1,14 @@
 import { apiUrl, GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../../services/http";
 
-import React, { useState, useEffect } from "react";
-import { Button, Typography, Avatar, Grid, Box, Card, Divider, useTheme, Container, Tabs, Tab, Skeleton, Tooltip, useMediaQuery } from "@mui/material";
+import React, { useState, useEffect, useRef } from "react";
+import { Button, Typography, Avatar, Grid, Box, Card, Divider, useTheme, Container, Tabs, Tab, Skeleton, Tooltip, useMediaQuery, Stack, Zoom, Collapse, IconButton, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
 
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { faXmark, faQuestionCircle, faClock, faCheck, faRepeat, faEye, faPencil, faFileLines } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faQuestionCircle, faClock, faCheck, faRepeat, faEye, faPencil, faFileLines, faUser, faEnvelope, faPhone, faBriefcase, faCamera, faVenusMars, faCrown, faShieldAlt, faInfoCircle, faBuilding, faIdCard } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ShieldUser } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
@@ -815,6 +815,10 @@ const MyAccount: React.FC = () => {
         }
     };
 
+
+
+
+
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setValueTab(newValue);
     };
@@ -968,8 +972,10 @@ const MyAccount: React.FC = () => {
                 buttonActive={isBottonActive}
             />
 
-            <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-                <Grid container spacing={3}>
+
+
+            <Container maxWidth={false} sx={{ padding: "0px 0px !important", width: "100%" }}>
+                <Grid container spacing={3} sx={{ width: "100% !important", padding: "0px 24px !important" }}>
                     <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
                         <ShieldUser size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
@@ -986,18 +992,19 @@ const MyAccount: React.FC = () => {
                         </Link>
                     </Grid>
 
-                    {user ? (
-                        <Card
-                            sx={{
-                                py: 3,
-                                px: 4,
-                                borderRadius: 2,
-                                width: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 4,
-                            }}
-                        >
+                    <Grid size={{ xs: 12 }}>
+                        {user ? (
+                            <Card
+                                sx={{
+                                    py: 3,
+                                    px: 4,
+                                    borderRadius: 2,
+                                    width: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 4,
+                                }}
+                            >
                             <Box sx={{ display: "flex", gap: "30px" }}>
                                 <Box
                                     sx={{
@@ -1025,9 +1032,11 @@ const MyAccount: React.FC = () => {
                                     }}
                                 >   
                                     <Typography
+                                        variant="h6"
                                         sx={{
                                             fontSize: 22,
                                             fontWeight: 600,
+                                            color: `${theme.palette.primary.main} !important`,
                                             width: "100%",
                                         }}
                                     >
@@ -1044,57 +1053,69 @@ const MyAccount: React.FC = () => {
                                     </Typography>
                                     <Grid container size={{ xs: 12 }} columnSpacing={10} rowSpacing={1.2} sx={{ mt: 2 }}>
                                         <Grid>
-                                            <Typography
-                                                sx={{
-                                                    fontSize: 16,
-                                                    fontWeight: 500,
-                                                    color: "text.secondary",
-                                                }}
-                                            >
-                                                Role
-                                            </Typography>
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faBriefcase} size="sm" color={theme.palette.warning.main} />
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: 16,
+                                                        fontWeight: 600,
+                                                        color: `${theme.palette.primary.main} !important`,
+                                                    }}
+                                                >
+                                                    Role
+                                                </Typography>
+                                            </Box>
                                             <Typography
                                                 sx={{
                                                     fontSize: 18,
                                                     fontWeight: 500,
+                                                    color: "text.primary",
                                                 }}
                                             >
                                                 {user?.Role?.Name}
                                             </Typography>
                                         </Grid>
                                         <Grid>
-                                            <Typography
-                                                sx={{
-                                                    fontSize: 16,
-                                                    fontWeight: 500,
-                                                    color: "text.secondary",
-                                                }}
-                                            >
-                                                Email Address
-                                            </Typography>
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faEnvelope} size="sm" color={theme.palette.info.main} />
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: 16,
+                                                        fontWeight: 600,
+                                                        color: `${theme.palette.primary.main} !important`,
+                                                    }}
+                                                >
+                                                    Email Address
+                                                </Typography>
+                                            </Box>
                                             <Typography
                                                 sx={{
                                                     fontSize: 18,
                                                     fontWeight: 500,
+                                                    color: "text.primary",
                                                 }}
                                             >
                                                 {user?.Email}
                                             </Typography>
                                         </Grid>
                                         <Grid>
-                                            <Typography
-                                                sx={{
-                                                    fontSize: 16,
-                                                    fontWeight: 500,
-                                                    color: "text.secondary",
-                                                }}
-                                            >
-                                                Phone Number
-                                            </Typography>
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                <FontAwesomeIcon icon={faPhone} size="sm" color={theme.palette.success.main} />
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: 16,
+                                                        fontWeight: 600,
+                                                        color: `${theme.palette.primary.main} !important`,
+                                                    }}
+                                                >
+                                                    Phone Number
+                                                </Typography>
+                                            </Box>
                                             <Typography
                                                 sx={{
                                                     fontSize: 18,
                                                     fontWeight: 500,
+                                                    color: "text.primary",
                                                 }}
                                             >
                                                 {user?.Phone}
@@ -1104,9 +1125,10 @@ const MyAccount: React.FC = () => {
                                 </Box>
                             </Box>
                         </Card>
-                    ) : (
-                        <Skeleton variant="rectangular" width="100%" height={182} sx={{ borderRadius: 2 }} />
-                    )}
+                        ) : (
+                            <Skeleton variant="rectangular" width="100%" height={182} sx={{ borderRadius: 2 }} />
+                        )}
+                    </Grid>
 
                     <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
                         <Grid size={{ xs: 6 }}>
@@ -1124,64 +1146,65 @@ const MyAccount: React.FC = () => {
                                 </Button>
                             </Link>
                         </Grid>
-                        <CustomTabPanel value={valueTab} index={0}>
-                            <Grid container size={{ xs: 12 }} spacing={2}>
-                                {/* Count Status Section */}
-                                {!statusCounts ? (
-                                    <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
-                                ) : (
-                                    <Grid
-                                        container
-                                        spacing={1}
-                                        className="filter-section"
-                                        size={{ xs: 12 }}
-                                        sx={{
-                                            height: "auto",
-                                        }}
-                                    >
-                                        <RequestStatusStack statusCounts={statusCounts || {}} />
-                                    </Grid>
-                                )}
-
-                                {/* Filters Section */}
-                                {!statusCounts ? (
-                                    <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
-                                ) : (
-                                    <FilterSection
-                                        searchText={searchText}
-                                        setSearchText={setSearchText}
-                                        selectedDate={selectedDate}
-                                        setSelectedDate={setSelectedDate}
-                                        selectedStatuses={selectedStatuses}
-                                        setSelectedStatuses={setSelectedStatuses}
-                                        handleClearFilter={handleClearFillter}
-                                        requestStatuses={requestStatuses}
-                                    />
-                                )}
-                            </Grid>
-
-                            {/* Data Table */}
-                            <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
-                                {isLoadingData ? (
-                                    <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
-                                ) : (
-                                    <CustomDataGrid
-                                        rows={filteredRequests}
-                                        columns={getColumns()}
-                                        rowCount={total}
-                                        page={page}
-                                        limit={limit}
-                                        onPageChange={setPage}
-                                        onLimitChange={setLimit}
-                                        noDataText="Maintenance request information not found."
-                                    />
-                                )}
-                            </Grid>
-                        </CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={2}></CustomTabPanel>
                     </Grid>
-                </Grid>
+
+                                        <CustomTabPanel value={valueTab} index={0}>
+                                <Grid container size={{ xs: 12 }} spacing={2}>
+                                    {/* Count Status Section */}
+                                    {!statusCounts ? (
+                                        <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
+                                    ) : (
+                                        <Grid
+                                            container
+                                            spacing={1}
+                                            className="filter-section"
+                                            size={{ xs: 12 }}
+                                            sx={{
+                                                height: "auto",
+                                            }}
+                                        >
+                                            <RequestStatusStack statusCounts={statusCounts || {}} />
+                                        </Grid>
+                                    )}
+
+                                    {/* Filters Section */}
+                                    {!statusCounts ? (
+                                        <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                                    ) : (
+                                        <FilterSection
+                                            searchText={searchText}
+                                            setSearchText={setSearchText}
+                                            selectedDate={selectedDate}
+                                            setSelectedDate={setSelectedDate}
+                                            selectedStatuses={selectedStatuses}
+                                            setSelectedStatuses={setSelectedStatuses}
+                                            handleClearFilter={handleClearFillter}
+                                            requestStatuses={requestStatuses}
+                                        />
+                                    )}
+                                </Grid>
+
+                                {/* Data Table */}
+                                <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                    {isLoadingData ? (
+                                        <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+                                    ) : (
+                                        <CustomDataGrid
+                                            rows={filteredRequests}
+                                            columns={getColumns()}
+                                            rowCount={total}
+                                            page={page}
+                                            limit={limit}
+                                            onPageChange={setPage}
+                                            onLimitChange={setLimit}
+                                            noDataText="Maintenance request information not found."
+                                        />
+                                    )}
+                                                                </Grid>
+                            </CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={2}></CustomTabPanel>
+                        </Grid>
             </Container>
         </Box>
     );

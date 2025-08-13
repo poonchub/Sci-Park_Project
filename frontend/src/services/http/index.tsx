@@ -231,6 +231,13 @@ async function UpdateUserbyID(data: any) {
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
     }
+    
+    // Add signature handling
+    formData.append("signature_check", data.SignatureCheck || "");
+    if (data.Signature_Image) {
+        formData.append("signature_image", data.Signature_Image);
+    }
+    
     const UserID = data.UserID;
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
@@ -272,6 +279,55 @@ async function UpdateUserbyID(data: any) {
             };
         } else {
             // If the error is not from axios, handle it here
+            return {
+                status: "error",
+                message: "An unexpected error occurred",
+                data: null,
+            };
+        }
+    }
+}
+
+async function UpdateUserSignature(data: any) {
+    const formData = new FormData();
+    formData.append("signature_check", "true");
+    formData.append("signature_image", data.Signature_Image);
+    
+    const UserID = data.UserID;
+
+    const token = localStorage.getItem("token");
+    const requestOptions = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    };
+
+    try {
+        const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
+
+        if (response.status === 200) {
+            return {
+                status: "success",
+                message: "Signature updated successfully",
+                data: response.data,
+            };
+        } else {
+            return {
+                status: "error",
+                message: "Failed to update signature",
+                data: response.data,
+            };
+        }
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            const errorMessage = error.response?.data?.error || error.message || "An error occurred while updating signature";
+
+            return {
+                status: "error",
+                message: errorMessage,
+                data: null,
+            };
+        } else {
             return {
                 status: "error",
                 message: "An unexpected error occurred",
@@ -2310,6 +2366,7 @@ export {
     ChangePassword,
     GetOperators,
     UpdateUserbyID,
+    UpdateUserSignature,
     UpdateProfileImage,
     CreateUserExternalOnly,
 

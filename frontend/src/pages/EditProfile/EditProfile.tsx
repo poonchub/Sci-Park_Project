@@ -6,10 +6,8 @@ import {
     Typography,
     Avatar,
     Grid,
-    Paper,
     Box,
     Card,
-    CardContent,
     Divider,
     useTheme,
     Container,
@@ -20,26 +18,28 @@ import {
     DialogContent,
     DialogActions,
     Zoom,
+    Stack,
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
 import ErrorAlert from "../../components/Alert/ErrorAlert";
-import WarningAlert from "../../components/Alert/WarningAlert";
 import { TextField } from "../../components/TextField/TextField";
 import { TextArea } from "../../components/TextField/TextArea";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 import { GetUserInterface } from "../../interfaces/IGetUser";
 
-import { UpdateProfileImage } from "../../services/http/index";
+import { UpdateProfileImage, UpdateUserSignature } from "../../services/http/index";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { faUser, faCamera, faEdit, faIdCard, faEnvelope, faPhone, faVenusMars, faBriefcase, faBuilding, faCrown, faShieldAlt, faInfoCircle, faAngleLeft } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faCamera, faEdit, faIdCard, faEnvelope, faPhone, faVenusMars, faBriefcase, faBuilding, faCrown, faShieldAlt, faInfoCircle, faAngleLeft, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { MaterialUISwitch } from "../../components/MaterialUISwitch/MaterialUISwitch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Close } from "@mui/icons-material";
 import SignatureCanvas from "react-signature-canvas";
+import PrivacyPolicyPopup from "../../components/PrivacyPolicyPopup/PrivacyPolicyPopup";
 
 const EditProfile: React.FC = () => {
     const theme = useTheme();
@@ -51,9 +51,14 @@ const EditProfile: React.FC = () => {
     const [img, setImg] = useState<MaintenaceImagesInterface | null>();
     const navigate = useNavigate();
     const [openPopup, setOpenPopup] = useState(false);
+    const [openPrivacyPolicy, setOpenPrivacyPolicy] = useState(false);
+    const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('th');
     const [isButtonActive, setIsButtonActive] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(true);
     const sigRef = useRef<SignatureCanvas>(null);
     const [signatureFile, setSignatureFile] = useState<File | null>(null);
+    const [signatureImage, setSignatureImage] = useState<string | null>(null);
+    const [isSignatureBlurred, setIsSignatureBlurred] = useState(true);
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
@@ -72,6 +77,37 @@ const EditProfile: React.FC = () => {
         const fileName = img.FilePath?.split("/").pop() || `image1.jpg`;
 
         return [new File([blob], fileName, { type: fileType })]; // ✅ Return array with single file
+    };
+
+    const loadSignatureImage = async (signaturePath: string) => {
+        try {
+            console.log("Loading signature from path:", signaturePath);
+            const url = apiUrl + "/" + signaturePath;
+            console.log("Full URL:", url);
+            
+            const response = await fetch(url);
+            console.log("Response status:", response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            console.log("Blob size:", blob.size);
+            
+            // Convert blob to base64 for display
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                console.log("Signature image loaded successfully");
+                setSignatureImage(reader.result as string);
+            };
+            reader.onerror = () => {
+                console.error("Error reading signature file");
+            };
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error("Error loading signature image:", error);
+        }
     };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +173,16 @@ const EditProfile: React.FC = () => {
                         };
                         reader.readAsDataURL(file);
                     }
+
+                    // Load signature image if available
+                    console.log("User data:", res);
+                    console.log("SignaturePath:", res.SignaturePath);
+                    if (res.SignaturePath) {
+                        console.log("Signature path exists, loading signature...");
+                        await loadSignatureImage(res.SignaturePath);
+                    } else {
+                        console.log("No signature path found");
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching request statuses:", error);
@@ -195,7 +241,17 @@ const EditProfile: React.FC = () => {
     };
 
     const handleBack = () => {
-        navigate(-1);
+        navigate("/my-account");
+    };
+
+    const handleEditModeToggle = () => {
+        if (isEditMode) {
+            // If currently in edit mode, navigate back to My Account
+            navigate("/my-account");
+        } else {
+            // If in view mode, enable edit mode
+            setIsEditMode(true);
+        }
     };
 
     const handleClear = () => {
@@ -203,35 +259,127 @@ const EditProfile: React.FC = () => {
         setSignatureFile(null);
     };
 
-    const handleSave = () => {
+    const handleOpenSignaturePopup = () => {
+        setOpenPrivacyPolicy(true);
+    };
+
+    const handlePrivacyPolicyAccept = () => {
+        setOpenPrivacyPolicy(false);
+        setOpenPopup(true);
+    };
+
+    const handlePrivacyPolicyDecline = () => {
+        setOpenPrivacyPolicy(false);
+    };
+
+    const handlePrivacyPolicyClose = () => {
+        setOpenPrivacyPolicy(false);
+    };
+
+    const handleSignatureImageClick = () => {
+        setIsSignatureBlurred(!isSignatureBlurred);
+    };
+
+    const handleSave = async () => {
         if (sigRef.current?.isEmpty()) {
-            // alert("กรุณาลงลายเซ็นก่อน");
+            alert("กรุณาลงลายเซ็นก่อน");
             return;
         }
-        const dataUrl = sigRef.current?.getTrimmedCanvas().toDataURL("image/png");
-
-        if (dataUrl) {
-            const arr = dataUrl.split(",");
-            const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
-            const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = bstr.charCodeAt(n);
+        
+        try {
+            // Get the canvas element directly
+            const canvas = sigRef.current?.getCanvas();
+            if (!canvas) {
+                setAlerts([{ type: "error", message: "Failed to get signature canvas" }]);
+                return;
             }
-            const file = new File([u8arr], "signature.png", { type: mime });
-            setSignatureFile(file);
+
+            // Create a new canvas with white background
+            const newCanvas = document.createElement('canvas');
+            const ctx = newCanvas.getContext('2d');
+            if (!ctx) {
+                setAlerts([{ type: "error", message: "Failed to create canvas context" }]);
+                return;
+            }
+
+            // Set canvas size
+            newCanvas.width = canvas.width;
+            newCanvas.height = canvas.height;
+
+            // Fill with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+            // Draw the signature on top
+            ctx.drawImage(canvas, 0, 0);
+
+            // Convert to blob
+            newCanvas.toBlob(async (blob) => {
+                if (!blob) {
+                    setAlerts([{ type: "error", message: "Failed to convert signature to image" }]);
+                    return;
+                }
+
+                // Create file from blob
+                const file = new File([blob], "signature.jpg", { type: "image/jpeg" });
+                setSignatureFile(file);
+
+                // Save signature to backend
+                if (user?.ID) {
+                    const result = await UpdateUserSignature({
+                        UserID: user.ID,
+                        Signature_Image: file
+                    });
+
+                    if (result.status === "success") {
+                        setAlerts([{ type: "success", message: "Signature saved successfully" }]);
+                        setOpenPopup(false);
+                        
+                        // Refresh user data to show updated signature
+                        try {
+                            const updatedUser = await GetUserById(Number(localStorage.getItem("userId")));
+                            if (updatedUser) {
+                                setUser(updatedUser);
+                                // Load the new signature image
+                                if (updatedUser.SignaturePath) {
+                                    await loadSignatureImage(updatedUser.SignaturePath);
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Error refreshing user data:", error);
+                        }
+                    } else {
+                        setAlerts([{ type: "error", message: result.message }]);
+                    }
+                }
+            }, 'image/jpeg', 0.9);
+
+        } catch (error) {
+            console.error("Error saving signature:", error);
+            setAlerts([{ type: "error", message: "Failed to save signature. Please try again." }]);
         }
     };
 
+    console.log("Rendering EditProfile, signatureImage:", signatureImage);
     return (
         <Box className="edit-profile-page">
             {alerts.map(
                 (alert, index) =>
-                    alert.type === "success" && (
+                    alert.type === "success" ? (
                         <SuccessAlert key={index} message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                    )
+                    ) : alert.type === "error" ? (
+                        <ErrorAlert key={index} message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                    ) : null
             )}
+
+            <PrivacyPolicyPopup
+                open={openPrivacyPolicy}
+                onAccept={handlePrivacyPolicyAccept}
+                onDecline={handlePrivacyPolicyDecline}
+                onClose={handlePrivacyPolicyClose}
+                language={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
+            />
 
             <Dialog open={openPopup} onClose={() => setOpenPopup(false)}>
                 <DialogTitle
@@ -314,7 +462,7 @@ const EditProfile: React.FC = () => {
                                 boxShadow: 3,
                                 p: 3,
                                 width: "100%",
-                                height: "55%",
+                                height: "auto",
                                 mb: 2,
                                 border: "1px solid",
                                 borderColor: "divider",
@@ -326,6 +474,7 @@ const EditProfile: React.FC = () => {
                                     sx={{
                                         width: 180,
                                         height: 180,
+
                                         border: `4px solid ${theme.palette.primary.main}20`,
                                         boxShadow: 3,
                                     }}
@@ -351,21 +500,7 @@ const EditProfile: React.FC = () => {
                                 </IconButton>
                             </Box>
 
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: "center", marginBottom: 3 }}>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    startIcon={<FontAwesomeIcon icon={faEdit} />}
-                                    sx={{
-                                        borderRadius: 2,
-                                        textTransform: "none",
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    Edit Profile Image
-                                    <input type="file" hidden onChange={handleFileChange} />
-                                </Button>
-                            </Box>
+                            
 
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: "center" }}>
                                 <Typography variant="h6" fontWeight={600} color="primary" gutterBottom>
@@ -380,6 +515,73 @@ const EditProfile: React.FC = () => {
                                     icon={<FontAwesomeIcon icon={userType === "internal" ? faIdCard : faBuilding} />}
                                     sx={{ mb: 2 }}
                                 />
+                            </Box>
+                            
+                            {/* Display existing signature if available */}
+                            {signatureImage && (
+                                <Box sx={{ mt: 2, textAlign: "center" }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Current Signature:
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            position: "relative",
+                                            display: "inline-block",
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={handleSignatureImageClick}
+                                    >
+                                        <img 
+                                            src={signatureImage} 
+                                            alt="User Signature" 
+                                            style={{ 
+                                                maxWidth: "100%", 
+                                                maxHeight: "100px",
+                                                filter: isSignatureBlurred ? "blur(3px)" : "none",
+                                                transition: "filter 0.3s ease",
+                                            }} 
+                                        />
+                                        {isSignatureBlurred && (
+                                            <Box
+                                                sx={{
+                                                    position: "absolute",
+                                                    top: "50%",
+                                                    left: "50%",
+                                                    transform: "translate(-50%, -50%)",
+                                                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                                    borderRadius: "50%",
+                                                    width: "40px",
+                                                    height: "40px",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    color: "white",
+                                                }}
+                                            >
+                                                <FontAwesomeIcon 
+                                                    icon={faEyeSlash} 
+                                                    size="lg"
+                                                    style={{ color: "white" }}
+                                                />
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </Box>
+                            )}
+                            
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: "center", marginTop: 2 }}>
+                                <Button 
+                                    variant="outlined" 
+                                    onClick={handleOpenSignaturePopup}
+                                    startIcon={<FontAwesomeIcon icon={faEdit} />}
+                                    sx={{
+                                        borderRadius: 2,
+                                        textTransform: "none",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    {user?.SignaturePath ? "Edit Signature" : "Create Signature"}
+                                </Button>
                             </Box>
                         </Card>
                     </Grid>
@@ -763,8 +965,6 @@ const EditProfile: React.FC = () => {
                             )}
                         </Card>
                     </Grid>
-
-                    <Button variant="contained" onClick={()=> setOpenPopup(true)}>Create Signature</Button>
                 </Grid>
             </Container>
         </Box>

@@ -15,6 +15,7 @@ export interface GetUserInterface {
     Email?: string;
     Phone?: string;
     ProfilePath?: string;
+    SignaturePath?: string;
     UserPackageID?: number;
     RoleID?: number;
     Role?: {

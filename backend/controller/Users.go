@@ -134,9 +134,14 @@ func CreateUser(c *gin.Context) {
 		}
 
 		fileExtension := path.Ext(file.Filename)
+		if fileExtension == "" {
+			fileExtension = ".jpg"
+		}
 
-		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
-		filePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
+		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+		timestamp := time.Now().Unix()
+		newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
+		filePath := path.Join(profileFolder, newFileName)
 		if filePath != "" {
 			user.ProfilePath = filePath
 		}
@@ -238,7 +243,14 @@ func CreateUserExternalOnly(c *gin.Context) {
 		}
 
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
+		if fileExtension == "" {
+			fileExtension = ".jpg"
+		}
+
+		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+		timestamp := time.Now().Unix()
+		newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
+		filePath := path.Join(profileFolder, newFileName)
 		if filePath != "" {
 			user.ProfilePath = filePath
 		}
@@ -337,6 +349,7 @@ func GetUserByID(c *gin.Context) {
 		"Email":          user.Email,
 		"Phone":          user.Phone,
 		"ProfilePath":    user.ProfilePath,
+		"SignaturePath":  user.SignaturePath,
 		"UserPackageID":  user.UserPackageID,
 		"RoleID":         user.RoleID,
 		"Role":           user.Role,
@@ -690,9 +703,14 @@ func UpdateUserByID(c *gin.Context) {
 
 		// กำหนด path ของไฟล์ที่จะเก็บ
 		fileExtension := path.Ext(file.Filename)
+		if fileExtension == "" {
+			fileExtension = ".jpg"
+		}
 
-		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
-		newProfilePath := path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
+		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+		timestamp := time.Now().Unix()
+		newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
+		newProfilePath := path.Join(profileFolder, newFileName)
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, newProfilePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new profile image"})
@@ -736,16 +754,18 @@ func UpdateUserByID(c *gin.Context) {
 			fileExtension = ".jpg"
 		}
 
-		// กำหนด path ของไฟล์ที่จะเก็บ โดยใช้อีเมลของผู้ใช้และนามสกุลไฟล์
-		newSignaturePath := path.Join(profileFolder, fmt.Sprintf("signature%s", fileExtension))
+		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+		timestamp := time.Now().Unix()
+		newFileName := fmt.Sprintf("signature_%d%s", timestamp, fileExtension)
+		newSignaturePath := path.Join(profileFolder, newFileName)
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, newSignaturePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new signature image"})
 			return
 		}
 
-		// อัปเดต path ของโปรไฟล์ในฐานข้อมูล
-		user.ProfilePath = newSignaturePath
+		// อัปเดต path ของ signature ในฐานข้อมูล
+		user.SignaturePath = newSignaturePath
 	}
 
 	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล
@@ -787,15 +807,15 @@ func UpdateProfileImage(c *gin.Context) {
 	}
 
 	fileExtension := path.Ext(file.Filename)
-	var filePath string
-	if user.ProfilePath == "" {
-		// ถ้ายังไม่มี path → สร้างชื่อใหม่เหมือนใน CreateUser
-		filePath = path.Join(profileFolder, fmt.Sprintf("profile%s", fileExtension))
-		user.ProfilePath = filePath
-	} else {
-		// ถ้ามี path แล้ว → ใช้ path เดิม
-		filePath = user.ProfilePath
+	if fileExtension == "" {
+		fileExtension = ".jpg"
 	}
+
+	// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+	timestamp := time.Now().Unix()
+	newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
+	filePath := path.Join(profileFolder, newFileName)
+	user.ProfilePath = filePath
 
 	// บันทึกไฟล์ (เขียนทับถ้ามี)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -810,4 +830,71 @@ func UpdateProfileImage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile image updated successfully", "profile_path": user.ProfilePath})
+}
+
+// UpdateSignatureImage อัปเดตลายเซ็นของผู้ใช้
+func UpdateSignatureImage(c *gin.Context) {
+	userID := c.Param("id") // รับ user id จาก path parameter
+
+	var user entity.User
+	if err := config.DB().First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// รับไฟล์ลายเซ็นใหม่
+	file, err := c.FormFile("signature_image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Signature image is required"})
+		return
+	}
+
+	// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
+	signatureFolder := fmt.Sprintf("images/users/user_%d", user.ID)
+	if _, err := os.Stat(signatureFolder); os.IsNotExist(err) {
+		if err := os.MkdirAll(signatureFolder, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+			return
+		}
+	}
+
+	// กำหนด path ของไฟล์ที่จะเก็บ
+	fileExtension := path.Ext(file.Filename)
+	if fileExtension == "" {
+		fileExtension = ".jpg"
+	}
+
+	// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
+	timestamp := time.Now().Unix()
+	newFileName := fmt.Sprintf("signature_%d%s", timestamp, fileExtension)
+	newSignaturePath := path.Join(signatureFolder, newFileName)
+
+	// ลบไฟล์เก่าถ้ามี
+	if user.SignaturePath != "" {
+		err := os.Remove(user.SignaturePath)
+		if err != nil {
+			// ถ้าลบไฟล์เก่าไม่ได้ ให้ข้ามขั้นตอนนี้ไป และไม่ต้องตอบกลับ error
+			fmt.Println("Failed to delete old signature image, but continuing...")
+		}
+	}
+
+	// บันทึกไฟล์ใหม่
+	if err := c.SaveUploadedFile(file, newSignaturePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save signature image"})
+		return
+	}
+
+	// อัปเดต path ของ signature ในฐานข้อมูล
+	user.SignaturePath = newSignaturePath
+
+	// บันทึกข้อมูลลงฐานข้อมูล
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user signature"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Signature image updated successfully",
+		"data":    user,
+	})
 }

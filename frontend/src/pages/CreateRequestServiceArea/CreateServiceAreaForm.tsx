@@ -11,6 +11,8 @@ import {
 import { BusinessGroupInterface } from '../../interfaces/IBusinessGroup';
 import { CompanySizeInterface } from '../../interfaces/ICompanySize';
 import { ServiceUserTypeInterface } from '../../interfaces/IServiceUserType';
+import { ServiceAreaFormData } from '../../interfaces/IServiceAreaForm';
+import { CollaborationPlanData } from '../../interfaces/ICollaborationPlan';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -25,28 +27,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { validateCorporateRegistrationNumber } from '../../utils/corporateRegistrationValidator';
-
-interface CollaborationPlanData {
-  plan: string;
-  budget: number;
-  startDate: string;
-}
-
-interface ServiceAreaFormData {
-  PurposeOfUsingSpace: string;
-  NumberOfEmployees: number;
-  ActivitiesInBuilding: string;
-  SupportingActivitiesForSciencePark: string;
-  ServiceRequestDocument?: File;
-  CorporateRegistrationNumber: string;
-  BusinessGroupID: number | null;
-  CompanySizeID: number | null;
-  MainServices: string;
-  RegisteredCapital: number;
-  HiringRate: number;
-  ResearchInvestmentValue: number;
-  ThreeYearGrowthForecast: string;
-}
+import PrivacyPolicyPopup from '../../components/PrivacyPolicyPopup/PrivacyPolicyPopup';
 
 const CreateServiceAreaForm: React.FC = () => {
   const { control, handleSubmit, reset, formState: { errors }, watch, trigger } = useForm<ServiceAreaFormData>();
@@ -60,6 +41,9 @@ const CreateServiceAreaForm: React.FC = () => {
     { plan: '', budget: 0, startDate: '' }
   ]);
   const [collaborationPlanErrors, setCollaborationPlanErrors] = useState<{ [key: number]: { plan?: string; budget?: string; startDate?: string } }>({});
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [formDataToSubmit, setFormDataToSubmit] = useState<FormData | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('th');
   
   // Watch all form fields for real-time validation
   const watchedFields = watch();
@@ -284,114 +268,129 @@ const CreateServiceAreaForm: React.FC = () => {
       return;
     }
     
+    // Prepare form data for submission
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      setAlerts([{ type: 'error', message: 'User not authenticated.' }]);
+      return;
+    }
+
+    // Check if we're on step 2 and validate required fields
+    if (currentStep === 2) {
+      const step2Fields = [
+        'PurposeOfUsingSpace',
+        'NumberOfEmployees',
+        'ActivitiesInBuilding',
+        'SupportingActivitiesForSciencePark'
+      ] as const;
+      
+      // Check if document is uploaded
+      if (!documentFile) {
+        setAlerts([{ 
+          type: 'error', 
+          message: 'Please upload a service request document before submitting.' 
+        }]);
+        return;
+      }
+      
+      const step2Errors = step2Fields.map(field => {
+        const fieldValue = data[field];
+        const fieldError = errors[field];
+        
+        if (fieldError) {
+          return fieldError;
+        }
+        
+        if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '') || 
+            (typeof fieldValue === 'number' && fieldValue === 0)) {
+          return { message: `Please complete ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}` };
+        }
+        
+        return null;
+      }).filter(error => error !== null);
+      
+      // Validate collaboration plans
+      const isCollaborationPlansValid = validateCollaborationPlans();
+      
+      const allErrors = [...step2Errors];
+      
+      if (allErrors.length > 0 || !isCollaborationPlansValid) {
+        setAlerts([{ 
+          type: 'error', 
+          message: 'Please complete all required fields in Service Area Request before submitting.' 
+        }]);
+        return;
+      }
+    }
+
+    // Create form data
+    const formData = new FormData();
+    formData.append('purpose_of_using_space', data.PurposeOfUsingSpace);
+    formData.append('number_of_employees', data.NumberOfEmployees.toString());
+    formData.append('activities_in_building', data.ActivitiesInBuilding);
+    formData.append('supporting_activities_for_science_park', data.SupportingActivitiesForSciencePark);
+    
+    // Add collaboration plans as arrays
+    collaborationPlans.forEach((plan, index) => {
+      if (plan.plan.trim()) {
+        formData.append('collaboration_plan[]', plan.plan);
+        formData.append('collaboration_budgets[]', plan.budget.toString());
+        formData.append('project_start_dates[]', plan.startDate);
+      }
+    });
+    
+    if (documentFile) {
+      formData.append('service_request_document', documentFile);
+    }
+    
+    formData.append('corporate_registration_number', data.CorporateRegistrationNumber);
+    formData.append('business_group_id', (data.BusinessGroupID || 0).toString());
+    formData.append('company_size_id', (data.CompanySizeID || 0).toString());
+    formData.append('main_services', data.MainServices);
+    formData.append('registered_capital', data.RegisteredCapital.toString());
+    formData.append('hiring_rate', data.HiringRate.toString());
+    formData.append('research_investment_value', data.ResearchInvestmentValue.toString());
+    formData.append('three_year_growth_forecast', data.ThreeYearGrowthForecast);
+
+    // Store form data and show privacy policy popup
+    setFormDataToSubmit(formData);
+    setShowPrivacyPolicy(true);
+  };
+
+  const handlePrivacyPolicyAccept = async () => {
+    if (!formDataToSubmit) return;
+    
     setIsSubmitting(true);
+    setShowPrivacyPolicy(false);
+    
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
         setAlerts([{ type: 'error', message: 'User not authenticated.' }]);
         return;
       }
-      console.log('User ID:', userId);
-
-      // Check if we're on step 2 and validate required fields
-      if (currentStep === 2) {
-        const step2Fields = [
-          'PurposeOfUsingSpace',
-          'NumberOfEmployees',
-          'ActivitiesInBuilding',
-          'SupportingActivitiesForSciencePark'
-        ] as const;
-        
-        // Check if document is uploaded
-        if (!documentFile) {
-          setAlerts([{ 
-            type: 'error', 
-            message: 'Please upload a service request document before submitting.' 
-          }]);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        const step2Errors = step2Fields.map(field => {
-          const fieldValue = data[field];
-          const fieldError = errors[field];
-          
-          if (fieldError) {
-            return fieldError;
-          }
-          
-          if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === '') || 
-              (typeof fieldValue === 'number' && fieldValue === 0)) {
-            return { message: `Please complete ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}` };
-          }
-          
-          return null;
-        }).filter(error => error !== null);
-        
-        // Validate collaboration plans
-        const isCollaborationPlansValid = validateCollaborationPlans();
-        
-        const allErrors = [...step2Errors];
-        
-        if (allErrors.length > 0 || !isCollaborationPlansValid) {
-          setAlerts([{ 
-            type: 'error', 
-            message: 'Please complete all required fields in Service Area Request before submitting.' 
-          }]);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      const formData = new FormData();
-      formData.append('purpose_of_using_space', data.PurposeOfUsingSpace);
-      formData.append('number_of_employees', data.NumberOfEmployees.toString());
-      formData.append('activities_in_building', data.ActivitiesInBuilding);
-      formData.append('supporting_activities_for_science_park', data.SupportingActivitiesForSciencePark);
-      
-      // Add collaboration plans as arrays
-      collaborationPlans.forEach((plan, index) => {
-        if (plan.plan.trim()) {
-          formData.append('collaboration_plan[]', plan.plan);
-          formData.append('collaboration_budgets[]', plan.budget.toString());
-          formData.append('project_start_dates[]', plan.startDate);
-        }
-      });
-      
-      if (documentFile) {
-        formData.append('service_request_document', documentFile);
-      }
-      
-      formData.append('corporate_registration_number', data.CorporateRegistrationNumber);
-      formData.append('business_group_id', (data.BusinessGroupID || 0).toString());
-      formData.append('company_size_id', (data.CompanySizeID || 0).toString());
-      formData.append('main_services', data.MainServices);
-      formData.append('registered_capital', data.RegisteredCapital.toString());
-      formData.append('hiring_rate', data.HiringRate.toString());
-      formData.append('research_investment_value', data.ResearchInvestmentValue.toString());
-      formData.append('three_year_growth_forecast', data.ThreeYearGrowthForecast);
 
       console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
+      for (let [key, value] of formDataToSubmit.entries()) {
         console.log(key, value);
       }
 
-          console.log('Submitting from step:', currentStep);
-    
-    // Trigger validation for all fields before submitting
-    const isValid = await trigger();
-    if (!isValid) {
-      console.log('Form validation failed');
-      setAlerts([{ 
-        type: 'error', 
-        message: 'Please fix all validation errors before submitting.' 
-      }]);
-      setIsSubmitting(false);
-      return;
-    }
-    
-    const response = await CreateRequestServiceAreaAndAboutCompany(parseInt(userId), formData);
-    console.log('API Response:', response);
+      console.log('Submitting from step:', currentStep);
+  
+      // Trigger validation for all fields before submitting
+      const isValid = await trigger();
+      if (!isValid) {
+        console.log('Form validation failed');
+        setAlerts([{ 
+          type: 'error', 
+          message: 'Please fix all validation errors before submitting.' 
+        }]);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const response = await CreateRequestServiceAreaAndAboutCompany(parseInt(userId), formDataToSubmit);
+      console.log('API Response:', response);
 
       // Check if response exists and has data
       if (response && response.message) {
@@ -429,11 +428,27 @@ const CreateServiceAreaForm: React.FC = () => {
       }
     } finally {
       setIsSubmitting(false);
+      setFormDataToSubmit(null);
     }
+  };
+
+  const handlePrivacyPolicyDecline = () => {
+    setShowPrivacyPolicy(false);
+    setFormDataToSubmit(null);
   };
 
   return (
     <>
+      {/* Privacy Policy Popup */}
+      <PrivacyPolicyPopup
+        open={showPrivacyPolicy}
+        onAccept={handlePrivacyPolicyAccept}
+        onDecline={handlePrivacyPolicyDecline}
+        onClose={() => setShowPrivacyPolicy(false)}
+        language={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+      />
+
       {alerts.map((alert, index) => (
         <React.Fragment key={index}>
           {alert.type === 'success' && (
