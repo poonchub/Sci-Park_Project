@@ -54,7 +54,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
             <DataGrid
                 rows={rows}
                 columns={columns}
-                getRowId={getRowId || ((row) => String(row.id))} // ✅ แก้ตรงนี้
+                getRowId={(row) => String(row.ID)} // ✅ แก้ตรงนี้
                 getRowHeight={() => "auto"}
                 pageSizeOptions={[5, 10, 20, 50]}
                 paginationMode="server"

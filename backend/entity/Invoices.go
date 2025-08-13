@@ -19,9 +19,9 @@ type Invoice struct {
 	StatusID   uint
 	Status     PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
 	CreaterID  uint
-	Creater    User `gorm:"foreignKey:CreaterID" valid:"-"`
+	Creater    User 		 `gorm:"foreignKey:CreaterID" valid:"-"`
 	CustomerID uint
-	Customer   User          `gorm:"foreignKey:CustomerID" valid:"-"`
+	Customer   User 		 `gorm:"foreignKey:CustomerID" valid:"-"`
 	Items      []InvoiceItem `gorm:"foreignKey:InvoiceID" valid:"-"`
 	Payments   []Payment     `gorm:"foreignKey:InvoiceID" valid:"-"`
 }

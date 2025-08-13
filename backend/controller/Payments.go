@@ -190,12 +190,12 @@ func CreatePayment(c *gin.Context) {
 		SlipPath:    slipPath,
 		// Note:          note,
 		StatusID:      1,
-		UserID:        uint(userID),
+		PayerID:        uint(userID),
 		BookingRoomID: uint(bookingRoomID),
 	}
 
 	var existing entity.Payment
-	if err := db.Where("user_id = ? AND booking_room_id = ?", payment.UserID, payment.BookingRoomID).First(&existing).Error; err == nil {
+	if err := db.Where("user_id = ? AND booking_room_id = ?", payment.PayerID, payment.BookingRoomID).First(&existing).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this user and booking"})
 		return
 	}
@@ -246,7 +246,7 @@ func UpdatePaymentByID(c *gin.Context) {
 			}
 
 			// เตรียมโฟลเดอร์
-			folderPath := fmt.Sprintf("images/payment/user%d", payment.UserID)
+			folderPath := fmt.Sprintf("images/payment/user%d", payment.PayerID)
 			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
 				return

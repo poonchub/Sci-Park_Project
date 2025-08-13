@@ -222,7 +222,12 @@ func GetInvoicePDF(c *gin.Context) {
 	db := config.DB()
 
 	var invoice entity.Invoice
-	result := db.Preload("Items").Preload("Customer").Preload("Creater.Role").Preload("Creater.Prefix").First(&invoice, id)
+	result := db.
+		Preload("Items").
+		Preload("Creater.Role").
+		Preload("Creater.Prefix").
+		// Preload("Room.Prefix.ServiceAreaDocument").
+		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
@@ -621,7 +626,8 @@ func CreateInvoice(c *gin.Context) {
 
 	var customer entity.User
 	if err := db.First(&customer, invoice.CustomerID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Creater not found"})
+		return
 	}
 
 	var room entity.Room
@@ -629,11 +635,13 @@ func CreateInvoice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Room not found"})
 	}
 
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+
 	invoiceData := entity.Invoice{
 		InvoiceNumber: invoice.InvoiceNumber,
-		IssueDate:     invoice.IssueDate,
-		DueDate:       invoice.DueDate,
-		BillingPeriod: invoice.BillingPeriod,
+		IssueDate:     invoice.IssueDate.In(loc),
+		DueDate:       invoice.DueDate.In(loc),
+		BillingPeriod: invoice.BillingPeriod.In(loc),
 		TotalAmount:   invoice.TotalAmount,
 		RoomID: 	   invoice.RoomID,	
 		StatusID:      invoice.StatusID,

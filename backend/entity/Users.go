@@ -42,10 +42,11 @@ type User struct {
 	UserPackages        []UserPackage        `gorm:"foreignKey:UserID" valid:"-"`
 	Notifications       []Notification       `gorm:"foreignKey:UserID" valid:"-"`
 	BookingRoom         []BookingRoom        `gorm:"foreignKey:UserID" valid:"-"`
-	Payments            []Payment            `gorm:"foreignKey:UserID" valid:"-"`
+	PaymentsAsPayer     []Payment            `gorm:"foreignKey:PayerID" valid:"-"`
+	PaymentsAsApprover  []Payment         	 `gorm:"foreignKey:ApproverID" valid:"-"`
 	News                []News               `gorm:"foreignKey:UserID" valid:"-"`
 	RequestServiceAreas []RequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
 	AboutCompany        *AboutCompany        `gorm:"foreignKey:UserID" valid:"-"`
-	InvoicesAsCustomer 	[]Invoice 			 `gorm:"foreignKey:CustomerID" valid:"-"`
     InvoicesAsCreator  	[]Invoice 			 `gorm:"foreignKey:CreaterID" valid:"-"`
+    InvoicesAsCustomer  []Invoice 			 `gorm:"foreignKey:CustomerID" valid:"-"`
 }

@@ -49,7 +49,7 @@ function RoomRentalSpace() {
     const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
     const [roomstatuses, setRoomStatuses] = useState<RoomStatusInterface[]>([]);
-    const [selectedRoom, setSelectedRoom] = useState<RoomsInterface>()
+    const [selectedRoom, setSelectedRoom] = useState<RoomsInterface>();
     const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
@@ -58,19 +58,28 @@ function RoomRentalSpace() {
         floorID: 0,
         roomStatusID: 0,
     });
+
+    const today = dayjs();
+    const issueDate = today.toISOString();
+    const dueDate = today.date(15).toISOString();
+    const billingPeriod = today.subtract(1, "month").endOf("month").toISOString();
     const [invoiceFormData, setInvoiceFormData] = useState<InvoiceInterface>({
-        IssueDate: "",
-        DueDate: "",
-        BillingPeriod: "",
+        IssueDate: issueDate,
+        DueDate: dueDate,
+        BillingPeriod: billingPeriod,
         TotalAmount: 0,
         CreaterID: 0,
-        CustomerID: 1,
+        RoomID: 0,
     });
     const [invoiceItemFormData, setInvoiceItemFormData] = useState<InvoiceItemInterface[]>([
         {
-            Description: "",
-            UnitPrice: 0,
-            Amount: 0,
+            Description: "ค่าใช้บริการพื้นที่",
+            Amount: 0.00,
+            InvoiceID: 0,
+        },
+        {
+            Description: "ค่าใช้บริการไฟฟ้า",
+            Amount: 0.00,
             InvoiceID: 0,
         },
     ]);
@@ -79,7 +88,8 @@ function RoomRentalSpace() {
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
-    const [openPopup, setOpenPopup] = useState(false);
+    const [openCreatePopup, setOpenCreatePopup] = useState(false);
+    const [openInvoicePopup, setOpenInvoicePopup] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isButtonActive, setIsButtonActive] = useState(false);
 
@@ -129,7 +139,6 @@ function RoomRentalSpace() {
             ...invoiceItemFormData,
             {
                 Description: "",
-                UnitPrice: 0,
                 Amount: 0,
                 InvoiceID: 0,
             },
@@ -159,7 +168,7 @@ function RoomRentalSpace() {
             const newData = [...prev];
             newData[index] = {
                 ...newData[index],
-                [name]: type === "checkbox" ? checked : numberFields.includes(name) ? Number(value) : value,
+                [name]: type === "checkbox" ? checked : numberFields.includes(name) ? (value === "" ? "" : Number(value)) : value,
             };
 
             const total = newData.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
@@ -188,44 +197,46 @@ function RoomRentalSpace() {
             setIsButtonActive(false);
             return;
         } else {
-            invoiceFormData.RoomID = selectedRoom.ID
+            invoiceFormData.RoomID = selectedRoom.ID;
         }
 
         try {
-            const resInvoice = await CreateInvoice(invoiceFormData);
-            if (!resInvoice) {
-                console.error("🚨 Error creating invoice:", resInvoice);
-                handleSetAlert("error", resInvoice?.Error || "Failed to create invoice");
-                setIsButtonActive(false);
-                return;
-            }
+            console.log("invoiceFormData: ", invoiceFormData);
+            console.log("selectedRoom: ", selectedRoom);
+            // const resInvoice = await CreateInvoice(invoiceFormData);
+            // if (!resInvoice) {
+            //     console.error("🚨 Error creating invoice:", resInvoice);
+            //     handleSetAlert("error", resInvoice?.Error || "Failed to create invoice");
+            //     setIsButtonActive(false);
+            //     return;
+            // }
 
-            const updatedItems = invoiceItemFormData.map((item) => ({
-                ...item,
-                InvoiceID: resInvoice.data.ID,
-            }));
+            // const updatedItems = invoiceItemFormData.map((item) => ({
+            //     ...item,
+            //     InvoiceID: resInvoice.data.ID,
+            // }));
 
-            const results = await Promise.all(
-                updatedItems.map((item) =>
-                    CreateInvoiceItems(item).catch((err) => {
-                        return { error: err, item };
-                    })
-                )
-            );
+            // const results = await Promise.all(
+            //     updatedItems.map((item) =>
+            //         CreateInvoiceItems(item).catch((err) => {
+            //             return { error: err, item };
+            //         })
+            //     )
+            // );
 
-            const failedItems = results.filter((r: any) => r?.error);
-            if (failedItems.length > 0) {
-                console.warn("⚠️ Some invoice items failed:", failedItems);
-            } else {
-                handleSetAlert("success", "Invoice created successfully!");
-            }
+            // const failedItems = results.filter((r: any) => r?.error);
+            // if (failedItems.length > 0) {
+            //     console.warn("⚠️ Some invoice items failed:", failedItems);
+            // } else {
+            //     handleSetAlert("success", "Invoice created successfully!");
+            // }
 
-            handleDownloadInvoice(resInvoice.data.ID);
+            // handleDownloadInvoice(resInvoice.data.ID);
 
-            setTimeout(() => {
-                setIsButtonActive(false);
-                setOpenPopup(false);
-            }, 1800);
+            // setTimeout(() => {
+            //     setIsButtonActive(false);
+            //     setOpenCreatePopup(false);
+            // }, 1800);
         } catch (error) {
             console.error("🚨 Error creating invoice:", error);
             handleSetAlert("error", "An unexpected error occurred");
@@ -350,8 +361,8 @@ function RoomRentalSpace() {
                     type: "string",
                     flex: 1,
                     renderCell: (item) => {
-                        const statusName = item.value.StatusName || "";
-                        const statusKey = item.value.StatusName as keyof typeof roomStatusConfig;
+                        const statusName = item.value.status_name || "";
+                        const statusKey = item.value.status_name as keyof typeof roomStatusConfig;
                         const { color, colorLite, icon } = roomStatusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
@@ -419,8 +430,8 @@ function RoomRentalSpace() {
                                     <Button
                                         variant="outlined"
                                         onClick={() => {
-                                            setOpenPopup(true);
-                                            setSelectedRoom(data)
+                                            setOpenCreatePopup(true);
+                                            setSelectedRoom(data);
                                         }}
                                         sx={{
                                             minWidth: "42px",
@@ -437,7 +448,8 @@ function RoomRentalSpace() {
                                     <Button
                                         variant="outlinedGray"
                                         onClick={() => {
-                                            setOpenPopup(true);
+                                            setOpenInvoicePopup(true);
+                                            setSelectedRoom(data);
                                         }}
                                         sx={{
                                             minWidth: "42px",
@@ -464,8 +476,8 @@ function RoomRentalSpace() {
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             <Dialog
-                open={openPopup}
-                onClose={() => setOpenPopup(false)}
+                open={openCreatePopup}
+                onClose={() => setOpenCreatePopup(false)}
                 slotProps={{
                     paper: {
                         sx: {
@@ -488,7 +500,7 @@ function RoomRentalSpace() {
                     Create Invoice
                     <IconButton
                         aria-label="close"
-                        onClick={() => setOpenPopup(false)}
+                        onClick={() => setOpenCreatePopup(false)}
                         sx={{
                             position: "absolute",
                             right: 8,
@@ -555,7 +567,7 @@ function RoomRentalSpace() {
                                     slots={{
                                         openPickerIcon: CalendarMonth,
                                     }}
-                                    format="MM/YYYY"
+                                    format="MMM YYYY"
                                     sx={{ width: "100%" }}
                                     slotProps={{
                                         textField: {
@@ -577,9 +589,10 @@ function RoomRentalSpace() {
                                         borderRadius: "10px",
                                         p: 2,
                                     }}
+                                    rowSpacing={1.4}
                                 >
-                                    <Grid size={{ xs: 6 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 18 }}>
+                                    <Grid container size={{ xs: 6 }} sx={{ alignItems: 'cennter' }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 16 }}>
                                             Invoice Item {index + 1}
                                         </Typography>
                                     </Grid>
@@ -590,11 +603,9 @@ function RoomRentalSpace() {
                                             </Button>
                                         </Grid>
                                     )}
-                                    <Grid size={{ xs: 12 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
-                                            Description
-                                        </Typography>
+                                    <Grid size={{ xs: 8 }}>
                                         <TextField
+                                            label="Description"
                                             fullWidth
                                             variant="outlined"
                                             name="Description"
@@ -605,32 +616,9 @@ function RoomRentalSpace() {
                                             helperText={errors.Description}
                                         />
                                     </Grid>
-                                    <Grid size={{ xs: 6 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
-                                            Unit Price
-                                        </Typography>
+                                    <Grid size={{ xs: 4 }}>
                                         <TextField
-                                            type="number"
-                                            fullWidth
-                                            variant="outlined"
-                                            name="UnitPrice"
-                                            value={item.UnitPrice}
-                                            onChange={(e) => handleInputInvoiceItemChange(index, e)}
-                                            placeholder="Enter unit price."
-                                            error={!!errors.UnitPrice}
-                                            helperText={errors.UnitPrice}
-                                            slotProps={{
-                                                htmlInput: {
-                                                    step: "500",
-                                                } as any,
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 6 }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
-                                            Amount
-                                        </Typography>
-                                        <TextField
+                                            label="Amount"
                                             type="number"
                                             fullWidth
                                             variant="outlined"
@@ -661,13 +649,19 @@ function RoomRentalSpace() {
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Total Amount
                             </Typography>
-                            {invoiceFormData.TotalAmount}
+                            <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 22 }}>
+                                ฿
+                                {invoiceFormData.TotalAmount?.toLocaleString("th-TH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </Typography>
                         </Grid>
                     </Grid>
                 </DialogContent>
 
                 <DialogActions sx={{ px: 3, pb: 2 }}>
-                    <Zoom in={openPopup} timeout={400}>
+                    <Zoom in={openCreatePopup} timeout={400}>
                         <Button
                             onClick={handleCreateInvoice}
                             variant="contained"
@@ -679,6 +673,60 @@ function RoomRentalSpace() {
                     </Zoom>
                 </DialogActions>
             </Dialog>
+
+            <Dialog
+                open={openInvoicePopup}
+                onClose={() => setOpenInvoicePopup(false)}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            width: "80%",
+                            maxWidth: "1400px",
+                        },
+                    },
+                }}
+            >
+                <DialogTitle
+                    sx={{
+                        fontWeight: 700,
+                        color: "primary.main",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                    }}
+                >
+                    <ScrollText size={26} />
+                    Invoice List
+                    <IconButton
+                        aria-label="close"
+                        onClick={() => setOpenInvoicePopup(false)}
+                        sx={{
+                            position: "absolute",
+                            right: 8,
+                            top: 8,
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
+                    <Grid container size={{ xs: 12 }} spacing={2}></Grid>
+                </DialogContent>
+
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Zoom in={openInvoicePopup} timeout={400}>
+                        <Button
+                            // onClick={handleCreateInvoice}
+                            variant="contained"
+                            disabled={isButtonActive}
+                            // startIcon={<CircleX size={18} />}
+                        >
+                            Create Invoice
+                        </Button>
+                    </Zoom>
+                </DialogActions>
+            </Dialog>
+
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     <Grid container className="title-box" direction={"row"} size={{ xs: 5, sm: 5 }} sx={{ gap: 1 }}>
