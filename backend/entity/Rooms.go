@@ -24,3 +24,4 @@ type Room struct {
     Invoice     []Invoice     `gorm:"foreignKey:RoomID"`
 	ServiceAreaDocument	[]ServiceAreaDocument	`gorm:"foreignKey:RoomID"`
 }
+

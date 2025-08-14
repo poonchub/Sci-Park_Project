@@ -9,7 +9,7 @@ import (
 	"sci-park_web-application/entity"
 	_ "sci-park_web-application/validator" // Import to register custom validators
 	"strconv"
-
+	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -662,25 +662,27 @@ func UpdateUserByID(c *gin.Context) {
 		user.UserPackageID = &userPackage.ID
 	}
 
-	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล
-	if err := config.DB().Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User updated successfully",
-		"data":    user,
-	})
-
 	// หากมีการเปลี่ยนแปลงโปรไฟล์, ลบไฟล์โปรไฟล์เก่า
 	if updateUserData.ProfileCheck != "" {
-		// ลบไฟล์เก่าถ้ามี
+		// ลบไฟล์โปรไฟล์เก่าทั้งหมดในโฟลเดอร์
+		userFolder := fmt.Sprintf("images/users/user_%d", user.ID)
 		if user.ProfilePath != "" {
-			err := os.Remove(user.ProfilePath) // ลบไฟล์โปรไฟล์เก่าที่อยู่ใน path
+			// ลบไฟล์โปรไฟล์เก่าที่อยู่ใน path
+			err := os.Remove(user.ProfilePath)
 			if err != nil {
-				// ถ้าลบไฟล์เก่าไม่ได้ ให้ข้ามขั้นตอนนี้ไป และไม่ต้องตอบกลับ error
 				fmt.Println("Failed to delete old profile image, but continuing...")
+			}
+
+			// ลบไฟล์โปรไฟล์เก่าทั้งหมดในโฟลเดอร์
+			if entries, err := os.ReadDir(userFolder); err == nil {
+				for _, entry := range entries {
+					if !entry.IsDir() && (strings.HasPrefix(entry.Name(), "profile_") || strings.HasPrefix(entry.Name(), "signature_")) {
+						oldFilePath := path.Join(userFolder, entry.Name())
+						if oldFilePath != user.ProfilePath && oldFilePath != user.SignaturePath {
+							os.Remove(oldFilePath)
+						}
+					}
+				}
 			}
 		}
 
@@ -692,9 +694,9 @@ func UpdateUserByID(c *gin.Context) {
 		}
 
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
-		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
-		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(profileFolder, os.ModePerm)
+		userFolder = fmt.Sprintf("images/users/user_%d", user.ID)
+		if _, err := os.Stat(userFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(userFolder, os.ModePerm)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
 				return
@@ -710,7 +712,7 @@ func UpdateUserByID(c *gin.Context) {
 		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
 		timestamp := time.Now().Unix()
 		newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
-		newProfilePath := path.Join(profileFolder, newFileName)
+		newProfilePath := path.Join(userFolder, newFileName)
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, newProfilePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new profile image"})
@@ -739,9 +741,9 @@ func UpdateUserByID(c *gin.Context) {
 		}
 
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์หากยังไม่มี
-		profileFolder := fmt.Sprintf("images/users/user_%d", user.ID)
-		if _, err := os.Stat(profileFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(profileFolder, os.ModePerm)
+		signatureFolder := fmt.Sprintf("images/users/user_%d", user.ID)
+		if _, err := os.Stat(signatureFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(signatureFolder, os.ModePerm)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
 				return
@@ -757,7 +759,7 @@ func UpdateUserByID(c *gin.Context) {
 		// สร้างชื่อไฟล์ใหม่ด้วย timestamp เพื่อป้องกัน cache
 		timestamp := time.Now().Unix()
 		newFileName := fmt.Sprintf("signature_%d%s", timestamp, fileExtension)
-		newSignaturePath := path.Join(profileFolder, newFileName)
+		newSignaturePath := path.Join(signatureFolder, newFileName)
 		// บันทึกไฟล์ในโฟลเดอร์ที่กำหนด
 		if err := c.SaveUploadedFile(file, newSignaturePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save new signature image"})
@@ -768,7 +770,7 @@ func UpdateUserByID(c *gin.Context) {
 		user.SignaturePath = newSignaturePath
 	}
 
-	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล
+	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล (รวมการอัพเดตรูปภาพ)
 	if err := config.DB().Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
@@ -815,13 +817,23 @@ func UpdateProfileImage(c *gin.Context) {
 	timestamp := time.Now().Unix()
 	newFileName := fmt.Sprintf("profile_%d%s", timestamp, fileExtension)
 	filePath := path.Join(profileFolder, newFileName)
-	user.ProfilePath = filePath
 
-	// บันทึกไฟล์ (เขียนทับถ้ามี)
+	// ลบไฟล์เก่าถ้ามี
+	if user.ProfilePath != "" {
+		err := os.Remove(user.ProfilePath)
+		if err != nil {
+			// ถ้าลบไฟล์เก่าไม่ได้ ให้ข้ามขั้นตอนนี้ไป และไม่ต้องตอบกลับ error
+			fmt.Println("Failed to delete old profile image, but continuing...")
+		}
+	}
+
+	// บันทึกไฟล์ใหม่
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
+
+	user.ProfilePath = filePath
 
 	// อัปเดต path ใน database (เผื่อนามสกุลเปลี่ยน)
 	if err := config.DB().Save(&user).Error; err != nil {
