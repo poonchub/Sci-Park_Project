@@ -95,7 +95,9 @@ func GetInvoiceByOption(c *gin.Context) {
 
 	query = query.
 		Preload("Payments").
-		Preload("Status")
+		Preload("Status").
+		Preload("Items").
+		Preload("Room.Floor")
 		
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -705,8 +707,8 @@ func CreateInvoice(c *gin.Context) {
 	}
 
 	var exiting entity.Invoice
-	if err := db.Where("invoice_number = ? AND billing_period = ?", invoiceData.InvoiceNumber, invoiceData.BillingPeriod).First(&exiting).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Invoice with this number already exists"})
+	if err := db.Where("billing_period = ?", invoiceData.BillingPeriod).First(&exiting).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "An invoice for this billing period already exists."})
 		return
 	}
 
@@ -720,6 +722,68 @@ func CreateInvoice(c *gin.Context) {
 		"data":    invoiceData,
 	})
 
+}
+
+// PATCH /invoice/:id
+func UpdateInvoiceByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	var invoice entity.Invoice
+
+	db := config.DB()
+	result := db.First(&invoice, ID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&invoice); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	result = db.Save(&invoice)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}
+
+// DELETE /invoice/:id
+func DeleteInvoiceByID(c *gin.Context) {
+    ID := c.Param("id")
+    db := config.DB()
+
+    tx := db.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    var invoice entity.Invoice
+    if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+        return
+    }
+
+    if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
+        return
+    }
+
+    if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
+        return
+    }
+
+    tx.Commit()
+    c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
 }
 
 func ThaiDateFull(t time.Time) string {
@@ -773,39 +837,4 @@ func GenerateNextInvoiceNumber(db *gorm.DB) (string, error) {
 	}
 	// ถ้าเกิน 999 ก็ไม่ต้อง zero padding
 	return fmt.Sprintf("NE2/%d", nextNum), nil
-}
-
-// DELETE /invoice/:id
-func DeleteInvoiceByID(c *gin.Context) {
-    ID := c.Param("id")
-    db := config.DB()
-
-    tx := db.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
-
-    var invoice entity.Invoice
-    if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
-        return
-    }
-
-    if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
-        return
-    }
-
-    if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
-        return
-    }
-
-    tx.Commit()
-    c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
 }

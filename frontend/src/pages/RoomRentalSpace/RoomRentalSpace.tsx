@@ -3,12 +3,25 @@ import React, { ChangeEvent, useEffect, useState } from "react";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import { CreateInvoice, CreateInvoiceItems, DeleteInvoiceByID, GetFloors, GetInvoiceByOption, GetRoomRentalSpaceByOption, GetRoomStatus } from "../../services/http";
+import {
+    apiUrl,
+    CreateInvoice,
+    CreateInvoiceItems,
+    DeleteInvoiceByID,
+    DeleteInvoiceItemByID,
+    GetFloors,
+    GetInvoiceByOption,
+    GetRoomRentalSpaceByOption,
+    GetRoomStatus,
+    UpdateInvoiceByID,
+    UpdateInvoiceItemsByID,
+} from "../../services/http";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import {
     Button,
     Card,
+    CardMedia,
     Container,
     Dialog,
     DialogActions,
@@ -27,7 +40,18 @@ import {
     useMediaQuery,
     Zoom,
 } from "@mui/material";
-import { BrushCleaning, CirclePlus, CircleX, DoorClosed, Download, NotebookPen, ScrollText, Send, SendHorizonal, Trash2 } from "lucide-react";
+import {
+    BrushCleaning,
+    CirclePlus,
+    DoorClosed,
+    Download,
+    Eye,
+    NotebookPen,
+    Pencil,
+    ScrollText,
+    Send,
+    Trash2,
+} from "lucide-react";
 import { TextField } from "../../components/TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faMagnifyingGlass, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
@@ -47,6 +71,7 @@ import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import { TransitionProps } from "@mui/material/transitions";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 type InvoiceItemError = {
     Description?: string;
@@ -75,6 +100,7 @@ function RoomRentalSpace() {
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
     const [roomstatuses, setRoomStatuses] = useState<RoomStatusInterface[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<RoomsInterface | null>();
+    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceInterface | null>();
     const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
@@ -118,15 +144,22 @@ function RoomRentalSpace() {
     const [invoiceTotal, setInvoiceTotal] = useState(0);
 
     const [openCreatePopup, setOpenCreatePopup] = useState(false);
+    const [openImage, setOpenImage] = useState(false);
     const [openInvoicePopup, setOpenInvoicePopup] = useState(false);
+    const [openDeletePopup, setOpenDeletePopup] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
     const [isButtonActive, setIsButtonActive] = useState(false);
     const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
-    const [loadingDeleteId , setLoadingDeleteId ] = useState<number | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const getRooms = async () => {
         try {
-            const resRooms = await GetRoomRentalSpaceByOption(roomPage, roomLimit, selectedOption.floorID, selectedOption.roomStatusID);
+            const resRooms = await GetRoomRentalSpaceByOption(
+                roomPage,
+                roomLimit,
+                selectedOption.floorID,
+                selectedOption.roomStatusID
+            );
             if (resRooms) {
                 setRoomTotal(resRooms.total);
                 setRooms(resRooms.data);
@@ -189,6 +222,10 @@ function RoomRentalSpace() {
     };
 
     const handleDecreaseItem = (index: number) => {
+        setInvoiceFormData((form) => ({
+            ...form,
+            TotalAmount: (form.TotalAmount ?? 0) - (invoiceItemFormData[index]?.Amount ?? 0),
+        }));
         setInvoiceItemFormData(invoiceItemFormData.filter((_, i) => i !== index));
     };
 
@@ -199,7 +236,10 @@ function RoomRentalSpace() {
         }));
     };
 
-    const handleInputInvoiceItemChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputInvoiceItemChange = (
+        index: number,
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         const target = e.target as HTMLInputElement;
 
         const { name, value, type } = target;
@@ -211,7 +251,14 @@ function RoomRentalSpace() {
             const newData = [...prev];
             newData[index] = {
                 ...newData[index],
-                [name]: type === "checkbox" ? checked : numberFields.includes(name) ? (value === "" ? "" : Number(value)) : value,
+                [name]:
+                    type === "checkbox"
+                        ? checked
+                        : numberFields.includes(name)
+                          ? value === ""
+                              ? ""
+                              : Number(value)
+                          : value,
             };
 
             const total = newData.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
@@ -257,12 +304,6 @@ function RoomRentalSpace() {
 
         try {
             const resInvoice = await CreateInvoice(invoiceFormData);
-            if (!resInvoice) {
-                console.error("🚨 Error creating invoice:", resInvoice);
-                handleSetAlert("error", resInvoice?.Error || "Failed to create invoice");
-                setIsButtonActive(false);
-                return;
-            }
 
             const updatedItems = invoiceItemFormData.map((item) => ({
                 ...item,
@@ -281,37 +322,115 @@ function RoomRentalSpace() {
             if (failedItems.length > 0) {
                 console.warn("⚠️ Some invoice items failed:", failedItems);
             }
-            const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(invoiceFormData.BillingPeriod ?? "")}`;
-            const success = await handleDownloadInvoice(resInvoice.data.ID, fileName);
-            if (success) {
-                handleSetAlert("success", "Invoice created successfully!");
-            }
+
+            handleSetAlert("success", "Invoice created successfully!");
             setTimeout(() => {
                 setIsButtonActive(false);
                 setOpenCreatePopup(false);
                 handleClearForm();
-                setSelectedRoom({});
+                setSelectedRoom(null);
             }, 1800);
-        } catch (error) {
+        } catch (error: any) {
             console.error("🚨 Error creating invoice:", error);
-            handleSetAlert("error", "An unexpected error occurred");
+            if (error.status === 409) {
+                handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
+            } else {
+                handleSetAlert("error", "An unexpected error occurred");
+            }
             setIsButtonActive(false);
         }
     };
 
-    // const handleDeleteInvoice = async () =>{
-    //     try {
-    //         const resDelete = DeleteInvoiceByID()
-    //         if (!resInvoice) {
-    //             console.error("🚨 Error creating invoice:", resInvoice);
-    //             handleSetAlert("error", resInvoice?.Error || "Failed to create invoice");
-    //             setIsButtonActive(false);
-    //             return;
-    //         }
-    //     } catch (error) {
+    const handleDeleteInvoice = async () => {
+        setIsButtonActive(true);
+        if (!selectedInvoice?.ID) {
+            handleSetAlert("error", "InvoiceID not found");
+            setIsButtonActive(false);
+            return;
+        }
 
-    //     }
-    // }
+        try {
+            await DeleteInvoiceByID(selectedInvoice?.ID || 0);
+
+            handleSetAlert("success", "Invoice deleted successfully!");
+
+            setTimeout(() => {
+                getInvoice();
+                setIsButtonActive(false);
+            }, 1800);
+        } catch (error) {
+            console.error("🚨 Unexpected error while deleting invoice:", error);
+            handleSetAlert("error", "An unexpected error occurred while deleting the invoice");
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleUpdateInvoice = async () => {
+        setIsButtonActive(true);
+        if (!validateForm()) {
+            setIsButtonActive(false);
+            return;
+        }
+
+        try {
+            await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceFormData);
+
+            if (selectedInvoice?.Items) {
+                const deletedItems = selectedInvoice.Items.filter(
+                    (oldItem) => !invoiceItemFormData.some((newItem) => newItem.ID === oldItem.ID)
+                );
+
+                await Promise.all(
+                    deletedItems.map((item) =>
+                        DeleteInvoiceItemByID(item.ID ?? 0).catch((err) => ({ error: err, item }))
+                    )
+                );
+
+                const newItems = invoiceItemFormData.filter((item) => !item.ID);
+                if (newItems.length > 0) {
+                    await Promise.all(
+                        newItems.map((item) =>
+                            CreateInvoiceItems({ ...item, InvoiceID: selectedInvoice.ID }).catch((err) => ({
+                                error: err,
+                                item,
+                            }))
+                        )
+                    );
+                }
+
+                const updatedItems = invoiceItemFormData
+                    .filter((item) => !!item.ID)
+                    .map((item) => ({
+                        ...item,
+                        InvoiceID: selectedInvoice.ID,
+                    }));
+
+                const results = await Promise.all(
+                    updatedItems.map((item) =>
+                        UpdateInvoiceItemsByID(item.ID ?? 0, item).catch((err) => ({ error: err, item }))
+                    )
+                );
+
+                const failedItems = results.filter((r: any) => r?.error);
+                if (failedItems.length > 0) {
+                    console.warn("⚠️ Some invoice items failed:", failedItems);
+                }
+            }
+
+            handleSetAlert("success", "The invoice has been updated successfully.");
+            setTimeout(() => {
+                setIsButtonActive(false);
+                setSelectedInvoice(null);
+                setInvoices([]);
+                getInvoice();
+                handleClearForm();
+            }, 1800);
+        } catch (error) {
+            console.error("🚨 Error updating invoice:", error);
+            handleSetAlert("error", "An unexpected error occurred");
+            setIsButtonActive(false);
+        }
+    };
 
     const validateForm = () => {
         const newErrors: { [key: string]: any } = {};
@@ -353,7 +472,10 @@ function RoomRentalSpace() {
         setErrors(newErrors);
 
         // Check if there are any errors
-        const hasErrors = Object.keys(newErrors).length > 0 && (Object.keys(newErrors).some((k) => k !== "invoiceItems") || itemErrors.some((e) => Object.keys(e).length > 0));
+        const hasErrors =
+            Object.keys(newErrors).length > 0 &&
+            (Object.keys(newErrors).some((k) => k !== "invoiceItems") ||
+                itemErrors.some((e) => Object.keys(e).length > 0));
 
         return !hasErrors;
     };
@@ -389,7 +511,20 @@ function RoomRentalSpace() {
     function formatThaiMonthYear(dateInput: string | Date): string {
         const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
 
-        const thaiMonthsShort = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        const thaiMonthsShort = [
+            "ม.ค.",
+            "ก.พ.",
+            "มี.ค.",
+            "เม.ย.",
+            "พ.ค.",
+            "มิ.ย.",
+            "ก.ค.",
+            "ส.ค.",
+            "ก.ย.",
+            "ต.ค.",
+            "พ.ย.",
+            "ธ.ค.",
+        ];
 
         const year = date.getFullYear() + 543;
         const shortYear = year.toString().slice(-2);
@@ -437,6 +572,13 @@ function RoomRentalSpace() {
         }
     }, [openInvoicePopup]);
 
+    useEffect(() => {
+        if (isEditMode && selectedInvoice && selectedInvoice.Items) {
+            setInvoiceFormData(selectedInvoice);
+            setInvoiceItemFormData(selectedInvoice.Items);
+        }
+    }, [selectedInvoice, isEditMode]);
+
     const filteredRooms = rooms.filter((item) => {
         const roomNumber = item.RoomNumber;
 
@@ -447,7 +589,7 @@ function RoomRentalSpace() {
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     const getRoomColumns = (): GridColDef[] => {
         if (isSmallScreen) {
@@ -849,7 +991,6 @@ function RoomRentalSpace() {
                         const data = item.row;
                         const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
                         const isDownloading = loadingDownloadId === data.ID;
-                        const isDeleting = loadingDeleteId === data.ID;
 
                         return (
                             <Box
@@ -881,25 +1022,48 @@ function RoomRentalSpace() {
                                         {isDownloading ? "Loading..." : <Download size={18} />}
                                     </Button>
                                 </Tooltip>
-
-                                <Tooltip title="Delete Invoice">
+                                <Tooltip title="Edit Invoice">
                                     <Button
                                         variant="outlined"
-                                        onClick={async () => {
-                                            setLoadingDeleteId(data.ID);
-                                            const success = await DeleteInvoiceByID(data.ID);
-                                            if (success) {
-                                                getInvoice()
-                                                console.log("Invoice deleted successfully.");
-                                            } else {
-                                                console.error("Failed to delete Invoice.");
-                                            }
-                                            setLoadingDeleteId(null);
+                                        onClick={() => {
+                                            setIsEditMode(true);
+                                            setSelectedInvoice(data);
+                                            setOpenCreatePopup(true);
                                         }}
-                                        disabled={isDeleting}
-                                        sx={{ minWidth: "42px" }}
+                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
                                     >
-                                        {isDeleting ? "Loading..." : <Trash2 size={18} />}
+                                        <Pencil size={18} />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Delete Invoice">
+                                    <Button
+                                        variant="outlinedCancel"
+                                        onClick={() => {
+                                            setSelectedInvoice((prev) => ({
+                                                ...prev,
+                                                ...data,
+                                            }));
+
+                                            setOpenDeletePopup(true);
+                                        }}
+                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                    >
+                                        <Trash2 size={18} />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="View Slip">
+                                    <Button
+                                        variant="outlinedGray"
+                                        onClick={() => {
+                                            setSelectedInvoice((prev) => ({
+                                                ...prev,
+                                                ...data,
+                                            }));
+                                            setOpenImage(true);
+                                        }}
+                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                    >
+                                        <Eye size={18} />
                                     </Button>
                                 </Tooltip>
                             </Box>
@@ -910,18 +1074,67 @@ function RoomRentalSpace() {
         }
     };
 
+    const imagePopup = (
+        <Dialog
+            open={openImage}
+            onClose={() => {
+                setOpenImage(false);
+            }}
+            maxWidth={false}
+            sx={{
+                "& .MuiDialog-paper": {
+                    maxWidth: "70vw",
+                    width: "auto",
+                    margin: 0,
+                    borderRadius: 0,
+                },
+            }}
+        >
+            <CardMedia
+                component="img"
+                image={
+                    selectedInvoice?.Payments?.SlipPath
+                        ? `${apiUrl}/${selectedInvoice?.Payments?.SlipPath}`
+                        : "https://placehold.co/360x480"
+                }
+                alt="image"
+                sx={{
+                    width: "100%",
+                    height: "auto",
+                    display: "block",
+                }}
+            />
+        </Dialog>
+    );
+
     return (
         <Box className="room-rental-space-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
+            {/* Delete Confirm */}
+            <ConfirmDialog
+                open={openDeletePopup}
+                setOpenConfirm={setOpenDeletePopup}
+                handleFunction={() => handleDeleteInvoice()}
+                title="Delete Invoice"
+                message="Are you sure you want to delete this invoice? This action cannot be undone."
+                buttonActive={isButtonActive}
+            />
+
+            {/* Create amd Update Popup */}
             <Dialog
-                open={openCreatePopup}
+                open={isEditMode ? selectedInvoice?.ID === invoiceFormData?.ID : openCreatePopup}
                 onClose={() => {
                     setOpenCreatePopup(false);
                     handleClearForm();
                     setErrors({});
-                    setSelectedRoom({});
+                    if (isEditMode) {
+                        setSelectedInvoice(null);
+                        setIsEditMode(false);
+                    } else {
+                        setSelectedRoom(null);
+                    }
                 }}
                 slotProps={{
                     paper: {
@@ -942,14 +1155,19 @@ function RoomRentalSpace() {
                     }}
                 >
                     <NotebookPen size={26} />
-                    Create Invoice
+                    {isEditMode ? "Edit Invoice" : "Create Invoice"}
                     <IconButton
                         aria-label="close"
                         onClick={() => {
                             setOpenCreatePopup(false);
                             handleClearForm();
                             setErrors({});
-                            setSelectedRoom({});
+                            if (isEditMode) {
+                                setSelectedInvoice(null);
+                                setIsEditMode(false);
+                            } else {
+                                setSelectedRoom(null);
+                            }
                         }}
                         sx={{
                             position: "absolute",
@@ -976,6 +1194,7 @@ function RoomRentalSpace() {
                                         openPickerIcon: CalendarMonth,
                                     }}
                                     format="DD/MM/YYYY"
+                                    readOnly={isEditMode}
                                     sx={{ width: "100%" }}
                                     slotProps={{
                                         textField: {
@@ -1024,6 +1243,7 @@ function RoomRentalSpace() {
                                         openPickerIcon: CalendarMonth,
                                     }}
                                     format="MMM YYYY"
+                                    readOnly={isEditMode}
                                     sx={{ width: "100%" }}
                                     slotProps={{
                                         textField: {
@@ -1054,7 +1274,11 @@ function RoomRentalSpace() {
                                     </Grid>
                                     {invoiceItemFormData.length > 1 && (
                                         <Grid size={{ xs: 6 }} sx={{ textAlign: "end" }}>
-                                            <Button variant="outlinedCancel" sx={{ minWidth: "0px" }} onClick={() => handleDecreaseItem(index)}>
+                                            <Button
+                                                variant="outlinedCancel"
+                                                sx={{ minWidth: "0px" }}
+                                                onClick={() => handleDecreaseItem(index)}
+                                            >
                                                 <Trash2 size={18} />
                                             </Button>
                                         </Grid>
@@ -1096,7 +1320,11 @@ function RoomRentalSpace() {
                         })}
 
                         <Grid size={{ xs: 12 }} sx={{ textAlign: "end" }}>
-                            <Button variant="outlined" startIcon={<CirclePlus size={20} />} onClick={() => handleIncreaseItem()}>
+                            <Button
+                                variant="outlined"
+                                startIcon={<CirclePlus size={20} />}
+                                onClick={() => handleIncreaseItem()}
+                            >
                                 Add Item
                             </Button>
                         </Grid>
@@ -1127,7 +1355,10 @@ function RoomRentalSpace() {
                                 <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                     Total Amount
                                 </Typography>
-                                <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 26, color: "primary.main" }}>
+                                <Typography
+                                    variant="body1"
+                                    sx={{ fontWeight: 700, fontSize: 26, color: "primary.main" }}
+                                >
                                     ฿
                                     {invoiceFormData.TotalAmount?.toLocaleString("th-TH", {
                                         minimumFractionDigits: 2,
@@ -1143,12 +1374,14 @@ function RoomRentalSpace() {
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Zoom in={openCreatePopup} timeout={400}>
                         <Button
-                            onClick={handleCreateInvoice}
+                            onClick={() => {
+                                isEditMode ? handleUpdateInvoice() : handleCreateInvoice();
+                            }}
                             variant="contained"
                             disabled={isButtonActive}
                             // startIcon={<CircleX size={18} />}
                         >
-                            {isButtonActive ? "Loading..." : "Create Invoice"}
+                            {isButtonActive ? "Loading..." : isEditMode ? "Save Change" : "Create Invoice"}
                         </Button>
                     </Zoom>
                 </DialogActions>
@@ -1167,6 +1400,7 @@ function RoomRentalSpace() {
                     transition: Transition,
                 }}
             >
+                {imagePopup}
                 <DialogTitle
                     sx={{
                         fontWeight: 700,
@@ -1254,7 +1488,12 @@ function RoomRentalSpace() {
                                         <FormControl fullWidth>
                                             <Select
                                                 value={selectedOption.floorID}
-                                                onChange={(e) => setSelectedOption((prev) => ({ ...prev, floorID: Number(e.target.value) }))}
+                                                onChange={(e) =>
+                                                    setSelectedOption((prev) => ({
+                                                        ...prev,
+                                                        floorID: Number(e.target.value),
+                                                    }))
+                                                }
                                                 displayEmpty
                                                 startAdornment={
                                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
@@ -1277,7 +1516,12 @@ function RoomRentalSpace() {
                                         <FormControl fullWidth>
                                             <Select
                                                 value={selectedOption.roomStatusID}
-                                                onChange={(e) => setSelectedOption((prev) => ({ ...prev, roomStatusID: Number(e.target.value) }))}
+                                                onChange={(e) =>
+                                                    setSelectedOption((prev) => ({
+                                                        ...prev,
+                                                        roomStatusID: Number(e.target.value),
+                                                    }))
+                                                }
                                                 displayEmpty
                                                 startAdornment={
                                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>

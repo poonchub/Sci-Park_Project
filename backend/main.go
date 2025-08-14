@@ -223,12 +223,15 @@ func main() {
 		protected.GET("/invoice/:id", controller.GetInvoiceByID)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.GET("/room-invoice-option", controller.GetInvoiceByOption)
+		protected.PATCH("/invoice/:id", controller.UpdateInvoiceByID)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
 
 		// InvoiceItems
 		protected.GET("/invoice-items", controller.ListInvoiceItems)
 		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
 		protected.POST("/invoice-items", controller.CreateInvoiceItem)
+		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
+		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token

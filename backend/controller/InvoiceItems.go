@@ -75,3 +75,50 @@ func CreateInvoiceItem(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, &invoiceItemData)
 }
+
+// PATCH /invoice-item/:id
+func UpdateInvoiceItemsByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	var invoiceItem entity.InvoiceItem
+
+	db := config.DB()
+	result := db.Find(&invoiceItem, ID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&invoiceItem); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	result = db.Save(&invoiceItem)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}
+
+// DELETE /invoicce-item/:id
+func DeleteInvoiceItemByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	db := config.DB()
+
+	var invoiceItem entity.InvoiceItem
+	if err := db.Where("id = ?", ID).First(&invoiceItem).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice item not found"})
+		return
+	}
+
+	if err := db.Where("id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice item"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Invoice item deleted successfully"})
+}

@@ -1653,24 +1653,18 @@ async function ListNewsOrderedPeriod() {
     return res;
 }
 async function CreateNews(data: NewsImagesInterface) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/news`, requestOptions).then((res) => {
-        if (res.status == 201) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.post(`/news`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating news:", error);
+        throw error;
+    }
 }
 
 async function GetTimeSlots(id?: number) {
@@ -2288,12 +2282,26 @@ async function GetInvoiceByOption(page: number, limit: number, roomId?: number, 
         throw error;
     }
 }
+async function UpdateInvoiceByID(invoiceID: number, data: InvoiceInterface): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/invoice/${invoiceID}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice:", error);
+        throw error;
+    }
+}
 async function DeleteInvoiceByID(invoiceID: number): Promise<any> {
     try {
         const response = await axiosInstance.delete(`/invoice/${invoiceID}`);
         return response.data;
     } catch (error) {
-        console.error("Error deleting service area document:", error);
+        console.error("Error deleting invoice:", error);
         throw error;
     }
 }
@@ -2310,6 +2318,29 @@ async function CreateInvoiceItems(data: InvoiceItemInterface) {
         return response.data;
     } catch (error) {
         console.error("Error creating invoice items:", error);
+        throw error;
+    }
+}
+async function UpdateInvoiceItemsByID(id: number, data: InvoiceItemInterface): Promise<InvoiceItemInterface> {
+    try {
+        const response = await axiosInstance.patch(`/invoice-item/${id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice items:", error);
+        throw error;
+    }
+}
+async function DeleteInvoiceItemByID(invoiceItemID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/invoice-item/${invoiceItemID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting invoice item:", error);
         throw error;
     }
 }
@@ -2490,7 +2521,10 @@ export {
     CreateInvoice,
     GetInvoiceByOption,
     DeleteInvoiceByID,
+    UpdateInvoiceByID,
 
     // InvoiceItems
     CreateInvoiceItems,
+    UpdateInvoiceItemsByID,
+    DeleteInvoiceItemByID,
 };
