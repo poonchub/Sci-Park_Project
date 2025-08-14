@@ -73,6 +73,7 @@ func GetInvoiceByOption(c *gin.Context) {
 
 	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
 	statusID, _ := strconv.Atoi(c.DefaultQuery("statusId", "0"))
+	customerID, _ := strconv.Atoi(c.DefaultQuery("customerId", "0"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
@@ -92,13 +93,16 @@ func GetInvoiceByOption(c *gin.Context) {
 	if roomID != 0 {
 		query = query.Where("room_id = ?", roomID)
 	}
+	if customerID != 0 {
+		query = query.Where("customer_id = ?", customerID)
+	}
 
 	query = query.
 		Preload("Payments").
 		Preload("Status").
 		Preload("Items").
 		Preload("Room.Floor")
-		
+
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,6 +115,9 @@ func GetInvoiceByOption(c *gin.Context) {
 	}
 	if roomID != 0 {
 		countQuery = countQuery.Where("room_id = ?", roomID)
+	}
+	if customerID != 0 {
+		countQuery = countQuery.Where("customer_id = ?", customerID)
 	}
 	countQuery.Count(&total)
 
@@ -700,7 +707,7 @@ func CreateInvoice(c *gin.Context) {
 		DueDate:       invoice.DueDate.In(loc),
 		BillingPeriod: invoice.BillingPeriod.In(loc),
 		TotalAmount:   invoice.TotalAmount,
-		RoomID: 	   invoice.RoomID,	
+		RoomID:        invoice.RoomID,
 		StatusID:      invoice.StatusID,
 		CreaterID:     invoice.CreaterID,
 		CustomerID:    invoice.CustomerID,
@@ -753,37 +760,37 @@ func UpdateInvoiceByID(c *gin.Context) {
 
 // DELETE /invoice/:id
 func DeleteInvoiceByID(c *gin.Context) {
-    ID := c.Param("id")
-    db := config.DB()
+	ID := c.Param("id")
+	db := config.DB()
 
-    tx := db.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-    var invoice entity.Invoice
-    if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
-        return
-    }
+	var invoice entity.Invoice
+	if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
 
-    if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
-        return
-    }
+	if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
+		return
+	}
 
-    if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
-        tx.Rollback()
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
-        return
-    }
+	if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
+		return
+	}
 
-    tx.Commit()
-    c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
 }
 
 func ThaiDateFull(t time.Time) string {

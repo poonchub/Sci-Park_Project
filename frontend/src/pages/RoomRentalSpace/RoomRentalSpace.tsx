@@ -13,6 +13,7 @@ import {
     GetInvoiceByOption,
     GetRoomRentalSpaceByOption,
     GetRoomStatus,
+    ListPaymentStatus,
     UpdateInvoiceByID,
     UpdateInvoiceItemsByID,
 } from "../../services/http";
@@ -72,6 +73,9 @@ import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import { TransitionProps } from "@mui/material/transitions";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
+import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
+import { formatToMonthYear } from "../../utils/formatToMonthYear";
 
 type InvoiceItemError = {
     Description?: string;
@@ -99,15 +103,19 @@ function RoomRentalSpace() {
     const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
     const [roomstatuses, setRoomStatuses] = useState<RoomStatusInterface[]>([]);
+    const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatusInterface[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<RoomsInterface | null>();
     const [selectedInvoice, setSelectedInvoice] = useState<InvoiceInterface | null>();
     const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+    const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
-    const [searchText, setSearchText] = useState("");
+    const [searchTextRoom, setSearchTextRoom] = useState("");
+    const [searchTextInvoice, setSearchTextInvoice] = useState("");
     const [selectedOption, setSelectedOption] = useState({
         floorID: 0,
         roomStatusID: 0,
+        paymentStatusID: 0,
     });
 
     const today = dayjs();
@@ -170,11 +178,18 @@ function RoomRentalSpace() {
     };
 
     const getInvoice = async () => {
+        setIsLoadingInvoice(true)
         try {
-            const resRooms = await GetInvoiceByOption(invoicePage, invoiceLimit, selectedRoom?.ID, 1);
-            if (resRooms) {
-                setInvoiceTotal(resRooms.total);
-                setInvoices(resRooms.data);
+            const resInvoice = await GetInvoiceByOption(
+                invoicePage,
+                invoiceLimit,
+                selectedRoom?.ID,
+                selectedOption.paymentStatusID
+            );
+            if (resInvoice) {
+                setInvoiceTotal(resInvoice.total);
+                setInvoices(resInvoice.data);
+                setIsLoadingInvoice(false)
             }
         } catch (error) {
             console.error("Error fetching rooms:", error);
@@ -203,10 +218,22 @@ function RoomRentalSpace() {
         }
     };
 
+    const getPaymentStatuses = async () => {
+        try {
+            const resStatuses = await ListPaymentStatus();
+            if (resStatuses) {
+                setPaymentStatuses(resStatuses);
+            }
+        } catch (error) {
+            console.error("Error fetching payment statuses:", error);
+        }
+    };
+
     const handleClearFillter = () => {
         setSelectedOption({
             floorID: 0,
             roomStatusID: 0,
+            paymentStatusID: 0,
         });
     };
 
@@ -508,42 +535,10 @@ function RoomRentalSpace() {
         ]);
     };
 
-    function formatThaiMonthYear(dateInput: string | Date): string {
-        const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-
-        const thaiMonthsShort = [
-            "ม.ค.",
-            "ก.พ.",
-            "มี.ค.",
-            "เม.ย.",
-            "พ.ค.",
-            "มิ.ย.",
-            "ก.ค.",
-            "ส.ค.",
-            "ก.ย.",
-            "ต.ค.",
-            "พ.ย.",
-            "ธ.ค.",
-        ];
-
-        const year = date.getFullYear() + 543;
-        const shortYear = year.toString().slice(-2);
-
-        return `เดือน ${thaiMonthsShort[date.getMonth()]} ${shortYear}`;
-    }
-
-    function formatToMonthYear(dateString: string): string {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-        });
-    }
-
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getRooms(), getFloors(), getRoomStatuses()]);
+                await Promise.all([getRooms(), getFloors(), getRoomStatuses(), getPaymentStatuses()]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.log("Error fetching initial data: ", error);
@@ -559,7 +554,11 @@ function RoomRentalSpace() {
     }, [roomPage, roomLimit]);
 
     useEffect(() => {
-        getRooms();
+        if (openInvoicePopup) {
+            getInvoice();
+        } else {
+            getRooms();
+        }
     }, [selectedOption]);
 
     useEffect(() => {
@@ -582,7 +581,21 @@ function RoomRentalSpace() {
     const filteredRooms = rooms.filter((item) => {
         const roomNumber = item.RoomNumber;
 
-        const matchText = !searchText || roomNumber?.includes(searchText.toLocaleLowerCase());
+        const matchText = !searchTextRoom || roomNumber?.includes(searchTextRoom.toLocaleLowerCase());
+
+        return matchText;
+    });
+
+    const filteredInvoices = invoices.filter((item) => {
+        const invoiceNumber = item.InvoiceNumber;
+        const billingPeriod = formatToMonthYear(item.BillingPeriod || "");
+        const totalAmount = String(item.TotalAmount)
+
+        const matchText =
+            !searchTextInvoice ||
+            invoiceNumber?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+            billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) || 
+            totalAmount?.includes(searchTextInvoice)
 
         return matchText;
     });
@@ -868,52 +881,10 @@ function RoomRentalSpace() {
                     ),
                 },
                 {
-                    field: "RoomDetails",
-                    headerName: "Room Details",
-                    type: "string",
-                    flex: 0.6,
-                    renderCell: (item) => {
-                        return (
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "center",
-                                    height: "100%",
-                                }}
-                            >
-                                {/* <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                    }}
-                                >
-                                    {`Room No. ${roomNumber}, Floor ${floor}`}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        fontSize: 14,
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        maxWidth: "100%",
-                                        color: "text.secondary",
-                                    }}
-                                >
-                                    {`Room Size: ${roomSize} sqm`}
-                                </Typography> */}
-                            </Box>
-                        );
-                    },
-                },
-                {
                     field: "BillingPeriod",
                     headerName: "Billing Period",
                     type: "string",
-                    flex: 0.8,
+                    flex: 0.4,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -925,6 +896,30 @@ function RoomRentalSpace() {
                                 }}
                             >
                                 {formatToMonthYear(params.value)}
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "TotalAmount",
+                    headerName: "Total Amount",
+                    type: "string",
+                    flex: 0.4,
+                    renderCell: (params) => {
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                ฿
+                                {params.value?.toLocaleString("th-TH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                             </Box>
                         );
                     },
@@ -1387,6 +1382,7 @@ function RoomRentalSpace() {
                 </DialogActions>
             </Dialog>
 
+            {/* Invoice List Popup */}
             <Dialog
                 fullScreen
                 open={openInvoicePopup}
@@ -1430,12 +1426,92 @@ function RoomRentalSpace() {
                 </DialogTitle>
                 <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
                     <Grid container size={{ xs: 12 }} spacing={2}>
+                        {!isLoadingData ? (
+                            <Grid className="filter-section" size={{ xs: 12 }}>
+                                <Card sx={{ width: "100%", borderRadius: 2 }}>
+                                    <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
+                                        <Grid size={{ xs: 12, sm: 8 }}>
+                                            <TextField
+                                                fullWidth
+                                                className="search-box"
+                                                variant="outlined"
+                                                placeholder="Search"
+                                                margin="none"
+                                                value={searchTextInvoice}
+                                                onChange={(e) => setSearchTextInvoice(e.target.value)}
+                                                slotProps={{
+                                                    input: {
+                                                        startAdornment: (
+                                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                            </InputAdornment>
+                                                        ),
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid size={{ xs: 5, sm: 3 }}>
+                                            <FormControl fullWidth>
+                                                <Select
+                                                    value={selectedOption.paymentStatusID}
+                                                    onChange={(e) =>
+                                                        setSelectedOption((prev) => ({
+                                                            ...prev,
+                                                            paymentStatusID: Number(e.target.value),
+                                                        }))
+                                                    }
+                                                    displayEmpty
+                                                    startAdornment={
+                                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                            {/* <FontAwesomeIcon icon={faToolbox} size="lg" /> */}
+                                                        </InputAdornment>
+                                                    }
+                                                >
+                                                    <MenuItem value={0}>{"All Statuses"}</MenuItem>
+                                                    {paymentStatuses.map((item, index) => {
+                                                        return (
+                                                            <MenuItem key={index} value={item.ID}>
+                                                                {item.Name}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid size={{ xs: 2, sm: 1 }}>
+                                            <Button
+                                                onClick={handleClearFillter}
+                                                sx={{
+                                                    minWidth: 0,
+                                                    width: "100%",
+                                                    height: "45px",
+                                                    borderRadius: "10px",
+                                                    border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                    "&:hover": {
+                                                        boxShadow: "none",
+                                                        borderColor: "primary.main",
+                                                        backgroundColor: "transparent",
+                                                    },
+                                                }}
+                                            >
+                                                <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                </Card>
+                            </Grid>
+                        ) : (
+                            <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                        )}
+
                         <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
-                            {isLoadingData ? (
-                                <Skeleton variant="rectangular" width="100%" height={215} sx={{ borderRadius: 2 }} />
+                            {isLoadingInvoice ? (
+                                <Skeleton variant="rectangular" width="100%" height={255} sx={{ borderRadius: 2 }} />
                             ) : (
                                 <CustomDataGrid
-                                    rows={invoices}
+                                    rows={filteredInvoices.sort((a, b) =>
+                                        (b.BillingPeriod ?? "").localeCompare(a.BillingPeriod ?? "")
+                                    )}
                                     columns={getInvoiceColumns()}
                                     rowCount={invoiceTotal}
                                     page={invoicePage}
@@ -1471,8 +1547,8 @@ function RoomRentalSpace() {
                                             variant="outlined"
                                             placeholder="Search"
                                             margin="none"
-                                            value={searchText}
-                                            onChange={(e) => setSearchText(e.target.value)}
+                                            value={searchTextRoom}
+                                            onChange={(e) => setSearchTextRoom(e.target.value)}
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
@@ -1504,7 +1580,7 @@ function RoomRentalSpace() {
                                                 <MenuItem value={0}>{"All Floors"}</MenuItem>
                                                 {floors.map((item, index) => {
                                                     return (
-                                                        <MenuItem key={index} value={index + 1}>
+                                                        <MenuItem key={index} value={item.ID}>
                                                             {`Floor ${item.Number}`}
                                                         </MenuItem>
                                                     );
@@ -1532,7 +1608,7 @@ function RoomRentalSpace() {
                                                 <MenuItem value={0}>{"All Statuses"}</MenuItem>
                                                 {roomstatuses.map((item, index) => {
                                                     return (
-                                                        <MenuItem key={index} value={index + 1}>
+                                                        <MenuItem key={index} value={item.ID}>
                                                             {item.StatusName}
                                                         </MenuItem>
                                                     );
@@ -1568,7 +1644,7 @@ function RoomRentalSpace() {
 
                     <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
                         {isLoadingData ? (
-                            <Skeleton variant="rectangular" width="100%" height={215} sx={{ borderRadius: 2 }} />
+                            <Skeleton variant="rectangular" width="100%" height={255} sx={{ borderRadius: 2 }} />
                         ) : (
                             <CustomDataGrid
                                 rows={filteredRooms}

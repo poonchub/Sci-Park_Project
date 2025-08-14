@@ -8,11 +8,9 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
     Divider,
     Fab,
-    Fade,
     Grid,
     Tooltip,
     Typography,
@@ -20,9 +18,9 @@ import {
 } from "@mui/material";
 import { NewsInterface } from "../../interfaces/News";
 import Carousel from "react-material-ui-carousel";
-import { apiUrl, DeleteNewsByID, DeleteNewsImagesByNewsID, UpdateNewsByID, UpdateNewsImages } from "../../services/http";
+import { apiUrl, UpdateNewsByID, UpdateNewsImages } from "../../services/http";
 import formatNewsDate from "../../utils/formatNewsDate";
-import { BadgeCheck, BookmarkCheck, CalendarDays, CircleX, ImageUp, Newspaper, Pencil, Pin, RotateCcw, Save, Trash2 } from "lucide-react";
+import { CalendarDays, CircleX, Newspaper, Pencil, Pin, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { TextField } from "../TextField/TextField";
 import { DatePicker } from "../DatePicker/DatePicker";
@@ -32,14 +30,13 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleExclamation, faImage } from "@fortawesome/free-solid-svg-icons";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 import { motion } from "framer-motion";
 import React from "react";
 import Lottie from "lottie-react";
 import animationData from "../../../public/lottie/Succes 2.json";
 import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import { handleDeleteNews } from "../../utils/handleDeleteNews";
-import { NewsImagesInterface } from "../../interfaces/NewsImages";
 import formatNewsDateRange from "../../utils/formatNewsDateRange";
 
 interface NewsDetailPopupProps {

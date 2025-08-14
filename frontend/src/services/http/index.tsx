@@ -23,6 +23,7 @@ import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocum
 import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
+import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -2273,9 +2274,9 @@ async function CreateInvoice(data: InvoiceInterface) {
         throw error;
     }
 }
-async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number){
+async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number, customerId?: number){
     try {
-        const response = await axiosInstance.get(`/room-invoice-option?roomId=${roomId}&statusId=${statusId}&page=${page}&limit=${limit}`);
+        const response = await axiosInstance.get(`/room-invoice-option?roomId=${roomId}&statusId=${statusId}&page=${page}&limit=${limit}&customerId=${customerId}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching invoice by id:", error);
@@ -2341,6 +2342,17 @@ async function DeleteInvoiceItemByID(invoiceItemID: number): Promise<any> {
         return response.data;
     } catch (error) {
         console.error("Error deleting invoice item:", error);
+        throw error;
+    }
+}
+
+// PaymentStatus
+async function ListPaymentStatus(): Promise<PaymentStatusInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/payment-statuses`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
         throw error;
     }
 }
@@ -2527,4 +2539,7 @@ export {
     CreateInvoiceItems,
     UpdateInvoiceItemsByID,
     DeleteInvoiceItemByID,
+
+    // PaymentStatuses
+    ListPaymentStatus,
 };

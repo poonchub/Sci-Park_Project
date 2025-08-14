@@ -1,16 +1,49 @@
-import { apiUrl, GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../../services/http";
+import {
+    apiUrl,
+    GetInvoiceByOption,
+    GetMaintenanceRequestByID,
+    GetMaintenanceRequestsForUser,
+    GetRequestStatuses,
+    socketUrl,
+    UpdateMaintenanceRequestByID,
+    UpdateNotificationsByRequestID,
+} from "../../services/http";
 
 import React, { useState, useEffect } from "react";
-import { Button, Typography, Avatar, Grid, Box, Card, Divider, useTheme, Container, Tabs, Tab, Skeleton, Tooltip, useMediaQuery } from "@mui/material";
+import {
+    Button,
+    Typography,
+    Avatar,
+    Grid,
+    Box,
+    Card,
+    Divider,
+    useTheme,
+    Container,
+    Tabs,
+    Tab,
+    Skeleton,
+    Tooltip,
+    useMediaQuery,
+} from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
 
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { faXmark, faQuestionCircle, faClock, faCheck, faRepeat, faEye, faPencil, faFileLines } from "@fortawesome/free-solid-svg-icons";
+import {
+    faXmark,
+    faQuestionCircle,
+    faClock,
+    faCheck,
+    faRepeat,
+    faEye,
+    faPencil,
+    faFileLines,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ShieldUser } from "lucide-react";
+import { Download, Eye, ShieldUser } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import FilterSection from "../../components/FilterSection/FilterSection";
@@ -33,11 +66,19 @@ import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { io } from "socket.io-client";
 import { UserInterface } from "../../interfaces/IUser";
+import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { roomStatusConfig } from "../../constants/roomStatusConfig";
+import { formatToMonthYear } from "../../utils/formatToMonthYear";
+import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
+import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
+import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [user, setUser] = useState<UserInterface | null>();
+    const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
+    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceInterface | null>();
     const [valueTab, setValueTab] = useState(0);
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
@@ -52,7 +93,13 @@ const MyAccount: React.FC = () => {
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
 
+    const [invoicePage, setInvoicePage] = useState(0);
+    const [invoiceLimit, setInvoiceLimit] = useState(10);
+    const [invoiceTotal, setInvoiceTotal] = useState(0);
+
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
+    const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
     const [isBottonActive, setIsBottonActive] = useState(false);
@@ -60,6 +107,7 @@ const MyAccount: React.FC = () => {
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
+    const [openImage, setOpenImage] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
 
@@ -106,7 +154,8 @@ const MyAccount: React.FC = () => {
                         const roomFloor = params.row.Room?.Floor?.Number;
 
                         const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
-                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const maintenanceKey = params.row.MaintenanceType
+                            ?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
@@ -134,7 +183,9 @@ const MyAccount: React.FC = () => {
                                             maxWidth: "100%",
                                         }}
                                     >
-                                        {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
+                                        {areaID === 2
+                                            ? `${areaDetail}`
+                                            : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                     </Typography>
                                     <Box
                                         sx={{
@@ -253,7 +304,10 @@ const MyAccount: React.FC = () => {
                                                             fullWidth
                                                         >
                                                             <FontAwesomeIcon icon={faCheck} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Confirm
                                                             </Typography>
                                                         </Button>
@@ -270,7 +324,10 @@ const MyAccount: React.FC = () => {
                                                             fullWidth
                                                         >
                                                             <FontAwesomeIcon icon={faRepeat} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Rework
                                                             </Typography>
                                                         </Button>
@@ -290,7 +347,10 @@ const MyAccount: React.FC = () => {
                                                         >
                                                             <FontAwesomeIcon icon={faEye} size="lg" />
                                                             {width && width > 530 && (
-                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                <Typography
+                                                                    variant="textButtonClassic"
+                                                                    className="text-btn"
+                                                                >
                                                                     Details
                                                                 </Typography>
                                                             )}
@@ -311,7 +371,10 @@ const MyAccount: React.FC = () => {
                                                             fullWidth
                                                         >
                                                             <FontAwesomeIcon icon={faXmark} size="lg" />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                            <Typography
+                                                                variant="textButtonClassic"
+                                                                className="text-btn"
+                                                            >
                                                                 Cancel
                                                             </Typography>
                                                         </Button>
@@ -331,7 +394,10 @@ const MyAccount: React.FC = () => {
                                                         >
                                                             <FontAwesomeIcon icon={faEye} size="lg" />
                                                             {width && width > 250 && (
-                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                <Typography
+                                                                    variant="textButtonClassic"
+                                                                    className="text-btn"
+                                                                >
                                                                     Details
                                                                 </Typography>
                                                             )}
@@ -401,7 +467,8 @@ const MyAccount: React.FC = () => {
                         const roomFloor = params.row.Room?.Floor?.Number;
 
                         const typeName = params.row.MaintenanceType?.TypeName || "Electrical Work";
-                        const maintenanceKey = params.row.MaintenanceType?.TypeName as keyof typeof maintenanceTypeConfig;
+                        const maintenanceKey = params.row.MaintenanceType
+                            ?.TypeName as keyof typeof maintenanceTypeConfig;
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
@@ -426,7 +493,9 @@ const MyAccount: React.FC = () => {
                                         maxWidth: "100%",
                                     }}
                                 >
-                                    {areaID === 2 ? `${areaDetail}` : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
+                                    {areaID === 2
+                                        ? `${areaDetail}`
+                                        : `${roomtype} - Floor ${roomFloor}, Room No. ${roomNum}`}
                                 </Typography>
                                 <Typography
                                     sx={{
@@ -700,7 +769,13 @@ const MyAccount: React.FC = () => {
         try {
             const userId = localStorage.getItem("userId");
             const statusFormat = selectedStatuses.join(",");
-            const res = await GetMaintenanceRequestsForUser(statusFormat, pageNum, limit, selectedDate ? selectedDate.format("YYYY-MM-DD") : "", Number(userId));
+            const res = await GetMaintenanceRequestsForUser(
+                statusFormat,
+                pageNum,
+                limit,
+                selectedDate ? selectedDate.format("YYYY-MM-DD") : "",
+                Number(userId)
+            );
 
             if (res) {
                 setMaintenanceRequests(res.data);
@@ -752,6 +827,21 @@ const MyAccount: React.FC = () => {
         }
     };
 
+    const getInvoice = async () => {
+        // setIsLoadingInvoice(true);
+        try {
+            const userId = Number(localStorage.getItem("userId"));
+            const resInvoice = await GetInvoiceByOption(invoicePage, invoiceLimit, 0, 0, userId);
+            if (resInvoice) {
+                setInvoiceTotal(resInvoice.total);
+                setInvoices(resInvoice.data);
+                setIsLoadingInvoice(false);
+            }
+        } catch (error) {
+            console.error("Error fetching rooms:", error);
+        }
+    };
+
     const handleClickCheck = (data: MaintenanceRequestsInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.ID));
@@ -759,7 +849,11 @@ const MyAccount: React.FC = () => {
         }
     };
 
-    const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
+    const handleClickInspection = (
+        statusName: "Completed" | "Rework Requested",
+        actionType: "confirm" | "rework",
+        note?: string
+    ) => {
         setIsBottonActive(true);
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
         const userID = Number(localStorage.getItem("userId"));
@@ -787,13 +881,18 @@ const MyAccount: React.FC = () => {
             };
 
             const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
-            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status.");
+            if (!resRequest || resRequest.error)
+                throw new Error(resRequest?.error || "Failed to update request status.");
 
             const notificationDataUpdate: NotificationsInterface = {
                 IsRead: true,
             };
-            const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
-            if (!resUpdateNotification || resUpdateNotification.error) throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+            const resUpdateNotification = await UpdateNotificationsByRequestID(
+                notificationDataUpdate,
+                selectedRequest.ID
+            );
+            if (!resUpdateNotification || resUpdateNotification.error)
+                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
             setTimeout(() => {
                 setAlerts((prev) => [
@@ -923,12 +1022,225 @@ const MyAccount: React.FC = () => {
         };
     }, []);
 
+    const filteredInvoices = invoices.filter((item) => {
+        // const invoiceNumber = item.InvoiceNumber;
+        // const billingPeriod = formatToMonthYear(item.BillingPeriod || "");
+        // const totalAmount = String(item.TotalAmount)
+
+        // const matchText =
+        //     !searchTextInvoice ||
+        //     invoiceNumber?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+        //     billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+        //     totalAmount?.includes(searchTextInvoice)
+
+        return item;
+    });
+
+    const getInvoiceColumns = (): GridColDef[] => {
+        if (isSmallScreen) {
+            return [
+                {
+                    field: "All Maintenance Requests",
+                    headerName: "All Maintenance Requests",
+                    flex: 1,
+                    renderCell: (params) => {
+                        return <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container"></Grid>;
+                    },
+                },
+            ];
+        } else {
+            return [
+                {
+                    field: "InvoiceNumber",
+                    headerName: "Invoice No.",
+                    flex: 0.3,
+                    headerAlign: "center",
+                    renderCell: (params) => (
+                        <Box
+                            sx={{
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            {params.value}
+                        </Box>
+                    ),
+                },
+                {
+                    field: "BillingPeriod",
+                    headerName: "Billing Period",
+                    type: "string",
+                    flex: 0.4,
+                    renderCell: (params) => {
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                {formatToMonthYear(params.value)}
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "TotalAmount",
+                    headerName: "Total Amount",
+                    type: "string",
+                    flex: 0.4,
+                    renderCell: (params) => {
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                ฿
+                                {params.value?.toLocaleString("th-TH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Status",
+                    headerName: "Status",
+                    type: "string",
+                    flex: 0.5,
+                    renderCell: (item) => {
+                        const statusName = item.value.Name || "";
+                        const statusKey = item.value.Name as keyof typeof roomStatusConfig;
+                        const { color, colorLite, icon } = paymentStatusConfig[statusKey] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
+                        return (
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        bgcolor: colorLite,
+                                        borderRadius: 10,
+                                        px: 1.5,
+                                        py: 0.5,
+                                        display: "flex",
+                                        gap: 1,
+                                        color: color,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: "100%",
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={icon} />
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {statusName}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Actions",
+                    headerName: "Actions",
+                    type: "string",
+                    flex: 0.6,
+                    renderCell: (item) => {
+                        const data = item.row;
+                        const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
+                        const isDownloading = loadingDownloadId === data.ID;
+
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                <Tooltip title="Download PDF">
+                                    <Button
+                                        variant="contained"
+                                        onClick={async () => {
+                                            setLoadingDownloadId(data.ID);
+                                            const success = await handleDownloadInvoice(data.ID, fileName);
+                                            if (success) {
+                                                console.log("Download success");
+                                            } else {
+                                                console.error("Download failed");
+                                            }
+                                            setLoadingDownloadId(null);
+                                        }}
+                                        disabled={isDownloading}
+                                        sx={{ minWidth: "42px" }}
+                                    >
+                                        {isDownloading ? "Loading..." : <Download size={18} />}
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="View Slip">
+                                    <Button
+                                        variant="outlinedGray"
+                                        onClick={() => {
+                                            setSelectedInvoice((prev) => ({
+                                                ...prev,
+                                                ...data,
+                                            }));
+                                            setOpenImage(true);
+                                        }}
+                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                    >
+                                        <Eye size={18} />
+                                    </Button>
+                                </Tooltip>
+                            </Box>
+                        );
+                    },
+                },
+            ];
+        }
+    };
+
     return (
         <Box className="my-accout-page">
             {alerts.map(
                 (alert, index) =>
                     alert.type === "success" && (
-                        <SuccessAlert key={index} message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                        <SuccessAlert
+                            key={index}
+                            message={alert.message}
+                            onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                            index={index}
+                            totalAlerts={alerts.length}
+                        />
                     )
             )}
 
@@ -1023,7 +1335,7 @@ const MyAccount: React.FC = () => {
                                         flexDirection: "column",
                                         justifyContent: "center",
                                     }}
-                                >   
+                                >
                                     <Typography
                                         sx={{
                                             fontSize: 22,
@@ -1042,7 +1354,13 @@ const MyAccount: React.FC = () => {
                                     >
                                         {user?.CompanyName}
                                     </Typography>
-                                    <Grid container size={{ xs: 12 }} columnSpacing={10} rowSpacing={1.2} sx={{ mt: 2 }}>
+                                    <Grid
+                                        container
+                                        size={{ xs: 12 }}
+                                        columnSpacing={10}
+                                        rowSpacing={1.2}
+                                        sx={{ mt: 2 }}
+                                    >
                                         <Grid>
                                             <Typography
                                                 sx={{
@@ -1110,10 +1428,16 @@ const MyAccount: React.FC = () => {
 
                     <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
                         <Grid size={{ xs: 6 }}>
-                            <Tabs value={valueTab} onChange={handleChange} variant="scrollable" allowScrollButtonsMobile>
+                            <Tabs
+                                value={valueTab}
+                                onChange={handleChange}
+                                variant="scrollable"
+                                allowScrollButtonsMobile
+                            >
                                 <Tab label="Maintenance Request" {...a11yProps(0)} />
                                 <Tab label="Room Booking" {...a11yProps(1)} />
-                                <Tab label="Payment" {...a11yProps(2)} />
+                                <Tab label="Invoice" {...a11yProps(2)} />
+                                <Tab label="Payment" {...a11yProps(3)} />
                             </Tabs>
                         </Grid>
                         <Grid container size={{ xs: 6 }} sx={{ justifyContent: "flex-end" }}>
@@ -1163,7 +1487,12 @@ const MyAccount: React.FC = () => {
                             {/* Data Table */}
                             <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
                                 {isLoadingData ? (
-                                    <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 2 }} />
+                                    <Skeleton
+                                        variant="rectangular"
+                                        width="100%"
+                                        height={200}
+                                        sx={{ borderRadius: 2 }}
+                                    />
                                 ) : (
                                     <CustomDataGrid
                                         rows={filteredRequests}
@@ -1179,7 +1508,31 @@ const MyAccount: React.FC = () => {
                             </Grid>
                         </CustomTabPanel>
                         <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={2}></CustomTabPanel>
+                        <CustomTabPanel value={valueTab} index={2}>
+                            <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                {isLoadingInvoice ? (
+                                    <Skeleton
+                                        variant="rectangular"
+                                        width="100%"
+                                        height={255}
+                                        sx={{ borderRadius: 2 }}
+                                    />
+                                ) : (
+                                    <CustomDataGrid
+                                        rows={filteredInvoices.sort((a, b) =>
+                                            (b.BillingPeriod ?? "").localeCompare(a.BillingPeriod ?? "")
+                                        )}
+                                        columns={getInvoiceColumns()}
+                                        rowCount={invoiceTotal}
+                                        page={invoicePage}
+                                        limit={invoiceLimit}
+                                        onPageChange={setInvoicePage}
+                                        onLimitChange={setInvoiceLimit}
+                                        noDataText="Invoices information not found."
+                                    />
+                                )}
+                            </Grid>
+                        </CustomTabPanel>
                     </Grid>
                 </Grid>
             </Container>

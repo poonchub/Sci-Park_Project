@@ -202,6 +202,9 @@ func main() {
 
 		// Invoice
 		protected.GET("/invoice/:id/pdf", controller.GetInvoicePDF)
+
+		// PaymentStatus
+		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
