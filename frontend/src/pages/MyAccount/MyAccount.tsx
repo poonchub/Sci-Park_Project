@@ -1,5 +1,7 @@
 import {
     apiUrl,
+    CheckSlip,
+    CreatePayment,
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForUser,
@@ -25,6 +27,7 @@ import {
     Skeleton,
     Tooltip,
     useMediaQuery,
+    Dialog,
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
@@ -72,6 +75,11 @@ import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
 import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
+import { PaymentInterface } from "../../interfaces/IPayments";
+import formatToLocalWithTimezone from "../../utils/formatToLocalWithTimezone";
+import generateInvoicePDF from "../../components/InvoicePDF/InvoicePDF";
+import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
+// import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -83,6 +91,7 @@ const MyAccount: React.FC = () => {
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
+    const [slipfile, setSlipFile] = useState<File | null>(null);
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
@@ -102,12 +111,13 @@ const MyAccount: React.FC = () => {
     const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
-    const [isBottonActive, setIsBottonActive] = useState(false);
+    const [isButtonActive, setIsButtonActive] = useState(false);
 
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openImage, setOpenImage] = useState(false);
+    const [openPDF, setOpenPDF] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
 
@@ -120,8 +130,6 @@ const MyAccount: React.FC = () => {
         pagePath: KEY_PAGES.MY_ACCOUNT,
         onInteractionChange: () => {},
     });
-
-    console.log(user);
 
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
@@ -854,7 +862,7 @@ const MyAccount: React.FC = () => {
         actionType: "confirm" | "rework",
         note?: string
     ) => {
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
         const userID = Number(localStorage.getItem("userId"));
 
@@ -868,12 +876,12 @@ const MyAccount: React.FC = () => {
             note,
             files: requestfiles,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClickCancel = async () => {
         try {
-            setIsBottonActive(true);
+            setIsButtonActive(true);
             const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
@@ -904,14 +912,51 @@ const MyAccount: React.FC = () => {
                 ]);
 
                 setOpenConfirmCancelled(false);
-                setIsBottonActive(false);
+                setIsButtonActive(false);
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
-            setIsBottonActive(false);
+            setIsButtonActive(false);
         }
+    };
+
+    const handleUploadSlip = async (resCheckSlip?: any) => {
+        try {
+            // const resCheckSlip = await
+            const userId = Number(localStorage.getItem("userId"));
+            const paymentData: PaymentInterface = {
+                PaymentDate: formatToLocalWithTimezone(resCheckSlip.data.transTimestamp),
+                Amount: selectedInvoice?.TotalAmount,
+                UserID: userId,
+                InvoiceID: selectedInvoice?.ID,
+            };
+
+            const formData = new FormData();
+
+            for (const [key, value] of Object.entries(paymentData)) {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
+            }
+
+            formData.append("files", slipfile as File);
+
+            await CreatePayment(formData);
+        } catch (error: any) {
+            console.error("🚨 Error creating payment:", error);
+            if (error.status === 409) {
+                handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
+            } else {
+                handleSetAlert("error", "An unexpected error occurred");
+            }
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
+        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
     };
 
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -993,21 +1038,29 @@ const MyAccount: React.FC = () => {
         }
     }, [selectedStatuses, selectedDate]);
 
-    const filteredRequests = maintenanceRequests.filter((request) => {
-        const requestId = String(request.ID);
-        const roomTypeName = request.Room?.RoomType?.TypeName?.toLowerCase() || "";
-        const floor = `Floor ${request.Room?.Floor?.Number}`;
-        const roomNumber = String(request.Room?.RoomNumber).toLowerCase() || "";
+    useEffect(() => {
+        if (valueTab === 2) {
+            getInvoice();
+        }
+    }, [valueTab]);
 
-        const matchText =
-            !searchText ||
-            requestId?.includes(searchText) ||
-            roomTypeName.includes(searchText.toLowerCase()) ||
-            floor.includes(searchText.toLowerCase()) ||
-            roomNumber?.includes(searchText.toLowerCase());
+    useEffect(() => {
+        async function doCheckSlip() {
+            const formData = new FormData();
+            formData.append("files", slipfile as File);
 
-        return matchText;
-    });
+            const resCheckSlip = await CheckSlip(formData);
+            console.log("Slip check result:", resCheckSlip);
+
+            if (resCheckSlip) {
+                handleUploadSlip(resCheckSlip);
+            }
+        }
+
+        if (slipfile) {
+            doCheckSlip();
+        }
+    }, [slipfile]);
 
     useEffect(() => {
         const socket = io(socketUrl);
@@ -1034,6 +1087,22 @@ const MyAccount: React.FC = () => {
         //     totalAmount?.includes(searchTextInvoice)
 
         return item;
+    });
+
+    const filteredRequests = maintenanceRequests.filter((request) => {
+        const requestId = String(request.ID);
+        const roomTypeName = request.Room?.RoomType?.TypeName?.toLowerCase() || "";
+        const floor = `Floor ${request.Room?.Floor?.Number}`;
+        const roomNumber = String(request.Room?.RoomNumber).toLowerCase() || "";
+
+        const matchText =
+            !searchText ||
+            requestId?.includes(searchText) ||
+            roomTypeName.includes(searchText.toLowerCase()) ||
+            floor.includes(searchText.toLowerCase()) ||
+            roomNumber?.includes(searchText.toLowerCase());
+
+        return matchText;
     });
 
     const getInvoiceColumns = (): GridColDef[] => {
@@ -1192,12 +1261,15 @@ const MyAccount: React.FC = () => {
                                         variant="contained"
                                         onClick={async () => {
                                             setLoadingDownloadId(data.ID);
-                                            const success = await handleDownloadInvoice(data.ID, fileName);
-                                            if (success) {
-                                                console.log("Download success");
-                                            } else {
-                                                console.error("Download failed");
-                                            }
+                                            // const success = await handleDownloadInvoice(data.ID, fileName);
+                                            // if (success) {
+                                            //     console.log("Download success");
+                                            // } else {
+                                            //     console.error("Download failed");
+                                            // }
+                                            setOpenPDF(true);
+                                            setSelectedInvoice(data);
+                                            // generateInvoicePDF(data)
                                             setLoadingDownloadId(null);
                                         }}
                                         disabled={isDownloading}
@@ -1229,6 +1301,26 @@ const MyAccount: React.FC = () => {
         }
     };
 
+    const PDFPopup = (
+        <Dialog
+            open={openPDF}
+            onClose={() => {
+                setOpenPDF(false);
+            }}
+            maxWidth={false}
+            sx={{
+                "& .MuiDialog-paper": {
+                    maxWidth: "70vw",
+                    width: "auto",
+                    margin: 0,
+                    borderRadius: 0,
+                },
+            }}
+        >
+            <InvoicePDF invoice={selectedInvoice ?? {}} />
+        </Dialog>
+    );
+
     return (
         <Box className="my-accout-page">
             {alerts.map(
@@ -1244,6 +1336,8 @@ const MyAccount: React.FC = () => {
                     )
             )}
 
+            {PDFPopup}
+
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -1254,7 +1348,7 @@ const MyAccount: React.FC = () => {
                 handleFunction={() => handleClickInspection("Completed", "confirm")}
                 title="Confirm Maintenance Inspection"
                 message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Rework Confirm */}
@@ -1277,7 +1371,7 @@ const MyAccount: React.FC = () => {
                 handleFunction={() => handleClickCancel()}
                 title="Confirm Cancel Request"
                 message="Are you sure you want to cancel this request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>

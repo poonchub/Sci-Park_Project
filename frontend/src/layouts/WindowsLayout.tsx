@@ -71,6 +71,8 @@ interface NotificationCountsInterface {
     UnreadTasks?: number;
 }
 
+export let logoPath = ""
+
 const WindowsLayout: React.FC = (props: any) => {
     const { window } = props;
     const theme = useTheme();
@@ -483,6 +485,7 @@ const WindowsLayout: React.FC = (props: any) => {
             const res = await GetOrganizationInfo();
             if (res) {
                 setOrganizationInfo(res);
+                logoPath = `${apiUrl}/${res?.LogoPath}?t=${Date.now()}`
             }
         } catch (error) {
             console.error("Error fetching organization info:", error);

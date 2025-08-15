@@ -123,6 +123,7 @@ function RoomRentalSpace() {
     const dueDate = today.date(15).toISOString();
     const billingPeriod = today.subtract(1, "month").endOf("month").toISOString();
     const [invoiceFormData, setInvoiceFormData] = useState<InvoiceInterface>({
+        ID: 0,
         IssueDate: issueDate,
         DueDate: dueDate,
         BillingPeriod: billingPeriod,
@@ -448,9 +449,9 @@ function RoomRentalSpace() {
             setTimeout(() => {
                 setIsButtonActive(false);
                 setSelectedInvoice(null);
+                handleClearForm()
                 setInvoices([]);
                 getInvoice();
-                handleClearForm();
             }, 1800);
         } catch (error) {
             console.error("🚨 Error updating invoice:", error);
@@ -513,6 +514,7 @@ function RoomRentalSpace() {
 
     const handleClearForm = () => {
         setInvoiceFormData({
+            ID: 0,
             IssueDate: issueDate,
             DueDate: dueDate,
             BillingPeriod: billingPeriod,

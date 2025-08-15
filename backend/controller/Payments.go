@@ -105,7 +105,6 @@ func CancelExpiredBookings() {
 	}
 }
 
-
 func CancelExpiredBookingsHandler(c *gin.Context) {
 	CancelExpiredBookings() // เรียกฟังก์ชันเดิม
 	c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกการจองที่หมดอายุแล้วเรียบร้อย"})
@@ -190,13 +189,19 @@ func CreatePayment(c *gin.Context) {
 		SlipPath:    slipPath,
 		// Note:          note,
 		StatusID:      1,
-		PayerID:        uint(userID),
+		PayerID:       uint(userID),
 		BookingRoomID: uint(bookingRoomID),
 	}
 
 	var existing entity.Payment
-	if err := db.Where("user_id = ? AND booking_room_id = ?", payment.PayerID, payment.BookingRoomID).First(&existing).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this user and booking"})
+	if err := db.Where("payer_id = ? AND booking_room_id = ?", payment.PayerID, payment.BookingRoomID).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this booking."})
+		return
+	}
+	if err := db.Where("payer_id = ? AND invoice_id = ?", payment.PayerID, payment.InvoiceID).
+		First(&existing).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this invoice."})
 		return
 	}
 

@@ -101,7 +101,9 @@ func GetInvoiceByOption(c *gin.Context) {
 		Preload("Payments").
 		Preload("Status").
 		Preload("Items").
-		Preload("Room.Floor")
+		Preload("Room.Floor").
+		Preload("Customer.Prefix").
+		Preload("Creater.Prefix")
 
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -714,7 +716,7 @@ func CreateInvoice(c *gin.Context) {
 	}
 
 	var exiting entity.Invoice
-	if err := db.Where("billing_period = ?", invoiceData.BillingPeriod).First(&exiting).Error; err == nil {
+	if err := db.Where("billing_period = ? AND room_id = ?", invoiceData.BillingPeriod, invoiceData.RoomID).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "An invoice for this billing period already exists."})
 		return
 	}
