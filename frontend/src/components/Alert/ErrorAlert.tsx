@@ -71,7 +71,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
       sx={{
         position: 'fixed',
         top: `${20 + index * 100}px`, // Dynamic top position based on index
-        left: '100%', // Start from the right side of the screen
+        left: '50%', // Center horizontally
         transform: 'translateX(-50%)',
         width: '35%',
         zIndex: 1350 + index, // Simple zIndex based on index only
@@ -80,7 +80,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
         padding: '12px',
         opacity: 0, // Start with zero opacity (hidden)
         transition: 'opacity 0.5s ease-in, transform 0.5s ease-out', // Fade and slide transition
-        animation: 'fadeInFromRight 0.5s ease-out forwards', // Fade-in and slide-in animation
+        animation: 'fadeInFromTop 0.5s ease-out forwards', // Fade-in and slide-in animation
         '&::before': { // Progress bar
           content: '""',
           display: 'block',
@@ -95,23 +95,23 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onClose, index, totalA
         '& .MuiAlert-icon': { // Red icon color
           color: '#f02c2c',
         },
-        '@keyframes fadeInFromRight': {
+        '@keyframes fadeInFromTop': {
           '0%': {
-            transform: 'translateX(0%)', // Start from the right side
+            transform: 'translateX(-50%) translateY(-100%)', // Start from above
             opacity: 0, // Fully transparent
           },
           '100%': {
-            transform: 'translateX(-200%)', // Move to the center
+            transform: 'translateX(-50%) translateY(0%)', // Move to center
             opacity: 1, // Fully opaque
           },
         },
-        '@keyframes slideOutToRight': {
+        '@keyframes slideOutToTop': {
           '0%': {
-            transform: 'translateX(-200%)', // Start at the center
+            transform: 'translateX(-50%) translateY(0%)', // Start at center
             opacity: 1, // Fully visible
           },
           '100%': {
-            transform: 'translateX(0%)', // Move to the right side
+            transform: 'translateX(-50%) translateY(-100%)', // Move to above
             opacity: 0, // Fade out
           },
         },
