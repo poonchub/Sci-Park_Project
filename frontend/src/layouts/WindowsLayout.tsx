@@ -114,7 +114,7 @@ const WindowsLayout: React.FC = (props: any) => {
     const NAVIGATION: Navigation = [
         {
             kind: "header",
-            title: "Main items",
+            title: "Main Items",
         },
         {
             segment: "home",
@@ -142,11 +142,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <Building2 size={iconSize} />,
         },
         {
-            kind: "divider",
-        },
-        {
             kind: "header",
-            title: "Management",
+            title: "Dashboard",
         },
         {
             segment: "dashboard",
@@ -181,6 +178,10 @@ const WindowsLayout: React.FC = (props: any) => {
         //     ],
         // },
         {
+            kind: "header",
+            title: "Management",
+        },
+        {
             segment: "maintenance/all-maintenance-request",
             title: t("requestList"),
             icon: <ClipboardList size={iconSize} />,
@@ -194,6 +195,12 @@ const WindowsLayout: React.FC = (props: any) => {
                         size="small"
                     />
                 ) : null,
+        },
+        
+        {
+            segment: "service-area/service-request-list",
+            title: "Service Request List",
+            icon: <ClipboardList size={iconSize} />,
         },
         
         {
@@ -271,7 +278,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <LayersIcon />,
         },
         {
-            kind: "divider",
+            kind: "header",
+            title: "Personal Information",
         },
         {
             segment: "my-account",
@@ -306,6 +314,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "add-user",
             "add-user-by-csv",
             "rental-space",
+            "service-area/service-request-list",
         ],
         Manager: [
             "home",
@@ -320,6 +329,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
             "maintenance/all-maintenance-request",
             "rental-space",
+            "service-area/service-request-list",
         ],
         Operator: [
             "home",
@@ -349,8 +359,39 @@ const WindowsLayout: React.FC = (props: any) => {
     }
 
     function getNavigationByRole(role: Role): Navigation {
-        return NAVIGATION.filter((item) => {
-            if (item.kind === "header" || item.kind === "divider") return true;
+        const filteredNavigation = NAVIGATION.filter((item) => {
+            if (item.kind === "header" || item.kind === "divider") {
+                // สำหรับ header และ divider ให้ตรวจสอบว่ามี item ที่อนุญาตตามมาใน section นี้หรือไม่
+                const currentIndex = NAVIGATION.indexOf(item);
+                const nextItems = NAVIGATION.slice(currentIndex + 1);
+                
+                // หา header หรือ divider ถัดไป
+                const nextHeaderIndex = nextItems.findIndex(nextItem => 
+                    nextItem.kind === "header" || nextItem.kind === "divider"
+                );
+                
+                // ตรวจสอบ items ระหว่าง header/divider ปัจจุบันกับ header/divider ถัดไป
+                const itemsInSection = nextHeaderIndex === -1 
+                    ? nextItems 
+                    : nextItems.slice(0, nextHeaderIndex);
+                
+                // ถ้าเป็น header ให้ตรวจสอบว่ามี item ที่อนุญาตใน section นี้หรือไม่
+                if (item.kind === "header") {
+                    return itemsInSection.some(sectionItem => 
+                        hasSegment(sectionItem) && isAllowed(sectionItem.segment || "", role)
+                    );
+                }
+                
+                // ถ้าเป็น divider ให้ตรวจสอบว่ามี item ที่อนุญาตใน section ถัดไปหรือไม่
+                if (item.kind === "divider") {
+                    return itemsInSection.some(sectionItem => 
+                        hasSegment(sectionItem) && isAllowed(sectionItem.segment || "", role)
+                    );
+                }
+                
+                return false;
+            }
+            
             return hasSegment(item) && isAllowed(item.segment || "", role);
         }).map((item) => {
             if ("children" in item && Array.isArray(item.children)) {
@@ -362,6 +403,21 @@ const WindowsLayout: React.FC = (props: any) => {
                 return { ...item, children: filteredChildren };
             }
             return item;
+        });
+
+        // ลบ divider ที่อยู่ติดกันหรือ divider ที่อยู่ท้ายสุด
+        return filteredNavigation.filter((item, index, array) => {
+            if (item.kind === "divider") {
+                // ลบ divider ที่อยู่ท้ายสุด
+                if (index === array.length - 1) return false;
+                
+                // ลบ divider ที่อยู่ติดกัน
+                if (index < array.length - 1 && array[index + 1].kind === "divider") return false;
+                
+                // ลบ divider ที่อยู่ก่อน header
+                if (index < array.length - 1 && array[index + 1].kind === "header") return false;
+            }
+            return true;
         });
     }
 

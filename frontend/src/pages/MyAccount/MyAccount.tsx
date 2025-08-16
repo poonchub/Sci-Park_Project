@@ -1,14 +1,14 @@
 import { apiUrl, GetMaintenanceRequestByID, GetMaintenanceRequestsForUser, GetRequestStatuses, socketUrl, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../../services/http";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Button, Typography, Avatar, Grid, Box, Card, Divider, useTheme, Container, Tabs, Tab, Skeleton, Tooltip, useMediaQuery, Stack, Zoom, Collapse, IconButton, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Button, Typography, Avatar, Grid, Box, Card, Divider, useTheme, Container, Tabs, Tab, Skeleton, Tooltip, useMediaQuery } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
 import SuccessAlert from "../../components/Alert/SuccessAlert";
 
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { faXmark, faQuestionCircle, faClock, faCheck, faRepeat, faEye, faPencil, faFileLines, faUser, faEnvelope, faPhone, faBriefcase, faCamera, faVenusMars, faCrown, faShieldAlt, faInfoCircle, faBuilding, faIdCard } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faQuestionCircle, faClock, faCheck, faRepeat, faEye, faPencil, faFileLines, faEnvelope, faPhone, faBriefcase } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ShieldUser } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";

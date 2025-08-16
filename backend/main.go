@@ -190,6 +190,7 @@ func main() {
 		// RequestServiceArea & AboutCompany
 		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
 		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
+		protected.GET("/request-service-areas", controller.ListRequestServiceAreas)
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)

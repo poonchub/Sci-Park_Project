@@ -195,7 +195,7 @@ const CreateServiceAreaForm: React.FC = () => {
         try {
           const aboutCompanyData = await GetAboutCompanyByUserID(parseInt(userId));
           setAboutCompany(aboutCompanyData);
-          console.log('AboutCompany data loaded:', aboutCompanyData);
+          
           setAlerts([{ type: 'success', message: 'Previous company information loaded automatically!' }]);
         } catch (aboutCompanyError) {
           // If AboutCompany not found, it's okay - user will fill the form manually

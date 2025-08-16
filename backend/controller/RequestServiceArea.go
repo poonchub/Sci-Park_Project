@@ -480,6 +480,146 @@ func UpdateAboutCompany(c *gin.Context) {
 	})
 }
 
+// ListRequestServiceAreas ดึงรายการ Request Service Area ทั้งหมดพร้อม pagination และ filtering
+func ListRequestServiceAreas(c *gin.Context) {
+	var requestServiceAreas []entity.RequestServiceArea
+
+	// รับค่าจาก Query Parameters
+	requestStatusID, _ := strconv.Atoi(c.DefaultQuery("request_status_id", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	search := c.DefaultQuery("search", "")        // รับค่า search จาก query parameter
+	createdAt := c.DefaultQuery("created_at", "") // รับค่า created_at จาก query parameter
+
+	// ตรวจสอบค่าที่ส่งมา
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	// เชื่อมต่อกับฐานข้อมูล
+	db := config.DB()
+
+	// การกรองตาม request_status_id (ถ้ามีค่า)
+	if requestStatusID > 0 {
+		db = db.Where("request_status_id = ?", requestStatusID)
+	}
+
+	// การกรองตาม search (ถ้ามีค่า) - ค้นหาจากชื่อ User
+	if search != "" {
+		searchTerm := "%" + search + "%"
+		db = db.Joins("JOIN users ON users.id = request_service_areas.user_id").
+			Where("(users.first_name LIKE ? OR users.last_name LIKE ? OR users.email LIKE ? OR users.company_name LIKE ?)",
+				searchTerm, searchTerm, searchTerm, searchTerm)
+	}
+
+	// การกรองตาม created_at (ถ้ามีค่า)
+	if createdAt != "" {
+		// คาดหวังรูปแบบ YYYY-MM-DD
+		db = db.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+	}
+
+	// ดึงข้อมูล Request Service Area จากฐานข้อมูล
+	query := db.Preload("User").Preload("RequestStatus").Preload("CollaborationPlans")
+
+	// แก้ไขการ ORDER โดยใช้ `request_service_areas.created_at` เพื่อระบุคอลัมน์ที่มาจากตาราง `request_service_areas`
+	if err := query.Order("request_service_areas.created_at DESC").Limit(limit).Offset(offset).Find(&requestServiceAreas).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service areas"})
+		return
+	}
+
+	// คำนวณจำนวนทั้งหมดแยกออกจาก Query หลัก
+	var total int64
+	countQuery := config.DB().Model(&entity.RequestServiceArea{})
+
+	if requestStatusID > 0 {
+		countQuery = countQuery.Where("request_status_id = ?", requestStatusID)
+	}
+
+	// การกรองตาม search สำหรับ count query (ถ้ามีค่า)
+	if search != "" {
+		searchTerm := "%" + search + "%"
+		countQuery = countQuery.Joins("JOIN users ON users.id = request_service_areas.user_id").
+			Where("(users.first_name LIKE ? OR users.last_name LIKE ? OR users.email LIKE ? OR users.company_name LIKE ?)",
+				searchTerm, searchTerm, searchTerm, searchTerm)
+	}
+
+	// การกรองตาม created_at สำหรับ count query (ถ้ามีค่า)
+	if createdAt != "" {
+		countQuery = countQuery.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+	}
+
+	countQuery.Count(&total)
+
+	// จัดรูปแบบข้อมูลที่ส่งกลับให้เป็น PascalCase
+	var requestServiceAreaResponses []map[string]interface{}
+	for _, requestServiceArea := range requestServiceAreas {
+		requestServiceAreaResponse := map[string]interface{}{
+			"ID":                                 requestServiceArea.ID,
+			"UserID":                             requestServiceArea.UserID,
+			"RequestStatusID":                    requestServiceArea.RequestStatusID,
+			"PurposeOfUsingSpace":                requestServiceArea.PurposeOfUsingSpace,
+			"NumberOfEmployees":                  requestServiceArea.NumberOfEmployees,
+			"ActivitiesInBuilding":               requestServiceArea.ActivitiesInBuilding,
+			"SupportingActivitiesForSciencePark": requestServiceArea.SupportingActivitiesForSciencePark,
+			"ServiceRequestDocument":             requestServiceArea.ServiceRequestDocument,
+			"CreatedAt":                          requestServiceArea.CreatedAt,
+			"UpdatedAt":                          requestServiceArea.UpdatedAt,
+			"DeletedAt":                          requestServiceArea.DeletedAt,
+		}
+
+		// เพิ่มข้อมูล User
+		if requestServiceArea.User.ID != 0 {
+			requestServiceAreaResponse["User"] = map[string]interface{}{
+				"ID":          requestServiceArea.User.ID,
+				"FirstName":   requestServiceArea.User.FirstName,
+				"LastName":    requestServiceArea.User.LastName,
+				"Email":       requestServiceArea.User.Email,
+				"CompanyName": requestServiceArea.User.CompanyName,
+				"EmployeeID":  requestServiceArea.User.EmployeeID,
+				"IsEmployee":  requestServiceArea.User.IsEmployee,
+			}
+		}
+
+		// เพิ่มข้อมูล RequestStatus
+		if requestServiceArea.RequestStatus.ID != 0 {
+			requestServiceAreaResponse["RequestStatus"] = map[string]interface{}{
+				"ID":   requestServiceArea.RequestStatus.ID,
+				"Name": requestServiceArea.RequestStatus.Name,
+			}
+		}
+
+		// เพิ่มข้อมูล CollaborationPlans
+		if len(requestServiceArea.CollaborationPlans) > 0 {
+			var collaborationPlans []map[string]interface{}
+			for _, plan := range requestServiceArea.CollaborationPlans {
+				collaborationPlan := map[string]interface{}{
+					"ID":                  plan.ID,
+					"CollaborationPlan":   plan.CollaborationPlan,
+					"CollaborationBudget": plan.CollaborationBudget,
+					"ProjectStartDate":    plan.ProjectStartDate,
+				}
+				collaborationPlans = append(collaborationPlans, collaborationPlan)
+			}
+			requestServiceAreaResponse["CollaborationPlans"] = collaborationPlans
+		}
+
+		requestServiceAreaResponses = append(requestServiceAreaResponses, requestServiceAreaResponse)
+	}
+
+	// ส่งข้อมูล Request Service Area ทั้งหมดกลับไปในรูปแบบ JSON
+	c.JSON(http.StatusOK, gin.H{
+		"data":       requestServiceAreaResponses,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
+	})
+}
+
 // Helper functions
 func parseInt(s string) int {
 	if s == "" {

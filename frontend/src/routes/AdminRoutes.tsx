@@ -24,6 +24,7 @@ import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import CreateInvoice from "../pages/CreateInvoice/CreateInvoice";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
+import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
 
 
 const AdminRoutes = (): RouteObject => {
@@ -123,6 +124,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/room/rental-space",
 				element: <RoomRentalSpace/>
+			},
+			{
+				path: "/service-area/service-request-list",
+				element: <ServiceRequestList/>
 			},
 			{
 				path: "",

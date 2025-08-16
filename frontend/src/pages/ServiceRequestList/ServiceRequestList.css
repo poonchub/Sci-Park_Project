@@ -1,0 +1,90 @@
+/* ========================================
+   SERVICE REQUEST LIST PAGE STYLES
+   ======================================== */
+
+.service-request-list-page {
+    /* Status Cards Section */
+    .status-section {
+        .status-card {
+            .status-card-content {
+                padding: 0;
+                display: flex;
+                align-items: center;
+            }
+        }
+    }
+
+    /* Status Card specific styling */
+    .status-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: 1px solid #e0e0e0;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-card-content {
+            padding: 16px 16px 16px 20px !important; /* Account for the colored bar */
+        }
+    }
+
+    /* Filter Section */
+    .filter-section {
+        .search-box {
+            margin: 0 !important;
+        }
+    }
+
+    /* Material-UI TextField overrides */
+    .MuiTextField-root {
+        margin-bottom: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Container queries for responsive buttons */
+    .container-btn {
+        container-type: inline-size;
+
+        .text-btn{
+            display: none;
+        }
+    }
+
+    @container (max-width: 160px) {
+        .btn-approve,
+        .btn-reject, 
+        .btn-detail {
+            width: 100%;
+
+            .text-btn{
+                display: block;
+            }
+        }
+    }
+
+    /* Responsive grid adjustments */
+    @media (max-width: 768px) {
+        .status-card {
+            margin-bottom: 16px;
+        }
+    }
+
+    /* Loading skeleton styles */
+    .MuiSkeleton-root {
+        border-radius: 8px;
+    }
+
+    /* Title section styling */
+    .title-box {
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    /* Content text styling */
+    .content-text {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+}
