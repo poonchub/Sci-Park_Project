@@ -60,8 +60,6 @@ function AllMaintenanceRequest() {
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
-    // const [totalAll, setTotalAll] = useState(0);
-    // const [counts, setCounts] = useState();
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);

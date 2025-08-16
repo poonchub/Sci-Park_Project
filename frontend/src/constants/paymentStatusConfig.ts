@@ -1,12 +1,5 @@
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import {
-    faClock,
-    faCheckCircle,
-    faTimesCircle,
-    faHourglassHalf,
-    faBan,
-    faUndoAlt,
-} from "@fortawesome/free-solid-svg-icons";
+import { faClock, faHourglassHalf, faCheckCircle, faTimesCircle, faUndoAlt } from "@fortawesome/free-solid-svg-icons";
 
 export interface PaymentStatusConfig {
     color: string;
@@ -16,37 +9,31 @@ export interface PaymentStatusConfig {
 
 export const paymentStatusConfig: Record<string, PaymentStatusConfig> = {
     "Pending Payment": {
-        // รอการชำระเงิน
+        // ยังไม่ได้จ่าย
         color: "#FFC107",
         colorLite: "rgb(255, 243, 205)",
         icon: faClock,
     },
-    "Paid": {
-        // ชำระแล้ว (รอตรวจสอบ)
+    "Pending Verification": {
+        // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสอบสลิป
         color: "#17A2B8",
         colorLite: "rgb(209, 236, 241)",
         icon: faHourglassHalf,
     },
-    "Approved": {
-        // อนุมัติแล้ว
+    "Paid": {
+        // จ่ายแล้วและตรวจสอบเรียบร้อย
         color: "#28A745",
         colorLite: "rgb(212, 237, 218)",
         icon: faCheckCircle,
     },
     "Rejected": {
-        // ปฏิเสธการชำระ
+        // สลิปไม่ถูกต้อง / ต้องอัพโหลดใหม่
         color: "#DC3545",
         colorLite: "rgb(248, 215, 218)",
         icon: faTimesCircle,
     },
-    "Cancelled": {
-        // ยกเลิก
-        color: "#6C757D",
-        colorLite: "rgb(233, 236, 239)",
-        icon: faBan,
-    },
     "Refunded": {
-        // คืนเงิน
+        // คืนเงินแล้ว
         color: "#007BFF",
         colorLite: "rgb(210, 227, 252)",
         icon: faUndoAlt,

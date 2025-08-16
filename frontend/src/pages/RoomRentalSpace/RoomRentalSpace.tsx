@@ -16,6 +16,7 @@ import {
     ListPaymentStatus,
     UpdateInvoiceByID,
     UpdateInvoiceItemsByID,
+    UpdatePaymentByID,
 } from "../../services/http";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
@@ -43,19 +44,22 @@ import {
 } from "@mui/material";
 import {
     BrushCleaning,
+    Check,
     CirclePlus,
     DoorClosed,
     Download,
     Eye,
     NotebookPen,
     Pencil,
+    ReceiptText,
     ScrollText,
     Send,
     Trash2,
+    Wallet,
 } from "lucide-react";
 import { TextField } from "../../components/TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faMagnifyingGlass, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faFilePdf, faMagnifyingGlass, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { Select } from "../../components/Select/Select";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import { GridColDef } from "@mui/x-data-grid";
@@ -76,6 +80,9 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
 import { formatToMonthYear } from "../../utils/formatToMonthYear";
+import PDFPopup from "../../components/PDFPopup/PDFPopup";
+import dateFormat from "../../utils/dateFormat";
+import { PaymentInterface } from "../../interfaces/IPayments";
 
 type InvoiceItemError = {
     Description?: string;
@@ -153,13 +160,16 @@ function RoomRentalSpace() {
     const [invoiceTotal, setInvoiceTotal] = useState(0);
 
     const [openCreatePopup, setOpenCreatePopup] = useState(false);
-    const [openImage, setOpenImage] = useState(false);
+    const [openPaymentPopup, setOpenPaymentPopup] = useState(false);
     const [openInvoicePopup, setOpenInvoicePopup] = useState(false);
     const [openDeletePopup, setOpenDeletePopup] = useState(false);
+    const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [errors, setErrors] = useState<FormErrors>({});
     const [isButtonActive, setIsButtonActive] = useState(false);
     const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    const [openPDF, setOpenPDF] = useState(false);
 
     const getRooms = async () => {
         try {
@@ -455,6 +465,58 @@ function RoomRentalSpace() {
             }, 1800);
         } catch (error) {
             console.error("🚨 Error updating invoice:", error);
+            handleSetAlert("error", "An unexpected error occurred");
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleClickUpdatePayment = async (statusName: "Paid" | "Rejected", note?: string) => {
+        setIsButtonActive(true);
+        if (selectedInvoice?.ID === 0) {
+            handleSetAlert("error", "Invoice not found");
+            setIsButtonActive(false);
+            return;
+        }
+
+        try {
+            const statusID = paymentStatuses.find((item) => item.Name === statusName)?.ID;
+            if (!statusID) {
+                console.error("Invalid payment status");
+                setIsButtonActive(false);
+                return;
+            }
+
+            const approverId = localStorage.getItem("userId");
+            const paymentData: PaymentInterface = {
+                StatusID: statusID,
+                Note: note,
+                ApproverID: Number(approverId),
+            };
+            
+            const formData = new FormData();
+            for (const [key, value] of Object.entries(paymentData)) {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
+            }
+            await UpdatePaymentByID(selectedInvoice?.Payments?.ID ?? 0, formData);
+
+            const invoiceData: InvoiceInterface = {
+                StatusID: statusID,
+            };
+            await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
+
+            handleSetAlert("success", "Payment slip has been verified successfully.");
+
+            setTimeout(() => {
+                setIsButtonActive(false);
+                setSelectedInvoice(null);
+                setInvoices([]);
+                getInvoice();
+                setOpenPaymentPopup(false);
+            }, 1800);
+        } catch (error) {
+            console.error("🚨 Error updating payment:", error);
             handleSetAlert("error", "An unexpected error occurred");
             setIsButtonActive(false);
         }
@@ -986,9 +1048,6 @@ function RoomRentalSpace() {
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
-                        const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
-                        const isDownloading = loadingDownloadId === data.ID;
-
                         return (
                             <Box
                                 className="container-btn"
@@ -1004,19 +1063,13 @@ function RoomRentalSpace() {
                                     <Button
                                         variant="contained"
                                         onClick={async () => {
-                                            setLoadingDownloadId(data.ID);
-                                            const success = await handleDownloadInvoice(data.ID, fileName);
-                                            if (success) {
-                                                console.log("Download success");
-                                            } else {
-                                                console.error("Download failed");
-                                            }
+                                            setOpenPDF(true);
+                                            setSelectedInvoice(data);
                                             setLoadingDownloadId(null);
                                         }}
-                                        disabled={isDownloading}
                                         sx={{ minWidth: "42px" }}
                                     >
-                                        {isDownloading ? "Loading..." : <Download size={18} />}
+                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                                     </Button>
                                 </Tooltip>
                                 <Tooltip title="Edit Invoice">
@@ -1048,21 +1101,23 @@ function RoomRentalSpace() {
                                         <Trash2 size={18} />
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title="View Slip">
-                                    <Button
-                                        variant="outlinedGray"
-                                        onClick={() => {
-                                            setSelectedInvoice((prev) => ({
-                                                ...prev,
-                                                ...data,
-                                            }));
-                                            setOpenImage(true);
-                                        }}
-                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
-                                    >
-                                        <Eye size={18} />
-                                    </Button>
-                                </Tooltip>
+                                {data.Payments && (
+                                    <Tooltip title="View Slip">
+                                        <Button
+                                            variant="outlinedGray"
+                                            onClick={() => {
+                                                setSelectedInvoice((prev) => ({
+                                                    ...prev,
+                                                    ...data,
+                                                }));
+                                                setOpenPaymentPopup(true);
+                                            }}
+                                            sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                        >
+                                            <Wallet size={18} />
+                                        </Button>
+                                    </Tooltip>
+                                )}
                             </Box>
                         );
                     },
@@ -1071,63 +1126,244 @@ function RoomRentalSpace() {
         }
     };
 
-    const imagePopup = (
-        <Dialog
-            open={openImage}
-            onClose={() => {
-                setOpenImage(false);
-                setSelectedInvoice(null);
-            }}
-            maxWidth={false}
-            sx={{
-                "& .MuiDialog-paper": {
-                    maxWidth: { xs: "75vw", md: "50vw" },
-                    width: "auto",
-                    margin: 0,
-                    borderRadius: 0,
-                },
-            }}
-        >
-            <Box sx={{ 
-                position: 'absolute', 
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'end',
-                alignItems: 'flex-start',
-                height: '100%'
-            }}>
-                <IconButton
-                    aria-label="close"
-                    onClick={() => {
-                        setOpenImage(false);
-                        setSelectedInvoice(null);
-                    }}
+    const paymentPopup = () => {
+        const paymentData = selectedInvoice?.Payments;
+        const statusName = paymentData?.Status?.Name;
+        const statusKey = paymentData?.Status?.Name as keyof typeof paymentStatusConfig;
+        const { color, colorLite, icon } = paymentStatusConfig[statusKey] ?? {
+            color: "#000",
+            colorLite: "#000",
+            icon: faQuestionCircle,
+        };
+        return (
+            <Dialog
+                open={openPaymentPopup && selectedInvoice?.ID !== 0}
+                onClose={() => {
+                    setOpenPaymentPopup(false);
+                    setSelectedInvoice(null);
+                }}
+                maxWidth={false}
+                sx={{
+                    "& .MuiDialog-paper": {
+                        maxWidth: { xs: "75vw", md: "50vw" },
+                        width: "auto",
+                        margin: 0,
+                        borderRadius: 0,
+                    },
+                }}
+            >
+                <DialogTitle
                     sx={{
-                        position: "sticky",
-                        right: 8,
-                        top: 8,
+                        display: "flex",
+                        gap: 1,
+                        justifyContent: "space-between",
                     }}
                 >
-                    <Close />
-                </IconButton>
-            </Box>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            gap: 1,
+                            alignItems: "center",
+                            color: "primary.main",
+                        }}
+                    >
+                        <Wallet />
+                        <Typography sx={{ fontWeight: 700, fontSize: 22 }}>Payment</Typography>
+                        <IconButton
+                            aria-label="close"
+                            onClick={() => {
+                                setOpenPaymentPopup(false);
+                                setSelectedInvoice(null);
+                            }}
+                            sx={{
+                                position: "absolute",
+                                right: 8,
+                                top: 8,
+                            }}
+                        >
+                            <Close />
+                        </IconButton>
+                    </Box>
+                </DialogTitle>
 
-            <CardMedia
-                component="img"
-                image={
-                    selectedInvoice?.Payments?.SlipPath
-                        ? `${apiUrl}/${selectedInvoice?.Payments?.SlipPath}`
-                        : "https://placehold.co/360x480"
-                }
-                alt="image"
-                sx={{
-                    width: "100%",
-                    height: "auto",
-                    display: "block",
-                }}
-            />
-        </Dialog>
-    );
+                <DialogContent sx={{ minWidth: 350 }}>
+                    <Grid
+                        container
+                        size={{ xs: 12 }}
+                        columnSpacing={3}
+                        rowSpacing={2}
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <Grid container size={{ xs: 12 }} spacing={2}>
+                            <Grid size={{ xs: 12 }}>
+                                <Card sx={{ py: 2, px: 3, display: "flex", flexDirection: "column", gap: 1.4 }}>
+                                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                                        <ReceiptText size={18} />
+                                        <Typography sx={{ fontWeight: 500 }}>Payment Details</Typography>
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            height: "100%",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: 14,
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            Status
+                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                bgcolor: colorLite,
+                                                borderRadius: 10,
+                                                px: 2.5,
+                                                py: 0.5,
+                                                gap: 1,
+                                                color: color,
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                display: "inline-flex",
+                                            }}
+                                        >
+                                            <FontAwesomeIcon icon={icon} />
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 14,
+                                                    fontWeight: 600,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                {statusName}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            height: "100%",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: 14,
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            Date
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: 14,
+                                                color: "text.main",
+                                            }}
+                                        >
+                                            {dateFormat(paymentData?.PaymentDate ?? "")}
+                                        </Typography>
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            height: "100%",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: 14,
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            Amount
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontWeight: 500,
+                                                fontSize: 14,
+                                                color: "text.main",
+                                            }}
+                                        >
+                                            {paymentData?.Amount?.toLocaleString("th-TH", {
+                                                style: "currency",
+                                                currency: "THB",
+                                            })}
+                                        </Typography>
+                                    </Box>
+                                </Card>
+                            </Grid>
+
+                            <Grid
+                                size={{ xs: 12 }}
+                                container
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    py: 2.5,
+                                    px: 2,
+                                    borderRadius: 2,
+                                    border: "1px solid #2c55b0",
+                                }}
+                            >
+                                <CardMedia
+                                    component="img"
+                                    image={`${apiUrl}/${paymentData?.SlipPath}`}
+                                    sx={{
+                                        width: { xs: 250, lg: 300 },
+                                        height: "auto",
+                                        borderRadius: 2,
+                                        cursor: "pointer",
+                                    }}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+
+                {statusName === "Pending Verification" && (
+                    <DialogActions sx={{ px: 3, pb: 2 }}>
+                        <Zoom in={openPaymentPopup} timeout={400}>
+                            <Button
+                                onClick={() => {
+                                    setOpenConfirmRejected(true);
+                                }}
+                                variant="outlinedCancel"
+                                startIcon={<Close />}
+                            >
+                                Reject Slip
+                            </Button>
+                        </Zoom>
+                        <Zoom in={openPaymentPopup} timeout={400}>
+                            <Button
+                                onClick={() => {
+                                    handleClickUpdatePayment("Paid");
+                                }}
+                                variant="contained"
+                                startIcon={<Check size={18} />}
+                            >
+                                Confirm Payment
+                            </Button>
+                        </Zoom>
+                    </DialogActions>
+                )}
+            </Dialog>
+        );
+    };
 
     return (
         <Box className="room-rental-space-page">
@@ -1142,6 +1378,26 @@ function RoomRentalSpace() {
                 title="Delete Invoice"
                 message="Are you sure you want to delete this invoice? This action cannot be undone."
                 buttonActive={isButtonActive}
+            />
+
+            {/* Reject Slip Confirm */}
+            <ConfirmDialog
+                open={openConfirmRejected}
+                setOpenConfirm={setOpenConfirmRejected}
+                handleFunction={(note) => handleClickUpdatePayment("Rejected", note)}
+                title="Confirm Payment Slip Rejection"
+                message="Are you sure you want to reject this payment slip? This action cannot be undone."
+                showNoteField
+                buttonActive={isButtonActive}
+            />
+
+            <PDFPopup
+                open={openPDF}
+                invoice={selectedInvoice}
+                onClose={() => {
+                    setOpenPDF(false);
+                    setSelectedInvoice(null);
+                }}
             />
 
             {/* Create amd Update Popup */}
@@ -1423,7 +1679,7 @@ function RoomRentalSpace() {
                     transition: Transition,
                 }}
             >
-                {imagePopup}
+                {paymentPopup()}
                 <DialogTitle
                     sx={{
                         fontWeight: 700,

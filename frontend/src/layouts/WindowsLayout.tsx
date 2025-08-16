@@ -554,7 +554,11 @@ const WindowsLayout: React.FC = (props: any) => {
                     />
                 ) : (
                     <img
-                        src={`${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}`}
+                        src={
+                            organizationInfo?.LogoPath ? 
+                            `${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}` :
+                            ''
+                        }
                         alt=" RSP Northeast 2"
                         style={{
                             backgroundColor: "#fff",

@@ -5,6 +5,7 @@ import {
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForUser,
+    GetQuota,
     GetRequestStatuses,
     ListPaymentStatus,
     socketUrl,
@@ -84,6 +85,7 @@ import generateInvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
+import PDFPopup from "../../components/PDFPopup/PDFPopup";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 
 const MyAccount: React.FC = () => {
@@ -96,7 +98,7 @@ const MyAccount: React.FC = () => {
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
-    const [slipfile, setSlipFile] = useState<File | null>(null);
+    const [slipfile, setSlipFile] = useState<File[]>([]);
     const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatusInterface[]>([]);
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
@@ -284,6 +286,7 @@ const MyAccount: React.FC = () => {
                 setIsButtonActive(false);
             }, 500);
         } catch (error) {
+            setAlerts([]);
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             handleSetAlert("error", errMessage);
@@ -293,7 +296,6 @@ const MyAccount: React.FC = () => {
 
     const handleUploadSlip = async (resCheckSlip?: any) => {
         try {
-            // const resCheckSlip = await
             const userId = Number(localStorage.getItem("userId"));
             const paymentData: PaymentInterface = {
                 PaymentDate: resCheckSlip.data.transTimestamp,
@@ -308,10 +310,8 @@ const MyAccount: React.FC = () => {
                     formData.append(key, value);
                 }
             }
-            formData.append("files", slipfile as File);
+            formData.append("files", slipfile[0]);
             const resPayment = await CreatePayment(formData);
-
-            console.log("resPayment: ", resPayment);
 
             const invoiceData: InvoiceInterface = {
                 StatusID: resPayment.payment.StatusID,
@@ -320,11 +320,13 @@ const MyAccount: React.FC = () => {
 
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
-                getInvoice()
-                setSelectedInvoice(null)
-                setOpenPopupPayment(false)
+                getInvoice();
+                setSelectedInvoice(null);
+                setOpenPopupPayment(false);
+                setSlipFile([]);
             }, 500);
         } catch (error: any) {
+            setAlerts([]);
             console.error("🚨 Error creating payment:", error);
             if (error.status === 409) {
                 handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
@@ -427,18 +429,27 @@ const MyAccount: React.FC = () => {
 
     useEffect(() => {
         async function doCheckSlip() {
-            const formData = new FormData();
-            formData.append("files", slipfile as File);
+            try {
+                const resGetQuota = await GetQuota();
+                if (resGetQuota.success && resGetQuota.data.quota > 0) {
+                    const formData = new FormData();
+                    formData.append("files", slipfile[0]);
 
-            const resCheckSlip = await CheckSlip(formData);
-            console.log("Slip check result:", resCheckSlip);
+                    const resCheckSlip = await CheckSlip(formData);
 
-            if (resCheckSlip) {
-                handleUploadSlip(resCheckSlip);
+                    if (resCheckSlip.success) {
+                        handleUploadSlip(resCheckSlip);
+                    }
+                }
+            } catch (error: any) {
+                setAlerts([]);
+                console.error("🚨 Error check slip:", error);
+                handleSetAlert("error", "The payment slip you uploaded is invalid. Please check and try again.");
+                setIsButtonActive(false);
             }
         }
 
-        if (slipfile) {
+        if (slipfile.length === 1) {
             doCheckSlip();
         }
     }, [slipfile]);
@@ -1265,9 +1276,6 @@ const MyAccount: React.FC = () => {
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
-                        // const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
-                        // const isDownloading = loadingDownloadId === data.ID;
-
                         return (
                             <Box
                                 className="container-btn"
@@ -1283,13 +1291,6 @@ const MyAccount: React.FC = () => {
                                     <Button
                                         variant="contained"
                                         onClick={async () => {
-                                            // setLoadingDownloadId(data.ID);
-                                            // const success = await handleDownloadInvoice(data.ID, fileName);
-                                            // if (success) {
-                                            //     console.log("Download success");
-                                            // } else {
-                                            //     console.error("Download failed");
-                                            // }
                                             setOpenPDF(true);
                                             setSelectedInvoice(data);
                                             setLoadingDownloadId(null);
@@ -1322,27 +1323,6 @@ const MyAccount: React.FC = () => {
         }
     };
 
-    const PDFPopup = (
-        <Dialog
-            open={openPDF && selectedInvoice?.ID != 0}
-            onClose={() => {
-                setOpenPDF(false);
-                setSelectedInvoice(null);
-            }}
-            maxWidth={false}
-            sx={{
-                "& .MuiDialog-paper": {
-                    maxWidth: "70vw",
-                    width: "auto",
-                    margin: 0,
-                    borderRadius: 0,
-                },
-            }}
-        >
-            <InvoicePDF invoice={selectedInvoice ?? {}} />
-        </Dialog>
-    );
-
     return (
         <Box className="my-accout-page">
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
@@ -1351,11 +1331,19 @@ const MyAccount: React.FC = () => {
                 open={openPopupPayment}
                 onClose={() => setOpenPopupPayment(false)}
                 amount={selectedInvoice?.TotalAmount ?? 0}
+                file={slipfile}
                 onChangeFile={setSlipFile}
                 paymentData={selectedInvoice?.Payments ?? {}}
             />
 
-            {PDFPopup}
+            <PDFPopup
+                open={openPDF}
+                invoice={selectedInvoice}
+                onClose={() => {
+                    setOpenPDF(false);
+                    setSelectedInvoice(null);
+                }}
+            />
 
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />

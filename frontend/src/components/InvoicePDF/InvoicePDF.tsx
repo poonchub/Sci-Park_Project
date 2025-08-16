@@ -2,17 +2,11 @@ import { useRef, useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { apiUrl } from "../../services/http";
-// import tinymce from "tinymce";
 import { Button, Grid } from "@mui/material";
+
 import tinymce from "tinymce/tinymce";
-
-// Theme
 import "tinymce/themes/silver/theme";
-
-// Icons
 import "tinymce/icons/default/icons";
-
-// Plugins
 import "tinymce/plugins/advlist";
 import "tinymce/plugins/lists";
 import "tinymce/models/dom/model";

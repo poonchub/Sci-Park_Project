@@ -133,7 +133,6 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-
 	paymentDate, err := time.Parse(time.RFC3339Nano, paymentDateStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment date format"})
@@ -210,7 +209,7 @@ func CreatePayment(c *gin.Context) {
 	}
 
 	var status entity.PaymentStatus
-	if err := db.Where("name = ?", "Paid").First(&status).Error; err != nil {
+	if err := db.Where("name = ?", "Pending Verification").First(&status).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Paid' not found"})
 		return
 	}
@@ -251,8 +250,16 @@ func CreatePayment(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Payment created successfully", "payment": payment})
 }
 
-// PATCH  /payment:id
+// PATCH  /payment/:id
 func UpdatePaymentByID(c *gin.Context) {
+	type PaymentUpdateInput struct {
+		PaymentDate *time.Time
+		StatusID    *uint
+		Note        *string
+		ApproverID  *uint
+		Amount      *float64
+	}
+
 	ID := c.Param("id")
 
 	db := config.DB()
@@ -264,17 +271,28 @@ func UpdatePaymentByID(c *gin.Context) {
 	}
 
 	// ข้อมูล JSON ที่ไม่รวมไฟล์
-	var input entity.Payment
+	var input PaymentUpdateInput
 	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
 		return
 	}
 
 	// อัปเดต field ทีละตัว เพื่อไม่ให้ overwrite ด้วยค่า default
-	payment.PaymentDate = input.PaymentDate
-	payment.Amount = input.Amount
-	payment.Note = input.Note
-	payment.StatusID = input.StatusID
+	if input.PaymentDate != nil {
+		payment.PaymentDate = *input.PaymentDate
+	}
+	if input.Amount != nil {
+		payment.Amount = *input.Amount
+	}
+	if input.Note != nil {
+		payment.Note = *input.Note
+	}
+	if input.StatusID != nil {
+		payment.StatusID = *input.StatusID
+	}
+	if input.ApproverID != nil {
+		payment.ApproverID = *input.ApproverID
+	}
 
 	// อัปโหลดไฟล์รูปภาพ
 	form, err := c.MultipartForm()

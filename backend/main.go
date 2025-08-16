@@ -262,6 +262,10 @@ func main() {
 		// OrganizationInfo
 		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
 
+		// Payments
+		protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
+
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
