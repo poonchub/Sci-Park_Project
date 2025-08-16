@@ -6,13 +6,18 @@ import {
   CreateRequestServiceAreaAndAboutCompany, 
   ListBusinessGroups, 
   ListCompanySizes,
-  ListServiceUserTypes 
+  ListServiceUserTypes,
+  GetUserById,
+  UpdateUserbyID,
+  GetAboutCompanyByUserID
 } from '../../services/http';
 import { BusinessGroupInterface } from '../../interfaces/IBusinessGroup';
 import { CompanySizeInterface } from '../../interfaces/ICompanySize';
 import { ServiceUserTypeInterface } from '../../interfaces/IServiceUserType';
 import { ServiceAreaFormData } from '../../interfaces/IServiceAreaForm';
 import { CollaborationPlanData } from '../../interfaces/ICollaborationPlan';
+import { GetUserInterface } from '../../interfaces/IGetUser';
+import { AboutCompanyInterface } from '../../interfaces/IAboutCompany';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -30,7 +35,7 @@ import { validateCorporateRegistrationNumber } from '../../utils/corporateRegist
 import PrivacyPolicyPopup from '../../components/PrivacyPolicyPopup/PrivacyPolicyPopup';
 
 const CreateServiceAreaForm: React.FC = () => {
-  const { control, handleSubmit, reset, formState: { errors }, watch, trigger } = useForm<ServiceAreaFormData>();
+  const { control, handleSubmit, reset, formState: { errors }, watch, trigger, setValue } = useForm<ServiceAreaFormData>();
   const [businessGroups, setBusinessGroups] = useState<BusinessGroupInterface[]>([]);
   const [companySizes, setCompanySizes] = useState<CompanySizeInterface[]>([]);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -44,6 +49,8 @@ const CreateServiceAreaForm: React.FC = () => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [formDataToSubmit, setFormDataToSubmit] = useState<FormData | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('th');
+  const [user, setUser] = useState<GetUserInterface | null>(null);
+  const [aboutCompany, setAboutCompany] = useState<AboutCompanyInterface | null>(null);
   
   // Watch all form fields for real-time validation
   const watchedFields = watch();
@@ -129,15 +136,71 @@ const CreateServiceAreaForm: React.FC = () => {
     }
   }, [watchedFields.CompanySizeID, trigger]);
 
+  // Real-time validation for Company Name
+  useEffect(() => {
+    if (watchedFields.CompanyName && watchedFields.CompanyName.length > 0) {
+      trigger('CompanyName');
+    }
+  }, [watchedFields.CompanyName, trigger]);
+
+  // Real-time validation for Business Detail
+  useEffect(() => {
+    if (watchedFields.BusinessDetail && watchedFields.BusinessDetail.length > 0) {
+      trigger('BusinessDetail');
+    }
+  }, [watchedFields.BusinessDetail, trigger]);
+
+  // Set form values when user data is loaded
+  useEffect(() => {
+    if (user) {
+      setValue('CompanyName', user.CompanyName || '');
+      setValue('BusinessDetail', user.BusinessDetail || '');
+    }
+  }, [user, setValue]);
+
+  // Set form values when about company data is loaded
+  useEffect(() => {
+    if (aboutCompany) {
+      setValue('CorporateRegistrationNumber', aboutCompany.CorporateRegistrationNumber || '');
+      setValue('BusinessGroupID', aboutCompany.BusinessGroupID || null);
+      setValue('CompanySizeID', aboutCompany.CompanySizeID || null);
+      setValue('MainServices', aboutCompany.MainServices || '');
+      setValue('RegisteredCapital', aboutCompany.RegisteredCapital || 0);
+      setValue('HiringRate', aboutCompany.HiringRate || 0);
+      setValue('ResearchInvestmentValue', aboutCompany.ResearchInvestmentValue || 0);
+      setValue('ThreeYearGrowthForecast', aboutCompany.ThreeYearGrowthForecast || '');
+    }
+  }, [aboutCompany, setValue]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [businessGroupData, companySizeData] = await Promise.all([
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          setAlerts([{ type: 'error', message: 'User not authenticated.' }]);
+          return;
+        }
+
+        const [businessGroupData, companySizeData, userData] = await Promise.all([
           ListBusinessGroups(),
-          ListCompanySizes()
+          ListCompanySizes(),
+          GetUserById(parseInt(userId))
         ]);
+        
         setBusinessGroups(businessGroupData);
         setCompanySizes(companySizeData);
+        setUser(userData);
+
+        // Try to fetch AboutCompany data if exists
+        try {
+          const aboutCompanyData = await GetAboutCompanyByUserID(parseInt(userId));
+          setAboutCompany(aboutCompanyData);
+          console.log('AboutCompany data loaded:', aboutCompanyData);
+          setAlerts([{ type: 'success', message: 'Previous company information loaded automatically!' }]);
+        } catch (aboutCompanyError) {
+          // If AboutCompany not found, it's okay - user will fill the form manually
+          console.log('No existing AboutCompany data found, user will fill manually');
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         setAlerts([{ type: 'error', message: 'Failed to load form data.' }]);
@@ -234,7 +297,9 @@ const CreateServiceAreaForm: React.FC = () => {
       'RegisteredCapital',
       'HiringRate',
       'ResearchInvestmentValue',
-      'ThreeYearGrowthForecast'
+      'ThreeYearGrowthForecast',
+      'CompanyName',
+      'BusinessDetail'
     ] as const;
     
     // Trigger validation for all step 1 fields
@@ -351,6 +416,8 @@ const CreateServiceAreaForm: React.FC = () => {
     formData.append('hiring_rate', data.HiringRate.toString());
     formData.append('research_investment_value', data.ResearchInvestmentValue.toString());
     formData.append('three_year_growth_forecast', data.ThreeYearGrowthForecast);
+    formData.append('company_name', data.CompanyName);
+    formData.append('business_detail', data.BusinessDetail);
 
     // Store form data and show privacy policy popup
     setFormDataToSubmit(formData);
@@ -394,7 +461,48 @@ const CreateServiceAreaForm: React.FC = () => {
 
       // Check if response exists and has data
       if (response && response.message) {
-        setAlerts([{ type: 'success', message: response.message || 'Service area request created successfully!' }]);
+        // Get form data from FormData
+        const formDataObj = Object.fromEntries(formDataToSubmit.entries());
+        const companyName = formDataObj.company_name as string;
+        const businessDetail = formDataObj.business_detail as string;
+        
+        // Check if company information was updated
+        const currentUser = await GetUserById(parseInt(userId));
+        if (currentUser) {
+          const companyNameChanged = currentUser.CompanyName !== companyName;
+          const businessDetailChanged = currentUser.BusinessDetail !== businessDetail;
+          
+          if (companyNameChanged || businessDetailChanged) {
+            // Update user information if company data changed
+            const updateUserData = {
+              UserID: parseInt(userId),
+              CompanyName: companyName,
+              BusinessDetail: businessDetail,
+              FirstName: currentUser.FirstName || '',
+              LastName: currentUser.LastName || '',
+              Email: currentUser.Email || '',
+              Phone: currentUser.Phone || '',
+              GenderID: currentUser.GenderID || 1, // Default gender ID since it's not directly available
+              RoleID: currentUser.RoleID || 1,
+              RequestTypeID: currentUser.RequestTypeID || 1,
+              EmployeeID: currentUser.EmployeeID || '',
+              ImageCheck: currentUser.ImageCheck || '',
+              SignatureCheck: currentUser.SignatureCheck || ''
+            };
+            
+            const userUpdateResponse = await UpdateUserbyID(updateUserData);
+            if (userUpdateResponse.status === 'success') {
+              setAlerts([{ type: 'success', message: 'Service area request created and company information updated successfully!' }]);
+            } else {
+              setAlerts([{ type: 'success', message: 'Service area request created successfully! (Company information update failed)' }]);
+            }
+          } else {
+            setAlerts([{ type: 'success', message: response.message || 'Service area request created successfully!' }]);
+          }
+        } else {
+          setAlerts([{ type: 'success', message: response.message || 'Service area request created successfully!' }]);
+        }
+        
         reset();
         setDocumentFile(null);
         setCollaborationPlans([{ plan: '', budget: 0, startDate: '' }]);
@@ -570,7 +678,50 @@ const CreateServiceAreaForm: React.FC = () => {
                     <Typography variant="h6" sx={{ fontWeight: 600, color: '#ff6f00' }}>
                       Company Information
                     </Typography>
+                    {aboutCompany && (
+                      <Typography variant="body2" sx={{ color: 'green', ml: 2, fontStyle: 'italic' }}>
+                        ✓ Previous data loaded
+                      </Typography>
+                    )}
                   </Box>
+                </Grid>
+
+                {/* Company Name */}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body1" className="title-field">Company Name *</Typography>
+                  <Controller
+                    name="CompanyName"
+                    control={control}
+                    defaultValue={user?.CompanyName || ""}
+                    rules={{
+                      required: 'Please enter company name',
+                      minLength: { value: 2, message: 'Company name must be at least 2 characters long' }
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        label="Enter company name"
+                        fullWidth
+                        error={!!errors.CompanyName}
+                        helperText={
+                          errors.CompanyName?.message || 
+                          (field.value && field.value.length >= 2 ? 
+                            `✓ Valid company name: ${field.value}` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/2 characters (minimum required)` : 
+                              "")
+                        }
+                        slotProps={{
+                          inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 2 ? 'green' : undefined
+                          }
+                        }}
+                      />
+                    )}
+                  />
                 </Grid>
 
                 {/* Corporate Registration Number */}
@@ -579,7 +730,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="CorporateRegistrationNumber"
                     control={control}
-                    defaultValue=""
+                    defaultValue={aboutCompany?.CorporateRegistrationNumber || ""}
                     rules={{
                       required: 'Please enter corporate registration number',
                       pattern: {
@@ -627,7 +778,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="BusinessGroupID"
                     control={control}
-                    defaultValue={null}
+                    defaultValue={aboutCompany?.BusinessGroupID || null}
                     rules={{ 
                       required: 'Please select business group',
                       validate: (value) => {
@@ -673,7 +824,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="CompanySizeID"
                     control={control}
-                    defaultValue={null}
+                    defaultValue={aboutCompany?.CompanySizeID || null}
                     rules={{ 
                       required: 'Please select company size',
                       validate: (value) => {
@@ -719,7 +870,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="MainServices"
                     control={control}
-                    defaultValue=""
+                    defaultValue={aboutCompany?.MainServices || ""}
                     rules={{ 
                       required: 'Please enter main services',
                       minLength: { value: 10, message: 'Main services description must be at least 10 characters long' }
@@ -757,7 +908,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="RegisteredCapital"
                     control={control}
-                    defaultValue={0}
+                    defaultValue={aboutCompany?.RegisteredCapital || 0}
                     rules={{
                       required: 'Please enter registered capital',
                       min: { value: 10, message: 'Registered capital must be at least 10 THB' }
@@ -796,7 +947,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="HiringRate"
                     control={control}
-                    defaultValue={0}
+                    defaultValue={aboutCompany?.HiringRate || 0}
                     rules={{
                       required: 'Please enter hiring rate',
                       min: { value: 0, message: 'Number of people to hire cannot be negative' }
@@ -833,7 +984,7 @@ const CreateServiceAreaForm: React.FC = () => {
                   <Controller
                     name="ResearchInvestmentValue"
                     control={control}
-                    defaultValue={0}
+                    defaultValue={aboutCompany?.ResearchInvestmentValue || 0}
                     rules={{
                       required: 'Please enter research investment value',
                       min: { value: 1, message: 'Research investment value must be at least 1 THB' }
@@ -866,13 +1017,53 @@ const CreateServiceAreaForm: React.FC = () => {
                   />
                 </Grid>
 
+                {/* Company Description */}
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant="body1" className="title-field">Company Description *</Typography>
+                  <Controller
+                    name="BusinessDetail"
+                    control={control}
+                    defaultValue={user?.BusinessDetail || ""}
+                    rules={{ 
+                      required: 'Please enter company description',
+                      minLength: { value: 10, message: 'Company description must be at least 10 characters long' }
+                    }}
+                    render={({ field }) => (
+                      <TextArea
+                        {...field}
+                        label="Please describe your company and business activities"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        error={!!errors.BusinessDetail}
+                        helperText={
+                          errors.BusinessDetail?.message || 
+                          (field.value && field.value.length >= 10 ? 
+                            `✓ Valid (${field.value.length} characters)` : 
+                            field.value && field.value.length > 0 ? 
+                              `${field.value.length}/10 characters (minimum required)` : 
+                              "")
+                        }
+                        slotProps={{
+                          inputLabel: { sx: { color: '#6D6E70' } }
+                        }}
+                        sx={{
+                          '& .MuiFormHelperText-root': {
+                            color: field.value && field.value.length >= 10 ? 'green' : undefined
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+
                 {/* Three Year Growth Forecast */}
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="body1" className="title-field">Three Year Growth Forecast *</Typography>
                   <Controller
                     name="ThreeYearGrowthForecast"
                     control={control}
-                    defaultValue=""
+                    defaultValue={aboutCompany?.ThreeYearGrowthForecast || ""}
                     rules={{ 
                       required: 'Please enter three year growth forecast',
                       minLength: { value: 10, message: 'Growth forecast must be at least 10 characters long' }

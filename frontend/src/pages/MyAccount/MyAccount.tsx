@@ -73,7 +73,7 @@ const MyAccount: React.FC = () => {
         onInteractionChange: () => {},
     });
 
-    console.log(user);
+
 
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
@@ -714,7 +714,7 @@ const MyAccount: React.FC = () => {
                 setIsLoadingData(false);
             }
         } catch (error) {
-            console.error("Error fetching maintenance requests:", error);
+            // Error handling for maintenance requests
         }
     };
 
@@ -725,7 +725,7 @@ const MyAccount: React.FC = () => {
                 setRequestStatuses(res);
             }
         } catch (error) {
-            console.error("Error fetching request statuses:", error);
+            // Error handling for request statuses
         }
     };
 
@@ -737,7 +737,7 @@ const MyAccount: React.FC = () => {
                 setProfileImage(res.ProfilePath);
             }
         } catch (error) {
-            console.error("Error fetching user:", error);
+            // Error handling for user data
         }
     };
 
@@ -748,7 +748,7 @@ const MyAccount: React.FC = () => {
                 setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
         } catch (error) {
-            console.error("Error updating maintenance request:", error);
+            // Error handling for maintenance request update
         }
     };
 
@@ -808,7 +808,6 @@ const MyAccount: React.FC = () => {
                 setIsBottonActive(false);
             }, 500);
         } catch (error) {
-            console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
             setIsBottonActive(false);
@@ -878,9 +877,9 @@ const MyAccount: React.FC = () => {
             try {
                 await Promise.all([getRequestStatuses(), getUser()]);
                 setIsLoadingData(false);
-            } catch (error) {
-                console.error("Error fetching initial data:", error);
-            }
+                    } catch (error) {
+            // Error handling for initial data fetch
+        }
         };
 
         fetchInitialData();
@@ -918,7 +917,6 @@ const MyAccount: React.FC = () => {
         const socket = io(socketUrl);
 
         socket.on("maintenance_updated", (data) => {
-            console.log("🔄 Maintenance request updated:", data);
             getUpdateMaintenanceRequest(data.ID);
         });
 

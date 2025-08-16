@@ -12,4 +12,6 @@ export interface ServiceAreaFormData {
   HiringRate: number;
   ResearchInvestmentValue: number;
   ThreeYearGrowthForecast: string;
+  CompanyName: string;
+  BusinessDetail: string;
 }

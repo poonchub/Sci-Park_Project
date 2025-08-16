@@ -211,22 +211,23 @@ async function CreateUser(data: any) {
 }
 
 async function UpdateUserbyID(data: any) {
-    const formData = new FormData();
-    formData.append("company_name", data.CompanyName || "");
-    formData.append("business_detail", data.BusinessDetail || "");
-    formData.append("first_name", data.FirstName || "");
-    formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID.toString());
-    formData.append("email", data.Email || "");
-    // Only append password if user entered a new password (explicitly provided)
-    if (data.Password && data.Password.trim() !== "") {
-        formData.append("password", data.Password);
-    }
-    formData.append("phone", data.Phone || "");
-    formData.append("role_id", data.RoleID.toString());
-    formData.append("employee_id", data.EmployeeID || "");
-    formData.append("profile_check", data.ImageCheck || "");
-    formData.append("request_type_id", data.RequestTypeID.toString() || "1");
+    try {
+        const formData = new FormData();
+        formData.append("company_name", data.CompanyName || "");
+        formData.append("business_detail", data.BusinessDetail || "");
+        formData.append("first_name", data.FirstName || "");
+        formData.append("last_name", data.LastName || "");
+        formData.append("gender_id", (data.GenderID || 1).toString());
+        formData.append("email", data.Email || "");
+        // Only append password if user entered a new password (explicitly provided)
+        if (data.Password && data.Password.trim() !== "") {
+            formData.append("password", data.Password);
+        }
+        formData.append("phone", data.Phone || "");
+        formData.append("role_id", (data.RoleID || 1).toString());
+        formData.append("employee_id", data.EmployeeID || "");
+        formData.append("profile_check", data.ImageCheck || "");
+        formData.append("request_type_id", (data.RequestTypeID || 1).toString());
 
     if (data.Profile_Image) {
         formData.append("profile_image", data.Profile_Image);
@@ -285,6 +286,14 @@ async function UpdateUserbyID(data: any) {
                 data: null,
             };
         }
+    }
+    } catch (error) {
+        console.error("Error in UpdateUserbyID:", error);
+        return {
+            status: "error",
+            message: "An unexpected error occurred while updating user",
+            data: null,
+        };
     }
 }
 

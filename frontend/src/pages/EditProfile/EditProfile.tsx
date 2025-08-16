@@ -135,8 +135,14 @@ const EditProfile: React.FC = () => {
             // Find gender ID from genders array based on user's gender name
             const userGender = genders.find(g => g.Name === user.Gender?.name);
             setValue('GenderID', userGender?.ID || 1);
+            
+            // Set company information for external users
+            if (userType === "external") {
+                setValue('CompanyName', user.CompanyName || '');
+                setValue('BusinessDetail', user.BusinessDetail || '');
+            }
         }
-    }, [user, genders, setValue]);
+    }, [user, genders, setValue, userType]);
 
     const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
         if (images.length === 0) return [];
@@ -422,14 +428,20 @@ const EditProfile: React.FC = () => {
         }
 
         try {
-            // ตรวจสอบข้อมูลที่จำเป็น
-            if (!data.FirstName || !data.LastName || !data.Phone || !data.Email) {
-                setAlerts((prevAlerts) => [
-                    ...prevAlerts,
-                    { type: "error", message: "Please fill in all required fields." },
-                ]);
-                return;
-            }
+                    // ตรวจสอบข้อมูลที่จำเป็น
+        const requiredFields = ['FirstName', 'LastName', 'Phone', 'Email'];
+        if (userType === "external") {
+            requiredFields.push('CompanyName', 'BusinessDetail');
+        }
+        
+        const missingFields = requiredFields.filter(field => !data[field]);
+        if (missingFields.length > 0) {
+            setAlerts((prevAlerts) => [
+                ...prevAlerts,
+                { type: "error", message: "Please fill in all required fields." },
+            ]);
+            return;
+        }
 
             const formData = {
                 UserID: user.ID,
@@ -440,6 +452,11 @@ const EditProfile: React.FC = () => {
                 Email: data.Email,
                 RoleID: user.RoleID || 1, // เพิ่ม RoleID จากข้อมูลผู้ใช้ปัจจุบัน
                 RequestTypeID: user.RequestTypeID || 1, // เพิ่ม RequestTypeID จากข้อมูลผู้ใช้ปัจจุบัน
+                // เพิ่มข้อมูลบริษัทสำหรับ External User
+                ...(userType === "external" && {
+                    CompanyName: data.CompanyName || '',
+                    BusinessDetail: data.BusinessDetail || ''
+                }),
                 // ไม่รวม Profile_Image และ ImageCheck เพื่อไม่ให้อัพเดทรูปโปรไฟล์
             };
 
@@ -448,7 +465,7 @@ const EditProfile: React.FC = () => {
             if (response.status === "success") {
                 setAlerts((prevAlerts) => [
                     ...prevAlerts,
-                    { type: "success", message: "Profile information updated successfully!" },
+                    { type: "success", message: userType === "external" ? "Profile and company information updated successfully!" : "Profile information updated successfully!" },
                 ]);
                 
                 // Refresh user data
@@ -1210,11 +1227,7 @@ const EditProfile: React.FC = () => {
 
                             {/* External User Information */}
                             {userType === "external" && (
-                                <Box sx={{ 
-                                    opacity: isEditMode ? 0.5 : 1,
-                                    filter: isEditMode ? 'grayscale(50%)' : 'none',
-                                    pointerEvents: isEditMode ? 'none' : 'auto'
-                                }}>
+                                <Box>
                                     <Divider sx={{ my: 3 }} />
                                     <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
                                         <FontAwesomeIcon icon={faBuilding} style={{ marginRight: 8 }} />
@@ -1229,25 +1242,58 @@ const EditProfile: React.FC = () => {
                                                     Company Name
                                                 </Typography>
                                             </Box>
-                                            <TextField
-                                                fullWidth
-                                                value={String(user?.CompanyName || "-")}
-                                                slotProps={{
-                                                    input: {
-                                                        readOnly: true,
-                                                    },
-                                                }}
-                                                sx={{
-                                                    "& .MuiOutlinedInput-root": {
-                                                        bgcolor: "background.default",
-                                                        color: "text.primary",
-                                                        "& fieldset": {
-                                                            borderColor: "divider",
+                                            {isEditMode ? (
+                                                <Controller
+                                                    name="CompanyName"
+                                                    control={control}
+                                                    defaultValue={user?.CompanyName || ""}
+                                                    rules={{ required: 'Please enter company name' }}
+                                                    render={({ field }) => (
+                                                        <TextField
+                                                            {...field}
+                                                            label="Please enter company name"
+                                                            fullWidth
+                                                            error={!!errors.CompanyName}
+                                                            helperText={
+                                                                String(errors.CompanyName?.message || "") || 
+                                                                (field.value && field.value.length > 0 ? 
+                                                                    `✓ Valid company name: ${field.value}` : 
+                                                                    "")
+                                                            }
+                                                            slotProps={{
+                                                                inputLabel: {
+                                                                    sx: { color: '#6D6E70' }
+                                                                }
+                                                            }}
+                                                            sx={{
+                                                                '& .MuiFormHelperText-root': {
+                                                                    color: field.value && field.value.length > 0 ? 'green' : undefined
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                            ) : (
+                                                <TextField
+                                                    fullWidth
+                                                    value={String(user?.CompanyName || "-")}
+                                                    slotProps={{
+                                                        input: {
+                                                            readOnly: true,
                                                         },
-                                                    },
-                                                    input: { color: "text.primary" },
-                                                }}
-                                            />
+                                                    }}
+                                                    sx={{
+                                                        "& .MuiOutlinedInput-root": {
+                                                            bgcolor: "background.default",
+                                                            color: "text.primary",
+                                                            "& fieldset": {
+                                                                borderColor: "divider",
+                                                            },
+                                                        },
+                                                        input: { color: "text.primary" },
+                                                    }}
+                                                />
+                                            )}
                                         </Grid>
                                         <Grid size={{ xs: 12 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
@@ -1256,28 +1302,64 @@ const EditProfile: React.FC = () => {
                                                     Business Description
                                                 </Typography>
                                             </Box>
-                                            <TextArea
-                                                fullWidth
-                                                value={String(user?.BusinessDetail || "-")}
-                                                multiline
-                                                minRows={3}
-                                                maxRows={5}
-                                                slotProps={{
-                                                    input: {
-                                                        readOnly: true,
-                                                    },
-                                                }}
-                                                sx={{
-                                                    "& .MuiOutlinedInput-root": {
-                                                        bgcolor: "background.default",
-                                                        color: "text.primary",
-                                                        "& fieldset": {
-                                                            borderColor: "divider",
+                                            {isEditMode ? (
+                                                <Controller
+                                                    name="BusinessDetail"
+                                                    control={control}
+                                                    defaultValue={user?.BusinessDetail || ""}
+                                                    rules={{ required: 'Please enter business description' }}
+                                                    render={({ field }) => (
+                                                        <TextArea
+                                                            {...field}
+                                                            label="Please enter business description"
+                                                            fullWidth
+                                                            multiline
+                                                            minRows={3}
+                                                            maxRows={5}
+                                                            error={!!errors.BusinessDetail}
+                                                            helperText={
+                                                                String(errors.BusinessDetail?.message || "") || 
+                                                                (field.value && field.value.length > 0 ? 
+                                                                    `✓ Valid business description: ${field.value.length} characters` : 
+                                                                    "")
+                                                            }
+                                                            slotProps={{
+                                                                inputLabel: {
+                                                                    sx: { color: '#6D6E70' }
+                                                                }
+                                                            }}
+                                                            sx={{
+                                                                '& .MuiFormHelperText-root': {
+                                                                    color: field.value && field.value.length > 0 ? 'green' : undefined
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                            ) : (
+                                                <TextArea
+                                                    fullWidth
+                                                    value={String(user?.BusinessDetail || "-")}
+                                                    multiline
+                                                    minRows={3}
+                                                    maxRows={5}
+                                                    slotProps={{
+                                                        input: {
+                                                            readOnly: true,
                                                         },
-                                                    },
-                                                    input: { color: "text.primary" },
-                                                }}
-                                            />
+                                                    }}
+                                                    sx={{
+                                                        "& .MuiOutlinedInput-root": {
+                                                            bgcolor: "background.default",
+                                                            color: "text.primary",
+                                                            "& fieldset": {
+                                                                borderColor: "divider",
+                                                            },
+                                                        },
+                                                        input: { color: "text.primary" },
+                                                    }}
+                                                />
+                                            )}
                                         </Grid>
                                     </Grid>
                                 </Box>
@@ -1287,7 +1369,7 @@ const EditProfile: React.FC = () => {
                             {isEditMode && (
                                 <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'flex-end', alignItems: 'center' }}>
                                     <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
-                                        * Only personal information will be updated
+                                        * {userType === "external" ? "Personal and company information will be updated" : "Only personal information will be updated"}
                                     </Typography>
                                     <Button
                                         variant="outlined"
@@ -1304,7 +1386,7 @@ const EditProfile: React.FC = () => {
                                         onClick={handleSubmit(onSubmit)}
                                         disabled={isButtonActive}
                                     >
-                                        Save Personal Info
+                                        {userType === "external" ? "Save Profile Info" : "Save Personal Info"}
                                     </Button>
                                 </Box>
                             )}
