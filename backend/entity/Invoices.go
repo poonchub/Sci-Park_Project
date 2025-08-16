@@ -23,5 +23,5 @@ type Invoice struct {
 	CustomerID uint
 	Customer   User 		 `gorm:"foreignKey:CustomerID" valid:"-"`
 	Items      []InvoiceItem `gorm:"foreignKey:InvoiceID" valid:"-"`
-	Payments   []Payment     `gorm:"foreignKey:InvoiceID" valid:"-"`
+	Payments   *Payment     `gorm:"foreignKey:InvoiceID" valid:"-"`
 }

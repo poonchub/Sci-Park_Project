@@ -98,7 +98,7 @@ func GetInvoiceByOption(c *gin.Context) {
 	}
 
 	query = query.
-		Preload("Payments").
+		Preload("Payments.Status").
 		Preload("Status").
 		Preload("Items").
 		Preload("Room.Floor").
@@ -677,8 +677,8 @@ func CreateInvoice(c *gin.Context) {
 	invoice.InvoiceNumber = nextInvoiceNumber
 
 	var status entity.PaymentStatus
-	if err := db.Where("name = ?", "Pending").First(&status).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending' not found"})
+	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending Payment' not found"})
 		return
 	}
 

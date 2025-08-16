@@ -179,7 +179,7 @@ function RoomRentalSpace() {
     };
 
     const getInvoice = async () => {
-        setIsLoadingInvoice(true)
+        setIsLoadingInvoice(true);
         try {
             const resInvoice = await GetInvoiceByOption(
                 invoicePage,
@@ -190,7 +190,7 @@ function RoomRentalSpace() {
             if (resInvoice) {
                 setInvoiceTotal(resInvoice.total);
                 setInvoices(resInvoice.data);
-                setIsLoadingInvoice(false)
+                setIsLoadingInvoice(false);
             }
         } catch (error) {
             console.error("Error fetching rooms:", error);
@@ -449,7 +449,7 @@ function RoomRentalSpace() {
             setTimeout(() => {
                 setIsButtonActive(false);
                 setSelectedInvoice(null);
-                handleClearForm()
+                handleClearForm();
                 setInvoices([]);
                 getInvoice();
             }, 1800);
@@ -591,13 +591,13 @@ function RoomRentalSpace() {
     const filteredInvoices = invoices.filter((item) => {
         const invoiceNumber = item.InvoiceNumber;
         const billingPeriod = formatToMonthYear(item.BillingPeriod || "");
-        const totalAmount = String(item.TotalAmount)
+        const totalAmount = String(item.TotalAmount);
 
         const matchText =
             !searchTextInvoice ||
             invoiceNumber?.includes(searchTextInvoice.toLocaleLowerCase()) ||
-            billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) || 
-            totalAmount?.includes(searchTextInvoice)
+            billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+            totalAmount?.includes(searchTextInvoice);
 
         return matchText;
     });
@@ -1076,17 +1076,42 @@ function RoomRentalSpace() {
             open={openImage}
             onClose={() => {
                 setOpenImage(false);
+                setSelectedInvoice(null);
             }}
             maxWidth={false}
             sx={{
                 "& .MuiDialog-paper": {
-                    maxWidth: "70vw",
+                    maxWidth: { xs: "75vw", md: "50vw" },
                     width: "auto",
                     margin: 0,
                     borderRadius: 0,
                 },
             }}
         >
+            <Box sx={{ 
+                position: 'absolute', 
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'end',
+                alignItems: 'flex-start',
+                height: '100%'
+            }}>
+                <IconButton
+                    aria-label="close"
+                    onClick={() => {
+                        setOpenImage(false);
+                        setSelectedInvoice(null);
+                    }}
+                    sx={{
+                        position: "sticky",
+                        right: 8,
+                        top: 8,
+                    }}
+                >
+                    <Close />
+                </IconButton>
+            </Box>
+
             <CardMedia
                 component="img"
                 image={

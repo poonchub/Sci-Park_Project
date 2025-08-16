@@ -1117,8 +1117,12 @@ func SeedDatabase() {
 
 	// PaymentStatus
 	paymentStatuses := []entity.PaymentStatus{
-		{Name: "Pending"},
-		{Name: "Completed"},
+		{Name: "Pending Payment"},
+		{Name: "Paid"},
+		{Name: "Approved"},
+		{Name: "Rejected"},
+		{Name: "Cancelled"},
+		{Name: "Refunded"},
 	}
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{

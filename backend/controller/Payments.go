@@ -118,23 +118,22 @@ func CreatePayment(c *gin.Context) {
 	amountStr := c.PostForm("Amount")
 	userIDStr := c.PostForm("UserID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
+	invoiceIDStr := c.PostForm("InvoiceID")
 
-	// แปลง string เป็นค่าที่ต้องการ (เช่น float, uint)
+	// แปลง string เป็นค่าที่ต้องการ
 	amount, err := strconv.ParseFloat(amountStr, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount"})
 		return
 	}
+
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
 		return
 	}
-	bookingRoomID, err := strconv.ParseUint(bookingRoomIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BookingRoomID"})
-		return
-	}
+
+
 	paymentDate, err := time.Parse(time.RFC3339Nano, paymentDateStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid payment date format"})
@@ -147,62 +146,101 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	var booking entity.BookingRoom
-	if err := db.First(&booking, bookingRoomID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "booking not found"})
+	var bookingRoomID, invoiceID uint
+	if bookingRoomIDStr != "" {
+		brID, err := strconv.ParseUint(bookingRoomIDStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BookingRoomID"})
+			return
+		}
+		bookingRoomID = uint(brID)
+
+		var booking entity.BookingRoom
+		if err := db.First(&booking, bookingRoomID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "booking not found"})
+			return
+		}
+	}
+
+	if invoiceIDStr != "" {
+		invID, err := strconv.ParseUint(invoiceIDStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid InvoiceID"})
+			return
+		}
+		invoiceID = uint(invID)
+
+		var invoice entity.Invoice
+		if err := db.First(&invoice, invoiceID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "invoice not found"})
+			return
+		}
+	}
+
+	// ตรวจสอบว่ามีการส่งมาอย่างน้อย 1 อย่าง
+	if bookingRoomID == 0 && invoiceID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "BookingRoomID or InvoiceID must be provided"})
 		return
 	}
 
+	// อัปโหลดไฟล์ slip
 	form, err := c.MultipartForm()
 	var slipPath string
 	if err == nil {
 		files := form.File["files"]
 		if len(files) > 0 {
 			file := files[0]
-
-			// เตรียมโฟลเดอร์
 			folderPath := fmt.Sprintf("images/payment/user%d", user.ID)
 			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
 				return
 			}
 
-			// สร้างชื่อไฟล์ใหม่
 			ext := ".png"
-			newFileName := fmt.Sprintf("slip_room_booking%d%s", booking.ID, ext)
+			newFileName := "slip_" + strconv.FormatInt(time.Now().Unix(), 10) + ext
 			fullPath := path.Join(folderPath, newFileName)
 
-			// บันทึกไฟล์
 			if err := c.SaveUploadedFile(file, fullPath); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save file"})
 				return
 			}
 
-			// บันทึก path ไฟล์ลงใน database
-			slipPath = fullPath // หรือใช้ URL prefix ตามเว็บคุณ
+			slipPath = fullPath
 		}
 	}
 
-	payment := entity.Payment{
-		PaymentDate: paymentDate,
-		Amount:      amount,
-		SlipPath:    slipPath,
-		// Note:          note,
-		StatusID:      1,
-		PayerID:       uint(userID),
-		BookingRoomID: uint(bookingRoomID),
+	var status entity.PaymentStatus
+	if err := db.Where("name = ?", "Paid").First(&status).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Paid' not found"})
+		return
 	}
 
-	var existing entity.Payment
-	if err := db.Where("payer_id = ? AND booking_room_id = ?", payment.PayerID, payment.BookingRoomID).
-		First(&existing).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this booking."})
-		return
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	payment := entity.Payment{
+		PaymentDate:   paymentDate.In(loc),
+		Amount:        amount,
+		SlipPath:      slipPath,
+		StatusID:      status.ID,
+		PayerID:       uint(userID),
+		BookingRoomID: bookingRoomID,
+		InvoiceID:     invoiceID,
 	}
-	if err := db.Where("payer_id = ? AND invoice_id = ?", payment.PayerID, payment.InvoiceID).
-		First(&existing).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this invoice."})
-		return
+
+	// ตรวจสอบว่ามี payment ซ้ำหรือไม่
+	var existing entity.Payment
+	if bookingRoomID != 0 {
+		if err := db.Where("payer_id = ? AND booking_room_id = ?", payment.PayerID, payment.BookingRoomID).
+			First(&existing).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this booking."})
+			return
+		}
+	}
+	if invoiceID != 0 {
+		if err := db.Where("payer_id = ? AND invoice_id = ?", payment.PayerID, payment.InvoiceID).
+			First(&existing).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this invoice."})
+			return
+		}
 	}
 
 	if err := db.Create(&payment).Error; err != nil {
@@ -259,7 +297,7 @@ func UpdatePaymentByID(c *gin.Context) {
 
 			// สร้างชื่อไฟล์ใหม่
 			ext := ".png"
-			newFileName := fmt.Sprintf("slip_room_booking%d%s", payment.BookingRoomID, ext)
+			newFileName := "slip_" + strconv.FormatInt(time.Now().Unix(), 10) + ext
 			fullPath := path.Join(folderPath, newFileName)
 
 			// บันทึกไฟล์

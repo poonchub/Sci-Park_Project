@@ -6,7 +6,9 @@ import {
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForUser,
     GetRequestStatuses,
+    ListPaymentStatus,
     socketUrl,
+    UpdateInvoiceByID,
     UpdateMaintenanceRequestByID,
     UpdateNotificationsByRequestID,
 } from "../../services/http";
@@ -44,9 +46,10 @@ import {
     faEye,
     faPencil,
     faFileLines,
+    faFilePdf,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Download, Eye, ShieldUser } from "lucide-react";
+import { Download, Eye, ShieldUser, Wallet } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import FilterSection from "../../components/FilterSection/FilterSection";
@@ -79,6 +82,8 @@ import { PaymentInterface } from "../../interfaces/IPayments";
 import formatToLocalWithTimezone from "../../utils/formatToLocalWithTimezone";
 import generateInvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
+import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
+import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 
 const MyAccount: React.FC = () => {
@@ -92,6 +97,7 @@ const MyAccount: React.FC = () => {
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequestsInterface>({});
     const [slipfile, setSlipFile] = useState<File | null>(null);
+    const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatusInterface[]>([]);
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
@@ -117,6 +123,7 @@ const MyAccount: React.FC = () => {
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openImage, setOpenImage] = useState(false);
+    const [openPopupPayment, setOpenPopupPayment] = useState(false);
     const [openPDF, setOpenPDF] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
@@ -129,6 +136,354 @@ const MyAccount: React.FC = () => {
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_ACCOUNT,
         onInteractionChange: () => {},
+    });
+
+    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
+        try {
+            const userId = localStorage.getItem("userId");
+            const statusFormat = selectedStatuses.join(",");
+            const res = await GetMaintenanceRequestsForUser(
+                statusFormat,
+                pageNum,
+                limit,
+                selectedDate ? selectedDate.format("YYYY-MM-DD") : "",
+                Number(userId)
+            );
+
+            if (res) {
+                setMaintenanceRequests(res.data);
+                if (setTotalFlag) setTotal(res.total);
+
+                const formatted = res.statusCounts.reduce((acc: any, item: any) => {
+                    acc[item.status_name] = item.count;
+                    return acc;
+                }, {});
+                setStatusCounts(formatted);
+                setIsLoadingData(false);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance requests:", error);
+        }
+    };
+
+    const getRequestStatuses = async () => {
+        try {
+            const res = await GetRequestStatuses();
+            if (res) {
+                setRequestStatuses(res);
+            }
+        } catch (error) {
+            console.error("Error fetching request statuses:", error);
+        }
+    };
+
+    const getUser = async () => {
+        try {
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
+            if (res) {
+                setUser(res);
+                setProfileImage(res.ProfilePath);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
+    const getUpdateMaintenanceRequest = async (ID: number) => {
+        try {
+            const res = await GetMaintenanceRequestByID(ID);
+            if (res) {
+                setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+            }
+        } catch (error) {
+            console.error("Error updating maintenance request:", error);
+        }
+    };
+
+    const getInvoice = async () => {
+        // setIsLoadingInvoice(true);
+        try {
+            const userId = Number(localStorage.getItem("userId"));
+            const resInvoice = await GetInvoiceByOption(invoicePage, invoiceLimit, 0, 0, userId);
+            if (resInvoice) {
+                setInvoiceTotal(resInvoice.total);
+                setInvoices(resInvoice.data);
+                setIsLoadingInvoice(false);
+            }
+        } catch (error) {
+            console.error("Error fetching rooms:", error);
+        }
+    };
+
+    const getPaymentStatuses = async () => {
+        try {
+            const res = await ListPaymentStatus();
+            if (res) {
+                setPaymentStatuses(res);
+            }
+        } catch (error) {
+            console.error("Error fetching payment statuses:", error);
+        }
+    };
+
+    const handleClickCheck = (data: MaintenanceRequestsInterface) => {
+        if (data) {
+            const encodedId = Base64.encode(String(data.ID));
+            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
+        }
+    };
+
+    const handleClickInspection = (
+        statusName: "Completed" | "Rework Requested",
+        actionType: "confirm" | "rework",
+        note?: string
+    ) => {
+        setIsButtonActive(true);
+        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+        const userID = Number(localStorage.getItem("userId"));
+
+        handleActionInspection(statusID, {
+            userID,
+            selectedRequest,
+            setAlerts,
+            setOpenConfirmInspection,
+            setOpenConfirmRework,
+            actionType,
+            note,
+            files: requestfiles,
+        });
+        setIsButtonActive(false);
+    };
+
+    const handleClickCancel = async () => {
+        try {
+            setIsButtonActive(true);
+            const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
+
+            const request: MaintenanceRequestsInterface = {
+                RequestStatusID: statusID,
+            };
+
+            const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
+            if (!resRequest || resRequest.error)
+                throw new Error(resRequest?.error || "Failed to update request status.");
+
+            const notificationDataUpdate: NotificationsInterface = {
+                IsRead: true,
+            };
+            const resUpdateNotification = await UpdateNotificationsByRequestID(
+                notificationDataUpdate,
+                selectedRequest.ID
+            );
+            if (!resUpdateNotification || resUpdateNotification.error)
+                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
+            handleSetAlert("success", "Request cancelled successfully.");
+            setTimeout(() => {
+                setOpenConfirmCancelled(false);
+                setIsButtonActive(false);
+            }, 500);
+        } catch (error) {
+            console.error("API Error:", error);
+            const errMessage = (error as Error).message || "Unknown error!";
+            handleSetAlert("error", errMessage);
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleUploadSlip = async (resCheckSlip?: any) => {
+        try {
+            // const resCheckSlip = await
+            const userId = Number(localStorage.getItem("userId"));
+            const paymentData: PaymentInterface = {
+                PaymentDate: resCheckSlip.data.transTimestamp,
+                Amount: selectedInvoice?.TotalAmount,
+                UserID: userId,
+                InvoiceID: selectedInvoice?.ID,
+            };
+
+            const formData = new FormData();
+            for (const [key, value] of Object.entries(paymentData)) {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
+            }
+            formData.append("files", slipfile as File);
+            const resPayment = await CreatePayment(formData);
+
+            console.log("resPayment: ", resPayment);
+
+            const invoiceData: InvoiceInterface = {
+                StatusID: resPayment.payment.StatusID,
+            };
+            await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
+
+            handleSetAlert("success", "Upload slip successfully.");
+            setTimeout(() => {
+                getInvoice()
+                setSelectedInvoice(null)
+                setOpenPopupPayment(false)
+            }, 500);
+        } catch (error: any) {
+            console.error("🚨 Error creating payment:", error);
+            if (error.status === 409) {
+                handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
+            } else {
+                handleSetAlert("error", "An unexpected error occurred");
+            }
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
+        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+    };
+
+    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+        setValueTab(newValue);
+    };
+
+    const handleClearFillter = () => {
+        setSelectedDate(null);
+        setSearchText("");
+        setSelectedStatuses([0]);
+    };
+
+    // Analytics tracking
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        // ส่ง request ตอนเข้า (duration = 0)
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem("userId")),
+            page_path: KEY_PAGES.MY_ACCOUNT,
+            page_name: "My Account",
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem("userId")),
+                page_path: KEY_PAGES.MY_ACCOUNT,
+                page_name: "My Account",
+                duration,
+                is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
+    }, []);
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([getRequestStatuses(), getUser()]);
+                setIsLoadingData(false);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
+    }, []);
+
+    useEffect(() => {
+        if (requestStatuses) {
+            getMaintenanceRequests(page);
+        }
+    }, [page, limit]);
+
+    useEffect(() => {
+        if (requestStatuses) {
+            getMaintenanceRequests(1, true);
+        }
+    }, [selectedStatuses, selectedDate]);
+
+    useEffect(() => {
+        if (valueTab === 2) {
+            getInvoice();
+            getPaymentStatuses();
+        }
+    }, [valueTab]);
+
+    useEffect(() => {
+        async function doCheckSlip() {
+            const formData = new FormData();
+            formData.append("files", slipfile as File);
+
+            const resCheckSlip = await CheckSlip(formData);
+            console.log("Slip check result:", resCheckSlip);
+
+            if (resCheckSlip) {
+                handleUploadSlip(resCheckSlip);
+            }
+        }
+
+        if (slipfile) {
+            doCheckSlip();
+        }
+    }, [slipfile]);
+
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            getUpdateMaintenanceRequest(data.ID);
+        });
+
+        return () => {
+            socket.off("maintenance_updated");
+        };
+    }, []);
+
+    const filteredInvoices = invoices.filter((item) => {
+        // const invoiceNumber = item.InvoiceNumber;
+        // const billingPeriod = formatToMonthYear(item.BillingPeriod || "");
+        // const totalAmount = String(item.TotalAmount)
+
+        // const matchText =
+        //     !searchTextInvoice ||
+        //     invoiceNumber?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+        //     billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) ||
+        //     totalAmount?.includes(searchTextInvoice)
+
+        return item;
+    });
+
+    const filteredRequests = maintenanceRequests.filter((request) => {
+        const requestId = String(request.ID);
+        const roomTypeName = request.Room?.RoomType?.TypeName?.toLowerCase() || "";
+        const floor = `Floor ${request.Room?.Floor?.Number}`;
+        const roomNumber = String(request.Room?.RoomNumber).toLowerCase() || "";
+
+        const matchText =
+            !searchText ||
+            requestId?.includes(searchText) ||
+            roomTypeName.includes(searchText.toLowerCase()) ||
+            floor.includes(searchText.toLowerCase()) ||
+            roomNumber?.includes(searchText.toLowerCase());
+
+        return matchText;
     });
 
     const getColumns = (): GridColDef[] => {
@@ -773,338 +1128,6 @@ const MyAccount: React.FC = () => {
         }
     };
 
-    const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
-        try {
-            const userId = localStorage.getItem("userId");
-            const statusFormat = selectedStatuses.join(",");
-            const res = await GetMaintenanceRequestsForUser(
-                statusFormat,
-                pageNum,
-                limit,
-                selectedDate ? selectedDate.format("YYYY-MM-DD") : "",
-                Number(userId)
-            );
-
-            if (res) {
-                setMaintenanceRequests(res.data);
-                if (setTotalFlag) setTotal(res.total);
-
-                const formatted = res.statusCounts.reduce((acc: any, item: any) => {
-                    acc[item.status_name] = item.count;
-                    return acc;
-                }, {});
-                setStatusCounts(formatted);
-                setIsLoadingData(false);
-            }
-        } catch (error) {
-            console.error("Error fetching maintenance requests:", error);
-        }
-    };
-
-    const getRequestStatuses = async () => {
-        try {
-            const res = await GetRequestStatuses();
-            if (res) {
-                setRequestStatuses(res);
-            }
-        } catch (error) {
-            console.error("Error fetching request statuses:", error);
-        }
-    };
-
-    const getUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
-            if (res) {
-                setUser(res);
-                setProfileImage(res.ProfilePath);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
-
-    const getUpdateMaintenanceRequest = async (ID: number) => {
-        try {
-            const res = await GetMaintenanceRequestByID(ID);
-            if (res) {
-                setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
-            }
-        } catch (error) {
-            console.error("Error updating maintenance request:", error);
-        }
-    };
-
-    const getInvoice = async () => {
-        // setIsLoadingInvoice(true);
-        try {
-            const userId = Number(localStorage.getItem("userId"));
-            const resInvoice = await GetInvoiceByOption(invoicePage, invoiceLimit, 0, 0, userId);
-            if (resInvoice) {
-                setInvoiceTotal(resInvoice.total);
-                setInvoices(resInvoice.data);
-                setIsLoadingInvoice(false);
-            }
-        } catch (error) {
-            console.error("Error fetching rooms:", error);
-        }
-    };
-
-    const handleClickCheck = (data: MaintenanceRequestsInterface) => {
-        if (data) {
-            const encodedId = Base64.encode(String(data.ID));
-            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
-        }
-    };
-
-    const handleClickInspection = (
-        statusName: "Completed" | "Rework Requested",
-        actionType: "confirm" | "rework",
-        note?: string
-    ) => {
-        setIsButtonActive(true);
-        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        const userID = Number(localStorage.getItem("userId"));
-
-        handleActionInspection(statusID, {
-            userID,
-            selectedRequest,
-            setAlerts,
-            setOpenConfirmInspection,
-            setOpenConfirmRework,
-            actionType,
-            note,
-            files: requestfiles,
-        });
-        setIsButtonActive(false);
-    };
-
-    const handleClickCancel = async () => {
-        try {
-            setIsButtonActive(true);
-            const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
-
-            const request: MaintenanceRequestsInterface = {
-                RequestStatusID: statusID,
-            };
-
-            const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
-            if (!resRequest || resRequest.error)
-                throw new Error(resRequest?.error || "Failed to update request status.");
-
-            const notificationDataUpdate: NotificationsInterface = {
-                IsRead: true,
-            };
-            const resUpdateNotification = await UpdateNotificationsByRequestID(
-                notificationDataUpdate,
-                selectedRequest.ID
-            );
-            if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
-
-            setTimeout(() => {
-                setAlerts((prev) => [
-                    ...prev,
-                    {
-                        type: "success",
-                        message: "Request cancelled successfully",
-                    },
-                ]);
-
-                setOpenConfirmCancelled(false);
-                setIsButtonActive(false);
-            }, 500);
-        } catch (error) {
-            console.error("API Error:", error);
-            const errMessage = (error as Error).message || "Unknown error!";
-            setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
-            setIsButtonActive(false);
-        }
-    };
-
-    const handleUploadSlip = async (resCheckSlip?: any) => {
-        try {
-            // const resCheckSlip = await
-            const userId = Number(localStorage.getItem("userId"));
-            const paymentData: PaymentInterface = {
-                PaymentDate: formatToLocalWithTimezone(resCheckSlip.data.transTimestamp),
-                Amount: selectedInvoice?.TotalAmount,
-                UserID: userId,
-                InvoiceID: selectedInvoice?.ID,
-            };
-
-            const formData = new FormData();
-
-            for (const [key, value] of Object.entries(paymentData)) {
-                if (value !== undefined && value !== null) {
-                    formData.append(key, value);
-                }
-            }
-
-            formData.append("files", slipfile as File);
-
-            await CreatePayment(formData);
-        } catch (error: any) {
-            console.error("🚨 Error creating payment:", error);
-            if (error.status === 409) {
-                handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
-            } else {
-                handleSetAlert("error", "An unexpected error occurred");
-            }
-            setIsButtonActive(false);
-        }
-    };
-
-    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
-        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
-    };
-
-    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
-        setValueTab(newValue);
-    };
-
-    const handleClearFillter = () => {
-        setSelectedDate(null);
-        setSearchText("");
-        setSelectedStatuses([0]);
-    };
-
-    // Analytics tracking
-    useEffect(() => {
-        const startTime = Date.now();
-        let sent = false;
-
-        // ส่ง request ตอนเข้า (duration = 0)
-        analyticsService.trackPageVisit({
-            user_id: Number(localStorage.getItem("userId")),
-            page_path: KEY_PAGES.MY_ACCOUNT,
-            page_name: "My Account",
-            duration: 0, // ตอนเข้า duration = 0
-            is_bounce: false,
-        });
-
-        // ฟังก์ชันส่ง analytics ตอนออก
-        const sendAnalyticsOnLeave = (isBounce: boolean) => {
-            if (sent) {
-                return;
-            }
-            sent = true;
-            const duration = Math.floor((Date.now() - startTime) / 1000);
-            analyticsService.trackPageVisit({
-                user_id: Number(localStorage.getItem("userId")),
-                page_path: KEY_PAGES.MY_ACCOUNT,
-                page_name: "My Account",
-                duration,
-                is_bounce: isBounce,
-                interaction_count: getInteractionCount(),
-            });
-        };
-
-        // ออกจากหน้าแบบปิด tab/refresh
-        const handleBeforeUnload = () => {
-            sendAnalyticsOnLeave(true);
-        };
-        window.addEventListener("beforeunload", handleBeforeUnload);
-
-        // ออกจากหน้าแบบ SPA (React)
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-            sendAnalyticsOnLeave(false);
-        };
-    }, []);
-
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                await Promise.all([getRequestStatuses(), getUser()]);
-                setIsLoadingData(false);
-            } catch (error) {
-                console.error("Error fetching initial data:", error);
-            }
-        };
-
-        fetchInitialData();
-    }, []);
-
-    useEffect(() => {
-        if (requestStatuses) {
-            getMaintenanceRequests(page);
-        }
-    }, [page, limit]);
-
-    useEffect(() => {
-        if (requestStatuses) {
-            getMaintenanceRequests(1, true);
-        }
-    }, [selectedStatuses, selectedDate]);
-
-    useEffect(() => {
-        if (valueTab === 2) {
-            getInvoice();
-        }
-    }, [valueTab]);
-
-    useEffect(() => {
-        async function doCheckSlip() {
-            const formData = new FormData();
-            formData.append("files", slipfile as File);
-
-            const resCheckSlip = await CheckSlip(formData);
-            console.log("Slip check result:", resCheckSlip);
-
-            if (resCheckSlip) {
-                handleUploadSlip(resCheckSlip);
-            }
-        }
-
-        if (slipfile) {
-            doCheckSlip();
-        }
-    }, [slipfile]);
-
-    useEffect(() => {
-        const socket = io(socketUrl);
-
-        socket.on("maintenance_updated", (data) => {
-            console.log("🔄 Maintenance request updated:", data);
-            getUpdateMaintenanceRequest(data.ID);
-        });
-
-        return () => {
-            socket.off("maintenance_updated");
-        };
-    }, []);
-
-    const filteredInvoices = invoices.filter((item) => {
-        // const invoiceNumber = item.InvoiceNumber;
-        // const billingPeriod = formatToMonthYear(item.BillingPeriod || "");
-        // const totalAmount = String(item.TotalAmount)
-
-        // const matchText =
-        //     !searchTextInvoice ||
-        //     invoiceNumber?.includes(searchTextInvoice.toLocaleLowerCase()) ||
-        //     billingPeriod?.includes(searchTextInvoice.toLocaleLowerCase()) ||
-        //     totalAmount?.includes(searchTextInvoice)
-
-        return item;
-    });
-
-    const filteredRequests = maintenanceRequests.filter((request) => {
-        const requestId = String(request.ID);
-        const roomTypeName = request.Room?.RoomType?.TypeName?.toLowerCase() || "";
-        const floor = `Floor ${request.Room?.Floor?.Number}`;
-        const roomNumber = String(request.Room?.RoomNumber).toLowerCase() || "";
-
-        const matchText =
-            !searchText ||
-            requestId?.includes(searchText) ||
-            roomTypeName.includes(searchText.toLowerCase()) ||
-            floor.includes(searchText.toLowerCase()) ||
-            roomNumber?.includes(searchText.toLowerCase());
-
-        return matchText;
-    });
-
     const getInvoiceColumns = (): GridColDef[] => {
         if (isSmallScreen) {
             return [
@@ -1242,8 +1265,8 @@ const MyAccount: React.FC = () => {
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
-                        const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
-                        const isDownloading = loadingDownloadId === data.ID;
+                        // const fileName = `ใบแจ้งหนี้ ${formatThaiMonthYear(data.BillingPeriod ?? "")}`;
+                        // const isDownloading = loadingDownloadId === data.ID;
 
                         return (
                             <Box
@@ -1260,7 +1283,7 @@ const MyAccount: React.FC = () => {
                                     <Button
                                         variant="contained"
                                         onClick={async () => {
-                                            setLoadingDownloadId(data.ID);
+                                            // setLoadingDownloadId(data.ID);
                                             // const success = await handleDownloadInvoice(data.ID, fileName);
                                             // if (success) {
                                             //     console.log("Download success");
@@ -1269,13 +1292,11 @@ const MyAccount: React.FC = () => {
                                             // }
                                             setOpenPDF(true);
                                             setSelectedInvoice(data);
-                                            // generateInvoicePDF(data)
                                             setLoadingDownloadId(null);
                                         }}
-                                        disabled={isDownloading}
                                         sx={{ minWidth: "42px" }}
                                     >
-                                        {isDownloading ? "Loading..." : <Download size={18} />}
+                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                                     </Button>
                                 </Tooltip>
                                 <Tooltip title="View Slip">
@@ -1286,11 +1307,11 @@ const MyAccount: React.FC = () => {
                                                 ...prev,
                                                 ...data,
                                             }));
-                                            setOpenImage(true);
+                                            setOpenPopupPayment(true);
                                         }}
                                         sx={{ minWidth: "42px", bgcolor: "#FFF" }}
                                     >
-                                        <Eye size={18} />
+                                        <Wallet size={18} />
                                     </Button>
                                 </Tooltip>
                             </Box>
@@ -1303,9 +1324,10 @@ const MyAccount: React.FC = () => {
 
     const PDFPopup = (
         <Dialog
-            open={openPDF}
+            open={openPDF && selectedInvoice?.ID != 0}
             onClose={() => {
                 setOpenPDF(false);
+                setSelectedInvoice(null);
             }}
             maxWidth={false}
             sx={{
@@ -1323,18 +1345,15 @@ const MyAccount: React.FC = () => {
 
     return (
         <Box className="my-accout-page">
-            {alerts.map(
-                (alert, index) =>
-                    alert.type === "success" && (
-                        <SuccessAlert
-                            key={index}
-                            message={alert.message}
-                            onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-                            index={index}
-                            totalAlerts={alerts.length}
-                        />
-                    )
-            )}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+
+            <PaymentPopup
+                open={openPopupPayment}
+                onClose={() => setOpenPopupPayment(false)}
+                amount={selectedInvoice?.TotalAmount ?? 0}
+                onChangeFile={setSlipFile}
+                paymentData={selectedInvoice?.Payments ?? {}}
+            />
 
             {PDFPopup}
 

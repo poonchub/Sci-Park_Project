@@ -1985,7 +1985,21 @@ async function CreatePayment(data: FormData) {
         });
         return response.data;
     } catch (error) {
-        console.error("Error updating about company:", error);
+        console.error("Error creating payment:", error);
+        throw error;
+    }
+}
+async function UpdatePaymentByID(id: number, data: FormData) {
+    try {
+        const response = await axiosInstance.patch(`/payment/${id}`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice items:", error);
         throw error;
     }
 }
@@ -2471,6 +2485,7 @@ export {
 
     // Payment
     CreatePayment,
+    UpdatePaymentByID,
     CheckSlip,
     GetQuota,
 

@@ -1,9 +1,22 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { apiUrl } from "../../services/http";
-import tinymce from "tinymce";
+// import tinymce from "tinymce";
 import { Button, Grid } from "@mui/material";
+import tinymce from "tinymce/tinymce";
+
+// Theme
+import "tinymce/themes/silver/theme";
+
+// Icons
+import "tinymce/icons/default/icons";
+
+// Plugins
+import "tinymce/plugins/advlist";
+import "tinymce/plugins/lists";
+import "tinymce/models/dom/model";
+import { Download, Loader } from "lucide-react";
 
 interface InvoicePDFProps {
     invoice: InvoiceInterface;
@@ -42,44 +55,57 @@ export function thaiDateMonthYear(date: string | Date): string {
 export default function InvoicePDF({ invoice }: InvoicePDFProps) {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
+    const subjectRef = useRef<HTMLDivElement>(null);
+    const toRef = useRef<HTMLDivElement>(null);
+    const noticeRef = useRef<HTMLDivElement>(null);
+    const paymentRef = useRef<HTMLDivElement>(null);
+
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
-        tinymce.init({
-            selector: ".editable-content",
-            menubar: false,
-            toolbar:
-                "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | fontsizeselect | letterspacing",
-            plugins: "lists advlist",
-            setup: (editor) => {
-                const rangeInput = document.getElementById("letter-spacing-slider") as HTMLInputElement;
-                if (rangeInput) {
-                    rangeInput.addEventListener("input", (e) => {
-                        const value = (e.target as HTMLInputElement).value;
-                        editor.getBody().style.letterSpacing = value + "em";
-                    });
-                }
-            },
+        const targets = [subjectRef.current, toRef.current, noticeRef.current, paymentRef.current].filter(Boolean);
+
+        targets.forEach((el) => {
+            if (!el) return;
+            tinymce.init({
+                target: el,
+                inline: true,
+                menubar: false,
+                toolbar:
+                    "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | fontsizeselect | letterspacing",
+                plugins: "lists advlist",
+                license_key: "gpl",
+            });
         });
+
+        return () => {
+            targets.forEach((el) => {
+                if (!el) return;
+                const editor = tinymce.get(el.id);
+                if (editor) editor.remove();
+            });
+        };
     }, []);
 
     const generatePDF = () => {
         if (!invoiceRef.current) return;
 
-        // สั่งให้ TinyMCE ทุกตัวบันทึกเนื้อหาลงใน div ต้นฉบับ
+        setLoading(true); 
         tinymce.triggerSave();
 
-        // รอให้การเปลี่ยนแปลง DOM สมบูรณ์ก่อน
         setTimeout(() => {
             html2pdf()
                 .from(invoiceRef.current)
                 .set({
                     margin: [40, 60, 40, 60],
-                    filename: `invoice_${invoice.InvoiceNumber}.pdf`,
+                    filename: `ใบแจ้งหนี้เดือน ${thaiDateMonthYear(invoice.BillingPeriod || "")}.pdf`,
                     image: { type: "jpeg", quality: 0.98 },
                     html2canvas: { scale: 2, letterRendering: true, useCORS: true },
                     jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
                 })
-                .save();
-        }, 500); // ตั้งค่า delay ประมาณ 500 มิลลิวินาที (หรือตามความเหมาะสม)
+                .save()
+                .finally(() => setLoading(false));
+        }, 500);
     };
 
     return (
@@ -92,10 +118,91 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
             }}
         >
             <Grid size={{ xs: 12 }} textAlign={"end"}>
-                <Button variant="contained" onClick={generatePDF} style={{ marginBottom: "20px" }}>
-                    ดาวน์โหลด PDF
+                <Button 
+                    disabled={loading} 
+                    variant="contained" 
+                    onClick={generatePDF} 
+                    style={{ marginBottom: "20px" }}
+                    startIcon={loading ? <Loader size={18}/> :<Download size={18}/>}
+                >
+                    {loading ? ("Loading...") : "Download PDF"}
                 </Button>
             </Grid>
+
+            <link
+                rel="preload"
+                href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap"
+                as="style"
+            />
+            <link
+                rel="stylesheet"
+                href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap"
+                media="all"
+            />
+            <style>
+                {`
+                    .header-row {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 12px;
+                    }
+                    .invoice-number {
+                        margin-top: 20px;
+                    }
+                    .text-bold {
+                        font-weight: 500;
+                    }
+                    .text-right {
+                        text-align: right;
+                    }
+                    .text-center {
+                        text-align: center;
+                    }
+                    .text-normal {
+                        font-weight: 200;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    th,
+                    td {
+                        border: 1px solid #999;
+                        padding: 6px 10px;
+                        font-weight: 200;
+                    }
+                    th {
+                        background-color: #ccc;
+                        font-weight: 500;
+                    }
+                    td {
+                        vertical-align: top;
+                    }
+                    .col-description {
+                        text-align: left;
+                    }
+                    .col-month {
+                        text-align: center;
+                    }
+                    .col-amount {
+                        text-align: right;
+                    }
+                    .footer-text {
+                        margin-top: 20px;
+                        line-height: 1.2;
+                    }
+                    .editable-content {
+                        text-align: justify;
+                        letter-spacing: 0.05em;
+                        font-weight: 200;
+                    }
+                    strong {
+                        font-weight: 500;
+                    }
+                `}
+            </style>
 
             <div
                 ref={invoiceRef}
@@ -106,81 +213,6 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                     lineHeight: "1.8",
                 }}
             >
-                <link
-                    rel="preload"
-                    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap"
-                    as="style"
-                />
-                <link
-                    rel="stylesheet"
-                    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Sarabun:wght@100;200;300;400;500;600;700;800&display=swap"
-                    media="all"
-                />
-                <style>
-                    {`
-                        .header-row {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            margin-bottom: 12px;
-                        }
-                        .invoice-number {
-                            margin-top: 20px;
-                        }
-                        .text-bold {
-                            font-weight: 500;
-                        }
-                        .text-right {
-                            text-align: right;
-                        }
-                        .text-center {
-                            text-align: center;
-                        }
-                        .text-normal {
-                            font-weight: 200;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-top: 10px;
-                        }
-                        th,
-                        td {
-                            border: 1px solid #999;
-                            padding: 6px 10px;
-                            font-weight: 200;
-                        }
-                        th {
-                            background-color: #ccc;
-                            font-weight: 500;
-                        }
-                        td {
-                            vertical-align: top;
-                        }
-                        .col-description {
-                            text-align: left;
-                        }
-                        .col-month {
-                            text-align: center;
-                        }
-                        .col-amount {
-                            text-align: right;
-                        }
-                        .footer-text {
-                            margin-top: 20px;
-                            line-height: 1.2;
-                        }
-                        .editable-content {
-                            text-align: justify;
-                            letter-spacing: 0.05em;
-                            font-weight: 200;
-                        }
-                        strong {
-                            font-weight: 500;
-                        }
-                    `}
-                </style>
-
                 {/* Header */}
                 <div
                     style={{
@@ -226,6 +258,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
 
                 {/* เรื่อง */}
                 <div
+                    ref={subjectRef}
                     className="editable-content"
                     id="subject-div"
                     style={{ display: "flex", gap: "16px", marginBottom: "10px", textAlign: "justify" }}
@@ -241,6 +274,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
 
                 {/* เรียน */}
                 <div
+                    ref={toRef}
                     className="editable-content"
                     id="to-div"
                     style={{ display: "flex", gap: "16px", marginBottom: "10px", textAlign: "justify" }}
@@ -252,7 +286,12 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                 </div>
 
                 {/* Notice */}
-                <div className="editable-content" id="notice-div" style={{ marginBottom: "6px", textIndent: "3.2em" }}>
+                <div
+                    ref={noticeRef}
+                    className="editable-content"
+                    id="notice-div"
+                    style={{ marginBottom: "6px", textIndent: "3.2em" }}
+                >
                     อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 (จังหวัดนครราชสีมา) ขอเรียนให้ท่านทราบ
                     <br />
                     ถึงรายการค่าใช้จ่ายต่าง ๆ ต้องชำระดังต่อไปนี้
@@ -300,6 +339,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
 
                 {/* Payment Instruction */}
                 <div
+                    ref={paymentRef}
                     className="editable-content"
                     id="payment-div"
                     style={{ marginTop: "20px", textIndent: "3.2em", textAlign: "justify" }}
