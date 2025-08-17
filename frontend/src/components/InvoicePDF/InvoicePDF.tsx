@@ -339,11 +339,11 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                     style={{ marginTop: "20px", textIndent: "3.2em", textAlign: "justify" }}
                 >
                     จึงขอให้ท่านโปรดชำระค่าบริการ
-                    <strong>ภายในวันที่ {thaiDateFull(invoice.DueDate || "")}</strong>{" "}
+                    <strong>ภายในวันที่ {thaiDateFull(invoice.DueDate || "")}</strong>&nbsp;
                     ที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน อุทยานวิทยาศาสตร์ภาคตะวันออกเฉียงเหนือตอนล่าง
                     (จ.นครราชสีมา) หรือโอนเงินเข้า<strong>บัญชีธนาคารกรุงไทย</strong> สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
                     <strong> ชื่อบัญชี "RSP นครราชสีมา โดย เทคโนธานี" เลขที่บัญชี 662-1-84151-5&nbsp;</strong>
-                    และขอให้ท่านส่งหลักฐานการโอนเงินมาที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน อีเมล{" "}
+                    และขอให้ท่านส่งหลักฐานการโอนเงินมาที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน อีเมล&nbsp;
                     <strong>office.ne2@gmail.com</strong> เบอร์โทร
                     <strong>&nbsp;099-629-5494&nbsp;</strong>
                     เพื่อออกใบเสร็จรับเงิน หากท่านไม่ชำระเงินตามกำหนด อุทยานวิทยาศาสตร์ฯ
@@ -359,9 +359,12 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <div className="text-normal" style={{ width: "240px", textAlign: "center" }}>
                         <span>ขอแสดงความนับถือ</span>
-                        <div style={{ flex: 2, textAlign: "center" }}>
+                        <div style={{ textAlign: "center" }}>
                             <img
-                                src={`${apiUrl}/${invoice.Creater?.SignaturePath}`}
+                                src={
+                                    invoice.Creater?.SignaturePath ? 
+                                        `${apiUrl}/${invoice.Creater?.SignaturePath}` : ""
+                                    }
                                 alt="Signature"
                                 style={{ maxHeight: "80px" }}
                             />
