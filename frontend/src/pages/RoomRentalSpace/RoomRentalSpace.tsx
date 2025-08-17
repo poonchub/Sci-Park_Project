@@ -24,6 +24,7 @@ import {
     Button,
     Card,
     CardMedia,
+    CircularProgress,
     Container,
     Dialog,
     DialogActions,
@@ -49,9 +50,12 @@ import {
     DoorClosed,
     Download,
     Eye,
+    Loader,
     NotebookPen,
     Pencil,
+    PencilLine,
     ReceiptText,
+    Save,
     ScrollText,
     Send,
     Trash2,
@@ -83,6 +87,7 @@ import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import dateFormat from "../../utils/dateFormat";
 import { PaymentInterface } from "../../interfaces/IPayments";
+import { updatePaymentAndInvoice } from "../../utils/handleClickUpdatePayment";
 
 type InvoiceItemError = {
     Description?: string;
@@ -472,8 +477,14 @@ function RoomRentalSpace() {
 
     const handleClickUpdatePayment = async (statusName: "Paid" | "Rejected", note?: string) => {
         setIsButtonActive(true);
-        if (selectedInvoice?.ID === 0) {
+        if (!selectedInvoice?.ID) {
             handleSetAlert("error", "Invoice not found");
+            setIsButtonActive(false);
+            return;
+        }
+
+        if (!note || note.trim() === "") {
+            handleSetAlert("warning", "Please enter a reason before reject requested.");
             setIsButtonActive(false);
             return;
         }
@@ -486,25 +497,14 @@ function RoomRentalSpace() {
                 return;
             }
 
-            const approverId = localStorage.getItem("userId");
-            const paymentData: PaymentInterface = {
-                StatusID: statusID,
-                Note: note,
-                ApproverID: Number(approverId),
-            };
-            
-            const formData = new FormData();
-            for (const [key, value] of Object.entries(paymentData)) {
-                if (value !== undefined && value !== null) {
-                    formData.append(key, value);
-                }
-            }
-            await UpdatePaymentByID(selectedInvoice?.Payments?.ID ?? 0, formData);
-
-            const invoiceData: InvoiceInterface = {
-                StatusID: statusID,
-            };
-            await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
+            const approverId = Number(localStorage.getItem("userId"));
+            await updatePaymentAndInvoice(
+                selectedInvoice.ID,
+                selectedInvoice?.Payments?.ID ?? 0,
+                statusID,
+                approverId,
+                note
+            );
 
             handleSetAlert("success", "Payment slip has been verified successfully.");
 
@@ -1048,6 +1048,7 @@ function RoomRentalSpace() {
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
+                        const statusName = data.Status.Name;
                         return (
                             <Box
                                 className="container-btn"
@@ -1072,35 +1073,40 @@ function RoomRentalSpace() {
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title="Edit Invoice">
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => {
-                                            setIsEditMode(true);
-                                            setSelectedInvoice(data);
-                                            setOpenCreatePopup(true);
-                                        }}
-                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
-                                    >
-                                        <Pencil size={18} />
-                                    </Button>
-                                </Tooltip>
-                                <Tooltip title="Delete Invoice">
-                                    <Button
-                                        variant="outlinedCancel"
-                                        onClick={() => {
-                                            setSelectedInvoice((prev) => ({
-                                                ...prev,
-                                                ...data,
-                                            }));
+                                {statusName === "Pending Payment" && (
+                                    <>
+                                        <Tooltip title="Edit Invoice">
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => {
+                                                    setIsEditMode(true);
+                                                    setSelectedInvoice(data);
+                                                    setOpenCreatePopup(true);
+                                                }}
+                                                sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                            >
+                                                <Pencil size={18} />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title="Delete Invoice">
+                                            <Button
+                                                variant="outlinedCancel"
+                                                onClick={() => {
+                                                    setSelectedInvoice((prev) => ({
+                                                        ...prev,
+                                                        ...data,
+                                                    }));
 
-                                            setOpenDeletePopup(true);
-                                        }}
-                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
-                                    >
-                                        <Trash2 size={18} />
-                                    </Button>
-                                </Tooltip>
+                                                    setOpenDeletePopup(true);
+                                                }}
+                                                sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                            >
+                                                <Trash2 size={18} />
+                                            </Button>
+                                        </Tooltip>
+                                    </>
+                                )}
+
                                 {data.Payments && (
                                     <Tooltip title="View Slip">
                                         <Button
@@ -1322,7 +1328,11 @@ function RoomRentalSpace() {
                             >
                                 <CardMedia
                                     component="img"
-                                    image={`${apiUrl}/${paymentData?.SlipPath}`}
+                                    image={
+                                        paymentData?.SlipPath
+                                            ? `${apiUrl}/${paymentData?.SlipPath}`
+                                            : "https://placehold.co/300x420"
+                                    }
                                     sx={{
                                         width: { xs: 250, lg: 300 },
                                         height: "auto",
@@ -1354,9 +1364,10 @@ function RoomRentalSpace() {
                                     handleClickUpdatePayment("Paid");
                                 }}
                                 variant="contained"
-                                startIcon={<Check size={18} />}
+                                startIcon={isButtonActive ? <Loader size={18} /> : <Check size={18} />}
+                                disabled={isButtonActive}
                             >
-                                Confirm Payment
+                                {isButtonActive ? "Loading..." : "Confirm Payment"}
                             </Button>
                         </Zoom>
                     </DialogActions>
@@ -1657,7 +1668,15 @@ function RoomRentalSpace() {
                             }}
                             variant="contained"
                             disabled={isButtonActive}
-                            // startIcon={<CircleX size={18} />}
+                            startIcon={
+                                isButtonActive ? (
+                                    <Loader size={18} />
+                                ) : isEditMode ? (
+                                    <Save size={18} />
+                                ) : (
+                                    <PencilLine size={18} />
+                                )
+                            }
                         >
                             {isButtonActive ? "Loading..." : isEditMode ? "Save Change" : "Create Invoice"}
                         </Button>

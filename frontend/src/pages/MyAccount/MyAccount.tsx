@@ -86,6 +86,7 @@ import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
+import { updatePaymentAndInvoice } from "../../utils/handleClickUpdatePayment";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 
 const MyAccount: React.FC = () => {
@@ -295,6 +296,12 @@ const MyAccount: React.FC = () => {
     };
 
     const handleUploadSlip = async (resCheckSlip?: any) => {
+        if (!selectedInvoice?.ID) {
+            handleSetAlert("error", "Invoice not found");
+            setIsButtonActive(false);
+            return;
+        }
+
         try {
             const userId = Number(localStorage.getItem("userId"));
             const paymentData: PaymentInterface = {
@@ -320,10 +327,10 @@ const MyAccount: React.FC = () => {
 
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
+                handleClearInvoiceData();
                 getInvoice();
-                setSelectedInvoice(null);
                 setOpenPopupPayment(false);
-                setSlipFile([]);
+                setIsButtonActive(false)
             }, 500);
         } catch (error: any) {
             setAlerts([]);
@@ -335,6 +342,51 @@ const MyAccount: React.FC = () => {
             }
             setIsButtonActive(false);
         }
+    };
+
+    const handleClickUpdatePayment = async () => {
+        if (!selectedInvoice?.ID) {
+            handleSetAlert("error", "Invoice not found");
+            setIsButtonActive(false);
+            return;
+        }
+
+        try {
+            const statusID = paymentStatuses.find((item) => item.Name === "Pending Verification")?.ID;
+            if (!statusID) {
+                console.error("Invalid payment status");
+                setIsButtonActive(false);
+                return;
+            }
+
+            await updatePaymentAndInvoice(
+                selectedInvoice.ID,
+                selectedInvoice?.Payments?.ID ?? 0,
+                statusID,
+                undefined,
+                undefined,
+                slipfile[0]
+            );
+
+            handleSetAlert("success", "Upload new slip successfully.");
+
+            setTimeout(() => {
+                handleClearInvoiceData();
+                getInvoice();
+                setOpenPopupPayment(false);
+                setIsButtonActive(false);
+            }, 1800);
+        } catch (error) {
+            console.error("🚨 Error updating payment:", error);
+            handleSetAlert("error", "An unexpected error occurred");
+            setIsButtonActive(false);
+        }
+    };
+
+    const handleClearInvoiceData = () => {
+        setSelectedInvoice(null);
+        setSelectedInvoice(null);
+        setSlipFile([]);
     };
 
     const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
@@ -429,6 +481,7 @@ const MyAccount: React.FC = () => {
 
     useEffect(() => {
         async function doCheckSlip() {
+            setIsButtonActive(true)
             try {
                 const resGetQuota = await GetQuota();
                 if (resGetQuota.success && resGetQuota.data.quota > 0) {
@@ -437,8 +490,11 @@ const MyAccount: React.FC = () => {
 
                     const resCheckSlip = await CheckSlip(formData);
 
-                    if (resCheckSlip.success) {
+                    const statusName = selectedInvoice?.Status?.Name;
+                    if (resCheckSlip.success && statusName === "Pending Payment") {
                         handleUploadSlip(resCheckSlip);
+                    } else if (resCheckSlip.success && statusName === "Rejected") {
+                        handleClickUpdatePayment()
                     }
                 }
             } catch (error: any) {
@@ -1329,11 +1385,14 @@ const MyAccount: React.FC = () => {
 
             <PaymentPopup
                 open={openPopupPayment}
-                onClose={() => setOpenPopupPayment(false)}
-                amount={selectedInvoice?.TotalAmount ?? 0}
+                onClose={() => {
+                    setOpenPopupPayment(false)
+                    setSlipFile([])
+                }}
                 file={slipfile}
                 onChangeFile={setSlipFile}
                 paymentData={selectedInvoice?.Payments ?? {}}
+                isButtonActive={isButtonActive}
             />
 
             <PDFPopup

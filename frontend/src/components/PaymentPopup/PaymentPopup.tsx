@@ -3,6 +3,7 @@ import {
     Button,
     Card,
     CardMedia,
+    CircularProgress,
     Collapse,
     Dialog,
     DialogActions,
@@ -31,13 +32,13 @@ import AlertGroup from "../AlertGroup/AlertGroup";
 interface PaymentProps {
     open: boolean;
     onClose: () => void;
-    amount: number;
     file: File[];
     onChangeFile: (files: File[]) => void;
     paymentData?: PaymentInterface;
+    isButtonActive?: boolean;
 }
 
-const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, amount, file, onChangeFile, paymentData }) => {
+const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, file, onChangeFile, paymentData, isButtonActive }) => {
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const accountNumber = "662-1-84151-5";
@@ -326,22 +327,22 @@ const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, amount, file, onC
                                                         fontSize: 14,
                                                         color: "error.main",
                                                         fontWeight: 500,
-                                                        display: 'flex',
+                                                        display: "flex",
                                                         gap: 0.5,
-                                                        alignItems: 'center'
+                                                        alignItems: "center",
                                                     }}
                                                 >
-                                                    <CircleAlert size={14}/>
+                                                    <CircleAlert size={14} />
                                                     The slip is invalid. Please upload a new one.
                                                 </Typography>
                                                 <Typography
                                                     sx={{
-                                                        fontSize: 14,
+                                                        fontSize: 13,
                                                         color: "error.main",
-                                                        pl: "18px"
+                                                        pl: "18px",
                                                     }}
                                                 >
-                                                    {`Description: ${paymentData.Note}`}
+                                                    {`Note : ${paymentData.Note}`}
                                                 </Typography>
                                             </Box>
                                         </>
@@ -364,7 +365,11 @@ const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, amount, file, onC
                                 >
                                     <CardMedia
                                         component="img"
-                                        image={`${apiUrl}/${paymentData?.SlipPath}`}
+                                        image={
+                                            paymentData?.SlipPath
+                                                ? `${apiUrl}/${paymentData?.SlipPath}`
+                                                : "https://placehold.co/300x420"
+                                        }
                                         sx={{
                                             width: { xs: 250, lg: 300 },
                                             height: "auto",
@@ -402,25 +407,20 @@ const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, amount, file, onC
                                     maxFiles={1}
                                     buttonText="Upload Payment Slip"
                                 />
+
+                                <Zoom in={isButtonActive} timeout={400} unmountOnExit>
+                                    <Box sx={{ display: "flex", justifyContent: "end", mt: 1 }}>
+                                        <Box sx={{ display: "flex", gap: 0.8, fontSize: 14, alignItems: "center" }}>
+                                            <CircularProgress size={18} />
+                                            Uploading...
+                                        </Box>
+                                    </Box>
+                                </Zoom>
                             </Card>
                         </Grid>
                     )}
                 </Grid>
             </DialogContent>
-
-            {/* <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Zoom in={open} timeout={400}>
-                    <Button
-                        onClick={() => {
-                            onClose();
-                        }}
-                        variant="outlined"
-                        startIcon={<CircleX size={18} />}
-                    >
-                        Close
-                    </Button>
-                </Zoom>
-            </DialogActions> */}
         </Dialog>
     );
 };

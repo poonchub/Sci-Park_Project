@@ -671,8 +671,8 @@ function AcceptWork() {
                                 className="btn-accept"
                                 variant="containedBlue"
                                 onClick={() => {
-                                    setOpenConfirmAccepted(true);
-                                    setSelectedTask(data);
+                                    setSelectedTask((prev) => ({...prev, data}));
+                                    handleClickAcceptWork("In Progress", "accept")
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
@@ -1039,14 +1039,14 @@ function AcceptWork() {
             />
 
             {/* Accepted Confirm */}
-            <ConfirmDialog
+            {/* <ConfirmDialog
                 open={openConfirmAccepted}
                 setOpenConfirm={setOpenConfirmAccepted}
-                handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
+                handleFunction={() => }
                 title="Confirm Maintenance Request Processing"
                 message="Are you sure you want to start this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
-            />
+            /> */}
 
             {/* Cancelled Confirm */}
             <ConfirmDialog
