@@ -19,6 +19,6 @@ export interface InvoiceInterface {
     Creater?:       UserInterface;
     CustomerID?:    number;
     Customer?:      UserInterface;
-    Items?:         InvoiceItemInterface;
+    Items?:         InvoiceItemInterface[];
     Payments?:      PaymentInterface;
 }

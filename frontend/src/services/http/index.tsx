@@ -23,6 +23,7 @@ import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocum
 import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
+import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -1718,24 +1719,18 @@ async function ListNewsOrderedPeriod() {
     return res;
 }
 async function CreateNews(data: NewsImagesInterface) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/news`, requestOptions).then((res) => {
-        if (res.status == 201) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.post(`/news`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating news:", error);
+        throw error;
+    }
 }
 
 async function GetTimeSlots(id?: number) {
@@ -2046,65 +2041,54 @@ async function ListContributors() {
 
 // Payment
 async function CreatePayment(data: FormData) {
-    const requestOptions = {
-        method: "POST",
-        body: data,
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/payment`, requestOptions).then((res) => {
-        console.log(res);
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.post(`/payment`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating payment:", error);
+        throw error;
+    }
+}
+async function UpdatePaymentByID(id: number, data: FormData) {
+    try {
+        const response = await axiosInstance.patch(`/payment/${id}`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice items:", error);
+        throw error;
+    }
 }
 async function CheckSlip(data: FormData) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: data,
-    };
-
-    let res = await fetch(`${apiUrl}/proxy/slipok`, requestOptions).then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return res.json();
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.post(`/proxy/slipok`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error check slip:", error);
+        throw error;
+    }
 }
 async function GetQuota() {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
     try {
-        const response = await fetch(`${apiUrl}/proxy/slipok/quota`, requestOptions);
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        } else {
-            console.error("Error:", response.status, response.statusText);
-            return false;
-        }
+        const response = await axiosInstance.get(`/proxy/slipok/quota`);
+        return response.data;
     } catch (error) {
-        console.error("Fetch error:", error);
-        return false;
+        console.error("Error giting quota:", error);
+        throw error;
     }
 }
 
@@ -2344,6 +2328,38 @@ async function CreateInvoice(data: InvoiceInterface) {
         throw error;
     }
 }
+async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number, customerId?: number){
+    try {
+        const response = await axiosInstance.get(`/room-invoice-option?roomId=${roomId}&statusId=${statusId}&page=${page}&limit=${limit}&customerId=${customerId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
+    }
+}
+async function UpdateInvoiceByID(invoiceID: number, data: InvoiceInterface): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/invoice/${invoiceID}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice:", error);
+        throw error;
+    }
+}
+async function DeleteInvoiceByID(invoiceID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/invoice/${invoiceID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting invoice:", error);
+        throw error;
+    }
+}
 
 // InvoiceItems
 async function CreateInvoiceItems(data: InvoiceItemInterface) {
@@ -2357,6 +2373,40 @@ async function CreateInvoiceItems(data: InvoiceItemInterface) {
         return response.data;
     } catch (error) {
         console.error("Error creating invoice items:", error);
+        throw error;
+    }
+}
+async function UpdateInvoiceItemsByID(id: number, data: InvoiceItemInterface): Promise<InvoiceItemInterface> {
+    try {
+        const response = await axiosInstance.patch(`/invoice-item/${id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating invoice items:", error);
+        throw error;
+    }
+}
+async function DeleteInvoiceItemByID(invoiceItemID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/invoice-item/${invoiceItemID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting invoice item:", error);
+        throw error;
+    }
+}
+
+// PaymentStatus
+async function ListPaymentStatus(): Promise<PaymentStatusInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/payment-statuses`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
         throw error;
     }
 }
@@ -2501,6 +2551,7 @@ export {
 
     // Payment
     CreatePayment,
+    UpdatePaymentByID,
     CheckSlip,
     GetQuota,
 
@@ -2536,7 +2587,15 @@ export {
     GetInvoiceByID,
     GetInvoicePDF,
     CreateInvoice,
+    GetInvoiceByOption,
+    DeleteInvoiceByID,
+    UpdateInvoiceByID,
 
     // InvoiceItems
     CreateInvoiceItems,
+    UpdateInvoiceItemsByID,
+    DeleteInvoiceItemByID,
+
+    // PaymentStatuses
+    ListPaymentStatus,
 };

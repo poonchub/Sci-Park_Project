@@ -34,8 +34,8 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
             sx={{
                 '& .MuiDialog-paper': {
                     minWidth: '350px',
-                    maxWidth: '70vw',
-                    width: 'auto',
+                    maxWidth: '1000px',
+                    width: {xs: "90vw",sm: "70vw",md: "60vw", lg: '50vw'},
                     margin: 0,
                     borderRadius: 0,
                 },
@@ -58,6 +58,7 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
                         onChange={onChange}
                         setAlerts={setAlerts}
                         maxFiles={3}
+                        buttonText='Click to select image files'
                     />
                 </Grid>
             </DialogContent>

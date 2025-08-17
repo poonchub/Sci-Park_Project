@@ -37,7 +37,7 @@ const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
             </Typography>
             {
                 isLoading ? (
-                    <Skeleton variant="rectangular" width="100%" height={215} sx={{ borderRadius: 2 }} />
+                    <Skeleton variant="rectangular" width="100%" height={255} sx={{ borderRadius: 2 }} />
                 ) : (
                     <CustomDataGrid
                         rows={rows}

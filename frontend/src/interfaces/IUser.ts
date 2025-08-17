@@ -1,5 +1,6 @@
 import { RequestTypeInterface } from "./IRequestTypes";
 import { RolesInterface } from "./IRoles";
+import { TitlePrefix } from "./ITitlePrefix";
 
 export interface UserInterface {
     ID?: number;
@@ -13,6 +14,7 @@ export interface UserInterface {
     Email?: string;
     Phone?: string;
     ProfilePath?: string;
+    SignaturePath?: string;
     UserPackageID?: number;
     RoleID?: number;
     Role?: RolesInterface;
@@ -22,6 +24,8 @@ export interface UserInterface {
     IsEmployee?:    boolean;
     RequestTypeID?: number;
     RequestType?:   RequestTypeInterface;
+    PrefixID?:  number;
+    Prefix?:    TitlePrefix;
 
     UserNameCombined?: string;
 }

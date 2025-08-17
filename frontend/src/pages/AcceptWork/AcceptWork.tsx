@@ -80,17 +80,10 @@ export function a11yProps(index: number) {
 }
 
 function AcceptWork() {
-    const [maintenanceTypes, setMaintenanceTypes] = useState<
-        MaintenanceTypesInteface[]
-    >([]);
-    const [maintenanceTasks, setMaintenanceTasks] = useState<
-        MaintenanceTasksInterface[]
-    >([]);
-    const [selectedTask, setSelectedTask] =
-        useState<MaintenanceTasksInterface>();
-    const [requestStatuses, setRequestStatuses] = useState<
-        RequestStatusesInterface[]
-    >([]);
+    const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
+    const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTasksInterface[]>([]);
+    const [selectedTask, setSelectedTask] = useState<MaintenanceTasksInterface>();
+    const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [user, setUser] = useState<UserInterface>();
 
     const [searchText, setSearchText] = useState("");
@@ -101,15 +94,11 @@ function AcceptWork() {
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
 
-    const [openConfirmAccepted, setOpenConfirmAccepted] =
-        useState<boolean>(false);
-    const [openConfirmCancelled, setOpenConfirmCancelled] =
-        useState<boolean>(false);
+    const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
+    const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openPopupSubmit, setOpenPopupSubmit] = useState(false);
 
-    const [alerts, setAlerts] = useState<
-        { type: "warning" | "error" | "success"; message: string }[]
-    >([]);
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [files, setFiles] = useState<File[]>([]);
 
     const [valueTab, setValueTab] = useState(0);
@@ -150,51 +139,33 @@ function AcceptWork() {
                         const roomFloor = requests?.Room?.Floor?.Number;
                         const description = requests?.Description;
 
-                        const typeName =
-                            requests?.MaintenanceType?.TypeName ||
-                            "Electrical Work";
+                        const typeName = requests?.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = requests?.MaintenanceType
                             ?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color, icon } = maintenanceTypeConfig[
-                            maintenanceKey
-                        ] ?? {
+                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
                         };
 
-                        const isApproved =
-                            params.row.RequestStatus?.Name === "Approved";
-                        const isRework =
-                            params.row.RequestStatus?.Name ===
-                            "Rework Requested";
-                        const isInProgress =
-                            params.row.RequestStatus?.Name === "In Progress";
-                        const isWaitingForReview =
-                            params.row.RequestStatus?.Name ===
-                            "Waiting For Review";
+                        const isApproved = params.row.RequestStatus?.Name === "Approved";
+                        const isRework = params.row.RequestStatus?.Name === "Rework Requested";
+                        const isInProgress = params.row.RequestStatus?.Name === "In Progress";
+                        const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting For Review";
 
                         const notification = params.row.Notifications ?? [];
                         const hasNotificationForUser = notification.some(
-                            (n: NotificationsInterface) =>
-                                n.UserID === user?.ID && !n.IsRead
+                            (n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead
                         );
 
-                        const cardItem = document.querySelector(
-                            ".card-row-container"
-                        ) as HTMLElement;
+                        const cardItem = document.querySelector(".card-row-container") as HTMLElement;
                         let width;
                         if (cardItem) {
                             width = cardItem.offsetWidth;
                         }
 
                         return (
-                            <Grid
-                                container
-                                size={{ xs: 12 }}
-                                sx={{ px: 1 }}
-                                className="card-row-container"
-                            >
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-row-container">
                                 <Grid size={{ xs: 7 }}>
                                     <Box
                                         sx={{
@@ -204,9 +175,7 @@ function AcceptWork() {
                                             width: "100%",
                                         }}
                                     >
-                                        {hasNotificationForUser && (
-                                            <AnimatedBell />
-                                        )}
+                                        {hasNotificationForUser && <AnimatedBell />}
                                         <Typography
                                             sx={{
                                                 fontSize: 16,
@@ -294,34 +263,20 @@ function AcceptWork() {
                                             flexWrap: "wrap",
                                         }}
                                     >
-                                        <Grid
-                                            container
-                                            spacing={0.8}
-                                            size={{ xs: 12 }}
-                                        >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
                                             {isApproved || isRework ? (
                                                 <>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Tooltip
-                                                            title={"Start"}
-                                                        >
+                                                        <Tooltip title={"Start"}>
                                                             <Button
                                                                 variant="containedBlue"
                                                                 onClick={() => {
-                                                                    setOpenConfirmAccepted(
-                                                                        true
-                                                                    );
-                                                                    setSelectedTask(
-                                                                        data
-                                                                    );
+                                                                    setOpenConfirmAccepted(true);
+                                                                    setSelectedTask(data);
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon
-                                                                    icon={
-                                                                        faCheck
-                                                                    }
-                                                                />
+                                                                <FontAwesomeIcon icon={faCheck} />
                                                                 <Typography variant="textButtonClassic">
                                                                     Start
                                                                 </Typography>
@@ -329,27 +284,16 @@ function AcceptWork() {
                                                         </Tooltip>
                                                     </Grid>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Tooltip
-                                                            title={"Cancel"}
-                                                        >
+                                                        <Tooltip title={"Cancel"}>
                                                             <Button
                                                                 variant="containedCancel"
                                                                 onClick={() => {
-                                                                    setOpenConfirmCancelled(
-                                                                        true
-                                                                    );
-                                                                    setSelectedTask(
-                                                                        data
-                                                                    );
+                                                                    setOpenConfirmCancelled(true);
+                                                                    setSelectedTask(data);
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon
-                                                                    icon={
-                                                                        faXmark
-                                                                    }
-                                                                    size="xl"
-                                                                />
+                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
                                                                 <Typography variant="textButtonClassic">
                                                                     Cancel
                                                                 </Typography>
@@ -360,26 +304,16 @@ function AcceptWork() {
                                             ) : isInProgress ? (
                                                 <>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Tooltip
-                                                            title={"Submit"}
-                                                        >
+                                                        <Tooltip title={"Submit"}>
                                                             <Button
                                                                 variant="containedBlue"
                                                                 onClick={() => {
-                                                                    setOpenPopupSubmit(
-                                                                        true
-                                                                    );
-                                                                    setSelectedTask(
-                                                                        data
-                                                                    );
+                                                                    setOpenPopupSubmit(true);
+                                                                    setSelectedTask(data);
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon
-                                                                    icon={
-                                                                        faPaperPlane
-                                                                    }
-                                                                />
+                                                                <FontAwesomeIcon icon={faPaperPlane} />
                                                                 <Typography variant="textButtonClassic">
                                                                     Submit
                                                                 </Typography>
@@ -387,27 +321,16 @@ function AcceptWork() {
                                                         </Tooltip>
                                                     </Grid>
                                                     <Grid size={{ xs: 5 }}>
-                                                        <Tooltip
-                                                            title={"Cancel"}
-                                                        >
+                                                        <Tooltip title={"Cancel"}>
                                                             <Button
                                                                 variant="containedCancel"
                                                                 onClick={() => {
-                                                                    setOpenConfirmCancelled(
-                                                                        true
-                                                                    );
-                                                                    setSelectedTask(
-                                                                        data
-                                                                    );
+                                                                    setOpenConfirmCancelled(true);
+                                                                    setSelectedTask(data);
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon
-                                                                    icon={
-                                                                        faXmark
-                                                                    }
-                                                                    size="xl"
-                                                                />
+                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
                                                                 <Typography variant="textButtonClassic">
                                                                     Cancel
                                                                 </Typography>
@@ -424,21 +347,15 @@ function AcceptWork() {
                                                         <Button
                                                             variant="outlinedGray"
                                                             onClick={() => {
-                                                                handleClickCheck(
-                                                                    data
-                                                                );
+                                                                handleClickCheck(data);
                                                             }}
                                                             sx={{
-                                                                minWidth:
-                                                                    "42px",
+                                                                minWidth: "42px",
                                                                 width: "100%",
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faEye}
-                                                                size="lg"
-                                                            />
+                                                            <FontAwesomeIcon icon={faEye} size="lg" />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -454,30 +371,23 @@ function AcceptWork() {
                                                         <Button
                                                             variant="outlinedGray"
                                                             onClick={() => {
-                                                                handleClickCheck(
-                                                                    data
-                                                                );
+                                                                handleClickCheck(data);
                                                             }}
                                                             sx={{
-                                                                minWidth:
-                                                                    "42px",
+                                                                minWidth: "42px",
                                                                 width: "100%",
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faEye}
-                                                                size="lg"
-                                                            />
-                                                            {width &&
-                                                                width > 530 && (
-                                                                    <Typography
-                                                                        variant="textButtonClassic"
-                                                                        className="text-btn"
-                                                                    >
-                                                                        Details
-                                                                    </Typography>
-                                                                )}
+                                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                                            {width && width > 530 && (
+                                                                <Typography
+                                                                    variant="textButtonClassic"
+                                                                    className="text-btn"
+                                                                >
+                                                                    Details
+                                                                </Typography>
+                                                            )}
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
@@ -502,8 +412,7 @@ function AcceptWork() {
                         const requestID = params.row.MaintenanceRequest.ID;
                         const notification = params.row.Notifications ?? [];
                         const hasNotificationForUser = notification.some(
-                            (n: NotificationsInterface) =>
-                                n.UserID === user?.ID && !n.IsRead
+                            (n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead
                         );
                         return (
                             <Box
@@ -534,14 +443,10 @@ function AcceptWork() {
                         const roomNum = requests?.Room?.RoomNumber;
                         const roomFloor = requests?.Room?.Floor?.Number;
 
-                        const typeName =
-                            requests?.MaintenanceType?.TypeName ||
-                            "Electrical Work";
+                        const typeName = requests?.MaintenanceType?.TypeName || "Electrical Work";
                         const maintenanceKey = requests?.MaintenanceType
                             ?.TypeName as keyof typeof maintenanceTypeConfig;
-                        const { color, icon } = maintenanceTypeConfig[
-                            maintenanceKey
-                        ] ?? {
+                        const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
                             icon: faQuestionCircle,
@@ -585,11 +490,7 @@ function AcceptWork() {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={icon} />
-                                    <Typography
-                                        sx={{ fontSize: 14, fontWeight: 600 }}
-                                    >
-                                        {typeName}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                 </Box>
                             </Box>
                         );
@@ -642,8 +543,7 @@ function AcceptWork() {
                 {
                     field: "Requester",
                     headerName: "Requester",
-                    description:
-                        "This column has a value getter and is not sortable.",
+                    description: "This column has a value getter and is not sortable.",
                     sortable: false,
                     flex: 1.2,
                     renderCell: (params) => {
@@ -686,16 +586,13 @@ function AcceptWork() {
                     flex: 1.6,
                     renderCell: (params) => {
                         const task = params.row;
-                        const inspection =
-                            params.row.MaintenanceRequest?.Inspection.at(-1);
+                        const inspection = params.row.MaintenanceRequest?.Inspection.at(-1);
                         const user = inspection?.User;
                         const name = `${user?.FirstName} ${user?.LastName}`;
                         const date = dateFormat(inspection?.CreatedAt || "");
                         const time = timeFormat(inspection?.CreatedAt || "");
 
-                        return inspection &&
-                            inspection.RequestStatus.Name !==
-                                "Rework Requested" ? (
+                        return inspection && inspection.RequestStatus.Name !== "Rework Requested" ? (
                             <Box>
                                 <Typography
                                     sx={{
@@ -763,8 +660,7 @@ function AcceptWork() {
 
     const renderActionButtons = (data: any, statusName: string) => {
         const showSubmit = statusName === "In Progress";
-        const showAcceptReject =
-            statusName === "Approved" || statusName === "Rework Requested";
+        const showAcceptReject = statusName === "Approved" || statusName === "Rework Requested";
 
         return (
             <>
@@ -775,16 +671,13 @@ function AcceptWork() {
                                 className="btn-accept"
                                 variant="containedBlue"
                                 onClick={() => {
-                                    setOpenConfirmAccepted(true);
-                                    setSelectedTask(data);
+                                    setSelectedTask((prev) => ({...prev, data}));
+                                    handleClickAcceptWork("In Progress", "accept")
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
                                 <FontAwesomeIcon icon={faCheck} size="lg" />
-                                <Typography
-                                    variant="textButtonClassic"
-                                    className="text-btn"
-                                >
+                                <Typography variant="textButtonClassic" className="text-btn">
                                     Start
                                 </Typography>
                             </Button>
@@ -800,10 +693,7 @@ function AcceptWork() {
                                 sx={{ minWidth: "42px" }}
                             >
                                 <FontAwesomeIcon icon={faXmark} size="lg" />
-                                <Typography
-                                    variant="textButtonClassic"
-                                    className="text-btn"
-                                >
+                                <Typography variant="textButtonClassic" className="text-btn">
                                     Cancel
                                 </Typography>
                             </Button>
@@ -824,10 +714,7 @@ function AcceptWork() {
                                 sx={{ minWidth: "42px" }}
                             >
                                 <FontAwesomeIcon icon={faPaperPlane} />
-                                <Typography
-                                    variant="textButtonClassic"
-                                    className="text-btn"
-                                >
+                                <Typography variant="textButtonClassic" className="text-btn">
                                     Submit
                                 </Typography>
                             </Button>
@@ -843,10 +730,7 @@ function AcceptWork() {
                                 sx={{ minWidth: "42px" }}
                             >
                                 <FontAwesomeIcon icon={faXmark} size="lg" />
-                                <Typography
-                                    variant="textButtonClassic"
-                                    className="text-btn"
-                                >
+                                <Typography variant="textButtonClassic" className="text-btn">
                                     Cancel
                                 </Typography>
                             </Button>
@@ -861,21 +745,14 @@ function AcceptWork() {
                         onClick={() => handleClickCheck(data)}
                         sx={{
                             minWidth: "42px",
-                            width: !(showSubmit || showAcceptReject)
-                                ? "100%"
-                                : "",
+                            width: !(showSubmit || showAcceptReject) ? "100%" : "",
                         }}
                     >
                         <FontAwesomeIcon icon={faEye} size="lg" />
                         {!(showSubmit || showAcceptReject) ? (
-                            <Typography variant="textButtonClassic">
-                                Details
-                            </Typography>
+                            <Typography variant="textButtonClassic">Details</Typography>
                         ) : (
-                            <Typography
-                                variant="textButtonClassic"
-                                className="text-btn"
-                            >
+                            <Typography variant="textButtonClassic" className="text-btn">
                                 Details
                             </Typography>
                         )}
@@ -910,10 +787,7 @@ function AcceptWork() {
                         : [""];
 
             const statusIDs = statusNames
-                .map(
-                    (name) =>
-                        requestStatuses?.find((item) => item.Name === name)?.ID
-                )
+                .map((name) => requestStatuses?.find((item) => item.Name === name)?.ID)
                 .filter(Boolean);
 
             if (statusIDs.length === 0) return;
@@ -961,9 +835,7 @@ function AcceptWork() {
         }
     };
 
-    const getUpdatedMaintenanceTask = async (
-        data: MaintenanceTasksInterface
-    ) => {
+    const getUpdatedMaintenanceTask = async (data: MaintenanceTasksInterface) => {
         try {
             const res = await GetMaintenanceTaskByID(data.ID || 0);
             if (res) {
@@ -975,20 +847,13 @@ function AcceptWork() {
                     statusName === "Unsuccessful" ||
                     statusName === "Rework Requested"
                 ) {
-                    setMaintenanceTasks((prev) =>
-                        prev.filter((task) => task.ID !== data.ID)
-                    );
+                    setMaintenanceTasks((prev) => prev.filter((task) => task.ID !== data.ID));
                     setTotal((prev) => (prev > 0 ? prev - 1 : 0));
                 } else {
-                    setMaintenanceTasks((prev) =>
-                        prev.map((item) => (item.ID === res.ID ? res : item))
-                    );
+                    setMaintenanceTasks((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
                 }
 
-                if (
-                    statusName === "Rework Requested" &&
-                    valueTabRef.current === 0
-                ) {
+                if (statusName === "Rework Requested" && valueTabRef.current === 0) {
                     setMaintenanceTasks((prev) => [res, ...prev]);
                     setTotal((prev) => prev + 1);
                 }
@@ -1000,9 +865,7 @@ function AcceptWork() {
 
     const getUser = async () => {
         try {
-            const res = await GetUserById(
-                Number(localStorage.getItem("userId"))
-            );
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
             if (res) {
                 setUser(res);
             }
@@ -1016,8 +879,7 @@ function AcceptWork() {
         actionType: "accept" | "cancel",
         note?: string
     ) => {
-        const statusID =
-            requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
+        const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
 
         handleActionAcception(statusID, {
             selectedTask,
@@ -1035,15 +897,12 @@ function AcceptWork() {
                 ...prev,
                 {
                     type: "error",
-                    message:
-                        "The selected maintenance task information was not found.",
+                    message: "The selected maintenance task information was not found.",
                 },
             ]);
             return;
         }
-        const statusID =
-            requestStatuses?.find((item) => item.Name === "Waiting For Review")
-                ?.ID || 0;
+        const statusID = requestStatuses?.find((item) => item.Name === "Waiting For Review")?.ID || 0;
 
         handleSubmitWork(statusID, {
             selectedTask,
@@ -1060,27 +919,17 @@ function AcceptWork() {
         setSelectedType(0);
     };
 
-    const handleUpdateNotification = async (
-        task_id?: number,
-        user_id?: number
-    ) => {
+    const handleUpdateNotification = async (task_id?: number, user_id?: number) => {
         try {
-            const resNotification = await GetNotificationsByTaskAndUser(
-                task_id,
-                user_id
-            );
-            if (!resNotification || resNotification.error)
-                console.error("Error fetching notification.");
+            const resNotification = await GetNotificationsByTaskAndUser(task_id, user_id);
+            if (!resNotification || resNotification.error) console.error("Error fetching notification.");
 
             const notificationData: NotificationsInterface = {
                 IsRead: true,
             };
             const notificationID = resNotification.data.ID;
             if (!resNotification.data.IsRead) {
-                const resUpdated = await UpdateNotificationByID(
-                    notificationData,
-                    notificationID
-                );
+                const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
                 if (resUpdated) {
                     console.log("✅ Notification updated successfully.");
                 }
@@ -1099,9 +948,7 @@ function AcceptWork() {
             const userID = Number(localStorage.getItem("userId"));
 
             handleUpdateNotification(taskID, userID);
-            navigate(
-                `/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`
-            );
+            navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
 
@@ -1124,11 +971,7 @@ function AcceptWork() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([
-                    getMaintenanceTypes(),
-                    getRequestStatuses(),
-                    getUser(),
-                ]);
+                await Promise.all([getMaintenanceTypes(), getRequestStatuses(), getUser()]);
                 setIsLoadingInitialData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -1196,24 +1039,20 @@ function AcceptWork() {
             />
 
             {/* Accepted Confirm */}
-            <ConfirmDialog
+            {/* <ConfirmDialog
                 open={openConfirmAccepted}
                 setOpenConfirm={setOpenConfirmAccepted}
-                handleFunction={() =>
-                    handleClickAcceptWork("In Progress", "accept")
-                }
+                handleFunction={() => }
                 title="Confirm Maintenance Request Processing"
                 message="Are you sure you want to start this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
-            />
+            /> */}
 
             {/* Cancelled Confirm */}
             <ConfirmDialog
                 open={openConfirmCancelled}
                 setOpenConfirm={setOpenConfirmCancelled}
-                handleFunction={(note) =>
-                    handleClickAcceptWork("Unsuccessful", "cancel", note)
-                }
+                handleFunction={(note) => handleClickAcceptWork("Unsuccessful", "cancel", note)}
                 title="Confirm Maintenance Cancellation"
                 message="Are you sure you want to cancel this maintenance request? This action cannot be undone."
                 showNoteField
@@ -1222,19 +1061,9 @@ function AcceptWork() {
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
-                    <Grid
-                        container
-                        className="title-box"
-                        direction={"row"}
-                        size={{ xs: 10, md: 12 }}
-                        sx={{ gap: 1 }}
-                    >
+                    <Grid container className="title-box" direction={"row"} size={{ xs: 10, md: 12 }} sx={{ gap: 1 }}>
                         <HardHat size={26} />
-                        <Typography
-                            variant="h5"
-                            className="title"
-                            sx={{ fontWeight: 700 }}
-                        >
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             My Work
                         </Typography>
                     </Grid>
@@ -1243,11 +1072,7 @@ function AcceptWork() {
                     {!isLoadingInitialData ? (
                         <Grid className="filter-section" size={{ xs: 12 }}>
                             <Card sx={{ width: "100%", borderRadius: 2 }}>
-                                <Grid
-                                    container
-                                    sx={{ alignItems: "flex-end", p: 1.5 }}
-                                    spacing={1}
-                                >
+                                <Grid container sx={{ alignItems: "flex-end", p: 1.5 }} spacing={1}>
                                     <Grid size={{ xs: 12, sm: 5 }}>
                                         <TextField
                                             fullWidth
@@ -1256,22 +1081,12 @@ function AcceptWork() {
                                             placeholder="Search"
                                             margin="none"
                                             value={searchText}
-                                            onChange={(e) =>
-                                                setSearchText(e.target.value)
-                                            }
+                                            onChange={(e) => setSearchText(e.target.value)}
                                             slotProps={{
                                                 input: {
                                                     startAdornment: (
-                                                        <InputAdornment
-                                                            position="start"
-                                                            sx={{ px: 0.5 }}
-                                                        >
-                                                            <FontAwesomeIcon
-                                                                icon={
-                                                                    faMagnifyingGlass
-                                                                }
-                                                                size="lg"
-                                                            />
+                                                        <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
                                                         </InputAdornment>
                                                     ),
                                                 },
@@ -1279,9 +1094,7 @@ function AcceptWork() {
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 5, sm: 3 }}>
-                                        <LocalizationProvider
-                                            dateAdapter={AdapterDayjs}
-                                        >
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
                                             <DatePicker
                                                 views={["year", "month"]}
                                                 format="MM/YYYY"
@@ -1294,8 +1107,7 @@ function AcceptWork() {
                                                     }
                                                 }}
                                                 slots={{
-                                                    openPickerIcon:
-                                                        CalendarMonth,
+                                                    openPickerIcon: CalendarMonth,
                                                 }}
                                                 sx={{ width: "100%" }}
                                             />
@@ -1305,41 +1117,22 @@ function AcceptWork() {
                                         <FormControl fullWidth>
                                             <Select
                                                 value={selectedType}
-                                                onChange={(e) =>
-                                                    setSelectedType(
-                                                        Number(e.target.value)
-                                                    )
-                                                }
+                                                onChange={(e) => setSelectedType(Number(e.target.value))}
                                                 displayEmpty
                                                 startAdornment={
-                                                    <InputAdornment
-                                                        position="start"
-                                                        sx={{ pl: 0.5 }}
-                                                    >
-                                                        <FontAwesomeIcon
-                                                            icon={faToolbox}
-                                                            size="lg"
-                                                        />
+                                                    <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                        <FontAwesomeIcon icon={faToolbox} size="lg" />
                                                     </InputAdornment>
                                                 }
                                             >
-                                                <MenuItem value={0}>
-                                                    {"All Maintenance Types"}
-                                                </MenuItem>
-                                                {maintenanceTypes.map(
-                                                    (item, index) => {
-                                                        return (
-                                                            <MenuItem
-                                                                key={index}
-                                                                value={
-                                                                    index + 1
-                                                                }
-                                                            >
-                                                                {item.TypeName}
-                                                            </MenuItem>
-                                                        );
-                                                    }
-                                                )}
+                                                <MenuItem value={0}>{"All Maintenance Types"}</MenuItem>
+                                                {maintenanceTypes.map((item, index) => {
+                                                    return (
+                                                        <MenuItem key={index} value={item.ID}>
+                                                            {item.TypeName}
+                                                        </MenuItem>
+                                                    );
+                                                })}
                                             </Select>
                                         </FormControl>
                                     </Grid>
@@ -1355,28 +1148,18 @@ function AcceptWork() {
                                                 "&:hover": {
                                                     boxShadow: "none",
                                                     borderColor: "primary.main",
-                                                    backgroundColor:
-                                                        "transparent",
+                                                    backgroundColor: "transparent",
                                                 },
                                             }}
                                         >
-                                            <BrushCleaning
-                                                size={22}
-                                                strokeWidth={2.2}
-                                                style={{ color: "gray" }}
-                                            />
+                                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                         </Button>
                                     </Grid>
                                 </Grid>
                             </Card>
                         </Grid>
                     ) : (
-                        <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height={70}
-                            sx={{ borderRadius: 2 }}
-                        />
+                        <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
                     )}
 
                     {/* Data Table */}

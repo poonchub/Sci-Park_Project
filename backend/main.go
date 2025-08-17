@@ -203,15 +203,10 @@ func main() {
 		protected.GET("/proxy/slipok/quota", controller.ProxySlipOKQuota)
 
 		// Invoice
-		protected.GET("/invoces", controller.ListInvoices)
-		protected.GET("/invoice/:id", controller.GetInvoiceByID)
 		protected.GET("/invoice/:id/pdf", controller.GetInvoicePDF)
-		protected.POST("/invoice", controller.CreateInvoice)
 
-		// InvoiceItems
-		protected.GET("/invoice-items", controller.ListInvoiceItems)
-		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
-		protected.POST("/invoice-items", controller.CreateInvoiceItem)
+		// PaymentStatus
+		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
@@ -227,6 +222,21 @@ func main() {
 
 		// Room
 		protected.GET("/room-rental-space-option", controller.GetRoomRentalSpaceByOption)
+
+		// Invoice
+		protected.GET("/invoces", controller.ListInvoices)
+		protected.GET("/invoice/:id", controller.GetInvoiceByID)
+		protected.POST("/invoice", controller.CreateInvoice)
+		protected.GET("/room-invoice-option", controller.GetInvoiceByOption)
+		protected.PATCH("/invoice/:id", controller.UpdateInvoiceByID)
+		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
+
+		// InvoiceItems
+		protected.GET("/invoice-items", controller.ListInvoiceItems)
+		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
+		protected.POST("/invoice-items", controller.CreateInvoiceItem)
+		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
+		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
@@ -253,6 +263,10 @@ func main() {
 
 		// OrganizationInfo
 		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
+
+		// Payments
+		protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
+
 
 	}
 

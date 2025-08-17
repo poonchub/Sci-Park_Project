@@ -95,7 +95,7 @@ function MyMaintenanceRequest() {
     >([]);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
-    const [isBottonActive, setIsBottonActive] = useState(false);
+    const [isButtonActive, setIsButtonActive] = useState(false);
 
     const navigate = useNavigate();
 
@@ -942,7 +942,7 @@ function MyMaintenanceRequest() {
         actionType: "confirm" | "rework",
         note?: string
     ) => {
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         const statusID =
             requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
         const userID = Number(localStorage.getItem("userId"));
@@ -957,12 +957,12 @@ function MyMaintenanceRequest() {
             note,
             files: requestfiles,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClickCancel = async () => {
         try {
-            setIsBottonActive(true);
+            setIsButtonActive(true);
             const statusID =
                 requestStatuses?.find((item) => item.Name === "Unsuccessful")
                     ?.ID || 0;
@@ -1003,7 +1003,7 @@ function MyMaintenanceRequest() {
                 ]);
 
                 setOpenConfirmCancelled(false);
-                setIsBottonActive(false);
+                setIsButtonActive(false);
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
@@ -1012,7 +1012,7 @@ function MyMaintenanceRequest() {
                 ...prev,
                 { type: "error", message: errMessage },
             ]);
-            setIsBottonActive(false);
+            setIsButtonActive(false);
         }
     };
 
@@ -1157,7 +1157,7 @@ function MyMaintenanceRequest() {
                 }
                 title="Confirm Maintenance Inspection"
                 message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Rework Confirm */}
@@ -1182,7 +1182,7 @@ function MyMaintenanceRequest() {
                 handleFunction={() => handleClickCancel()}
                 title="Confirm Cancel Request"
                 message="Are you sure you want to cancel this request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>

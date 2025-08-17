@@ -544,8 +544,8 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Rooms
 	rooms := []entity.Room{
-		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
 		{RoomNumber: "A103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
 		{RoomNumber: "A104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
 		{RoomNumber: "A105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
@@ -1117,8 +1117,11 @@ func SeedDatabase() {
 
 	// PaymentStatus
 	paymentStatuses := []entity.PaymentStatus{
-		{Name: "Pending"},
-		{Name: "Completed"},
+		{Name: "Pending Payment"},      // ยังไม่ได้จ่าย
+		{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสอบสลิป
+		{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
+		{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัพโหลดใหม่
+		{Name: "Refunded"},             // คืนเงินแล้ว
 	}
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{

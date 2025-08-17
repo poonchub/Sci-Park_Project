@@ -66,6 +66,72 @@ func GetInvoiceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoice)
 }
 
+// GET /room-invoice-option
+func GetInvoiceByOption(c *gin.Context) {
+	var invoices []entity.Invoice
+	db := config.DB()
+
+	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
+	statusID, _ := strconv.Atoi(c.DefaultQuery("statusId", "0"))
+	customerID, _ := strconv.Atoi(c.DefaultQuery("customerId", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	query := db.Model(&entity.Invoice{})
+
+	if statusID != 0 {
+		query = query.Where("status_id = ?", statusID)
+	}
+	if roomID != 0 {
+		query = query.Where("room_id = ?", roomID)
+	}
+	if customerID != 0 {
+		query = query.Where("customer_id = ?", customerID)
+	}
+
+	query = query.
+		Preload("Payments.Status").
+		Preload("Status").
+		Preload("Items").
+		Preload("Room.Floor").
+		Preload("Customer.Prefix").
+		Preload("Creater.Prefix")
+
+	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var total int64
+	countQuery := db.Model(&entity.Invoice{})
+	if statusID != 0 {
+		countQuery = countQuery.Where("status_id = ?", statusID)
+	}
+	if roomID != 0 {
+		countQuery = countQuery.Where("room_id = ?", roomID)
+	}
+	if customerID != 0 {
+		countQuery = countQuery.Where("customer_id = ?", customerID)
+	}
+	countQuery.Count(&total)
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       invoices,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	})
+}
+
 func add(a, b int) int {
 	return a + b
 }
@@ -226,7 +292,7 @@ func GetInvoicePDF(c *gin.Context) {
 		Preload("Items").
 		Preload("Creater.Role").
 		Preload("Creater.Prefix").
-		// Preload("Room.Prefix.ServiceAreaDocument").
+		Preload("Customer").
 		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
@@ -611,8 +677,8 @@ func CreateInvoice(c *gin.Context) {
 	invoice.InvoiceNumber = nextInvoiceNumber
 
 	var status entity.PaymentStatus
-	if err := db.Where("name = ?", "Pending").First(&status).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending' not found"})
+	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending Payment' not found"})
 		return
 	}
 
@@ -643,15 +709,15 @@ func CreateInvoice(c *gin.Context) {
 		DueDate:       invoice.DueDate.In(loc),
 		BillingPeriod: invoice.BillingPeriod.In(loc),
 		TotalAmount:   invoice.TotalAmount,
-		RoomID: 	   invoice.RoomID,	
+		RoomID:        invoice.RoomID,
 		StatusID:      invoice.StatusID,
 		CreaterID:     invoice.CreaterID,
 		CustomerID:    invoice.CustomerID,
 	}
 
 	var exiting entity.Invoice
-	if err := db.Where("invoice_number = ?", invoiceData.InvoiceNumber).First(&exiting).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Invoice with this number already exists"})
+	if err := db.Where("billing_period = ? AND room_id = ?", invoiceData.BillingPeriod, invoiceData.RoomID).First(&exiting).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "An invoice for this billing period already exists."})
 		return
 	}
 
@@ -665,6 +731,68 @@ func CreateInvoice(c *gin.Context) {
 		"data":    invoiceData,
 	})
 
+}
+
+// PATCH /invoice/:id
+func UpdateInvoiceByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	var invoice entity.Invoice
+
+	db := config.DB()
+	result := db.First(&invoice, ID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&invoice); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	result = db.Save(&invoice)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}
+
+// DELETE /invoice/:id
+func DeleteInvoiceByID(c *gin.Context) {
+	ID := c.Param("id")
+	db := config.DB()
+
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var invoice entity.Invoice
+	if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+		return
+	}
+
+	if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
+		return
+	}
+
+	if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
+		return
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})
 }
 
 func ThaiDateFull(t time.Time) string {

@@ -140,12 +140,6 @@ function News() {
 
         try {
             const resNews = await CreateNews(formData)
-            if (!resNews) {
-                console.error("🚨 Error creating news:", resNews);
-                handleSetAlert("error", resNews?.Error || "Failed to create news");
-                setIsSubmitButtonActive(false);
-                return;
-            }
 
             if (files.length > 0) {
                 const formDataFile = new FormData();
@@ -170,9 +164,13 @@ function News() {
                 setIsSubmitButtonActive(false)
                 getNewsForAdmin()
             }, 1800);
-        } catch (error) {
+        } catch (error: any) {
             console.error("🚨 Error submitting request:", error);
-            handleSetAlert("error", "An unexpected error occurred");
+            if (error.status === 409) {
+                handleSetAlert("error", error.response?.data?.error || "Failed to create invoice");
+            } else {
+                handleSetAlert("error", "An unexpected error occurred");
+            }
             setIsSubmitButtonActive(false);
         }
     };

@@ -13,6 +13,7 @@ interface ImageUploaderProps {
     value: File[];
     onChange: (files: File[]) => void;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
+    buttonText: string;
 }
 
 
@@ -23,6 +24,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     value,
     onChange,
     setAlerts = () => { },
+    buttonText,
 }) => {
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -67,7 +69,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             >
                 {/* Preview Images */}
                 {value.length != 0 &&
-                    <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
+                    <Grid container spacing={2} sx={{ 
+                        mt: 0.5, mb: 2, 
+                        height: '150px', 
+                        overflow: 'auto',
+                        p: 1
+                    }}>
                         {value.map((file, index) => {
                             const imageUrl = URL.createObjectURL(file);
                             return (
@@ -84,20 +91,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     </Grid>
                 }
 
-                <Typography sx={{ mb: 0.5, fontSize: 14 }}>Drag and drop image files here, or</Typography>
+                <Typography sx={{ mb: 1.4, fontSize: 14 }}>Drag and drop image files here, or</Typography>
                 <Button variant="contained" component="label">
                     <FontAwesomeIcon icon={faImage} size="lg" />
-                    <Typography variant="textButtonClassic" >Click to select image files</Typography>
+                    <Typography variant="textButtonClassic" >{buttonText}</Typography>
                     <input
                         name="imageUploader"
                         accept="image/png, image/jpeg, image/jpg"
                         type="file"
-                        multiple
+                        multiple={maxFiles>1}
                         hidden
                         onChange={handleFileChange}
                     />
                 </Button>
-                <Typography sx={{ fontSize: 13, color: 'gray', mt: 1 }}>
+                <Typography sx={{ fontSize: 13, color: 'gray', mt: 1.4 }}>
                     Supported file types: .png, .jpg, .jpeg
                 </Typography>
             </Grid>

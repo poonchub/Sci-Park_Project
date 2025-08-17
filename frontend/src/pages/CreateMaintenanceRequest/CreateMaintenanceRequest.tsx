@@ -1350,6 +1350,7 @@ function CreateMaintenanceRequestPage() {
                                                 onChange={setFiles}
                                                 setAlerts={setAlerts}
                                                 maxFiles={3}
+                                                buttonText="Click to select image files"
                                             />
                                         </Grid>
                                     </Grid>
