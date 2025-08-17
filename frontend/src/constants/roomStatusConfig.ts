@@ -1,6 +1,6 @@
 // Importing necessary FontAwesome icons
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faCheck, faDoorOpen  } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faWrench, faTimesCircle, faHammer } from "@fortawesome/free-solid-svg-icons";
 
 // Interface defining the configuration for each room status type
 export interface RoomStatusConfig {
@@ -12,19 +12,23 @@ export interface RoomStatusConfig {
 // Mapping different room statuses to their respective configuration
 export const roomStatusConfig: Record<string, RoomStatusConfig> = {
     "Available": {
-        color: "#007BFF", // Blue color for Reserved
-        colorLite: "rgb(202, 227, 255)", // Light blue background for Reserved
-        icon: faCheck // Check icon for Reserved
+        color: "#28A745", // Green = available
+        colorLite: "rgb(202, 255, 202)",
+        icon: faCheck,
     },
-    "Not Reserved": {
-        color: "#28A745", // Green color for Not Reserved (Available)
-        colorLite: "rgb(202, 255, 202)", // Light green background for Not Reserved
-        icon: faDoorOpen  // Circle icon for Not Reserved (Available)
-    },
-
     "Under Maintenance": {
-        color: "#FF0000", // Red color for Un Available
-        colorLite: "rgb(255, 202, 202)", // Light red background for Un Available
-        icon: faDoorOpen  // Circle icon for Un Available
+        color: "#FFC107", // Yellow = maintenance
+        colorLite: "rgb(255, 243, 205)",
+        icon: faWrench,
+    },
+    "Unavailable": {
+        color: "#6C757D", // Gray = unavailable
+        colorLite: "rgb(222, 226, 230)",
+        icon: faTimesCircle,
+    },
+    "Damaged": {
+        color: "#DC3545", // Red = damaged
+        colorLite: "rgb(248, 215, 218)",
+        icon: faHammer,
     },
 };
