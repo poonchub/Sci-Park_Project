@@ -103,7 +103,8 @@ func GetInvoiceByOption(c *gin.Context) {
 		Preload("Items").
 		Preload("Room.Floor").
 		Preload("Customer.Prefix").
-		Preload("Creater.Prefix")
+		Preload("Creater.Prefix").
+		Preload("Creater.Role")
 
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
