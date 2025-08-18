@@ -47,6 +47,7 @@ import {
     BrushCleaning,
     Check,
     CirclePlus,
+    Coins,
     DoorClosed,
     Download,
     Eye,
@@ -63,7 +64,7 @@ import {
 } from "lucide-react";
 import { TextField } from "../../components/TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faFilePdf, faMagnifyingGlass, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faBuilding, faCalendar, faClock, faExpand, faEye, faFilePdf, faMagnifyingGlass, faMoneyBill, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { Select } from "../../components/Select/Select";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import { GridColDef } from "@mui/x-data-grid";
@@ -298,10 +299,10 @@ function RoomRentalSpace() {
                     type === "checkbox"
                         ? checked
                         : numberFields.includes(name)
-                          ? value === ""
-                              ? ""
-                              : Number(value)
-                          : value,
+                            ? value === ""
+                                ? ""
+                                : Number(value)
+                            : value,
             };
 
             const total = newData.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
@@ -672,11 +673,196 @@ function RoomRentalSpace() {
         if (isSmallScreen) {
             return [
                 {
-                    field: "All Maintenance Requests",
-                    headerName: "All Maintenance Requests",
+                    field: "All Rental Room",
+                    headerName: "All Rental Room",
                     flex: 1,
-                    renderCell: (params) => {
-                        return <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container"></Grid>;
+                    renderCell: (item) => {
+                        const data = item.row;
+
+                        const statusName = data.RoomStatus?.status_name
+                        const statusKey = statusName as keyof typeof roomStatusConfig;
+                        const {
+                            color: statusColor,
+                            colorLite: statusColorLite,
+                            icon: statusIcon,
+                        } = roomStatusConfig[statusKey] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
+
+                        const roomNumber = data.RoomNumber;
+                        const floor = data.Floor.Number;
+                        const roomSize = data.RoomSize;
+
+                        const doc = data.ServiceAreaDocument;
+                        let userType = "";
+                        let companyName = "";
+                        if (doc.length > 0) {
+                            userType = doc[doc.length - 1].ServiceUserType.Name;
+                            companyName = doc[doc.length - 1].RequestServiceArea.User.CompanyName;
+                        }
+
+                        return (
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
+                                <Grid size={{ xs: 12, mobileS: 7 }}>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {`Room No. ${roomNumber}, Floor ${floor}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
+                                        <FontAwesomeIcon
+                                            icon={faExpand}
+                                            style={{
+                                                width: "13px",
+                                                height: "13px",
+                                                paddingBottom: "4px"
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 13,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Size: ${roomSize} sqm`}
+                                        </Typography>
+                                    </Box>
+                                    {
+                                        companyName !== "" &&
+                                        <>
+                                            <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, mt: 1, mb: 0 }}>
+                                                <FontAwesomeIcon icon={faBuilding} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                                <Typography
+                                                    sx={{
+                                                        fontSize: 13,
+                                                        // whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    {companyName}
+                                                </Typography>
+                                            </Box>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 12,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    maxWidth: "100%",
+                                                    color: "text.secondary",
+                                                    ml: 1.9
+                                                }}
+                                            >
+                                                ({userType})
+                                            </Typography>
+                                        </>
+                                    }
+                                </Grid>
+
+                                <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
+                                    <Box
+                                        sx={{
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={statusIcon} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {statusName}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Divider sx={{ width: "100%", my: 1 }} />
+
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid size={{ xs: 6 }}>
+                                                <Tooltip title={"Create Invoice"}>
+                                                    <Button
+                                                        variant="contained"
+                                                        onClick={() => {
+                                                            setOpenCreatePopup(true);
+                                                            setSelectedRoom(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            width: '100%',
+                                                            height: '100%'
+                                                        }}
+                                                        disabled={statusName === "Available"}
+                                                    >
+                                                        <NotebookPen size={18} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Create Invoice
+                                                        </Typography>
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                            <Grid size={{ xs: 6 }}>
+                                                <Tooltip title={"Invoice List"}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        onClick={() => {
+                                                            setOpenInvoicePopup(true);
+                                                            setSelectedRoom(data);
+                                                        }}
+                                                        sx={{
+                                                            minWidth: "42px",
+                                                            bgcolor: "#FFFFFF",
+                                                            width: '100%',
+                                                            height: '100%'
+                                                        }}
+                                                    >
+                                                        <ScrollText size={18} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Invoice List
+                                                        </Typography>
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        );
                     },
                 },
             ];
@@ -915,11 +1101,237 @@ function RoomRentalSpace() {
         if (isSmallScreen) {
             return [
                 {
-                    field: "All Maintenance Requests",
-                    headerName: "All Maintenance Requests",
+                    field: "All Invoice",
+                    headerName: "All Invoice",
                     flex: 1,
-                    renderCell: (params) => {
-                        return <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container"></Grid>;
+                    renderCell: (item) => {
+                        const data = item.row;
+                        console.log("data: ", data)
+
+                        const statusName = data.Status?.Name
+                        const statusKey = statusName as keyof typeof paymentStatusConfig;
+                        const {
+                            color: statusColor,
+                            colorLite: statusColorLite,
+                            icon: statusIcon,
+                        } = paymentStatusConfig[statusKey] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
+
+                        const invoiceNumber = data.InvoiceNumber
+                        const billingPeriod = formatToMonthYear(data.BillingPeriod)
+                        const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
+                            style: "currency",
+                            currency: "THB",
+                        })
+
+                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
+                        let width;
+                        if (cardItem) {
+                            width = cardItem.offsetWidth;
+                        }
+
+                        return (
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
+                                <Grid size={{ xs: 12, mobileS: 7 }}>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                                fontWeight: 500
+                                            }}
+                                        >
+                                            {invoiceNumber}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <FontAwesomeIcon
+                                            icon={faCalendar}
+                                            style={{
+                                                width: "14px",
+                                                height: "14px",
+                                                paddingBottom: "4px"
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ mt: 1.4, mb: 1 }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                color: 'text.secondary'
+                                            }}
+                                        >
+                                            Total Amount
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                fontWeight: 500,
+                                                color: "text.main"
+                                            }}
+                                        >
+                                            {totalAmount}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
+                                    <Box
+                                        sx={{
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={statusIcon} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {statusName}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Divider sx={{ width: "100%", my: 1 }} />
+
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid size={{ xs: statusName === "Pending Payment" ? 5 : 6 }}>
+                                                <Tooltip title="Download PDF">
+                                                    <Button
+                                                        variant="contained"
+                                                        onClick={async () => {
+                                                            setOpenPDF(true);
+                                                            setSelectedInvoice(data);
+                                                            setLoadingDownloadId(null);
+                                                        }}
+                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
+                                                    >
+                                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Download PDF
+                                                        </Typography>
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                            {
+                                                statusName === "Pending Payment" &&
+                                                <>
+                                                    <Grid size={{ xs: 5 }}>
+                                                        <Tooltip title="Edit Invoice">
+                                                            <Button
+                                                                variant="outlined"
+                                                                onClick={() => {
+                                                                    setIsEditMode(true);
+                                                                    setSelectedInvoice(data);
+                                                                    setOpenCreatePopup(true);
+                                                                }}
+                                                                sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', height: '100%' }}
+                                                            >
+                                                                <Pencil size={18} />
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Edit
+                                                                </Typography>
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 2 }}>
+                                                        <Tooltip title="Delete Invoice">
+                                                            <Button
+                                                                variant="outlinedCancel"
+                                                                onClick={() => {
+                                                                    setSelectedInvoice((prev) => ({
+                                                                        ...prev,
+                                                                        ...data,
+                                                                    }));
+
+                                                                    setOpenDeletePopup(true);
+                                                                }}
+                                                                sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', minHeight: '100%' }}
+                                                            >
+                                                                <Trash2 size={18} />
+                                                                {
+                                                                    (width && width > 670) &&
+                                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                                        Delete
+                                                                    </Typography>
+                                                                }
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </Grid>
+                                                </>
+                                            }
+                                            {
+                                                data.Payments &&
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Tooltip title="View Slip">
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                setSelectedInvoice((prev) => ({
+                                                                    ...prev,
+                                                                    ...data,
+                                                                }));
+                                                                setOpenPaymentPopup(true);
+                                                            }}
+                                                            sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', minHeight: '100%' }}
+                                                        >
+                                                            <Wallet size={18} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                View Slip
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                            }
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        );
                     },
                 },
             ];
@@ -979,11 +1391,12 @@ function RoomRentalSpace() {
                                     height: "100%",
                                 }}
                             >
-                                ฿
-                                {params.value?.toLocaleString("th-TH", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
+                                {
+                                    params.value?.toLocaleString("th-TH", {
+                                        style: "currency",
+                                        currency: "THB",
+                                    })
+                                }
                             </Box>
                         );
                     },
@@ -1752,7 +2165,7 @@ function RoomRentalSpace() {
                                                 }}
                                             />
                                         </Grid>
-                                        <Grid size={{ xs: 5, sm: 3 }}>
+                                        <Grid size={{ xs: 10, sm: 3 }}>
                                             <FormControl fullWidth>
                                                 <Select
                                                     value={selectedOption.paymentStatusID}
@@ -1830,7 +2243,7 @@ function RoomRentalSpace() {
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
-                    <Grid container className="title-box" direction={"row"} size={{ xs: 5, sm: 5 }} sx={{ gap: 1 }}>
+                    <Grid container className="title-box" direction={"row"} size={{ xs: 12 }} sx={{ gap: 1 }}>
                         <DoorClosed size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Rental Space

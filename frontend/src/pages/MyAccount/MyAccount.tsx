@@ -51,6 +51,7 @@ import {
     faEnvelope,
     faPhone,
     faBriefcase,
+    faCalendar,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Download, Eye, ShieldUser, Wallet } from "lucide-react";
@@ -141,7 +142,7 @@ const MyAccount: React.FC = () => {
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_ACCOUNT,
-        onInteractionChange: () => {},
+        onInteractionChange: () => { },
     });
 
     const getMaintenanceRequests = async (pageNum: number = 1, setTotalFlag = false) => {
@@ -1205,8 +1206,197 @@ const MyAccount: React.FC = () => {
                     field: "All Maintenance Requests",
                     headerName: "All Maintenance Requests",
                     flex: 1,
-                    renderCell: (params) => {
-                        return <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container"></Grid>;
+                    renderCell: (item) => {
+                        const data = item.row;
+                        console.log("data: ", data)
+
+                        const statusName = data.Status?.Name
+                        const statusKey = statusName as keyof typeof paymentStatusConfig;
+                        const {
+                            color: statusColor,
+                            colorLite: statusColorLite,
+                            icon: statusIcon,
+                        } = paymentStatusConfig[statusKey] ?? {
+                            color: "#000",
+                            colorLite: "#000",
+                            icon: faQuestionCircle,
+                        };
+
+                        const invoiceNumber = data.InvoiceNumber
+                        const billingPeriod = formatToMonthYear(data.BillingPeriod)
+                        const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
+                            style: "currency",
+                            currency: "THB",
+                        })
+
+                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
+                        let width;
+                        if (cardItem) {
+                            width = cardItem.offsetWidth;
+                        }
+
+                        return (
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
+                                <Grid size={{ xs: 12, mobileS: 7 }}>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                                fontWeight: 500
+                                            }}
+                                        >
+                                            {invoiceNumber}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <FontAwesomeIcon
+                                            icon={faCalendar}
+                                            style={{
+                                                width: "14px",
+                                                height: "14px",
+                                                paddingBottom: "4px"
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ mt: 1.4, mb: 1 }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                color: 'text.secondary'
+                                            }}
+                                        >
+                                            Total Amount
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                fontWeight: 500,
+                                                color: "text.main"
+                                            }}
+                                        >
+                                            {totalAmount}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
+                                    <Box
+                                        sx={{
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        <FontAwesomeIcon icon={statusIcon} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {statusName}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Divider sx={{ width: "100%", my: 1 }} />
+
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid size={{ xs: 6 }}>
+                                                <Tooltip title="Download PDF">
+                                                    <Button
+                                                        variant="contained"
+                                                        onClick={async () => {
+                                                            setOpenPDF(true);
+                                                            setSelectedInvoice(data);
+                                                            setLoadingDownloadId(null);
+                                                        }}
+                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
+                                                    >
+                                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Download PDF
+                                                        </Typography>
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                            <Grid size={{ xs: 6 }}>
+                                                <Tooltip title={statusName === "Pending Payment" ? "Pay Now" : "View Slip"}>
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={() => {
+                                                            setSelectedInvoice((prev) => ({
+                                                                ...prev,
+                                                                ...data,
+                                                            }));
+                                                            setOpenPopupPayment(true);
+                                                        }}
+                                                        sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', height: '100%' }}
+                                                    >
+                                                        {
+                                                            (statusName === "Pending Payment" || statusName === "Rejected") ? (
+                                                                <>
+                                                                    <Wallet size={18} />
+                                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                                        Pay Now
+                                                                    </Typography>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Eye size={18} />
+                                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                                        View Slip
+                                                                    </Typography>
+                                                                </>
+                                                            )
+                                                        }
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        );
                     },
                 },
             ];
