@@ -1,0 +1,21 @@
+.my-account-page{
+
+    .container-btn {
+        container-type: inline-size;
+
+        .text-btn{
+            display: none;
+        }
+    }
+
+    @container (max-width: 160px) {
+        .btn-confirm,
+        .btn-rework, .btn-detail {
+            width: 100%;
+
+            .text-btn{
+                display: block;
+            }
+        }
+    }
+}

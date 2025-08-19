@@ -5,6 +5,7 @@ import { Button, DialogActions, InputAdornment, TextFieldProps } from "@mui/mate
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import dayjs, { Dayjs } from "dayjs";
 import { MobileTimePicker } from "../MobileTimePicker/MobileTimePicker";
+import { Clock } from "lucide-react";
 
 interface TimePickerFieldProps {
     label: string;
@@ -66,7 +67,7 @@ const TimePickerField: React.FC<TimePickerFieldProps> = ({ label, value, onChang
                         InputProps: {
                             endAdornment: (
                                 <InputAdornment position="end">
-                                    <AccessTimeIcon sx={{ color: !disabled ? "primary.main" : "#6D6E70" }} />
+                                    <Clock size={18} style={{ color: !disabled ? "primary.main" : "#6D6E70" }} />
                                 </InputAdornment>
                             ),
                         },

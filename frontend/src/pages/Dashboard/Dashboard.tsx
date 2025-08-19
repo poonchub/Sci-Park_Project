@@ -743,7 +743,7 @@ function Dashboard() {
 
                                         <Button
                                             startIcon={<HelpOutline />}
-                                            variant="outlined"
+                                            variant="outlinedGray"
                                             onClick={() => setOpen(true)}
                                         >
                                             How to use this chart
@@ -810,12 +810,6 @@ function Dashboard() {
                                                     ))}
                                                 </Box>
                                             </DialogContent>
-
-                                            <DialogActions>
-                                                <Button onClick={() => setOpen(false)} variant="outlined">
-                                                    Close
-                                                </Button>
-                                            </DialogActions>
                                         </Dialog>
                                     </Card>
                                 </Grid>

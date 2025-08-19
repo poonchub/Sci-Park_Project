@@ -2040,6 +2040,25 @@ async function ListContributors() {
 }
 
 // Payment
+async function GetPaymentByUserID() {
+    try {
+        const userId = localStorage.getItem("userId")
+        const response = await axiosInstance.get(`/payments/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
+async function GetPaymentByOption(page: number, limit: number, payerID?: number) {
+    try {
+        const response = await axiosInstance.get(`/payments-option?payerID=${payerID}&page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
 async function CreatePayment(data: FormData) {
     try {
         const response = await axiosInstance.post(`/payment`, data, {
@@ -2550,6 +2569,8 @@ export {
     GetAllRoomLayouts,
 
     // Payment
+    GetPaymentByUserID,
+    GetPaymentByOption,
     CreatePayment,
     UpdatePaymentByID,
     CheckSlip,

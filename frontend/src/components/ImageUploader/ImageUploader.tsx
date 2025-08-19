@@ -2,6 +2,7 @@ import React from "react";
 import { Typography, Button, Grid } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage } from "@fortawesome/free-solid-svg-icons";
+import { Image } from "lucide-react";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -93,7 +94,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 <Typography sx={{ mb: 1.4, fontSize: 14 }}>Drag and drop image files here, or</Typography>
                 <Button variant="contained" component="label">
-                    <FontAwesomeIcon icon={faImage} size="lg" />
+                    <Image size={20}/>
                     <Typography variant="textButtonClassic" >{buttonText}</Typography>
                     <input
                         name="imageUploader"

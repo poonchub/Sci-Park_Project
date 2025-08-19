@@ -69,7 +69,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { MobileTimePicker } from "../../components/MobileTimePicker/MobileTimePicker";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TimePickerField from "../../components/TimePickerField/TimePickerField";
-import { NotebookPen } from "lucide-react";
+import { Mail, NotebookPen, Pencil, Phone, RotateCcw, Save, Undo2, Upload, UserRound } from "lucide-react";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -1170,12 +1170,7 @@ function CreateMaintenanceRequestPage() {
                                                                 position="start"
                                                                 sx={{ mr: 1.6 }}
                                                             >
-                                                                <FontAwesomeIcon
-                                                                    icon={
-                                                                        faUserTie
-                                                                    }
-                                                                    size="lg"
-                                                                />
+                                                                <UserRound size={18}/>
                                                             </InputAdornment>
                                                         ),
                                                     },
@@ -1213,12 +1208,7 @@ function CreateMaintenanceRequestPage() {
                                                                         mr: 1.6,
                                                                     }}
                                                                 >
-                                                                    <FontAwesomeIcon
-                                                                        icon={
-                                                                            faPhone
-                                                                        }
-                                                                        size="lg"
-                                                                    />
+                                                                    <Phone size={18}/>
                                                                 </InputAdornment>
                                                             ),
                                                         },
@@ -1246,12 +1236,7 @@ function CreateMaintenanceRequestPage() {
                                                                         mr: 1.6,
                                                                     }}
                                                                 >
-                                                                    <FontAwesomeIcon
-                                                                        icon={
-                                                                            faEnvelope
-                                                                        }
-                                                                        size="lg"
-                                                                    />
+                                                                    <Mail size={18}/>
                                                                 </InputAdornment>
                                                             ),
                                                         },
@@ -1268,14 +1253,12 @@ function CreateMaintenanceRequestPage() {
                                             >
                                                 {!onEdit ? (
                                                     <Button
-                                                        variant="containedBlue"
+                                                        variant="outlined"
                                                         onClick={() =>
                                                             setOnEdit(!onEdit)
                                                         }
                                                     >
-                                                        <FontAwesomeIcon
-                                                            icon={faPencil}
-                                                        />
+                                                        <Pencil size={18}/>
                                                         <Typography variant="textButtonClassic">
                                                             Edit Info
                                                         </Typography>
@@ -1288,7 +1271,7 @@ function CreateMaintenanceRequestPage() {
                                                         }}
                                                     >
                                                         <Button
-                                                            variant="outlined"
+                                                            variant="outlinedGray"
                                                             onClick={() => {
                                                                 getUser;
                                                                 setOnEdit(
@@ -1296,9 +1279,7 @@ function CreateMaintenanceRequestPage() {
                                                                 );
                                                             }}
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faUndo}
-                                                            />
+                                                            <Undo2 size={18}/>
                                                             <Typography variant="textButtonClassic">
                                                                 Cancel
                                                             </Typography>
@@ -1312,11 +1293,7 @@ function CreateMaintenanceRequestPage() {
                                                                 isEditButtonActive
                                                             }
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={
-                                                                    faFloppyDisk
-                                                                }
-                                                            />
+                                                            <Save size={18}/>
                                                             <Typography variant="textButtonClassic">
                                                                 Save
                                                             </Typography>
@@ -1364,15 +1341,13 @@ function CreateMaintenanceRequestPage() {
                                     >
                                         <Box sx={{ gap: 1, display: "flex" }}>
                                             <Button
-                                                variant="outlined"
+                                                variant="outlinedGray"
                                                 sx={{ minHeight: "37px" }}
                                                 onClick={() =>
                                                     handleResetData()
                                                 }
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faRotateRight}
-                                                />
+                                                <RotateCcw size={18}/>
                                                 <Typography variant="textButtonClassic">
                                                     Reset Data
                                                 </Typography>
@@ -1383,9 +1358,7 @@ function CreateMaintenanceRequestPage() {
                                                 type="submit"
                                                 disabled={isSubmitButtonActive}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faUpload}
-                                                />
+                                                <Upload size={18}/>
                                                 <Typography variant="textButtonClassic">
                                                     Submit Request
                                                 </Typography>

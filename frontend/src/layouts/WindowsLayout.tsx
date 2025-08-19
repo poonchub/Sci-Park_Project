@@ -638,8 +638,8 @@ const WindowsLayout: React.FC = (props: any) => {
                     <Box
                         sx={{
                             minHeight: "95vh",
-                            p: 4,
-                            mb: 4, // เพิ่ม margin-bottom เพื่อให้มีระยะห่างจาก footer
+                            p: {xs: 2.5, md: 4},
+                            mb: 4,
                         }}
                     >
                         <Outlet />

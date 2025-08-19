@@ -196,6 +196,8 @@ func main() {
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
 		// Payment
+		protected.GET("/payments/:userId", controller.GetPaymentByUserID)
+		protected.GET("/payments-option", controller.GetPaymentByOption)
 		protected.POST("/payment", controller.CreatePayment)
 
 		// SlipOK
