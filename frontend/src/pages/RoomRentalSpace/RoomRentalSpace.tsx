@@ -484,7 +484,7 @@ function RoomRentalSpace() {
             return;
         }
 
-        if (!note || note.trim() === "") {
+        if (statusName==="Rejected" && (!note || note.trim() === "")) {
             handleSetAlert("warning", "Please enter a reason before reject requested.");
             setIsButtonActive(false);
             return;
@@ -1043,6 +1043,7 @@ function RoomRentalSpace() {
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
+                        const statusName = data.RoomStatus?.status_name
                         return (
                             <Box
                                 className="container-btn"
@@ -1064,6 +1065,7 @@ function RoomRentalSpace() {
                                         sx={{
                                             minWidth: "42px",
                                         }}
+                                        disabled={statusName === "Available"}
                                     >
                                         <NotebookPen size={18} />
                                         {/* <Typography variant="textButtonClassic" className="text-btn">

@@ -66,3 +66,10 @@ textarea::placeholder{
   font-family: "Noto Sans Thai", sans-serif;
 }
 
+/* .lucide {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  flex-shrink: 0;
+} */

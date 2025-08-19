@@ -42,7 +42,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
-import { ClipboardList } from "lucide-react";
+import { Check, ClipboardList, Eye, X } from "lucide-react";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -249,14 +249,14 @@ function AllMaintenanceRequest() {
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title={"Approve"}>
                                                         <Button
-                                                            variant="containedBlue"
+                                                            variant="contained"
                                                             onClick={() => {
                                                                 setOpenPopupApproved(true);
                                                                 setSelectedRequest(data);
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                            <Check size={18}/>
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Approve
                                                             </Typography>
@@ -266,14 +266,14 @@ function AllMaintenanceRequest() {
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title={"Reject"}>
                                                         <Button
-                                                            variant="containedCancel"
+                                                            variant="outlinedCancel"
                                                             onClick={() => {
                                                                 setOpenConfirmRejected(true);
                                                                 setSelectedRequest(data);
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                            <X size={18}/>
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Reject
                                                             </Typography>
@@ -292,8 +292,8 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faEye} size="lg" />
-                                                            {width && width > 530 && (
+                                                            <Eye size={18}/>
+                                                            {width && width > 650 && (
                                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                                     Details
                                                                 </Typography>
@@ -315,7 +315,7 @@ function AllMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon icon={faEye} size="lg" />
+                                                    <Eye size={18}/>
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Details
                                                     </Typography>
@@ -587,7 +587,7 @@ function AllMaintenanceRequest() {
                                         <Tooltip title={"Approve"}>
                                             <Button
                                                 className="btn-approve"
-                                                variant="containedBlue"
+                                                variant="contained"
                                                 onClick={() => {
                                                     setOpenPopupApproved(true);
                                                     setSelectedRequest(data);
@@ -596,7 +596,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                <Check size={18}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Approve
                                                 </Typography>
@@ -605,7 +605,7 @@ function AllMaintenanceRequest() {
                                         <Tooltip title={"Reject"}>
                                             <Button
                                                 className="btn-reject"
-                                                variant="containedCancel"
+                                                variant="outlinedCancel"
                                                 onClick={() => {
                                                     setOpenConfirmRejected(true);
                                                     setSelectedRequest(data);
@@ -614,7 +614,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                <X size={18}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Reject
                                                 </Typography>
@@ -631,7 +631,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faEye} size="lg" />
+                                                <Eye size={18}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -650,7 +650,7 @@ function AllMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                            <Eye size={18}/>
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Details
                                             </Typography>

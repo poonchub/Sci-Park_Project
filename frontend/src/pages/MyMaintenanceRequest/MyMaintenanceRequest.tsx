@@ -56,7 +56,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { Wrench } from "lucide-react";
+import { Check, Eye, FileText, Repeat, Wrench, X } from "lucide-react";
 
 function MyMaintenanceRequest() {
     const [maintenanceRequests, setMaintenanceRequests] = useState<
@@ -306,10 +306,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faCheck}
-                                                                size="lg"
-                                                            />
+                                                            <Check size={20}/>
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -333,10 +330,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faRepeat}
-                                                                size="lg"
-                                                            />
+                                                            <Repeat size={20}/>
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -361,10 +355,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faEye}
-                                                                size="lg"
-                                                            />
+                                                            <Eye size={20}/>
                                                             {width &&
                                                                 width > 530 && (
                                                                     <Typography
@@ -387,7 +378,7 @@ function MyMaintenanceRequest() {
                                                 <Grid size={{ xs: 7 }}>
                                                     <Tooltip title={"Cancel"}>
                                                         <Button
-                                                            variant="containedCancel"
+                                                            variant="outlinedCancel"
                                                             onClick={() => {
                                                                 setOpenConfirmCancelled(
                                                                     true
@@ -398,10 +389,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faXmark}
-                                                                size="lg"
-                                                            />
+                                                            <X size={20}/>
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -426,10 +414,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon
-                                                                icon={faEye}
-                                                                size="lg"
-                                                            />
+                                                            <Eye size={20}/>
                                                             {width &&
                                                                 width > 250 && (
                                                                     <Typography
@@ -456,10 +441,7 @@ function MyMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon
-                                                        icon={faEye}
-                                                        size="lg"
-                                                    />
+                                                    <Eye size={20}/>
                                                     <Typography
                                                         variant="textButtonClassic"
                                                         className="text-btn"
@@ -708,7 +690,7 @@ function MyMaintenanceRequest() {
                                         <Tooltip title={"Confirm"}>
                                             <Button
                                                 className="btn-confirm"
-                                                variant="containedBlue"
+                                                variant="contained"
                                                 onClick={() => {
                                                     setOpenConfirmInspection(
                                                         true
@@ -719,10 +701,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faCheck}
-                                                    size="lg"
-                                                />
+                                                <Check size={20}/>
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -743,10 +722,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faRepeat}
-                                                    size="lg"
-                                                />
+                                                <Repeat size={20}/>
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -766,10 +742,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faEye}
-                                                    size="lg"
-                                                />
+                                                <Eye size={20}/>
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -784,7 +757,7 @@ function MyMaintenanceRequest() {
                                         <Tooltip title={"Cancel"}>
                                             <Button
                                                 className="btn-confirm"
-                                                variant="containedCancel"
+                                                variant="outlinedCancel"
                                                 onClick={() => {
                                                     setOpenConfirmCancelled(
                                                         true
@@ -795,10 +768,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faXmark}
-                                                    size="lg"
-                                                />
+                                                <X size={20}/>
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -818,10 +788,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faEye}
-                                                    size="lg"
-                                                />
+                                                <Eye size={20}/>
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -843,10 +810,7 @@ function MyMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <FontAwesomeIcon
-                                                icon={faEye}
-                                                size="lg"
-                                            />
+                                            <Eye size={20}/>
                                             <Typography
                                                 variant="textButtonClassic"
                                                 className="text-btn"
@@ -1211,8 +1175,8 @@ function MyMaintenanceRequest() {
                         sx={{ justifyContent: "flex-end" }}
                     >
                         <Link to="/maintenance/create-maintenance-request">
-                            <Button variant="containedBlue">
-                                <FontAwesomeIcon icon={faFileLines} size="lg" />
+                            <Button variant="contained">
+                                <FileText size={20}/>
                                 <Typography variant="textButtonClassic">
                                     Create Request
                                 </Typography>

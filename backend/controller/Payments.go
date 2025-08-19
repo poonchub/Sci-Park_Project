@@ -110,6 +110,69 @@ func CancelExpiredBookingsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกการจองที่หมดอายุแล้วเรียบร้อย"})
 }
 
+// GET /payment/:userId
+func GetPaymentByUserID (c *gin.Context) {
+	ID := c.Param("userId")
+	var payment entity.Payment
+
+	db := config.DB()
+
+	result := db.Where("payer_id = ?", ID).Find(&payment)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+	}
+
+	c.JSON(http.StatusOK, payment)
+}
+
+// GET /payment-option
+func GetPaymentByOption(c *gin.Context) {
+	var payment []entity.Payment
+	db := config.DB()
+
+	payerID, _ := strconv.Atoi(c.DefaultQuery("payerID", "0"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	query := db.Model(&entity.Payment{})
+
+	if payerID != 0 {
+		query = query.Where("payer_id = ?", payerID)
+	}
+
+	query = query.
+		Preload("Status")
+
+	if err := query.Limit(limit).Offset(offset).Find(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var total int64
+	countQuery := db.Model(&entity.Payment{})
+
+	if payerID != 0 {
+		countQuery = countQuery.Where("payer_id = ?", payerID)
+	}
+	countQuery.Count(&total)
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       payment,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	})
+}
+
 // POST /payment
 func CreatePayment(c *gin.Context) {
 	db := config.DB()
