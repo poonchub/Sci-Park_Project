@@ -748,7 +748,7 @@ const EditProfile: React.FC = () => {
                             <Grid container spacing={3} sx={{ mb: 3 }}>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.primary.main} />
+                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             First Name
                                         </Typography>
@@ -808,7 +808,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.primary.main} />
+                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Last Name
                                         </Typography>
@@ -868,7 +868,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faVenusMars} size="sm" color={theme.palette.warning.main} />
+                                        <FontAwesomeIcon icon={faVenusMars} size="sm" color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Gender
                                         </Typography>
@@ -943,7 +943,7 @@ const EditProfile: React.FC = () => {
                             <Grid container spacing={3} sx={{ mb: 3 }}>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faPhone} size="sm" color={theme.palette.success.main} />
+                                        <FontAwesomeIcon icon={faPhone} size="sm" color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Phone Number
                                         </Typography>
@@ -1011,7 +1011,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faEnvelope} size="sm" color={theme.palette.info.main} />
+                                        <FontAwesomeIcon icon={faEnvelope} size="sm" color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Email
                                         </Typography>
@@ -1095,7 +1095,7 @@ const EditProfile: React.FC = () => {
                                     <Grid container spacing={3} sx={{ mb: 3 }}>
                                         <Grid size={{ xs: 12, sm: 4 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faBriefcase} size="sm" color={theme.palette.warning.main} />
+                                                <FontAwesomeIcon icon={faBriefcase} size="sm" color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Position
                                                 </Typography>
@@ -1124,9 +1124,9 @@ const EditProfile: React.FC = () => {
                                         {(user?.RoleID === 3 || user?.RoleID === 4) && (
                                             <Grid size={{ xs: 12, sm: 4 }}>
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <FontAwesomeIcon icon={faShieldAlt} size="sm" color={theme.palette.error.main} />
+                                                    <FontAwesomeIcon icon={faShieldAlt} size="sm" color={theme.palette.grey[500]} />
                                                     <Typography variant="body2" fontWeight={600} color="text.secondary">
-                                                        Management
+                                                        Management (User)
                                                     </Typography>
                                                 </Box>
                                                 <TextField
@@ -1153,7 +1153,7 @@ const EditProfile: React.FC = () => {
 
                                         <Grid size={{ xs: 12, sm: 4 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faIdCard} size="sm" color={theme.palette.info.main} />
+                                                <FontAwesomeIcon icon={faIdCard} size="sm" color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Employee ID
                                                 </Typography>
@@ -1197,7 +1197,7 @@ const EditProfile: React.FC = () => {
                                 <Grid container spacing={3}>
                                     <Grid size={{ xs: 12, sm: 6 }}>
                                         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                            <FontAwesomeIcon icon={faCrown} size="sm" color={theme.palette.warning.main} />
+                                            <FontAwesomeIcon icon={faCrown} size="sm" color={theme.palette.grey[500]} />
                                             <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                 Privileges
                                             </Typography>
@@ -1237,7 +1237,7 @@ const EditProfile: React.FC = () => {
                                     <Grid container spacing={3}>
                                         <Grid size={{ xs: 12, sm: 6 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faBuilding} size="sm" color={theme.palette.secondary.main} />
+                                                <FontAwesomeIcon icon={faBuilding} size="sm" color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Company Name
                                                 </Typography>
@@ -1297,7 +1297,7 @@ const EditProfile: React.FC = () => {
                                         </Grid>
                                         <Grid size={{ xs: 12 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faInfoCircle} size="sm" color={theme.palette.info.main} />
+                                                <FontAwesomeIcon icon={faInfoCircle} size="sm" color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Business Description
                                                 </Typography>

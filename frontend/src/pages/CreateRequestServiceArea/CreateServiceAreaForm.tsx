@@ -688,7 +688,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Company Name */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Company Name *</Typography>
+                  <Typography variant="body1" className="title-field">Company Name</Typography>
                   <Controller
                     name="CompanyName"
                     control={control}
@@ -726,7 +726,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Corporate Registration Number */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Corporate Registration Number *</Typography>
+                  <Typography variant="body1" className="title-field">Corporate Registration Number</Typography>
                   <Controller
                     name="CorporateRegistrationNumber"
                     control={control}
@@ -774,7 +774,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Business Group */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Business Group *</Typography>
+                  <Typography variant="body1" className="title-field">Business Group</Typography>
                   <Controller
                     name="BusinessGroupID"
                     control={control}
@@ -820,7 +820,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Company Size */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Company Size *</Typography>
+                  <Typography variant="body1" className="title-field">Company Size</Typography>
                   <Controller
                     name="CompanySizeID"
                     control={control}
@@ -866,7 +866,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Main Services */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Main Services *</Typography>
+                  <Typography variant="body1" className="title-field">Main Services</Typography>
                   <Controller
                     name="MainServices"
                     control={control}
@@ -904,7 +904,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Registered Capital */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Registered Capital (THB) *</Typography>
+                  <Typography variant="body1" className="title-field">Registered Capital (THB)</Typography>
                   <Controller
                     name="RegisteredCapital"
                     control={control}
@@ -943,7 +943,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Hiring Rate */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Hiring Rate (number of people) *</Typography>
+                  <Typography variant="body1" className="title-field">Hiring Rate (number of people)</Typography>
                   <Controller
                     name="HiringRate"
                     control={control}
@@ -980,7 +980,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Research Investment Value */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Research Investment Value (THB) *</Typography>
+                  <Typography variant="body1" className="title-field">Research Investment Value (THB)</Typography>
                   <Controller
                     name="ResearchInvestmentValue"
                     control={control}
@@ -1019,7 +1019,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Company Description */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Company Description *</Typography>
+                  <Typography variant="body1" className="title-field">Company Description</Typography>
                   <Controller
                     name="BusinessDetail"
                     control={control}
@@ -1059,7 +1059,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Three Year Growth Forecast */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Three Year Growth Forecast *</Typography>
+                  <Typography variant="body1" className="title-field">Three Year Growth Forecast</Typography>
                   <Controller
                     name="ThreeYearGrowthForecast"
                     control={control}
@@ -1126,7 +1126,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Purpose of Using Space */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Purpose of Using Space *</Typography>
+                  <Typography variant="body1" className="title-field">Purpose of Using Space</Typography>
                   <Controller
                     name="PurposeOfUsingSpace"
                     control={control}
@@ -1166,7 +1166,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Number of Employees and Collaboration Budget */}
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Number of Employees *</Typography>
+                  <Typography variant="body1" className="title-field">Number of Employees</Typography>
                   <Controller
                     name="NumberOfEmployees"
                     control={control}
@@ -1208,7 +1208,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Activities in Building */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Activities in Building *</Typography>
+                  <Typography variant="body1" className="title-field">Activities in Building</Typography>
                   <Controller
                     name="ActivitiesInBuilding"
                     control={control}
@@ -1249,7 +1249,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 {/* Collaboration Plans */}
                 <Grid size={{ xs: 12 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="body1" className="title-field">Collaboration Plans *</Typography>
+                    <Typography variant="body1" className="title-field">Collaboration Plans</Typography>
                     <Button
                       type="button"
                       variant="outlined"
@@ -1373,7 +1373,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Supporting Activities */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Supporting Activities for Science Park *</Typography>
+                  <Typography variant="body1" className="title-field">Supporting Activities for Science Park</Typography>
                   <Controller
                     name="SupportingActivitiesForSciencePark"
                     control={control}
@@ -1413,9 +1413,9 @@ const CreateServiceAreaForm: React.FC = () => {
 
                 {/* Document Upload */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body1" className="title-field">Service Request Document *</Typography>
+                  <Typography variant="body1" className="title-field">Service Request Document</Typography>
                   <Button
-                    variant="outlined"
+                    variant="outlinedGray"
                     component="label"
                     startIcon={<FontAwesomeIcon icon={faFileUpload} />}
                     sx={{ marginTop: 1 }}
