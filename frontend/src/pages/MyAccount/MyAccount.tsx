@@ -1722,13 +1722,13 @@ const MyAccount: React.FC = () => {
                                                     <FontAwesomeIcon
                                                         icon={faBriefcase}
                                                         size="sm"
-                                                        color={theme.palette.warning.main}
+                                                        color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
                                                         sx={{
                                                             fontSize: 16,
                                                             fontWeight: 600,
-                                                            color: `${theme.palette.primary.main} !important`,
+                                                            color: `${theme.palette.grey[500]} !important`,
                                                         }}
                                                     >
                                                         Role
@@ -1749,13 +1749,13 @@ const MyAccount: React.FC = () => {
                                                     <FontAwesomeIcon
                                                         icon={faEnvelope}
                                                         size="sm"
-                                                        color={theme.palette.info.main}
+                                                        color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
                                                         sx={{
                                                             fontSize: 16,
                                                             fontWeight: 600,
-                                                            color: `${theme.palette.primary.main} !important`,
+                                                            color: `${theme.palette.grey[500]} !important`,
                                                         }}
                                                     >
                                                         Email Address
@@ -1776,13 +1776,13 @@ const MyAccount: React.FC = () => {
                                                     <FontAwesomeIcon
                                                         icon={faPhone}
                                                         size="sm"
-                                                        color={theme.palette.success.main}
+                                                        color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
                                                         sx={{
                                                             fontSize: 16,
                                                             fontWeight: 600,
-                                                            color: `${theme.palette.primary.main} !important`,
+                                                            color: `${theme.palette.grey[500]} !important`,
                                                         }}
                                                     >
                                                         Phone Number
