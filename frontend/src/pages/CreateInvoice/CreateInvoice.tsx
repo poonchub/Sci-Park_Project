@@ -20,7 +20,7 @@ function CreateInvoice() {
             />
             <Button 
                 variant="outlined"
-                onClick={()=> handleDownloadInvoice(Number(searchText))}
+                // onClick={()=> handleDownloadInvoice(Number(searchText))}
                 sx={{ marginLeft: 1 }}
             >
                 Dowload PDF

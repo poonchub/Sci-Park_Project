@@ -357,7 +357,7 @@ function CreateMaintenanceRequestPage() {
                 "Maintenance request submitted successfully"
             );
             setTimeout(() => {
-                navigate("/maintenance/my-maintenance-request");
+                navigate("/my-account");
             }, 1800);
         } catch (error) {
             console.error("🚨 Error submitting request:", error);

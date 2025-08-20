@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
+import { useNotificationStore } from "../store/notificationStore";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -66,11 +67,6 @@ function hasSegment(item: NavigationItem): item is { segment: string } {
     return "segment" in item;
 }
 
-interface NotificationCountsInterface {
-    UnreadRequests?: number;
-    UnreadTasks?: number;
-}
-
 export let logoPath = ""
 
 const WindowsLayout: React.FC = (props: any) => {
@@ -82,8 +78,6 @@ const WindowsLayout: React.FC = (props: any) => {
     const demoWindow = window ? window() : undefined;
 
     const [user, setUser] = useState<UserInterface>();
-    const [notificationCounts, setNotificationCounts] =
-        useState<NotificationCountsInterface>();
     const [organizationInfo, setOrganizationInfo] =
         useState<OrganizationInfoInterface>();
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -98,6 +92,8 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const location = useLocation();
+
+    const { notificationCounts, setNotificationCounts } = useNotificationStore();
 
     useEffect(() => {
         if (containerRef.current) {
@@ -287,6 +283,14 @@ const WindowsLayout: React.FC = (props: any) => {
             segment: "my-account",
             title: "My Account",
             icon: <ShieldUser />,
+            action:
+                notificationCounts?.UnreadInvoice ? (
+                    <Chip
+                        label={"New"}
+                        color="primary"
+                        size="small"
+                    />
+                ) : null,
         },
         {
             segment: "organization-info",
@@ -525,10 +529,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 user?.ID
             );
             if (resCounts) {
-                setNotificationCounts((prev) => ({
-                    ...prev,
-                    ...resCounts,
-                }));
+                setNotificationCounts(resCounts);
             }
         } catch (error) {
             console.error("Error fetching new notification counts:", error);
