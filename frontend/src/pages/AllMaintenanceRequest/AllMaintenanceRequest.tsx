@@ -43,6 +43,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { Check, ClipboardList, Eye, X } from "lucide-react";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 function AllMaintenanceRequest() {
     const [user, setUser] = useState<UserInterface>();
@@ -775,35 +776,13 @@ function AllMaintenanceRequest() {
         setSelectedStatuses([0]);
     };
 
-    const handleUpdateNotification = async (request_id?: number, user_id?: number) => {
-        try {
-            const resNotification = await GetNotificationsByRequestAndUser(request_id, user_id);
-            if (!resNotification || resNotification.error) console.error("Error fetching notification.");
-
-            const notificationData: NotificationsInterface = {
-                IsRead: true,
-            };
-            const notificationID = resNotification.data.ID;
-            if (!resNotification.data.IsRead) {
-                const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
-                if (resUpdated) {
-                    console.log("✅ Notification updated successfully.");
-                }
-            } else {
-                return;
-            }
-        } catch (error) {
-            console.error("❌ Error updating maintenance request:", error);
-        }
-    };
-
-    const handleClickCheck = (data: MaintenanceRequestsInterface) => {
+    const handleClickCheck = async (data: MaintenanceRequestsInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.ID));
             const requestID = data?.ID;
-            const userID = user?.ID;
+            const userID = user?.ID ?? 0;
 
-            handleUpdateNotification(requestID, userID);
+            await handleUpdateNotification(userID, true, requestID, undefined, undefined);
             navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };

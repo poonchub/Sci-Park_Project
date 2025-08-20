@@ -30,6 +30,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 	userID := c.Param("id")
 	var requestCount int64
 	var taskCount int64
+	var invoiceCount int64
 
 	db := config.DB()
 
@@ -41,9 +42,14 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 		Where("is_read = ? AND task_id != 0 AND user_id = ?", false, userID).
 		Count(&taskCount)
 
+	db.Model(&entity.Notification{}).
+		Where("is_read = ? AND invoice_id != 0 AND user_id = ?", false, userID).
+		Count(&invoiceCount)
+
 	c.JSON(http.StatusOK, gin.H{
 		"UnreadRequests": requestCount,
 		"UnreadTasks":    taskCount,
+		"UnreadInvoice": invoiceCount,
 	})
 }
 
@@ -83,11 +89,30 @@ func GetNotificationByTaskAndUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notifications})
 }
 
+// GET /notification/by-invoice/:invoice_id/:user_id
+func GetNotificationByInvoiceAndUser(c *gin.Context) {
+	taskID := c.Param("invoice_id")
+	userID := c.Param("user_id")
+
+	db := config.DB()
+
+	var notifications entity.Notification
+	err := db.Where("invoice_id = ? AND user_id = ?", taskID, userID).First(&notifications).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": notifications})
+}
+
 // POST /notification
 func CreateNotification(c *gin.Context) {
 	var notificationInput struct {
 		RequestID uint
 		TaskID    uint
+		InvoiceID uint
 	}
 	if err := c.ShouldBindJSON(&notificationInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -208,6 +233,39 @@ func CreateNotification(c *gin.Context) {
 
 		if err := db.Create(&noti).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for operator."})
+			return
+		}
+
+		// ส่ง socket event และตอบกลับ
+		services.NotifySocketEvent("notification_created", []entity.Notification{noti})
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Created success",
+			"count":   1,
+			"data":    noti,
+		})
+	case notificationInput.InvoiceID != 0:
+		var invoice entity.Invoice
+		if err := db.First(&invoice, notificationInput.InvoiceID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified invoice was not found."})
+			return
+		}
+
+		var customer entity.User
+		if err := db.First(&customer, invoice.CustomerID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The customer was not found."})
+			return
+		}
+
+		// สร้าง Notification สำหรับ customer
+		noti := entity.Notification{
+			IsRead:    false,
+			InvoiceID: notificationInput.InvoiceID,
+			UserID:    customer.ID,
+		}
+
+		if err := db.Create(&noti).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for customer."})
 			return
 		}
 

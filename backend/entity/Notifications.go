@@ -12,6 +12,9 @@ type Notification struct{
 	TaskID 		uint   	`valid:"required~TaskID is required"`  
     Task   		MaintenanceTask	`gorm:"foreignKey:TaskID" valid:"-"`
 
+	InvoiceID	uint  	`valid:"required~InvoiceID is required"`
+	Invoice  	Invoice	`gorm:"foreignKey:InvoiceID" valid:"-"`
+
 	UserID 		uint	`valid:"required~UserID is required"`
-	User        User          `gorm:"foreignKey:UserID" valid:"-"`
+	User        User    `gorm:"foreignKey:UserID" valid:"-"`
 }

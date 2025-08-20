@@ -1352,43 +1352,32 @@ async function GetUnreadNotificationCountsByUserID(id?: number) {
         return false;
     }
 }
-async function GetNotificationsByRequestAndUser(request_id?: number, user_id?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/notification/by-request/${request_id}/${user_id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+async function GetNotificationsByRequestAndUser(request_id: number, user_id: number) {
+    try {
+        const response = await axiosInstance.get(`/notification/by-request/${request_id}/${user_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification:", error);
+        throw error;
+    }
 }
-async function GetNotificationsByTaskAndUser(task_id?: number, user_id?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/notification/by-task/${task_id}/${user_id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+async function GetNotificationsByTaskAndUser(task_id: number, user_id: number) {
+    try {
+        const response = await axiosInstance.get(`/notification/by-task/${task_id}/${user_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification:", error);
+        throw error;
+    }
+}
+async function GetNotificationsByInvoiceAndUser(invoice_id: number, user_id: number) {
+    try {
+        const response = await axiosInstance.get(`/notification/by-invoice/${invoice_id}/${user_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification:", error);
+        throw error;
+    }
 }
 async function CreateNotification(data: NotificationsInterface) {
     const requestOptions = {
@@ -1411,24 +1400,18 @@ async function CreateNotification(data: NotificationsInterface) {
     return res;
 }
 async function UpdateNotificationByID(data: NotificationsInterface, id: Number | undefined) {
-    const requestOptions = {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/notification/${id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.patch(`/notification/${id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating notification:", error);
+        throw error;
+    }
 }
 
 async function UpdateNotificationsByRequestID(data: NotificationsInterface, request_id: Number | undefined) {
@@ -2313,7 +2296,7 @@ async function ListInvoices(): Promise<InvoiceInterface[]> {
         throw error;
     }
 }
-async function GetInvoiceByID(id: number): Promise<InvoiceInterface[]> {
+async function GetInvoiceByID(id: number) {
     try {
         const response = await axiosInstance.get(`/invoice/${id}`);
         return response.data.data;
@@ -2528,6 +2511,7 @@ export {
     GetUnreadNotificationCountsByUserID,
     GetNotificationsByRequestAndUser,
     GetNotificationsByTaskAndUser,
+    GetNotificationsByInvoiceAndUser,
     CreateNotification,
     UpdateNotificationByID,
     UpdateNotificationsByRequestID,

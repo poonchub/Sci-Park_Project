@@ -71,6 +71,7 @@ import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
 import { BrushCleaning, HardHat } from "lucide-react";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 export function a11yProps(index: number) {
     return {
@@ -919,35 +920,13 @@ function AcceptWork() {
         setSelectedType(0);
     };
 
-    const handleUpdateNotification = async (task_id?: number, user_id?: number) => {
-        try {
-            const resNotification = await GetNotificationsByTaskAndUser(task_id, user_id);
-            if (!resNotification || resNotification.error) console.error("Error fetching notification.");
-
-            const notificationData: NotificationsInterface = {
-                IsRead: true,
-            };
-            const notificationID = resNotification.data.ID;
-            if (!resNotification.data.IsRead) {
-                const resUpdated = await UpdateNotificationByID(notificationData, notificationID);
-                if (resUpdated) {
-                    console.log("✅ Notification updated successfully.");
-                }
-            } else {
-                return;
-            }
-        } catch (error) {
-            console.error("❌ Error updating maintenance request:", error);
-        }
-    };
-
     const handleClickCheck = (data: MaintenanceTasksInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.RequestID));
             const taskID = data?.ID;
             const userID = Number(localStorage.getItem("userId"));
 
-            handleUpdateNotification(taskID, userID);
+            handleUpdateNotification(userID, true, undefined, taskID, undefined);
             navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
