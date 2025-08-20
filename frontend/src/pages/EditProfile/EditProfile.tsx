@@ -38,10 +38,24 @@ import { Controller, useForm } from "react-hook-form";
 import { UpdateProfileImage, UpdateUserSignature } from "../../services/http/index";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { faUser, faCamera, faEdit, faIdCard, faEnvelope, faPhone, faVenusMars, faBriefcase, faBuilding, faCrown, faShieldAlt, faInfoCircle, faAngleLeft, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { MaterialUISwitch } from "../../components/MaterialUISwitch/MaterialUISwitch";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Pencil } from "lucide-react";
+import { 
+    Pencil, 
+    Camera, 
+    Edit, 
+    IdCard, 
+    Mail, 
+    Phone, 
+    VenusAndMars, 
+    Briefcase, 
+    Building, 
+    Crown, 
+    Shield, 
+    Info, 
+    ChevronLeft, 
+    EyeOff,
+    User
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Close } from "@mui/icons-material";
 import SignatureCanvas from "react-signature-canvas";
@@ -629,7 +643,7 @@ const EditProfile: React.FC = () => {
                                             height: 40,
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={faCamera} size="sm" />
+                                        <Camera size={16} />
                                         <input type="file" hidden onChange={handleFileChange} />
                                     </IconButton>
                                 </Zoom>
@@ -647,7 +661,7 @@ const EditProfile: React.FC = () => {
                                 <Chip
                                     label={userType === "internal" ? "Internal User" : "External User"}
                                     color={userType === "internal" ? "primary" : "primary"}
-                                    icon={<FontAwesomeIcon icon={userType === "internal" ? faIdCard : faBuilding} />}
+                                    icon={userType === "internal" ? <IdCard size={16} /> : <Building size={16} />}
                                     sx={{ mb: 2 }}
                                 />
                             </Box>
@@ -693,9 +707,8 @@ const EditProfile: React.FC = () => {
                                                     color: "white",
                                                 }}
                                             >
-                                                <FontAwesomeIcon 
-                                                    icon={faEyeSlash} 
-                                                    size="lg"
+                                                <EyeOff 
+                                                    size={20}
                                                     style={{ color: "white" }}
                                                 />
                                             </Box>
@@ -709,7 +722,7 @@ const EditProfile: React.FC = () => {
                                     <Button 
                                         variant="outlined" 
                                         onClick={handleOpenSignaturePopup}
-                                        startIcon={<FontAwesomeIcon icon={faEdit} />}
+                                        startIcon={<Edit size={16} />}
                                         sx={{
                                             borderRadius: 2,
                                             textTransform: "none",
@@ -740,7 +753,7 @@ const EditProfile: React.FC = () => {
                             }}
                         >
                             <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
-                                <FontAwesomeIcon icon={faUser} style={{ marginRight: 8 }} />
+                                <User size={20} style={{ marginRight: 8 }} />
                                 Personal Information
                             </Typography>
 
@@ -748,7 +761,7 @@ const EditProfile: React.FC = () => {
                             <Grid container spacing={3} sx={{ mb: 3 }}>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.grey[500]} />
+                                        <User size={16} color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             First Name
                                         </Typography>
@@ -808,7 +821,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faUser} size="sm" color={theme.palette.grey[500]} />
+                                        <User size={16} color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Last Name
                                         </Typography>
@@ -868,7 +881,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 4 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faVenusMars} size="sm" color={theme.palette.grey[500]} />
+                                        <VenusAndMars size={16} color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Gender
                                         </Typography>
@@ -936,14 +949,14 @@ const EditProfile: React.FC = () => {
 
                             {/* Contact Information */}
                             <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
-                                <FontAwesomeIcon icon={faEnvelope} style={{ marginRight: 8 }} />
+                                <Mail size={20} style={{ marginRight: 8 }} />
                                 Contact Information
                             </Typography>
 
                             <Grid container spacing={3} sx={{ mb: 3 }}>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faPhone} size="sm" color={theme.palette.grey[500]} />
+                                        <Phone size={16} color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Phone Number
                                         </Typography>
@@ -1011,7 +1024,7 @@ const EditProfile: React.FC = () => {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                        <FontAwesomeIcon icon={faEnvelope} size="sm" color={theme.palette.grey[500]} />
+                                        <Mail size={16} color={theme.palette.grey[500]} />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Email
                                         </Typography>
@@ -1088,14 +1101,14 @@ const EditProfile: React.FC = () => {
                                 }}>
                                     <Divider sx={{ my: 3 }} />
                                     <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
-                                        <FontAwesomeIcon icon={faBriefcase} style={{ marginRight: 8 }} />
+                                        <Briefcase size={20} style={{ marginRight: 8 }} />
                                         Work Information
                                     </Typography>
 
                                     <Grid container spacing={3} sx={{ mb: 3 }}>
                                         <Grid size={{ xs: 12, sm: 4 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faBriefcase} size="sm" color={theme.palette.grey[500]} />
+                                                <Briefcase size={16} color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Position
                                                 </Typography>
@@ -1124,7 +1137,7 @@ const EditProfile: React.FC = () => {
                                         {(user?.RoleID === 3 || user?.RoleID === 4) && (
                                             <Grid size={{ xs: 12, sm: 4 }}>
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <FontAwesomeIcon icon={faShieldAlt} size="sm" color={theme.palette.grey[500]} />
+                                                    <Shield size={16} color={theme.palette.grey[500]} />
                                                     <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                         Management (User)
                                                     </Typography>
@@ -1153,7 +1166,7 @@ const EditProfile: React.FC = () => {
 
                                         <Grid size={{ xs: 12, sm: 4 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faIdCard} size="sm" color={theme.palette.grey[500]} />
+                                                <IdCard size={16} color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Employee ID
                                                 </Typography>
@@ -1190,14 +1203,14 @@ const EditProfile: React.FC = () => {
                             }}>
                                 <Divider sx={{ my: 3 }} />
                                 <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
-                                    <FontAwesomeIcon icon={faCrown} style={{ marginRight: 8 }} />
+                                    <Crown size={20} style={{ marginRight: 8 }} />
                                     Account Privileges
                                 </Typography>
 
                                 <Grid container spacing={3}>
                                     <Grid size={{ xs: 12, sm: 6 }}>
                                         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                            <FontAwesomeIcon icon={faCrown} size="sm" color={theme.palette.grey[500]} />
+                                            <Crown size={16} color={theme.palette.grey[500]} />
                                             <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                 Privileges
                                             </Typography>
@@ -1230,14 +1243,14 @@ const EditProfile: React.FC = () => {
                                 <Box>
                                     <Divider sx={{ my: 3 }} />
                                     <Typography variant="h6" fontWeight={600} color="primary" gutterBottom sx={{ mb: 3 }}>
-                                        <FontAwesomeIcon icon={faBuilding} style={{ marginRight: 8 }} />
+                                        <Building size={20} style={{ marginRight: 8 }} />
                                         Company Information
                                     </Typography>
 
                                     <Grid container spacing={3}>
                                         <Grid size={{ xs: 12, sm: 6 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faBuilding} size="sm" color={theme.palette.grey[500]} />
+                                                <Building size={16} color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Company Name
                                                 </Typography>
@@ -1297,7 +1310,7 @@ const EditProfile: React.FC = () => {
                                         </Grid>
                                         <Grid size={{ xs: 12 }}>
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                <FontAwesomeIcon icon={faInfoCircle} size="sm" color={theme.palette.grey[500]} />
+                                                <Info size={16} color={theme.palette.grey[500]} />
                                                 <Typography variant="body2" fontWeight={600} color="text.secondary">
                                                     Business Description
                                                 </Typography>

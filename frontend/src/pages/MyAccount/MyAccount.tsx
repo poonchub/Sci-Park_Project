@@ -41,22 +41,24 @@ import SuccessAlert from "../../components/Alert/SuccessAlert";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 import {
-    faXmark,
-    faQuestionCircle,
-    faClock,
-    faCheck,
-    faRepeat,
-    faEye,
-    faPencil,
-    faFileLines,
-    faFilePdf,
-    faEnvelope,
-    faPhone,
-    faBriefcase,
-    faCalendar,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Check, Download, Eye, FileText, Pencil, Receipt, ReceiptText, Repeat, ShieldUser, Wallet, X } from "lucide-react";
+    X,
+    HelpCircle,
+    Clock,
+    Check,
+    RotateCcw,
+    Eye,
+    Pencil,
+    FileText,
+    FileText as FilePdf,
+    Mail,
+    Phone,
+    Briefcase,
+    Calendar,
+    Download,
+    ShieldUser,
+    Wallet,
+    ReceiptText,
+} from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import FilterSection from "../../components/FilterSection/FilterSection";
@@ -597,7 +599,7 @@ const MyAccount: React.FC = () => {
                         } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
@@ -615,7 +617,7 @@ const MyAccount: React.FC = () => {
                         const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         const showButtonConfirm = params.row.RequestStatus?.Name === "Waiting For Review";
@@ -652,11 +654,9 @@ const MyAccount: React.FC = () => {
                                             my: 0.8,
                                         }}
                                     >
-                                        <FontAwesomeIcon
-                                            icon={faClock}
+                                        <Clock
+                                            size={12}
                                             style={{
-                                                width: "12px",
-                                                height: "12px",
                                                 paddingBottom: "4px",
                                             }}
                                         />
@@ -694,7 +694,7 @@ const MyAccount: React.FC = () => {
                                             alignItems: "center",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={typeIcon} />
+                                        {React.createElement(typeIcon, { size: 16 })}
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -721,7 +721,7 @@ const MyAccount: React.FC = () => {
                                             width: "100%",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusIcon} />
+                                        {React.createElement(statusIcon, { size: 16 })}
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -759,7 +759,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Check size={18} />
+                                                            <Check size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -779,7 +779,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Repeat size={18} />
+                                                            <RotateCcw size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -801,7 +801,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18} />
+                                                            <Eye size={20} />
                                                             {width && width > 530 && (
                                                                 <Typography
                                                                     variant="textButtonClassic"
@@ -826,7 +826,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <X size={18} />
+                                                            <X size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -848,7 +848,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18} />
+                                                            <Eye size={20} />
                                                             {width && width > 250 && (
                                                                 <Typography
                                                                     variant="textButtonClassic"
@@ -874,7 +874,7 @@ const MyAccount: React.FC = () => {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <Eye size={18} />
+                                                    <Eye size={20} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Details
                                                     </Typography>
@@ -928,7 +928,7 @@ const MyAccount: React.FC = () => {
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         return (
@@ -975,7 +975,7 @@ const MyAccount: React.FC = () => {
                                         alignItems: "center",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    {React.createElement(icon, { size: 16 })}
                                     <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                 </Box>
                             </Box>
@@ -1037,7 +1037,7 @@ const MyAccount: React.FC = () => {
                         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         return (
@@ -1063,7 +1063,7 @@ const MyAccount: React.FC = () => {
                                         width: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    {React.createElement(icon, { size: 16 })}
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -1114,7 +1114,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Check size={18} />
+                                                <Check size={20} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Confirm
                                                 </Typography>
@@ -1132,7 +1132,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Repeat size={18} />
+                                                <RotateCcw size={20} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Rework
                                                 </Typography>
@@ -1149,7 +1149,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={18} />
+                                                <Eye size={20} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -1170,7 +1170,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <X size={18} />
+                                                <X size={20} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Cancel
                                                 </Typography>
@@ -1187,7 +1187,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={18} />
+                                                <Eye size={20} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -1206,7 +1206,7 @@ const MyAccount: React.FC = () => {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <Eye size={18} />
+                                            <Eye size={20} />
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Details
                                             </Typography>
@@ -1241,7 +1241,7 @@ const MyAccount: React.FC = () => {
                         } = paymentStatusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         const invoiceNumber = data.InvoiceNumber
@@ -1275,11 +1275,9 @@ const MyAccount: React.FC = () => {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                        <FontAwesomeIcon
-                                            icon={faCalendar}
+                                        <Calendar
+                                            size={14}
                                             style={{
-                                                width: "14px",
-                                                height: "14px",
                                                 paddingBottom: "4px"
                                             }}
                                         />
@@ -1336,7 +1334,7 @@ const MyAccount: React.FC = () => {
                                             width: "100%",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusIcon} />
+                                        {React.createElement(statusIcon, { size: 16 })}
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -1374,7 +1372,7 @@ const MyAccount: React.FC = () => {
                                                         }}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
-                                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                        <FilePdf size={16} />
                                                         <Typography variant="textButtonClassic" className="text-btn">
                                                             Download PDF
                                                         </Typography>
@@ -1498,7 +1496,7 @@ const MyAccount: React.FC = () => {
                         const { color, colorLite, icon } = paymentStatusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
                         return (
                             <Box
@@ -1523,7 +1521,7 @@ const MyAccount: React.FC = () => {
                                         width: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    {React.createElement(icon, { size: 16 })}
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -1569,7 +1567,7 @@ const MyAccount: React.FC = () => {
                                         }}
                                         sx={{ minWidth: "42px" }}
                                     >
-                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                        <FilePdf size={16} />
                                     </Button>
                                 </Tooltip>
                                 <Tooltip title={statusName === "Pending Payment" ? "Pay Now" : "View Slip"}>
@@ -1587,7 +1585,7 @@ const MyAccount: React.FC = () => {
                                         {
                                             (statusName === "Pending Payment" || statusName === "Rejected") ? (
                                                 <>
-                                                    <Wallet size={18} />
+                                        <Wallet size={18} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Pay Now
                                                     </Typography>
@@ -1631,7 +1629,7 @@ const MyAccount: React.FC = () => {
                         } = paymentStatusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
 
                         const invoiceNumber = data.InvoiceNumber
@@ -1647,7 +1645,7 @@ const MyAccount: React.FC = () => {
                             width = cardItem.offsetWidth;
                         }
 
-                        return (
+    return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
@@ -1665,11 +1663,9 @@ const MyAccount: React.FC = () => {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                        <FontAwesomeIcon
-                                            icon={faCalendar}
+                                        <Calendar
+                                            size={14}
                                             style={{
-                                                width: "14px",
-                                                height: "14px",
                                                 paddingBottom: "4px"
                                             }}
                                         />
@@ -1726,7 +1722,7 @@ const MyAccount: React.FC = () => {
                                             width: "100%",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusIcon} />
+                                        {React.createElement(statusIcon, { size: 16 })}
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -1764,7 +1760,7 @@ const MyAccount: React.FC = () => {
                                                         }}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
-                                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                        <FilePdf size={16} />
                                                         <Typography variant="textButtonClassic" className="text-btn">
                                                             Download PDF
                                                         </Typography>
@@ -1893,7 +1889,7 @@ const MyAccount: React.FC = () => {
                         const { color, colorLite, icon } = paymentStatusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
                         return (
                             <Box
@@ -1918,7 +1914,7 @@ const MyAccount: React.FC = () => {
                                         width: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    {React.createElement(icon, { size: 16 })}
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -2050,8 +2046,8 @@ const MyAccount: React.FC = () => {
 
                     <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Link to="/my-account/edit-profile">
-                            <Button variant="outlined">
-                                <Pencil size={18} />
+                            <Button variant="containedBlue">
+                                <Pencil size={20} />
                                 <Typography variant="textButtonClassic">Edit Profile</Typography>
                             </Button>
                         </Link>
@@ -2125,9 +2121,8 @@ const MyAccount: React.FC = () => {
                                         >
                                             <Grid>
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <FontAwesomeIcon
-                                                        icon={faBriefcase}
-                                                        size="sm"
+                                                    <Briefcase
+                                                        size={16}
                                                         color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
@@ -2152,9 +2147,8 @@ const MyAccount: React.FC = () => {
                                             </Grid>
                                             <Grid>
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <FontAwesomeIcon
-                                                        icon={faEnvelope}
-                                                        size="sm"
+                                                    <Mail
+                                                        size={16}
                                                         color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
@@ -2179,9 +2173,8 @@ const MyAccount: React.FC = () => {
                                             </Grid>
                                             <Grid>
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <FontAwesomeIcon
-                                                        icon={faPhone}
-                                                        size="sm"
+                                                    <Phone
+                                                        size={16}
                                                         color={theme.palette.grey[500]}
                                                     />
                                                     <Typography
@@ -2230,7 +2223,7 @@ const MyAccount: React.FC = () => {
                         <Grid container size={{ xs: 3 }} sx={{ justifyContent: "flex-end" }}>
                             <Link to="/maintenance/create-maintenance-request">
                                 <Button variant="contained">
-                                    <FileText size={18} />
+                                    <FileText size={20} />
                                     <Typography variant="textButtonClassic">Create Request</Typography>
                                 </Button>
                             </Link>

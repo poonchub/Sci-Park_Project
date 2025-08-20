@@ -16,9 +16,9 @@ import {
 } from '@mui/material';
 import {
 
-    CalendarMonth,
+    CalendarDays ,
 
-} from '@mui/icons-material';
+} from 'lucide-react';
 import {
     LineChart,
     Line,
@@ -39,23 +39,21 @@ import {
     ChartPie,
 
 } from "lucide-react";
-import ApexLineChart from '../ApexLineChart/ApexLineChart';
-import PopularPagesDonutChart from '../PopularPagesDonutChart/PopularPagesDonutChart';
+import ApexLineChart from '../../components/ApexLineChart/ApexLineChart';
+import PopularPagesDonutChart from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import {
-    faBroom,
-    faChartLine,
-    faUsers,
-    faEye,
-    faClock,
-    IconDefinition,
-    faQuestion,
-    faBook,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import CustomTabPanel from '../CustomTabPanel/CustomTabPanel';
+    Sparkles,
+    TrendingUp,
+    Users,
+    Eye,
+    Clock,
+    HelpCircle,
+    BookOpen,
+} from 'lucide-react';
+import CustomTabPanel from '../../components/CustomTabPanel/CustomTabPanel';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '../DatePicker/DatePicker';
+import { DatePicker } from '../../components/DatePicker/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { 
     analyticsService, 
@@ -65,7 +63,7 @@ import {
     PerformanceAnalyticsData,
     KEY_PAGES 
 } from '../../services/analyticsService';
-import { pageConfig, normalizePageName } from '../PopularPagesDonutChart/PopularPagesDonutChart';
+import { pageConfig, normalizePageName } from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import { useTheme } from '@mui/material/styles';
@@ -682,10 +680,10 @@ For data interpretation:
     const SummaryCard: React.FC<{
         title: string;
         value: string | number;
-        icon: IconDefinition;
+        icon: React.ComponentType<{ size?: string | number; className?: string }>;
         color: string;
         subtitle?: string;
-    }> = ({ title, value, icon, color, subtitle }) => (
+    }> = ({ title, value, icon: Icon, color, subtitle }) => (
         <Card
             sx={{
                 height: "100%",
@@ -751,7 +749,7 @@ For data interpretation:
                             color: color,
                         }}
                     >
-                        <FontAwesomeIcon icon={icon} size="2xl" />
+                        <Icon size={24} />
                     </Box>
                 </Grid>
             </CardContent>
@@ -795,7 +793,7 @@ For data interpretation:
                         <Button
                             variant="outlined"
                             onClick={handleDownloadManual}
-                            startIcon={<FontAwesomeIcon icon={faBook} />}
+                            startIcon={<BookOpen size={20} />}
                             sx={{ minWidth: 'auto', px: 2 }}
                         >
                             Download Manual
@@ -826,7 +824,7 @@ For data interpretation:
                                     <SummaryCard
                                         title="Today's Visits"
                                         value={analyticsData?.today_visits || 0}
-                                        icon={faChartLine}
+                                        icon={TrendingUp}
                                         color="#1976d2"
                                         subtitle="Current day"
                                     />
@@ -835,7 +833,7 @@ For data interpretation:
                                     <SummaryCard
                                         title="This Week"
                                         value={analyticsData?.week_visits || 0}
-                                        icon={faClock}
+                                        icon={Clock}
                                         color="#4caf50"
                                         subtitle="7 days"
                                     />
@@ -844,7 +842,7 @@ For data interpretation:
                                     <SummaryCard
                                         title="This Month"
                                         value={analyticsData?.month_visits || 0}
-                                        icon={faEye}
+                                        icon={Eye}
                                         color="#ff9800"
                                         subtitle="30 days"
                                     />
@@ -853,153 +851,151 @@ For data interpretation:
                                     <SummaryCard
                                         title="Total Users"
                                         value={systemAnalyticsData?.total_users || 0}
-                                        icon={faUsers}
+                                        icon={Users}
                                         color="#9c27b0"
                                         subtitle="Registered users"
                                     />
                                 </Grid>
                             </Grid>
 
-                            <Grid container size={{ md: 12, lg: 12, xl: 8 }} spacing={2}>
-                                {/* Chart Section */}
-                                <Grid size={{ xs: 12, md: 12 }}>
-                                    <Card
+                            {/* Daily Visits Analytics - Left Side (Larger) */}
+                            <Grid size={{ xs: 12, lg: 8 }}>
+                                <Card
+                                    sx={{
+                                        bgcolor: "secondary.main",
+                                        borderRadius: 2,
+                                        py: 2,
+                                        px: 3,
+                                        height: "100%",
+                                        justifyContent: "space-between",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                    }}
+                                >
+                                    <Grid
+                                        container
+                                        size={{ xs: 12, md: 12 }}
                                         sx={{
-                                            bgcolor: "secondary.main",
-                                            borderRadius: 2,
-                                            py: 2,
-                                            px: 3,
-                                            height: "100%",
-                                            justifyContent: "space-between",
-                                            display: "flex",
-                                            flexDirection: "column",
+                                            alignItems: "center",
                                         }}
+                                        spacing={1}
                                     >
+                                        <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
+                                            <Typography variant="subtitle1" color="text.main" fontWeight={600}>
+                                                Daily Visits Analytics
+                                            </Typography>
+                                            <Typography variant="h4" fontWeight={800} color="primary">
+                                                <Box component="span">
+                                                    {visitsRangeData.length}
+                                                </Box>
+                                                {' '}
+                                                <Box component="span" sx={{ fontSize: 20, fontWeight: 700 }}>
+                                                    Days
+                                                </Box>
+                                            </Typography>
+                                        </Grid>
                                         <Grid
                                             container
-                                            size={{ xs: 12, md: 12 }}
+                                            size={{ xs: 10, mobileS: 4, md: 6 }}
                                             sx={{
-                                                alignItems: "center",
+                                                justifyContent: { xs: "flex-start", mobileS: "flex-end" },
+                                                gap: 1,
                                             }}
-                                            spacing={1}
                                         >
-                                            <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
-                                                <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                                    Daily Visits Analytics
-                                                </Typography>
-                                                <Typography variant="h4" fontWeight={800} color="primary">
-                                                    <Box component="span">
-                                                        {visitsRangeData.length}
-                                                    </Box>
-                                                    {' '}
-                                                    <Box component="span" sx={{ fontSize: 20, fontWeight: 700 }}>
-                                                        Days
-                                                    </Box>
-                                                </Typography>
-                                            </Grid>
-                                            <Grid
-                                                container
-                                                size={{ xs: 10, mobileS: 4, md: 6 }}
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker
+                                                    label="Start Date"
+                                                    value={startDate}
+                                                    onChange={(value, _) => {
+                                                        if (dayjs.isDayjs(value)) {
+                                                            setStartDate(value);
+                                                        } else {
+                                                            setStartDate(null);
+                                                        }
+                                                    }}
+                                                    slots={{
+                                                        openPickerIcon: CalendarDays ,
+                                                    }}
+                                                    format="DD/MM/YYYY"
+                                                    sx={{
+                                                        minWidth: "120px",
+                                                        maxWidth: "150px",
+                                                    }}
+                                                />
+                                                <DatePicker
+                                                    label="End Date"
+                                                    value={endDate}
+                                                    onChange={(value, _) => {
+                                                        if (dayjs.isDayjs(value)) {
+                                                            setEndDate(value);
+                                                        } else {
+                                                            setStartDate(null);
+                                                        }
+                                                    }}
+                                                    slots={{
+                                                        openPickerIcon: CalendarDays ,
+                                                    }}
+                                                    format="DD/MM/YYYY"
+                                                    sx={{
+                                                        minWidth: "120px",
+                                                        maxWidth: "150px",
+                                                    }}
+                                                />
+                                            </LocalizationProvider>
+                                        </Grid>
+                                        <Grid size={{ xs: 2, mobileS: 0.5, md: 1 }}>
+                                            <Button
+                                                onClick={handleClearFilter}
                                                 sx={{
-                                                    justifyContent: { xs: "flex-start", mobileS: "flex-end" },
-                                                    gap: 1,
+                                                    color:"primary",
+                                                    minWidth: "35px",
+                                                    width: "100%",
+                                                    height: "45px",
+                                                    borderRadius: "10px",
+                                                    border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                    "&:hover": {
+                                                        boxShadow: "none",
+                                                        borderColor: "primary.main",
+                                                        backgroundColor: "transparent",
+                                                    },
                                                 }}
                                             >
-                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                    <DatePicker
-                                                        label="Start Date"
-                                                        value={startDate}
-                                                        onChange={(value, _) => {
-                                                            if (dayjs.isDayjs(value)) {
-                                                                setStartDate(value);
-                                                            } else {
-                                                                setStartDate(null);
-                                                            }
-                                                        }}
-                                                        slots={{
-                                                            openPickerIcon: CalendarMonth,
-                                                        }}
-                                                        format="DD/MM/YYYY"
-                                                        sx={{
-                                                            minWidth: "120px",
-                                                            maxWidth: "150px",
-                                                        }}
-                                                    />
-                                                    <DatePicker
-                                                        label="End Date"
-                                                        value={endDate}
-                                                        onChange={(value, _) => {
-                                                            if (dayjs.isDayjs(value)) {
-                                                                setEndDate(value);
-                                                            } else {
-                                                                setStartDate(null);
-                                                            }
-                                                        }}
-                                                        slots={{
-                                                            openPickerIcon: CalendarMonth,
-                                                        }}
-                                                        format="DD/MM/YYYY"
-                                                        sx={{
-                                                            minWidth: "120px",
-                                                            maxWidth: "150px",
-                                                        }}
-                                                    />
-                                                </LocalizationProvider>
-                                            </Grid>
-                                            <Grid size={{ xs: 2, mobileS: 0.5, md: 1 }}>
-                                                <Button
-                                                    onClick={handleClearFilter}
-                                                    sx={{
-                                                        color:"primary",
-                                                        minWidth: "35px",
-                                                        width: "100%",
-                                                        height: "45px",
-                                                        borderRadius: "10px",
-                                                        border: "1px solid rgb(109, 110, 112, 0.4)",
-                                                        "&:hover": {
-                                                            boxShadow: "none",
-                                                            borderColor: "primary.main",
-                                                            backgroundColor: "transparent",
-                                                        },
-                                                    }}
-                                                >
-                                                    <FontAwesomeIcon icon={faBroom} size="lg" style={{ color: "gray" }} />
-                                                </Button>
-                                            </Grid>
-                                            
+                                                <Sparkles size={20} style={{ color: "gray" }} />
+                                            </Button>
                                         </Grid>
                                         
-                                        {/* Chart */}
-                                        <Box sx={{ height: 280 }}>
-                                            {visitsRangeData && visitsRangeData.length > 0 ? (
-                                                <VisitsApexChart
-                                                    data={visitsRangeData}
-                                                    height={280}
-                                                />
-                                            ) : (
-                                                <Box sx={{ 
-                                                    height: '100%', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    justifyContent: 'center',
-                                                    flexDirection: 'column',
-                                                    color: 'text.secondary'
-                                                }}>
-                                                    <Typography variant="h6" gutterBottom>
-                                                        No Data Available
-                                                    </Typography>
-                                                    <Typography variant="body2">
-                                                        No visit data found for the selected date range
-                                                    </Typography>
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </Card>
-                                </Grid>
+                                    </Grid>
+                                    
+                                    {/* Chart */}
+                                    <Box sx={{ height: 280 }}>
+                                        {visitsRangeData && visitsRangeData.length > 0 ? (
+                                            <VisitsApexChart
+                                                data={visitsRangeData}
+                                                height={280}
+                                            />
+                                        ) : (
+                                            <Box sx={{ 
+                                                height: '100%', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center',
+                                                flexDirection: 'column',
+                                                color: 'text.secondary'
+                                            }}>
+                                                <Typography variant="h6" gutterBottom>
+                                                    No Data Available
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    No visit data found for the selected date range
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </Card>
                             </Grid>
 
-                            {/* Popular Pages Donut Chart Section */}
-                            <Grid size={{ xs: 12, sm: 12, lg: 12, xl: 4 }}>
+                            {/* Popular Pages Donut Chart Section - Right Side (Smaller) */}
+                            <Grid size={{ xs: 12, lg: 4 }}>
                                 <PopularPagesDonutChart 
                                     height={250}
                                     title="Popular Pages"
@@ -1031,7 +1027,7 @@ For data interpretation:
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarMonth,
+                                                        openPickerIcon: CalendarDays ,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{ minWidth: "150px" }}
@@ -1047,7 +1043,7 @@ For data interpretation:
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarMonth,
+                                                        openPickerIcon: CalendarDays ,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{ minWidth: "150px" }}
@@ -1069,7 +1065,7 @@ For data interpretation:
                                                     },
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faBroom} />
+                                                <Sparkles size={20} />
                                             </IconButton>
                                             <IconButton
                                                 onClick={handleDownloadManual}
@@ -1087,7 +1083,7 @@ For data interpretation:
                                                     },
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faBook} />
+                                                <BookOpen size={20} />
                                             </IconButton>
                                         </Box>
                                     </CardContent>
@@ -1189,7 +1185,7 @@ For data interpretation:
                                                         </tr>
                                                     ) : performanceData?.page_performance && performanceData.page_performance.length > 0 ? (
                                                         performanceData.page_performance.map((page, index) => {
-                                                            const config = pageConfig[normalizePageName(page.page_name)] || { color: '#888', icon: faQuestion };
+                                                            const config = pageConfig[normalizePageName(page.page_name)] || { color: '#888', icon: HelpCircle };
                                                             return (
                                                                 <tr key={index}>
                                                                     <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
@@ -1205,7 +1201,7 @@ For data interpretation:
                                                                                     mr: 1,
                                                                                 }}
                                                                             >
-                                                                                <FontAwesomeIcon icon={config.icon} />
+                                                                                <HelpCircle size={16} />
                                                                             </Avatar>
                                                                             <Typography variant="body2" fontWeight="medium">
                                                                                 {page.page_name}

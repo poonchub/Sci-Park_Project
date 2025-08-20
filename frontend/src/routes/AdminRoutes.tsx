@@ -17,7 +17,7 @@ import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
 import AddUserFormByCsv from "../pages/AddUser/AddUserFormByCsv";
-import Analytics from "../components/Analytics/Analytics";
+import Analytics from "../pages/Analytics/Analytics";
 import News from "../pages/News/News";
 import OrganizationInfo from "../pages/OrganizationInfo/OrganizationInfo";
 import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";

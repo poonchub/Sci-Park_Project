@@ -10,7 +10,7 @@ import {
     Paper,
     Link,
 } from '@mui/material';
-import { Info, Settings, Close } from '@mui/icons-material';
+import { Info, Settings, X } from 'lucide-react';
 import { getCookie, setCookie } from '../../utils/cookieManager';
 
 interface CookieConsentProps {
@@ -115,7 +115,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ open, onAccept, onDecline
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Info color="primary" sx={{ mr: 1 }} />
+                    <Info size={24} color="primary" style={{ marginRight: 8 }} />
                     <Typography variant="h6">Cookie Settings</Typography>
                 </Box>
                 <Button
@@ -126,7 +126,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ open, onAccept, onDecline
                     }}
                     sx={{ minWidth: 'auto', p: 0.5 }}
                 >
-                    <Close />
+                    <X size={20} />
                 </Button>
             </Box>
 

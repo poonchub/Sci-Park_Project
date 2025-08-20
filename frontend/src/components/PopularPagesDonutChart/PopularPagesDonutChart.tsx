@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 import {
@@ -12,37 +12,36 @@ import {
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFile, faUser, faHome, faCalendarCheck, faWrench, faUserCircle, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { analyticsService, PopularPagesByPeriodData } from '../../services/analyticsService';
 
 export interface PageConfig {
     color: string;
     colorLite: string;
-    icon: IconDefinition;
+    icon: LucideIcon;
 }
 
 export const pageConfig: Record<string, PageConfig> = {
     "Home": {
         color: "#4caf50",
         colorLite: "rgba(76, 175, 80, 0.16)",
-        icon: faHome
+        icon: Home
     },
     "Booking Room": {
         color: "#ff9800",
         colorLite: "rgba(255, 152, 0, 0.18)",
-        icon: faCalendarCheck
+        icon: CalendarCheck
     },
     "My Maintenance Request": {
         color: "#9c27b0",
         colorLite: "rgba(156, 39, 176, 0.18)",
-        icon: faWrench
+        icon: Wrench
     },
     "My Account": {
         color: "#2196f3",
         colorLite: "rgba(33, 150, 243, 0.18)",
-        icon: faUserCircle
+        icon: UserCircle
     },
 };
 
@@ -300,31 +299,31 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                         
                         let config = pageConfig[normalizePageName(pageName)];
                         let color = config ? config.color : '#708090';
-                        let icon = config ? config.icon : faQuestion;
+                        let icon = config ? config.icon : HelpCircle;
                         
                         // กำหนด default icon และสีถ้าไม่มีใน config
                         if (!config) {
                             switch (pageName) {
                                 case 'Home':
                                 case 'Home Page':
-                                    icon = faHome;
+                                    icon = Home;
                                     color = '#4caf50';
                                     break;
                                 case 'Booking Room':
-                                    icon = faCalendarCheck;
+                                    icon = CalendarCheck;
                                     color = '#ff9800';
                                     break;
                                 case 'My Maintenance Request':
                                 case 'Maintenance':
-                                    icon = faWrench;
+                                    icon = Wrench;
                                     color = '#9c27b0';
                                     break;
                                 case 'My Account':
-                                    icon = faUserCircle;
+                                    icon = UserCircle;
                                     color = '#2196f3';
                                     break;
                                 default:
-                                    icon = faQuestion;
+                                    icon = HelpCircle;
                                     color = '#708090';
                             }
                         }
@@ -341,7 +340,7 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                                                 color: color,
                                             }}
                                         >
-                                            {icon && <FontAwesomeIcon icon={icon} size="xs" />}
+                                            {icon && React.createElement(icon, { size: 16 })}
                                         </Avatar>
                                         <Typography variant="body2">{pageName}</Typography>
                                     </Stack>

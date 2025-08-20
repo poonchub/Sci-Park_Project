@@ -17,8 +17,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload, faCheck, faTimes, faFileCsv, faRotateRight, faBook } from "@fortawesome/free-solid-svg-icons";
+import { Upload, Check, X, FileText, RotateCcw, BookOpen } from "lucide-react";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import {
@@ -583,9 +582,9 @@ const AddUserFormByCsv: React.FC = () => {
           height: '100%'
         }}>
           {params.value ? (
-            <FontAwesomeIcon icon={faCheck} style={{ color: 'green', fontSize: '16px' }} />
+            <Check size={16} style={{ color: 'green' }} />
           ) : (
-            <FontAwesomeIcon icon={faTimes} style={{ color: 'red', fontSize: '16px' }} />
+            <X size={16} style={{ color: 'red' }} />
           )}
         </Box>
       ),
@@ -695,7 +694,7 @@ const AddUserFormByCsv: React.FC = () => {
                          <Button
                variant="outlined"
                component="label"
-               startIcon={<FontAwesomeIcon icon={faUpload} />}
+               startIcon={<Upload size={20} />}
                disabled={isLoadingData}
                sx={{ mr: 2 }}
              >
@@ -711,7 +710,7 @@ const AddUserFormByCsv: React.FC = () => {
              
              <Button
                variant="text"
-               startIcon={<FontAwesomeIcon icon={faFileCsv} />}
+               startIcon={<FileText size={20} />}
                disabled={isLoadingData}
                onClick={() => {
                  const link = document.createElement('a');
@@ -726,7 +725,7 @@ const AddUserFormByCsv: React.FC = () => {
              
              <Button
                variant="outlined"
-               startIcon={<FontAwesomeIcon icon={faBook} />}
+               startIcon={<BookOpen size={20} />}
                disabled={isLoadingData}
                onClick={() => {
                  const link = document.createElement('a');
@@ -742,7 +741,7 @@ const AddUserFormByCsv: React.FC = () => {
                <Button
                  variant="outlined"
                  color="error"
-                 startIcon={<FontAwesomeIcon icon={faRotateRight} />}
+                 startIcon={<RotateCcw size={20} />}
                  onClick={handleResetData}
                  sx={{ ml: 2 }}
                >
@@ -1090,7 +1089,7 @@ const AddUserFormByCsv: React.FC = () => {
             onClick={handleSubmit(handleSaveChanges)} 
             variant="contained" 
             disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : <FontAwesomeIcon icon={faCheck} />}
+            startIcon={isLoading ? <CircularProgress size={20} /> : <Check size={20} />}
           >
             {isLoading ? 'Saving...' : 'Save & Create User'}
           </Button>
