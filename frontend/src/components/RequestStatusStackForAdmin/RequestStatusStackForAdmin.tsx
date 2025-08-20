@@ -3,6 +3,7 @@ import { Avatar, Card, Grid, Stack, Typography } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { statusConfig } from "../../constants/statusConfig";
+import { FileQuestion } from "lucide-react";
 
 interface Props {
     statusCounts: Record<string, number>;
@@ -39,7 +40,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
             color: "#000",
             colorLite: "#000",
-            icon: faQuestionCircle
+            icon: FileQuestion
         };
 
         return { name: status, count, color, colorLite, icon };
@@ -58,6 +59,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
         >
             {
                 statusCards.map((item, index) => {
+                    const Icon = statusConfig[item.name].icon
                     return (
                         <Grid
                             size={{
@@ -82,7 +84,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
                                                 color: statusConfig[item.name].color,
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={statusConfig[item.name].icon} size="xs" />
+                                            <Icon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                         </Avatar>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>{item.name}</Typography>
                                     </Stack>

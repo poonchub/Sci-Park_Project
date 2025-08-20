@@ -1,8 +1,6 @@
 import { Step, StepIconProps, StepLabel, Stepper, styled } from "@mui/material";
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import { faArrowsSpin, faCheck, faCircleXmark, faClipboardCheck, faFile, faFlagCheckered, faHourglassHalf, faRedo } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Check, ClipboardCheck, File, FileText, Flag, Hourglass, LucideIcon, Repeat, RotateCcw, X } from "lucide-react";
 
 // Stepper component rendering the steps with dynamic icons
 function StepperComponent(props: { activeStep: number; steps: string[]; }) {
@@ -78,23 +76,23 @@ function StepperComponent(props: { activeStep: number; steps: string[]; }) {
 
         const stepIndex = props.icon as string;
 
-        const icons: { [key: string]: IconDefinition } = {
-            "Creating": faFile,
-            "Created": faFile,
-            "Pending": faHourglassHalf,
-            "Approved": faCheck,
-            "In Progress": faArrowsSpin,
-            "Waiting for Review": faClipboardCheck,
-            "Completed": faFlagCheckered,
-            "Unsuccessful": faCircleXmark,
-            "Rework Requested": faRedo,
+        const icons: { [key: string]: LucideIcon } = {
+            "Creating": File,
+            "Created": FileText,
+            "Pending": Hourglass,
+            "Approved": Check,
+            "In Progress": RotateCcw,
+            "Waiting For Review": ClipboardCheck,
+            "Completed": Flag,
+            "Unsuccessful": X,
+            "Rework Requested": Repeat,
         };
 
-        const icon = icons[stepIndex] || faFile;
+        const Icon = icons[stepIndex] || File;
 
         return (
             <ColorlibStepIconRoot ownerState={{ completed, active }} className={className}>
-                <FontAwesomeIcon icon={icon} size="lg" />
+                <Icon size={24} style={{ minWidth: "24px", minHeight: "24px" }}/>
             </ColorlibStepIconRoot>
         );
     }

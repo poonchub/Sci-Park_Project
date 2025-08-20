@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, Typography, Box, Grid } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarDays, faUserTie } from "@fortawesome/free-solid-svg-icons";
+import { Calendar, UserRound } from "lucide-react";
 
 // Define the types for the props passed to the InfoCard component
 interface InfoCardProps {
@@ -65,7 +66,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ type, title, name, date, size }) =>
                                     {name}
                                 </Typography>
                                 <Box sx={{ display: "flex", alignItems: 'center', color: 'text.secondary', gap: 0.4 }}>
-                                    <FontAwesomeIcon icon={faCalendarDays} size="sm" style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                    <Calendar size={16} style={{ minWidth: "16px", minHeight: "16px", paddingBottom: "2px" }}/>
                                     <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 14 }}>
                                         {date}
                                     </Typography>
@@ -91,7 +92,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ type, title, name, date, size }) =>
                                 }}
                             >
                                 {/* Icon representing the role or user */}
-                                <FontAwesomeIcon icon={faUserTie} size="2xl" />
+                                <UserRound size={26} style={{ minWidth: "26px", minHeight: "26px" }}/>
                             </Box>
                         </Grid>
                     )}

@@ -1,8 +1,7 @@
 import React from "react";
 import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { statusConfig } from "../../constants/statusConfig";
+import { HelpCircle } from "lucide-react";
 
 interface Props {
     statusCounts: Record<string, number>;
@@ -17,38 +16,30 @@ interface Props {
 }
 
 const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
-    const displayStatuses = [
-        "Pending",
-        "Approved",
-        "In Progress",
-        "Waiting For Review",
-        "Completed",
-        "Unsuccessful"
-    ];
+    const displayStatuses = ["Pending", "Approved", "In Progress", "Waiting For Review", "Completed", "Unsuccessful"];
 
     const statusCards = displayStatuses.map((status) => {
         let count = statusCounts?.[status] ?? 0;
         if (status === "Approved") {
             const approveStatuses = ["Approved", "Rework Requested"];
-            count = approveStatuses.reduce(
-                (sum, key) => sum + (statusCounts?.[key] ?? 0),
-                0
-            );
+            count = approveStatuses.reduce((sum, key) => sum + (statusCounts?.[key] ?? 0), 0);
         }
 
-        const statusKey = status as keyof typeof statusConfig
+        const statusKey = status as keyof typeof statusConfig;
         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
             color: "#000",
             colorLite: "#000",
-            icon: faQuestionCircle
+            icon: HelpCircle,
         };
 
         return { name: status, count, color, colorLite, icon };
     });
 
-    return (
-        statusCards.map((item, index) => (
-            <Grid key={index}
+    return statusCards.map((item, index) => {
+        const Icon = item.icon
+        return (
+            <Grid
+                key={index}
                 size={{
                     xs: size?.xs || 12,
                     sm: size?.sm || 6,
@@ -57,37 +48,34 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                     lg: size?.lg,
                     xl: size?.xl,
                 }}
-                className='status-section'
+                className="status-section"
                 sx={{
                     display: {
-                        xs: 'none',
-                        md: 'Grid',
-                    }
+                        xs: "none",
+                        md: "Grid",
+                    },
                 }}
             >
-                <Card className="status-card" sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2, borderLeft: `4px solid ${item.color}` }}>
-                    <CardContent className="status-card-content" sx={{ height: '100%' }}>
-                        <Grid size={{ xs: 10, md: 12 }}
+                <Card
+                    className="status-card"
+                    sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2, borderLeft: `4px solid ${item.color}` }}
+                >
+                    <CardContent className="status-card-content" sx={{ height: "100%" }}>
+                        <Grid
+                            size={{ xs: 10, md: 12 }}
                             container
                             direction="column"
                             sx={{
-                                height: '100%',
+                                height: "100%",
                                 justifyContent: "space-between",
                                 alignItems: "flex-start",
                             }}
                         >
-                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: 'text.secondary' }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: "text.secondary" }}>
                                 {item.name}
                             </Typography>
-                            <Typography
-                                variant="h5" 
-                                fontWeight="bold" 
-                                color="textPrimary" 
-                            >
-                                <Box component="span" >
-                                    {item.count}
-                                </Box>
-                                {' '}
+                            <Typography variant="h5" fontWeight="bold" color="textPrimary">
+                                <Box component="span">{item.count}</Box>{" "}
                                 <Box component="span" sx={{ fontSize: 16, fontWeight: 600 }}>
                                     Items
                                 </Box>
@@ -111,14 +99,14 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
                                     color: item.color,
                                 }}
                             >
-                                <FontAwesomeIcon icon={item.icon} size="2xl" />
+                                <Icon size={28} style={{ minWidth: "28px", minHeight: "28px" }} strokeWidth={2} />
                             </Box>
                         </Grid>
                     </CardContent>
                 </Card>
             </Grid>
-        ))
-    );
+        );
+    });
 };
 
 export default RequestStatusCards;
