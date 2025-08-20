@@ -7,6 +7,7 @@ import {
     apiUrl,
     CreateInvoice,
     CreateInvoiceItems,
+    CreateNotification,
     DeleteInvoiceByID,
     DeleteInvoiceItemByID,
     GetFloors,
@@ -89,6 +90,8 @@ import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import dateFormat from "../../utils/dateFormat";
 import { PaymentInterface } from "../../interfaces/IPayments";
 import { updatePaymentAndInvoice } from "../../utils/handleClickUpdatePayment";
+import { NotificationsInterface } from "../../interfaces/INotifications";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 type InvoiceItemError = {
     Description?: string;
@@ -367,6 +370,16 @@ function RoomRentalSpace() {
                 console.warn("⚠️ Some invoice items failed:", failedItems);
             }
 
+            const notificationData: NotificationsInterface = {
+                InvoiceID: resInvoice.data.ID,
+            };
+
+            const resNotification = await CreateNotification(notificationData);
+            if (!resNotification) {
+                console.error("Failed to create notification")
+                return;
+            }
+
             handleSetAlert("success", "Invoice created successfully!");
             setTimeout(() => {
                 setIsButtonActive(false);
@@ -394,7 +407,9 @@ function RoomRentalSpace() {
         }
 
         try {
-            await DeleteInvoiceByID(selectedInvoice?.ID || 0);
+            await DeleteInvoiceByID(selectedInvoice?.ID ?? 0);
+
+            await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Invoice deleted successfully!");
 
@@ -484,7 +499,7 @@ function RoomRentalSpace() {
             return;
         }
 
-        if (statusName==="Rejected" && (!note || note.trim() === "")) {
+        if (statusName === "Rejected" && (!note || note.trim() === "")) {
             handleSetAlert("warning", "Please enter a reason before reject requested.");
             setIsButtonActive(false);
             return;
@@ -506,6 +521,10 @@ function RoomRentalSpace() {
                 approverId,
                 note
             );
+
+            if (statusName === "Rejected") {
+                await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, false, undefined, undefined, selectedInvoice?.ID);
+            }
 
             handleSetAlert("success", "Payment slip has been verified successfully.");
 

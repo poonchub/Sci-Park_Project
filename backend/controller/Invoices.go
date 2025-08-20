@@ -12,6 +12,7 @@ import (
 
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 
 	"time"
 
@@ -96,7 +97,8 @@ func GetInvoiceByOption(c *gin.Context) {
 		Preload("Room.Floor").
 		Preload("Customer.Prefix").
 		Preload("Creater.Prefix").
-		Preload("Creater.Role")
+		Preload("Creater.Role").
+		Preload("Notifications")
 
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -274,6 +276,8 @@ func CreateInvoice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	services.NotifySocketEvent("invoice_created", invoiceData)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Create success",

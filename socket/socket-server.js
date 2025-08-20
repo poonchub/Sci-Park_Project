@@ -38,6 +38,14 @@ app.post("/notify-news", (req, res) => {
   res.sendStatus(200);
 });
 
+app.post("/notify-invoice", (req, res) => {
+  const { event, data } = req.body;
+  console.log("📨 Notify from Go:", event, data);
+
+  io.emit(event, data);
+
+  res.sendStatus(200);
+});
 
 server.listen(3001, () => {
   console.log("🚀 Socket.IO Gateway running on port 3001");

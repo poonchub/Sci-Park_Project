@@ -2,9 +2,11 @@ import {
     apiUrl,
     CheckSlip,
     CreatePayment,
+    GetInvoiceByID,
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForUser,
+    GetNotificationsByInvoiceAndUser,
     GetPaymentByOption,
     GetPaymentByUserID,
     GetQuota,
@@ -13,6 +15,7 @@ import {
     socketUrl,
     UpdateInvoiceByID,
     UpdateMaintenanceRequestByID,
+    UpdateNotificationByID,
     UpdateNotificationsByRequestID,
 } from "../../services/http";
 
@@ -33,6 +36,7 @@ import {
     Tooltip,
     useMediaQuery,
     Dialog,
+    Badge,
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
@@ -97,6 +101,9 @@ import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import { updatePaymentAndInvoice } from "../../utils/handleClickUpdatePayment";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 import "./MyAccount.css"
+import { useNotificationStore } from "../../store/notificationStore";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -145,6 +152,7 @@ const MyAccount: React.FC = () => {
     const [openPDF, setOpenPDF] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
+    const { notificationCounts } = useNotificationStore();
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
@@ -215,6 +223,29 @@ const MyAccount: React.FC = () => {
             }
         } catch (error) {
             console.error("Error updating maintenance request:", error);
+        }
+    };
+
+    const getNewInvoice = async (ID: number) => {
+        try {
+            const res = await GetInvoiceByID(ID);
+            if (res) {
+                setInvoices((prev) => [res, ...prev]);
+                setInvoiceTotal((prev) => prev + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching invoice:", error);
+        }
+    };
+
+    const getUpdateInvoice = async (ID: number) => {
+        try {
+            const res = await GetInvoiceByID(ID);
+            if (res) {
+                setInvoices((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+            }
+        } catch (error) {
+            console.error("Error updating invoice:", error);
         }
     };
 
@@ -355,6 +386,8 @@ const MyAccount: React.FC = () => {
             };
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
 
+            await handleUpdateNotification(userId, true, undefined, undefined, selectedInvoice?.ID);
+
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
                 handleClearInvoiceData();
@@ -397,6 +430,8 @@ const MyAccount: React.FC = () => {
                 undefined,
                 slipfile[0]
             );
+
+            await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Upload new slip successfully.");
 
@@ -524,6 +559,7 @@ const MyAccount: React.FC = () => {
             setIsButtonActive(true);
             try {
                 const resGetQuota = await GetQuota();
+                console.log(resGetQuota.data.quota)
                 if (resGetQuota.success && resGetQuota.data.quota > 0) {
                     const formData = new FormData();
                     formData.append("files", slipfile[0]);
@@ -560,8 +596,20 @@ const MyAccount: React.FC = () => {
             getUpdateMaintenanceRequest(data.ID);
         });
 
+        socket.on("invoice_created", (data) => {
+            console.log("📦 New invoice:", data);
+            getNewInvoice(data.ID);
+        });
+
+        socket.on("invoice_updated", (data) => {
+            console.log("🔄 Invoice updated:", data);
+            getUpdateInvoice(data.ID);
+        });
+
         return () => {
             socket.off("maintenance_updated");
+            socket.off("invoice_created");
+            socket.off("invoice_updated");
         };
     }, []);
 
@@ -1426,20 +1474,19 @@ const MyAccount: React.FC = () => {
                     field: "InvoiceNumber",
                     headerName: "Invoice No.",
                     flex: 0.3,
+                    align: "center",
                     headerAlign: "center",
-                    renderCell: (params) => (
-                        <Box
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            {params.value}
-                        </Box>
-                    ),
+                    renderCell: (params) => {
+                        const invoiceNumber = params.row.InvoiceNumber;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                        return (
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography sx={{ fontSize: 14 }}>{invoiceNumber}</Typography>
+                            </Box>
+                        );
+                    },
                 },
                 {
                     field: "BillingPeriod",
@@ -2216,7 +2263,11 @@ const MyAccount: React.FC = () => {
                             >
                                 <Tab label="Maintenance Request" {...a11yProps(0)} />
                                 <Tab label="Room Booking" {...a11yProps(1)} />
-                                <Tab label="Invoice" {...a11yProps(2)} />
+                                <Tab label={
+                                    <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
+                                        Invoice
+                                    </Badge>
+                                } {...a11yProps(2)} />
                                 <Tab label="Payment" {...a11yProps(3)} />
                             </Tabs>
                         </Grid>

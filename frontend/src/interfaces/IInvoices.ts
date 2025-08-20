@@ -1,4 +1,5 @@
 import { InvoiceItemInterface } from "./IInvoiceItems";
+import { NotificationsInterface } from "./INotifications";
 import { PaymentInterface } from "./IPayments";
 import { PaymentStatusInterface } from "./IPaymentStatuses";
 import { RoomsInterface } from "./IRooms";
@@ -21,4 +22,5 @@ export interface InvoiceInterface {
     Customer?:      UserInterface;
     Items?:         InvoiceItemInterface[];
     Payments?:      PaymentInterface;
+    Notifications?: NotificationsInterface[];
 }
