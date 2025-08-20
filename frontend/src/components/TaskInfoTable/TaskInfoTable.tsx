@@ -63,8 +63,8 @@ const TaskInfoTable = ({ data }: TaskInfoTableProps) => {
                         <Typography className="title-list">Inspected By</Typography>
                     </TableCell>
                     <TableCell>
-                        <Typography>{`${data.Inspection?.User?.FirstName} ${data.Inspection?.User?.LastName}`}</Typography>
-                        <Typography>{`${dateFormat(data.Inspection?.CreatedAt || '')}, ${timeFormat(data.Inspection?.CreatedAt || '')}`}</Typography>
+                        <Typography>{`${data.Inspection?.at(-1)?.User?.FirstName} ${data.Inspection?.at(-1)?.User?.LastName}`}</Typography>
+                        <Typography>{`${dateFormat(data.Inspection?.at(-1)?.CreatedAt || '')}, ${timeFormat(data.Inspection?.at(-1)?.CreatedAt || '')}`}</Typography>
                     </TableCell>
                 </TableRow>}
             </TableBody>

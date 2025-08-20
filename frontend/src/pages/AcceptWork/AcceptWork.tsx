@@ -70,7 +70,7 @@ import { faClock } from "@fortawesome/free-regular-svg-icons";
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
-import { BrushCleaning, HardHat } from "lucide-react";
+import { BrushCleaning, Check, Clock, Eye, HardHat, HelpCircle, Send, X } from "lucide-react";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 export function a11yProps(index: number) {
@@ -146,8 +146,10 @@ function AcceptWork() {
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const TypeIcon = icon
 
                         const isApproved = params.row.RequestStatus?.Name === "Approved";
                         const isRework = params.row.RequestStatus?.Name === "Rework Requested";
@@ -201,14 +203,7 @@ function AcceptWork() {
                                             my: 0.8,
                                         }}
                                     >
-                                        <FontAwesomeIcon
-                                            icon={faClock}
-                                            style={{
-                                                width: "12px",
-                                                height: "12px",
-                                                paddingBottom: "4px",
-                                            }}
-                                        />
+                                        <Clock size={16} style={{ minWidth: "16px", minHeight: "16px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 13,
@@ -242,7 +237,7 @@ function AcceptWork() {
                                             alignItems: "center",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={icon} />
+                                        <TypeIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: "2px" }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -272,12 +267,11 @@ function AcceptWork() {
                                                             <Button
                                                                 variant="containedBlue"
                                                                 onClick={() => {
-                                                                    setOpenConfirmAccepted(true);
-                                                                    setSelectedTask(data);
+                                                                    handleClickAcceptWork("In Progress", "accept", undefined, data)
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon icon={faCheck} />
+                                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                                 <Typography variant="textButtonClassic">
                                                                     Start
                                                                 </Typography>
@@ -294,7 +288,7 @@ function AcceptWork() {
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                                 <Typography variant="textButtonClassic">
                                                                     Cancel
                                                                 </Typography>
@@ -314,7 +308,7 @@ function AcceptWork() {
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon icon={faPaperPlane} />
+                                                                <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
                                                                 <Typography variant="textButtonClassic">
                                                                     Submit
                                                                 </Typography>
@@ -331,7 +325,7 @@ function AcceptWork() {
                                                                 }}
                                                                 fullWidth
                                                             >
-                                                                <FontAwesomeIcon icon={faXmark} size="xl" />
+                                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                                 <Typography variant="textButtonClassic">
                                                                     Cancel
                                                                 </Typography>
@@ -356,7 +350,7 @@ function AcceptWork() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -380,7 +374,7 @@ function AcceptWork() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <FontAwesomeIcon icon={faEye} size="lg" />
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             {width && width > 530 && (
                                                                 <Typography
                                                                     variant="textButtonClassic"
@@ -450,8 +444,10 @@ function AcceptWork() {
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const Icon = icon
 
                         return (
                             <Box>
@@ -490,7 +486,7 @@ function AcceptWork() {
                                         alignItems: "center",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    <Icon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                     <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
                                 </Box>
                             </Box>
@@ -672,12 +668,11 @@ function AcceptWork() {
                                 className="btn-accept"
                                 variant="containedBlue"
                                 onClick={() => {
-                                    setSelectedTask((prev) => ({...prev, data}));
-                                    handleClickAcceptWork("In Progress", "accept")
+                                    handleClickAcceptWork("In Progress", "accept", undefined, data)
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
-                                <FontAwesomeIcon icon={faCheck} size="lg" />
+                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                 <Typography variant="textButtonClassic" className="text-btn">
                                     Start
                                 </Typography>
@@ -693,7 +688,7 @@ function AcceptWork() {
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
-                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                 <Typography variant="textButtonClassic" className="text-btn">
                                     Cancel
                                 </Typography>
@@ -714,7 +709,7 @@ function AcceptWork() {
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
-                                <FontAwesomeIcon icon={faPaperPlane} />
+                                <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
                                 <Typography variant="textButtonClassic" className="text-btn">
                                     Submit
                                 </Typography>
@@ -730,7 +725,7 @@ function AcceptWork() {
                                 }}
                                 sx={{ minWidth: "42px" }}
                             >
-                                <FontAwesomeIcon icon={faXmark} size="lg" />
+                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                 <Typography variant="textButtonClassic" className="text-btn">
                                     Cancel
                                 </Typography>
@@ -749,7 +744,7 @@ function AcceptWork() {
                             width: !(showSubmit || showAcceptReject) ? "100%" : "",
                         }}
                     >
-                        <FontAwesomeIcon icon={faEye} size="lg" />
+                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                         {!(showSubmit || showAcceptReject) ? (
                             <Typography variant="textButtonClassic">Details</Typography>
                         ) : (
@@ -878,12 +873,13 @@ function AcceptWork() {
     const handleClickAcceptWork = (
         statusName: "In Progress" | "Unsuccessful",
         actionType: "accept" | "cancel",
-        note?: string
+        note?: string,
+        data?: MaintenanceTasksInterface,
     ) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
 
         handleActionAcception(statusID, {
-            selectedTask,
+            selectedTask: data ?? selectedTask,
             setAlerts,
             setOpenConfirmAccepted,
             setOpenConfirmCancelled,

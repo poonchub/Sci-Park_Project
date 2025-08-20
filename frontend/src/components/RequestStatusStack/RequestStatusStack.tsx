@@ -1,7 +1,6 @@
 import { Avatar, Card, Grid, Stack, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { statusConfig } from "../../constants/statusConfig";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface Props {
     statusCounts: Record<string, number>;
@@ -44,6 +43,7 @@ function RequestStatusStack({ statusCounts, size }: Props) {
     return (
         <Grid container spacing={1.4} size={{ xs: 12, md: 12 }}>
             {Object.entries(mergedStatusCounts).map(([label, value]) => {
+                const Icon = statusConfig[label].icon
                 return (
                     <Grid size={{
                         xs: size?.xs || 12,
@@ -64,7 +64,7 @@ function RequestStatusStack({ statusCounts, size }: Props) {
                                             color: statusConfig[label].color,
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusConfig[label].icon} size="xs" />
+                                        <Icon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                     </Avatar>
                                     <Typography variant="body2" sx={{ fontWeight: 500 }}>{label}</Typography>
                                 </Stack>

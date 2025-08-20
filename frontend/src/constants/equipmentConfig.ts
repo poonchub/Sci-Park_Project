@@ -1,4 +1,4 @@
-import { Armchair, LayoutGrid, LucideIcon, MicVocal, Presentation, Projector, Table } from "lucide-react";
+import { Armchair, LayoutGrid, LucideIcon, MicVocal, Presentation, Projector } from "lucide-react";
 
 // Configuration for each maintenance type
 export interface EquipmentConfig {
