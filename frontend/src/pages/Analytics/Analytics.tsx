@@ -1201,7 +1201,7 @@ For data interpretation:
                                                                                     mr: 1,
                                                                                 }}
                                                                             >
-                                                                                <HelpCircle size={16} />
+                                                                                {React.createElement(config.icon, { size: 16 })}
                                                                             </Avatar>
                                                                             <Typography variant="body2" fontWeight="medium">
                                                                                 {page.page_name}
