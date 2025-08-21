@@ -10,6 +10,7 @@ import {
     UpdateMaintenanceTaskByID,
     UpdateNotificationsByTaskID,
 } from "../services/http";
+import { handleUpdateNotification } from "./handleUpdateNotification";
 
 interface Alert {
     type: "warning" | "error" | "success";
@@ -95,19 +96,17 @@ const handleActionInspection = async (
         if (actionType === "rework") {
             const resImages = await DeleteHandoverImagesByTaskID(selectedRequest.MaintenanceTask?.ID);
             if (!resImages || resImages.error) throw new Error(resImages?.error || "Failed to delete handover images.");
+
+            await handleUpdateNotification(selectedRequest.UserID ?? 0, true, selectedRequest.ID, undefined, undefined);
+            await handleUpdateNotification(selectedRequest.MaintenanceTask?.UserID ?? 0, false, undefined, selectedRequest.MaintenanceTask?.ID, undefined);
+        }
+
+        if (actionType === "confirm") {
+            await handleUpdateNotification(selectedRequest.UserID ?? 0, true, selectedRequest.ID, undefined, undefined);
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status.");
-
-        if (actionType === "rework") {
-            const notificationDataUpdate: NotificationsInterface = {
-                IsRead: false,
-            };
-            const resUpdateNotification = await UpdateNotificationsByTaskID(notificationDataUpdate, selectedRequest.MaintenanceTask?.ID);
-            if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
-        }
 
         setTimeout(() => {
             setAlerts((prev) => [

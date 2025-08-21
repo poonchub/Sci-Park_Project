@@ -871,7 +871,6 @@ function AcceptWork() {
         handleActionAcception(statusID, {
             selectedTask: data ?? selectedTask,
             setAlerts,
-            setOpenConfirmAccepted,
             setOpenConfirmCancelled,
             actionType,
             note,

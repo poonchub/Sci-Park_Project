@@ -11,7 +11,6 @@ interface Alert {
 interface handleActionAcceptionProps {
     selectedTask?: MaintenanceTasksInterface;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
-    setOpenConfirmAccepted: (v: boolean) => void;
     setOpenConfirmCancelled: (v: boolean) => void;
     note?: string;
 }
@@ -21,7 +20,6 @@ const handleActionAcception = async (
     {
         selectedTask,
         setAlerts,
-        setOpenConfirmAccepted,
         setOpenConfirmCancelled,
         actionType,
         note,
@@ -65,7 +63,6 @@ const handleActionAcception = async (
                 { type: "success", message: actionType === "accept" ? "Request accepted successfully" : "Request cancelled successfully" },
             ]);
 
-            setOpenConfirmAccepted(false);
             setOpenConfirmCancelled(false);
         }, 500);
 

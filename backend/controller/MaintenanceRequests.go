@@ -51,6 +51,7 @@ func GetMaintenanceRequestByID(c *gin.Context) {
 		Preload("MaintenanceTask.RequestStatus").
 		Preload("MaintenanceImages").
 		Preload("Inspection.User").
+		Preload("Notifications").
 		First(&request, ID)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
@@ -82,6 +83,7 @@ func GetMaintenanceRequestByUserID(c *gin.Context) {
 		Preload("MaintenanceTask.RequestStatus").
 		Preload("MaintenanceImages").
 		Preload("Inspection").
+		Preload("Notifications").
 		Where("user_id = ?", userID).
 		Find(&requests)
 

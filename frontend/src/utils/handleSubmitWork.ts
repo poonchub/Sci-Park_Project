@@ -63,10 +63,10 @@ const handleSubmitWork = async (
         const resAssign = await UpdateMaintenanceTaskByID(task, selectedTask.ID);
         if (!resAssign || resAssign.error) throw new Error(resAssign?.error || "Failed to update task.");
 
+        await handleUpdateNotification(selectedTask.MaintenanceRequest?.UserID ?? 0, false, selectedTask.RequestID, undefined, undefined);
+
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request.");
-
-        await handleUpdateNotification(selectedTask.MaintenanceRequest?.UserID ?? 0, false, selectedTask.RequestID, undefined, undefined);
 
         setTimeout(() => {
             setAlerts((prev) => [...prev, { type: 'success', message: 'Work submitted successfully' }]);

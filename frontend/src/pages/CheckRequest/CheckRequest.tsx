@@ -53,7 +53,6 @@ function CheckRequest() {
     const [openPopupApproved, setOpenPopupApproved] = useState(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [openPopupSubmit, setOpenPopupSubmit] = useState(false);
-    const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
     const [openConfirmCancelledFromOwnRequest, setOpenConfirmCancelledFromOwnRequest] = useState<boolean>(false);
     const [openConfirmCancelledFromOperator, setOpenConfirmCancelledFromOperator] = useState<boolean>(false);
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
@@ -201,7 +200,6 @@ function CheckRequest() {
         handleActionAcception(statusID, {
             selectedTask: maintenanceTask,
             setAlerts,
-            setOpenConfirmAccepted,
             setOpenConfirmCancelled: setOpenConfirmCancelledFromOperator,
             actionType,
             note,
@@ -336,16 +334,6 @@ function CheckRequest() {
                 title="Confirm Maintenance Request Rejection"
                 message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
-                buttonActive={isBottonActive}
-            />
-
-            {/* Accepted Confirm */}
-            <ConfirmDialog
-                open={openConfirmAccepted}
-                setOpenConfirm={setOpenConfirmAccepted}
-                handleFunction={() => handleClickAcceptWork("In Progress", "accept")}
-                title="Confirm Maintenance Request Processing"
-                message="Are you sure you want to start this maintenance request? This action cannot be undone."
                 buttonActive={isBottonActive}
             />
 
@@ -590,7 +578,7 @@ function CheckRequest() {
                                                     <Button
                                                         variant="contained"
                                                         onClick={() => {
-                                                            setOpenConfirmAccepted(true);
+                                                            handleClickAcceptWork("In Progress", "accept")
                                                         }}
                                                         sx={{ px: 4, py: 1 }}
                                                     >

@@ -220,6 +220,7 @@ const MyAccount: React.FC = () => {
     const getUpdateMaintenanceRequest = async (ID: number) => {
         try {
             const res = await GetMaintenanceRequestByID(ID);
+            console.log("res: ", res)
             if (res) {
                 setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
@@ -948,7 +949,6 @@ const MyAccount: React.FC = () => {
                     align: "center",
                     headerAlign: "center",
                     renderCell: (params) => {
-                        console.log(params.row)
                         const requestID = params.row.ID;
                         const notification = params.row.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
