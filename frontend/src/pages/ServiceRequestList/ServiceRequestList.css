@@ -3,7 +3,6 @@
    ======================================== */
 
 .service-request-list-page {
-    /* Status Cards Section */
     .status-section {
         .status-card {
             .status-card-content {
@@ -14,35 +13,17 @@
         }
     }
 
-    /* Status Card specific styling */
-    .status-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        border: 1px solid #e0e0e0;
-        
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .status-card-content {
-            padding: 16px 16px 16px 20px !important; /* Account for the colored bar */
-        }
-    }
-
-    /* Filter Section */
     .filter-section {
         .search-box {
             margin: 0 !important;
         }
     }
 
-    /* Material-UI TextField overrides */
     .MuiTextField-root {
         margin-bottom: 0 !important;
         width: 100% !important;
     }
 
-    /* Container queries for responsive buttons */
     .container-btn {
         container-type: inline-size;
 
@@ -53,8 +34,7 @@
 
     @container (max-width: 160px) {
         .btn-approve,
-        .btn-reject, 
-        .btn-detail {
+        .btn-reject, .btn-detail {
             width: 100%;
 
             .text-btn{
@@ -63,28 +43,57 @@
         }
     }
 
-    /* Responsive grid adjustments */
-    @media (max-width: 768px) {
-        .status-card {
-            margin-bottom: 16px;
-        }
-    }
-
-    /* Loading skeleton styles */
-    .MuiSkeleton-root {
+    /* Card styling for mobile view */
+    .card-item-container {
+        padding: 16px;
         border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 8px;
     }
 
-    /* Title section styling */
-    .title-box {
-        align-items: center;
-        margin-bottom: 16px;
-    }
+    /* Responsive grid adjustments */
+    .MuiDataGrid-root {
+        .MuiDataGrid-cell {
+            padding: 8px 16px;
+        }
 
-    /* Content text styling */
-    .content-text {
-        text-align: center;
-        color: #666;
-        font-style: italic;
+        /* Add margin/padding to table rows */
+        .MuiDataGrid-row {
+            
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid rgb(236, 236, 236);
+        }
+
+        /* Hover effect for rows */
+        .MuiDataGrid-row:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        /* Alternative: Add padding to row cells for more spacing */
+        .MuiDataGrid-row .MuiDataGrid-cell {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        /* Header styling */
+        .MuiDataGrid-columnHeaders {
+            border-bottom: 1px solid rgb(226, 226, 226);
+            background-color: #f5f5f5;
+        }
+
+        /* Column separators */
+        .MuiDataGrid-columnSeparator {
+            color: #e0e0e0;
+        }
+
+        /* Remove focus outlines */
+        .MuiDataGrid-columnHeader:focus, 
+        .MuiDataGrid-columnHeader:focus-within,
+        .MuiDataGrid-cell:focus, 
+        .MuiDataGrid-cell:focus-within {
+            outline: none;
+        }
     }
 }

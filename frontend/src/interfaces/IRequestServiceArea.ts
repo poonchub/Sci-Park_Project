@@ -19,4 +19,15 @@ export interface RequestServiceAreaInterface {
   CreatedAt?: string;
   UpdatedAt?: string;
   DeletedAt?: string | null;
+}
+
+// New interface for the API response format
+export interface RequestServiceAreaListInterface {
+  ID: number; // now required
+  UserID: number;
+  CompanyName: string;
+  UserNameCombined: string;
+  CreatedAt: string;
+  StatusID: number;
+  BusinessGroupID: number | null;
 } 

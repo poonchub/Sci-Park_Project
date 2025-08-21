@@ -503,7 +503,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 	// เชื่อมต่อกับฐานข้อมูล
 	db := config.DB()
 
-	// การกรองตาม request_status_id (ถ้ามีค่า)
+	// การกรองตาม request_status_id (ถ้ามีค่าและไม่ใช่ 0)
 	if requestStatusID > 0 {
 		db = db.Where("request_status_id = ?", requestStatusID)
 	}
@@ -518,12 +518,19 @@ func ListRequestServiceAreas(c *gin.Context) {
 
 	// การกรองตาม created_at (ถ้ามีค่า)
 	if createdAt != "" {
-		// คาดหวังรูปแบบ YYYY-MM-DD
-		db = db.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+		// ตรวจสอบรูปแบบของ createdAt
+		if len(createdAt) == 7 && createdAt[4] == '-' {
+			// รูปแบบ YYYY-MM (เช่น 2025-08) - ค้นหาเฉพาะเดือน
+			// ใช้ strftime สำหรับ SQLite แทน DATE_FORMAT
+			db = db.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", createdAt)
+		} else if len(createdAt) == 10 && createdAt[4] == '-' && createdAt[7] == '-' {
+			// รูปแบบ YYYY-MM-DD (เช่น 2025-08-21) - ค้นหาวันที่เฉพาะ
+			db = db.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+		}
 	}
 
 	// ดึงข้อมูล Request Service Area จากฐานข้อมูล
-	query := db.Preload("User").Preload("RequestStatus").Preload("CollaborationPlans")
+	query := db.Preload("User").Preload("User.AboutCompany").Preload("RequestStatus")
 
 	// แก้ไขการ ORDER โดยใช้ `request_service_areas.created_at` เพื่อระบุคอลัมน์ที่มาจากตาราง `request_service_areas`
 	if err := query.Order("request_service_areas.created_at DESC").Limit(limit).Offset(offset).Find(&requestServiceAreas).Error; err != nil {
@@ -535,6 +542,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 	var total int64
 	countQuery := config.DB().Model(&entity.RequestServiceArea{})
 
+	// การกรองตาม request_status_id สำหรับ count query (ถ้ามีค่าและไม่ใช่ 0)
 	if requestStatusID > 0 {
 		countQuery = countQuery.Where("request_status_id = ?", requestStatusID)
 	}
@@ -549,62 +557,37 @@ func ListRequestServiceAreas(c *gin.Context) {
 
 	// การกรองตาม created_at สำหรับ count query (ถ้ามีค่า)
 	if createdAt != "" {
-		countQuery = countQuery.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+		// ตรวจสอบรูปแบบของ createdAt
+		if len(createdAt) == 7 && createdAt[4] == '-' {
+			// รูปแบบ YYYY-MM (เช่น 2025-08) - ค้นหาเฉพาะเดือน
+			// ใช้ strftime สำหรับ SQLite แทน DATE_FORMAT
+			countQuery = countQuery.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", createdAt)
+		} else if len(createdAt) == 10 && createdAt[4] == '-' && createdAt[7] == '-' {
+			// รูปแบบ YYYY-MM-DD (เช่น 2025-08-21) - ค้นหาวันที่เฉพาะ
+			countQuery = countQuery.Where("DATE(request_service_areas.created_at) = ?", createdAt)
+		}
 	}
 
 	countQuery.Count(&total)
 
-	// จัดรูปแบบข้อมูลที่ส่งกลับให้เป็น PascalCase
+	// จัดรูปแบบข้อมูลที่ส่งกลับให้เป็น PascalCase ตามที่ต้องการ
 	var requestServiceAreaResponses []map[string]interface{}
 	for _, requestServiceArea := range requestServiceAreas {
+		// สร้าง response object ตามที่ต้องการ
 		requestServiceAreaResponse := map[string]interface{}{
-			"ID":                                 requestServiceArea.ID,
-			"UserID":                             requestServiceArea.UserID,
-			"RequestStatusID":                    requestServiceArea.RequestStatusID,
-			"PurposeOfUsingSpace":                requestServiceArea.PurposeOfUsingSpace,
-			"NumberOfEmployees":                  requestServiceArea.NumberOfEmployees,
-			"ActivitiesInBuilding":               requestServiceArea.ActivitiesInBuilding,
-			"SupportingActivitiesForSciencePark": requestServiceArea.SupportingActivitiesForSciencePark,
-			"ServiceRequestDocument":             requestServiceArea.ServiceRequestDocument,
-			"CreatedAt":                          requestServiceArea.CreatedAt,
-			"UpdatedAt":                          requestServiceArea.UpdatedAt,
-			"DeletedAt":                          requestServiceArea.DeletedAt,
+			"ID":               requestServiceArea.ID,
+			"UserID":           requestServiceArea.UserID,
+			"CompanyName":      requestServiceArea.User.CompanyName,
+			"UserNameCombined": requestServiceArea.User.FirstName + " " + requestServiceArea.User.LastName,
+			"CreatedAt":        requestServiceArea.CreatedAt,
+			"StatusID":         requestServiceArea.RequestStatusID,
 		}
 
-		// เพิ่มข้อมูล User
-		if requestServiceArea.User.ID != 0 {
-			requestServiceAreaResponse["User"] = map[string]interface{}{
-				"ID":          requestServiceArea.User.ID,
-				"FirstName":   requestServiceArea.User.FirstName,
-				"LastName":    requestServiceArea.User.LastName,
-				"Email":       requestServiceArea.User.Email,
-				"CompanyName": requestServiceArea.User.CompanyName,
-				"EmployeeID":  requestServiceArea.User.EmployeeID,
-				"IsEmployee":  requestServiceArea.User.IsEmployee,
-			}
-		}
-
-		// เพิ่มข้อมูล RequestStatus
-		if requestServiceArea.RequestStatus.ID != 0 {
-			requestServiceAreaResponse["RequestStatus"] = map[string]interface{}{
-				"ID":   requestServiceArea.RequestStatus.ID,
-				"Name": requestServiceArea.RequestStatus.Name,
-			}
-		}
-
-		// เพิ่มข้อมูล CollaborationPlans
-		if len(requestServiceArea.CollaborationPlans) > 0 {
-			var collaborationPlans []map[string]interface{}
-			for _, plan := range requestServiceArea.CollaborationPlans {
-				collaborationPlan := map[string]interface{}{
-					"ID":                  plan.ID,
-					"CollaborationPlan":   plan.CollaborationPlan,
-					"CollaborationBudget": plan.CollaborationBudget,
-					"ProjectStartDate":    plan.ProjectStartDate,
-				}
-				collaborationPlans = append(collaborationPlans, collaborationPlan)
-			}
-			requestServiceAreaResponse["CollaborationPlans"] = collaborationPlans
+		// ดึงข้อมูล BusinessGroupID จาก AboutCompany
+		if requestServiceArea.User.AboutCompany != nil {
+			requestServiceAreaResponse["BusinessGroupID"] = requestServiceArea.User.AboutCompany.BusinessGroupID
+		} else {
+			requestServiceAreaResponse["BusinessGroupID"] = nil
 		}
 
 		requestServiceAreaResponses = append(requestServiceAreaResponses, requestServiceAreaResponse)

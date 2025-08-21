@@ -45,6 +45,7 @@ import {
     Building2,
     NotebookPen,
     DoorClosed,
+    NotepadText,
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
@@ -180,8 +181,8 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "Management",
         },
         {
-            segment: "maintenance/all-maintenance-request",
-            title: t("requestList"),
+            segment: "requests",
+            title: "Request List",
             icon: <ClipboardList size={iconSize} />,
             action:
                 notificationCounts?.UnreadRequests &&
@@ -193,12 +194,28 @@ const WindowsLayout: React.FC = (props: any) => {
                         size="small"
                     />
                 ) : null,
-        },
-        
-        {
-            segment: "service-area/service-request-list",
-            title: "Service Request List",
-            icon: <ClipboardList size={iconSize} />,
+            children: [
+                {
+                    segment: "maintenance/all-maintenance-request",
+                    title: t("Maintenance"),
+                    icon: <ClipboardList size={iconSize} />,
+                    action:
+                        notificationCounts?.UnreadRequests &&
+                        notificationCounts?.UnreadRequests > 0 &&
+                        (isAdmin || isManager) ? (
+                            <Chip
+                                label={notificationCounts.UnreadRequests}
+                                color="primary"
+                                size="small"
+                            />
+                        ) : null,
+                },
+                {
+                    segment: "service-area/service-request-list",
+                    title: "Service Area",
+                    icon: <NotepadText size={iconSize} />,
+                },
+            ],
         },
         
         {
@@ -314,6 +331,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
             "organization-info",
 
+            "requests",
             "maintenance/all-maintenance-request",
             "manage-room",
             "manage-user",
@@ -333,6 +351,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
             "organization-info",
 
+            "requests",
             "maintenance/all-maintenance-request",
             "rental-space",
             "service-area/service-request-list",

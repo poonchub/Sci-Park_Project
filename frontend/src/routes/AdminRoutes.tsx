@@ -45,7 +45,11 @@ const AdminRoutes = (): RouteObject => {
 				element: <RoomBookingForm roomsOfSameType={[]}/>
 			},
 			{
-				path: "/maintenance/all-maintenance-request",
+				path: "/requests",
+				element: <AllMaintenanceRequest/>
+			},
+			{
+				path: "/requests/maintenance/all-maintenance-request",
 				element: <AllMaintenanceRequest/>
 			},
 			{
@@ -126,7 +130,7 @@ const AdminRoutes = (): RouteObject => {
 				element: <RoomRentalSpace/>
 			},
 			{
-				path: "/service-area/service-request-list",
+				path: "/requests/service-area/service-request-list",
 				element: <ServiceRequestList/>
 			},
 			{

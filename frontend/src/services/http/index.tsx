@@ -2413,6 +2413,58 @@ async function ListPaymentStatus(): Promise<PaymentStatusInterface[]> {
     }
 }
 
+// ListRequestServiceAreas ดึงรายการ Request Service Area ทั้งหมดพร้อม pagination และ filtering
+async function ListRequestServiceAreas(
+    requestStatusID: string,
+    page: number,
+    limit: number,
+    search?: string | undefined,
+    createdAt?: string | undefined
+) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    // สร้าง URL parameters ที่มีเฉพาะค่าที่ไม่ใช่ 0, undefined, หรือ empty
+    const params = new URLSearchParams();
+    
+    // เพิ่ม page และ limit เสมอ
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
+    
+    // เพิ่ม request_status_id เฉพาะเมื่อไม่ใช่ "0" หรือ "undefined"
+    if (requestStatusID && requestStatusID !== "0" && requestStatusID !== "undefined") {
+        params.append("request_status_id", requestStatusID);
+    }
+    
+    // เพิ่ม search เฉพาะเมื่อมีข้อความและไม่ใช่ "undefined"
+    if (search && search.trim() !== "" && search !== "undefined") {
+        params.append("search", search.trim());
+    }
+    
+    // เพิ่ม created_at เฉพาะเมื่อมีค่าและไม่ใช่ "undefined"
+    if (createdAt && createdAt.trim() !== "" && createdAt !== "undefined") {
+        params.append("created_at", createdAt.trim());
+    }
+
+    let res = await fetch(
+        `${apiUrl}/request-service-areas?${params.toString()}`,
+        requestOptions
+    ).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -2582,6 +2634,7 @@ export {
     CreateRequestServiceAreaAndAboutCompany,
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
+    ListRequestServiceAreas,
 
     // AboutCompany
     GetAboutCompanyByUserID,
