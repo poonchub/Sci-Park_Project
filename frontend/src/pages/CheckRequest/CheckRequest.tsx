@@ -37,6 +37,7 @@ import { io } from "socket.io-client";
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
 import { Check, ChevronLeft, NotebookText, Repeat, Send, X } from "lucide-react";
+import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
 
 function CheckRequest() {
     // Request data
@@ -254,19 +255,6 @@ function CheckRequest() {
     const handleBack = () => {
         localStorage.removeItem("requestID");
         navigate(-1);
-    };
-
-    const convertPathsToFiles = async (images: MaintenaceImagesInterface[]): Promise<File[]> => {
-        return await Promise.all(
-            images.map(async (img, index) => {
-                const url = apiUrl + "/" + img.FilePath;
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const fileType = blob.type || "image/jpeg";
-                const fileName = img.FilePath?.split("/").pop() || `image${index + 1}.jpg`;
-                return new File([blob], fileName, { type: fileType });
-            })
-        );
     };
 
     // Load all necessary data on mount
@@ -507,7 +495,7 @@ function CheckRequest() {
                                             <Box sx={{ gap: 1, display: "flex" }}>
                                                 {/* Reject button */}
                                                 <Button
-                                                    variant="containedCancel"
+                                                    variant="outlinedCancel"
                                                     onClick={() => setOpenConfirmRejected(true)}
                                                     sx={{
                                                         minWidth: "0px",
@@ -520,7 +508,7 @@ function CheckRequest() {
                                                 </Button>
 
                                                 {/* Approve button */}
-                                                <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
+                                                <Button variant="contained" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
                                                     <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                     <Typography variant="textButtonClassic">Approve</Typography>
                                                 </Button>
@@ -539,7 +527,7 @@ function CheckRequest() {
                                             >
                                                 {isOwnRequest && isPending ? (
                                                     <Button
-                                                        variant="containedCancel"
+                                                        variant="outlinedCancel"
                                                         onClick={() => {
                                                             setOpenConfirmCancelledFromOwnRequest(true);
                                                         }}
@@ -584,7 +572,7 @@ function CheckRequest() {
                                         {(isApproved || isInProgress || isRework) && isOperator && isOwnTask && (
                                             <Box sx={{ gap: 1, display: "flex" }}>
                                                 <Button
-                                                    variant="containedCancel"
+                                                    variant="outlinedCancel"
                                                     onClick={() => {
                                                         setOpenConfirmCancelledFromOperator(true);
                                                     }}
@@ -600,7 +588,7 @@ function CheckRequest() {
 
                                                 {isApproved || isRework ? (
                                                     <Button
-                                                        variant="containedBlue"
+                                                        variant="contained"
                                                         onClick={() => {
                                                             setOpenConfirmAccepted(true);
                                                         }}
@@ -611,7 +599,7 @@ function CheckRequest() {
                                                     </Button>
                                                 ) : isInProgress || isWaitingForReview ? (
                                                     <Button
-                                                        variant="containedBlue"
+                                                        variant="contained"
                                                         onClick={() => {
                                                             setOpenPopupSubmit(true);
                                                         }}

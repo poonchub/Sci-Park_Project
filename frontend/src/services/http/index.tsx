@@ -1380,24 +1380,18 @@ async function GetNotificationsByInvoiceAndUser(invoice_id: number, user_id: num
     }
 }
 async function CreateNotification(data: NotificationsInterface) {
-    const requestOptions = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/notification`, requestOptions).then((res) => {
-        if (res.status == 201) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.post(`/notification`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating notification:", error);
+        throw error;
+    }
 }
 async function UpdateNotificationByID(data: NotificationsInterface, id: Number | undefined) {
     try {
@@ -1415,44 +1409,32 @@ async function UpdateNotificationByID(data: NotificationsInterface, id: Number |
 }
 
 async function UpdateNotificationsByRequestID(data: NotificationsInterface, request_id: Number | undefined) {
-    const requestOptions = {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/notifications/request/${request_id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.patch(`/notifications/request/${request_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating notification:", error);
+        throw error;
+    }
 }
 async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id: Number | undefined) {
-    const requestOptions = {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(data),
-    };
-
-    let res = await fetch(`${apiUrl}/notifications/task/${task_id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.patch(`/notifications/task/${task_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating notification:", error);
+        throw error;
+    }
 }
 
 // BookingRooms

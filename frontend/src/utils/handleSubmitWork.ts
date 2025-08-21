@@ -1,6 +1,7 @@
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { CreateHandoverImages, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateMaintenanceTaskByID } from "../services/http";
+import { handleUpdateNotification } from "./handleUpdateNotification";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -65,6 +66,8 @@ const handleSubmitWork = async (
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedTask.RequestID);
         if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request.");
 
+        await handleUpdateNotification(selectedTask.MaintenanceRequest?.UserID ?? 0, false, selectedTask.RequestID, undefined, undefined);
+
         setTimeout(() => {
             setAlerts((prev) => [...prev, { type: 'success', message: 'Work submitted successfully' }]);
             setFiles([])
@@ -73,7 +76,6 @@ const handleSubmitWork = async (
         }, 500);
 
         const resEmail = await SendMaintenanceStatusEmail(selectedTask.RequestID || 0);
-        console.log(resEmail)
         if (!resEmail || resEmail.error) throw new Error(resEmail?.error || "Failed to send email.");
 
     } catch (error) {

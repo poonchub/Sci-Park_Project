@@ -3,6 +3,7 @@ import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
 import { NotificationsInterface } from "../interfaces/INotifications";
 import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
+import { handleUpdateNotification } from "./handleUpdateNotification";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";
@@ -79,22 +80,14 @@ const handleActionApproval = async (
             const notificationDataCreate: NotificationsInterface = {
                 TaskID: resAssign.data.ID
             }
-            
-            const resNotification = await CreateNotification(notificationDataCreate);
-            if (!resNotification || resNotification.error)
-                throw new Error(resNotification?.error || "Failed to create notification.");
+            await CreateNotification(notificationDataCreate);
         }
 
         const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest.ID);
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status.");
 
-        const notificationDataUpdate: NotificationsInterface = {
-            IsRead: true,
-        };
-        const resUpdateNotification = await UpdateNotificationsByRequestID(notificationDataUpdate, selectedRequest.ID);
-        if (!resUpdateNotification || resUpdateNotification.error)
-            throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+        await handleUpdateNotification(userID, true, selectedRequest.ID, undefined, undefined);
 
         setTimeout(() => {
             setAlerts((prev) => [
