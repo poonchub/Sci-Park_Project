@@ -90,6 +90,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                         onChange={onChangeFiles}
                         setAlerts={setAlerts}
                         maxFiles={3}
+                        buttonText="Click to select image files"
                     />
                 </Grid>
             </DialogContent>

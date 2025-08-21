@@ -36,7 +36,7 @@ import { io } from "socket.io-client";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { NotebookText } from "lucide-react";
+import { Check, ChevronLeft, NotebookText, Repeat, Send, X } from "lucide-react";
 
 function CheckRequest() {
     // Request data
@@ -307,6 +307,8 @@ function CheckRequest() {
         };
     }, []);
 
+    console.log(maintenanceRequest)
+
     return (
         <Box className="check-requests-page">
             {/* Alert messages */}
@@ -405,7 +407,7 @@ function CheckRequest() {
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
                             <Button variant="outlined" onClick={handleBack}>
-                                <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
                         </Box>
@@ -513,13 +515,13 @@ function CheckRequest() {
                                                         py: 1,
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                     <Typography variant="textButtonClassic">Reject</Typography>
                                                 </Button>
 
                                                 {/* Approve button */}
                                                 <Button variant="containedBlue" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
-                                                    <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                    <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                     <Typography variant="textButtonClassic">Approve</Typography>
                                                 </Button>
                                             </Box>
@@ -547,7 +549,7 @@ function CheckRequest() {
                                                             py: 1,
                                                         }}
                                                     >
-                                                        <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                        <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                         <Typography variant="textButtonClassic">Cancel</Typography>
                                                     </Button>
                                                 ) : isWaitingForReview ? (
@@ -558,7 +560,7 @@ function CheckRequest() {
                                                                 setOpenConfirmRework(true);
                                                             }}
                                                         >
-                                                            <FontAwesomeIcon icon={faRepeat} />
+                                                            <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
                                                             <Typography variant="textButtonClassic">Rework</Typography>
                                                         </Button>
 
@@ -569,7 +571,7 @@ function CheckRequest() {
                                                             }}
                                                             sx={{ px: 4, py: 1 }}
                                                         >
-                                                            <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             <Typography variant="textButtonClassic">Confirm</Typography>
                                                         </Button>
                                                     </Box>
@@ -592,7 +594,7 @@ function CheckRequest() {
                                                         py: 1,
                                                     }}
                                                 >
-                                                    <FontAwesomeIcon icon={faXmark} size="lg" />
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                     <Typography variant="textButtonClassic">Cancel</Typography>
                                                 </Button>
 
@@ -604,7 +606,7 @@ function CheckRequest() {
                                                         }}
                                                         sx={{ px: 4, py: 1 }}
                                                     >
-                                                        <FontAwesomeIcon icon={faCheck} size="lg" />
+                                                        <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                         <Typography variant="textButtonClassic">Start</Typography>
                                                     </Button>
                                                 ) : isInProgress || isWaitingForReview ? (
@@ -614,7 +616,7 @@ function CheckRequest() {
                                                             setOpenPopupSubmit(true);
                                                         }}
                                                     >
-                                                        <FontAwesomeIcon icon={faPaperPlane} />
+                                                        <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
                                                         <Typography variant="textButtonClassic">Submit</Typography>
                                                     </Button>
                                                 ) : (

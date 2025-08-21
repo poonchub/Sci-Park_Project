@@ -10,6 +10,7 @@ import { faQuestionCircle, faUserTie } from '@fortawesome/free-solid-svg-icons';
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
 import { UserInterface } from "../../interfaces/IUser";
 import { Select } from '../Select/Select';
+import { HelpCircle, UserRound } from 'lucide-react';
 
 interface MaintenanceTypeConfig {
     [key: string]: {
@@ -74,8 +75,10 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                         const typeName = requestSelected.MaintenanceType.TypeName;
                         const maintenanceKey = typeName as keyof typeof maintenanceTypeConfig;
                         const { color, colorLite, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
-                            color: "#000", colorLite: "#ddd", icon: faQuestionCircle,
+                            color: "#000", colorLite: "#ddd", icon: HelpCircle,
                         };
+
+                        const Icon = icon
 
                         return (
                             <Grid
@@ -90,7 +93,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                                     alignItems: 'center',
                                 }}
                             >
-                                <FontAwesomeIcon icon={icon} />
+                                <Icon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                 <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                                     {typeName}
                                 </Typography>
@@ -110,7 +113,7 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
                             fullWidth
                             startAdornment={
                                 <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                    <FontAwesomeIcon icon={faUserTie} size="lg" />
+                                    <UserRound size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                 </InputAdornment>
                             }
                             sx={{ mt: 1 }}

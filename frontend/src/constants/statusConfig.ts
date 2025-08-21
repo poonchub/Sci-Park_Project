@@ -1,5 +1,5 @@
 // Importing necessary Lucide React icons
-import { LucideIcon } from "lucide-react";
+import { Hourglass, LucideIcon, Repeat } from "lucide-react";
 import { RotateCcw, Check, X, ClipboardCheck, Flag, Clock, RotateCcw as Redo } from "lucide-react";
 
 // Interface defining the configuration for each status type
@@ -14,7 +14,7 @@ export const statusConfig: Record<string, StatusConfig> = {
     "Pending": {
         color: "#ebca0c",
         colorLite: "rgba(235, 202, 12, 0.22)",
-        icon: Clock
+        icon: Hourglass
     },
     "Approved": {
         color: "#10a605",
@@ -49,6 +49,6 @@ export const statusConfig: Record<string, StatusConfig> = {
     "Rework Requested": {
         color: "#FFA500",
         colorLite: "rgba(255, 166, 0, 0.21)",
-        icon: Redo
+        icon: Repeat
     },
 };

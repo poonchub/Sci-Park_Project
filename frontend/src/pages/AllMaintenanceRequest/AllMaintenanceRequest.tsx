@@ -7,20 +7,15 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import {
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForAdmin,
-    GetNotificationsByRequestAndUser,
     GetOperators,
     GetRequestStatuses,
     GetUserById,
     socketUrl,
-    UpdateNotificationByID,
 } from "../../services/http";
 
 import { GridColDef } from "@mui/x-data-grid";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { UserInterface } from "../../interfaces/IUser";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle, faXmark, faEye, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { faClock, faUser } from "@fortawesome/free-regular-svg-icons";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dayjs, { Dayjs } from "dayjs";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -42,7 +37,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
-import { Check, ClipboardList, Eye, X } from "lucide-react";
+import { Check, ClipboardList, Clock, Eye, FileQuestion, HelpCircle, UserRound, X } from "lucide-react";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 function AllMaintenanceRequest() {
@@ -94,8 +89,9 @@ function AllMaintenanceRequest() {
                         } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+                        const StatusIcon = statusIcon
 
                         const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
 
@@ -111,8 +107,9 @@ function AllMaintenanceRequest() {
                         const { color: typeColor, icon: typeIcon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+                        const TypeIcon = typeIcon
 
                         const requester = params.row.User;
                         const requesterName = `${requester?.FirstName || ""} ${requester?.LastName || ""} (${requester?.EmployeeID})`;
@@ -127,8 +124,8 @@ function AllMaintenanceRequest() {
                         }
 
                         return (
-                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container">
-                                <Grid size={{ xs: 7 }}>
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1.5}>
+                                <Grid size={{ xs: 12, sm: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
                                         {hasNotificationForUser && <AnimatedBell />}
                                         <Typography
@@ -144,7 +141,7 @@ function AllMaintenanceRequest() {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
-                                        <FontAwesomeIcon icon={faClock} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <Clock size={16} style={{ minWidth: "16px", minHeight: "16px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 13,
@@ -170,7 +167,7 @@ function AllMaintenanceRequest() {
                                         {description}
                                     </Typography>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 1 }}>
-                                        <FontAwesomeIcon icon={faUser} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                        <UserRound size={16} style={{ minWidth: "16px", minHeight: "16px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 13,
@@ -192,11 +189,15 @@ function AllMaintenanceRequest() {
                                             alignItems: "center",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={typeIcon} />
+                                        <TypeIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
                                                 fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
                                             }}
                                         >
                                             {typeName}
@@ -204,7 +205,7 @@ function AllMaintenanceRequest() {
                                     </Box>
                                 </Grid>
 
-                                <Grid size={{ xs: 5 }} container direction="column">
+                                <Grid size={{ xs: 12, sm: 5 }} container direction="column">
                                     <Box
                                         sx={{
                                             bgcolor: statusColorLite,
@@ -219,7 +220,7 @@ function AllMaintenanceRequest() {
                                             width: "100%",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusIcon} />
+                                        <StatusIcon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -257,7 +258,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Check size={18}/>
+                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Approve
                                                             </Typography>
@@ -274,7 +275,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <X size={18}/>
+                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Reject
                                                             </Typography>
@@ -293,7 +294,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18}/>
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                             {width && width > 650 && (
                                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                                     Details
@@ -316,7 +317,7 @@ function AllMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <Eye size={18}/>
+                                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Details
                                                     </Typography>
@@ -368,8 +369,10 @@ function AllMaintenanceRequest() {
                         const { color, icon } = maintenanceTypeConfig[maintenanceKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const Icon = icon
 
                         return (
                             <Box
@@ -413,8 +416,17 @@ function AllMaintenanceRequest() {
                                         alignItems: "center",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{typeName}</Typography>
+                                    <Icon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxWidth: "100%",
+                                        }}
+                                    >{typeName}</Typography>
                                 </Box>
                             </Box>
                         );
@@ -475,8 +487,10 @@ function AllMaintenanceRequest() {
                         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const Icon = icon
 
                         return (
                             <Box
@@ -501,7 +515,7 @@ function AllMaintenanceRequest() {
                                         width: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    <Icon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -597,7 +611,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Check size={18}/>
+                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Approve
                                                 </Typography>
@@ -615,7 +629,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <X size={18}/>
+                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Reject
                                                 </Typography>
@@ -632,7 +646,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={18}/>
+                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -651,7 +665,7 @@ function AllMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <Eye size={18}/>
+                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Details
                                             </Typography>
@@ -700,7 +714,7 @@ function AllMaintenanceRequest() {
     };
 
     const getMaintenanceRequests = async (
-        pageNum: number = 1, 
+        pageNum: number = 1,
         setTotalFlag = false
     ) => {
         try {
@@ -808,8 +822,8 @@ function AllMaintenanceRequest() {
         const fetchInitialData = async () => {
             try {
                 await Promise.all([
-                    getUser(), 
-                    getRequestStatuses(), 
+                    getUser(),
+                    getRequestStatuses(),
                     getOperators(),
                 ]);
                 setIsLoadingData(false);
@@ -884,10 +898,10 @@ function AllMaintenanceRequest() {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid 
-                        container 
-                        className="title-box" 
-                        direction={'row'} 
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={'row'}
                         size={{ xs: 5, sm: 5 }}
                         sx={{ gap: 1 }}
                     >
@@ -961,8 +975,8 @@ function AllMaintenanceRequest() {
                     /> */}
 
                     {/* Data Table */}
-                    <Grid 
-                        size={{ xs: 12, md: 12 }} 
+                    <Grid
+                        size={{ xs: 12, md: 12 }}
                         // height={'50vh'} 
                         minHeight={'200px'}
                     >
