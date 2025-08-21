@@ -105,6 +105,7 @@ import "./MyAccount.css"
 import { useNotificationStore } from "../../store/notificationStore";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
+import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -219,6 +220,7 @@ const MyAccount: React.FC = () => {
     const getUpdateMaintenanceRequest = async (ID: number) => {
         try {
             const res = await GetMaintenanceRequestByID(ID);
+            console.log("res: ", res)
             if (res) {
                 setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
@@ -230,6 +232,7 @@ const MyAccount: React.FC = () => {
     const getNewInvoice = async (ID: number) => {
         try {
             const res = await GetInvoiceByID(ID);
+            console.log("resx: ", res)
             if (res) {
                 setInvoices((prev) => [res, ...prev]);
                 setInvoiceTotal((prev) => prev + 1);
@@ -291,9 +294,12 @@ const MyAccount: React.FC = () => {
         }
     }
 
-    const handleClickCheck = (data: MaintenanceRequestsInterface) => {
+    const handleClickCheck = async (data: MaintenanceRequestsInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.ID));
+            const requestID = data?.ID;
+            const userID = user?.ID ?? 0;
+            await handleUpdateNotification(userID, true, requestID, undefined, undefined);
             navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
@@ -387,7 +393,7 @@ const MyAccount: React.FC = () => {
             };
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
 
-            await handleUpdateNotification(userId, true, undefined, undefined, selectedInvoice?.ID);
+            await handleUpdateNotification(userId, false, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
@@ -805,7 +811,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -825,7 +831,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
+                                                            <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -847,7 +853,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             {width && width > 530 && (
                                                                 <Typography
                                                                     variant="textButtonClassic"
@@ -872,7 +878,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -894,7 +900,7 @@ const MyAccount: React.FC = () => {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             {width && width > 250 && (
                                                                 <Typography
                                                                     variant="textButtonClassic"
@@ -920,7 +926,7 @@ const MyAccount: React.FC = () => {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Details
                                                     </Typography>
@@ -940,20 +946,19 @@ const MyAccount: React.FC = () => {
                     field: "ID",
                     headerName: "No.",
                     flex: 0.5,
+                    align: "center",
                     headerAlign: "center",
-                    renderCell: (params) => (
-                        <Box
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            {params.value}
-                        </Box>
-                    ),
+                    renderCell: (params) => {
+                        const requestID = params.row.ID;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                        return (
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography sx={{ fontSize: 14 }}>{requestID}</Typography>
+                            </Box>
+                        );
+                    },
                 },
                 {
                     field: "Title",
@@ -1164,7 +1169,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Confirm
                                                 </Typography>
@@ -1174,15 +1179,19 @@ const MyAccount: React.FC = () => {
                                             <Button
                                                 className="btn-rework"
                                                 variant="outlined"
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     setOpenConfirmRework(true);
                                                     setSelectedRequest(data);
+                                                    const fileList = await convertPathsToFiles(data.MaintenanceImages || []);
+                                                    if (fileList) {
+                                                        setRequestFiles(fileList);
+                                                    }
                                                 }}
                                                 sx={{
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
+                                                <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Rework
                                                 </Typography>
@@ -1199,7 +1208,7 @@ const MyAccount: React.FC = () => {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -1280,8 +1289,6 @@ const MyAccount: React.FC = () => {
                     flex: 1,
                     renderCell: (item) => {
                         const data = item.row;
-                        console.log("data: ", data)
-
                         const statusName = data.Status?.Name
                         const statusKey = statusName as keyof typeof paymentStatusConfig;
                         const {
@@ -1295,6 +1302,8 @@ const MyAccount: React.FC = () => {
                         };
 
                         const invoiceNumber = data.InvoiceNumber
+                        const notification = data.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         const billingPeriod = formatToMonthYear(data.BillingPeriod)
                         const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
                             style: "currency",
@@ -1311,6 +1320,7 @@ const MyAccount: React.FC = () => {
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        {hasNotificationForUser && <AnimatedBell />}
                                         <Typography
                                             sx={{
                                                 fontSize: 16,
@@ -1318,7 +1328,6 @@ const MyAccount: React.FC = () => {
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
                                                 maxWidth: "100%",
-                                                fontWeight: 500
                                             }}
                                         >
                                             {invoiceNumber}
@@ -1634,7 +1643,7 @@ const MyAccount: React.FC = () => {
                                         {
                                             (statusName === "Pending Payment" || statusName === "Rejected") ? (
                                                 <>
-                                        <Wallet size={18} />
+                                                    <Wallet size={18} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Pay Now
                                                     </Typography>
@@ -1694,7 +1703,7 @@ const MyAccount: React.FC = () => {
                             width = cardItem.offsetWidth;
                         }
 
-    return (
+                        return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
@@ -2263,7 +2272,11 @@ const MyAccount: React.FC = () => {
                                 variant="scrollable"
                                 allowScrollButtonsMobile
                             >
-                                <Tab label="Maintenance Request" {...a11yProps(0)} />
+                                <Tab label={
+                                    <Badge badgeContent={notificationCounts.UnreadRequests} color="primary">
+                                        Maintenance Request
+                                    </Badge>
+                                } {...a11yProps(0)} />
                                 <Tab label="Room Booking" {...a11yProps(1)} />
                                 <Tab label={
                                     <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">

@@ -49,7 +49,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"UnreadRequests": requestCount,
 		"UnreadTasks":    taskCount,
-		"UnreadInvoice": invoiceCount,
+		"UnreadInvoice":  invoiceCount,
 	})
 }
 
@@ -128,10 +128,12 @@ func CreateNotification(c *gin.Context) {
 
 	switch {
 	case notificationInput.RequestID != 0:
-		if err := db.First(&entity.MaintenanceRequest{}, notificationInput.RequestID).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified request was not found."})
-			return
+		var request entity.MaintenanceRequest 
+		if err := db.First(&request, notificationInput.RequestID).Error; err != nil { 
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified request was not found."}) 
+			return 
 		}
+
 		// ดึง email จาก token
 		userEmail := c.GetString("user_email")
 
@@ -204,6 +206,26 @@ func CreateNotification(c *gin.Context) {
 			createdNotifications = append(createdNotifications, noti)
 		}
 
+		exists := false
+		for _, u := range recipients {
+			if u.ID == request.UserID {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			notiForUser := entity.Notification{
+				IsRead:    true,
+				RequestID: notificationInput.RequestID,
+				UserID:    request.UserID,
+			}
+			if err := db.Create(&notiForUser).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Notification."})
+				return
+			}
+			createdNotifications = append(createdNotifications, notiForUser)
+		}
+
 		services.NotifySocketEvent("notification_created", createdNotifications)
 
 		c.JSON(http.StatusCreated, gin.H{
@@ -226,9 +248,9 @@ func CreateNotification(c *gin.Context) {
 
 		// สร้าง Notification สำหรับ operator
 		noti := entity.Notification{
-			IsRead:    false,
-			TaskID:    notificationInput.TaskID,
-			UserID:    operator.ID,
+			IsRead: false,
+			TaskID: notificationInput.TaskID,
+			UserID: operator.ID,
 		}
 
 		if err := db.Create(&noti).Error; err != nil {
@@ -391,7 +413,7 @@ func UpdateNotificationsByTaskID(c *gin.Context) {
 	// Broadcast socket event (optional)
 	services.NotifySocketEvent("notification_updated_bulk", gin.H{
 		"task_id": taskID,
-		"updated":    updateData,
+		"updated": updateData,
 	})
 
 	c.JSON(http.StatusOK, gin.H{

@@ -301,7 +301,9 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "My Account",
             icon: <ShieldUser />,
             action:
-                notificationCounts?.UnreadInvoice ? (
+                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0) ||
+                (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0)
+                ? (
                     <Chip
                         label={"New"}
                         color="primary"

@@ -17,16 +17,6 @@ import {
 import { TextField } from "../../components/TextField/TextField";
 import { useEffect, useRef, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faCheck,
-    faEye,
-    faMagnifyingGlass,
-    faPaperPlane,
-    faQuestionCircle,
-    faToolbox,
-    faXmark,
-} from "@fortawesome/free-solid-svg-icons";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import { GridColDef } from "@mui/x-data-grid";
@@ -34,11 +24,9 @@ import {
     GetMaintenanceTask,
     GetMaintenanceTaskByID,
     GetMaintenanceTypes,
-    GetNotificationsByTaskAndUser,
     GetRequestStatuses,
     GetUserById,
     socketUrl,
-    UpdateNotificationByID,
 } from "../../services/http";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -70,7 +58,7 @@ import { faClock } from "@fortawesome/free-regular-svg-icons";
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
-import { BrushCleaning, Check, Clock, Eye, HardHat, HelpCircle, Send, X } from "lucide-react";
+import { Briefcase, BrushCleaning, Check, Clock, Eye, HardHat, HelpCircle, Search, Send, X } from "lucide-react";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 export function a11yProps(index: number) {
@@ -265,7 +253,7 @@ function AcceptWork() {
                                                     <Grid size={{ xs: 5 }}>
                                                         <Tooltip title={"Start"}>
                                                             <Button
-                                                                variant="containedBlue"
+                                                                variant="contained"
                                                                 onClick={() => {
                                                                     handleClickAcceptWork("In Progress", "accept", undefined, data)
                                                                 }}
@@ -281,7 +269,7 @@ function AcceptWork() {
                                                     <Grid size={{ xs: 5 }}>
                                                         <Tooltip title={"Cancel"}>
                                                             <Button
-                                                                variant="containedCancel"
+                                                                variant="outlinedCancel"
                                                                 onClick={() => {
                                                                     setOpenConfirmCancelled(true);
                                                                     setSelectedTask(data);
@@ -301,7 +289,7 @@ function AcceptWork() {
                                                     <Grid size={{ xs: 5 }}>
                                                         <Tooltip title={"Submit"}>
                                                             <Button
-                                                                variant="containedBlue"
+                                                                variant="contained"
                                                                 onClick={() => {
                                                                     setOpenPopupSubmit(true);
                                                                     setSelectedTask(data);
@@ -318,7 +306,7 @@ function AcceptWork() {
                                                     <Grid size={{ xs: 5 }}>
                                                         <Tooltip title={"Cancel"}>
                                                             <Button
-                                                                variant="containedCancel"
+                                                                variant="outlinedCancel"
                                                                 onClick={() => {
                                                                     setOpenConfirmCancelled(true);
                                                                     setSelectedTask(data);
@@ -431,6 +419,7 @@ function AcceptWork() {
                     type: "string",
                     flex: 1.6,
                     renderCell: (params) => {
+                        console.log(params.row)
                         const requests = params.row.MaintenanceRequest;
                         const areaID = requests?.Area?.ID;
                         const areaDetail = requests?.AreaDetail;
@@ -666,7 +655,7 @@ function AcceptWork() {
                         <Tooltip title={"Start"}>
                             <Button
                                 className="btn-accept"
-                                variant="containedBlue"
+                                variant="contained"
                                 onClick={() => {
                                     handleClickAcceptWork("In Progress", "accept", undefined, data)
                                 }}
@@ -681,7 +670,7 @@ function AcceptWork() {
                         <Tooltip title={"Cancel"}>
                             <Button
                                 className="btn-reject"
-                                variant="containedCancel"
+                                variant="outlinedCancel"
                                 onClick={() => {
                                     setOpenConfirmCancelled(true);
                                     setSelectedTask(data);
@@ -702,7 +691,7 @@ function AcceptWork() {
                         <Tooltip title={"Submit"}>
                             <Button
                                 className="btn-submit"
-                                variant="containedBlue"
+                                variant="contained"
                                 onClick={() => {
                                     setOpenPopupSubmit(true);
                                     setSelectedTask(data);
@@ -718,7 +707,7 @@ function AcceptWork() {
                         <Tooltip title={"Cancel"}>
                             <Button
                                 className="btn-reject"
-                                variant="containedCancel"
+                                variant="outlinedCancel"
                                 onClick={() => {
                                     setOpenConfirmCancelled(true);
                                     setSelectedTask(data);
@@ -822,6 +811,7 @@ function AcceptWork() {
     const getNewMaintenanceTask = async (ID: number) => {
         try {
             const res = await GetMaintenanceTaskByID(ID);
+            console.log("res: ", res)
             if (res) {
                 setMaintenanceTasks((prev) => [res, ...prev]);
                 setTotal((prev) => prev + 1);
@@ -881,7 +871,6 @@ function AcceptWork() {
         handleActionAcception(statusID, {
             selectedTask: data ?? selectedTask,
             setAlerts,
-            setOpenConfirmAccepted,
             setOpenConfirmCancelled,
             actionType,
             note,
@@ -1061,7 +1050,7 @@ function AcceptWork() {
                                                 input: {
                                                     startAdornment: (
                                                         <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                            <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
                                                         </InputAdornment>
                                                     ),
                                                 },
@@ -1096,7 +1085,7 @@ function AcceptWork() {
                                                 displayEmpty
                                                 startAdornment={
                                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                        <FontAwesomeIcon icon={faToolbox} size="lg" />
+                                                        <Briefcase size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
                                                     </InputAdornment>
                                                 }
                                             >

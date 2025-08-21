@@ -21,7 +21,7 @@ import {
     Skeleton,
     Typography,
 } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     CreateMaintenanceImages,
     CreateMaintenanceRequest,
@@ -45,31 +45,13 @@ import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceReque
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faAngleLeft,
-    faEnvelope,
-    faFloppyDisk,
-    faPencil,
-    faPhone,
-    faRotateRight,
-    faUndo,
-    faUpload,
-    faUserTie,
-} from "@fortawesome/free-solid-svg-icons";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ImageUploader from "../../components/ImageUploader/ImageUploader";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
-import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
-import dayjs from "dayjs";
-import { LocalizationProvider, PickersActionBar } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { MobileTimePicker } from "../../components/MobileTimePicker/MobileTimePicker";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import TimePickerField from "../../components/TimePickerField/TimePickerField";
-import { Mail, NotebookPen, Pencil, Phone, RotateCcw, Save, Undo2, Upload, UserRound } from "lucide-react";
+import { ChevronLeft, Mail, NotebookPen, Pencil, Phone, RotateCcw, Save, Undo2, Upload, UserRound } from "lucide-react";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -343,14 +325,7 @@ function CreateMaintenanceRequestPage() {
                 RequestID: resRequest.data.ID,
             };
 
-            const resNotification = await CreateNotification(notificationData);
-            if (!resNotification) {
-                handleSetAlert(
-                    "error",
-                    resNotification?.Error || "Failed to create notification"
-                );
-                return;
-            }
+            await CreateNotification(notificationData);
 
             handleSetAlert(
                 "success",
@@ -544,7 +519,7 @@ function CreateMaintenanceRequestPage() {
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
                             <Button variant="outlined" onClick={handleBack}>
-                                <FontAwesomeIcon icon={faAngleLeft} size="lg" />
+                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
                         </Box>
