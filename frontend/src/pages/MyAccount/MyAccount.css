@@ -8,6 +8,13 @@
         }
     }
 
+    @container (max-width: 110px) {
+        .btn-payment,
+        .btn-download-pdf {
+            width: 100%;
+        }
+    }
+
     @container (max-width: 160px) {
         .btn-confirm,
         .btn-rework, .btn-detail {

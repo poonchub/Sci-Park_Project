@@ -63,6 +63,7 @@ import {
     Wallet,
     ReceiptText,
     Repeat,
+    HandCoins,
 } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
@@ -99,13 +100,15 @@ import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
-import { updatePaymentAndInvoice } from "../../utils/handleClickUpdatePayment";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 import "./MyAccount.css"
 import { useNotificationStore } from "../../store/notificationStore";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
+import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAndInvoice";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -375,7 +378,7 @@ const MyAccount: React.FC = () => {
             const paymentData: PaymentInterface = {
                 PaymentDate: resCheckSlip.data.transTimestamp,
                 Amount: selectedInvoice?.TotalAmount,
-                UserID: userId,
+                PayerID: userId,
                 InvoiceID: selectedInvoice?.ID,
             };
 
@@ -385,7 +388,7 @@ const MyAccount: React.FC = () => {
                     formData.append(key, value);
                 }
             }
-            formData.append("files", slipfile[0]);
+            formData.append("slip", slipfile[0]);
             const resPayment = await CreatePayment(formData);
 
             const invoiceData: InvoiceInterface = {
@@ -393,7 +396,7 @@ const MyAccount: React.FC = () => {
             };
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
 
-            await handleUpdateNotification(userId, false, undefined, undefined, selectedInvoice?.ID);
+            await handleUpdateNotification(userId, true, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
@@ -429,7 +432,7 @@ const MyAccount: React.FC = () => {
                 return;
             }
 
-            await updatePaymentAndInvoice(
+            await handleUpdatePaymentAndInvoice(
                 selectedInvoice.ID,
                 selectedInvoice?.Payments?.ID ?? 0,
                 statusID,
@@ -1316,6 +1319,9 @@ const MyAccount: React.FC = () => {
                             width = cardItem.offsetWidth;
                         }
 
+                        const receiptPath = data.Payments?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
@@ -1376,6 +1382,7 @@ const MyAccount: React.FC = () => {
                                             {totalAmount}
                                         </Typography>
                                     </Box>
+
                                 </Grid>
 
                                 <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
@@ -1409,6 +1416,44 @@ const MyAccount: React.FC = () => {
                                     </Box>
                                 </Grid>
 
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: 'inline-flex',
+                                            gap: 1,
+                                            border: '1px solid rgb(109, 110, 112, 0.4)',
+                                            borderRadius: 1,
+                                            px: 1,
+                                            py: 0.5,
+                                            bgcolor: '#FFF',
+                                            cursor: 'pointer',
+                                            transition: 'all ease 0.3s',
+                                            alignItems: 'center',
+                                            width: {
+                                                xs: '100%', mobileS: 'auto'
+                                            },
+                                            "&:hover": {
+                                                color: 'primary.main',
+                                                borderColor: 'primary.main'
+                                            }
+                                        }}
+                                    >
+                                        <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                        <Typography
+                                            variant="body1"
+                                            onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {fileName}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
                                 <Divider sx={{ width: "100%", my: 1 }} />
 
                                 <Grid size={{ xs: 12 }}>
@@ -1421,27 +1466,9 @@ const MyAccount: React.FC = () => {
                                     >
                                         <Grid container spacing={0.8} size={{ xs: 12 }}>
                                             <Grid size={{ xs: 6 }}>
-                                                <Tooltip title="Download PDF">
-                                                    <Button
-                                                        variant="contained"
-                                                        onClick={async () => {
-                                                            setOpenPDF(true);
-                                                            setSelectedInvoice(data);
-                                                            setLoadingDownloadId(null);
-                                                        }}
-                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
-                                                    >
-                                                        <FilePdf size={16} />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Download PDF
-                                                        </Typography>
-                                                    </Button>
-                                                </Tooltip>
-                                            </Grid>
-                                            <Grid size={{ xs: 6 }}>
                                                 <Tooltip title={statusName === "Pending Payment" ? "Pay Now" : "View Slip"}>
                                                     <Button
-                                                        variant="outlinedGray"
+                                                        variant="contained"
                                                         onClick={() => {
                                                             setSelectedInvoice((prev) => ({
                                                                 ...prev,
@@ -1449,25 +1476,43 @@ const MyAccount: React.FC = () => {
                                                             }));
                                                             setOpenPopupPayment(true);
                                                         }}
-                                                        sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', height: '100%' }}
+                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
                                                         {
                                                             (statusName === "Pending Payment" || statusName === "Rejected") ? (
                                                                 <>
-                                                                    <Wallet size={18} />
+                                                                    <HandCoins size={18} />
                                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                                         Pay Now
                                                                     </Typography>
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <Eye size={18} />
+                                                                    <Wallet size={18} />
                                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                                         View Slip
                                                                     </Typography>
                                                                 </>
                                                             )
                                                         }
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
+                                            <Grid size={{ xs: 6 }}>
+                                                <Tooltip title="Download PDF">
+                                                    <Button
+                                                        variant="outlinedGray"
+                                                        onClick={async () => {
+                                                            setOpenPDF(true);
+                                                            setSelectedInvoice(data);
+                                                            setLoadingDownloadId(null);
+                                                        }}
+                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
+                                                    >
+                                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Download PDF
+                                                        </Typography>
                                                     </Button>
                                                 </Tooltip>
                                             </Grid>
@@ -1484,7 +1529,7 @@ const MyAccount: React.FC = () => {
                 {
                     field: "InvoiceNumber",
                     headerName: "Invoice No.",
-                    flex: 0.3,
+                    flex: 1,
                     align: "center",
                     headerAlign: "center",
                     renderCell: (params) => {
@@ -1503,7 +1548,7 @@ const MyAccount: React.FC = () => {
                     field: "BillingPeriod",
                     headerName: "Billing Period",
                     type: "string",
-                    flex: 0.4,
+                    flex: 1.5,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -1523,7 +1568,7 @@ const MyAccount: React.FC = () => {
                     field: "TotalAmount",
                     headerName: "Total Amount",
                     type: "string",
-                    flex: 0.4,
+                    flex: 1.5,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -1547,7 +1592,7 @@ const MyAccount: React.FC = () => {
                     field: "Status",
                     headerName: "Status",
                     type: "string",
-                    flex: 0.5,
+                    flex: 1.8,
                     renderCell: (item) => {
                         const statusName = item.value.Name || "";
                         const statusKey = item.value.Name as keyof typeof roomStatusConfig;
@@ -1600,7 +1645,7 @@ const MyAccount: React.FC = () => {
                     field: "Actions",
                     headerName: "Actions",
                     type: "string",
-                    flex: 0.6,
+                    flex: 1.5,
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status?.Name
@@ -1615,22 +1660,10 @@ const MyAccount: React.FC = () => {
                                     height: "100%",
                                 }}
                             >
-                                <Tooltip title="Download PDF">
-                                    <Button
-                                        variant="contained"
-                                        onClick={async () => {
-                                            setOpenPDF(true);
-                                            setSelectedInvoice(data);
-                                            setLoadingDownloadId(null);
-                                        }}
-                                        sx={{ minWidth: "42px" }}
-                                    >
-                                        <FilePdf size={16} />
-                                    </Button>
-                                </Tooltip>
                                 <Tooltip title={statusName === "Pending Payment" ? "Pay Now" : "View Slip"}>
                                     <Button
-                                        variant="outlinedGray"
+                                        variant="contained"
+                                        className="btn-payment"
                                         onClick={() => {
                                             setSelectedInvoice((prev) => ({
                                                 ...prev,
@@ -1638,19 +1671,19 @@ const MyAccount: React.FC = () => {
                                             }));
                                             setOpenPopupPayment(true);
                                         }}
-                                        sx={{ minWidth: "42px", bgcolor: "#FFF" }}
+                                        sx={{ minWidth: "42px" }}
                                     >
                                         {
                                             (statusName === "Pending Payment" || statusName === "Rejected") ? (
                                                 <>
-                                                    <Wallet size={18} />
+                                                    <HandCoins size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Pay Now
                                                     </Typography>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Eye size={18} />
+                                                    <Wallet size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         View Slip
                                                     </Typography>
@@ -1659,6 +1692,78 @@ const MyAccount: React.FC = () => {
                                         }
                                     </Button>
                                 </Tooltip>
+
+                                <Tooltip title="Download PDF">
+                                    <Button
+                                        variant="outlinedGray"
+                                        className="btn-download-pdf"
+                                        onClick={async () => {
+                                            setOpenPDF(true);
+                                            setSelectedInvoice(data);
+                                            setLoadingDownloadId(null);
+                                        }}
+                                        sx={{ minWidth: "42px" }}
+                                    >
+                                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                    </Button>
+                                </Tooltip>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Receipt",
+                    headerName: "Receipt",
+                    type: "string",
+                    flex: 2,
+                    renderCell: (item) => {
+                        const data = item.row;
+                        const receiptPath = data.Payments?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        gap: 1,
+                                        border: '1px solid rgb(109, 110, 112, 0.4)',
+                                        borderRadius: 1,
+                                        px: 1,
+                                        py: 0.5,
+                                        bgcolor: '#FFF',
+                                        cursor: 'pointer',
+                                        transition: 'all ease 0.3s',
+                                        alignItems: 'center',
+                                        width: '100%',
+                                        "&:hover": {
+                                            color: 'primary.main',
+                                            borderColor: 'primary.main'
+                                        }
+                                    }}
+                                >
+                                    <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                    <Typography
+                                        variant="body1"
+                                        onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                        sx={{
+                                            fontSize: 14,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {fileName}
+                                    </Typography>
+                                </Box>
                             </Box>
                         );
                     },

@@ -1,5 +1,5 @@
 import { LucideIcon } from "lucide-react";
-import { Clock, Hourglass, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { Clock, Hourglass, FileText, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 
 export interface PaymentStatusConfig {
     color: string;
@@ -19,6 +19,12 @@ export const paymentStatusConfig: Record<string, PaymentStatusConfig> = {
         color: "#17A2B8",
         colorLite: "rgba(23, 162, 184, 0.2)", // light cyan
         icon: Hourglass,
+    },
+    "Awaiting Receipt": {
+        // ตรวจสอบสลิปแล้ว รอออกใบเสร็จ
+        color: "#6F42C1",
+        colorLite: "rgba(111, 66, 193, 0.2)", // light purple
+        icon: FileText, // 📄 ใช้ icon เอกสารแทนใบเสร็จ
     },
     "Paid": {
         // จ่ายแล้วและตรวจสอบเรียบร้อย
