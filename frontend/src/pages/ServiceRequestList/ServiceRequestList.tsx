@@ -772,9 +772,6 @@ const ServiceRequestList: React.FC = () => {
         setSelectedStatuses([0]); // Reset to "All" status
         setSelectedDate(dayjs()); // Reset to current date
         setPage(0);
-        
-        // เรียก API ใหม่หลังจาก clear filter - ส่งเฉพาะ page และ limit
-        fetchServiceRequestAreas("0", 0, limit, undefined, undefined);
     };
 
 
@@ -857,6 +854,22 @@ const ServiceRequestList: React.FC = () => {
         }
     }, [page, limit]);
 
+    // Filter data in frontend based on search text
+    const filteredServiceRequests = requestServiceAreas.filter((request) => {
+        if (!searchText) return true;
+        
+        const searchLower = searchText.toLowerCase();
+        const companyName = request.CompanyName?.toLowerCase() || "";
+        const userName = request.UserNameCombined?.toLowerCase() || "";
+        const requestId = request.ID?.toString() || "";
+        
+        return (
+            companyName.includes(searchLower) ||
+            userName.includes(searchLower) ||
+            requestId.includes(searchText)
+        );
+    });
+
     // Remove statusCards mapping since we'll use RequestStatusCards component
 
     return (
@@ -915,9 +928,9 @@ const ServiceRequestList: React.FC = () => {
                     <Grid size={{ xs: 12, md: 12 }} minHeight={'200px'}>
                         {!isLoadingData && statusCounts ? (
                             <CustomDataGrid
-                                rows={requestServiceAreas}
+                                rows={filteredServiceRequests}
                                 columns={getColumns()}
-                                rowCount={total}
+                                rowCount={filteredServiceRequests.length}
                                 page={page}
                                 limit={limit}
                                 onPageChange={setPage}
