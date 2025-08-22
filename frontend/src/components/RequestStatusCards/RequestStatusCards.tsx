@@ -13,10 +13,11 @@ interface Props {
         lg?: number;
         xl?: number;
     };
+    customDisplayStatuses?: string[];
 }
 
-const RequestStatusCards: React.FC<Props> = ({ statusCounts, size }) => {
-    const displayStatuses = ["Pending", "Approved", "In Progress", "Waiting For Review", "Completed", "Unsuccessful"];
+const RequestStatusCards: React.FC<Props> = ({ statusCounts, size, customDisplayStatuses }) => {
+    const displayStatuses = customDisplayStatuses || ["Pending", "Approved", "In Progress", "Waiting For Review", "Completed", "Unsuccessful"];
 
     const statusCards = displayStatuses.map((status) => {
         let count = statusCounts?.[status] ?? 0;

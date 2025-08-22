@@ -1002,15 +1002,10 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล BusinessGroup
 	businessGroups := []entity.BusinessGroup{
-		{Name: "Technology"},
-		{Name: "Healthcare"},
-		{Name: "Manufacturing"},
-		{Name: "Finance"},
-		{Name: "Education"},
-		{Name: "Retail"},
-		{Name: "Consulting"},
-		{Name: "Research & Development"},
-		{Name: "Other"},
+		{Name: "IT Software & digital content"},
+		{Name: "Agriculture & Food"},
+		{Name: "Energy Tech & material"},
+		{Name: "Medical & Bio-Tech"},
 	}
 	for _, businessGroup := range businessGroups {
 		db.FirstOrCreate(&businessGroup, entity.BusinessGroup{Name: businessGroup.Name})
@@ -1219,6 +1214,38 @@ func SeedDatabase() {
 		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
 			RequestServiceAreaID: doc.RequestServiceAreaID,
 			RoomID:               doc.RoomID,
+		})
+	}
+
+	// AboutCompany data
+	aboutCompanies := []entity.AboutCompany{
+		{
+			UserID:                      1,
+			CorporateRegistrationNumber: "1234567890123",
+			BusinessGroupID:             &[]uint{1}[0], // IT Software & digital content
+			CompanySizeID:               &[]uint{1}[0], // Small (1-50 employees)
+			MainServices:                "Software Development, Digital Content Creation",
+			RegisteredCapital:           1000000.00,
+			HiringRate:                  5,
+			ResearchInvestmentValue:     500000.00,
+			ThreeYearGrowthForecast:     "Expected 50% growth in software development services",
+		},
+		{
+			UserID:                      2,
+			CorporateRegistrationNumber: "9876543210987",
+			BusinessGroupID:             &[]uint{2}[0], // Agriculture & Food
+			CompanySizeID:               &[]uint{2}[0], // Medium (51-200 employees)
+			MainServices:                "Agricultural Research, Food Processing",
+			RegisteredCapital:           5000000.00,
+			HiringRate:                  15,
+			ResearchInvestmentValue:     2000000.00,
+			ThreeYearGrowthForecast:     "Expected 30% growth in agricultural technology",
+		},
+	}
+
+	for _, aboutCompany := range aboutCompanies {
+		db.FirstOrCreate(&aboutCompany, entity.AboutCompany{
+			UserID: aboutCompany.UserID,
 		})
 	}
 
