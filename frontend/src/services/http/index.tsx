@@ -2242,6 +2242,23 @@ async function UpdateRequestServiceArea(requestID: number, formData: FormData): 
     }
 }
 
+async function UpdateRequestServiceAreaStatus(requestID: number, requestStatusID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/request-service-area/${requestID}/status`, {
+            request_status_id: requestStatusID
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating request service area status:", error);
+        throw error;
+    }
+}
+
 // AboutCompany functions
 async function GetAboutCompanyByUserID(userID: number): Promise<AboutCompanyInterface> {
     try {
@@ -2403,6 +2420,14 @@ async function ListRequestServiceAreas(
     search?: string | undefined,
     createdAt?: string | undefined
 ) {
+    console.log("🔍 [DEBUG] ListRequestServiceAreas called with:", {
+        requestStatusID,
+        page,
+        limit,
+        search,
+        createdAt
+    });
+
     const requestOptions = {
         method: "GET",
         headers: {
@@ -2433,17 +2458,22 @@ async function ListRequestServiceAreas(
         params.append("created_at", createdAt.trim());
     }
 
+    const finalUrl = `${apiUrl}/request-service-areas?${params.toString()}`;
+    console.log("🔍 [DEBUG] Final API URL:", finalUrl);
+
     let res = await fetch(
-        `${apiUrl}/request-service-areas?${params.toString()}`,
+        finalUrl,
         requestOptions
     ).then((res) => {
         if (res.status == 200) {
             return res.json();
         } else {
+            console.error("🔍 [DEBUG] API Error:", res.status, res.statusText);
             return false;
         }
     });
 
+    console.log("🔍 [DEBUG] API Response:", res);
     return res;
 }
 
@@ -2616,6 +2646,7 @@ export {
     CreateRequestServiceAreaAndAboutCompany,
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
+    UpdateRequestServiceAreaStatus,
     ListRequestServiceAreas,
 
     // AboutCompany

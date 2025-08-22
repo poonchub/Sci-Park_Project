@@ -5,10 +5,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
-import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups } from "../../services/http";
+import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById } from "../../services/http";
 import { RequestServiceAreaInterface, RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
+import { UserInterface } from "../../interfaces/IUser";
 import FilterSection from "../../components/FilterSection/FilterSection";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import { GridColDef } from "@mui/x-data-grid";
@@ -22,6 +23,7 @@ const ServiceRequestList: React.FC = () => {
     const [requestServiceAreas, setRequestServiceAreas] = useState<RequestServiceAreaListInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [businessGroups, setBusinessGroups] = useState<BusinessGroupInterface[]>([]);
+    const [user, setUser] = useState<UserInterface>();
     
     // Search and filter states
     const [searchText, setSearchText] = useState("");
@@ -229,8 +231,7 @@ const ServiceRequestList: React.FC = () => {
                                                                              className="btn-approve"
                                                                              variant="contained"
                                                                              onClick={() => {
-                                                                                 // TODO: Implement approve functionality
-                                                                                 console.log("Approve clicked for:", data);
+                                                                                 handleApproveReject(data.ID, 'approve');
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -247,8 +248,7 @@ const ServiceRequestList: React.FC = () => {
                                                                              className="btn-reject"
                                                                              variant="outlinedCancel"
                                                                              onClick={() => {
-                                                                                 // TODO: Implement reject functionality
-                                                                                 console.log("Reject clicked for:", data);
+                                                                                 handleApproveReject(data.ID, 'reject');
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -566,8 +566,7 @@ const ServiceRequestList: React.FC = () => {
                                              className="btn-approve"
                                              variant="contained"
                                              onClick={() => {
-                                                 // TODO: Implement approve functionality
-                                                 console.log("Approve clicked for:", data);
+                                                 handleApproveReject(data.ID, 'approve');
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -584,8 +583,7 @@ const ServiceRequestList: React.FC = () => {
                                              className="btn-reject"
                                              variant="outlinedCancel"
                                              onClick={() => {
-                                                 // TODO: Implement reject functionality
-                                                 console.log("Reject clicked for:", data);
+                                                 handleApproveReject(data.ID, 'reject');
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -643,33 +641,41 @@ const ServiceRequestList: React.FC = () => {
         ];
     };
 
+    // Fetch user
+    const fetchUser = async () => {
+        try {
+            const res = await GetUserById(Number(localStorage.getItem("userId")));
+            if (res) {
+                setUser(res);
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
     // Fetch request statuses
     const fetchRequestStatuses = async () => {
         try {
-            console.log("📋 [DEBUG] Fetching request statuses...");
             const res = await GetRequestStatuses();
             
             if (res) {
                 setRequestStatuses(res);
-                
             }
         } catch (error) {
-            console.error("🚨 [DEBUG] Error fetching request statuses:", error);
+            console.error("Error fetching request statuses:", error);
         }
     };
 
     // Fetch business groups
     const fetchBusinessGroups = async () => {
         try {
-            console.log("📋 [DEBUG] Fetching business groups...");
             const res = await ListBusinessGroups();
             
             if (res) {
                 setBusinessGroups(res);
-                console.log("✅ [DEBUG] Business groups loaded:", res);
             }
         } catch (error) {
-            console.error("🚨 [DEBUG] Error fetching business groups:", error);
+            console.error("Error fetching business groups:", error);
         }
     };
 
@@ -682,13 +688,6 @@ const ServiceRequestList: React.FC = () => {
         createdAt?: string
     ) => {
         try {
-            console.log("🔍 [DEBUG] fetchServiceRequestAreas called with params:", {
-                requestStatusID,
-                page,
-                limit,
-                search,
-                createdAt
-            });
             
             // สร้าง URL parameters ที่มีเฉพาะค่าที่ไม่ใช่ 0, undefined, หรือ empty
             const params = new URLSearchParams();
@@ -712,8 +711,6 @@ const ServiceRequestList: React.FC = () => {
                 params.append("created_at", createdAt.trim());
             }
             
-            console.log("📤 [DEBUG] Final URL parameters:", params.toString());
-            
             setIsLoadingData(true);
             const res = await ListRequestServiceAreas(
                 requestStatusID,
@@ -723,16 +720,11 @@ const ServiceRequestList: React.FC = () => {
                 createdAt && createdAt.trim() !== "" && createdAt !== "undefined" ? createdAt.trim() : undefined
             );
             
-            console.log("📡 [DEBUG] API Response:", res);
-            
-            if (res && res.data) {
-                console.log("✅ [DEBUG] Setting data:", {
-                    dataLength: res.data.length,
-                    total: res.total,
-                    data: res.data
-                });
+            // Always set the data, even if it's null or empty
+            if (res) {
                 
-                setRequestServiceAreas(res.data);
+                // Set data to empty array if null, otherwise use the data
+                setRequestServiceAreas(res.data || []);
                 setTotal(res.total || 0);
                 
                 // Calculate status counts
@@ -744,41 +736,38 @@ const ServiceRequestList: React.FC = () => {
                     "Unsuccessful": 0
                 };
                 
-                                 // Count by status ID based on actual database status IDs
-                 res.data.forEach((item: any) => {
-                     const statusID = item.StatusID;
-                     // Map status ID to status name based on actual database
-                     // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful
-                     let statusName = "Unknown";
-                     if (statusID === 1) statusName = "Created";
-                     else if (statusID === 2) statusName = "Pending";
-                     else if (statusID === 3) statusName = "Approved";
-                     else if (statusID === 4) statusName = "In Progress";
-                     
-                     else if (statusID === 6) statusName = "Completed";
-                     
-                     else if (statusID === 8) statusName = "Unsuccessful";
-                     
-                     // Only count statuses that are in our display list
-                     if (counts.hasOwnProperty(statusName)) {
-                         counts[statusName]++;
-                     }
-                 });
+                // Count by status ID based on actual database status IDs
+                if (res.data && Array.isArray(res.data)) {
+                    res.data.forEach((item: any) => {
+                        const statusID = item.StatusID;
+                        // Map status ID to status name based on actual database
+                        // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful
+                        let statusName = "Unknown";
+                        if (statusID === 1) statusName = "Created";
+                        else if (statusID === 2) statusName = "Pending";
+                        else if (statusID === 3) statusName = "Approved";
+                        else if (statusID === 4) statusName = "In Progress";
+                        else if (statusID === 6) statusName = "Completed";
+                        else if (statusID === 8) statusName = "Unsuccessful";
+                        
+                        // Only count statuses that are in our display list
+                        if (counts.hasOwnProperty(statusName)) {
+                            counts[statusName]++;
+                        }
+                    });
+                }
                 
-                console.log("📊 [DEBUG] Calculated status counts:", counts);
                 setStatusCounts(counts);
             }
         } catch (error) {
-            console.error("🚨 [DEBUG] Error fetching service request areas:", error);
+            console.error("Error fetching service request areas:", error);
         } finally {
             setIsLoadingData(false);
-            
         }
     };
 
     // Handle clear filter
     const handleClearFilter = () => {
-        console.log("🧹 [DEBUG] Clearing all filters");
         setSearchText("");
         setSelectedStatuses([0]); // Reset to "All" status
         setSelectedDate(dayjs()); // Reset to current date
@@ -786,61 +775,86 @@ const ServiceRequestList: React.FC = () => {
         
         // เรียก API ใหม่หลังจาก clear filter - ส่งเฉพาะ page และ limit
         fetchServiceRequestAreas("0", 0, limit, undefined, undefined);
-        
-        console.log("✅ [DEBUG] Filters cleared and API called");
     };
 
-    // Handle search and filter
-    const handleSearchAndFilter = () => {
-        // แปลง selectedStatuses เป็น request_status_id
-        // selectedStatuses[0] === 0 หมายถึง "All" ให้ส่ง "0"
-        const statusID = selectedStatuses[0] === 0 ? "0" : selectedStatuses[0].toString();
-        
-        // แปลงวันที่เป็นรูปแบบ YYYY-MM สำหรับการค้นหาเฉพาะเดือน
-        let dateStr = "";
-        if (selectedDate) {
-            // ใช้รูปแบบ YYYY-MM เพื่อค้นหาเฉพาะเดือน (เช่น 2025-08)
-            dateStr = selectedDate.format("YYYY-MM");
-        }
-        
-        // ตรวจสอบว่า searchText ไม่ใช่ empty string หรือ "undefined"
-        const searchParam = searchText.trim() !== "" && searchText.trim() !== "undefined" ? searchText.trim() : undefined;
-        
-        console.log("🔍 [DEBUG] handleSearchAndFilter called with:", {
-            statusID,
-            dateStr,
-            searchText: searchParam,
-            limit,
-            selectedStatuses,
-            selectedDate: selectedDate?.format("YYYY-MM-DD")
-        });
-        
-        // ส่งเฉพาะ parameters ที่มีค่า
-        fetchServiceRequestAreas(
-            statusID,
-            0, // Reset to first page when searching
-            limit,
-            searchParam,
-            dateStr || undefined
-        );
-        setPage(0); // Reset page to 0
-        
-        console.log("✅ [DEBUG] Search and filter applied");
-    };
+
 
     // Initial data fetch
     useEffect(() => {
-        
-        fetchRequestStatuses();
-        fetchBusinessGroups();
-        // เรียก API ครั้งแรกโดยไม่ใช้ filter ใดๆ
-        fetchServiceRequestAreas("0", 0, 20, undefined, undefined);
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([
+                    fetchUser(),
+                    fetchRequestStatuses(),
+                    fetchBusinessGroups(),
+                ]);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
     }, []);
 
-    // Handle search and filter changes
+    // Load initial data after user and requestStatuses are ready
     useEffect(() => {
-        
-        handleSearchAndFilter();
+        if (user && requestStatuses) {
+            fetchServiceRequestAreas("0", 0, 20, undefined, undefined);
+        }
+    }, [user, requestStatuses]);
+
+    // Handle approve/reject actions
+    const handleApproveReject = async (requestID: number, action: 'approve' | 'reject') => {
+        try {
+            setIsLoadingData(true);
+            
+            // Determine the status ID based on action
+            const statusID = action === 'approve' ? 3 : 8; // 3 = Approved, 8 = Unsuccessful
+            
+            // Call the API to update the status
+            await UpdateRequestServiceAreaStatus(requestID, statusID);
+            
+            // Refresh the data
+            await fetchServiceRequestAreas(
+                selectedStatuses.join(','),
+                page,
+                limit,
+                searchText || undefined,
+                selectedDate ? selectedDate.format('YYYY-MM') : undefined
+            );
+            
+        } catch (error) {
+            console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, error);
+            // You might want to show a toast notification here
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
+
+    // Handle filter changes (status and date)
+    useEffect(() => {
+        if (user && requestStatuses) {
+            fetchServiceRequestAreas(
+                selectedStatuses[0] === 0 ? "0" : selectedStatuses[0].toString(),
+                0, // Reset to page 0 when filters change
+                limit,
+                undefined,
+                selectedDate ? selectedDate.format("YYYY-MM") : undefined
+            );
+        }
+    }, [selectedStatuses, selectedDate]);
+
+    // Handle pagination changes
+    useEffect(() => {
+        if (user && requestStatuses) {
+            fetchServiceRequestAreas(
+                selectedStatuses[0] === 0 ? "0" : selectedStatuses[0].toString(),
+                page,
+                limit,
+                searchText || undefined,
+                selectedDate ? selectedDate.format("YYYY-MM") : undefined
+            );
+        }
     }, [page, limit]);
 
     // Remove statusCards mapping since we'll use RequestStatusCards component

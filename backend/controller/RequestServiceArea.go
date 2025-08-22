@@ -512,7 +512,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 	if search != "" {
 		searchTerm := "%" + search + "%"
 		db = db.Joins("JOIN users ON users.id = request_service_areas.user_id").
-			Where("(users.first_name LIKE ? OR users.last_name LIKE ? OR users.email LIKE ? OR users.company_name LIKE ?)",
+			Where("(LOWER(users.first_name) LIKE LOWER(?) OR LOWER(users.last_name) LIKE LOWER(?) OR LOWER(users.email) LIKE LOWER(?) OR LOWER(users.company_name) LIKE LOWER(?))",
 				searchTerm, searchTerm, searchTerm, searchTerm)
 	}
 
@@ -522,7 +522,9 @@ func ListRequestServiceAreas(c *gin.Context) {
 		if len(createdAt) == 7 && createdAt[4] == '-' {
 			// รูปแบบ YYYY-MM (เช่น 2025-08) - ค้นหาเฉพาะเดือน
 			// ใช้ strftime สำหรับ SQLite แทน DATE_FORMAT
-			db = db.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", createdAt)
+			dateFilter := createdAt + "%"
+			// Try a simpler approach first - just check if the date contains the year and month
+			db = db.Where("request_service_areas.created_at LIKE ?", dateFilter)
 		} else if len(createdAt) == 10 && createdAt[4] == '-' && createdAt[7] == '-' {
 			// รูปแบบ YYYY-MM-DD (เช่น 2025-08-21) - ค้นหาวันที่เฉพาะ
 			db = db.Where("DATE(request_service_areas.created_at) = ?", createdAt)
@@ -551,7 +553,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 	if search != "" {
 		searchTerm := "%" + search + "%"
 		countQuery = countQuery.Joins("JOIN users ON users.id = request_service_areas.user_id").
-			Where("(users.first_name LIKE ? OR users.last_name LIKE ? OR users.email LIKE ? OR users.company_name LIKE ?)",
+			Where("(LOWER(users.first_name) LIKE LOWER(?) OR LOWER(users.last_name) LIKE LOWER(?) OR LOWER(users.email) LIKE LOWER(?) OR LOWER(users.company_name) LIKE LOWER(?))",
 				searchTerm, searchTerm, searchTerm, searchTerm)
 	}
 
@@ -561,7 +563,8 @@ func ListRequestServiceAreas(c *gin.Context) {
 		if len(createdAt) == 7 && createdAt[4] == '-' {
 			// รูปแบบ YYYY-MM (เช่น 2025-08) - ค้นหาเฉพาะเดือน
 			// ใช้ strftime สำหรับ SQLite แทน DATE_FORMAT
-			countQuery = countQuery.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", createdAt)
+			dateFilter := createdAt + "%"
+			countQuery = countQuery.Where("request_service_areas.created_at LIKE ?", dateFilter)
 		} else if len(createdAt) == 10 && createdAt[4] == '-' && createdAt[7] == '-' {
 			// รูปแบบ YYYY-MM-DD (เช่น 2025-08-21) - ค้นหาวันที่เฉพาะ
 			countQuery = countQuery.Where("DATE(request_service_areas.created_at) = ?", createdAt)
@@ -594,13 +597,15 @@ func ListRequestServiceAreas(c *gin.Context) {
 	}
 
 	// ส่งข้อมูล Request Service Area ทั้งหมดกลับไปในรูปแบบ JSON
-	c.JSON(http.StatusOK, gin.H{
+	response := gin.H{
 		"data":       requestServiceAreaResponses,
 		"page":       page,
 		"limit":      limit,
 		"total":      total,
 		"totalPages": (total + int64(limit) - 1) / int64(limit), // คำนวณจำนวนหน้าทั้งหมด
-	})
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // Helper functions
@@ -629,4 +634,50 @@ func parseDate(s string) time.Time {
 		return time.Time{}
 	}
 	return t
+}
+
+// UpdateRequestServiceAreaStatus อัปเดตเฉพาะ Status ของ RequestServiceArea
+func UpdateRequestServiceAreaStatus(c *gin.Context) {
+	// รับ request ID จาก path parameter
+	requestIDStr := c.Param("id")
+
+	requestID, err := strconv.ParseUint(requestIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// รับ new status ID จาก request body
+	var requestBody struct {
+		RequestStatusID uint `json:"request_status_id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// ตรวจสอบว่า RequestServiceArea มีอยู่จริงหรือไม่
+	var requestServiceArea entity.RequestServiceArea
+	if err := config.DB().First(&requestServiceArea, requestID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	// อัปเดตเฉพาะ RequestStatusID
+	requestServiceArea.RequestStatusID = requestBody.RequestStatusID
+
+	// บันทึกการเปลี่ยนแปลง
+	if err := config.DB().Save(&requestServiceArea).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request service area status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Request service area status updated successfully",
+		"data": gin.H{
+			"id":                requestServiceArea.ID,
+			"request_status_id": requestServiceArea.RequestStatusID,
+		},
+	})
 }
