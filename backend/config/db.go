@@ -428,7 +428,7 @@ func SeedDatabase() {
 			Phone:          "1234567890",
 			ProfilePath:    "",
 			SignaturePath:  "images/users/user_1/signature.jpg",
-			RoleID:         4,
+			RoleID:         5,             // Admin (ID 5)
 			JobPositionID:  &[]uint{1}[0], // Software Developer
 			GenderID:       1,
 			IsEmployee:     true,
@@ -445,7 +445,7 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         3,
+			RoleID:         4,             // Manager (ID 4)
 			JobPositionID:  &[]uint{3}[0], // Project Manager
 			GenderID:       1,
 			IsEmployee:     true,
@@ -461,7 +461,7 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         3,
+			RoleID:         4,              // Manager (ID 4)
 			JobPositionID:  &[]uint{10}[0], // Product Manager
 			GenderID:       1,
 			IsEmployee:     true,
@@ -507,9 +507,24 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1232323223",
 			ProfilePath:    "",
-			RoleID:         3,
+			RoleID:         3,             // Document Operator (ID 3)
 			JobPositionID:  &[]uint{4}[0], // Business Analyst
 			GenderID:       2,
+			IsEmployee:     true,
+		},
+		{
+			CompanyName:    "Regional Science Park Northeast 2",
+			BusinessDetail: "Research & Development Hub",
+			FirstName:      "Document Operator",
+			EmployeeID:     "EMP006",
+			LastName:       "2",
+			Email:          "documentoperator2@gmail.com",
+			Password:       "123456",
+			Phone:          "1232323224",
+			ProfilePath:    "",
+			RoleID:         3,             // Document Operator (ID 3)
+			JobPositionID:  &[]uint{7}[0], // Quality Assurance
+			GenderID:       1,
 			IsEmployee:     true,
 		},
 		{
