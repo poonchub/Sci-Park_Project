@@ -15,7 +15,7 @@ import {
     Typography,
     Zoom,
 } from "@mui/material";
-import { CircleAlert, CircleX, CreditCard, Landmark, ReceiptText, Wallet } from "lucide-react";
+import { CircleAlert, CircleX, CreditCard, HelpCircle, Landmark, ReceiptText, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import generatePayload from "promptpay-qr";
@@ -50,8 +50,10 @@ const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, file, onChangeFil
     const { color, colorLite, icon } = paymentStatusConfig[statusKey] ?? {
         color: "#000",
         colorLite: "#000",
-        icon: faQuestionCircle,
+        icon: HelpCircle,
     };
+
+    const Icon = icon
 
     return (
         <Dialog
@@ -241,7 +243,7 @@ const PaymentPopup: React.FC<PaymentProps> = ({ open, onClose, file, onChangeFil
                                                 display: "inline-flex",
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={icon} />
+                                            <Icon size={18} style={{minWidth: '18px', minHeight: '18px' }}/>
                                             <Typography
                                                 sx={{
                                                     fontSize: 14,

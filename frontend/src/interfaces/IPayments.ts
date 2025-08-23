@@ -9,7 +9,7 @@ export interface PaymentInterface {
     Amount?:        number
     SlipPath?:      string
     Note?:          string
-    UserID?:        number
+    ReceiptPath?:   string;
     
     PayerID?:       number
     Payer?:         UserInterface

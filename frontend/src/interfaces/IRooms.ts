@@ -15,6 +15,6 @@ export interface RoomsInterface {
     Floor?:         FloorsInterface
     RoomTypeID?:    number;
     RoomType?:      RoomtypesInterface;
-    Invoice?:       InvoiceInterface[];
+    Invoices?:      InvoiceInterface[];
     ServiceAreaDocument?:   ServiceAreaDocumentInterface[];
 }

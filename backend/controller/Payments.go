@@ -111,7 +111,7 @@ func CancelExpiredBookingsHandler(c *gin.Context) {
 }
 
 // GET /payment/:userId
-func GetPaymentByUserID (c *gin.Context) {
+func GetPaymentByUserID(c *gin.Context) {
 	ID := c.Param("userId")
 	var payment entity.Payment
 
@@ -179,7 +179,7 @@ func CreatePayment(c *gin.Context) {
 
 	paymentDateStr := c.PostForm("PaymentDate")
 	amountStr := c.PostForm("Amount")
-	userIDStr := c.PostForm("UserID")
+	payerIDStr := c.PostForm("PayerID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
 	invoiceIDStr := c.PostForm("InvoiceID")
 
@@ -190,7 +190,7 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	payerID, err := strconv.ParseUint(payerIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
 		return
@@ -202,8 +202,8 @@ func CreatePayment(c *gin.Context) {
 		return
 	}
 
-	var user entity.User
-	if err := db.First(&user, userID).Error; err != nil {
+	var payer entity.User
+	if err := db.First(&payer, payerID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
@@ -249,10 +249,10 @@ func CreatePayment(c *gin.Context) {
 	form, err := c.MultipartForm()
 	var slipPath string
 	if err == nil {
-		files := form.File["files"]
+		files := form.File["slip"]
 		if len(files) > 0 {
 			file := files[0]
-			folderPath := fmt.Sprintf("images/payment/user%d", user.ID)
+			folderPath := fmt.Sprintf("images/payment/user%d/slips", payer.ID)
 			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
 				return
@@ -283,7 +283,7 @@ func CreatePayment(c *gin.Context) {
 		Amount:        amount,
 		SlipPath:      slipPath,
 		StatusID:      status.ID,
-		PayerID:       uint(userID),
+		PayerID:       uint(payerID),
 		BookingRoomID: bookingRoomID,
 		InvoiceID:     invoiceID,
 	}
@@ -313,7 +313,7 @@ func CreatePayment(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Payment created successfully", "payment": payment})
 }
 
-// PATCH  /payment/:id
+// PATCH /payment/:id
 func UpdatePaymentByID(c *gin.Context) {
 	type PaymentUpdateInput struct {
 		PaymentDate *time.Time
@@ -324,7 +324,6 @@ func UpdatePaymentByID(c *gin.Context) {
 	}
 
 	ID := c.Param("id")
-
 	db := config.DB()
 
 	var payment entity.Payment
@@ -333,14 +332,14 @@ func UpdatePaymentByID(c *gin.Context) {
 		return
 	}
 
-	// ข้อมูล JSON ที่ไม่รวมไฟล์
+	// JSON ที่มากับ request
 	var input PaymentUpdateInput
 	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
 		return
 	}
 
-	// อัปเดต field ทีละตัว เพื่อไม่ให้ overwrite ด้วยค่า default
+	// อัปเดต field ทีละตัว
 	if input.PaymentDate != nil {
 		payment.PaymentDate = *input.PaymentDate
 	}
@@ -357,42 +356,63 @@ func UpdatePaymentByID(c *gin.Context) {
 		payment.ApproverID = *input.ApproverID
 	}
 
-	// อัปโหลดไฟล์รูปภาพ
+	// ตรวจสอบไฟล์แนบ
 	form, err := c.MultipartForm()
 	if err == nil {
-		files := form.File["files"]
-		if len(files) > 0 {
-			file := files[0]
+		// ✅ อัปโหลด Slip (รูปภาพ)
+		if slipFiles, ok := form.File["slip"]; ok && len(slipFiles) > 0 {
+			file := slipFiles[0]
 
 			// ลบไฟล์เดิมถ้ามี
 			if payment.SlipPath != "" {
 				os.Remove(payment.SlipPath)
 			}
 
-			// เตรียมโฟลเดอร์
-			folderPath := fmt.Sprintf("images/payment/user%d", payment.PayerID)
+			folderPath := fmt.Sprintf("images/payment/user%d/slips", payment.PayerID)
 			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder for slip"})
 				return
 			}
 
-			// สร้างชื่อไฟล์ใหม่
 			ext := ".png"
 			newFileName := "slip_" + strconv.FormatInt(time.Now().Unix(), 10) + ext
 			fullPath := path.Join(folderPath, newFileName)
 
-			// บันทึกไฟล์
 			if err := c.SaveUploadedFile(file, fullPath); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save file"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save slip file"})
+				return
+			}
+			payment.SlipPath = fullPath
+		}
+
+		// ✅ อัปโหลด Receipt (PDF)
+		if receiptFiles, ok := form.File["receipt"]; ok && len(receiptFiles) > 0 {
+			file := receiptFiles[0]
+
+			// ลบไฟล์เดิมถ้ามี
+			if payment.ReceiptPath != "" {
+				os.Remove(payment.ReceiptPath)
+			}
+
+			folderPath := fmt.Sprintf("images/payment/user%d/receipts", payment.PayerID)
+			if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder for receipt"})
 				return
 			}
 
-			// บันทึก path ไฟล์ลงใน database
-			payment.SlipPath = fullPath // หรือใช้ URL prefix ตามเว็บคุณ
+			// บังคับเป็น .pdf
+			newFileName := "receipt_" + strconv.FormatInt(time.Now().Unix(), 10) + ".pdf"
+			fullPath := path.Join(folderPath, newFileName)
+
+			if err := c.SaveUploadedFile(file, fullPath); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save receipt file"})
+				return
+			}
+			payment.ReceiptPath = fullPath
 		}
 	}
 
-	// บันทึกข้อมูลทั้งหมด
+	// บันทึกข้อมูล
 	if err := db.Save(&payment).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update payment"})
 		return
@@ -400,6 +420,35 @@ func UpdatePaymentByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Update successful",
+		"data":    payment,
+	})
+}
+
+// DELETE /payment-receipt/:id
+func DeletePaymentReceiptByID(c *gin.Context) {
+	ID := c.Param("id")
+	db := config.DB()
+
+	var payment entity.Payment
+	if err := db.First(&payment, ID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
+		return
+	}
+
+	if payment.ReceiptPath != "" {
+		if err := os.Remove(payment.ReceiptPath); err != nil {
+			fmt.Println("Warning: file not found on disk:", err)
+		}
+		payment.ReceiptPath = ""
+	}
+
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update payment"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Receipt deleted successfully",
 		"data":    payment,
 	})
 }

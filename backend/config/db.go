@@ -570,6 +570,7 @@ func SeedDatabase() {
 			JobPositionID:  &[]uint{12}[0], // Lab Technician
 			GenderID:       2,
 			IsEmployee:     false,
+			IsBusinessOwner: true,
 		},
 		{
 			CompanyName:    "Global Innovations Hub",
@@ -584,6 +585,7 @@ func SeedDatabase() {
 			JobPositionID:  &[]uint{13}[0], // Administrative Staff
 			GenderID:       1,
 			IsEmployee:     false,
+			IsBusinessOwner: true,
 		},
 	}
 	for i, user := range users {
@@ -1163,6 +1165,7 @@ func SeedDatabase() {
 	paymentStatuses := []entity.PaymentStatus{
 		{Name: "Pending Payment"},      // ยังไม่ได้จ่าย
 		{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสอบสลิป
+		{Name: "Awaiting Receipt"},		// ตรวจสอบสลิปแล้ว รอออกใบเสร็จ
 		{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
 		{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัพโหลดใหม่
 		{Name: "Refunded"},             // คืนเงินแล้ว
@@ -1173,49 +1176,10 @@ func SeedDatabase() {
 		})
 	}
 
-	// Invoice
-	invoices := []entity.Invoice{
-		{
-			InvoiceNumber: "NE2/001",
-			IssueDate:     time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC),
-			DueDate:       time.Date(2025, 8, 15, 0, 0, 0, 0, time.UTC),
-			BillingPeriod: time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC),
-			TotalAmount:   18000.00,
-			StatusID:      1,
-			CreaterID:     1,
-			CustomerID:    1,
-			RoomID:        1,
-		},
-	}
-	for _, invoice := range invoices {
-		db.FirstOrCreate(&invoice, entity.Invoice{InvoiceNumber: invoice.InvoiceNumber})
-	}
-
-	// Invoice Items
-	invoiceItems := []entity.InvoiceItem{
-		{
-			Description: "ค่าพื้นที่",
-			Amount:      15000,
-			InvoiceID:   1,
-		},
-		{
-			Description: "ค่าไฟ",
-			Amount:      3000,
-			InvoiceID:   1,
-		},
-	}
-	for _, item := range invoiceItems {
-		db.FirstOrCreate(&item, entity.InvoiceItem{
-			Description: item.Description,
-			Amount:      item.Amount,
-			InvoiceID:   item.InvoiceID,
-		})
-	}
-
 	// Request Service Area
 	requestServiceAreas := []entity.RequestServiceArea{
 		{
-			UserID:                             1,
+			UserID:                             9,
 			RequestStatusID:                    2,
 			PurposeOfUsingSpace:                "Project Alpha",
 			NumberOfEmployees:                  5,
@@ -1224,7 +1188,7 @@ func SeedDatabase() {
 			ServiceRequestDocument:             "/files/service_requests/request1.pdf",
 		},
 		{
-			UserID:                             2,
+			UserID:                             10,
 			RequestStatusID:                    2,
 			PurposeOfUsingSpace:                "Project Beta",
 			NumberOfEmployees:                  3,

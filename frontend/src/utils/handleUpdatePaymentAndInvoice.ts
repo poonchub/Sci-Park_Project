@@ -2,13 +2,14 @@ import { InvoiceInterface } from "../interfaces/IInvoices";
 import { PaymentInterface } from "../interfaces/IPayments";
 import { UpdateInvoiceByID, UpdatePaymentByID } from "../services/http";
 
-export const updatePaymentAndInvoice = async (
+export const handleUpdatePaymentAndInvoice = async (
     invoiceId: number,
     paymentId: number,
     statusID: number,
     approverId?: number,
     note?: string,
-    slipFile?: File
+    slipFile?: File,
+    receiptFile?: File
 ) => {
     const paymentData: PaymentInterface = {
         StatusID: statusID,
@@ -24,7 +25,11 @@ export const updatePaymentAndInvoice = async (
     }
 
     if (slipFile) {
-        formData.append("files", slipFile);
+        formData.append("slip", slipFile);
+    }
+
+    if (receiptFile) {
+        formData.append("receipt", receiptFile);
     }
 
     await UpdatePaymentByID(paymentId, formData);

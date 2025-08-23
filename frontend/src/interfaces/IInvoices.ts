@@ -7,6 +7,7 @@ import { UserInterface } from "./IUser";
 
 export interface InvoiceInterface {
     ID?:    number;
+    UpdatedAt?:     number;
     InvoiceNumber?: string;
     IssueDate?:     string;
     DueDate?:       string;

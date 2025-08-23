@@ -128,10 +128,10 @@ func CreateNotification(c *gin.Context) {
 
 	switch {
 	case notificationInput.RequestID != 0:
-		var request entity.MaintenanceRequest 
-		if err := db.First(&request, notificationInput.RequestID).Error; err != nil { 
-			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified request was not found."}) 
-			return 
+		var request entity.MaintenanceRequest
+		if err := db.First(&request, notificationInput.RequestID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified request was not found."})
+			return
 		}
 
 		// ดึง email จาก token
@@ -279,25 +279,39 @@ func CreateNotification(c *gin.Context) {
 			return
 		}
 
+		createdNotifications := []entity.Notification{}
+
 		// สร้าง Notification สำหรับ customer
 		noti := entity.Notification{
 			IsRead:    false,
 			InvoiceID: notificationInput.InvoiceID,
 			UserID:    customer.ID,
 		}
-
 		if err := db.Create(&noti).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for customer."})
 			return
 		}
+		createdNotifications = append(createdNotifications, noti)
 
-		// ส่ง socket event และตอบกลับ
-		services.NotifySocketEvent("notification_created", []entity.Notification{noti})
+		if invoice.CreaterID != customer.ID {
+			notiForUser := entity.Notification{
+				IsRead:    true,
+				InvoiceID: notificationInput.InvoiceID,
+				UserID:    invoice.CreaterID,
+			}
+			if err := db.Create(&notiForUser).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for creater."})
+				return
+			}
+			createdNotifications = append(createdNotifications, notiForUser)
+		}
+
+		services.NotifySocketEvent("notification_created", createdNotifications)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
-			"count":   1,
-			"data":    noti,
+			"count":   len(createdNotifications),
+			"data":    createdNotifications,
 		})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id or task_id."})

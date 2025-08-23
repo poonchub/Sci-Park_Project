@@ -73,7 +73,10 @@ func CreateInvoiceItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, &invoiceItemData)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Create success",
+		"data":    invoiceItemData,
+	})
 }
 
 // PATCH /invoice-item/:id
