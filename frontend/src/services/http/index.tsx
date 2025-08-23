@@ -457,6 +457,15 @@ async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?:
         throw error;
     }
 }
+async function GetRoomRentalSpaceByID(roomId: number){
+    try {
+        const response = await axiosInstance.get(`/room-rental-space/${roomId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room by id:", error);
+        throw error;
+    }
+}
 
 async function CreateRoom(roomData: RoomsInterface) {
     const requestOptions = {
@@ -524,23 +533,13 @@ async function UpdateRoom(roomData: RoomsInterface) {
 }
 
 async function GetRoomByID(id: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/room/${id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+    try {
+        const response = await axiosInstance.get(`/room/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
 }
 
 // RoomTypes
@@ -2281,7 +2280,7 @@ async function UpdateAboutCompany(userID: number, formData: FormData): Promise<a
 async function ListInvoices(): Promise<InvoiceInterface[]> {
     try {
         const response = await axiosInstance.get(`/invoices`);
-        return response.data.data;
+        return response.data;
     } catch (error) {
         console.error("Error fetching invoice:", error);
         throw error;
@@ -2290,7 +2289,7 @@ async function ListInvoices(): Promise<InvoiceInterface[]> {
 async function GetInvoiceByID(id: number) {
     try {
         const response = await axiosInstance.get(`/invoice/${id}`);
-        return response.data.data;
+        return response.data;
     } catch (error) {
         console.error("Error fetching invoice by id:", error);
         throw error;
@@ -2431,6 +2430,7 @@ export {
     UpdateRoom,
     GetRoomByID,
     GetRoomRentalSpaceByOption,
+    GetRoomRentalSpaceByID,
 
     // RoomTypes
     GetRoomTypes,

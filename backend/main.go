@@ -200,6 +200,7 @@ func main() {
 		protected.GET("/payments/:userId", controller.GetPaymentByUserID)
 		protected.GET("/payments-option", controller.GetPaymentByOption)
 		protected.POST("/payment", controller.CreatePayment)
+		protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
 
 		// SlipOK
 		protected.POST("/proxy/slipok", controller.ProxySlipOK)
@@ -207,6 +208,9 @@ func main() {
 
 		// Invoice
 		protected.GET("/invoice/:id/pdf", controller.GetInvoicePDF)
+		protected.GET("/room-invoice-option", controller.GetInvoiceByOption)
+		protected.GET("/invoice/:id", controller.GetInvoiceByID)
+		protected.PATCH("/invoice/:id", controller.UpdateInvoiceByID)
 
 		// PaymentStatus
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
@@ -225,13 +229,11 @@ func main() {
 
 		// Room
 		protected.GET("/room-rental-space-option", controller.GetRoomRentalSpaceByOption)
+		protected.GET("/room-rental-space/:id", controller.GetRoomRentalSpaceByID)
 
 		// Invoice
 		protected.GET("/invoces", controller.ListInvoices)
-		protected.GET("/invoice/:id", controller.GetInvoiceByID)
 		protected.POST("/invoice", controller.CreateInvoice)
-		protected.GET("/room-invoice-option", controller.GetInvoiceByOption)
-		protected.PATCH("/invoice/:id", controller.UpdateInvoiceByID)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
 
 		// InvoiceItems
@@ -268,7 +270,6 @@ func main() {
 		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
 
 		// Payments
-		protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
 		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
 
 	}

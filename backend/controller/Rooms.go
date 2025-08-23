@@ -240,7 +240,6 @@ func GetRoomByID(c *gin.Context) {
     })
 }
 
-
 // handler.go
 
 func GetRoomsByRoomTypeID(c *gin.Context) {
@@ -298,7 +297,7 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 	query = query.
 		Preload("Floor").
 		Preload("RoomStatus").
-		Preload("Invoice.Notifications").
+		Preload("Invoices.Notifications").
 		Preload("ServiceAreaDocument.RequestServiceArea.User").
 		Preload("ServiceAreaDocument.ServiceUserType")
 
@@ -327,4 +326,27 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 		"total":      total,
 		"totalPages": (total + int64(limit) - 1) / int64(limit),
 	})
+}
+
+// GET /room-rental-space/:id
+func GetRoomRentalSpaceByID(c *gin.Context) {
+    roomID := c.Param("id")
+
+    var room entity.Room
+
+    db := config.DB()
+
+	result := db.
+		Preload("Floor").
+		Preload("RoomStatus").
+		Preload("Invoices.Notifications").
+		Preload("ServiceAreaDocument.RequestServiceArea.User").
+		Preload("ServiceAreaDocument.ServiceUserType").
+		First(&room, roomID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &room)
 }

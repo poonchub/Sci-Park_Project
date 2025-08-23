@@ -1,7 +1,6 @@
-import { Box, fontSize } from "@mui/system";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import { Box } from "@mui/system";
+import React, { useEffect, useState } from "react";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
-import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import {
     apiUrl,
@@ -12,13 +11,15 @@ import {
     DeleteInvoiceItemByID,
     DeletePaymentReceiptByID,
     GetFloors,
+    GetInvoiceByID,
     GetInvoiceByOption,
+    GetRoomRentalSpaceByID,
     GetRoomRentalSpaceByOption,
     GetRoomStatus,
     ListPaymentStatus,
+    socketUrl,
     UpdateInvoiceByID,
     UpdateInvoiceItemsByID,
-    UpdatePaymentByID,
 } from "../../services/http";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
@@ -27,7 +28,6 @@ import {
     Button,
     Card,
     CardMedia,
-    CircularProgress,
     Container,
     Dialog,
     DialogActions,
@@ -51,18 +51,18 @@ import {
     Activity,
     AlignVerticalSpaceAround,
     BrushCleaning,
+    Building,
+    Calendar,
     Check,
     CirclePlus,
-    Coins,
     DoorClosed,
-    Download,
     Ellipsis,
-    Eye,
     File,
     FileText,
     FolderOpen,
     HelpCircle,
     Loader,
+    Maximize,
     NotebookPen,
     Pencil,
     PencilLine,
@@ -72,17 +72,15 @@ import {
     Search,
     Send,
     Trash2,
-    Upload,
     Wallet,
     X,
 } from "lucide-react";
 import { TextField } from "../../components/TextField/TextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuilding, faCalendar, faClock, faExpand, faEye, faFilePdf, faMagnifyingGlass, faMoneyBill, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import { Select } from "../../components/Select/Select";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import { GridColDef } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
 import theme from "../../styles/Theme";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -92,21 +90,18 @@ import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
 import dayjs from "dayjs";
 import { CalendarMonth, Close } from "@mui/icons-material";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import { TransitionProps } from "@mui/material/transitions";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
-import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
 import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import dateFormat from "../../utils/dateFormat";
-import { PaymentInterface } from "../../interfaces/IPayments";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAndInvoice";
-import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
-import { useNotificationStore } from "../../store/notificationStore";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { io } from "socket.io-client";
 
 type InvoiceItemError = {
     Description?: string;
@@ -190,15 +185,12 @@ function RoomRentalSpace() {
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
     const [errors, setErrors] = useState<FormErrors>({});
     const [isButtonActive, setIsButtonActive] = useState(false);
-    const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
     const [openPDF, setOpenPDF] = useState(false);
-    const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const openButtonMenu = Boolean(anchorEl);
 
-    const { notificationCounts } = useNotificationStore();
     const userID = localStorage.getItem('userId')
 
     const getRooms = async () => {
@@ -267,6 +259,29 @@ function RoomRentalSpace() {
             }
         } catch (error) {
             console.error("Error fetching payment statuses:", error);
+        }
+    };
+
+    const getUpdateInvoice = async (ID: number) => {
+        try {
+            const res = await GetInvoiceByID(ID);
+            if (res) {
+                setInvoices((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+            }
+        } catch (error) {
+            console.error("Error updating invoice:", error);
+        }
+    };
+
+    const getUpdateRoom = async (ID: number) => {
+        try {
+            const res = await GetRoomRentalSpaceByID(ID);
+            console.log("res: ", res)
+            if (res) {
+                setRooms((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+            }
+        } catch (error) {
+            console.error("Error updating room:", error);
         }
     };
 
@@ -547,6 +562,8 @@ function RoomRentalSpace() {
                 note
             );
 
+            await handleUpdateNotification(selectedInvoice.CreaterID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
+
             if (statusName === "Rejected") {
                 await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, false, undefined, undefined, selectedInvoice?.ID);
             }
@@ -761,6 +778,22 @@ function RoomRentalSpace() {
         }
     }, [selectedInvoice, isEditMode]);
 
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("invoice_updated", (data) => {
+            console.log("🔄 Invoice updated:", data);
+            getUpdateRoom(data.RoomID)
+            getUpdateInvoice(data.ID);
+        });
+
+        return () => {
+            socket.off("maintenance_updated");
+            socket.off("invoice_created");
+            socket.off("invoice_updated");
+        };
+    }, []);
+
     const filteredRooms = rooms.filter((item) => {
         const roomNumber = item.RoomNumber;
 
@@ -817,10 +850,15 @@ function RoomRentalSpace() {
                         const doc = data.ServiceAreaDocument;
                         let userType = "";
                         let companyName = "";
-                        if (doc.length > 0) {
+                        if (doc && doc.length > 0) {
                             userType = doc[doc.length - 1].ServiceUserType.Name;
                             companyName = doc[doc.length - 1].RequestServiceArea.User.CompanyName;
                         }
+
+                        const invoice = data.Invoices ?? [];
+                        const hasNotification = invoice.some(
+                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
+                        );
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -839,14 +877,7 @@ function RoomRentalSpace() {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, my: 0.8 }}>
-                                        <FontAwesomeIcon
-                                            icon={faExpand}
-                                            style={{
-                                                width: "13px",
-                                                height: "13px",
-                                                paddingBottom: "4px"
-                                            }}
-                                        />
+                                        <Maximize size={14} style={{ minWidth: '14px', minHeight: '14px', marginBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 13,
@@ -862,7 +893,7 @@ function RoomRentalSpace() {
                                         companyName !== "" &&
                                         <>
                                             <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.4, mt: 1, mb: 0 }}>
-                                                <FontAwesomeIcon icon={faBuilding} style={{ width: "12px", height: "12px", paddingBottom: "4px" }} />
+                                                <Building size={14} style={{ minWidth: '14px', minHeight: '14px', marginBottom: '2px' }} />
                                                 <Typography
                                                     sx={{
                                                         fontSize: 13,
@@ -956,26 +987,44 @@ function RoomRentalSpace() {
                                                 </Tooltip>
                                             </Grid>
                                             <Grid size={{ xs: 6 }}>
-                                                <Tooltip title={"Invoice List"}>
-                                                    <Button
-                                                        variant="outlined"
-                                                        onClick={() => {
-                                                            setOpenInvoicePopup(true);
-                                                            setSelectedRoom(data);
-                                                        }}
-                                                        sx={{
-                                                            minWidth: "42px",
-                                                            bgcolor: "#FFFFFF",
-                                                            width: '100%',
-                                                            height: '100%'
-                                                        }}
-                                                    >
-                                                        <FolderOpen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Invoice List
-                                                        </Typography>
-                                                    </Button>
-                                                </Tooltip>
+                                                <Badge
+                                                    variant="dot"
+                                                    invisible={!hasNotification}
+                                                    color="primary"
+                                                    sx={{
+                                                        width: '100%',
+                                                        "& .MuiBadge-dot": {
+                                                            height: "12px",
+                                                            minWidth: "12px",
+                                                            borderRadius: "50%",
+                                                        },
+                                                        "& .MuiBadge-badge": {
+                                                            top: 2,
+                                                            right: 2,
+                                                        }
+                                                    }}
+                                                >
+                                                    <Tooltip title={"Invoice List"}>
+                                                        <Button
+                                                            variant="outlined"
+                                                            onClick={() => {
+                                                                setOpenInvoicePopup(true);
+                                                                setSelectedRoom(data);
+                                                            }}
+                                                            sx={{
+                                                                minWidth: "42px",
+                                                                bgcolor: "#FFFFFF",
+                                                                width: '100%',
+                                                                height: '100%'
+                                                            }}
+                                                        >
+                                                            <FolderOpen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Invoice List
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Badge>
                                             </Grid>
                                         </Grid>
                                     </Box>
@@ -1061,7 +1110,7 @@ function RoomRentalSpace() {
                         const doc = item.row.ServiceAreaDocument;
                         let userType = "";
                         let companyName = "";
-                        if (doc.length > 0) {
+                        if (doc && doc.length > 0) {
                             userType = doc[doc.length - 1].ServiceUserType.Name;
                             companyName = doc[doc.length - 1].RequestServiceArea.User.CompanyName;
                         }
@@ -1164,16 +1213,11 @@ function RoomRentalSpace() {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.RoomStatus?.status_name
-                        console.log("data: ", data)
-                        const invoice = data.Invoice ?? [];
-                        console.log("invoice: ", invoice)
+                        const invoice = data.Invoices ?? [];
 
                         const hasNotification = invoice.some(
-                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface)=> noti.UserID === Number(userID) && !noti.IsRead)
-
+                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
                         );
-
-                        console.log("hasNotification: ", hasNotification)
 
                         return (
                             <Box
@@ -1288,10 +1332,14 @@ function RoomRentalSpace() {
                         const receiptPath = data.Payments?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
+                        const notification = data.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === Number(userID) && !n.IsRead);
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        {hasNotificationForUser && <AnimatedBell />}
                                         <Typography
                                             sx={{
                                                 fontSize: 16,
@@ -1306,14 +1354,7 @@ function RoomRentalSpace() {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                        <FontAwesomeIcon
-                                            icon={faCalendar}
-                                            style={{
-                                                width: "14px",
-                                                height: "14px",
-                                                paddingBottom: "4px"
-                                            }}
-                                        />
+                                        <Calendar size={16} style={{ minWidth: '16px', minHeight: '16px', marginBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -1507,14 +1548,13 @@ function RoomRentalSpace() {
                                                                 No file uploaded
                                                             </Typography>
                                                         </Box>
-
                                                     )
                                                 }
                                             </Box>
                                         ) : (
                                             <Box
                                                 sx={{
-                                                    display: 'flex',
+                                                    display: 'inline-flex',
                                                     gap: 1,
                                                     border: '1px solid rgb(109, 110, 112, 0.4)',
                                                     borderRadius: 1,
@@ -1523,6 +1563,7 @@ function RoomRentalSpace() {
                                                     bgcolor: '#FFF',
                                                     alignItems: 'center',
                                                     color: 'text.secondary',
+                                                    width: { xs: "100%", mobileS: "auto" },
                                                 }}
                                             >
                                                 <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
@@ -1553,14 +1594,36 @@ function RoomRentalSpace() {
                                         }}
                                     >
                                         <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            {
+                                                data.Payments &&
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Tooltip title="View Slip">
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={() => {
+                                                                setSelectedInvoice((prev) => ({
+                                                                    ...prev,
+                                                                    ...data,
+                                                                }));
+                                                                setOpenPaymentPopup(true);
+                                                            }}
+                                                            sx={{ minWidth: "42px", width: '100%', minHeight: '100%' }}
+                                                        >
+                                                            <Wallet size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                View Slip
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                            }
                                             <Grid size={{ xs: statusName === "Pending Payment" ? 5 : 6 }}>
                                                 <Tooltip title="Download PDF">
                                                     <Button
-                                                        variant="contained"
+                                                        variant="outlinedGray"
                                                         onClick={async () => {
                                                             setOpenPDF(true);
                                                             setSelectedInvoice(data);
-                                                            setLoadingDownloadId(null);
                                                         }}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
@@ -1618,29 +1681,6 @@ function RoomRentalSpace() {
                                                     </Grid>
                                                 </>
                                             }
-                                            {
-                                                data.Payments &&
-                                                <Grid size={{ xs: 6 }}>
-                                                    <Tooltip title="View Slip">
-                                                        <Button
-                                                            variant="outlinedGray"
-                                                            onClick={() => {
-                                                                setSelectedInvoice((prev) => ({
-                                                                    ...prev,
-                                                                    ...data,
-                                                                }));
-                                                                setOpenPaymentPopup(true);
-                                                            }}
-                                                            sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', minHeight: '100%' }}
-                                                        >
-                                                            <Wallet size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
-                                                                View Slip
-                                                            </Typography>
-                                                        </Button>
-                                                    </Tooltip>
-                                                </Grid>
-                                            }
                                         </Grid>
                                     </Box>
                                 </Grid>
@@ -1656,19 +1696,18 @@ function RoomRentalSpace() {
                     headerName: "Invoice No.",
                     flex: 1,
                     headerAlign: "center",
-                    renderCell: (params) => (
-                        <Box
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            {params.value}
-                        </Box>
-                    ),
+                    align: "center",
+                    renderCell: (params) => {
+                        const invoiceNumber = params.row.InvoiceNumber;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === Number(userID) && !n.IsRead);
+                        return (
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography sx={{ fontSize: 14 }}>{invoiceNumber}</Typography>
+                            </Box>
+                        );
+                    },
                 },
                 {
                     field: "BillingPeriod",
@@ -1912,12 +1951,9 @@ function RoomRentalSpace() {
                                                                 onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
                                                                 sx={{
                                                                     fontSize: 14,
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all ease 0.3s',
-                                                                    "&:hover": {
-                                                                        color: 'primary.main',
-                                                                        borderColor: 'primary.main'
-                                                                    }
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
                                                                 }}
                                                             >
                                                                 No file uploaded
@@ -2002,7 +2038,6 @@ function RoomRentalSpace() {
                                         onClick={async () => {
                                             setOpenPDF(true);
                                             setSelectedInvoice(data);
-                                            setLoadingDownloadId(null);
                                         }}
                                         sx={{ minWidth: "42px" }}
                                     >
@@ -2873,6 +2908,9 @@ function RoomRentalSpace() {
                             <Skeleton variant="rectangular" width="100%" height={255} sx={{ borderRadius: 2 }} />
                         ) : (
                             <CustomDataGrid
+                                getRowId={(row) =>
+                                    `${row.ID}-${row.Invoices?.map((inv: InvoiceInterface) => inv.StatusID).join("-")}`
+                                }
                                 rows={filteredRooms}
                                 columns={getRoomColumns()}
                                 rowCount={roomTotal}

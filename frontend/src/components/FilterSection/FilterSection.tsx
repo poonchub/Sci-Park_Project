@@ -92,7 +92,7 @@ const FilterSection = ({
                                 value={selectedDate}
                                 onChange={(newValue) => setSelectedDate(newValue)}
                                 slots={{
-                                    openPickerIcon: CalendarIcon,
+                                    // openPickerIcon: CalendarIcon,
                                 }}
                                 sx={{ width: '100%'}}
                             />

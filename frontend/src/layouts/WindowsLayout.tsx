@@ -49,6 +49,7 @@ import {
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
 import { useNotificationStore } from "../store/notificationStore";
+import { useUserStore } from "../store/userStore";
 
 function useToolpadRouter(): Router {
     const location = useLocation();
@@ -77,7 +78,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const demoWindow = window ? window() : undefined;
 
-    const [user, setUser] = useState<UserInterface>();
+    const {user, setUser} = useUserStore();
     const [organizationInfo, setOrganizationInfo] =
         useState<OrganizationInfoInterface>();
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -85,6 +86,7 @@ const WindowsLayout: React.FC = (props: any) => {
     // Role of current user (from localStorage)
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
+    const isExternalUser = !(user?.IsEmployee) && user?.Role?.Name === "User"
 
     const iconSize = 24;
 
@@ -297,7 +299,7 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "My Account",
             icon: <ShieldUser />,
             action:
-                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0) ||
+                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0 && isExternalUser) ||
                     (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0)
                     ? (
                         <Chip

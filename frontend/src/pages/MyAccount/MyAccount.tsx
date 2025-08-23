@@ -36,7 +36,6 @@ import {
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById } from "../../services/http";
-import SuccessAlert from "../../components/Alert/SuccessAlert";
 
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
@@ -45,7 +44,6 @@ import {
     HelpCircle,
     Clock,
     Check,
-    RotateCcw,
     Eye,
     Pencil,
     FileText,
@@ -54,7 +52,6 @@ import {
     Phone,
     Briefcase,
     Calendar,
-    Download,
     ShieldUser,
     Wallet,
     ReceiptText,
@@ -76,9 +73,7 @@ import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceReque
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { Base64 } from "js-base64";
 import { Link, useNavigate } from "react-router-dom";
-import RequestStatusStack from "../../components/RequestStatusStack/RequestStatusStack";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
@@ -88,12 +83,6 @@ import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
-import { formatThaiMonthYear } from "../../utils/formatThaiMonthYear";
-import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
-import { PaymentInterface } from "../../interfaces/IPayments";
-import formatToLocalWithTimezone from "../../utils/formatToLocalWithTimezone";
-import generateInvoicePDF from "../../components/InvoicePDF/InvoicePDF";
-import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
@@ -106,6 +95,8 @@ import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
 import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAndInvoice";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
+import { PaymentInterface } from "../../interfaces/IPayments";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -141,7 +132,6 @@ const MyAccount: React.FC = () => {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
     const [isLoadingPayment, setIsLoadingPayment] = useState<boolean>(true);
-    const [loadingDownloadId, setLoadingDownloadId] = useState<number | null>(null);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
     const [isButtonActive, setIsButtonActive] = useState(false);
@@ -149,7 +139,6 @@ const MyAccount: React.FC = () => {
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
-    const [openImage, setOpenImage] = useState(false);
     const [openPopupPayment, setOpenPopupPayment] = useState(false);
     const [openPDF, setOpenPDF] = useState(false);
 
@@ -220,7 +209,6 @@ const MyAccount: React.FC = () => {
     const getUpdateMaintenanceRequest = async (ID: number) => {
         try {
             const res = await GetMaintenanceRequestByID(ID);
-            console.log("res: ", res)
             if (res) {
                 setMaintenanceRequests((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
@@ -232,7 +220,6 @@ const MyAccount: React.FC = () => {
     const getNewInvoice = async (ID: number) => {
         try {
             const res = await GetInvoiceByID(ID);
-            console.log("resx: ", res)
             if (res) {
                 setInvoices((prev) => [res, ...prev]);
                 setInvoiceTotal((prev) => prev + 1);
@@ -440,6 +427,7 @@ const MyAccount: React.FC = () => {
             );
 
             await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
+            await handleUpdateNotification(selectedInvoice.CreaterID ?? 0, false, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Upload new slip successfully.");
 
@@ -601,17 +589,23 @@ const MyAccount: React.FC = () => {
 
         socket.on("maintenance_updated", (data) => {
             console.log("🔄 Maintenance request updated:", data);
-            getUpdateMaintenanceRequest(data.ID);
+            setTimeout(() => {
+                getUpdateMaintenanceRequest(data.ID);
+            }, 1500);
         });
 
         socket.on("invoice_created", (data) => {
             console.log("📦 New invoice:", data);
-            getNewInvoice(data.ID);
+            setTimeout(() => {
+                getNewInvoice(data.ID);
+            }, 1500);
         });
 
         socket.on("invoice_updated", (data) => {
             console.log("🔄 Invoice updated:", data);
-            getUpdateInvoice(data.ID);
+            setTimeout(() => {
+                getUpdateInvoice(data.ID);
+            }, 1500);
         });
 
         return () => {
@@ -1538,7 +1532,6 @@ const MyAccount: React.FC = () => {
                                                         onClick={async () => {
                                                             setOpenPDF(true);
                                                             setSelectedInvoice(data);
-                                                            setLoadingDownloadId(null);
                                                         }}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
@@ -1822,7 +1815,6 @@ const MyAccount: React.FC = () => {
                                         onClick={async () => {
                                             setOpenPDF(true);
                                             setSelectedInvoice(data);
-                                            setLoadingDownloadId(null);
                                         }}
                                         sx={{ minWidth: "42px" }}
                                     >
@@ -1984,7 +1976,6 @@ const MyAccount: React.FC = () => {
                                                         onClick={async () => {
                                                             setOpenPDF(true);
                                                             setSelectedInvoice(data);
-                                                            setLoadingDownloadId(null);
                                                         }}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
@@ -2181,11 +2172,6 @@ const MyAccount: React.FC = () => {
                                 <Tooltip title="Download Receipt">
                                     <Button
                                         variant="contained"
-                                        onClick={async () => {
-                                            // setOpenPDF(true);
-                                            // setSelectedInvoice(data);
-                                            // setLoadingDownloadId(null);
-                                        }}
                                         sx={{ minWidth: "42px" }}
                                     >
                                         <ReceiptText size={18} />
@@ -2448,11 +2434,15 @@ const MyAccount: React.FC = () => {
                                     </Badge>
                                 } {...a11yProps(0)} />
                                 <Tab label="Room Booking" {...a11yProps(1)} />
-                                <Tab label={
-                                    <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
-                                        Invoice
-                                    </Badge>
-                                } {...a11yProps(2)} />
+                                {
+                                    !(user?.IsEmployee) && user?.Role?.Name === "User" &&
+                                    <Tab label={
+                                        <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
+                                            Invoice
+                                        </Badge>
+                                    } {...a11yProps(2)} />
+                                }
+
                                 <Tab label="Payment" {...a11yProps(3)} />
                             </Tabs>
                         </Grid>
@@ -2535,6 +2525,7 @@ const MyAccount: React.FC = () => {
                                     />
                                 ) : (
                                     <CustomDataGrid
+                                        key={JSON.stringify(invoices.map(i => i.StatusID))}
                                         rows={invoices.toSorted((a, b) =>
                                             (b.BillingPeriod ?? "").localeCompare(a.BillingPeriod ?? "")
                                         )}

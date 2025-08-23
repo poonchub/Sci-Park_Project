@@ -522,6 +522,7 @@ func SeedDatabase() {
 			RoleID:         1,
 			GenderID:       2,
 			IsEmployee:     false,
+			IsBusinessOwner: true,
 		},
 		{
 			CompanyName:    "Global Innovations Hub",
@@ -535,6 +536,7 @@ func SeedDatabase() {
 			RoleID:         1,
 			GenderID:       1,
 			IsEmployee:     false,
+			IsBusinessOwner: true,
 		},
 	}
 	for i, user := range users {
@@ -1133,7 +1135,7 @@ func SeedDatabase() {
 	// Request Service Area
 	requestServiceAreas := []entity.RequestServiceArea{
 		{
-			UserID:                             1,
+			UserID:                             9,
 			RequestStatusID:                    2,
 			PurposeOfUsingSpace:                "Project Alpha",
 			NumberOfEmployees:                  5,
@@ -1142,7 +1144,7 @@ func SeedDatabase() {
 			ServiceRequestDocument:             "/files/service_requests/request1.pdf",
 		},
 		{
-			UserID:                             2,
+			UserID:                             10,
 			RequestStatusID:                    2,
 			PurposeOfUsingSpace:                "Project Beta",
 			NumberOfEmployees:                  3,

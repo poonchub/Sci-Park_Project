@@ -50,7 +50,17 @@ func GetInvoiceByID(c *gin.Context) {
 
 	db := config.DB()
 
-	result := db.First(&invoice, id)
+	result := db.
+		Preload("Payments.Status").
+		Preload("Status").
+		Preload("Items").
+		Preload("Room.Floor").
+		Preload("Customer.Prefix").
+		Preload("Creater.Prefix").
+		Preload("Creater.Role").
+		Preload("Notifications").
+
+		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
@@ -309,6 +319,8 @@ func UpdateInvoiceByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
 		return
 	}
+
+	services.NotifySocketEvent("invoice_updated", invoice)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
 }
