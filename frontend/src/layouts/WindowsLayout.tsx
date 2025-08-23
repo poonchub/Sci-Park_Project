@@ -185,8 +185,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <ClipboardList size={iconSize} />,
             action:
                 notificationCounts?.UnreadRequests &&
-                notificationCounts?.UnreadRequests > 0 &&
-                (isAdmin || isManager) ? (
+                    notificationCounts?.UnreadRequests > 0 &&
+                    (isAdmin || isManager) ? (
                     <Chip
                         label={notificationCounts.UnreadRequests}
                         color="primary"
@@ -194,21 +194,21 @@ const WindowsLayout: React.FC = (props: any) => {
                     />
                 ) : null,
         },
-        
+
         {
             segment: "service-area/service-request-list",
             title: "Service Request List",
             icon: <ClipboardList size={iconSize} />,
         },
-        
+
         {
             segment: "maintenance/accept-work",
             title: "My Work",
             icon: <HardHat />,
             action:
                 notificationCounts?.UnreadTasks &&
-                notificationCounts.UnreadTasks &&
-                isOperator ? (
+                    notificationCounts.UnreadTasks &&
+                    isOperator ? (
                     <Chip
                         label={notificationCounts.UnreadTasks}
                         color="primary"
@@ -262,13 +262,26 @@ const WindowsLayout: React.FC = (props: any) => {
                     segment: "rental-space",
                     title: "Rental Space",
                     icon: <DoorClosed />,
-                },
-                {
-                    segment: "traffic",
-                    title: "Traffic",
-                    icon: <ClipboardList />,
+                    action:
+                        (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0)
+                            ? (
+                                <Chip
+                                    label={notificationCounts?.UnreadInvoice}
+                                    color="primary"
+                                    size="small"
+                                />
+                            ) : null,
                 },
             ],
+            action:
+                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0)
+                    ? (
+                        <Chip
+                            label={"New"}
+                            color="primary"
+                            size="small"
+                        />
+                    ) : null,
         },
         {
             segment: "all-booking-room",
@@ -285,14 +298,14 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <ShieldUser />,
             action:
                 (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0) ||
-                (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0)
-                ? (
-                    <Chip
-                        label={"New"}
-                        color="primary"
-                        size="small"
-                    />
-                ) : null,
+                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0)
+                    ? (
+                        <Chip
+                            label={"New"}
+                            color="primary"
+                            size="small"
+                        />
+                    ) : null,
         },
         {
             segment: "organization-info",
@@ -372,34 +385,34 @@ const WindowsLayout: React.FC = (props: any) => {
                 // สำหรับ header และ divider ให้ตรวจสอบว่ามี item ที่อนุญาตตามมาใน section นี้หรือไม่
                 const currentIndex = NAVIGATION.indexOf(item);
                 const nextItems = NAVIGATION.slice(currentIndex + 1);
-                
+
                 // หา header หรือ divider ถัดไป
-                const nextHeaderIndex = nextItems.findIndex(nextItem => 
+                const nextHeaderIndex = nextItems.findIndex(nextItem =>
                     nextItem.kind === "header" || nextItem.kind === "divider"
                 );
-                
+
                 // ตรวจสอบ items ระหว่าง header/divider ปัจจุบันกับ header/divider ถัดไป
-                const itemsInSection = nextHeaderIndex === -1 
-                    ? nextItems 
+                const itemsInSection = nextHeaderIndex === -1
+                    ? nextItems
                     : nextItems.slice(0, nextHeaderIndex);
-                
+
                 // ถ้าเป็น header ให้ตรวจสอบว่ามี item ที่อนุญาตใน section นี้หรือไม่
                 if (item.kind === "header") {
-                    return itemsInSection.some(sectionItem => 
+                    return itemsInSection.some(sectionItem =>
                         hasSegment(sectionItem) && isAllowed(sectionItem.segment || "", role)
                     );
                 }
-                
+
                 // ถ้าเป็น divider ให้ตรวจสอบว่ามี item ที่อนุญาตใน section ถัดไปหรือไม่
                 if (item.kind === "divider") {
-                    return itemsInSection.some(sectionItem => 
+                    return itemsInSection.some(sectionItem =>
                         hasSegment(sectionItem) && isAllowed(sectionItem.segment || "", role)
                     );
                 }
-                
+
                 return false;
             }
-            
+
             return hasSegment(item) && isAllowed(item.segment || "", role);
         }).map((item) => {
             if ("children" in item && Array.isArray(item.children)) {
@@ -418,10 +431,10 @@ const WindowsLayout: React.FC = (props: any) => {
             if (item.kind === "divider") {
                 // ลบ divider ที่อยู่ท้ายสุด
                 if (index === array.length - 1) return false;
-                
+
                 // ลบ divider ที่อยู่ติดกัน
                 if (index < array.length - 1 && array[index + 1].kind === "divider") return false;
-                
+
                 // ลบ divider ที่อยู่ก่อน header
                 if (index < array.length - 1 && array[index + 1].kind === "header") return false;
             }
@@ -614,9 +627,9 @@ const WindowsLayout: React.FC = (props: any) => {
                 ) : (
                     <img
                         src={
-                            organizationInfo?.LogoPath ? 
-                            `${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}` :
-                            ''
+                            organizationInfo?.LogoPath ?
+                                `${apiUrl}/${organizationInfo?.LogoPath}?t=${Date.now()}` :
+                                ''
                         }
                         alt=" RSP Northeast 2"
                         style={{
@@ -641,7 +654,7 @@ const WindowsLayout: React.FC = (props: any) => {
                     <Box
                         sx={{
                             minHeight: "95vh",
-                            p: {xs: 2.5, md: 4},
+                            p: { xs: 2.5, md: 4 },
                             mb: 4,
                         }}
                     >

@@ -10,6 +10,7 @@ import {
     CreateNotification,
     DeleteInvoiceByID,
     DeleteInvoiceItemByID,
+    DeletePaymentReceiptByID,
     GetFloors,
     GetInvoiceByOption,
     GetRoomRentalSpaceByOption,
@@ -22,6 +23,7 @@ import {
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import {
+    Badge,
     Button,
     Card,
     CardMedia,
@@ -36,6 +38,7 @@ import {
     Grid,
     IconButton,
     InputAdornment,
+    Menu,
     MenuItem,
     Skeleton,
     Slide,
@@ -45,14 +48,19 @@ import {
     Zoom,
 } from "@mui/material";
 import {
+    Activity,
+    AlignVerticalSpaceAround,
     BrushCleaning,
     Check,
     CirclePlus,
     Coins,
     DoorClosed,
     Download,
+    Ellipsis,
     Eye,
+    File,
     FileText,
+    FolderOpen,
     HelpCircle,
     Loader,
     NotebookPen,
@@ -61,6 +69,7 @@ import {
     ReceiptText,
     Save,
     ScrollText,
+    Search,
     Send,
     Trash2,
     Upload,
@@ -97,6 +106,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAndInvoice";
 import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
+import { useNotificationStore } from "../../store/notificationStore";
 
 type InvoiceItemError = {
     Description?: string;
@@ -185,6 +195,11 @@ function RoomRentalSpace() {
 
     const [openPDF, setOpenPDF] = useState(false);
     const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const openButtonMenu = Boolean(anchorEl);
+
+    const { notificationCounts } = useNotificationStore();
+    const userID = localStorage.getItem('userId')
 
     const getRooms = async () => {
         try {
@@ -327,6 +342,7 @@ function RoomRentalSpace() {
 
     const handleCreateInvoice = async () => {
         setIsButtonActive(true);
+        setAlerts([])
         if (!validateForm()) {
             setIsButtonActive(false);
             return;
@@ -406,6 +422,7 @@ function RoomRentalSpace() {
 
     const handleDeleteInvoice = async () => {
         setIsButtonActive(true);
+        setAlerts([])
         if (!selectedInvoice?.ID) {
             handleSetAlert("error", "InvoiceID not found");
             setIsButtonActive(false);
@@ -432,6 +449,7 @@ function RoomRentalSpace() {
 
     const handleUpdateInvoice = async () => {
         setIsButtonActive(true);
+        setAlerts([])
         if (!validateForm()) {
             setIsButtonActive(false);
             return;
@@ -499,6 +517,7 @@ function RoomRentalSpace() {
 
     const handleClickUpdatePayment = async (statusName: "Awaiting Receipt" | "Rejected", note?: string) => {
         setIsButtonActive(true);
+        setAlerts([])
         if (!selectedInvoice?.ID) {
             handleSetAlert("error", "Invoice not found");
             setIsButtonActive(false);
@@ -552,6 +571,7 @@ function RoomRentalSpace() {
         event: React.ChangeEvent<HTMLInputElement>,
         data: InvoiceInterface
     ) => {
+        setAlerts([])
         const file = event.target.files?.[0];
         if (!file || !(file.type === "application/pdf")) {
             handleSetAlert("warning", "Please select a valid PDF file");
@@ -579,12 +599,46 @@ function RoomRentalSpace() {
 
             setTimeout(() => {
                 setSelectedInvoice(null);
+                setAnchorEl(null);
                 getInvoice();
             }, 1800);
         } catch (error) {
             console.error("🚨 Error uploading receipt:", error);
             handleSetAlert("error", "An unexpected error occurred");
         }
+    };
+
+    const handleDeleteReceipt = async (data: InvoiceInterface) => {
+        setAlerts([])
+        try {
+            await DeletePaymentReceiptByID(data.Payments?.ID ?? 0);
+
+            const statusID = paymentStatuses.find((item) => item.Name === 'Awaiting Receipt')?.ID;
+            if (!statusID) {
+                console.error("Invalid payment status");
+                return;
+            }
+            await handleUpdatePaymentAndInvoice(
+                data.ID ?? 0,
+                data.Payments?.ID ?? 0,
+                statusID ?? 0,
+            )
+
+            handleSetAlert("success", "Receipt deleted successfully");
+
+
+            setTimeout(() => {
+                setAnchorEl(null);
+                getInvoice();
+            }, 1800);
+        } catch (error) {
+            console.error("🚨 Error deleting receipt:", error);
+            handleSetAlert("error", "Failed to delete receipt");
+        }
+    };
+
+    const handleClickButtonMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
     };
 
     const validateForm = () => {
@@ -916,7 +970,7 @@ function RoomRentalSpace() {
                                                             height: '100%'
                                                         }}
                                                     >
-                                                        <ScrollText size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                                        <FolderOpen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                                         <Typography variant="textButtonClassic" className="text-btn">
                                                             Invoice List
                                                         </Typography>
@@ -1110,6 +1164,17 @@ function RoomRentalSpace() {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.RoomStatus?.status_name
+                        console.log("data: ", data)
+                        const invoice = data.Invoice ?? [];
+                        console.log("invoice: ", invoice)
+
+                        const hasNotification = invoice.some(
+                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface)=> noti.UserID === Number(userID) && !noti.IsRead)
+
+                        );
+
+                        console.log("hasNotification: ", hasNotification)
+
                         return (
                             <Box
                                 className="container-btn"
@@ -1139,24 +1204,41 @@ function RoomRentalSpace() {
                                         </Typography> */}
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title={"Invoice List"}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => {
-                                            setOpenInvoicePopup(true);
-                                            setSelectedRoom(data);
-                                        }}
-                                        sx={{
-                                            minWidth: "42px",
-                                            bgcolor: "#FFFFFF",
-                                        }}
-                                    >
-                                        <ScrollText size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
-                                        {/* <Typography variant="textButtonClassic" className="text-btn">
+                                <Badge
+                                    variant="dot"
+                                    invisible={!hasNotification}
+                                    color="primary"
+                                    sx={{
+                                        "& .MuiBadge-dot": {
+                                            height: "12px",
+                                            minWidth: "12px",
+                                            borderRadius: "50%",
+                                        },
+                                        "& .MuiBadge-badge": {
+                                            top: 2,
+                                            right: 2,
+                                        }
+                                    }}
+                                >
+                                    <Tooltip title={"Invoice List"}>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => {
+                                                setOpenInvoicePopup(true);
+                                                setSelectedRoom(data);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                                bgcolor: "#FFFFFF",
+                                            }}
+                                        >
+                                            <FolderOpen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                            {/* <Typography variant="textButtonClassic" className="text-btn">
                                             Invoice List
                                         </Typography> */}
-                                    </Button>
-                                </Tooltip>
+                                        </Button>
+                                    </Tooltip>
+                                </Badge>
                             </Box>
                         );
                     },
@@ -1202,6 +1284,9 @@ function RoomRentalSpace() {
                         if (cardItem) {
                             width = cardItem.offsetWidth;
                         }
+
+                        const receiptPath = data.Payments?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -1296,6 +1381,165 @@ function RoomRentalSpace() {
                                             {statusName}
                                         </Typography>
                                     </Box>
+                                </Grid>
+
+                                <Grid size={{ xs: 12 }}>
+                                    {
+                                        (statusName === "Awaiting Receipt" || statusName === "Paid") ? (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.8,
+                                                    width: '100%',
+                                                }}
+                                            >
+                                                <Button
+                                                    id="basic-button"
+                                                    aria-controls={openButtonMenu ? 'basic-menu' : undefined}
+                                                    aria-haspopup="true"
+                                                    aria-expanded={openButtonMenu ? 'true' : undefined}
+                                                    onClick={handleClickButtonMenu}
+                                                    variant="outlinedGray"
+                                                    sx={{
+                                                        minWidth: '42px'
+                                                    }}
+                                                >
+                                                    <Ellipsis size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                </Button>
+                                                <Menu
+                                                    id="basic-menu"
+                                                    anchorEl={anchorEl}
+                                                    open={openButtonMenu}
+                                                    onClose={() => setAnchorEl(null)}
+                                                    slotProps={{
+                                                        list: {
+                                                            'aria-labelledby': 'basic-button',
+                                                        },
+                                                    }}
+                                                    sx={{ fontSize: 14 }}
+                                                >
+                                                    <MenuItem>
+                                                        <input
+                                                            accept="application/pdf"
+                                                            style={{ display: "none" }}
+                                                            id="upload-new-pdf-input"
+                                                            type="file"
+                                                            onChange={(e) => handlePDFUploadReceipt(e, data)}
+                                                        />
+                                                        <label htmlFor="upload-new-pdf-input">
+                                                            <Typography component="span" sx={{ fontSize: 14 }}>
+                                                                Upload New File
+                                                            </Typography>
+                                                        </label>
+                                                    </MenuItem>
+                                                    {
+                                                        statusName === "Paid" &&
+                                                        <MenuItem
+                                                            sx={{ fontSize: 14 }}
+                                                            onClick={() => handleDeleteReceipt(data)}
+                                                        >
+                                                            Delete File
+                                                        </MenuItem>
+                                                    }
+
+                                                </Menu>
+
+                                                {
+                                                    fileName !== "" ? (
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                gap: 1,
+                                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                                borderRadius: 1,
+                                                                px: 1,
+                                                                py: 0.5,
+                                                                bgcolor: '#FFF',
+                                                                cursor: 'pointer',
+                                                                transition: 'all ease 0.3s',
+                                                                alignItems: 'center',
+                                                                "&:hover": {
+                                                                    color: 'primary.main',
+                                                                    borderColor: 'primary.main'
+                                                                },
+                                                                height: '32.5px',
+                                                                width: { xs: "100%", mobileS: "auto" },
+                                                            }}
+                                                        >
+                                                            <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                            <Typography
+                                                                variant="body1"
+                                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                                sx={{
+                                                                    fontSize: 14,
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                }}
+                                                            >
+                                                                {fileName}
+                                                            </Typography>
+                                                        </Box>
+                                                    ) : (
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                gap: 1,
+                                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                                borderRadius: 1,
+                                                                px: 1,
+                                                                py: 0.5,
+                                                                bgcolor: '#FFF',
+                                                                alignItems: 'center',
+                                                                color: 'text.secondary',
+                                                                width: { xs: "100%", mobileS: "auto" },
+                                                            }}
+                                                        >
+                                                            <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                            <Typography
+                                                                variant="body1"
+                                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                                sx={{
+                                                                    fontSize: 14,
+                                                                }}
+                                                            >
+                                                                No file uploaded
+                                                            </Typography>
+                                                        </Box>
+
+                                                    )
+                                                }
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    alignItems: 'center',
+                                                    color: 'text.secondary',
+                                                }}
+                                            >
+                                                <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    No file uploaded
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
                                 </Grid>
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
@@ -1526,6 +1770,196 @@ function RoomRentalSpace() {
                     },
                 },
                 {
+                    field: "Receipt",
+                    headerName: "Receipt",
+                    type: "string",
+                    flex: 2,
+                    renderCell: (item) => {
+                        const data = item.row;
+                        const statusName = data.Status.Name;
+                        const receiptPath = data.Payments?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                {
+                                    (!receiptPath || receiptPath !== "") &&
+                                        (statusName === "Awaiting Receipt" || statusName === "Paid") ?
+                                        (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 0.8,
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                <Button
+                                                    id="basic-button"
+                                                    aria-controls={openButtonMenu ? 'basic-menu' : undefined}
+                                                    aria-haspopup="true"
+                                                    aria-expanded={openButtonMenu ? 'true' : undefined}
+                                                    onClick={handleClickButtonMenu}
+                                                    variant="outlinedGray"
+                                                    sx={{
+                                                        minWidth: '42px'
+                                                    }}
+                                                >
+                                                    <Ellipsis size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                </Button>
+                                                <Menu
+                                                    id="basic-menu"
+                                                    anchorEl={anchorEl}
+                                                    open={openButtonMenu}
+                                                    onClose={() => setAnchorEl(null)}
+                                                    slotProps={{
+                                                        list: {
+                                                            'aria-labelledby': 'basic-button',
+                                                        },
+                                                    }}
+                                                    sx={{ fontSize: 14 }}
+                                                >
+                                                    <MenuItem>
+                                                        <input
+                                                            accept="application/pdf"
+                                                            style={{ display: "none" }}
+                                                            id="upload-new-pdf-input"
+                                                            type="file"
+                                                            onChange={(e) => handlePDFUploadReceipt(e, data)}
+                                                        />
+                                                        <label htmlFor="upload-new-pdf-input">
+                                                            <Typography component="span" sx={{ fontSize: 14 }}>
+                                                                Upload New File
+                                                            </Typography>
+                                                        </label>
+                                                    </MenuItem>
+                                                    {
+                                                        statusName === "Paid" &&
+                                                        <MenuItem
+                                                            sx={{ fontSize: 14 }}
+                                                            onClick={() => handleDeleteReceipt(data)}
+                                                        >
+                                                            Delete File
+                                                        </MenuItem>
+                                                    }
+                                                </Menu>
+
+                                                {
+                                                    fileName !== "" ? (
+                                                        <Tooltip title={fileName}>
+                                                            <Box
+                                                                sx={{
+                                                                    display: 'flex',
+                                                                    gap: 1,
+                                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                                    borderRadius: 1,
+                                                                    px: 1,
+                                                                    py: 0.5,
+                                                                    bgcolor: '#FFF',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all ease 0.3s',
+                                                                    alignItems: 'center',
+                                                                    "&:hover": {
+                                                                        color: 'primary.main',
+                                                                        borderColor: 'primary.main'
+                                                                    },
+                                                                    height: '32.5px',
+                                                                    width: '100px'
+                                                                }}
+                                                            >
+                                                                <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                                <Typography
+                                                                    variant="body1"
+                                                                    onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                                    sx={{
+                                                                        fontSize: 14,
+                                                                        whiteSpace: "nowrap",
+                                                                        overflow: "hidden",
+                                                                        textOverflow: "ellipsis",
+                                                                    }}
+                                                                >
+                                                                    {fileName}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Tooltip>
+                                                    ) : (
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                gap: 1,
+                                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                                borderRadius: 1,
+                                                                px: 1,
+                                                                py: 0.5,
+                                                                bgcolor: '#FFF',
+                                                                alignItems: 'center',
+                                                                color: 'text.secondary',
+                                                                width: { xs: "100%", mobileS: "auto" },
+                                                                height: '32.5px'
+                                                            }}
+                                                        >
+                                                            <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                            <Typography
+                                                                variant="body1"
+                                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                                sx={{
+                                                                    fontSize: 14,
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all ease 0.3s',
+                                                                    "&:hover": {
+                                                                        color: 'primary.main',
+                                                                        borderColor: 'primary.main'
+                                                                    }
+                                                                }}
+                                                            >
+                                                                No file uploaded
+                                                            </Typography>
+                                                        </Box>
+                                                    )
+                                                }
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    alignItems: 'center',
+                                                    color: 'text.secondary',
+                                                }}
+                                            >
+                                                <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    No file uploaded
+                                                </Typography>
+                                            </Box>
+                                        )
+                                }
+                            </Box>
+                        );
+                    },
+                },
+                {
                     field: "Actions",
                     headerName: "Actions",
                     type: "string",
@@ -1575,7 +2009,7 @@ function RoomRentalSpace() {
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                                     </Button>
                                 </Tooltip>
-                                
+
                                 {statusName === "Pending Payment" && (
                                     <>
                                         <Tooltip title="Edit Invoice">
@@ -1609,90 +2043,6 @@ function RoomRentalSpace() {
                                         </Tooltip>
                                     </>
                                 )}
-                            </Box>
-                        );
-                    },
-                },
-                {
-                    field: "Receipt",
-                    headerName: "Receipt",
-                    type: "string",
-                    flex: 2,
-                    renderCell: (item) => {
-                        const data = item.row;
-                        const statusName = data.Status.Name;
-                        const receiptPath = data.Payments?.ReceiptPath
-                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
-                        return (
-                            <Box
-                                className="container-btn"
-                                sx={{
-                                    display: "flex",
-                                    gap: 0.8,
-                                    flexWrap: "wrap",
-                                    alignItems: "center",
-                                    height: "100%",
-                                }}
-                            >
-                                {
-                                    (!receiptPath || receiptPath==="") && 
-                                    statusName === "Awaiting Receipt" ? 
-                                    (
-                                        <>
-                                            <input
-                                                accept="application/pdf"
-                                                style={{ display: "none" }}
-                                                id="upload-pdf-input"
-                                                type="file"
-                                                onChange={(e) => handlePDFUploadReceipt(e, data)}
-                                            />
-                                            <label htmlFor="upload-pdf-input">
-                                                <Button 
-                                                    variant="outlined" 
-                                                    component="span"
-                                                    startIcon={<Upload size={16} style={{ minWidth: '16px', minHeight: '16px' }} />}
-                                                    sx={{ fontSize: 14 }}
-                                                >
-                                                    Upload
-                                                </Button>
-                                            </label>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Box
-                                                sx={{
-                                                    display: 'flex',
-                                                    gap: 1,
-                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
-                                                    borderRadius: 1,
-                                                    px: 1,
-                                                    py: 0.5,
-                                                    bgcolor: '#FFF',
-                                                    cursor: 'pointer',
-                                                    transition: 'all ease 0.3s',
-                                                    "&:hover": {
-                                                        color: 'primary.main',
-                                                        borderColor: 'primary.main'
-                                                    }
-                                                }}
-                                            >
-                                                <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
-                                                <Typography
-                                                    variant="body1"
-                                                    onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
-                                                    sx={{
-                                                        fontSize: 14,
-                                                    }}
-                                                >
-                                                    {fileName}
-                                                </Typography>
-                                            </Box>
-
-
-                                        </>
-
-                                    )
-                                }
                             </Box>
                         );
                     },
@@ -2042,7 +2392,7 @@ function RoomRentalSpace() {
                 </DialogTitle>
                 <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
                     <Grid container size={{ xs: 12 }} spacing={2}>
-                        <Grid size={{ xs: 4 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Issue Date
                             </Typography>
@@ -2067,7 +2417,7 @@ function RoomRentalSpace() {
                                 />
                             </LocalizationProvider>
                         </Grid>
-                        <Grid size={{ xs: 4 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Due Date
                             </Typography>
@@ -2091,7 +2441,7 @@ function RoomRentalSpace() {
                                 />
                             </LocalizationProvider>
                         </Grid>
-                        <Grid size={{ xs: 4 }}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Billing Period
                             </Typography>
@@ -2173,6 +2523,7 @@ function RoomRentalSpace() {
                                             slotProps={{
                                                 htmlInput: {
                                                     step: "500",
+                                                    min: 0
                                                 } as any,
                                             }}
                                         />
@@ -2192,7 +2543,7 @@ function RoomRentalSpace() {
                         </Grid>
                         <Divider sx={{ width: "100%" }}></Divider>
                         <Grid container size={{ xs: 12 }} spacing={2} sx={{ px: 3 }}>
-                            <Grid size={{ xs: 10 }}>
+                            <Grid size={{ xs: 12, sm: 7 }}>
                                 <Typography
                                     variant="body1"
                                     sx={{
@@ -2213,7 +2564,7 @@ function RoomRentalSpace() {
                                     {`Room No. ${selectedRoom?.RoomNumber}, Floor ${selectedRoom?.Floor?.Number}`}
                                 </Typography>
                             </Grid>
-                            <Grid textAlign={"end"} size={{ xs: 2 }}>
+                            <Grid textAlign={{ xs: "start", sm: "end" }} size={{ xs: 12, sm: 5 }}>
                                 <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                     Total Amount
                                 </Typography>
@@ -2318,7 +2669,7 @@ function RoomRentalSpace() {
                                                     input: {
                                                         startAdornment: (
                                                             <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                                <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                             </InputAdornment>
                                                         ),
                                                     },
@@ -2338,7 +2689,7 @@ function RoomRentalSpace() {
                                                     displayEmpty
                                                     startAdornment={
                                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                            {/* <FontAwesomeIcon icon={faToolbox} size="lg" /> */}
+                                                            <Activity size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                         </InputAdornment>
                                                     }
                                                 >
@@ -2369,7 +2720,7 @@ function RoomRentalSpace() {
                                                     },
                                                 }}
                                             >
-                                                <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
+                                                <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                                             </Button>
                                         </Grid>
                                     </Grid>
@@ -2428,7 +2779,7 @@ function RoomRentalSpace() {
                                                 input: {
                                                     startAdornment: (
                                                         <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                                            <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                         </InputAdornment>
                                                     ),
                                                 },
@@ -2448,7 +2799,7 @@ function RoomRentalSpace() {
                                                 displayEmpty
                                                 startAdornment={
                                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                        {/* <FontAwesomeIcon icon={faToolbox} size="lg" /> */}
+                                                        <AlignVerticalSpaceAround size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                     </InputAdornment>
                                                 }
                                             >
@@ -2476,7 +2827,7 @@ function RoomRentalSpace() {
                                                 displayEmpty
                                                 startAdornment={
                                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                        {/* <FontAwesomeIcon icon={faToolbox} size="lg" /> */}
+                                                        <Activity size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                     </InputAdornment>
                                                 }
                                             >
@@ -2507,7 +2858,7 @@ function RoomRentalSpace() {
                                                 },
                                             }}
                                         >
-                                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
+                                            <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                                         </Button>
                                     </Grid>
                                 </Grid>

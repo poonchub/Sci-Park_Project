@@ -111,7 +111,7 @@ func CancelExpiredBookingsHandler(c *gin.Context) {
 }
 
 // GET /payment/:userId
-func GetPaymentByUserID (c *gin.Context) {
+func GetPaymentByUserID(c *gin.Context) {
 	ID := c.Param("userId")
 	var payment entity.Payment
 
@@ -420,6 +420,35 @@ func UpdatePaymentByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Update successful",
+		"data":    payment,
+	})
+}
+
+// DELETE /payment-receipt/:id
+func DeletePaymentReceiptByID(c *gin.Context) {
+	ID := c.Param("id")
+	db := config.DB()
+
+	var payment entity.Payment
+	if err := db.First(&payment, ID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found"})
+		return
+	}
+
+	if payment.ReceiptPath != "" {
+		if err := os.Remove(payment.ReceiptPath); err != nil {
+			fmt.Println("Warning: file not found on disk:", err)
+		}
+		payment.ReceiptPath = ""
+	}
+
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update payment"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Receipt deleted successfully",
 		"data":    payment,
 	})
 }

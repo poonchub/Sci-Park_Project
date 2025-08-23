@@ -6,16 +6,13 @@ import {
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
     GetMaintenanceRequestsForUser,
-    GetNotificationsByInvoiceAndUser,
     GetPaymentByOption,
-    GetPaymentByUserID,
     GetQuota,
     GetRequestStatuses,
     ListPaymentStatus,
     socketUrl,
     UpdateInvoiceByID,
     UpdateMaintenanceRequestByID,
-    UpdateNotificationByID,
     UpdateNotificationsByRequestID,
 } from "../../services/http";
 
@@ -35,7 +32,6 @@ import {
     Skeleton,
     Tooltip,
     useMediaQuery,
-    Dialog,
     Badge,
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
@@ -64,6 +60,7 @@ import {
     ReceiptText,
     Repeat,
     HandCoins,
+    File,
 } from "lucide-react";
 import { a11yProps } from "../AcceptWork/AcceptWork";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
@@ -397,6 +394,7 @@ const MyAccount: React.FC = () => {
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
 
             await handleUpdateNotification(userId, true, undefined, undefined, selectedInvoice?.ID);
+            await handleUpdateNotification(selectedInvoice.CreaterID ?? 0, false, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Upload slip successfully.");
             setTimeout(() => {
@@ -1287,8 +1285,8 @@ const MyAccount: React.FC = () => {
         if (isSmallScreen) {
             return [
                 {
-                    field: "All Maintenance Requests",
-                    headerName: "All Maintenance Requests",
+                    field: "All Invoice",
+                    headerName: "All Invoice",
                     flex: 1,
                     renderCell: (item) => {
                         const data = item.row;
@@ -1417,41 +1415,76 @@ const MyAccount: React.FC = () => {
                                 </Grid>
 
                                 <Grid size={{ xs: 12 }}>
-                                    <Box
-                                        sx={{
-                                            display: 'inline-flex',
-                                            gap: 1,
-                                            border: '1px solid rgb(109, 110, 112, 0.4)',
-                                            borderRadius: 1,
-                                            px: 1,
-                                            py: 0.5,
-                                            bgcolor: '#FFF',
-                                            cursor: 'pointer',
-                                            transition: 'all ease 0.3s',
-                                            alignItems: 'center',
-                                            width: {
-                                                xs: '100%', mobileS: 'auto'
-                                            },
-                                            "&:hover": {
-                                                color: 'primary.main',
-                                                borderColor: 'primary.main'
-                                            }
-                                        }}
-                                    >
-                                        <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
-                                        <Typography
-                                            variant="body1"
-                                            onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
-                                            sx={{
-                                                fontSize: 14,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                            }}
-                                        >
-                                            {fileName}
-                                        </Typography>
-                                    </Box>
+                                    {
+                                        fileName !== "" ? (
+
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    cursor: 'pointer',
+                                                    transition: 'all ease 0.3s',
+                                                    alignItems: 'center',
+                                                    width: {
+                                                        xs: '100%', mobileS: 'auto'
+                                                    },
+                                                    "&:hover": {
+                                                        color: 'primary.main',
+                                                        borderColor: 'primary.main'
+                                                    }
+                                                }}
+                                            >
+                                                <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    {fileName}
+                                                </Typography>
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    alignItems: 'center',
+                                                    color: 'text.secondary',
+                                                    width: {
+                                                        xs: '100%', mobileS: 'auto'
+                                                    },
+                                                }}
+                                            >
+                                                <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    No receipt file uploaded
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
                                 </Grid>
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
@@ -1642,6 +1675,95 @@ const MyAccount: React.FC = () => {
                     },
                 },
                 {
+                    field: "Receipt",
+                    headerName: "Receipt",
+                    type: "string",
+                    flex: 2,
+                    renderCell: (item) => {
+                        const data = item.row;
+                        const receiptPath = data.Payments?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                {
+                                    fileName !== "" ? (
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                gap: 1,
+                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                borderRadius: 1,
+                                                px: 1,
+                                                py: 0.5,
+                                                bgcolor: '#FFF',
+                                                cursor: 'pointer',
+                                                transition: 'all ease 0.3s',
+                                                alignItems: 'center',
+                                                width: '100%',
+                                                "&:hover": {
+                                                    color: 'primary.main',
+                                                    borderColor: 'primary.main'
+                                                }
+                                            }}
+                                        >
+                                            <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                            <Typography
+                                                variant="body1"
+                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                sx={{
+                                                    fontSize: 14,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                {fileName}
+                                            </Typography>
+                                        </Box>
+                                    ) : (
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                gap: 1,
+                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                borderRadius: 1,
+                                                px: 1,
+                                                py: 0.5,
+                                                bgcolor: '#FFF',
+                                                alignItems: 'center',
+                                                color: 'text.secondary',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                            <Typography
+                                                variant="body1"
+                                                sx={{
+                                                    fontSize: 14,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                No file uploaded
+                                            </Typography>
+                                        </Box>
+                                    )
+                                }
+                            </Box>
+                        );
+                    },
+                },
+                {
                     field: "Actions",
                     headerName: "Actions",
                     type: "string",
@@ -1707,63 +1829,6 @@ const MyAccount: React.FC = () => {
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                                     </Button>
                                 </Tooltip>
-                            </Box>
-                        );
-                    },
-                },
-                {
-                    field: "Receipt",
-                    headerName: "Receipt",
-                    type: "string",
-                    flex: 2,
-                    renderCell: (item) => {
-                        const data = item.row;
-                        const receiptPath = data.Payments?.ReceiptPath
-                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
-                        return (
-                            <Box
-                                className="container-btn"
-                                sx={{
-                                    display: "flex",
-                                    gap: 0.8,
-                                    flexWrap: "wrap",
-                                    alignItems: "center",
-                                    height: "100%",
-                                }}
-                            >
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        gap: 1,
-                                        border: '1px solid rgb(109, 110, 112, 0.4)',
-                                        borderRadius: 1,
-                                        px: 1,
-                                        py: 0.5,
-                                        bgcolor: '#FFF',
-                                        cursor: 'pointer',
-                                        transition: 'all ease 0.3s',
-                                        alignItems: 'center',
-                                        width: '100%',
-                                        "&:hover": {
-                                            color: 'primary.main',
-                                            borderColor: 'primary.main'
-                                        }
-                                    }}
-                                >
-                                    <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
-                                    <Typography
-                                        variant="body1"
-                                        onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
-                                        sx={{
-                                            fontSize: 14,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                        }}
-                                    >
-                                        {fileName}
-                                    </Typography>
-                                </Box>
                             </Box>
                         );
                     },

@@ -2052,6 +2052,15 @@ async function UpdatePaymentByID(id: number, data: FormData) {
         throw error;
     }
 }
+async function DeletePaymentReceiptByID(paymentID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.delete(`/payment-receipt/${paymentID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting receipt:", error);
+        throw error;
+    }
+}
 async function CheckSlip(data: FormData) {
     try {
         const response = await axiosInstance.post(`/proxy/slipok`, data, {
@@ -2541,6 +2550,7 @@ export {
     UpdatePaymentByID,
     CheckSlip,
     GetQuota,
+    DeletePaymentReceiptByID,
 
     // BusinessGroups
     ListBusinessGroups,

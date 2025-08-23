@@ -269,7 +269,7 @@ func main() {
 
 		// Payments
 		protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
-
+		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
 
 	}
 

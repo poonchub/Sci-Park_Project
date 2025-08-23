@@ -16,7 +16,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
-import { Activity, BrushCleaning } from "lucide-react";
+import { Activity, BrushCleaning, Calendar, Search } from "lucide-react";
 
 
 type Props = {
@@ -51,6 +51,8 @@ const FilterSection = ({
         .filter(status => inProcessNames.includes(status.Name || ''))
         .map(status => status.ID!)
 
+    const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => <Calendar size={20} style={{ minWidth: '20px', minHeight: '20px' }} {...props} />;
+
     return (
         <Grid
             className="filter-section"
@@ -74,7 +76,7 @@ const FilterSection = ({
                                 input: {
                                     startAdornment: (
                                         <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                            <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+                                            <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
                                         </InputAdornment>
                                     ),
                                 },
@@ -90,7 +92,7 @@ const FilterSection = ({
                                 value={selectedDate}
                                 onChange={(newValue) => setSelectedDate(newValue)}
                                 slots={{
-                                    openPickerIcon: CalendarMonth,
+                                    openPickerIcon: CalendarIcon,
                                 }}
                                 sx={{ width: '100%'}}
                             />
@@ -102,7 +104,7 @@ const FilterSection = ({
                             <Select
                                 startAdornment={
                                     <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                        <Activity size={18} strokeWidth={3}/>
+                                        <Activity size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
                                     </InputAdornment>
                                 }
                                 value={
@@ -150,7 +152,7 @@ const FilterSection = ({
                                 },
                             }}
                         >
-                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
+                            <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                         </Button>
                     </Grid>
                 </Grid>
