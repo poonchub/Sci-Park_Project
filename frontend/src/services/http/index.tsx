@@ -1000,6 +1000,47 @@ async function ListRoles() {
     return res;
 }
 
+// JobPositions
+async function ListJobPositions() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/job-positions`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+async function GetJobPositionByID(id: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/job-position/${id}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
 async function ListRequestTypes() {
     const requestOptions = {
         method: "GET",
@@ -2547,6 +2588,10 @@ export {
 
     // Roles
     ListRoles,
+
+    // JobPositions
+    ListJobPositions,
+    GetJobPositionByID,
 
     // ManagerApprovals
     CreateManagerApproval,

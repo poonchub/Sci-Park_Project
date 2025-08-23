@@ -134,6 +134,10 @@ func main() {
 		// Roles
 		protected.GET("/roles", controller.ListRoles)
 
+		// JobPositions
+		protected.GET("/job-positions", controller.ListJobPositions)
+		protected.GET("/job-position/:id", controller.GetJobPositionByID)
+
 		// Packages
 		protected.GET("/packages", controller.ListPackages)
 
@@ -278,6 +282,11 @@ func main() {
 	{
 		// Users
 		protected.GET("/users", controller.ListUsers)
+
+		// JobPositions
+		protected.POST("/create-job-position", controller.CreateJobPosition)
+		protected.PATCH("/update-job-position/:id", controller.UpdateJobPositionByID)
+		protected.DELETE("/job-position/:id", controller.DeleteJobPositionByID)
 
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)
