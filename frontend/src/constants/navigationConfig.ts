@@ -1,5 +1,5 @@
 // Define possible user roles in the system
-export type Role = 'User' | 'Operator' | 'Manager' | 'Admin';
+export type Role = 'User' | 'Maintenance Operator' | 'Document Operator' | 'Manager' | 'Admin';
 
 // Type definition for navigation items in the drawer
 type NavItem = {
@@ -15,7 +15,12 @@ const DEFAULT_PATHS_BY_ROLE: Record<Role, Record<string, string>> = {
         booking: '/booking-room',
         manageuser: '',
     },
-    Operator: {
+    'Maintenance Operator': {
+        maintenance: '/my-maintenance-request',
+        booking: '/booking-room',
+        manageuser: '',
+    },
+    'Document Operator': {
         maintenance: '/my-maintenance-request',
         booking: '/booking-room',
         manageuser: '',
@@ -40,7 +45,7 @@ const getDefaultPathForSection = (sectionKey: string, role: Role): string => {
 // Main sections of the app with key, path, and display name
 const getRoleFromStorage = (): Role => {
     const raw = localStorage.getItem("role");
-    const validRoles: Role[] = ['User', 'Operator', 'Manager', 'Admin'];
+    const validRoles: Role[] = ['User', 'Maintenance Operator', 'Document Operator', 'Manager', 'Admin'];
     return validRoles.includes(raw as Role) ? (raw as Role) : 'User';
 };
 const role = getRoleFromStorage();
@@ -60,7 +65,7 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/booking-room',
             name: 'ระบบจองห้อง',
-            roles: ['User', 'Operator', 'Manager', 'Admin']
+            roles: ['User', 'Maintenance Operator', 'Document Operator', 'Manager', 'Admin']
         },
     ],
     maintenance: [
@@ -77,12 +82,17 @@ const DRAWER_ITEMS: Record<string, NavItem[]> = {
         {
             path: '/my-maintenance-request',
             name: 'การแจ้งซ่อมของฉัน',
-            roles: ['User', 'Operator', 'Manager', 'Admin']
+            roles: ['User', 'Maintenance Operator', 'Document Operator', 'Manager', 'Admin']
         },
         {
             path: '/accept-work',
             name: 'งานของฉัน',
-            roles: ['Operator']
+            roles: ['Maintenance Operator']
+        },
+        {
+            path: '/document-management',
+            name: 'จัดการเอกสาร',
+            roles: ['Document Operator']
         },
     ],
     manageuser: [
@@ -133,6 +143,7 @@ export const getCurrentSectionKey = (pathname: string): string => {
         '/my-maintenance-request': 'maintenance',
         '/assign-work': 'maintenance',
         '/accept-work': 'maintenance',
+        '/document-management': 'maintenance',
         '/check-requests': 'maintenance',
         '/outsider-maintenance-request': 'maintenance',
         '/test-popup': 'maintenance',

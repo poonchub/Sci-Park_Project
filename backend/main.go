@@ -74,6 +74,7 @@ func main() {
 
 		protected.POST("/user/upload-profile/:id", controller.UpdateProfileImage)
 		protected.POST("/user/upload-signature/:id", controller.UpdateSignatureImage)
+		protected.DELETE("/user/delete-signature/:id", controller.DeleteSignature)
 		protected.GET("/operators", controller.ListOperators)
 		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
 		protected.PATCH("/change-password", controller.ChangePassword)
@@ -213,7 +214,7 @@ func main() {
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.Operator)) // ✅ Middleware ตรวจสอบ Token
+	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
 	{
 		// MaintenanceTasks
 		protected.GET("/maintenance-task/:id", controller.GetMaintenanceTaskByID)

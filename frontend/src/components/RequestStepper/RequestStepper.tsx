@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@mui/material";
 import StepperComponent from "../Stepper/Stepper";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
-import { isAdmin, isManager, isOperator } from "../../routes";
+import { isAdmin, isManager, isMaintenanceOperator, isDocumentOperator } from "../../routes";
 
 interface RequestStepperProps {
     requestStatuses: RequestStatusesInterface[];
@@ -25,7 +25,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
             s => s.ID === requestStatusID && s.Name === "Rework Requested"
         ) !== undefined;
 
-        if (isAdmin || isManager || isOperator) {
+        if (isAdmin() || isManager() || isMaintenanceOperator() || isDocumentOperator()) {
             return [
                 ...baseFlowAdmin,
                 ...(includeRework ? ["Rework Requested"] : []),
@@ -42,7 +42,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 "Completed"
             ];
         }
-    }, [isAdmin, isManager, isOperator, requestStatuses, requestStatusID]);
+    }, [requestStatuses, requestStatusID]);
 
     const unsuccessfulFlow = ["Unsuccessful"];
 
@@ -70,7 +70,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 }));
         }
     
-        if (isAdmin || isManager || isOperator) {
+        if (isAdmin() || isManager() || isMaintenanceOperator() || isDocumentOperator()) {
             const steps = requestStatuses
                 .filter(s => statusFlow.includes(s.Name || ""))
                 .sort((a, b) => statusFlow.indexOf(a.Name || "") - statusFlow.indexOf(b.Name || ""))
@@ -103,7 +103,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
     
             return steps;
         }
-    }, [requestStatuses, requestStatusID, statusFlow, isAdmin, isManager, isOperator]);    
+    }, [requestStatuses, requestStatusID, statusFlow]);    
 
     // 3. หา active step
     const activeStep = useMemo(() => {
@@ -112,7 +112,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
         const currentStatus = requestStatuses.find(s => s.ID === requestStatusID);
         if (!currentStatus) return 0;
 
-        if (isAdmin || isManager || isOperator) {
+        if (isAdmin() || isManager() || isMaintenanceOperator() || isDocumentOperator()) {
             return filteredSteps.findIndex(s => s.ID === requestStatusID);
         } else {
             // ถ้าเป็น user role อื่นๆ, ถ้าอยู่ใน Pending/Approved/In Progress ให้นับเป็น In Process
@@ -122,7 +122,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 return filteredSteps.findIndex(s => s.ID === requestStatusID);
             }
         }
-    }, [filteredSteps, requestStatuses, requestStatusID, isAdmin, isManager, isOperator]);
+    }, [filteredSteps, requestStatuses, requestStatusID]);
 
     return (
         <Card sx={{

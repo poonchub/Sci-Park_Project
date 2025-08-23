@@ -42,7 +42,7 @@ const FilterSection = ({
     handleClearFilter,
     requestStatuses,
 }: Props) => {
-    const inProcessNames = isAdmin || isManager ?
+            const inProcessNames = isAdmin() || isManager() ?
         ["Created"] :
         ["Created", "Pending", "Approved", "In Progress", "Rework Requested"]
 
@@ -122,7 +122,7 @@ const FilterSection = ({
                                 }}
                             >
                                 <MenuItem value={0}>All Statuses</MenuItem>
-                                {!(isAdmin || isManager) && <MenuItem value="in-process">In Process</MenuItem>}
+                                {!(isAdmin() || isManager()) && <MenuItem value="in-process">In Process</MenuItem>}
                                 {requestStatuses
                                     .filter(status => !inProcessNames.includes(status.Name || ''))
                                     .map((status) => (

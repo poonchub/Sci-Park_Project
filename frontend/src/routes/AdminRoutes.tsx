@@ -25,6 +25,7 @@ import CreateInvoice from "../pages/CreateInvoice/CreateInvoice";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
+import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
 
 
 const AdminRoutes = (): RouteObject => {
@@ -132,6 +133,10 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/requests/service-area/service-request-list",
 				element: <ServiceRequestList/>
+			},
+			{
+				path: "/document-management",
+				element: <DocumentManagement/>
 			},
 			{
 				path: "",

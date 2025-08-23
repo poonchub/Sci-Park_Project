@@ -24,7 +24,7 @@ import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
-import { isAdmin, isManager, isOperator } from "../../routes";
+import { isAdmin, isManager, isMaintenanceOperator, isDocumentOperator } from "../../routes";
 import handleActionApproval from "../../utils/handleActionApproval";
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup";
 import handleActionAcception from "../../utils/handleActionAcception";
@@ -479,7 +479,7 @@ function CheckRequest() {
                                     </Grid>
 
                                     <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
-                                        {isPending && (isAdmin || isManager) ? (
+                                        {isPending && (isAdmin() || isManager()) ? (
                                             <Box sx={{ gap: 1, display: "flex" }}>
                                                 {/* Reject button */}
                                                 <Button
@@ -505,7 +505,7 @@ function CheckRequest() {
                                             <></>
                                         )}
 
-                                        {(isOwnRequest || isAdmin || isManager) && (
+                                        {(isOwnRequest || isAdmin() || isManager()) && (
                                             <Grid
                                                 container
                                                 size={{ xs: 12, md: 12 }}
@@ -557,7 +557,7 @@ function CheckRequest() {
                                             </Grid>
                                         )}
 
-                                        {(isApproved || isInProgress || isRework) && isOperator && isOwnTask && (
+                                        {(isApproved || isInProgress || isRework) && isMaintenanceOperator() && isOwnTask && (
                                             <Box sx={{ gap: 1, display: "flex" }}>
                                                 <Button
                                                     variant="outlinedCancel"

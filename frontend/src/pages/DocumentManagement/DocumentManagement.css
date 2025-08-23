@@ -1,0 +1,37 @@
+.document-management-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.document-management-page .MuiTableContainer-root {
+    margin-top: 16px;
+}
+
+.document-management-page .MuiTableCell-head {
+    font-weight: 600;
+    background-color: #f5f5f5;
+}
+
+.document-management-page .MuiChip-root {
+    font-size: 0.75rem;
+}
+
+.document-management-page .MuiIconButton-root {
+    margin: 0 2px;
+}
+
+.document-management-page .MuiDialog-paper {
+    min-width: 500px;
+}
+
+@media (max-width: 768px) {
+    .document-management-page {
+        padding: 16px;
+    }
+    
+    .document-management-page .MuiDialog-paper {
+        min-width: 90vw;
+        margin: 16px;
+    }
+}

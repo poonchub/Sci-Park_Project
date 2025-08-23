@@ -12,7 +12,8 @@ import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
-const OperatorRoutes = (): RouteObject => {
+import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
+const MaintenanceOperatorRoutes = (): RouteObject => {
     return {
         path: "/",
         element: <WindowsLayout />,
@@ -62,6 +63,10 @@ const OperatorRoutes = (): RouteObject => {
                 element: <RoomRentalSpace />,
             },
             {
+                path: "/document-management",
+                element: <DocumentManagement />,
+            },
+            {
                 path: "",
                 element: <Home />,
             },
@@ -72,4 +77,4 @@ const OperatorRoutes = (): RouteObject => {
         ],
     };
 };
-export default OperatorRoutes;
+export default MaintenanceOperatorRoutes;

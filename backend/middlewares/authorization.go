@@ -6,15 +6,17 @@ import (
 
 	"sci-park_web-application/config"
 	"sci-park_web-application/services"
+
 	"github.com/gin-gonic/gin"
 )
 
 // Role levels for comparison
 const (
-	User   		= 1
-	Operator   	= 3
-	Manager  = 4
-	Admin      	= 5
+	User                = 1
+	MaintenanceOperator = 2
+	DocumentOperator    = 3
+	Manager             = 4
+	Admin               = 5
 )
 
 // Authorization เป็นฟังก์ชั่นตรวจเช็ค JWT และตรวจสอบบทบาท (role) ตามระดับ
@@ -69,14 +71,16 @@ func Authorizes(roleLevel int) gin.HandlerFunc {
 // ฟังก์ชั่นสำหรับแปลง role string เป็นระดับ
 func getRoleLevel(role string) int {
 	switch role {
-	case "Admin":
-		return Admin
-	case "Manager":
-		return Manager
-	case "Operator":
-		return Operator
 	case "User":
 		return User
+	case "Maintenance Operator":
+		return MaintenanceOperator
+	case "Document Operator":
+		return DocumentOperator
+	case "Manager":
+		return Manager
+	case "Admin":
+		return Admin
 	default:
 		return 0 // ถ้า role ไม่ถูกกำหนดให้กลับ 0
 	}

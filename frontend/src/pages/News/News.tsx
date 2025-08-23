@@ -247,7 +247,7 @@ function News() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                if (isAdmin || isManager) {
+                if (isAdmin() || isManager()) {
                     await Promise.all([getNewsForAdmin()]);
                     setIsLoadingData(false);
                 } else {
@@ -318,7 +318,7 @@ function News() {
                         </Typography>
                     </Grid>
                     {
-                        (isAdmin || isManager) && <Grid
+                        (isAdmin() || isManager()) && <Grid
                             container
                             className="title-box"
                             size={{ xs: 8 }}

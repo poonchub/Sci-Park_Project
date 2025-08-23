@@ -78,7 +78,7 @@ function AllMaintenanceRequest() {
                     flex: 1,
                     renderCell: (params) => {
                         const data = params.row;
-                        const showButtonApprove = params.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
+                        const showButtonApprove = params.row.RequestStatus?.Name === "Pending" && (isManager() || isAdmin());
 
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
@@ -585,7 +585,7 @@ function AllMaintenanceRequest() {
                     flex: 1.5,
                     renderCell: (item) => {
                         const data = item.row;
-                        const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager || isAdmin);
+                        const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager() || isAdmin());
                         return (
                             <Box
                                 className="container-btn"

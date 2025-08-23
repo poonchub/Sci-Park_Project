@@ -29,7 +29,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
-import { isAdmin, isManager, isOperator } from "../routes";
+import { isAdmin, isManager, isMaintenanceOperator, isDocumentOperator } from "../routes";
 import {
     ClipboardList,
     DoorOpen,
@@ -187,7 +187,7 @@ const WindowsLayout: React.FC = (props: any) => {
             action:
                 notificationCounts?.UnreadRequests &&
                 notificationCounts?.UnreadRequests > 0 &&
-                (isAdmin || isManager) ? (
+                (isAdmin() || isManager()) ? (
                     <Chip
                         label={notificationCounts.UnreadRequests}
                         color="primary"
@@ -202,7 +202,7 @@ const WindowsLayout: React.FC = (props: any) => {
                     action:
                         notificationCounts?.UnreadRequests &&
                         notificationCounts?.UnreadRequests > 0 &&
-                        (isAdmin || isManager) ? (
+                        (isAdmin() || isManager()) ? (
                             <Chip
                                 label={notificationCounts.UnreadRequests}
                                 color="primary"
@@ -225,7 +225,7 @@ const WindowsLayout: React.FC = (props: any) => {
             action:
                 notificationCounts?.UnreadTasks &&
                 notificationCounts.UnreadTasks &&
-                isOperator ? (
+                isMaintenanceOperator() ? (
                     <Chip
                         label={notificationCounts.UnreadTasks}
                         color="primary"
@@ -358,7 +358,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "rental-space",
             "service-area/service-request-list",
         ],
-        Operator: [
+        'Maintenance Operator': [
             "home",
             "booking-room",
             "maintenance",
@@ -368,6 +368,19 @@ const WindowsLayout: React.FC = (props: any) => {
             "news",
 
             "maintenance/accept-work",
+            "rental-space",
+        ],
+        'Document Operator': [
+            "home",
+            "booking-room",
+            "maintenance",
+            "maintenance/create-maintenance-request",
+            "room",
+            "my-account",
+            "news",
+
+            "maintenance/accept-work",
+            "document-management",
             "rental-space",
         ],
         User: [

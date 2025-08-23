@@ -411,9 +411,8 @@ func ListOperators(c *gin.Context) {
 
 	db := config.DB()
 
-	operatorRoleID := 2
-
-	if err := db.Where("role_id = ?", operatorRoleID).Find(&users).Error; err != nil {
+	// Get both Maintenance Operators (RoleID = 2) and Document Operators (RoleID = 3)
+	if err := db.Where("role_id IN (2, 3)").Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -907,6 +906,43 @@ func UpdateSignatureImage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Signature image updated successfully",
+		"data":    user,
+	})
+}
+
+// DeleteSignature ลบลายเซ็นของผู้ใช้จากไฟล์ระบบและล้าง path ในฐานข้อมูล
+func DeleteSignature(c *gin.Context) {
+	userID := c.Param("id") // รับ user id จาก path parameter
+
+	var user entity.User
+	if err := config.DB().First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// ตรวจสอบว่าผู้ใช้มีลายเซ็นหรือไม่
+	if user.SignaturePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User does not have a signature to delete"})
+		return
+	}
+
+	// ลบไฟล์ลายเซ็นจากระบบไฟล์
+	if err := os.Remove(user.SignaturePath); err != nil {
+		// ถ้าลบไฟล์ไม่ได้ (เช่น ไฟล์ไม่มีอยู่แล้ว) ให้ข้ามไป
+		fmt.Printf("Warning: Failed to delete signature file at %s: %v\n", user.SignaturePath, err)
+	}
+
+	// ล้าง path ของลายเซ็นในฐานข้อมูล
+	user.SignaturePath = ""
+
+	// บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
+	if err := config.DB().Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user signature path in database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Signature deleted successfully",
 		"data":    user,
 	})
 }
