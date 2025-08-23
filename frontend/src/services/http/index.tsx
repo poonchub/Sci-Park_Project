@@ -347,49 +347,6 @@ async function UpdateUserSignature(data: any) {
     }
 }
 
-async function DeleteUserSignature(UserID: number) {
-    const token = localStorage.getItem("token");
-    const requestOptions = {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    };
-
-    try {
-        const response = await axios.delete(`${apiUrl}/user/delete-signature/${UserID}`, requestOptions);
-
-        if (response.status === 200) {
-            return {
-                status: "success",
-                message: "Signature deleted successfully",
-                data: response.data,
-            };
-        } else {
-            return {
-                status: "error",
-                message: "Failed to delete signature",
-                data: response.data,
-            };
-        }
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const errorMessage = error.response?.data?.error || error.message || "An error occurred while deleting signature";
-
-            return {
-                status: "error",
-                message: errorMessage,
-                data: null,
-            };
-        } else {
-            return {
-                status: "error",
-                message: "An unexpected error occurred",
-                data: null,
-            };
-        }
-    }
-}
-
 async function CreateUserExternalOnly(data: any) {
     const formData = new FormData();
     formData.append("company_name", data.CompanyName || "");
@@ -2535,7 +2492,6 @@ export {
     GetOperators,
     UpdateUserbyID,
     UpdateUserSignature,
-    DeleteUserSignature,
     UpdateProfileImage,
     CreateUserExternalOnly,
 

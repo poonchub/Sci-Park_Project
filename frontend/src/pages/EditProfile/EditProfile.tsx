@@ -22,6 +22,9 @@ import {
     FormControl,
     FormHelperText,
     MenuItem,
+    Menu,
+    ListItemIcon,
+    ListItemText,
 } from "@mui/material";
 import "../AddUser/AddUserForm.css"; // Import the updated CSS
 import { GetUserById, UpdateUserbyID, ListGenders } from "../../services/http";
@@ -54,7 +57,9 @@ import {
     Info, 
     ChevronLeft, 
     EyeOff,
-    User
+    User,
+    Trash2,
+    MoreVertical
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Close } from "@mui/icons-material";
@@ -81,6 +86,8 @@ const EditProfile: React.FC = () => {
     const [signatureImage, setSignatureImage] = useState<string | null>(null);
     const [isSignatureBlurred, setIsSignatureBlurred] = useState(true);
     const [genders, setGenders] = useState<GendersInterface[]>([]);
+    const [signatureMenuAnchor, setSignatureMenuAnchor] = useState<null | HTMLElement>(null);
+    const [isDeletingSignature, setIsDeletingSignature] = useState(false);
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
@@ -352,6 +359,77 @@ const EditProfile: React.FC = () => {
         setIsSignatureBlurred(!isSignatureBlurred);
     };
 
+    const handleSignatureMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setSignatureMenuAnchor(event.currentTarget);
+    };
+
+    const handleSignatureMenuClose = () => {
+        setSignatureMenuAnchor(null);
+    };
+
+    const handleEditSignature = () => {
+        handleSignatureMenuClose();
+        if (!user?.SignaturePath) {
+            // If no signature exists, show privacy policy first
+            handleOpenSignaturePopup();
+        } else {
+            // If signature exists, go directly to edit
+            setOpenPopup(true);
+        }
+    };
+
+    const handleDeleteSignature = async () => {
+        handleSignatureMenuClose();
+        
+        if (!user?.ID) {
+            setAlerts([{ type: "error", message: "User ID not found." }]);
+            return;
+        }
+
+        if (!user?.SignaturePath) {
+            setAlerts([{ type: "error", message: "No signature to delete." }]);
+            return;
+        }
+
+        setIsDeletingSignature(true);
+        
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${apiUrl}/user/delete-signature/${user.ID}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.message === "Signature deleted successfully") {
+                setAlerts([{ type: "success", message: "Signature deleted successfully" }]);
+                
+                // Clear signature image from state
+                setSignatureImage(null);
+                
+                // Refresh user data to update signature path
+                try {
+                    const updatedUser = await GetUserById(Number(localStorage.getItem("userId")));
+                    if (updatedUser) {
+                        setUser(updatedUser);
+                    }
+                } catch (error) {
+                    // Handle error silently
+                }
+            } else {
+                setAlerts([{ type: "error", message: result.error || "Failed to delete signature" }]);
+            }
+        } catch (error) {
+            setAlerts([{ type: "error", message: "An error occurred while deleting signature" }]);
+        } finally {
+            setIsDeletingSignature(false);
+        }
+    };
+
     const handleSave = async () => {
         if (sigRef.current?.isEmpty()) {
             alert("กรุณาลงลายเซ็นก่อน");
@@ -521,6 +599,34 @@ const EditProfile: React.FC = () => {
                 language={currentLanguage}
                 onLanguageChange={setCurrentLanguage}
             />
+
+            {/* Signature Options Menu */}
+            <Menu
+                anchorEl={signatureMenuAnchor}
+                open={Boolean(signatureMenuAnchor)}
+                onClose={handleSignatureMenuClose}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                }}
+            >
+                <MenuItem onClick={handleEditSignature} disabled={isDeletingSignature}>
+                    <ListItemIcon>
+                        <Edit size={16} />
+                    </ListItemIcon>
+                    <ListItemText primary="Edit Signature" />
+                </MenuItem>
+                <MenuItem onClick={handleDeleteSignature} disabled={isDeletingSignature}>
+                    <ListItemIcon>
+                        <Trash2 size={16} />
+                    </ListItemIcon>
+                    <ListItemText primary={isDeletingSignature ? "Deleting..." : "Delete Signature"} />
+                </MenuItem>
+            </Menu>
 
             <Dialog open={openPopup} onClose={() => setOpenPopup(false)}>
                 <DialogTitle
@@ -719,18 +825,36 @@ const EditProfile: React.FC = () => {
                             
                             <Zoom in={isEditMode} timeout={300} unmountOnExit>
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: "center", marginTop: 2 }}>
-                                    <Button 
-                                        variant="outlined" 
-                                        onClick={handleOpenSignaturePopup}
-                                        startIcon={<Edit size={16} />}
-                                        sx={{
-                                            borderRadius: 2,
-                                            textTransform: "none",
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        {user?.SignaturePath ? "Edit Signature" : "Create Signature"}
-                                    </Button>
+                                    {user?.SignaturePath ? (
+                                        <Button 
+                                            variant="outlined" 
+                                            onClick={handleSignatureMenuOpen}
+                                            startIcon={<MoreVertical size={16} />}
+                                            endIcon={<MoreVertical size={16} />}
+                                            disabled={isDeletingSignature}
+                                            sx={{
+                                                borderRadius: 2,
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            Signature Options
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            variant="outlined" 
+                                            onClick={handleOpenSignaturePopup}
+                                            startIcon={<Edit size={16} />}
+                                            disabled={isDeletingSignature}
+                                            sx={{
+                                                borderRadius: 2,
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            Create Signature
+                                        </Button>
+                                    )}
                                 </Box>
                             </Zoom>
                         </Card>
