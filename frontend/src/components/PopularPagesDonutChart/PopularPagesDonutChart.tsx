@@ -38,10 +38,25 @@ export const pageConfig: Record<string, PageConfig> = {
         colorLite: "rgba(156, 39, 176, 0.18)",
         icon: Wrench
     },
+    "Create Maintenance Request": {
+        color: "#e91e63",
+        colorLite: "rgba(233, 30, 99, 0.18)",
+        icon: Wrench
+    },
     "My Account": {
         color: "#2196f3",
         colorLite: "rgba(33, 150, 243, 0.18)",
         icon: UserCircle
+    },
+    "News": {
+        color: "#ff5722",
+        colorLite: "rgba(255, 87, 34, 0.18)",
+        icon: FileText
+    },
+    "Create Service Area Request": {
+        color: "#795548",
+        colorLite: "rgba(121, 85, 72, 0.18)",
+        icon: HelpCircle
     },
 };
 
@@ -68,7 +83,10 @@ export const normalizePageName = (name: string) => {
     if (name === 'Home Page' || name === 'Home') return 'Home';
     if (name === 'Booking Room') return 'Booking Room';
     if (name === 'My Maintenance Request') return 'My Maintenance Request';
+    if (name === 'Create Maintenance Request') return 'Create Maintenance Request';
     if (name === 'My Account') return 'My Account';
+    if (name === 'News') return 'News';
+    if (name === 'Create Service Area Request') return 'Create Service Area Request';
     return name;
 };
 
@@ -318,9 +336,21 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                                     icon = Wrench;
                                     color = '#9c27b0';
                                     break;
+                                case 'Create Maintenance Request':
+                                    icon = Wrench;
+                                    color = '#e91e63';
+                                    break;
                                 case 'My Account':
                                     icon = UserCircle;
                                     color = '#2196f3';
+                                    break;
+                                case 'News':
+                                    icon = FileText;
+                                    color = '#ff5722';
+                                    break;
+                                case 'Create Service Area Request':
+                                    icon = HelpCircle;
+                                    color = '#795548';
                                     break;
                                 default:
                                     icon = HelpCircle;

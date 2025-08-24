@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { NewsInterface } from '../../interfaces/News'
 import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews, ListNewsOrdered, ListNewsOrderedPeriod, ListPinnedNews, ListUnpinnedNews, socketUrl } from '../../services/http';
 import { TextField } from '../../components/TextField/TextField';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faGear } from '@fortawesome/free-solid-svg-icons';
+
 import { BrushCleaning, CirclePlus, Newspaper, SquarePlus, TextSearch } from 'lucide-react';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -23,6 +22,8 @@ import { io } from 'socket.io-client';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import { handleDeleteNews } from '../../utils/handleDeleteNews';
 import { Select } from '../../components/Select/Select';
+import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
+import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 
 function News() {
     const [news, setNews] = useState<NewsInterface[]>([])
@@ -50,6 +51,12 @@ function News() {
     const [openStartPicker, setOpenStartPicker] = useState(false);
     const [openDelete, setOpenDelete] = useState(false)
     const [selectedDisplayOptions, setSelectedDisplayOptions] = useState<"inRange" | "all" | "pinned" | "unpinned">("inRange");
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.NEWS,
+        onInteractionChange: () => { },
+    });
 
     const displayOption = [
         { label: "Show Only in Display Period", value: "inRange" },
@@ -261,6 +268,50 @@ function News() {
         };
 
         fetchInitialData();
+    }, []);
+
+    // Analytics tracking
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        // ส่ง request ตอนเข้า (duration = 0)
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem('userId')),
+            page_path: KEY_PAGES.NEWS,
+            page_name: 'News',
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem('userId')),
+                page_path: KEY_PAGES.NEWS,
+                page_name: 'News',
+                duration,
+                is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
     }, []);
 
     useEffect(() => {
@@ -541,7 +592,7 @@ function News() {
                                                     </Typography>
                                                 </Box>
 
-                                                <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} />
+                                                <ImageUploader value={files} onChange={setFiles} setAlerts={setAlerts} maxFiles={3} buttonText="Upload Images" />
                                             </Grid>
                                         </Box>
                                     </Grid>

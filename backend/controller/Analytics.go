@@ -146,8 +146,8 @@ func GetSystemAnalytics(c *gin.Context) {
 	db.Model(&entity.Analytics{}).Count(&totalVisits)
 	db.Model(&entity.PageAnalytics{}).Count(&totalPages)
 
-	// หน้าที่ได้รับความนิยมมากที่สุด - เฉพาะ 4 หน้าที่ต้องการ
-	keyPages := []string{"/", "/booking-room", "/my-maintenance-request", "/my-account"}
+	// หน้าที่ได้รับความนิยมมากที่สุด - รวมหน้าทั้งหมดที่ track
+	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 	var popularPages []entity.PageAnalytics
 	if err := db.Where("page_path IN ?", keyPages).
 		Order("total_visits DESC").
@@ -205,8 +205,8 @@ func GetAnalyticsDashboard(c *gin.Context) {
 	var monthVisits int64
 	db.Model(&entity.Analytics{}).Where("visit_time >= ?", monthAgo).Count(&monthVisits)
 
-	// หน้าที่ได้รับความนิยมวันนี้ - เฉพาะ 4 หน้าที่ต้องการ
-	keyPages := []string{"/", "/booking-room", "/my-maintenance-request", "/my-account"}
+	// หน้าที่ได้รับความนิยมวันนี้ - รวมหน้าทั้งหมดที่ track
+	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 	var todayPopularPages []entity.PageAnalytics
 	if err := db.Where("last_updated >= ? AND page_path IN ?", today, keyPages).
 		Order("total_visits DESC").
@@ -328,8 +328,8 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 		startDate = today.AddDate(-1, 0, 0)
 	}
 
-	// Key pages to track
-	keyPages := []string{"/", "/booking-room", "/my-maintenance-request", "/my-account"}
+	// Key pages to track - รวมหน้าทั้งหมดที่ track
+	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 
 	// Get total visits for the period
 	var totalVisits int64
@@ -355,16 +355,19 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 		pageData[r.PagePath] = r.Count
 	}
 
-	// Get data for all 4 pages
+	// Get data for all tracked pages
 	homeVisits := pageData["/"]
 	bookingVisits := pageData["/booking-room"]
-	maintenanceVisits := pageData["/my-maintenance-request"]
+	maintenanceVisits := pageData["/maintenance/create-maintenance-request"]
+	createMaintenanceVisits := pageData["/create-maintenance-request"]
 	myAccountVisits := pageData["/my-account"]
+	newsVisits := pageData["/news"]
+	createServiceAreaVisits := pageData["/create-service-area-request"]
 
-	// Calculate total from all 4 pages
-	totalFromPages := homeVisits + bookingVisits + maintenanceVisits + myAccountVisits
+	// Calculate total from all tracked pages
+	totalFromPages := homeVisits + bookingVisits + maintenanceVisits + createMaintenanceVisits + myAccountVisits + newsVisits + createServiceAreaVisits
 
-	// Build response data with all 4 pages
+	// Build response data with all tracked pages
 	response := gin.H{
 		"period":       period,
 		"total_visits": totalFromPages,
@@ -388,10 +391,28 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 				"icon":   "maintenance",
 			},
 			{
+				"name":   "Create Maintenance",
+				"visits": createMaintenanceVisits,
+				"color":  "#e91e63",
+				"icon":   "maintenance",
+			},
+			{
 				"name":   "My Account",
 				"visits": myAccountVisits,
 				"color":  "#2196f3",
 				"icon":   "account",
+			},
+			{
+				"name":   "News",
+				"visits": newsVisits,
+				"color":  "#ff5722",
+				"icon":   "news",
+			},
+			{
+				"name":   "Create Service Area",
+				"visits": createServiceAreaVisits,
+				"color":  "#795548",
+				"icon":   "service",
 			},
 		},
 	}
@@ -432,8 +453,8 @@ func GetPerformanceAnalytics(c *gin.Context) {
 
 	db := config.DB()
 
-	// Key pages to track
-	keyPages := []string{"/", "/booking-room", "/my-maintenance-request", "/my-account"}
+	// Key pages to track - รวมหน้าทั้งหมดที่ track
+	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 
 	// Page Performance (aggregate from Analytics table)
 	type PagePerformance struct {

@@ -52,6 +52,8 @@ import RequestStepper from "../../components/RequestStepper/RequestStepper";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import TimePickerField from "../../components/TimePickerField/TimePickerField";
 import { ChevronLeft, Mail, NotebookPen, Pencil, Phone, RotateCcw, Save, Undo2, Upload, UserRound } from "lucide-react";
+import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
+import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 
 function CreateMaintenanceRequestPage() {
     const [user, setUser] = useState<UserInterface>();
@@ -98,6 +100,12 @@ function CreateMaintenanceRequestPage() {
     const navigate = useNavigate();
 
     const [isLoadingData, setIsLoadingData] = useState(true);
+
+    // Initialize interaction tracker
+    const { getInteractionCount } = useInteractionTracker({
+        pagePath: KEY_PAGES.CREATE_MAINTENANCE_REQUEST,
+        onInteractionChange: () => { },
+    });
 
     const getUser = async () => {
         try {
@@ -472,9 +480,50 @@ function CreateMaintenanceRequestPage() {
         };
 
         fetchInitialData();
+    }, []);
 
-        // Remove analytics tracking from CreateMaintenanceRequest
-        // analyticsService.trackKeyPageVisit(KEY_PAGES.CREATE_MAINTENANCE_REQUEST, 'Create Maintenance Request');
+    // Analytics tracking
+    useEffect(() => {
+        const startTime = Date.now();
+        let sent = false;
+
+        // ส่ง request ตอนเข้า (duration = 0)
+        analyticsService.trackPageVisit({
+            user_id: Number(localStorage.getItem('userId')),
+            page_path: KEY_PAGES.CREATE_MAINTENANCE_REQUEST,
+            page_name: 'Create Maintenance Request',
+            duration: 0, // ตอนเข้า duration = 0
+            is_bounce: false,
+        });
+
+        // ฟังก์ชันส่ง analytics ตอนออก
+        const sendAnalyticsOnLeave = (isBounce: boolean) => {
+            if (sent) {
+                return;
+            }
+            sent = true;
+            const duration = Math.floor((Date.now() - startTime) / 1000);
+            analyticsService.trackPageVisit({
+                user_id: Number(localStorage.getItem('userId')),
+                page_path: KEY_PAGES.CREATE_MAINTENANCE_REQUEST,
+                page_name: 'Create Maintenance Request',
+                duration,
+                is_bounce: isBounce,
+                interaction_count: getInteractionCount(),
+            });
+        };
+
+        // ออกจากหน้าแบบปิด tab/refresh
+        const handleBeforeUnload = () => {
+            sendAnalyticsOnLeave(true);
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // ออกจากหน้าแบบ SPA (React)
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            sendAnalyticsOnLeave(false);
+        };
     }, []);
 
     useEffect(() => {

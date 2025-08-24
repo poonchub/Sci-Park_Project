@@ -95,8 +95,11 @@ export interface TrackPageVisitData {
 export const KEY_PAGES = {
     HOME: '/',
     BOOKING_ROOM: '/booking-room',
-    MY_MAINTENANCE_REQUEST: '/my-maintenance-request',
+    MY_MAINTENANCE_REQUEST: '/maintenance/create-maintenance-request',
+    CREATE_MAINTENANCE_REQUEST: '/create-maintenance-request',
     MY_ACCOUNT: '/my-account',
+    NEWS: '/news',
+    CREATE_SERVICE_AREA: '/create-service-area-request',
 } as const;
 
 export type KeyPagePath = typeof KEY_PAGES[keyof typeof KEY_PAGES];

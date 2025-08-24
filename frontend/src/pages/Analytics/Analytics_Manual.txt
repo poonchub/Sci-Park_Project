@@ -82,12 +82,15 @@ DAILY VISITS CHART:
 POPULAR PAGES DONUT CHART:
 
 - Chart Type: Donut chart
-- Data: 4 key pages only
+- Data: All tracked pages
 - Pages Tracked:
   * Home Page (/)
   * Booking Room (/booking-room)
-  * My Maintenance Request (/my-maintenance-request)
+  * My Maintenance Request (/maintenance/create-maintenance-request)
+  * Create Maintenance Request (/create-maintenance-request)
   * My Account (/my-account)
+  * News (/news)
+  * Create Service Area Request (/create-service-area-request)
 - Features:
   * Color-coded by page
   * Percentage distribution
@@ -119,7 +122,7 @@ PERFORMANCE CARDS:
 1. Peak Hour Card
    - Title: "Peak Hour"
    - Data: Hour with highest visits
-   - Format: HH:00 (24-hour format)
+   - Format: HH:00 AM/PM format
    - Color: Primary blue
    - Updates: Based on selected date range
 
@@ -146,7 +149,7 @@ PAGE PERFORMANCE TABLE:
   * Red (<50): Low engagement
 
 - Features:
-  * Key pages only filter
+  * All tracked pages filter
   * Color-coded page icons
   * Responsive design
   * Loading states
@@ -156,14 +159,14 @@ TIME-BASED ANALYTICS:
 1. Visits by Time Slot
    - Chart Type: Bar chart
    - Time Slots:
-     * 09:00-11:00
-     * 11:00-13:00
-     * 13:00-15:00
-     * 15:00-17:00
-     * 17:00-19:00
-     * 19:00-21:00
-     * 21:00-23:00
-     * Other (before 9:00 or after 23:00)
+     * 09:00-11:00 AM
+     * 11:00-13:00 PM
+     * 13:00-15:00 PM
+     * 15:00-17:00 PM
+     * 17:00-19:00 PM
+     * 19:00-21:00 PM
+     * 21:00-23:00 PM
+     * Other (before 9:00 AM or after 11:00 PM)
    - Features:
      * Bar chart visualization
      * Detailed table below
@@ -336,7 +339,7 @@ TECHNICAL DETAILS
 ===========================================
 
 ANALYTICS TRACKING:
-- Tracks 4 key pages only
+- Tracks all configured pages
 - Records visit duration and interactions
 - Filters out visits under 2 seconds
 - Stores data in SQLite database
