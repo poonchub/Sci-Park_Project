@@ -2,6 +2,7 @@ import {
     apiUrl,
     CheckSlip,
     CreatePayment,
+    DeleteMaintenanceRequestByID,
     GetInvoiceByID,
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
@@ -97,6 +98,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import { PaymentInterface } from "../../interfaces/IPayments";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import { isAdmin, isManager } from "../../routes";
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
@@ -316,15 +318,9 @@ const MyAccount: React.FC = () => {
     const handleClickCancel = async () => {
         try {
             setIsButtonActive(true);
-            const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
-
-            const request: MaintenanceRequestsInterface = {
-                RequestStatusID: statusID,
-            };
-
-            const resRequest = await UpdateMaintenanceRequestByID(request, selectedRequest?.ID);
+            const resRequest = await DeleteMaintenanceRequestByID(selectedRequest?.ID);
             if (!resRequest || resRequest.error)
-                throw new Error(resRequest?.error || "Failed to update request status.");
+                throw new Error(resRequest?.error || "Failed to delete request status.");
 
             const notificationDataUpdate: NotificationsInterface = {
                 IsRead: true,
@@ -586,32 +582,58 @@ const MyAccount: React.FC = () => {
 
     useEffect(() => {
         const socket = io(socketUrl);
-
+        const userId = Number(localStorage.getItem("userId"))
         socket.on("maintenance_updated", (data) => {
             console.log("🔄 Maintenance request updated:", data);
-            setTimeout(() => {
-                getUpdateMaintenanceRequest(data.ID);
-            }, 1500);
+            if (data.UserID === userId) {
+                setTimeout(() => {
+                    getUpdateMaintenanceRequest(data.ID);
+                }, 1500);
+            }
+        });
+
+        socket.on("maintenance_deleted", (data) => {
+            console.log("🔄 Maintenance request deleted:", data);
+            if (data.UserID === userId) {
+                setTimeout(() => {
+                    setMaintenanceRequests((prev) => prev.filter((item) => item.ID !== data.ID));
+                }, 1500);
+            }
         });
 
         socket.on("invoice_created", (data) => {
             console.log("📦 New invoice:", data);
-            setTimeout(() => {
-                getNewInvoice(data.ID);
-            }, 1500);
+            if (data.CustomerID === userId) {
+                setTimeout(() => {
+                    getNewInvoice(data.ID);
+                }, 1500);
+            }
         });
 
         socket.on("invoice_updated", (data) => {
             console.log("🔄 Invoice updated:", data);
-            setTimeout(() => {
-                getUpdateInvoice(data.ID);
-            }, 1500);
+            if (data.CustomerID === userId) {
+                setTimeout(() => {
+                    getUpdateInvoice(data.ID);
+                }, 1500);
+            }
+        });
+
+        socket.on("invoice_deleted", (data) => {
+            console.log("🔄 Invoice deleted:", data);
+            if (data.CustomerID === userId) {
+                setTimeout(() => {
+                    setInvoices((prev) => prev.filter((item) => item.ID !== data.ID));
+                }, 1500);
+            }
         });
 
         return () => {
             socket.off("maintenance_updated");
+            socket.off("maintenance_deleted");
             socket.off("invoice_created");
             socket.off("invoice_updated");
+            socket.off("invoice_deleted");
         };
     }, []);
 
@@ -2429,7 +2451,7 @@ const MyAccount: React.FC = () => {
                                 allowScrollButtonsMobile
                             >
                                 <Tab label={
-                                    <Badge badgeContent={notificationCounts.UnreadRequests} color="primary">
+                                    <Badge invisible={isAdmin() || isManager()} badgeContent={notificationCounts.UnreadRequests} color="primary">
                                         Maintenance Request
                                     </Badge>
                                 } {...a11yProps(0)} />
@@ -2449,30 +2471,13 @@ const MyAccount: React.FC = () => {
                         <Grid container size={{ xs: 3 }} sx={{ justifyContent: "flex-end" }}>
                             <Link to="/maintenance/create-maintenance-request">
                                 <Button variant="contained">
-                                    <FileText size={20} />
+                                    <FileText size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                     <Typography variant="textButtonClassic">Create Request</Typography>
                                 </Button>
                             </Link>
                         </Grid>
                         <CustomTabPanel value={valueTab} index={0}>
                             <Grid container size={{ xs: 12 }} spacing={2}>
-                                {/* Count Status Section */}
-                                {/* {!statusCounts ? (
-                                    <Skeleton variant="rectangular" width="100%" height={50} sx={{ borderRadius: 2 }} />
-                                ) : (
-                                    <Grid
-                                        container
-                                        spacing={1}
-                                        className="filter-section"
-                                        size={{ xs: 12 }}
-                                        sx={{
-                                            height: "auto",
-                                        }}
-                                    >
-                                        <RequestStatusStack statusCounts={statusCounts || {}} />
-                                    </Grid>
-                                )} */}
-
                                 {/* Filters Section */}
                                 {!statusCounts ? (
                                     <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />

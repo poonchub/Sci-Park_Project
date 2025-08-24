@@ -87,14 +87,22 @@ const handleActionApproval = async (
         if (!resRequest || resRequest.error)
             throw new Error(resRequest?.error || "Failed to update request status.");
 
-        await handleUpdateNotification(userID, true, selectedRequest.ID, undefined, undefined);
+        const notificationDataUpdate: NotificationsInterface = {
+            IsRead: true,
+        };
+        const resUpdateNotification = await UpdateNotificationsByRequestID(
+            notificationDataUpdate,
+            selectedRequest.ID
+        );
+        if (!resUpdateNotification || resUpdateNotification.error)
+            throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
         setTimeout(() => {
             setAlerts((prev) => [
                 ...prev,
                 { type: "success", message: actionType === "approve" ? "Request approved successfully" : "Request rejected successfully" }
             ]);
-            
+
             setSelectedOperator(0)
             setOpenPopupApproved(false);
             setOpenConfirmRejected(false);

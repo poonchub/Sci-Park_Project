@@ -58,6 +58,7 @@ func GetInvoiceByID(c *gin.Context) {
 		Preload("Customer.Prefix").
 		Preload("Creater.Prefix").
 		Preload("Creater.Role").
+		Preload("Creater.JobPosition").
 		Preload("Notifications").
 
 		First(&invoice, id)
@@ -108,6 +109,7 @@ func GetInvoiceByOption(c *gin.Context) {
 		Preload("Customer.Prefix").
 		Preload("Creater.Prefix").
 		Preload("Creater.Role").
+		Preload("Creater.JobPosition").
 		Preload("Notifications")
 
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
@@ -355,6 +357,8 @@ func DeleteInvoiceByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
 		return
 	}
+
+	services.NotifySocketEvent("invoice_deleted", invoice)
 
 	tx.Commit()
 	c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})

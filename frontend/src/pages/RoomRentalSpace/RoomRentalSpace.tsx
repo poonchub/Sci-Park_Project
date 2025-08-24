@@ -72,6 +72,7 @@ import {
     Search,
     Send,
     Trash2,
+    Upload,
     Wallet,
     X,
 } from "lucide-react";
@@ -102,6 +103,7 @@ import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAndInvoice";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { io } from "socket.io-client";
+import { useUserStore } from "../../store/userStore";
 
 type InvoiceItemError = {
     Description?: string;
@@ -125,6 +127,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 function RoomRentalSpace() {
+    const { user } = useUserStore();
     const [rooms, setRooms] = useState<RoomsInterface[]>([]);
     const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
@@ -276,7 +279,6 @@ function RoomRentalSpace() {
     const getUpdateRoom = async (ID: number) => {
         try {
             const res = await GetRoomRentalSpaceByID(ID);
-            console.log("res: ", res)
             if (res) {
                 setRooms((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
             }
@@ -363,13 +365,19 @@ function RoomRentalSpace() {
             return;
         }
 
-        const userID = Number(localStorage.getItem("userId"));
-        if (!userID) {
+        if (user?.ID === 0) {
             handleSetAlert("error", "UserID not found");
             setIsButtonActive(false);
             return;
         } else {
-            invoiceFormData.CreaterID = userID;
+            invoiceFormData.CreaterID = user?.ID;
+        }
+
+        console.log("user: ", user)
+        if (!user?.SignaturePath || user.SignaturePath === "") {
+            handleSetAlert("warning", "Please upload your signature before proceeding.");
+            setIsButtonActive(false);
+            return;
         }
 
         if (!selectedRoom) {
@@ -422,7 +430,10 @@ function RoomRentalSpace() {
                 setIsButtonActive(false);
                 setOpenCreatePopup(false);
                 handleClearForm();
-                setSelectedRoom(null);
+                if (!openInvoicePopup) {
+                    setSelectedRoom(null);
+                }
+                getInvoice()
             }, 1800);
         } catch (error: any) {
             console.error("🚨 Error creating invoice:", error);
@@ -448,6 +459,7 @@ function RoomRentalSpace() {
             await DeleteInvoiceByID(selectedInvoice?.ID ?? 0);
 
             await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
+            await handleUpdateNotification(selectedInvoice.CreaterID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
 
             handleSetAlert("success", "Invoice deleted successfully!");
 
@@ -781,16 +793,32 @@ function RoomRentalSpace() {
     useEffect(() => {
         const socket = io(socketUrl);
 
+        socket.on("invoice_created", (data) => {
+            console.log("📦 New invoice:", data);
+            setTimeout(() => {
+                getUpdateRoom(data.RoomID)
+            }, 1500);
+        });
+
+        socket.on("invoice_deleted", (data) => {
+            console.log("🔄 Invoice deleted:", data);
+            setTimeout(() => {
+                getUpdateRoom(data.RoomID)
+            }, 1500);
+        });
+
         socket.on("invoice_updated", (data) => {
             console.log("🔄 Invoice updated:", data);
-            getUpdateRoom(data.RoomID)
-            getUpdateInvoice(data.ID);
+            setTimeout(() => {
+                getUpdateRoom(data.RoomID)
+                getUpdateInvoice(data.ID);
+            }, 1500);
         });
 
         return () => {
-            socket.off("maintenance_updated");
             socket.off("invoice_created");
             socket.off("invoice_updated");
+            socket.off("invoice_deleted");
         };
     }, []);
 
@@ -1006,7 +1034,7 @@ function RoomRentalSpace() {
                                                 >
                                                     <Tooltip title={"Invoice List"}>
                                                         <Button
-                                                            variant="outlined"
+                                                            variant="outlinedGray"
                                                             onClick={() => {
                                                                 setOpenInvoicePopup(true);
                                                                 setSelectedRoom(data);
@@ -1036,25 +1064,6 @@ function RoomRentalSpace() {
             ];
         } else {
             return [
-                {
-                    field: "ID",
-                    headerName: "No.",
-                    flex: 0.3,
-                    headerAlign: "center",
-                    renderCell: (params) => (
-                        <Box
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            {params.value}
-                        </Box>
-                    ),
-                },
                 {
                     field: "RoomDetails",
                     headerName: "Room Details",
@@ -1153,7 +1162,7 @@ function RoomRentalSpace() {
                 },
                 {
                     field: "RoomStatus",
-                    headerName: "Status",
+                    headerName: "Room Status",
                     type: "string",
                     flex: 0.5,
                     renderCell: (item) => {
@@ -1165,6 +1174,21 @@ function RoomRentalSpace() {
                             icon: HelpCircle,
                         };
                         const Icon = icon
+
+                        const data = item.row;
+                        const invoice = data.Invoices ?? [];
+                        const now = new Date();
+                        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                        const hasInvoiceCreated = invoice.some((inv: InvoiceInterface) => {
+                            if (!inv.BillingPeriod) return false;
+
+                            const billDate = new Date(inv.BillingPeriod);
+                            return (
+                                billDate.getFullYear() === prevMonth.getFullYear() &&
+                                billDate.getMonth() === prevMonth.getMonth()
+                            );
+                        });
+
                         return (
                             <Box
                                 sx={{
@@ -1201,6 +1225,19 @@ function RoomRentalSpace() {
                                         {statusName}
                                     </Typography>
                                 </Box>
+                                <Typography
+                                    display={statusName === "Unavailable" ? 'block' : 'none'}
+                                    variant="body1"
+                                    sx={{
+                                        fontSize: '12px',
+                                        mt: 1,
+                                        textAlign: 'center',
+                                        color: 'text.secondary',
+                                        lineHeight: 1
+                                    }}
+                                >
+                                    {hasInvoiceCreated ? 'Invoice created' : 'Invoice not created'}
+                                </Typography>
                             </Box>
                         );
                     },
@@ -1266,7 +1303,7 @@ function RoomRentalSpace() {
                                 >
                                     <Tooltip title={"Invoice List"}>
                                         <Button
-                                            variant="outlined"
+                                            variant="outlinedGray"
                                             onClick={() => {
                                                 setOpenInvoicePopup(true);
                                                 setSelectedRoom(data);
@@ -1875,9 +1912,12 @@ function RoomRentalSpace() {
                                                             onChange={(e) => handlePDFUploadReceipt(e, data)}
                                                         />
                                                         <label htmlFor="upload-new-pdf-input">
-                                                            <Typography component="span" sx={{ fontSize: 14 }}>
-                                                                Upload New File
-                                                            </Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <Upload size={14} style={{ minWidth: '14px', minHeight: '14px' }}/>
+                                                                <Typography component="span" sx={{ fontSize: 14 }}>
+                                                                    Upload New File
+                                                                </Typography>
+                                                            </Box>
                                                         </label>
                                                     </MenuItem>
                                                     {
@@ -1886,7 +1926,12 @@ function RoomRentalSpace() {
                                                             sx={{ fontSize: 14 }}
                                                             onClick={() => handleDeleteReceipt(data)}
                                                         >
-                                                            Delete File
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <Trash2 size={14} style={{ minWidth: '14px', minHeight: '14px', marginBottom: '2px' }}/>
+                                                                <Typography sx={{ fontSize: 14 }}>
+                                                                    Delete File
+                                                                </Typography>
+                                                            </Box>
                                                         </MenuItem>
                                                     }
                                                 </Menu>
@@ -2662,13 +2707,28 @@ function RoomRentalSpace() {
                     sx={{
                         fontWeight: 700,
                         color: "primary.main",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        pr: 8
                     }}
                 >
-                    <ScrollText size={26} />
-                    Invoice List
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                        }}
+                    >
+                        <ScrollText size={26} />
+                        Invoice List
+                    </Box>
+
+                    <Button variant="contained"
+                        onClick={() => setOpenCreatePopup(true)}
+                    >
+                        <NotebookPen size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                        <Typography variant="textButtonClassic">Create Invoice</Typography>
+                    </Button>
                     <IconButton
                         aria-label="close"
                         onClick={() => {
@@ -2679,12 +2739,13 @@ function RoomRentalSpace() {
                         sx={{
                             position: "absolute",
                             right: 8,
-                            top: 8,
+                            top: 12,
                         }}
                     >
                         <Close />
                     </IconButton>
                 </DialogTitle>
+
                 <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
                     <Grid container size={{ xs: 12 }} spacing={2}>
                         {!isLoadingData ? (
