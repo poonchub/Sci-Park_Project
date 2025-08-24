@@ -911,6 +911,24 @@ func SeedDatabase() {
 			BookingRoomID: 2,
 			StatusID:      2,
 		},
+		{
+			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
+			Amount:        1000.00,
+			SlipPath:      "/slips/payment2.jpg",
+			Note:          "",
+			PayerID:       users[2].ID, // internaluser2
+			InvoiceID: 	   2,
+			StatusID:      2,
+		},
+		{
+			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
+			Amount:        1000.00,
+			SlipPath:      "/slips/payment2.jpg",
+			Note:          "",
+			PayerID:       users[3].ID, // internaluser2
+			InvoiceID:     2,
+			StatusID:      2,
+		},
 	}
 	for _, p := range payments {
 		result := db.FirstOrCreate(&p, entity.Payment{

@@ -173,6 +173,106 @@ func GetPaymentByOption(c *gin.Context) {
 	})
 }
 
+// GET /booking-room-payments/by-date
+func ListBookingRoomPaymentsByDateRange(c *gin.Context) {
+	var payments []entity.Payment
+
+	startDateStr := c.Query("start_date")
+	endDateStr := c.Query("end_date")
+
+	db := config.DB()
+
+	query := db.
+		Where("booking_room_id > 0").
+		Order("created_at ASC")
+
+	layout := "2006-01-02"
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	if startDateStr != "" {
+		startDate, errStart := time.ParseInLocation(layout, startDateStr, loc)
+		if errStart != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format, expected YYYY-MM-DD"})
+			return
+		}
+
+		if endDateStr == "" {
+			startOfDay := startDate
+			endOfDay := startDate.AddDate(0, 0, 1)
+			query = query.Where("payment_date >= ? AND payment_date < ?", startOfDay, endOfDay)
+		} else {
+			endDate, errEnd := time.ParseInLocation(layout, endDateStr, loc)
+			if errEnd != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
+				return
+			}
+			query = query.Where("payment_date BETWEEN ? AND ?", startDate, endDate)
+		}
+	}
+
+	results := query.Find(&payments)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &payments)
+}
+
+// GET /invoice-payments/by-date
+func ListInvoicePaymentsByDateRange(c *gin.Context) {
+	var payments []entity.Payment
+
+	startDateStr := c.Query("start_date")
+	endDateStr := c.Query("end_date")
+
+	db := config.DB()
+
+	query := db.
+		Where("invoice_id > 0").
+		Order("created_at ASC")
+
+	layout := "2006-01-02"
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	if startDateStr != "" {
+		startDate, errStart := time.ParseInLocation(layout, startDateStr, loc)
+		if errStart != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format, expected YYYY-MM-DD"})
+			return
+		}
+
+		if endDateStr == "" {
+			startOfDay := startDate
+			endOfDay := startDate.AddDate(0, 0, 1)
+			query = query.Where("payment_date >= ? AND payment_date < ?", startOfDay, endOfDay)
+		} else {
+			endDate, errEnd := time.ParseInLocation(layout, endDateStr, loc)
+			if errEnd != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
+				return
+			}
+			query = query.Where("payment_date BETWEEN ? AND ?", startDate, endDate)
+		}
+	}
+
+	results := query.Find(&payments)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &payments)
+}
+
 // POST /payment
 func CreatePayment(c *gin.Context) {
 	db := config.DB()

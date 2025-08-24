@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import { apiUrl } from "../../services/http";
-import { Button, Grid } from "@mui/material";
+import { Button, CircularProgress, Grid } from "@mui/material";
 
 import tinymce from "tinymce/tinymce";
 import "tinymce/themes/silver/theme";
@@ -55,9 +55,15 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
     const paymentRef = useRef<HTMLDivElement>(null);
 
     const [loading, setLoading] = useState(false);
+    const [loadingGenerate, setLoadingGenerate] = useState(true);
 
     useEffect(() => {
-        const targets = [subjectRef.current, toRef.current, noticeRef.current, paymentRef.current].filter(Boolean);
+        const targets = [
+            subjectRef.current,
+            toRef.current,
+            noticeRef.current,
+            paymentRef.current,
+        ].filter(Boolean);
 
         targets.forEach((el) => {
             if (!el) return;
@@ -78,13 +84,14 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                 const editor = tinymce.get(el.id);
                 if (editor) editor.remove();
             });
+            setLoadingGenerate(false)
         };
     }, []);
 
     const generatePDF = () => {
         if (!invoiceRef.current) return;
 
-        setLoading(true); 
+        setLoading(true);
         tinymce.triggerSave();
 
         setTimeout(() => {
@@ -112,14 +119,14 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
             }}
         >
             <Grid size={{ xs: 12 }} textAlign={"end"}>
-                <Button 
-                    disabled={loading} 
-                    variant="contained" 
-                    onClick={generatePDF} 
+                <Button
+                    disabled={loading}
+                    variant="contained"
+                    onClick={generatePDF}
                     style={{ marginBottom: "20px" }}
-                    startIcon={loading ? <Loader size={18}/> :<Download size={18}/>}
+                    startIcon={loading ? <Loader size={18} /> : <Download size={18} />}
                 >
-                    {loading ? ("Loading...") : "Download PDF"}
+                    {loading ? "Loading..." : "Download PDF"}
                 </Button>
             </Grid>
 
@@ -198,186 +205,243 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                 `}
             </style>
 
-            <div
-                ref={invoiceRef}
-                style={{
-                    padding: "20px",
-                    fontFamily: "'Sarabun', sans-serif",
-                    fontSize: "14px",
-                    lineHeight: "1.8",
-                }}
-            >
-                {/* Header */}
+            {!loadingGenerate ? (
                 <div
+                    ref={invoiceRef}
                     style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "12px",
+                        padding: "20px",
+                        fontFamily: "'Sarabun', sans-serif",
+                        fontSize: "14px",
+                        lineHeight: "1.8",
                     }}
                 >
-                    <div style={{ flex: 1 }}>
-                        <h1
-                            style={{
-                                border: "2px solid",
-                                padding: "4px 0",
-                                textAlign: "center",
-                                width: "80px",
-                                margin: 0,
-                                fontSize: 14,
-                            }}
+                    {/* Header */}
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "12px",
+                        }}
+                    >
+                        <div style={{ flex: 1 }}>
+                            <h1
+                                style={{
+                                    border: "2px solid",
+                                    padding: "4px 0",
+                                    textAlign: "center",
+                                    width: "80px",
+                                    margin: 0,
+                                    fontSize: 14,
+                                }}
+                            >
+                                ใบแจ้งหนี้
+                            </h1>
+                            <div className="text-normal" style={{ marginTop: "20px" }}>
+                                ที่ {invoice.InvoiceNumber}
+                            </div>
+                        </div>
+                        <div style={{ flex: 2, textAlign: "center" }}>
+                            <img
+                                src="http://localhost:8000/images/organization/logo/logo_1.png"
+                                alt="Logo"
+                                style={{ maxHeight: "80px" }}
+                            />
+                        </div>
+                        <div style={{ flex: 1 }}></div>
+                    </div>
+
+                    {/* Issue Date */}
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            marginBottom: "10px",
+                        }}
+                    >
+                        <div
+                            className="text-normal"
+                            style={{ width: "240px", textAlign: "center" }}
                         >
-                            ใบแจ้งหนี้
-                        </h1>
-                        <div className="text-normal" style={{ marginTop: "20px" }}>
-                            ที่ {invoice.InvoiceNumber}
+                            วันที่ {thaiDateFull(invoice.IssueDate || "")}
                         </div>
                     </div>
-                    <div style={{ flex: 2, textAlign: "center" }}>
-                        <img
-                            src="http://localhost:8000/images/organization/logo/logo_1.png"
-                            alt="Logo"
-                            style={{ maxHeight: "80px" }}
-                        />
-                    </div>
-                    <div style={{ flex: 1 }}></div>
-                </div>
 
-                {/* Issue Date */}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
-                    <div className="text-normal" style={{ width: "240px", textAlign: "center" }}>
-                        วันที่ {thaiDateFull(invoice.IssueDate || "")}
+                    {/* เรื่อง */}
+                    <div
+                        ref={subjectRef}
+                        className="editable-content"
+                        id="subject-div"
+                        style={{
+                            display: "flex",
+                            gap: "16px",
+                            marginBottom: "10px",
+                            textAlign: "justify",
+                        }}
+                    >
+                        <div>
+                            <strong>เรื่อง</strong>
+                        </div>
+                        <div className="text-normal">
+                            แจ้งค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ
+                            2 <br /> (จังหวัดนครราชสีมา)
+                        </div>
                     </div>
-                </div>
 
-                {/* เรื่อง */}
-                <div
-                    ref={subjectRef}
-                    className="editable-content"
-                    id="subject-div"
-                    style={{ display: "flex", gap: "16px", marginBottom: "10px", textAlign: "justify" }}
-                >
-                    <div>
-                        <strong>เรื่อง</strong>
+                    {/* เรียน */}
+                    <div
+                        ref={toRef}
+                        className="editable-content"
+                        id="to-div"
+                        style={{
+                            display: "flex",
+                            gap: "16px",
+                            marginBottom: "10px",
+                            textAlign: "justify",
+                        }}
+                    >
+                        <div>
+                            <strong>เรียน</strong>
+                        </div>
+                        <div className="text-normal">{invoice.Customer?.CompanyName}</div>
                     </div>
-                    <div className="text-normal">
-                        แจ้งค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 <br />{" "}
-                        (จังหวัดนครราชสีมา)
+
+                    {/* Notice */}
+                    <div
+                        ref={noticeRef}
+                        className="editable-content"
+                        id="notice-div"
+                        style={{ marginBottom: "6px", textIndent: "3.2em" }}
+                    >
+                        อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 (จังหวัดนครราชสีมา)
+                        ขอเรียนให้ท่านทราบ
+                        <br />
+                        ถึงรายการค่าใช้จ่ายต่าง ๆ ประจำเดือน
+                        {thaiDateMonthYear(invoice.BillingPeriod || "")} ต้องชำระดังต่อไปนี้
                     </div>
-                </div>
 
-                {/* เรียน */}
-                <div
-                    ref={toRef}
-                    className="editable-content"
-                    id="to-div"
-                    style={{ display: "flex", gap: "16px", marginBottom: "10px", textAlign: "justify" }}
-                >
-                    <div>
-                        <strong>เรียน</strong>
-                    </div>
-                    <div className="text-normal">{invoice.Customer?.CompanyName}</div>
-                </div>
-
-                {/* Notice */}
-                <div
-                    ref={noticeRef}
-                    className="editable-content"
-                    id="notice-div"
-                    style={{ marginBottom: "6px", textIndent: "3.2em" }}
-                >
-                    อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 (จังหวัดนครราชสีมา) ขอเรียนให้ท่านทราบ
-                    <br />
-                    ถึงรายการค่าใช้จ่ายต่าง ๆ ต้องชำระดังต่อไปนี้
-                </div>
-
-                {/* Table */}
-                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
-                    <thead>
-                        <tr>
-                            <th style={{ border: "1px solid #999", textAlign: "center" }}>รายการ</th>
-                            <th style={{ border: "1px solid #999", textAlign: "center" }}>เดือน</th>
-                            <th style={{ border: "1px solid #999", textAlign: "center" }}>จำนวนเงิน (บาท)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {invoice.Items?.map((item, index) => (
-                            <tr key={index}>
-                                <td style={{ border: "1px solid #999" }}>
-                                    {index + 1}. {item.Description}
+                    {/* Table */}
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+                        <thead>
+                            <tr>
+                                <th
+                                    style={{
+                                        border: "1px solid #999",
+                                        textAlign: "center",
+                                        width: "70%",
+                                    }}
+                                >
+                                    รายการ
+                                </th>
+                                <th
+                                    style={{
+                                        border: "1px solid #999",
+                                        textAlign: "center",
+                                        width: "30%",
+                                    }}
+                                >
+                                    จำนวนเงิน (บาท)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {invoice.Items?.map((item, index) => (
+                                <tr key={index}>
+                                    <td style={{ border: "1px solid #999" }}>
+                                        {index + 1}. {item.Description}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: "right" }}>
+                                        {item.Amount?.toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                </tr>
+                            ))}
+                            <tr>
+                                <td
+                                    style={{
+                                        border: "1px solid #999",
+                                        textAlign: "right",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    รวมค่าใช้จ่ายทั้งสิ้น
                                 </td>
-                                <td style={{ border: "1px solid #999", textAlign: "center" }}>
-                                    {thaiDateMonthYear(invoice.BillingPeriod || "")}
-                                </td>
-                                <td style={{ border: "1px solid #999", textAlign: "right" }}>
-                                    {item.Amount?.toLocaleString("en-US", {
+                                <td
+                                    style={{
+                                        border: "1px solid #999",
+                                        textAlign: "right",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {invoice.TotalAmount?.toLocaleString("en-US", {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                     })}
                                 </td>
                             </tr>
-                        ))}
-                        <tr>
-                            <td colSpan={2} style={{ border: "1px solid #999", textAlign: "right", fontWeight: 500 }}>
-                                รวมค่าใช้จ่ายทั้งสิ้น
-                            </td>
-                            <td style={{ border: "1px solid #999", textAlign: "right", fontWeight: 500 }}>
-                                {invoice.TotalAmount?.toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
 
-                {/* Payment Instruction */}
-                <div
-                    ref={paymentRef}
-                    className="editable-content"
-                    id="payment-div"
-                    style={{ marginTop: "20px", textIndent: "3.2em", textAlign: "justify" }}
-                >
-                    จึงขอให้ท่านโปรดชำระค่าบริการ
-                    <strong>ภายในวันที่ {thaiDateFull(invoice.DueDate || "")}</strong>&nbsp;
-                    ที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน อุทยานวิทยาศาสตร์ภาคตะวันออกเฉียงเหนือตอนล่าง
-                    (จ.นครราชสีมา) หรือโอนเงินเข้า<strong>บัญชีธนาคารกรุงไทย</strong> สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
-                    <strong> ชื่อบัญชี "RSP นครราชสีมา โดย เทคโนธานี" เลขที่บัญชี 662-1-84151-5&nbsp;</strong>
-                    และขอให้ท่านส่งหลักฐานการโอนเงินมาที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน อีเมล&nbsp;
-                    <strong>office.ne2@gmail.com</strong> เบอร์โทร
-                    <strong>&nbsp;099-629-5494&nbsp;</strong>
-                    เพื่อออกใบเสร็จรับเงิน หากท่านไม่ชำระเงินตามกำหนด อุทยานวิทยาศาสตร์ฯ
-                    ขอสงวนสิทธิ์ดำเนินการปรับตามข้อตกลงตั้งแต่วันผิดข้อตกลงจนกว่าจะชำระเสร็จสิ้น
-                </div>
+                    {/* Payment Instruction */}
+                    <div
+                        ref={paymentRef}
+                        className="editable-content"
+                        id="payment-div"
+                        style={{ marginTop: "20px", textIndent: "3.2em", textAlign: "justify" }}
+                    >
+                        จึงขอให้ท่านโปรดชำระค่าบริการ
+                        <strong>ภายในวันที่ {thaiDateFull(invoice.DueDate || "")} </strong>
+                        ที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน
+                        อุทยานวิทยาศาสตร์ภาคตะวันออกเฉียงเหนือตอนล่าง (จ.นครราชสีมา) หรือโอนเงินเข้า
+                        <strong>บัญชีธนาคารกรุงไทย</strong> สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
+                        <strong>
+                            {" "}
+                            ชื่อบัญชี "RSP นครราชสีมา โดย เทคโนธานี" เลขที่บัญชี 662-1-84151-5&nbsp;
+                        </strong>
+                        และขอให้ท่าน<strong>แนบหลักฐานการโอนเงินผ่านระบบ</strong>&nbsp;
+                        เพื่อออกใบเสร็จรับเงิน หากท่านไม่ชำระเงินตามกำหนด อุทยานวิทยาศาสตร์ฯ
+                        ขอสงวนสิทธิ์ดำเนินการปรับตามข้อตกลงตั้งแต่วันผิดข้อตกลงจนกว่าจะชำระเสร็จสิ้น
+                    </div>
 
-                <div className="text-normal" style={{ marginTop: "10px", textIndent: "3.2em" }}>
-                    จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ
-                </div>
+                    <div className="text-normal" style={{ marginTop: "10px", textIndent: "3.2em" }}>
+                        จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ
+                    </div>
 
-                {/* Signature */}
-                <div style={{ height: "40px" }}></div>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <div className="text-normal" style={{ width: "240px", textAlign: "center" }}>
-                        <span>ขอแสดงความนับถือ</span>
-                        <div style={{ textAlign: "center" }}>
-                            <img
-                                src={
-                                    invoice.Creater?.SignaturePath ? 
-                                        `${apiUrl}/${invoice.Creater?.SignaturePath}` : ""
+                    {/* Signature */}
+                    <div style={{ height: "40px" }}></div>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <div
+                            className="text-normal"
+                            style={{ width: "240px", textAlign: "center" }}
+                        >
+                            <span>ขอแสดงความนับถือ</span>
+                            <div style={{ textAlign: "center", height: "80px" }}>
+                                <img
+                                    src={
+                                        invoice.Creater?.SignaturePath
+                                            ? `${apiUrl}/${invoice.Creater?.SignaturePath}`
+                                            : ""
                                     }
-                                alt="Signature"
-                                style={{ maxHeight: "80px" }}
-                            />
+                                    alt="Signature"
+                                    style={{ height: "100%" }}
+                                />
+                            </div>
+                            <span>
+                                ({invoice.Creater?.Prefix?.PrefixTH}
+                                {invoice.Creater?.FirstName} {invoice.Creater?.LastName})
+                            </span>
+                            <br />
+                            <span>{invoice.Creater?.JobPosition?.Name}</span>
                         </div>
-                        <span>
-                            ({invoice.Creater?.Prefix?.PrefixTH}
-                            {invoice.Creater?.FirstName} {invoice.Creater?.LastName})
-                        </span>
-                        <br />
-                        <span>{invoice.Creater?.Role?.Name}</span>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div>
+                    <CircularProgress />
+                </div>
+            )}
         </div>
     );
 }

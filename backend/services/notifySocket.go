@@ -59,7 +59,27 @@ func NotifySocketEventInvoice(event string, data interface{}) {
 		return
 	}
 
-	resp, err := http.Post("http://localhost:3001/notify-news", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post("http://localhost:3001/notify-invoice", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("notify error:", err)
+		return
+	}
+	defer resp.Body.Close()
+}
+
+func NotifySocketEventUser(event string, data interface{}) {
+	payload := map[string]interface{}{
+		"event": event,
+		"data":  data,
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("marshal error:", err)
+		return
+	}
+
+	resp, err := http.Post("http://localhost:3001/notify-user", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("notify error:", err)
 		return

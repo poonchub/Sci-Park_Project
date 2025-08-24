@@ -1497,6 +1497,15 @@ async function ListBookingRooms() {
 
     return res;
 }
+async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null) {
+    try {
+        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
 
 // Analytics API
 export async function getSystemAnalytics() {
@@ -2055,6 +2064,24 @@ async function GetPaymentByUserID() {
         throw error;
     }
 }
+async function ListBookingRoomPaymentsByDateRange(startDate: string | null, endDate: string | null) {
+    try {
+        const response = await axiosInstance.get(`/booking-room-payments/by-date?start_date=${startDate}&end_date=${endDate}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
+async function ListInvoicePaymentsByDateRange(startDate: string | null, endDate: string | null) {
+    try {
+        const response = await axiosInstance.get(`/invoice-payments/by-date?start_date=${startDate}&end_date=${endDate}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
 async function GetPaymentByOption(page: number, limit: number, payerID?: number) {
     try {
         const response = await axiosInstance.get(`/payments-option?payerID=${payerID}&page=${page}&limit=${limit}`);
@@ -2374,6 +2401,15 @@ async function GetInvoicePDF(id: number): Promise<Blob> {
         throw error;
     }
 }
+async function ListInvoiceByDateRange(startDate: string | null, endDate: string | null) {
+    try {
+        const response = await axiosInstance.get(`/invoices/by-date?start_date=${startDate}&end_date=${endDate}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting payments:", error);
+        throw error;
+    }
+}
 async function CreateInvoice(data: InvoiceInterface) {
     try {
         const response = await axiosInstance.post(`/invoice`, data, {
@@ -2647,6 +2683,7 @@ export {
 
     // BookingRooms
     ListBookingRooms,
+    ListBookingRoomByDateRange,
 
     // News
     ListNews,
@@ -2683,6 +2720,8 @@ export {
     // Payment
     GetPaymentByUserID,
     GetPaymentByOption,
+    ListBookingRoomPaymentsByDateRange,
+    ListInvoicePaymentsByDateRange,
     CreatePayment,
     UpdatePaymentByID,
     CheckSlip,
@@ -2723,6 +2762,7 @@ export {
     ListInvoices,
     GetInvoiceByID,
     GetInvoicePDF,
+    ListInvoiceByDateRange,
     CreateInvoice,
     GetInvoiceByOption,
     DeleteInvoiceByID,

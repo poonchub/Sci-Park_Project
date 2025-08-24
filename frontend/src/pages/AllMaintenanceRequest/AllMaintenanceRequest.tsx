@@ -39,9 +39,10 @@ import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { Check, ClipboardList, Clock, Eye, FileQuestion, HelpCircle, UserRound, X } from "lucide-react";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
+import { useUserStore } from "../../store/userStore";
 
 function AllMaintenanceRequest() {
-    const [user, setUser] = useState<UserInterface>();
+    const {user} = useUserStore();
     const [operators, setOperators] = useState<UserInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
@@ -258,7 +259,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Approve
                                                             </Typography>
@@ -275,7 +276,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                 Reject
                                                             </Typography>
@@ -294,7 +295,7 @@ function AllMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             {width && width > 650 && (
                                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                                     Details
@@ -317,7 +318,7 @@ function AllMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                         Details
                                                     </Typography>
@@ -611,7 +612,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Approve
                                                 </Typography>
@@ -629,7 +630,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Reject
                                                 </Typography>
@@ -646,7 +647,7 @@ function AllMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Details
                                                 </Typography>
@@ -665,7 +666,7 @@ function AllMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Details
                                             </Typography>
@@ -677,17 +678,6 @@ function AllMaintenanceRequest() {
                     },
                 },
             ];
-        }
-    };
-
-    const getUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
-            if (res) {
-                setUser(res);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
         }
     };
 
@@ -822,7 +812,6 @@ function AllMaintenanceRequest() {
         const fetchInitialData = async () => {
             try {
                 await Promise.all([
-                    getUser(),
                     getRequestStatuses(),
                     getOperators(),
                 ]);
@@ -852,17 +841,48 @@ function AllMaintenanceRequest() {
 
         socket.on("maintenance_created", (data) => {
             console.log("📦 New maintenance request:", data);
-            getNewMaintenanceRequest(data.ID);
+            if (
+                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
+                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
+                (user?.RequestType?.TypeName === "Both")
+            ) {
+                setTimeout(() => {
+                    getNewMaintenanceRequest(data.ID);
+                }, 1500);
+            }
         });
 
         socket.on("maintenance_updated", (data) => {
             console.log("🔄 Maintenance request updated:", data);
-            getUpdateMaintenanceRequest(data.ID);
+            console.log("user: ", user)
+            if (
+                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
+                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
+                (user?.RequestType?.TypeName === "Both")
+            ) {
+                setTimeout(() => {
+                    getUpdateMaintenanceRequest(data.ID);
+                }, 1500);
+            }
+        });
+
+        socket.on("maintenance_deleted", (data) => {
+            console.log("🔄 Maintenance request deleted:", data);
+            if (
+                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
+                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
+                (user?.RequestType?.TypeName === "Both")
+            ) {
+                setTimeout(() => {
+                    setMaintenanceRequests((prev) => prev.filter((item) => item.ID !== data.ID));
+                }, 1500);
+            }
         });
 
         return () => {
             socket.off("maintenance_created");
             socket.off("maintenance_updated");
+            socket.off("maintenance_deleted");
         };
     }, []);
 

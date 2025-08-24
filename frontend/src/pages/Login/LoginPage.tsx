@@ -52,13 +52,12 @@ const LoginPage: React.FC = () => {
           let redirectPath = "/login";
           if (response.Role) {
             redirectPath = "/";
+            window.location.href = redirectPath;
           }
-          navigate(redirectPath, { replace: true });
-          window.location.reload();
           setLoading(false);  // Stop loading after navigation
         }, 2000);  // 2 seconds delay
       } else {
-
+        setLoading(false);
         setAlerts([...alerts, { type: 'error', message: response?.Error || "Login failed!" }]);  // Add error alert
       }
     } catch (error: unknown) {

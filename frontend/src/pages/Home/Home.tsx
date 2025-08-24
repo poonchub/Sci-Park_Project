@@ -180,8 +180,8 @@ export default function SciparkHomePage() {
                             }}
                         >
                             <Container maxWidth={'xl'}>
-                                <Grid container spacing={4} alignItems="center">
-                                    <Grid size={{ xs: 12, md: 6 }}>
+                                <Grid container spacing={4} alignItems="center" size={{ xs: 12 }}>
+                                    <Grid size={{ xs: 12, lg: 6 }}>
                                         <Typography
                                             component="h2"
                                             variant="h4"
@@ -354,65 +354,6 @@ export default function SciparkHomePage() {
                                     </Button>
                                 </Link>
                             </Box>
-
-                            {/* Statistics & Highlights */}
-                            {/* <Box
-                                sx={{
-                                    mt: 8,
-                                    mb: 8,
-                                    p: 6,
-                                    borderRadius: 2,
-                                    bgcolor: 'primary.main',
-                                    color: 'white'
-                                }}
-                            >
-                                <Typography variant="h4" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 'bold' }}>
-                                    Service Statistics
-                                </Typography>
-
-                                <Grid container spacing={4} justifyContent="center">
-                                    <Grid size={{ xs: 6, md: 3 }}>
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                                150+
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Meeting Rooms Available
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                    <Grid size={{ xs: 6, md: 3 }}>
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                                9,800+
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Completed Repair Requests
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                    <Grid size={{ xs: 6, md: 3 }}>
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                                98%
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Customer Satisfaction
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                    <Grid size={{ xs: 6, md: 3 }}>
-                                        <Box sx={{ textAlign: 'center' }}>
-                                            <Typography variant="h3" component="div" sx={{ fontWeight: 'bold' }}>
-                                                24/7
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                Support Service
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-                            </Box> */}
                         </Container>
                     </>
                 )

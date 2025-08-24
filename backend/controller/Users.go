@@ -7,6 +7,7 @@ import (
 	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	_ "sci-park_web-application/validator" // Import to register custom validators
 	"strconv"
 	"strings"
@@ -774,6 +775,8 @@ func UpdateUserByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
 	}
+
+	services.NotifySocketEvent("user_updated", updateUserData)
 
 	// ส่งข้อมูลผู้ใช้ที่อัปเดตกลับ
 	c.JSON(http.StatusOK, gin.H{

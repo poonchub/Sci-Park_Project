@@ -87,7 +87,6 @@ const WindowsLayout: React.FC = (props: any) => {
     // Role of current user (from localStorage)
     const role = (localStorage.getItem("role") || "Guest") as Role;
     const userId = localStorage.getItem("userId");
-    const isExternalUser = !(user?.IsEmployee) && user?.Role?.Name === "User"
 
     const iconSize = 24;
 
@@ -316,8 +315,8 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "My Account",
             icon: <ShieldUser />,
             action:
-                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0 && isExternalUser) ||
-                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0)
+                (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0 && (!(user?.IsEmployee) && user?.Role?.Name === "User")) ||
+                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && !(isAdmin() || isManager()))
                     ? (
                         <Chip
                             label={"New"}
@@ -636,6 +635,11 @@ const WindowsLayout: React.FC = (props: any) => {
         socket.on("notification_updated_bulk", (data) => {
             console.log("📦 Notification updated bulk:", data);
             getNewUnreadNotificationCounts();
+        });
+
+        socket.on("user_updated", (data) => {
+            console.log("📦 Notification updated:", data);
+            loadUserAndImage();
         });
 
         return () => {

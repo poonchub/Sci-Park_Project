@@ -4,7 +4,7 @@ import OutletLayout from "../layouts/OutletLayout";
 import Loadable from "../components/Loadable/Loadable";
 import ResetPassword from "../pages/Login/ResetPasswordPage";
 import Register from "../pages/Login/Register";
-const  Login = Loadable(lazy(() => import("../pages/Login/LoginPage")));
+const Login = Loadable(lazy(() => import("../pages/Login/LoginPage")));
 
 const LoginRoutes = (): RouteObject => {
   return {
@@ -13,7 +13,7 @@ const LoginRoutes = (): RouteObject => {
     children: [
       {
         path: "/",
-        element: <Login/>,
+        element: <Login />,
       },
       {
         path: "/login",
@@ -27,7 +27,14 @@ const LoginRoutes = (): RouteObject => {
         path: "/register",
         element: <Register />,
       },
-
+      {
+        path: "",
+        element: <Login />,
+      },
+      {
+        path: "*",
+        element: <Login />,
+      },
     ],
   };
 };

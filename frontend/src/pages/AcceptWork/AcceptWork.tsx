@@ -419,7 +419,6 @@ function AcceptWork() {
                     type: "string",
                     flex: 1.6,
                     renderCell: (params) => {
-                        console.log(params.row)
                         const requests = params.row.MaintenanceRequest;
                         const areaID = requests?.Area?.ID;
                         const areaDetail = requests?.AreaDetail;
@@ -1116,7 +1115,7 @@ function AcceptWork() {
                                                 },
                                             }}
                                         >
-                                            <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
+                                            <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                                         </Button>
                                     </Grid>
                                 </Grid>

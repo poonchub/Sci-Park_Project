@@ -6,7 +6,6 @@ import { ApexOptions } from "apexcharts";
 import isBetween from "dayjs/plugin/isBetween";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
-import { useMediaQuery, useTheme } from "@mui/system";
 
 dayjs.extend(isBetween);
 dayjs.extend(weekOfYear);
@@ -29,15 +28,8 @@ function ApexLineChart(props: {
     counts?: CountItem[];
     selectedDateOption: string;
 }) {
-    const { data, height, dateRange, counts, selectedDateOption } = props;
+    const { data, height, dateRange, selectedDateOption } = props;
     const [mode, setMode] = useState<"light" | "dark">(getModeFromClass());
-    const theme = useTheme();
-    const isXs = useMediaQuery(theme.breakpoints.up("xs"));
-    const isMobile = useMediaQuery(theme.breakpoints.up("mobileS"));
-    const isSm = useMediaQuery(theme.breakpoints.up("sm"));
-    const isSm650 = useMediaQuery(theme.breakpoints.up("sm650"));
-    const isMd = useMediaQuery(theme.breakpoints.up("md"));
-    const isMd1000 = useMediaQuery(theme.breakpoints.up("md1000"));
 
     // ติดตามการเปลี่ยน theme
     useEffect(() => {
@@ -200,33 +192,14 @@ function ApexLineChart(props: {
 
         const formattedCategories = categories.map(formatLabel);
 
-        const rangeMap = {
-            daily: isMd ? 15 : isSm650 ? 9 : isMobile ? 7 : 4,
-            weekly: isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3,
-            monthly: isMd ? 11 : isSm650 ? 7 : isMobile ? 4 : 3,
-            yearly: isMd ? 5 : isSm650 ? 5 : isMobile ? 4 : 3,
-            hourly: isMd ? 11 : isSm650 ? 8 : isMobile ? 5 : 4,
-        };
-
-        const desiredRange = rangeMap[option] ?? categories.length;
-        const xRange = Math.min(desiredRange, categories.length - 1);
-
         const options: ApexOptions = {
             chart: {
                 height,
                 type: "area",
                 toolbar: {
-                    show: true,
-                    tools: {
-                        download: true,
-                        selection: true,
-                        zoom: false,
-                        zoomin: true,
-                        zoomout: true,
-                        pan: true,
-                        reset: true,
-                    },
+                    show: false,
                 },
+                zoom: { enabled: false },
             },
             dataLabels: { enabled: false },
             stroke: { curve: "smooth" },
@@ -234,7 +207,6 @@ function ApexLineChart(props: {
                 type: "category",
                 categories: formattedCategories,
                 tickPlacement: "on",
-                range: xRange,
                 labels: {
                     style: {
                         fontSize: "14px",
@@ -267,18 +239,18 @@ function ApexLineChart(props: {
                         w.globals.categoryLabels?.[dataPointIndex] ||
                         "ไม่ทราบเวลา";
                     return `
-                    <div style="
-                        padding: 10px 16px;
-                        font-size: 14px;
-                        font-family: 'Noto Sans Thai', sans-serif;
-                        color: ${mode === "dark" ? "#fff" : "#000"};
-                        background-color: ${mode === "dark" ? "#333" : "#fff"};
-                        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-                    ">
-                        <div><strong>${label}</strong></div>
-                        <div>Request: <b>${value}</b></div>
-                    </div>
-                `;
+                        <div style="
+                            padding: 10px 16px;
+                            font-size: 14px;
+                            font-family: 'Noto Sans Thai', sans-serif;
+                            color: ${mode === "dark" ? "#fff" : "#000"};
+                            background-color: ${mode === "dark" ? "#333" : "#fff"};
+                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                        ">
+                            <div><strong>${label}</strong></div>
+                            <div>Request: <b>${value}</b></div>
+                        </div>
+                    `;
                 },
             },
         };
