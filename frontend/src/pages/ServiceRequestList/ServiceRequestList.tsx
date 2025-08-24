@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Typography, Grid, Card, CardContent, Skeleton, useMediaQuery, Button, Divider, Tooltip } from "@mui/material";
 import { ClipboardList, Check, Eye, X, HelpCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
 import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById } from "../../services/http";
@@ -17,6 +19,7 @@ import { businessGroupConfig } from "../../constants/businessGroupConfig";
 import "./ServiceRequestList.css";
 
 const ServiceRequestList: React.FC = () => {
+    const navigate = useNavigate();
     const [isLoadingData, setIsLoadingData] = useState(false);
     const [requestServiceAreas, setRequestServiceAreas] = useState<RequestServiceAreaListInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
@@ -269,8 +272,8 @@ const ServiceRequestList: React.FC = () => {
                                                                              className="btn-detail"
                                                                              variant="outlinedGray"
                                                                              onClick={() => {
-                                                                                 // TODO: Implement details functionality
-                                                                                 // console.log("Details clicked for:", data);
+                                                                                 const encodedId = Base64.encode(data.ID.toString());
+                                                                                 navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -289,8 +292,8 @@ const ServiceRequestList: React.FC = () => {
                                                                          className="btn-detail"
                                                                          variant="outlinedGray"
                                                                          onClick={() => {
-                                                                             // TODO: Implement details functionality
-                                                                             // console.log("Details clicked for:", data);
+                                                                             const encodedId = Base64.encode(data.ID.toString());
+                                                                             navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
                                                                          }}
                                                                          sx={{
                                                                              minWidth: "42px",
@@ -612,8 +615,8 @@ const ServiceRequestList: React.FC = () => {
                                              className="btn-detail"
                                              variant="outlinedGray"
                                              onClick={() => {
-                                                 // TODO: Implement details functionality
-                                                 // console.log("Details clicked for:", data);
+                                                 const encodedId = Base64.encode(data.ID.toString());
+                                                 navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -632,8 +635,8 @@ const ServiceRequestList: React.FC = () => {
                                          className="btn-detail"
                                          variant="outlinedGray"
                                          onClick={() => {
-                                             // TODO: Implement details functionality
-                                             // console.log("Details clicked for:", data);
+                                             const encodedId = Base64.encode(data.ID.toString());
+                                             navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
                                          }}
                                          sx={{
                                              minWidth: "42px",

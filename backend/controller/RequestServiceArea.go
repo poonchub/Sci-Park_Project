@@ -681,3 +681,90 @@ func UpdateRequestServiceAreaStatus(c *gin.Context) {
 		},
 	})
 }
+
+// GetServiceAreaDetailsByID ดึงข้อมูลรายละเอียดของ Service Area ตาม ID
+func GetServiceAreaDetailsByID(c *gin.Context) {
+	// รับ service area ID จาก path parameter
+	serviceAreaIDStr := c.Param("id")
+	serviceAreaID, err := strconv.ParseUint(serviceAreaIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service area id"})
+		return
+	}
+
+	// ดึงข้อมูล RequestServiceArea พร้อม preload relationships
+	var requestServiceArea entity.RequestServiceArea
+	if err := config.DB().
+		Preload("User").
+		Preload("RequestStatus").
+		Preload("CollaborationPlans").
+		Preload("ServiceAreaApproval.User").
+		Preload("ServiceAreaTask.User").
+		Preload("ServiceAreaDocument").
+		First(&requestServiceArea, serviceAreaID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Service area not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service area details"})
+		}
+		return
+	}
+
+	// ดึงข้อมูล AboutCompany ของ User
+	var aboutCompany entity.AboutCompany
+	if err := config.DB().
+		Preload("BusinessGroup").
+		Preload("CompanySize").
+		Where("user_id = ?", requestServiceArea.UserID).
+		First(&aboutCompany).Error; err != nil && err != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch about company"})
+		return
+	}
+
+	// สร้าง response ในรูปแบบ Pascal Case
+	response := gin.H{
+		"RequestNo":                          requestServiceArea.ID,
+		"RequestedAt":                        requestServiceArea.CreatedAt,
+		"RequestStatusId":                    requestServiceArea.RequestStatusID,
+		"CompanyName":                        requestServiceArea.User.CompanyName,
+		"DescriptionCompany":                 requestServiceArea.User.BusinessDetail,
+		"PurposeOfUsingSpace":                requestServiceArea.PurposeOfUsingSpace,
+		"ActivitiesInBuilding":               requestServiceArea.ActivitiesInBuilding,
+		"SupportingActivitiesForSciencePark": requestServiceArea.SupportingActivitiesForSciencePark,
+		"ServiceRequestDocument":             requestServiceArea.ServiceRequestDocument,
+		"CollaborationPlans":                 requestServiceArea.CollaborationPlans,
+	}
+
+	// เพิ่มข้อมูลจาก AboutCompany (ถ้ามี)
+	if aboutCompany.ID != 0 {
+		response["CorporateRegistrationNumber"] = aboutCompany.CorporateRegistrationNumber
+		response["BusinessGroupName"] = aboutCompany.BusinessGroup.Name
+		response["CompanySizeName"] = aboutCompany.CompanySize.Name
+		response["MainServices"] = aboutCompany.MainServices
+		response["RegisteredCapital"] = aboutCompany.RegisteredCapital
+		response["HiringRate"] = aboutCompany.HiringRate
+		response["ResearchInvestmentValue"] = aboutCompany.ResearchInvestmentValue
+		response["ThreeYearGrowthForecast"] = aboutCompany.ThreeYearGrowthForecast
+	}
+
+	// เพิ่มข้อมูลจาก ServiceAreaApproval (ถ้ามี)
+	if requestServiceArea.ServiceAreaApproval != nil {
+		response["ApproverUserName"] = requestServiceArea.ServiceAreaApproval.User.FirstName + " " + requestServiceArea.ServiceAreaApproval.User.LastName
+		response["ApprovalNote"] = requestServiceArea.ServiceAreaApproval.Note
+	}
+
+	// เพิ่มข้อมูลจาก ServiceAreaTask (ถ้ามี)
+	if requestServiceArea.ServiceAreaTask != nil {
+		response["TaskUserName"] = requestServiceArea.ServiceAreaTask.User.FirstName + " " + requestServiceArea.ServiceAreaTask.User.LastName
+		response["TaskNote"] = requestServiceArea.ServiceAreaTask.Note
+	}
+
+	// เพิ่มข้อมูลจาก ServiceAreaDocument (ถ้ามี)
+	if requestServiceArea.ServiceAreaDocument != nil {
+		response["ServiceAreaDocumentId"] = requestServiceArea.ServiceAreaDocument.ID
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": response,
+	})
+}

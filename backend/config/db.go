@@ -106,6 +106,8 @@ func SetupDatabase() {
 		&entity.BookingDate{}, // ← ✅ ต้องใส่ให้ migrate ตาราง booking_dates
 		&entity.BookingStatus{},
 		&entity.CollaborationPlan{},
+		&entity.ServiceAreaApproval{},
+		&entity.ServiceAreaTask{},
 	)
 
 	if err != nil {
@@ -558,33 +560,33 @@ func SeedDatabase() {
 			IsEmployee:     true,
 		},
 		{
-			CompanyName:    "MediCare",
-			BusinessDetail: "Healthcare Services",
-			FirstName:      "External",
-			LastName:       "1",
-			Email:          "externaluser1@gmail.com",
-			Password:       "123456",
-			Phone:          "1232323111",
-			ProfilePath:    "",
-			RoleID:         1,
-			JobPositionID:  &[]uint{12}[0], // Lab Technician
-			GenderID:       2,
-			IsEmployee:     false,
+			CompanyName:     "MediCare",
+			BusinessDetail:  "Healthcare Services",
+			FirstName:       "External",
+			LastName:        "1",
+			Email:           "externaluser1@gmail.com",
+			Password:        "123456",
+			Phone:           "1232323111",
+			ProfilePath:     "",
+			RoleID:          1,
+			JobPositionID:   &[]uint{12}[0], // Lab Technician
+			GenderID:        2,
+			IsEmployee:      false,
 			IsBusinessOwner: true,
 		},
 		{
-			CompanyName:    "Global Innovations Hub",
-			BusinessDetail: "Technology Solutions",
-			FirstName:      "External",
-			LastName:       "2",
-			Email:          "externaluser2@gmail.com",
-			Password:       "123456",
-			Phone:          "9876543211",
-			ProfilePath:    "",
-			RoleID:         1,
-			JobPositionID:  &[]uint{13}[0], // Administrative Staff
-			GenderID:       1,
-			IsEmployee:     false,
+			CompanyName:     "Global Innovations Hub",
+			BusinessDetail:  "Technology Solutions",
+			FirstName:       "External",
+			LastName:        "2",
+			Email:           "externaluser2@gmail.com",
+			Password:        "123456",
+			Phone:           "9876543211",
+			ProfilePath:     "",
+			RoleID:          1,
+			JobPositionID:   &[]uint{13}[0], // Administrative Staff
+			GenderID:        1,
+			IsEmployee:      false,
 			IsBusinessOwner: true,
 		},
 	}
@@ -1165,7 +1167,7 @@ func SeedDatabase() {
 	paymentStatuses := []entity.PaymentStatus{
 		{Name: "Pending Payment"},      // ยังไม่ได้จ่าย
 		{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสอบสลิป
-		{Name: "Awaiting Receipt"},		// ตรวจสอบสลิปแล้ว รอออกใบเสร็จ
+		{Name: "Awaiting Receipt"},     // ตรวจสอบสลิปแล้ว รอออกใบเสร็จ
 		{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
 		{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัพโหลดใหม่
 		{Name: "Refunded"},             // คืนเงินแล้ว

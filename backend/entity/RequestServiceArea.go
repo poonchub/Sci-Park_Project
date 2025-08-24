@@ -21,4 +21,10 @@ type RequestServiceArea struct {
 
 	// 1:Many relationship with CollaborationPlan
 	CollaborationPlans []CollaborationPlan `gorm:"foreignKey:RequestServiceAreaID"`
+
+	// 1:1 relationship with ServiceAreaApproval
+	ServiceAreaApproval *ServiceAreaApproval `gorm:"foreignKey:RequestServiceAreaID"`
+
+	// 1:1 relationship with ServiceAreaTask
+	ServiceAreaTask *ServiceAreaTask `gorm:"foreignKey:RequestServiceAreaID"`
 }

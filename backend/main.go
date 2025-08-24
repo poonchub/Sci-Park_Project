@@ -200,6 +200,7 @@ func main() {
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/request-service-area/:id/status", controller.UpdateRequestServiceAreaStatus)
+		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
 		// Payment

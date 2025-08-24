@@ -2308,6 +2308,16 @@ async function UpdateRequestServiceAreaStatus(requestID: number, requestStatusID
     }
 }
 
+async function GetServiceAreaDetailsByID(serviceAreaID: number): Promise<any> {
+    try {
+        const response = await axiosInstance.get(`/request-service-area/details/${serviceAreaID}`);
+        return response.data.data;
+    } catch (error) {
+        console.error("Error fetching service area details by ID:", error);
+        throw error;
+    }
+}
+
 // AboutCompany functions
 async function GetAboutCompanyByUserID(userID: number): Promise<AboutCompanyInterface> {
     try {
@@ -2702,6 +2712,7 @@ export {
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
     UpdateRequestServiceAreaStatus,
+    GetServiceAreaDetailsByID,
     ListRequestServiceAreas,
 
     // AboutCompany

@@ -1,0 +1,7 @@
+cd frontend
+
+npm i -D playwright 
+
+npx playwright codegen localhost:5173/login 
+
+import { chromium } from 'playwright';
