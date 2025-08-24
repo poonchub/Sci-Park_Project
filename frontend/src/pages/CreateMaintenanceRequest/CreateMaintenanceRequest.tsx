@@ -491,7 +491,7 @@ function CreateMaintenanceRequestPage() {
         analyticsService.trackPageVisit({
             user_id: Number(localStorage.getItem('userId')),
             page_path: KEY_PAGES.CREATE_MAINTENANCE_REQUEST,
-            page_name: 'Create Maintenance Request',
+            page_name: 'Create Maintenance',
             duration: 0, // ตอนเข้า duration = 0
             is_bounce: false,
         });
@@ -506,7 +506,7 @@ function CreateMaintenanceRequestPage() {
             analyticsService.trackPageVisit({
                 user_id: Number(localStorage.getItem('userId')),
                 page_path: KEY_PAGES.CREATE_MAINTENANCE_REQUEST,
-                page_name: 'Create Maintenance Request',
+                page_name: 'Create Maintenance',
                 duration,
                 is_bounce: isBounce,
                 interaction_count: getInteractionCount(),

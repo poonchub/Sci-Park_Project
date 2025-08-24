@@ -147,7 +147,7 @@ func GetSystemAnalytics(c *gin.Context) {
 	db.Model(&entity.PageAnalytics{}).Count(&totalPages)
 
 	// หน้าที่ได้รับความนิยมมากที่สุด - รวมหน้าทั้งหมดที่ track
-	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
+	keyPages := []string{"/", "/booking-room", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 	var popularPages []entity.PageAnalytics
 	if err := db.Where("page_path IN ?", keyPages).
 		Order("total_visits DESC").
@@ -206,7 +206,7 @@ func GetAnalyticsDashboard(c *gin.Context) {
 	db.Model(&entity.Analytics{}).Where("visit_time >= ?", monthAgo).Count(&monthVisits)
 
 	// หน้าที่ได้รับความนิยมวันนี้ - รวมหน้าทั้งหมดที่ track
-	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
+	keyPages := []string{"/", "/booking-room", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 	var todayPopularPages []entity.PageAnalytics
 	if err := db.Where("last_updated >= ? AND page_path IN ?", today, keyPages).
 		Order("total_visits DESC").
@@ -329,7 +329,7 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 	}
 
 	// Key pages to track - รวมหน้าทั้งหมดที่ track
-	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
+	keyPages := []string{"/", "/booking-room", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 
 	// Get total visits for the period
 	var totalVisits int64
@@ -358,14 +358,13 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 	// Get data for all tracked pages
 	homeVisits := pageData["/"]
 	bookingVisits := pageData["/booking-room"]
-	maintenanceVisits := pageData["/maintenance/create-maintenance-request"]
 	createMaintenanceVisits := pageData["/create-maintenance-request"]
 	myAccountVisits := pageData["/my-account"]
 	newsVisits := pageData["/news"]
 	createServiceAreaVisits := pageData["/create-service-area-request"]
 
 	// Calculate total from all tracked pages
-	totalFromPages := homeVisits + bookingVisits + maintenanceVisits + createMaintenanceVisits + myAccountVisits + newsVisits + createServiceAreaVisits
+	totalFromPages := homeVisits + bookingVisits + createMaintenanceVisits + myAccountVisits + newsVisits + createServiceAreaVisits
 
 	// Build response data with all tracked pages
 	response := gin.H{
@@ -383,12 +382,6 @@ func GetPopularPagesByPeriod(c *gin.Context) {
 				"visits": bookingVisits,
 				"color":  "#ff9800",
 				"icon":   "booking",
-			},
-			{
-				"name":   "Maintenance",
-				"visits": maintenanceVisits,
-				"color":  "#9c27b0",
-				"icon":   "maintenance",
 			},
 			{
 				"name":   "Create Maintenance",
@@ -454,7 +447,7 @@ func GetPerformanceAnalytics(c *gin.Context) {
 	db := config.DB()
 
 	// Key pages to track - รวมหน้าทั้งหมดที่ track
-	keyPages := []string{"/", "/booking-room", "/maintenance/create-maintenance-request", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
+	keyPages := []string{"/", "/booking-room", "/create-maintenance-request", "/my-account", "/news", "/create-service-area-request"}
 
 	// Page Performance (aggregate from Analytics table)
 	type PagePerformance struct {

@@ -1,4 +1,4 @@
-===========================================
+export const analyticsManualContent = `===========================================
 ANALYTICS DASHBOARD MANUAL
 ===========================================
 
@@ -86,11 +86,10 @@ POPULAR PAGES DONUT CHART:
 - Pages Tracked:
   * Home Page (/)
   * Booking Room (/booking-room)
-  * My Maintenance Request (/maintenance/create-maintenance-request)
-  * Create Maintenance Request (/create-maintenance-request)
+  * Create Maintenance (/create-maintenance-request)
   * My Account (/my-account)
   * News (/news)
-  * Create Service Area Request (/create-service-area-request)
+  * Create Service Area (/create-service-area-request)
 - Features:
   * Color-coded by page
   * Percentage distribution
@@ -376,4 +375,4 @@ For data interpretation:
 4. Review historical data patterns
 5. Contact data analysis team
 
-=========================================== 
+===========================================`;

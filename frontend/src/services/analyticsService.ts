@@ -91,11 +91,10 @@ export interface TrackPageVisitData {
     interaction_count?: number; // เพิ่ม interaction_count
 }
 
-// Key pages configuration - Only track 4 specific pages
+// Key pages configuration - Track specific pages
 export const KEY_PAGES = {
     HOME: '/',
     BOOKING_ROOM: '/booking-room',
-    MY_MAINTENANCE_REQUEST: '/maintenance/create-maintenance-request',
     CREATE_MAINTENANCE_REQUEST: '/create-maintenance-request',
     MY_ACCOUNT: '/my-account',
     NEWS: '/news',

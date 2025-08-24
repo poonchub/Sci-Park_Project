@@ -226,7 +226,7 @@ const CreateServiceAreaForm: React.FC = () => {
     analyticsService.trackPageVisit({
       user_id: Number(localStorage.getItem('userId')),
       page_path: KEY_PAGES.CREATE_SERVICE_AREA,
-      page_name: 'Create Service Area Request',
+      page_name: 'Create Service Area',
       duration: 0, // ตอนเข้า duration = 0
       is_bounce: false,
     });
@@ -241,7 +241,7 @@ const CreateServiceAreaForm: React.FC = () => {
       analyticsService.trackPageVisit({
         user_id: Number(localStorage.getItem('userId')),
         page_path: KEY_PAGES.CREATE_SERVICE_AREA,
-        page_name: 'Create Service Area Request',
+        page_name: 'Create Service Area',
         duration,
         is_bounce: isBounce,
         interaction_count: getInteractionCount(),

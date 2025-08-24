@@ -12,7 +12,7 @@ import {
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
-import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User } from 'lucide-react';
+import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User, Building2 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { analyticsService, PopularPagesByPeriodData } from '../../services/analyticsService';
 
@@ -33,12 +33,7 @@ export const pageConfig: Record<string, PageConfig> = {
         colorLite: "rgba(255, 152, 0, 0.18)",
         icon: CalendarCheck
     },
-    "My Maintenance Request": {
-        color: "#9c27b0",
-        colorLite: "rgba(156, 39, 176, 0.18)",
-        icon: Wrench
-    },
-    "Create Maintenance Request": {
+    "Create Maintenance": {
         color: "#e91e63",
         colorLite: "rgba(233, 30, 99, 0.18)",
         icon: Wrench
@@ -53,10 +48,10 @@ export const pageConfig: Record<string, PageConfig> = {
         colorLite: "rgba(255, 87, 34, 0.18)",
         icon: FileText
     },
-    "Create Service Area Request": {
+    "Create Service Area": {
         color: "#795548",
         colorLite: "rgba(121, 85, 72, 0.18)",
-        icon: HelpCircle
+        icon: Building2
     },
 };
 
@@ -82,11 +77,10 @@ const getModeFromClass = () => {
 export const normalizePageName = (name: string) => {
     if (name === 'Home Page' || name === 'Home') return 'Home';
     if (name === 'Booking Room') return 'Booking Room';
-    if (name === 'My Maintenance Request') return 'My Maintenance Request';
-    if (name === 'Create Maintenance Request') return 'Create Maintenance Request';
+    if (name === 'Create Maintenance Request') return 'Create Maintenance';
     if (name === 'My Account') return 'My Account';
     if (name === 'News') return 'News';
-    if (name === 'Create Service Area Request') return 'Create Service Area Request';
+    if (name === 'Create Service Area Request') return 'Create Service Area';
     return name;
 };
 
@@ -331,11 +325,7 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                                     icon = CalendarCheck;
                                     color = '#ff9800';
                                     break;
-                                case 'My Maintenance Request':
-                                case 'Maintenance':
-                                    icon = Wrench;
-                                    color = '#9c27b0';
-                                    break;
+                                case 'Create Maintenance':
                                 case 'Create Maintenance Request':
                                     icon = Wrench;
                                     color = '#e91e63';
@@ -348,8 +338,9 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                                     icon = FileText;
                                     color = '#ff5722';
                                     break;
+                                case 'Create Service Area':
                                 case 'Create Service Area Request':
-                                    icon = HelpCircle;
+                                    icon = Building2;
                                     color = '#795548';
                                     break;
                                 default:
