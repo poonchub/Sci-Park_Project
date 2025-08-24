@@ -263,12 +263,15 @@ DAILY VISITS CHART:
 POPULAR PAGES DONUT CHART:
 
 - Chart Type: Donut chart
-- Data: 4 key pages only
+- Data: All tracked pages
 - Pages Tracked:
   * Home Page (/)
   * Booking Room (/booking-room)
-  * My Maintenance Request (/my-maintenance-request)
+  * My Maintenance Request (/maintenance/create-maintenance-request)
+  * Create Maintenance Request (/create-maintenance-request)
   * My Account (/my-account)
+  * News (/news)
+  * Create Service Area Request (/create-service-area-request)
 - Features:
   * Color-coded by page
   * Percentage distribution
@@ -327,7 +330,7 @@ PAGE PERFORMANCE TABLE:
   * Red (<50): Low engagement
 
 - Features:
-  * Key pages only filter
+  * All tracked pages filter
   * Color-coded page icons
   * Responsive design
   * Loading states
@@ -517,7 +520,7 @@ TECHNICAL DETAILS
 ===========================================
 
 ANALYTICS TRACKING:
-- Tracks 4 key pages only
+- Tracks all configured pages
 - Records visit duration and interactions
 - Filters out visits under 2 seconds
 - Stores data in SQLite database
@@ -580,10 +583,41 @@ For data interpretation:
         return `${minutes}m ${remainingSeconds}s`;
     };
 
-    // Filter key pages only (optional feature)
-    const getKeyPagesData = () => {
-        const keyPagePaths = Object.values(KEY_PAGES);
-        return pageData.filter(page => keyPagePaths.includes(page.page_path as any));
+    // Function to convert 24-hour format to 12-hour AM/PM format
+    const formatTimeToAMPM = (hour: number): string => {
+        if (hour === 0) return '12:00 AM';
+        if (hour === 12) return '12:00 PM';
+        if (hour > 12) return `${hour - 12}:00 PM`;
+        return `${hour}:00 AM`;
+    };
+
+    // Function to convert time slot format to AM/PM
+    const formatTimeSlotToAMPM = (timeSlot: string): string => {
+        // Handle time slots like "09:00-11:00", "11:00-13:00", etc.
+        const parts = timeSlot.split('-');
+        if (parts.length === 2) {
+            const startTime = parts[0].trim();
+            const endTime = parts[1].trim();
+            
+            // Convert start time
+            const startHour = parseInt(startTime.split(':')[0]);
+            const startAMPM = formatTimeToAMPM(startHour);
+            
+            // Convert end time
+            const endHour = parseInt(endTime.split(':')[0]);
+            const endAMPM = formatTimeToAMPM(endHour);
+            
+            return `${startAMPM} - ${endAMPM}`;
+        }
+        
+        // If it's a single time like "Other"
+        return timeSlot;
+    };
+
+    // Filter tracked pages only (optional feature)
+    const getTrackedPagesData = () => {
+        const trackedPagePaths = Object.values(KEY_PAGES);
+        return pageData.filter(page => trackedPagePaths.includes(page.page_path as any));
     };
 
     // New component for visits chart using ApexCharts
@@ -1104,7 +1138,7 @@ For data interpretation:
                                         ) : performanceData?.peak_hour ? (
                                             <Box>
                                                 <Typography variant="h4" fontWeight="bold" color="primary">
-                                                    {performanceData.peak_hour.hour}:00
+                                                    {formatTimeToAMPM(performanceData.peak_hour.hour)}
                                                 </Typography>
                                                 <Typography variant="body1" color="text.secondary">
                                                     {performanceData.peak_hour.visits.toLocaleString()} visits
@@ -1149,7 +1183,7 @@ For data interpretation:
                                         <Typography variant="h6" gutterBottom>
                                             Page Performance Details
                                             <Chip 
-                                                label="Key Pages Only" 
+                                                label="Tracked Pages Only" 
                                                 color="primary" 
                                                 size="small" 
                                                 sx={{ ml: 2 }}
@@ -1263,7 +1297,10 @@ For data interpretation:
                                                     <Box sx={{ height: 400, mb: 2, width: '100%' }}>
                                                         <ResponsiveContainer width="100%" height="100%">
                                                             <BarChart 
-                                                                data={performanceData.time_slots}
+                                                                data={performanceData.time_slots.map(slot => ({
+                                                                    ...slot,
+                                                                    slot: formatTimeSlotToAMPM(slot.slot)
+                                                                }))}
                                                                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                                                             >
                                                                 <CartesianGrid strokeDasharray="3 3" />
@@ -1316,7 +1353,7 @@ For data interpretation:
                                                                         <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fafafa' : '#ffffff' }}>
                                                                             <td style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '13px' }}>
                                                                                 <Typography variant="body2" fontWeight="medium">
-                                                                                    {slot.slot}
+                                                                                    {formatTimeSlotToAMPM(slot.slot)}
                                                                                 </Typography>
                                                                             </td>
                                                                             <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #eee' }}>
