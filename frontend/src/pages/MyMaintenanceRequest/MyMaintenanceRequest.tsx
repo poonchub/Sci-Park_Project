@@ -54,6 +54,8 @@ import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
+import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
+import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 import { Check, Eye, FileText, Repeat, Wrench, X } from "lucide-react";
 
 function MyMaintenanceRequest() {

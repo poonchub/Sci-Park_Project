@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Typography, Grid, Card, CardContent, Skeleton, useMediaQuery, Button, Divider, Tooltip } from "@mui/material";
-import { ClipboardList, Check, Eye, X } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { ClipboardList, Check, Eye, X, HelpCircle } from "lucide-react";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
 import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById } from "../../services/http";
@@ -71,11 +69,12 @@ const ServiceRequestList: React.FC = () => {
                         const statusID = params.row.StatusID;
                         const status = requestStatuses.find(s => s.ID === statusID);
                         const statusName = status?.Name || 'Unknown';
+                        
                         const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
                         
                         const statusColor = statusConfig?.color || "#000";
                         const statusColorLite = statusConfig?.colorLite || "#000";
-                        const StatusIcon = statusConfig?.icon || faQuestionCircle;
+                        const StatusIcon = statusConfig?.icon || HelpCircle;
 
                         const dateTime = `${dayjs(params.row.CreatedAt).format('DD/MM/YYYY')} ${dayjs(params.row.CreatedAt).format('hh:mm A')}`;
                         const companyName = params.row.CompanyName || '-';
@@ -110,26 +109,28 @@ const ServiceRequestList: React.FC = () => {
                                         {(() => {
                                             const businessGroup = businessGroups.find(bg => bg.ID === businessGroupId);
                                             const businessGroupName = businessGroup?.Name || 'Unknown';
+                                            
                                             const groupConfig = businessGroupConfig[businessGroupName] || {
                                                 color: "#000",
                                                 colorLite: "#000",
-                                                icon: faQuestionCircle
+                                                icon: HelpCircle
                                             };
                                             const GroupIcon = groupConfig.icon;
                                             
                                             return (
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                    <GroupIcon 
-                                                        size={16} 
-                                                        style={{ 
+                                                    {GroupIcon && React.createElement(GroupIcon, {
+                                                        size: 16,
+                                                        style: { 
                                                             color: groupConfig.color,
                                                             minWidth: "16px", 
                                                             minHeight: "16px" 
-                                                        }} 
-                                                    />
+                                                        }
+                                                    })}
                                                     <Typography
                                                         sx={{
                                                             fontSize: 13,
+                                                            fontWeight: 600,
                                                             whiteSpace: "nowrap",
                                                             overflow: "hidden",
                                                             textOverflow: "ellipsis",
@@ -183,7 +184,10 @@ const ServiceRequestList: React.FC = () => {
                                             width: "100%",
                                         }}
                                     >
-                                        <StatusIcon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                        {StatusIcon && React.createElement(StatusIcon, {
+                                            size: 18,
+                                            style: { minWidth: "18px", minHeight: "18px" }
+                                        })}
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -266,7 +270,7 @@ const ServiceRequestList: React.FC = () => {
                                                                              variant="outlinedGray"
                                                                              onClick={() => {
                                                                                  // TODO: Implement details functionality
-                                                                                 console.log("Details clicked for:", data);
+                                                                                 // console.log("Details clicked for:", data);
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -286,7 +290,7 @@ const ServiceRequestList: React.FC = () => {
                                                                          variant="outlinedGray"
                                                                          onClick={() => {
                                                                              // TODO: Implement details functionality
-                                                                             console.log("Details clicked for:", data);
+                                                                             // console.log("Details clicked for:", data);
                                                                          }}
                                                                          sx={{
                                                                              minWidth: "42px",
@@ -345,7 +349,7 @@ const ServiceRequestList: React.FC = () => {
                     const groupConfig = businessGroupConfig[businessGroupName] || {
                         color: "#000",
                         colorLite: "#000",
-                        icon: faQuestionCircle
+                        icon: HelpCircle
                     };
                     const GroupIcon = groupConfig.icon;
                     
@@ -370,17 +374,18 @@ const ServiceRequestList: React.FC = () => {
                                 {companyName}
                             </Typography>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
-                                <GroupIcon 
-                                    size={16} 
-                                    style={{ 
+                                {GroupIcon && React.createElement(GroupIcon, {
+                                    size: 16,
+                                    style: { 
                                         color: groupConfig.color,
                                         minWidth: "16px", 
                                         minHeight: "16px" 
-                                    }} 
-                                />
+                                    }
+                                })}
                                 <Typography
                                     sx={{
                                         fontSize: 12,
+                                        fontWeight: 600,
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
@@ -444,10 +449,14 @@ const ServiceRequestList: React.FC = () => {
                 type: "string",
                 flex: 1,
                 renderCell: (params) => {
-                                         const status = requestStatuses.find(s => s.ID === params.value);
-                     const statusName = status?.Name || 'Unknown';
-                     const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
-                     const StatusIcon = statusConfig?.icon || faQuestionCircle;
+                    const status = requestStatuses.find(s => s.ID === params.value);
+                    const statusName = status?.Name || 'Unknown';
+                    
+                    const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
+                    
+                    const statusColor = statusConfig?.color || "#000";
+                    const statusColorLite = statusConfig?.colorLite || "#000";
+                    const StatusIcon = statusConfig?.icon || HelpCircle;
                     
                     if (!statusConfig) {
                         return (
@@ -494,7 +503,10 @@ const ServiceRequestList: React.FC = () => {
                                     width: "100%",
                                 }}
                             >
-                                                                 <StatusIcon size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                 {StatusIcon && React.createElement(StatusIcon, {
+                                                                     size: 18,
+                                                                     style: { minWidth: "18px", minHeight: "18px" }
+                                                                 })}
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -601,7 +613,7 @@ const ServiceRequestList: React.FC = () => {
                                              variant="outlinedGray"
                                              onClick={() => {
                                                  // TODO: Implement details functionality
-                                                 console.log("Details clicked for:", data);
+                                                 // console.log("Details clicked for:", data);
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -621,7 +633,7 @@ const ServiceRequestList: React.FC = () => {
                                          variant="outlinedGray"
                                          onClick={() => {
                                              // TODO: Implement details functionality
-                                             console.log("Details clicked for:", data);
+                                             // console.log("Details clicked for:", data);
                                          }}
                                          sx={{
                                              minWidth: "42px",
@@ -659,7 +671,12 @@ const ServiceRequestList: React.FC = () => {
             const res = await GetRequestStatuses();
             
             if (res) {
-                setRequestStatuses(res);
+                // Filter to only include the 5 statuses used for Service Request List
+                const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
+                const filteredStatuses = res.filter((status: RequestStatusesInterface) => 
+                    serviceRequestStatusNames.includes(status.Name || '')
+                );
+                setRequestStatuses(filteredStatuses);
             }
         } catch (error) {
             console.error("Error fetching request statuses:", error);
