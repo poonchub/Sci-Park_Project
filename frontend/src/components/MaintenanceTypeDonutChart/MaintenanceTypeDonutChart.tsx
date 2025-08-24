@@ -144,6 +144,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
 
                 <Stack spacing={1.5} mt={2}>
                     {Object.entries(data).map(([label, value]) => {
+                        const Icon = maintenanceTypeConfig[label].icon
                         return (
                             <Box key={label}>
                                 <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -157,7 +158,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                                 color: maintenanceTypeConfig[label].color,
                                             }}
                                         >
-                                            <FontAwesomeIcon icon={maintenanceTypeConfig[label].icon} size="xs" />
+                                            <Icon size={16}  style={{ minWidth: '16px', minHeight: '16px', marginBottom: '2px' }}/>
                                         </Avatar>
                                         <Typography variant="body2">{label}</Typography>
                                     </Stack>

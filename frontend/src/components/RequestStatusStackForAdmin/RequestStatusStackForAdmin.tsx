@@ -1,9 +1,7 @@
 import React from "react";
 import { Avatar, Card, Grid, Stack, Typography } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 import { statusConfig } from "../../constants/statusConfig";
-import { FileQuestion } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 interface Props {
     statusCounts: Record<string, number>;
@@ -40,7 +38,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
         const { color, colorLite, icon } = statusConfig[statusKey] ?? {
             color: "#000",
             colorLite: "#000",
-            icon: FileQuestion
+            icon: HelpCircle
         };
 
         return { name: status, count, color, colorLite, icon };
