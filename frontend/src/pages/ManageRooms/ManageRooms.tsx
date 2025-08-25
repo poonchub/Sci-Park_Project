@@ -34,7 +34,7 @@ function ManageRooms() {
     const [selectRoomType, setSelectRoomType] = useState(0);
     const [selectRoomStatus, setSelectRoomStatus] = useState(0);
     const [selectFloor, setSelectFloors] = useState(0);
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
     const [openPopup, setOpenPopup] = useState(false);
@@ -245,7 +245,7 @@ function ManageRooms() {
         setSelectRoomType(0);  // Reset room type selection
         setSelectRoomStatus(0);  // Reset room status selection
         setSelectFloors(0);  // Reset floor selection
-        setPage(1);  // Reset to page 1
+        setPage(0);  // Reset to page 1
         setLimit(10);  // Reset page size to default
         Listrooms();  // Call function to fetch new data
         console.log(alerts); // Log message when popup is closed
@@ -303,7 +303,7 @@ function ManageRooms() {
         setSelectRoomStatus(0);  // Reset the selected package to 0 (default value)
         setSelectFloors(0);  // Reset the selected floor to 0 (default value)
         setSearchText('');  // Clear the search text
-        setPage(1);         // Reset to page 1
+        setPage(0);         // Reset to page 1
         Listrooms();  // Call the function to fetch users when the component mounts
     }
 

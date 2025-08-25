@@ -84,7 +84,7 @@ interface ConfirmUserFormData {
 const AddUserFormByCsv: React.FC = () => {
   const { control, handleSubmit, formState: { errors }, setValue, watch, trigger } = useForm<ConfirmUserFormData>();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [csvData, setCsvData] = useState<CsvUserData[]>(() => {
     // Load data from localStorage on component mount
     const savedData = localStorage.getItem('csvUserData');
@@ -141,7 +141,7 @@ const AddUserFormByCsv: React.FC = () => {
 
   const parseCSV = (csvText: string): CsvUserData[] => {
     const lines = csvText.split('\n');
-    
+
     // Find the header line (skip comment lines starting with #)
     let headerIndex = 0;
     for (let i = 0; i < lines.length; i++) {
@@ -150,7 +150,7 @@ const AddUserFormByCsv: React.FC = () => {
         break;
       }
     }
-    
+
     const headers = lines[headerIndex].split(',').map(h => h.trim());
     const data: CsvUserData[] = [];
 
@@ -169,7 +169,7 @@ const AddUserFormByCsv: React.FC = () => {
 
     for (let i = headerIndex + 1; i < lines.length; i++) {
       if (lines[i].trim() === '' || lines[i].trim().startsWith('#')) continue;
-      
+
       const values = lines[i].split(',').map(v => v.trim());
       const row: any = {};
       const errors: string[] = [];
@@ -301,21 +301,21 @@ const AddUserFormByCsv: React.FC = () => {
         const csvText = e.target?.result as string;
         const parsedData = parseCSV(csvText);
         setCsvData(parsedData);
-        
+
         if (parsedData.length === 0) {
           setAlerts(prev => [...prev, { type: 'warning', message: 'No valid data found in CSV file' }]);
         } else {
           const validCount = parsedData.filter(row => row.isValid).length;
-          setAlerts(prev => [...prev, { 
-            type: 'info', 
-            message: `Imported ${parsedData.length} rows. ${validCount} valid, ${parsedData.length - validCount} with errors.` 
+          setAlerts(prev => [...prev, {
+            type: 'info',
+            message: `Imported ${parsedData.length} rows. ${validCount} valid, ${parsedData.length - validCount} with errors.`
           }]);
         }
       } catch (error) {
         console.error('Error parsing CSV:', error);
-        setAlerts(prev => [...prev, { 
-          type: 'error', 
-          message: `Error parsing CSV: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        setAlerts(prev => [...prev, {
+          type: 'error',
+          message: `Error parsing CSV: ${error instanceof Error ? error.message : 'Unknown error'}`
         }]);
       }
     };
@@ -387,7 +387,7 @@ const AddUserFormByCsv: React.FC = () => {
     setSelectedPackage(user.UserPackageID || null);
     setSelectedRequestType(user.RequestTypeID || null);
     setIsEmployee(user.IsEmployee);
-    
+
     setValue('FirstName', user.FirstName);
     setValue('LastName', user.LastName);
     setValue('Email', user.Email);
@@ -397,9 +397,9 @@ const AddUserFormByCsv: React.FC = () => {
     setValue('BusinessDetail', user.BusinessDetail);
     setValue('GenderID', user.GenderID);
     setValue('RoleID', user.RoleID);
-    
+
     setConfirmDialogOpen(true);
-    
+
     // Trigger validation immediately when popup opens
     setTimeout(() => {
       // Force validation on all fields to show errors immediately
@@ -428,19 +428,19 @@ const AddUserFormByCsv: React.FC = () => {
       };
 
       const response = await CreateUser(userData);
-      
+
       if (response?.status === 'success') {
         setAlerts(prev => [...prev, { type: 'success', message: 'User created successfully' }]);
-        
+
         // Remove the row from the table after successful creation
         setCsvData(prev => prev.filter(row => row.id !== selectedUser.id));
-        
+
         setConfirmDialogOpen(false);
         setSelectedUser(null);
       } else {
-        setAlerts(prev => [...prev, { 
-          type: 'error', 
-          message: response?.message || 'Failed to create user' 
+        setAlerts(prev => [...prev, {
+          type: 'error',
+          message: response?.message || 'Failed to create user'
         }]);
       }
     } catch (error) {
@@ -473,7 +473,7 @@ const AddUserFormByCsv: React.FC = () => {
       RoleID: selectedRole,
       IsEmployee: isEmployee,
     };
-    
+
     const errors = validateUserData(validationData);
 
     // Update the user data in the table with the edited information (temporary)
@@ -538,46 +538,46 @@ const AddUserFormByCsv: React.FC = () => {
       headerName: 'Phone',
       flex: 1,
     },
-         {
-       field: 'EmployeeID',
-       headerName: 'Employee ID',
-       flex: 1,
-       
-     },
-     {
-       field: 'Gender',
-       headerName: 'Gender',
-       flex: 0.8,
-       
-     },
-     {
-       field: 'Role',
-       headerName: 'Role',
-       flex: 1,
-       
-     },
-     {
-       field: 'IsEmployee',
-       headerName: 'Employee',
-       flex: 0.8,
-       
-     },
-     {
-       field: 'UserPackage',
-       headerName: 'Package',
-       flex: 1,
-       
-     },
-     
+    {
+      field: 'EmployeeID',
+      headerName: 'Employee ID',
+      flex: 1,
+
+    },
+    {
+      field: 'Gender',
+      headerName: 'Gender',
+      flex: 0.8,
+
+    },
+    {
+      field: 'Role',
+      headerName: 'Role',
+      flex: 1,
+
+    },
+    {
+      field: 'IsEmployee',
+      headerName: 'Employee',
+      flex: 0.8,
+
+    },
+    {
+      field: 'UserPackage',
+      headerName: 'Package',
+      flex: 1,
+
+    },
+
     {
       field: 'isValid',
       headerName: 'Status',
       flex: 0.8,
       renderCell: (params) => (
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           alignItems: 'center',
-          
+
           width: '100%',
           height: '100%'
         }}>
@@ -618,35 +618,35 @@ const AddUserFormByCsv: React.FC = () => {
       {alerts.map((alert, index) => (
         <React.Fragment key={index}>
           {alert.type === 'success' && (
-            <SuccessAlert 
-              message={alert.message} 
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} 
-              index={index} 
-              totalAlerts={alerts.length} 
+            <SuccessAlert
+              message={alert.message}
+              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+              index={index}
+              totalAlerts={alerts.length}
             />
           )}
           {alert.type === 'error' && (
-            <ErrorAlert 
-              message={alert.message} 
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} 
-              index={index} 
-              totalAlerts={alerts.length} 
+            <ErrorAlert
+              message={alert.message}
+              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+              index={index}
+              totalAlerts={alerts.length}
             />
           )}
           {alert.type === 'warning' && (
-            <WarningAlert 
-              message={alert.message} 
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} 
-              index={index} 
-              totalAlerts={alerts.length} 
+            <WarningAlert
+              message={alert.message}
+              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+              index={index}
+              totalAlerts={alerts.length}
             />
           )}
           {alert.type === 'info' && (
-            <InfoAlert 
-              message={alert.message} 
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} 
-              index={index} 
-              totalAlerts={alerts.length} 
+            <InfoAlert
+              message={alert.message}
+              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+              index={index}
+              totalAlerts={alerts.length}
             />
           )}
         </React.Fragment>
@@ -654,18 +654,18 @@ const AddUserFormByCsv: React.FC = () => {
 
       <Grid container spacing={3}>
         <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <UserRoundPlus size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
-        </Box>
-        
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <UserRoundPlus size={26} />
+            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+          </Box>
+
         </Grid>
 
         {/* Upload Section */}
         <Grid size={{ xs: 12, md: 12 }}>
           <Card sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>Upload CSV File</Typography>
-            
+
             {isLoadingData ? (
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <CircularProgress size={20} sx={{ mr: 2 }} />
@@ -682,72 +682,72 @@ const AddUserFormByCsv: React.FC = () => {
                   <strong>Note:</strong> IsEmployee is automatically determined - if EmployeeID is provided, user is marked as Employee (true), otherwise as External User (false).
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  <strong>Allowed values:</strong><br/>
-                  Gender: {genders.map(g => g.Name).join(', ')}<br/>
-                  Role: {roles.map(r => r.Name).join(', ')}<br/>
-                  UserPackage: {packages.map(p => p.PackageName).join(', ')}<br/>
+                  <strong>Allowed values:</strong><br />
+                  Gender: {genders.map(g => g.Name).join(', ')}<br />
+                  Role: {roles.map(r => r.Name).join(', ')}<br />
+                  UserPackage: {packages.map(p => p.PackageName).join(', ')}<br />
                   RequestType: {requiredTypes.map(t => t.TypeName).join(', ')}
                 </Typography>
               </>
             )}
-            
-                         <Button
-               variant="outlined"
-               component="label"
-               startIcon={<Upload size={20} />}
-               disabled={isLoadingData}
-               sx={{ mr: 2 }}
-             >
-               Choose CSV File
-               <input
-                 ref={fileInputRef}
-                 type="file"
-                 hidden
-                 accept=".csv"
-                 onChange={handleFileUpload}
-               />
-             </Button>
-             
-             <Button
-               variant="text"
-               startIcon={<FileText size={20} />}
-               disabled={isLoadingData}
-               onClick={() => {
-                 const link = document.createElement('a');
-                 link.href = '/src/pages/AddUser/user_template.csv';
-                 link.download = 'user_template.csv';
-                 link.click();
-               }}
-               sx={{ mr: 2 }}
-             >
-               Download Template
-             </Button>
-             
-             <Button
-               variant="outlined"
-               startIcon={<BookOpen size={20} />}
-               disabled={isLoadingData}
-               onClick={() => {
-                 const link = document.createElement('a');
-                 link.href = '/src/pages/AddUser/CSV_User_Manual.txt';
-                 link.download = 'CSV_User_Manual.txt';
-                 link.click();
-               }}
-             >
-               Download Manual
-             </Button>
-             
-             {csvData.length > 0 && (
-               <Button
-                 variant="outlined"
-                 color="error"
-                 startIcon={<RotateCcw size={20} />}
-                 onClick={handleResetData}
-                 sx={{ ml: 2 }}
-               >
-                 Reset Data
-               </Button>
-             )}
+
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<Upload size={20} />}
+              disabled={isLoadingData}
+              sx={{ mr: 2 }}
+            >
+              Choose CSV File
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                accept=".csv"
+                onChange={handleFileUpload}
+              />
+            </Button>
+
+            <Button
+              variant="text"
+              startIcon={<FileText size={20} />}
+              disabled={isLoadingData}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/src/pages/AddUser/user_template.csv';
+                link.download = 'user_template.csv';
+                link.click();
+              }}
+              sx={{ mr: 2 }}
+            >
+              Download Template
+            </Button>
+
+            <Button
+              variant="outlined"
+              startIcon={<BookOpen size={20} />}
+              disabled={isLoadingData}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/src/pages/AddUser/CSV_User_Manual.txt';
+                link.download = 'CSV_User_Manual.txt';
+                link.click();
+              }}
+            >
+              Download Manual
+            </Button>
+
+            {csvData.length > 0 && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<RotateCcw size={20} />}
+                onClick={handleResetData}
+                sx={{ ml: 2 }}
+              >
+                Reset Data
+              </Button>
+            )}
 
             {csvData.length > 0 && (
               <Alert severity="info" sx={{ mt: 2 }}>
@@ -784,16 +784,16 @@ const AddUserFormByCsv: React.FC = () => {
       </Grid>
 
       {/* Confirmation Dialog */}
-      <Dialog 
-        open={confirmDialogOpen} 
-        onClose={() => setConfirmDialogOpen(false)} 
-        fullWidth 
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        fullWidth
         maxWidth="md"
       >
         <DialogTitle>
           <Typography variant="h6">Confirm User Details</Typography>
         </DialogTitle>
-        
+
         <DialogContent>
           {selectedUser && (
             <form onSubmit={handleSubmit(handleSaveChanges)}>
@@ -810,7 +810,7 @@ const AddUserFormByCsv: React.FC = () => {
                         {...field}
                         fullWidth
                         error={!!errors.FirstName}
-                        helperText={String(errors.FirstName?.message || '') }
+                        helperText={String(errors.FirstName?.message || '')}
                       />
                     )}
                   />
@@ -876,7 +876,7 @@ const AddUserFormByCsv: React.FC = () => {
                         {...field}
                         fullWidth
                         error={!!errors.Phone}
-                        helperText={String(errors.Phone?.message || '') }
+                        helperText={String(errors.Phone?.message || '')}
                       />
                     )}
                   />
@@ -901,14 +901,14 @@ const AddUserFormByCsv: React.FC = () => {
                           {...field}
                           fullWidth
                           error={!!errors.EmployeeID}
-                          helperText={String(errors.EmployeeID?.message || '') }
+                          helperText={String(errors.EmployeeID?.message || '')}
                         />
                       )}
                     />
                   </Grid>
                 )}
 
-                
+
 
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body1" className="title-field">Gender</Typography>
@@ -916,7 +916,7 @@ const AddUserFormByCsv: React.FC = () => {
                     name="GenderID"
                     control={control}
                     defaultValue={selectedUser?.GenderID || 0}
-                    rules={{ 
+                    rules={{
                       required: 'Gender is required',
                       validate: (value) => {
                         if (!value || value === 0) return 'Gender is required';
@@ -956,7 +956,7 @@ const AddUserFormByCsv: React.FC = () => {
                         name="RoleID"
                         control={control}
                         defaultValue={selectedUser?.RoleID || 0}
-                        rules={{ 
+                        rules={{
                           required: 'Role is required',
                           validate: (value) => {
                             if (!value || value === 0) return 'Role is required';
@@ -1042,7 +1042,7 @@ const AddUserFormByCsv: React.FC = () => {
                             {...field}
                             fullWidth
                             error={!!errors.CompanyName}
-                            helperText={String(errors.CompanyName?.message || '') }
+                            helperText={String(errors.CompanyName?.message || '')}
                           />
                         )}
                       />
@@ -1062,7 +1062,7 @@ const AddUserFormByCsv: React.FC = () => {
                             multiline
                             rows={3}
                             error={!!errors.BusinessDetail}
-                            helperText={String(errors.BusinessDetail?.message || '' ) }
+                            helperText={String(errors.BusinessDetail?.message || '')}
                           />
                         )}
                       />
@@ -1078,16 +1078,16 @@ const AddUserFormByCsv: React.FC = () => {
           <Button onClick={handleCancelEdit} color="secondary">
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit(handleTemporarySave)} 
-            variant="outlined" 
+          <Button
+            onClick={handleSubmit(handleTemporarySave)}
+            variant="outlined"
             color="primary"
           >
             Save Temporarily
           </Button>
-          <Button 
-            onClick={handleSubmit(handleSaveChanges)} 
-            variant="contained" 
+          <Button
+            onClick={handleSubmit(handleSaveChanges)}
+            variant="contained"
             disabled={isLoading}
             startIcon={isLoading ? <CircularProgress size={20} /> : <Check size={20} />}
           >
