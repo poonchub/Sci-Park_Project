@@ -239,9 +239,10 @@ func main() {
 		protected.GET("/room-rental-space/:id", controller.GetRoomRentalSpaceByID)
 
 		// Invoice
-		protected.GET("/invoces", controller.ListInvoices)
+		protected.GET("/invoices", controller.ListInvoices)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
+		protected.GET("/invoices/by-date", controller.ListInvoiceByDateRange)
 
 		// InvoiceItems
 		protected.GET("/invoice-items", controller.ListInvoiceItems)
@@ -259,6 +260,7 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms", controller.ListBookingRooms)
+		protected.GET("/booking-rooms/by-date", controller.ListBookingRoomByDateRange)
 
 		// News
 		protected.GET("/news/pinned", controller.ListPinnedNews)
@@ -278,7 +280,8 @@ func main() {
 
 		// Payments
 		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
-
+		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
+		protected.GET("/invoice-payments/by-date", controller.ListInvoicePaymentsByDateRange)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

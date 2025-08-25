@@ -114,7 +114,7 @@ function CheckRequest() {
     const isRework = RequestStatus === "Rework Requested";
     const isUnsuccessful = RequestStatus === "Unsuccessful";
 
-    const isNotApproved = maintenanceRequest?.ManagerApproval === null;
+    const isNotApproved = maintenanceRequest?.ManagerApproval === null || (maintenanceRequest?.ManagerApproval?.Note);
 
     // Fetch request by ID
     const getMaintenanceRequest = async () => {

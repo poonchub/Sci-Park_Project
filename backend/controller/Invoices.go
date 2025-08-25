@@ -58,6 +58,7 @@ func GetInvoiceByID(c *gin.Context) {
 		Preload("Customer.Prefix").
 		Preload("Creater.Prefix").
 		Preload("Creater.Role").
+		Preload("Creater.JobPosition").
 		Preload("Notifications").
 
 		First(&invoice, id)
@@ -108,6 +109,7 @@ func GetInvoiceByOption(c *gin.Context) {
 		Preload("Customer.Prefix").
 		Preload("Creater.Prefix").
 		Preload("Creater.Role").
+		Preload("Creater.JobPosition").
 		Preload("Notifications")
 
 	if err := query.Limit(limit).Offset(offset).Find(&invoices).Error; err != nil {
@@ -135,6 +137,55 @@ func GetInvoiceByOption(c *gin.Context) {
 		"total":      total,
 		"totalPages": (total + int64(limit) - 1) / int64(limit),
 	})
+}
+
+// GET /invoices/by-date
+func ListInvoiceByDateRange(c *gin.Context) {
+	var invoice []entity.Invoice
+
+	startDateStr := c.Query("start_date")
+	endDateStr := c.Query("end_date")
+
+	db := config.DB()
+
+	query := db.
+		Order("created_at ASC")
+
+	layout := "2006-01-02"
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	if startDateStr != "" {
+		startDate, errStart := time.ParseInLocation(layout, startDateStr, loc)
+		if errStart != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format, expected YYYY-MM-DD"})
+			return
+		}
+
+		if endDateStr == "" {
+			startOfDay := startDate
+			endOfDay := startDate.AddDate(0, 0, 1)
+			query = query.Where("created_at >= ? AND created_at < ?", startOfDay, endOfDay)
+		} else {
+			endDate, errEnd := time.ParseInLocation(layout, endDateStr, loc)
+			if errEnd != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
+				return
+			}
+			query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+		}
+	}
+
+	results := query.Find(&invoice)
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &invoice)
 }
 
 func GetInvoicePDF(c *gin.Context) {
@@ -355,6 +406,8 @@ func DeleteInvoiceByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
 		return
 	}
+
+	services.NotifySocketEvent("invoice_deleted", invoice)
 
 	tx.Commit()
 	c.JSON(http.StatusOK, gin.H{"message": "Invoice and its items deleted successfully"})

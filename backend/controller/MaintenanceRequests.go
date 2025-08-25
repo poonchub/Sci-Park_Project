@@ -188,7 +188,7 @@ func UpdateMaintenanceRequestByID(c *gin.Context) {
 	var request entity.MaintenanceRequest
 
 	db := config.DB()
-	result := db.First(&request, ID)
+	result := db.Preload("User").First(&request, ID)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
 		return
@@ -217,7 +217,7 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	db := config.DB()
 
 	var request entity.MaintenanceRequest
-	if err := db.Where("id = ?", ID).First(&request).Error; err != nil {
+	if err := db.Where("id = ?", ID).Preload("User").First(&request).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Maintenance request not found"})
 		return
 	}
@@ -226,6 +226,8 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Maintenance request"})
 		return
 	}
+
+	services.NotifySocketEvent("maintenance_deleted", request)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Maintenance request deleted successfully"})
 }

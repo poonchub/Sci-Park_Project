@@ -72,7 +72,7 @@ const RequestStatusCards: React.FC<Props> = ({ statusCounts, size, customDisplay
                                 alignItems: "flex-start",
                             }}
                         >
-                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: "text.secondary" }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: "text.secondary" }} gutterBottom>
                                 {item.name}
                             </Typography>
                             <Typography variant="h5" fontWeight="bold" color="textPrimary">

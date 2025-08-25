@@ -7,6 +7,10 @@ export default function AnimatedBell() {
   return (
     <MotionBellRing
       size={16}
+      style={{
+        minWidth: '16px',
+        minHeight: '16px'
+      }}
       color="#F26522"
       strokeWidth={3}
       animate={{ rotate: [-15, 15, -15] }}
