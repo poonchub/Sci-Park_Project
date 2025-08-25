@@ -1055,9 +1055,9 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล BusinessGroup
 	businessGroups := []entity.BusinessGroup{
-		{Name: "IT Software & digital content"},
+		{Name: "IT Software & Digital Content"},
 		{Name: "Agriculture & Food"},
-		{Name: "Energy Tech & material"},
+		{Name: "Energy Tech & Material"},
 		{Name: "Medical & Bio-Tech"},
 	}
 	for _, businessGroup := range businessGroups {
