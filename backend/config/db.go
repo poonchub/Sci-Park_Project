@@ -100,6 +100,7 @@ func SetupDatabase() {
 		&entity.CompanySize{},
 		&entity.ServiceUserType{},
 		&entity.ServiceAreaDocument{},
+		&entity.CancelRequestServiceArea{},
 		&entity.Invoice{},
 		&entity.InvoiceItem{},
 		&entity.TitlePrefix{},
@@ -912,22 +913,22 @@ func SeedDatabase() {
 			StatusID:      2,
 		},
 		{
-			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:        1000.00,
-			SlipPath:      "/slips/payment2.jpg",
-			Note:          "",
-			PayerID:       users[2].ID, // internaluser2
-			InvoiceID: 	   2,
-			StatusID:      2,
+			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
+			Amount:      1000.00,
+			SlipPath:    "/slips/payment2.jpg",
+			Note:        "",
+			PayerID:     users[2].ID, // internaluser2
+			InvoiceID:   2,
+			StatusID:    2,
 		},
 		{
-			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:        1000.00,
-			SlipPath:      "/slips/payment2.jpg",
-			Note:          "",
-			PayerID:       users[3].ID, // internaluser2
-			InvoiceID:     2,
-			StatusID:      2,
+			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
+			Amount:      1000.00,
+			SlipPath:    "/slips/payment2.jpg",
+			Note:        "",
+			PayerID:     users[3].ID, // internaluser2
+			InvoiceID:   2,
+			StatusID:    2,
 		},
 	}
 	for _, p := range payments {
@@ -1280,6 +1281,69 @@ func SeedDatabase() {
 		db.FirstOrCreate(&aboutCompany, entity.AboutCompany{
 			UserID: aboutCompany.UserID,
 		})
+	}
+
+	// ===== Mock External Users with AboutCompany, RequestServiceArea, CollaborationPlans =====
+	// Step 1: Create 5 External Users
+	externalUsers := []entity.User{
+		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+	}
+	for i := range externalUsers {
+		externalUsers[i].Password, _ = HashPassword(externalUsers[i].Password)
+		db.FirstOrCreate(&externalUsers[i], entity.User{Email: externalUsers[i].Email})
+	}
+
+	// Helper to get pointer to uint
+	ptr := func(u uint) *uint { return &u }
+
+	// Step 2: AboutCompany for each external user (map to business groups: IT, Agriculture, Energy, Medical, IT)
+	aboutCompaniesExt := []entity.AboutCompany{
+		{UserID: externalUsers[0].ID, CorporateRegistrationNumber: "1329901260944", BusinessGroupID: ptr(4), CompanySizeID: ptr(1), MainServices: "Healthcare Services", RegisteredCapital: 1000000, HiringRate: 20, ResearchInvestmentValue: 17000, ThreeYearGrowthForecast: "Growth 10%"},
+		{UserID: externalUsers[1].ID, CorporateRegistrationNumber: "2299012601234", BusinessGroupID: ptr(2), CompanySizeID: ptr(2), MainServices: "Smart Farming", RegisteredCapital: 5000000, HiringRate: 15, ResearchInvestmentValue: 25000, ThreeYearGrowthForecast: "Growth 15%"},
+		{UserID: externalUsers[2].ID, CorporateRegistrationNumber: "3399012605678", BusinessGroupID: ptr(3), CompanySizeID: ptr(3), MainServices: "Renewable Energy Materials", RegisteredCapital: 8000000, HiringRate: 25, ResearchInvestmentValue: 35000, ThreeYearGrowthForecast: "Growth 20%"},
+		{UserID: externalUsers[3].ID, CorporateRegistrationNumber: "4499012609876", BusinessGroupID: ptr(4), CompanySizeID: ptr(2), MainServices: "BioTech R&D", RegisteredCapital: 6000000, HiringRate: 18, ResearchInvestmentValue: 22000, ThreeYearGrowthForecast: "Growth 12%"},
+		{UserID: externalUsers[4].ID, CorporateRegistrationNumber: "5599012604321", BusinessGroupID: ptr(1), CompanySizeID: ptr(1), MainServices: "Software & Digital", RegisteredCapital: 3000000, HiringRate: 10, ResearchInvestmentValue: 12000, ThreeYearGrowthForecast: "Growth 25%"},
+	}
+	for i := range aboutCompaniesExt {
+		db.FirstOrCreate(&aboutCompaniesExt[i], entity.AboutCompany{UserID: aboutCompaniesExt[i].UserID})
+	}
+
+	// Step 3: For each external user, create 1-2 RequestServiceArea and 1-3 CollaborationPlans per request
+	makeRSA := func(user entity.User, idx int) {
+		// Create 1 or 2 requests depending on idx
+		reqCount := 1
+		if idx%2 == 0 { // for some users create 2
+			reqCount = 2
+		}
+		for r := 1; r <= reqCount; r++ {
+			req := entity.RequestServiceArea{
+				UserID:                             user.ID,
+				RequestStatusID:                    2,
+				PurposeOfUsingSpace:                fmt.Sprintf("Project %c-%d", 'A'+idx, r),
+				NumberOfEmployees:                  3 + r,
+				ActivitiesInBuilding:               "R&D Activities",
+				SupportingActivitiesForSciencePark: "Collaboration and workshops",
+			}
+			db.FirstOrCreate(&req, entity.RequestServiceArea{UserID: user.ID, PurposeOfUsingSpace: req.PurposeOfUsingSpace})
+			// Create 1-3 collaboration plans per request
+			plans := []entity.CollaborationPlan{
+				{RequestServiceAreaID: req.ID, CollaborationPlan: "Joint Research", CollaborationBudget: 10000, ProjectStartDate: time.Now().AddDate(0, 1, 0)},
+				{RequestServiceAreaID: req.ID, CollaborationPlan: "Prototype Development", CollaborationBudget: 15000, ProjectStartDate: time.Now().AddDate(0, 2, 0)},
+			}
+			if r%2 == 0 {
+				plans = append(plans, entity.CollaborationPlan{RequestServiceAreaID: req.ID, CollaborationPlan: "Pilot Testing", CollaborationBudget: 8000, ProjectStartDate: time.Now().AddDate(0, 3, 0)})
+			}
+			for _, p := range plans {
+				db.FirstOrCreate(&p, entity.CollaborationPlan{RequestServiceAreaID: req.ID, CollaborationPlan: p.CollaborationPlan})
+			}
+		}
+	}
+	for i := range externalUsers {
+		makeRSA(externalUsers[i], i)
 	}
 
 }

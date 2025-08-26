@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -13,6 +15,12 @@ type ServiceAreaDocument struct {
 	ServiceContractDocument string `gorm:"type:varchar(500)"` // แนบเอกสารสัญญาการใช้บริการพื้นที่
 	AreaHandoverDocument    string `gorm:"type:varchar(500)"` // แนบเอกสารส่งมอบพื้นที่
 	QuotationDocument       string `gorm:"type:varchar(500)"` // แนบใบเสนอราคา (หลักประกัน)
+
+	// เอกสารและข้อมูลเพิ่มเติมเกี่ยวกับสัญญา
+	RefundGuaranteeDocument string    `gorm:"type:varchar(500)"` // เอกสารคืนหลักประกัน (path)
+	ContractNumber          string    `gorm:"type:varchar(100)"` // เลขที่สัญญา
+	ContractStartAt         time.Time // วันเริ่มต้นสัญญา
+	ContractEndAt           time.Time // วันสิ้นสุดสัญญา
 
 	// Foreign Keys
 	RoomID uint `gorm:"index"`

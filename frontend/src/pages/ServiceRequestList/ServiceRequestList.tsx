@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Typography, Grid, Card, CardContent, Skeleton, useMediaQuery, Button, Divider, Tooltip } from "@mui/material";
+import { Box, Container, Typography, Grid, Skeleton, useMediaQuery, Button, Divider, Tooltip } from "@mui/material";
 import { ClipboardList, Check, Eye, X, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
 import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById } from "../../services/http";
-import { RequestServiceAreaInterface, RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
+import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 import { UserInterface } from "../../interfaces/IUser";
@@ -17,6 +17,7 @@ import dayjs, { Dayjs } from "dayjs";
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards";
 import { businessGroupConfig } from "../../constants/businessGroupConfig";
 import "./ServiceRequestList.css";
+import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
 
 const ServiceRequestList: React.FC = () => {
     const navigate = useNavigate();
@@ -25,6 +26,9 @@ const ServiceRequestList: React.FC = () => {
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [businessGroups, setBusinessGroups] = useState<BusinessGroupInterface[]>([]);
     const [user, setUser] = useState<UserInterface>();
+    const [openApprovePopup, setOpenApprovePopup] = useState(false);
+    const [requestIdPendingApprove, setRequestIdPendingApprove] = useState<number | null>(null);
+    const [businessGroupIdPending, setBusinessGroupIdPending] = useState<number | null>(null);
     
     // Search and filter states
     const [searchText, setSearchText] = useState("");
@@ -34,7 +38,7 @@ const ServiceRequestList: React.FC = () => {
     // Pagination states
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
-    const [total, setTotal] = useState(0);
+    // const [total, setTotal] = useState(0); // reserved for server-side pagination (unused)
     
     // Status counts from API
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
@@ -55,7 +59,7 @@ const ServiceRequestList: React.FC = () => {
     };
 
     // 6 statuses for Service Request List (same as All Maintenance except "Waiting For Review")
-    const displayStatuses = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
+    // const displayStatuses = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -84,11 +88,7 @@ const ServiceRequestList: React.FC = () => {
                         const businessGroupId = params.row.BusinessGroupID ?? 'N/A';
                         const requesterName = params.row.UserNameCombined;
 
-                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
-                        let width;
-                        if (cardItem) {
-                            width = cardItem.offsetWidth;
-                        }
+                        // const cardItem = document.querySelector(".card-item-container") as HTMLElement;
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -238,7 +238,7 @@ const ServiceRequestList: React.FC = () => {
                                                                              className="btn-approve"
                                                                              variant="contained"
                                                                              onClick={() => {
-                                                                                 handleApproveReject(data.ID, 'approve');
+                                                                                 handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -255,7 +255,7 @@ const ServiceRequestList: React.FC = () => {
                                                                              className="btn-reject"
                                                                              variant="outlinedCancel"
                                                                              onClick={() => {
-                                                                                 handleApproveReject(data.ID, 'reject');
+                                                                                 handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
                                                                              }}
                                                                              sx={{
                                                                                  minWidth: "42px",
@@ -457,8 +457,8 @@ const ServiceRequestList: React.FC = () => {
                     
                     const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
                     
-                    const statusColor = statusConfig?.color || "#000";
-                    const statusColorLite = statusConfig?.colorLite || "#000";
+                    // const statusColor = statusConfig?.color || "#000";
+                    // const statusColorLite = statusConfig?.colorLite || "#000";
                     const StatusIcon = statusConfig?.icon || HelpCircle;
                     
                     if (!statusConfig) {
@@ -581,7 +581,7 @@ const ServiceRequestList: React.FC = () => {
                                              className="btn-approve"
                                              variant="contained"
                                              onClick={() => {
-                                                 handleApproveReject(data.ID, 'approve');
+                                                 handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -598,7 +598,7 @@ const ServiceRequestList: React.FC = () => {
                                              className="btn-reject"
                                              variant="outlinedCancel"
                                              onClick={() => {
-                                                 handleApproveReject(data.ID, 'reject');
+                                                 handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
                                              }}
                                              sx={{
                                                  minWidth: "42px",
@@ -745,7 +745,6 @@ const ServiceRequestList: React.FC = () => {
                 
                 // Set data to empty array if null, otherwise use the data
                 setRequestServiceAreas(res.data || []);
-                setTotal(res.total || 0);
                 
                 // Calculate status counts
                 const counts: Record<string, number> = {
@@ -813,6 +812,8 @@ const ServiceRequestList: React.FC = () => {
         fetchInitialData();
     }, []);
 
+    // (moved fetching of document operators into controller component)
+
     // Load initial data after user and requestStatuses are ready
     useEffect(() => {
         if (user && requestStatuses) {
@@ -821,15 +822,21 @@ const ServiceRequestList: React.FC = () => {
     }, [user, requestStatuses]);
 
     // Handle approve/reject actions
-    const handleApproveReject = async (requestID: number, action: 'approve' | 'reject') => {
+    const handleApproveReject = async (requestID: number, action: 'approve' | 'reject', businessGroupID?: number | null) => {
         try {
             setIsLoadingData(true);
             
-            // Determine the status ID based on action
-            const statusID = action === 'approve' ? 3 : 8; // 3 = Approved, 8 = Unsuccessful
-            
-            // Call the API to update the status
-            await UpdateRequestServiceAreaStatus(requestID, statusID);
+            if (action === 'approve') {
+                // Instead of immediate approve, open popup to select Document Operator
+                setRequestIdPendingApprove(requestID);
+                setBusinessGroupIdPending(businessGroupID ?? null);
+                setOpenApprovePopup(true);
+                setIsLoadingData(false);
+                return;
+            } else {
+                const statusID = 8; // Unsuccessful
+                await UpdateRequestServiceAreaStatus(requestID, statusID);
+            }
             
             // Refresh the data
             await fetchServiceRequestAreas(
@@ -962,6 +969,27 @@ const ServiceRequestList: React.FC = () => {
                         )}
                     </Grid>
                 </Grid>
+                {/* Approve Service Area Controller */}
+                <ApproveServiceAreaController
+                    open={openApprovePopup}
+                    onClose={() => { setOpenApprovePopup(false); setRequestIdPendingApprove(null); setBusinessGroupIdPending(null); }}
+                    requestId={requestIdPendingApprove}
+                    businessGroupId={businessGroupIdPending}
+                    businessGroups={businessGroups}
+                    companyName={(() => {
+                        const current = requestServiceAreas.find(r => r.ID === requestIdPendingApprove);
+                        return current?.CompanyName;
+                    })()}
+                    onApproved={async () => {
+                        await fetchServiceRequestAreas(
+                            selectedStatuses.join(','),
+                            page,
+                            limit,
+                            searchText || undefined,
+                            selectedDate ? selectedDate.format('YYYY-MM') : undefined
+                        );
+                    }}
+                />
             </Container>
         </Box>
     );

@@ -8,6 +8,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -682,6 +683,61 @@ func UpdateRequestServiceAreaStatus(c *gin.Context) {
 	})
 }
 
+// CreateServiceAreaApproval สร้างบันทึกการอนุมัติ/ปฏิเสธของ Service Area โดยอ้างอิงผู้ปฏิบัติการ
+func CreateServiceAreaApproval(c *gin.Context) {
+	// Expect JSON body: { "user_id": number, "request_service_area_id": number, "operator_user_id": number, "note": string }
+	var body struct {
+		UserID               uint   `json:"user_id" binding:"required"`
+		RequestServiceAreaID uint   `json:"request_service_area_id" binding:"required"`
+		OperatorUserID       uint   `json:"operator_user_id" binding:"required"`
+		Note                 string `json:"note"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate user
+	var user entity.User
+	if err := config.DB().First(&user, body.UserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Validate request service area
+	var req entity.RequestServiceArea
+	if err := config.DB().First(&req, body.RequestServiceAreaID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	// Create approval record
+	approval := entity.ServiceAreaApproval{
+		UserID:               body.UserID,
+		RequestServiceAreaID: body.RequestServiceAreaID,
+		Note:                 body.Note,
+	}
+
+	if err := config.DB().Create(&approval).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service area approval"})
+		return
+	}
+
+	// Create service area task for selected operator
+	task := entity.ServiceAreaTask{
+		UserID:               body.OperatorUserID,
+		RequestServiceAreaID: body.RequestServiceAreaID,
+		Note:                 "",
+	}
+	if err := config.DB().Create(&task).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service area task"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Service area approval created", "data": gin.H{"approval": approval, "task": task}})
+}
+
 // GetServiceAreaDetailsByID ดึงข้อมูลรายละเอียดของ Service Area ตาม ID
 func GetServiceAreaDetailsByID(c *gin.Context) {
 	// รับ service area ID จาก path parameter
@@ -767,4 +823,50 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": response,
 	})
+}
+
+// DownloadServiceRequestDocument ให้ดาวน์โหลดไฟล์เอกสารโดยไม่เปิดเผย path ตรง
+func DownloadServiceRequestDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล request เพื่อเอา path ไฟล์
+	var req entity.RequestServiceArea
+	if err := config.DB().First(&req, requestID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	if req.ServiceRequestDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Document not found"})
+		return
+	}
+
+	filePath := req.ServiceRequestDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	// เดา content-type จากนามสกุล
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
 }

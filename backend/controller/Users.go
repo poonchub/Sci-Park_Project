@@ -412,8 +412,23 @@ func ListOperators(c *gin.Context) {
 
 	db := config.DB()
 
-	// Get both Maintenance Operators (RoleID = 2) and Document Operators (RoleID = 3)
-	if err := db.Where("role_id IN (2, 3)").Find(&users).Error; err != nil {
+	// Get only Maintenance Operators (RoleID = 2)
+	if err := db.Where("role_id = 2").Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+// GET /document-operators
+func ListDocumentOperators(c *gin.Context) {
+	var users []entity.User
+
+	db := config.DB()
+
+	// Get only Document Operators (RoleID = 3)
+	if err := db.Where("role_id = 3").Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

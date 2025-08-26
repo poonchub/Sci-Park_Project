@@ -27,4 +27,7 @@ type RequestServiceArea struct {
 
 	// 1:1 relationship with ServiceAreaTask
 	ServiceAreaTask *ServiceAreaTask `gorm:"foreignKey:RequestServiceAreaID"`
+
+	// 1:1 relationship with CancelRequestServiceArea
+	CancelRequest *CancelRequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
 }

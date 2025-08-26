@@ -416,6 +416,16 @@ async function GetOperators() {
     }
 }
 
+async function GetDocumentOperators() {
+    try {
+        const response = await axiosInstance.get(`/document-operators`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching document operators:", error);
+        return false;
+    }
+}
+
 // Request Statuses
 async function GetRequestStatuses() {
     try {
@@ -1321,25 +1331,7 @@ async function ListSetRooms(data: QuarryInterface) {
     return res;
 }
 
-async function GetRoomCapacity(id: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/room-capacity`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
-}
+// Note: GetRoomCapacity is currently unused; keeping implementation commented for future use.
 
 // Email
 async function SendMaintenanceStatusEmail(id: number) {
@@ -2345,6 +2337,44 @@ async function GetServiceAreaDetailsByID(serviceAreaID: number): Promise<any> {
     }
 }
 
+async function CreateServiceAreaApproval(payload: { user_id: number; request_service_area_id: number; operator_user_id: number; note?: string; }) {
+    try {
+        const response = await axiosInstance.post(`/service-area-approval`, payload, {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating service area approval:", error);
+        throw error;
+    }
+}
+
+// Secure download for Service Request Document with Authorization header
+async function DownloadServiceRequestDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/request-service-area-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `service_request_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading service request document:", error);
+        throw error;
+    }
+}
+
 // AboutCompany functions
 async function GetAboutCompanyByUserID(userID: number): Promise<AboutCompanyInterface> {
     try {
@@ -2585,6 +2615,7 @@ export {
     ValidateOTP,
     ChangePassword,
     GetOperators,
+    GetDocumentOperators,
     UpdateUserbyID,
     UpdateUserSignature,
     UpdateProfileImage,
@@ -2752,6 +2783,8 @@ export {
     UpdateRequestServiceArea,
     UpdateRequestServiceAreaStatus,
     GetServiceAreaDetailsByID,
+    CreateServiceAreaApproval,
+    DownloadServiceRequestDocument,
     ListRequestServiceAreas,
 
     // AboutCompany

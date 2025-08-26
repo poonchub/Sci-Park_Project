@@ -76,6 +76,7 @@ func main() {
 		protected.POST("/user/upload-signature/:id", controller.UpdateSignatureImage)
 		protected.DELETE("/user/delete-signature/:id", controller.DeleteSignature)
 		protected.GET("/operators", controller.ListOperators)
+		protected.GET("/document-operators", controller.ListDocumentOperators)
 		protected.PATCH("/update-profile/:id", controller.UpdateProfileImage)
 		protected.PATCH("/change-password", controller.ChangePassword)
 
@@ -197,9 +198,11 @@ func main() {
 		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
 		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
 		protected.GET("/request-service-areas", controller.ListRequestServiceAreas)
+		protected.GET("/request-service-area-document/:id", controller.DownloadServiceRequestDocument)
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/request-service-area/:id/status", controller.UpdateRequestServiceAreaStatus)
+		
 		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
@@ -261,6 +264,9 @@ func main() {
 		// BookingRooms
 		protected.GET("/booking-rooms", controller.ListBookingRooms)
 		protected.GET("/booking-rooms/by-date", controller.ListBookingRoomByDateRange)
+
+		// Service_area
+		protected.POST("/service-area-approval", controller.CreateServiceAreaApproval)
 
 		// News
 		protected.GET("/news/pinned", controller.ListPinnedNews)

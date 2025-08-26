@@ -11,7 +11,7 @@ export interface BusinessGroupConfig {
 
 // Business group configurations
 export const businessGroupConfig: Record<string, BusinessGroupConfig> = {
-    "IT Software & digital content": {
+    "IT Software & Digital Content": {
         color: "#3B82F6",
         colorLite: "rgba(59, 130, 246, 0.17)",
         icon: Code
@@ -21,7 +21,7 @@ export const businessGroupConfig: Record<string, BusinessGroupConfig> = {
         colorLite: "rgba(16, 185, 129, 0.16)",
         icon: Leaf
     },
-    "Energy Tech & material": {
+    "Energy Tech & Material": {
         color: "#F59E0B",
         colorLite: "rgba(245, 158, 11, 0.18)",
         icon: Zap
