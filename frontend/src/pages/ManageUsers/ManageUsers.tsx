@@ -1,4 +1,4 @@
-import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography,Container } from "@mui/material";
 import { faMagnifyingGlass,faRotateRight,faBook } from "@fortawesome/free-solid-svg-icons";
 import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -218,6 +218,7 @@ function ManageUsers() {
 
 
     return (
+        <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
         <div className="manage-users-page">
             {alerts.map((alert, index) => (
                 <React.Fragment key={index}>
@@ -459,6 +460,7 @@ function ManageUsers() {
 
             </Grid>
         </div>
+        </Container>
     );
 }
 

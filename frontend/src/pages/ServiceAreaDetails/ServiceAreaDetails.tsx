@@ -12,7 +12,7 @@ import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import InfoCard from "../../components/InfoCard/InfoCard";
-import RequestStepper from "../../components/RequestStepper/RequestStepper";
+import ServiceAreaStepper from "../../components/ServiceAreaStepper/ServiceAreaStepper";
 
 import dateFormat from "../../utils/dateFormat";
 
@@ -158,7 +158,7 @@ function ServiceAreaDetails() {
                         <>
                             {/* Stepper showing request progress */}
                             <Grid size={{ xs: 12, lg: isUnsuccessful ? 10 : 8 }}>
-                                <RequestStepper requestStatuses={requestStatuses} requestStatusID={requestStatusID} />
+                                <ServiceAreaStepper requestStatuses={requestStatuses} requestStatusID={requestStatusID} />
                             </Grid>
 
                             {/* Info cards for approval and assignment */}
@@ -168,7 +168,7 @@ function ServiceAreaDetails() {
                                     <InfoCard type="assigned" title="Assigned To" name={taskUserName || null} date={taskDate} />
                                 </>
                             ) : (
-                                <InfoCard type="unsuccessful" title="Cancelled By" name={approverName || taskUserName || null} date={approvalDate} />
+                                <InfoCard type="unsuccessful" title="Rejected By" name={approverName || taskUserName || null} date={approvalDate} />
                             )}
                         </>
                     )}

@@ -6,6 +6,7 @@ import {
   Typography,
   Grid,
   Dialog,
+  Container,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -613,6 +614,7 @@ const AddUserFormByCsv: React.FC = () => {
   ];
 
   return (
+    <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
     <div className="add-user-csv-page">
       {/* Alerts */}
       {alerts.map((alert, index) => (
@@ -1096,6 +1098,7 @@ const AddUserFormByCsv: React.FC = () => {
         </DialogActions>
       </Dialog>
     </div>
+    </Container>
   );
 };
 

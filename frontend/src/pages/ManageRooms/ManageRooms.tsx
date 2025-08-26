@@ -1,6 +1,6 @@
 
 
-import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography,Container } from "@mui/material";
 import {  faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -309,6 +309,7 @@ function ManageRooms() {
 
 
     return (
+        <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
         <div className="manage-users-page">
             {alerts.map((alert, index) => (
                 <React.Fragment key={index}>
@@ -525,6 +526,7 @@ function ManageRooms() {
 
             </Grid>
         </div>
+        </Container>
     );
 }
 

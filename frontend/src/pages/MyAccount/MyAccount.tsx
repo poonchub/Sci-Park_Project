@@ -100,6 +100,7 @@ import { PaymentInterface } from "../../interfaces/IPayments";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
 
+
 const MyAccount: React.FC = () => {
     const theme = useTheme();
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -2211,6 +2212,7 @@ const MyAccount: React.FC = () => {
     };
 
     return (
+        <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
         <Box className="my-account-page">
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -2574,6 +2576,7 @@ const MyAccount: React.FC = () => {
                 </Grid>
             </Container>
         </Box>
+        </Container>
     );
 };
 
