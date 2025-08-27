@@ -46,7 +46,7 @@ const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
     companyName,
     purposeOfUsingSpace,
 }) => {
-    console.log('[ApproveServiceAreaPopup] received props:', { companyName, purposeOfUsingSpace, requestSelected });
+    
     const businessGroupId = requestSelected?.BusinessGroupID ?? null;
     const businessGroup = businessGroups.find(bg => bg.ID === businessGroupId);
     const businessGroupName = businessGroup?.Name || 'Unknown';

@@ -487,10 +487,13 @@ func ListRequestServiceAreas(c *gin.Context) {
 
 	// รับค่าจาก Query Parameters
 	requestStatusID, _ := strconv.Atoi(c.DefaultQuery("request_status_id", "0"))
+	// รองรับรูปแบบ option แบบเดียวกับ Maintenance: status=1,2,3
+	statusStr := c.DefaultQuery("status", "")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	search := c.DefaultQuery("search", "")        // รับค่า search จาก query parameter
-	createdAt := c.DefaultQuery("created_at", "") // รับค่า created_at จาก query parameter
+	search := c.DefaultQuery("search", "") // optional; frontend อาจไม่ส่งมา
+	// รองรับทั้ง created_at และ createdAt
+	createdAt := c.DefaultQuery("createdAt", c.DefaultQuery("created_at", ""))
 
 	// ตรวจสอบค่าที่ส่งมา
 	if page < 1 {
@@ -504,8 +507,18 @@ func ListRequestServiceAreas(c *gin.Context) {
 	// เชื่อมต่อกับฐานข้อมูล
 	db := config.DB()
 
-	// การกรองตาม request_status_id (ถ้ามีค่าและไม่ใช่ 0)
-	if requestStatusID > 0 {
+	// การกรองตามสถานะ: รองรับได้ทั้ง status (comma-separated) และ request_status_id เดี่ยว
+	if statusStr != "" && statusStr != "0" {
+		var statusIDs []int
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+		if len(statusIDs) > 0 {
+			db = db.Where("request_status_id IN ?", statusIDs)
+		}
+	} else if requestStatusID > 0 {
 		db = db.Where("request_status_id = ?", requestStatusID)
 	}
 
@@ -517,7 +530,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 				searchTerm, searchTerm, searchTerm, searchTerm)
 	}
 
-	// การกรองตาม created_at (ถ้ามีค่า)
+	// การกรองตาม created_at/createdAt (ถ้ามีค่า)
 	if createdAt != "" {
 		// ตรวจสอบรูปแบบของ createdAt
 		if len(createdAt) == 7 && createdAt[4] == '-' {
@@ -545,8 +558,18 @@ func ListRequestServiceAreas(c *gin.Context) {
 	var total int64
 	countQuery := config.DB().Model(&entity.RequestServiceArea{})
 
-	// การกรองตาม request_status_id สำหรับ count query (ถ้ามีค่าและไม่ใช่ 0)
-	if requestStatusID > 0 {
+	// การกรองตามสถานะสำหรับ count query
+	if statusStr != "" && statusStr != "0" {
+		var statusIDs []int
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+		if len(statusIDs) > 0 {
+			countQuery = countQuery.Where("request_status_id IN ?", statusIDs)
+		}
+	} else if requestStatusID > 0 {
 		countQuery = countQuery.Where("request_status_id = ?", requestStatusID)
 	}
 
@@ -558,7 +581,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 				searchTerm, searchTerm, searchTerm, searchTerm)
 	}
 
-	// การกรองตาม created_at สำหรับ count query (ถ้ามีค่า)
+	// การกรองตาม created_at/createdAt สำหรับ count query (ถ้ามีค่า)
 	if createdAt != "" {
 		// ตรวจสอบรูปแบบของ createdAt
 		if len(createdAt) == 7 && createdAt[4] == '-' {

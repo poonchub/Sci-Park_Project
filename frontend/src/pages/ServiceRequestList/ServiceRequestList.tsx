@@ -38,7 +38,7 @@ const ServiceRequestList: React.FC = () => {
     // Pagination states
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
-    // const [total, setTotal] = useState(0); // reserved for server-side pagination (unused)
+    const [total, setTotal] = useState(0);
     
     // Status counts from API
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
@@ -713,7 +713,8 @@ const ServiceRequestList: React.FC = () => {
             const params = new URLSearchParams();
             
             // เพิ่ม page และ limit เสมอ
-            params.append("page", (page + 1).toString()); // API ใช้ 1-based pagination
+            // UI ใช้ 0-based index แต่ API ใช้ 1-based → ส่ง page+1
+            params.append("page", (page + 1).toString());
             params.append("limit", limit.toString());
             
             // เพิ่ม request_status_id เฉพาะเมื่อไม่ใช่ "0"
@@ -745,6 +746,15 @@ const ServiceRequestList: React.FC = () => {
                 
                 // Set data to empty array if null, otherwise use the data
                 setRequestServiceAreas(res.data || []);
+                // Set total rows for server-side pagination
+                if (typeof res.total === "number") {
+                    setTotal(res.total);
+                } else if (res?.data && Array.isArray(res.data)) {
+                    // Fallback: if API doesn't provide total, use data length (client-side)
+                    setTotal(res.data.length);
+                } else {
+                    setTotal(0);
+                }
                 
                 // Calculate status counts
                 const counts: Record<string, number> = {
@@ -957,7 +967,7 @@ const ServiceRequestList: React.FC = () => {
                             <CustomDataGrid
                                 rows={filteredServiceRequests}
                                 columns={getColumns()}
-                                rowCount={filteredServiceRequests.length}
+                                rowCount={total}
                                 page={page}
                                 limit={limit}
                                 onPageChange={setPage}

@@ -13,6 +13,7 @@ import News from "../pages/News/News";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
+import AcceptWorkDocument from "../pages/AcceptWorkDocument/AcceptWorkDocument";
 const DocumentOperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -21,6 +22,10 @@ const DocumentOperatorRoutes = (): RouteObject => {
             {
                 path: "/home",
                 element: <Home />,
+            },
+            {
+                path: "/service-area/accept-work-document",
+                element: <AcceptWorkDocument />,
             },
             {
                 path: "/booking-room",

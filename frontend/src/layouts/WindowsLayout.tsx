@@ -235,6 +235,11 @@ const WindowsLayout: React.FC = (props: any) => {
                 ) : null,
         },
         {
+            segment: "service-area/accept-work-document",
+            title: "Document Operator",
+            icon: <HardHat />,
+        },
+        {
             segment: "user",
             title: t("user"),
             icon: <UserRound size={iconSize} />,
@@ -389,6 +394,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
+            "service-area/accept-work-document",
             "room",
             "my-account",
             "news",
