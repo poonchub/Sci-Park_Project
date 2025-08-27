@@ -11,7 +11,7 @@ import theme from "../../styles/Theme";
 import { ListRequestServiceAreas, GetRequestStatuses } from "../../services/http";
 import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Search} from "lucide-react";
 
 function AcceptWorkDocument() {
     const [searchText, setSearchText] = useState("");
