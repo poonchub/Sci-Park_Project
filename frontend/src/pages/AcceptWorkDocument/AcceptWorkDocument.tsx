@@ -10,9 +10,10 @@ import { GridColDef } from "@mui/x-data-grid";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import theme from "../../styles/Theme";
 import { GetServiceAreaTasksByUserID, ListBusinessGroups } from "../../services/http";
-import { Search, BrushCleaning } from "lucide-react";
+import { Search, BrushCleaning, HelpCircle } from "lucide-react";
 import { CalendarMonth } from "@mui/icons-material";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
+import { businessGroupConfig } from "../../constants/businessGroupConfig";
 
 
 // Interface สำหรับ Service Area Tasks
@@ -46,44 +47,133 @@ function AcceptWorkDocument() {
 
     const getColumns = (): GridColDef[] => {
         return [
-            { 
-                field: "ServiceAreaTaskID", 
-                headerName: "No.", 
-                flex: 0.8, 
-                align: "center", 
-                headerAlign: "center" 
+            {
+                field: "ServiceAreaTaskID",
+                headerName: "No.",
+                flex: 0.5,
+                align: "center",
+                headerAlign: "center"
             },
-            { 
-                field: "CompanyName", 
-                headerName: "Company", 
-                flex: 1.5 
+            {
+                field: "Company",
+                headerName: "Company",
+                type: "string",
+                flex: 1.8,
+                renderCell: (params) => {
+                    const companyName = params.row.CompanyName || '-';
+                    const businessGroupId = params.row.BusinessGroupID;
+
+                    // Find business group by ID
+                    const businessGroup = businessGroups.find(bg => bg.ID === businessGroupId);
+                    const businessGroupName = businessGroup?.Name || 'Unknown';
+
+                    // Get business group config
+                    const groupConfig = businessGroupConfig[businessGroupName] || {
+                        color: "#000",
+                        colorLite: "#000",
+                        icon: HelpCircle
+                    };
+                    const GroupIcon = groupConfig.icon;
+
+                    return (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                                height: "100%",
+                            }}
+                        >
+                            <Typography
+                                sx={{
+                                    fontSize: 14,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                }}
+                            >
+                                {companyName}
+                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                                {GroupIcon && React.createElement(GroupIcon, {
+                                    size: 16,
+                                    style: {
+                                        color: groupConfig.color,
+                                        minWidth: "16px",
+                                        minHeight: "16px"
+                                    }
+                                })}
+                                <Typography
+                                    sx={{
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        color: groupConfig.color,
+                                    }}
+                                >
+                                    {businessGroupName}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    );
+                },
             },
-            { 
-                field: "CreatedAt", 
-                headerName: "Date Assigned", 
-                flex: 1.2,
-                valueFormatter: (params: any) => {
-                    try {
-                        // แก้ไขปัญหา timezone offset โดยใช้ dayjs
-                        const date = dayjs(params.value);
-                        if (!date.isValid()) {
-                            return "Invalid Date";
-                        }
-                        return date.format('DD/MM/YYYY');
-                    } catch (error) {
-                        return "Invalid Date";
-                    }
-                }
+            {
+                field: "CreatedAt",
+                headerName: "Date Assigned",
+                type: "string",
+                flex: 1,
+                renderCell: (params) => {
+                    const date = dayjs(params.value).format('DD/MM/YYYY');
+                    const time = dayjs(params.value).format('hh:mm A');
+                    return (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "center",
+                                height: "100%",
+                            }}
+                        >
+                            <Typography
+                                sx={{
+                                    fontSize: 14,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                }}
+                            >
+                                {date}
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    fontSize: 14,
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                    color: "text.secondary",
+                                }}
+                            >
+                                {time}
+                            </Typography>
+                        </Box>
+                    );
+                },
             },
-            { 
-                field: "UserNameCombined", 
-                headerName: "Requester", 
-                flex: 1.2 
+            {
+                field: "UserNameCombined",
+                headerName: "Requester",
+                flex: 1.2
             },
-            { 
-                field: "Actions", 
-                headerName: "Actions", 
-                flex: 1.0,
+            {
+                field: "Actions",
+                headerName: "Actions",
+                flex: 1.6,
                 renderCell: (params) => {
                     return (
                         <Button
@@ -108,7 +198,7 @@ function AcceptWorkDocument() {
     const fetchServiceAreaTasks = async () => {
         try {
             setLoading(true);
-            
+
             // สร้าง options object สำหรับ API call
             const options: {
                 month_year?: string;
@@ -116,7 +206,7 @@ function AcceptWorkDocument() {
                 page?: number;
                 limit?: number;
             } = {};
-            
+
             // เพิ่ม month_year filter ถ้ามีการเลือกวันที่
             if (selectedDate) {
                 const month = selectedDate.month() + 1; // dayjs month() return 0-11
@@ -125,7 +215,7 @@ function AcceptWorkDocument() {
                 const monthStr = month < 10 ? `0${month}` : `${month}`;
                 options.month_year = `${monthStr}/${year}`;
             }
-            
+
             // เพิ่ม business_group_id filter ถ้ามีการเลือก
             if (selectedBusinessGroup) {
                 options.business_group_id = selectedBusinessGroup;
@@ -134,26 +224,26 @@ function AcceptWorkDocument() {
             // เพิ่ม pagination
             options.page = page + 1; // API ใช้ 1-based, frontend ใช้ 0-based
             options.limit = limit;
-            
+
             console.log("🔍 [DEBUG] Calling API with options:", options);
             const res = await GetServiceAreaTasksByUserID(currentUserId, options);
             console.log("🔍 [DEBUG] Raw API Response:", res);
-            
+
             if (res && res.data) {
                 console.log("🔍 [DEBUG] API data length:", res.data.length);
                 console.log("🔍 [DEBUG] First item in data:", res.data[0]);
                 console.log("🔍 [DEBUG] All ServiceAreaTaskIDs:", res.data.map((item: any) => item.ServiceAreaTaskID));
                 console.log("🔍 [DEBUG] All RequestServiceAreaIDs:", res.data.map((item: any) => item.RequestServiceAreaID));
-                
+
                 // ตรวจสอบข้อมูลซ้ำ
                 const taskIds = res.data.map((item: any) => item.ServiceAreaTaskID);
                 const requestIds = res.data.map((item: any) => item.RequestServiceAreaID);
                 const duplicateTaskIds = taskIds.filter((id: any, index: number) => taskIds.indexOf(id) !== index);
                 const duplicateRequestIds = requestIds.filter((id: any, index: number) => requestIds.indexOf(id) !== index);
-                
+
                 console.log("🔍 [DEBUG] Duplicate ServiceAreaTaskIDs:", duplicateTaskIds);
                 console.log("🔍 [DEBUG] Duplicate RequestServiceAreaIDs:", duplicateRequestIds);
-                
+
                 setRows(res.data);
                 setTotal(res.total || res.data.length);
             }
@@ -189,41 +279,41 @@ function AcceptWorkDocument() {
         setActiveTab(newValue);
     };
 
-         const filteredRows = useMemo(() => {
-         console.log("🔍 [DEBUG] filteredRows - Original rows:", rows);
-         console.log("🔍 [DEBUG] filteredRows - Active tab:", activeTab);
-         console.log("🔍 [DEBUG] filteredRows - Search text:", searchText);
-         
-         let filtered = rows;
-         
-         // กรองตาม Tab (StatusID)
-         if (activeTab === 0) {
-             // In Progress Tab - แสดงเฉพาะ StatusID = 3
-             filtered = filtered.filter((r) => r.StatusID === 3);
-             console.log("🔍 [DEBUG] filteredRows - After StatusID=3 filter:", filtered.length);
-         } else {
-             // Complete Tab - แสดงเฉพาะ StatusID = 4
-             filtered = filtered.filter((r) => r.StatusID === 4);
-             console.log("🔍 [DEBUG] filteredRows - After StatusID=4 filter:", filtered.length);
-         }
-         
-         // กรองตาม search text
-         if (!searchText) {
-             console.log("🔍 [DEBUG] filteredRows - Final filtered (no search):", filtered.length);
-             console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", filtered.map((r: any) => r.ServiceAreaTaskID));
-             return filtered;
-         }
-         const s = searchText.toLowerCase();
-         const textFiltered = filtered.filter((r) => {
-             const company = (r.CompanyName || "").toLowerCase();
-             const requester = (r.UserNameCombined || "").toLowerCase();
-             const businessGroup = (r.BusinessGroupName || "").toLowerCase();
-             return company.includes(s) || requester.includes(s) || businessGroup.includes(s);
-         });
-         console.log("🔍 [DEBUG] filteredRows - Final filtered (with search):", textFiltered.length);
-         console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", textFiltered.map((r: any) => r.ServiceAreaTaskID));
-         return textFiltered;
-     }, [rows, searchText, activeTab]);
+    const filteredRows = useMemo(() => {
+        console.log("🔍 [DEBUG] filteredRows - Original rows:", rows);
+        console.log("🔍 [DEBUG] filteredRows - Active tab:", activeTab);
+        console.log("🔍 [DEBUG] filteredRows - Search text:", searchText);
+
+        let filtered = rows;
+
+        // กรองตาม Tab (StatusID)
+        if (activeTab === 0) {
+            // In Progress Tab - แสดงเฉพาะ StatusID = 3
+            filtered = filtered.filter((r) => r.StatusID === 3);
+            console.log("🔍 [DEBUG] filteredRows - After StatusID=3 filter:", filtered.length);
+        } else {
+            // Complete Tab - แสดงเฉพาะ StatusID = 4
+            filtered = filtered.filter((r) => r.StatusID === 4);
+            console.log("🔍 [DEBUG] filteredRows - After StatusID=4 filter:", filtered.length);
+        }
+
+        // กรองตาม search text
+        if (!searchText) {
+            console.log("🔍 [DEBUG] filteredRows - Final filtered (no search):", filtered.length);
+            console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", filtered.map((r: any) => r.ServiceAreaTaskID));
+            return filtered;
+        }
+        const s = searchText.toLowerCase();
+        const textFiltered = filtered.filter((r) => {
+            const company = (r.CompanyName || "").toLowerCase();
+            const requester = (r.UserNameCombined || "").toLowerCase();
+            const businessGroup = (r.BusinessGroupName || "").toLowerCase();
+            return company.includes(s) || requester.includes(s) || businessGroup.includes(s);
+        });
+        console.log("🔍 [DEBUG] filteredRows - Final filtered (with search):", textFiltered.length);
+        console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", textFiltered.map((r: any) => r.ServiceAreaTaskID));
+        return textFiltered;
+    }, [rows, searchText, activeTab]);
 
     return (
         <Box className="accept-work-document-page">
@@ -250,7 +340,7 @@ function AcceptWorkDocument() {
                                         input: {
                                             startAdornment: (
                                                 <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                    <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
+                                                    <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                 </InputAdornment>
                                             ),
                                         },
@@ -285,7 +375,7 @@ function AcceptWorkDocument() {
                                         displayEmpty
                                         startAdornment={
                                             <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }}/>
+                                                <Search size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                             </InputAdornment>
                                         }
                                     >
@@ -337,7 +427,7 @@ function AcceptWorkDocument() {
                             {loading ? (
                                 <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />
                             ) : (
-                                                                                                 <CustomDataGrid
+                                <CustomDataGrid
                                     rows={filteredRows}
                                     columns={getColumns()}
                                     rowCount={total}

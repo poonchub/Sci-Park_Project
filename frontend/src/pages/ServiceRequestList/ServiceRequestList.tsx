@@ -29,17 +29,17 @@ const ServiceRequestList: React.FC = () => {
     const [openApprovePopup, setOpenApprovePopup] = useState(false);
     const [requestIdPendingApprove, setRequestIdPendingApprove] = useState<number | null>(null);
     const [businessGroupIdPending, setBusinessGroupIdPending] = useState<number | null>(null);
-    
+
     // Search and filter states
     const [searchText, setSearchText] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-    
+
     // Pagination states
     const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
-    
+
     // Status counts from API
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({
         "Pending": 0,
@@ -76,9 +76,9 @@ const ServiceRequestList: React.FC = () => {
                         const statusID = params.row.StatusID;
                         const status = requestStatuses.find(s => s.ID === statusID);
                         const statusName = status?.Name || 'Unknown';
-                        
+
                         const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
-                        
+
                         const statusColor = statusConfig?.color || "#000";
                         const statusColorLite = statusConfig?.colorLite || "#000";
                         const StatusIcon = statusConfig?.icon || HelpCircle;
@@ -112,22 +112,22 @@ const ServiceRequestList: React.FC = () => {
                                         {(() => {
                                             const businessGroup = businessGroups.find(bg => bg.ID === businessGroupId);
                                             const businessGroupName = businessGroup?.Name || 'Unknown';
-                                            
+
                                             const groupConfig = businessGroupConfig[businessGroupName] || {
                                                 color: "#000",
                                                 colorLite: "#000",
                                                 icon: HelpCircle
                                             };
                                             const GroupIcon = groupConfig.icon;
-                                            
+
                                             return (
                                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                                     {GroupIcon && React.createElement(GroupIcon, {
                                                         size: 16,
-                                                        style: { 
+                                                        style: {
                                                             color: groupConfig.color,
-                                                            minWidth: "16px", 
-                                                            minHeight: "16px" 
+                                                            minWidth: "16px",
+                                                            minHeight: "16px"
                                                         }
                                                     })}
                                                     <Typography
@@ -208,111 +208,111 @@ const ServiceRequestList: React.FC = () => {
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
 
-                                                                 <Grid size={{ xs: 12 }}>
-                                     <Box
-                                         sx={{
-                                             display: "flex",
-                                             gap: 0.8,
-                                             flexWrap: "wrap",
-                                         }}
-                                     >
-                                         <Grid container spacing={0.8} size={{ xs: 12 }}>
-                                             <Grid size={{ xs: 12 }}>
-                                                 {(() => {
-                                                     const showButtonApprove = statusID === 2; // StatusID 2 = Pending
-                                                     return (
-                                                         <Box
-                                                             className="container-btn"
-                                                             sx={{
-                                                                 display: "flex",
-                                                                 gap: 0.8,
-                                                                 flexWrap: "wrap",
-                                                                 alignItems: "center",
-                                                                 width: "100%"
-                                                             }}
-                                                         >
-                                                             {showButtonApprove ? (
-                                                                 <>
-                                                                     <Tooltip title={"Approve"}>
-                                                                         <Button
-                                                                             className="btn-approve"
-                                                                             variant="contained"
-                                                                             onClick={() => {
-                                                                                 handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
-                                                                             }}
-                                                                             sx={{
-                                                                                 minWidth: "42px",
-                                                                             }}
-                                                                         >
-                                                                             <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                                                 Approve
-                                                                             </Typography>
-                                                                         </Button>
-                                                                     </Tooltip>
-                                                                     <Tooltip title={"Reject"}>
-                                                                         <Button
-                                                                             className="btn-reject"
-                                                                             variant="outlinedCancel"
-                                                                             onClick={() => {
-                                                                                 handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
-                                                                             }}
-                                                                             sx={{
-                                                                                 minWidth: "42px",
-                                                                             }}
-                                                                         >
-                                                                             <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                                                 Reject
-                                                                             </Typography>
-                                                                         </Button>
-                                                                     </Tooltip>
-                                                                     <Tooltip title={"Details"}>
-                                                                         <Button
-                                                                             className="btn-detail"
-                                                                             variant="outlinedGray"
-                                                                             onClick={() => {
-                                                                                 const encodedId = Base64.encode(data.ID.toString());
-                                                                                 navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
-                                                                             }}
-                                                                             sx={{
-                                                                                 minWidth: "42px",
-                                                                             }}
-                                                                         >
-                                                                             <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                                                 Details
-                                                                             </Typography>
-                                                                         </Button>
-                                                                     </Tooltip>
-                                                                 </>
-                                                             ) : (
-                                                                 <Tooltip title={"Details"}>
-                                                                     <Button
-                                                                         className="btn-detail"
-                                                                         variant="outlinedGray"
-                                                                         onClick={() => {
-                                                                             const encodedId = Base64.encode(data.ID.toString());
-                                                                             navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
-                                                                         }}
-                                                                         sx={{
-                                                                             minWidth: "42px",
-                                                                         }}
-                                                                     >
-                                                                         <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                                                         <Typography variant="textButtonClassic" className="text-btn">
-                                                                             Details
-                                                                         </Typography>
-                                                                     </Button>
-                                                                 </Tooltip>
-                                                             )}
-                                                         </Box>
-                                                     );
-                                                 })()}
-                                             </Grid>
-                                         </Grid>
-                                     </Box>
-                                 </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: 0.8,
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid size={{ xs: 12 }}>
+                                                {(() => {
+                                                    const showButtonApprove = statusID === 2; // StatusID 2 = Pending
+                                                    return (
+                                                        <Box
+                                                            className="container-btn"
+                                                            sx={{
+                                                                display: "flex",
+                                                                gap: 0.8,
+                                                                flexWrap: "wrap",
+                                                                alignItems: "center",
+                                                                width: "100%"
+                                                            }}
+                                                        >
+                                                            {showButtonApprove ? (
+                                                                <>
+                                                                    <Tooltip title={"Approve"}>
+                                                                        <Button
+                                                                            className="btn-approve"
+                                                                            variant="contained"
+                                                                            onClick={() => {
+                                                                                handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
+                                                                            }}
+                                                                            sx={{
+                                                                                minWidth: "42px",
+                                                                            }}
+                                                                        >
+                                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                                Approve
+                                                                            </Typography>
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                    <Tooltip title={"Reject"}>
+                                                                        <Button
+                                                                            className="btn-reject"
+                                                                            variant="outlinedCancel"
+                                                                            onClick={() => {
+                                                                                handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
+                                                                            }}
+                                                                            sx={{
+                                                                                minWidth: "42px",
+                                                                            }}
+                                                                        >
+                                                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                                Reject
+                                                                            </Typography>
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                    <Tooltip title={"Details"}>
+                                                                        <Button
+                                                                            className="btn-detail"
+                                                                            variant="outlinedGray"
+                                                                            onClick={() => {
+                                                                                const encodedId = Base64.encode(data.ID.toString());
+                                                                                navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                                                            }}
+                                                                            sx={{
+                                                                                minWidth: "42px",
+                                                                            }}
+                                                                        >
+                                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                                Details
+                                                                            </Typography>
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                </>
+                                                            ) : (
+                                                                <Tooltip title={"Details"}>
+                                                                    <Button
+                                                                        className="btn-detail"
+                                                                        variant="outlinedGray"
+                                                                        onClick={() => {
+                                                                            const encodedId = Base64.encode(data.ID.toString());
+                                                                            navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                                                        }}
+                                                                        sx={{
+                                                                            minWidth: "42px",
+                                                                        }}
+                                                                    >
+                                                                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                                            Details
+                                                                        </Typography>
+                                                                    </Button>
+                                                                </Tooltip>
+                                                            )}
+                                                        </Box>
+                                                    );
+                                                })()}
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Grid>
                             </Grid>
                         );
                     },
@@ -343,11 +343,11 @@ const ServiceRequestList: React.FC = () => {
                 renderCell: (params) => {
                     const companyName = params.row.CompanyName || '-';
                     const businessGroupId = params.row.BusinessGroupID;
-                    
+
                     // Find business group by ID
                     const businessGroup = businessGroups.find(bg => bg.ID === businessGroupId);
                     const businessGroupName = businessGroup?.Name || 'Unknown';
-                    
+
                     // Get business group config
                     const groupConfig = businessGroupConfig[businessGroupName] || {
                         color: "#000",
@@ -355,7 +355,7 @@ const ServiceRequestList: React.FC = () => {
                         icon: HelpCircle
                     };
                     const GroupIcon = groupConfig.icon;
-                    
+
                     return (
                         <Box
                             sx={{
@@ -379,10 +379,10 @@ const ServiceRequestList: React.FC = () => {
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
                                 {GroupIcon && React.createElement(GroupIcon, {
                                     size: 16,
-                                    style: { 
+                                    style: {
                                         color: groupConfig.color,
-                                        minWidth: "16px", 
-                                        minHeight: "16px" 
+                                        minWidth: "16px",
+                                        minHeight: "16px"
                                     }
                                 })}
                                 <Typography
@@ -454,13 +454,13 @@ const ServiceRequestList: React.FC = () => {
                 renderCell: (params) => {
                     const status = requestStatuses.find(s => s.ID === params.value);
                     const statusName = status?.Name || 'Unknown';
-                    
+
                     const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
-                    
+
                     // const statusColor = statusConfig?.color || "#000";
                     // const statusColorLite = statusConfig?.colorLite || "#000";
                     const StatusIcon = statusConfig?.icon || HelpCircle;
-                    
+
                     if (!statusConfig) {
                         return (
                             <Box
@@ -506,10 +506,10 @@ const ServiceRequestList: React.FC = () => {
                                     width: "100%",
                                 }}
                             >
-                                                                 {StatusIcon && React.createElement(StatusIcon, {
-                                                                     size: 18,
-                                                                     style: { minWidth: "18px", minHeight: "18px" }
-                                                                 })}
+                                {StatusIcon && React.createElement(StatusIcon, {
+                                    size: 18,
+                                    style: { minWidth: "18px", minHeight: "18px" }
+                                })}
                                 <Typography
                                     sx={{
                                         fontSize: 14,
@@ -555,104 +555,104 @@ const ServiceRequestList: React.FC = () => {
                     </Box>
                 ),
             },
-                         {
-                 field: 'Actions',
-                 headerName: 'Actions',
-                 type: "string",
-                 flex: 1.5,
-                 renderCell: (item) => {
-                     const data = item.row;
-                     const showButtonApprove = item.row.StatusID === 2; // StatusID 2 = Pending
-                     return (
-                         <Box
-                             className="container-btn"
-                             sx={{
-                                 display: "flex",
-                                 gap: 0.8,
-                                 flexWrap: "wrap",
-                                 alignItems: "center",
-                                 height: '100%'
-                             }}
-                         >
-                             {showButtonApprove ? (
-                                 <>
-                                     <Tooltip title={"Approve"}>
-                                         <Button
-                                             className="btn-approve"
-                                             variant="contained"
-                                             onClick={() => {
-                                                 handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
-                                             }}
-                                             sx={{
-                                                 minWidth: "42px",
-                                             }}
-                                         >
-                                             <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                 Approve
-                                             </Typography>
-                                         </Button>
-                                     </Tooltip>
-                                     <Tooltip title={"Reject"}>
-                                         <Button
-                                             className="btn-reject"
-                                             variant="outlinedCancel"
-                                             onClick={() => {
-                                                 handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
-                                             }}
-                                             sx={{
-                                                 minWidth: "42px",
-                                             }}
-                                         >
-                                             <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                 Reject
-                                             </Typography>
-                                         </Button>
-                                     </Tooltip>
-                                     <Tooltip title={"Details"}>
-                                         <Button
-                                             className="btn-detail"
-                                             variant="outlinedGray"
-                                             onClick={() => {
-                                                 const encodedId = Base64.encode(data.ID.toString());
-                                                 navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
-                                             }}
-                                             sx={{
-                                                 minWidth: "42px",
-                                             }}
-                                         >
-                                             <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                 Details
-                                             </Typography>
-                                         </Button>
-                                     </Tooltip>
-                                 </>
-                             ) : (
-                                 <Tooltip title={"Details"}>
-                                     <Button
-                                         className="btn-detail"
-                                         variant="outlinedGray"
-                                         onClick={() => {
-                                             const encodedId = Base64.encode(data.ID.toString());
-                                             navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
-                                         }}
-                                         sx={{
-                                             minWidth: "42px",
-                                         }}
-                                     >
-                                         <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
-                                         <Typography variant="textButtonClassic" className="text-btn">
-                                             Details
-                                         </Typography>
-                                     </Button>
-                                 </Tooltip>
-                             )}
-                         </Box>
-                     );
-                 },
-             },
+            {
+                field: 'Actions',
+                headerName: 'Actions',
+                type: "string",
+                flex: 1.5,
+                renderCell: (item) => {
+                    const data = item.row;
+                    const showButtonApprove = item.row.StatusID === 2; // StatusID 2 = Pending
+                    return (
+                        <Box
+                            className="container-btn"
+                            sx={{
+                                display: "flex",
+                                gap: 0.8,
+                                flexWrap: "wrap",
+                                alignItems: "center",
+                                height: '100%'
+                            }}
+                        >
+                            {showButtonApprove ? (
+                                <>
+                                    <Tooltip title={"Approve"}>
+                                        <Button
+                                            className="btn-approve"
+                                            variant="contained"
+                                            onClick={() => {
+                                                handleApproveReject(data.ID, 'approve', data.BusinessGroupID);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Approve
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip title={"Reject"}>
+                                        <Button
+                                            className="btn-reject"
+                                            variant="outlinedCancel"
+                                            onClick={() => {
+                                                handleApproveReject(data.ID, 'reject', data.BusinessGroupID);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Reject
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip title={"Details"}>
+                                        <Button
+                                            className="btn-detail"
+                                            variant="outlinedGray"
+                                            onClick={() => {
+                                                const encodedId = Base64.encode(data.ID.toString());
+                                                navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Details
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                </>
+                            ) : (
+                                <Tooltip title={"Details"}>
+                                    <Button
+                                        className="btn-detail"
+                                        variant="outlinedGray"
+                                        onClick={() => {
+                                            const encodedId = Base64.encode(data.ID.toString());
+                                            navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                        }}
+                                        sx={{
+                                            minWidth: "42px",
+                                        }}
+                                    >
+                                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                        <Typography variant="textButtonClassic" className="text-btn">
+                                            Details
+                                        </Typography>
+                                    </Button>
+                                </Tooltip>
+                            )}
+                        </Box>
+                    );
+                },
+            },
         ];
     };
 
@@ -672,11 +672,11 @@ const ServiceRequestList: React.FC = () => {
     const fetchRequestStatuses = async () => {
         try {
             const res = await GetRequestStatuses();
-            
+
             if (res) {
                 // Filter to only include the 5 statuses used for Service Request List
                 const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
-                const filteredStatuses = res.filter((status: RequestStatusesInterface) => 
+                const filteredStatuses = res.filter((status: RequestStatusesInterface) =>
                     serviceRequestStatusNames.includes(status.Name || '')
                 );
                 setRequestStatuses(filteredStatuses);
@@ -690,7 +690,7 @@ const ServiceRequestList: React.FC = () => {
     const fetchBusinessGroups = async () => {
         try {
             const res = await ListBusinessGroups();
-            
+
             if (res) {
                 setBusinessGroups(res);
             }
@@ -708,30 +708,30 @@ const ServiceRequestList: React.FC = () => {
         createdAt?: string
     ) => {
         try {
-            
+
             // สร้าง URL parameters ที่มีเฉพาะค่าที่ไม่ใช่ 0, undefined, หรือ empty
             const params = new URLSearchParams();
-            
+
             // เพิ่ม page และ limit เสมอ
             // UI ใช้ 0-based index แต่ API ใช้ 1-based → ส่ง page+1
             params.append("page", (page + 1).toString());
             params.append("limit", limit.toString());
-            
+
             // เพิ่ม request_status_id เฉพาะเมื่อไม่ใช่ "0"
             if (requestStatusID && requestStatusID !== "0" && requestStatusID !== "undefined") {
                 params.append("request_status_id", requestStatusID);
             }
-            
+
             // เพิ่ม search เฉพาะเมื่อมีข้อความและไม่ใช่ "undefined"
             if (search && search.trim() !== "" && search !== "undefined") {
                 params.append("search", search.trim());
             }
-            
+
             // เพิ่ม created_at เฉพาะเมื่อมีค่าและไม่ใช่ "undefined"
             if (createdAt && createdAt.trim() !== "" && createdAt !== "undefined") {
                 params.append("created_at", createdAt.trim());
             }
-            
+
             setIsLoadingData(true);
             const res = await ListRequestServiceAreas(
                 requestStatusID,
@@ -740,10 +740,10 @@ const ServiceRequestList: React.FC = () => {
                 search && search.trim() !== "" && search !== "undefined" ? search.trim() : undefined,
                 createdAt && createdAt.trim() !== "" && createdAt !== "undefined" ? createdAt.trim() : undefined
             );
-            
+
             // Always set the data, even if it's null or empty
             if (res) {
-                
+
                 // Set data to empty array if null, otherwise use the data
                 setRequestServiceAreas(res.data || []);
                 // Set total rows for server-side pagination
@@ -755,7 +755,7 @@ const ServiceRequestList: React.FC = () => {
                 } else {
                     setTotal(0);
                 }
-                
+
                 // Calculate status counts
                 const counts: Record<string, number> = {
                     "Pending": 0,
@@ -764,7 +764,7 @@ const ServiceRequestList: React.FC = () => {
                     "Completed": 0,
                     "Unsuccessful": 0
                 };
-                
+
                 // Count by status ID based on actual database status IDs
                 if (res.data && Array.isArray(res.data)) {
                     res.data.forEach((item: any) => {
@@ -778,14 +778,14 @@ const ServiceRequestList: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
-                        
+
                         // Only count statuses that are in our display list
                         if (counts.hasOwnProperty(statusName)) {
                             counts[statusName]++;
                         }
                     });
                 }
-                
+
                 setStatusCounts(counts);
             }
         } catch (error) {
@@ -835,7 +835,7 @@ const ServiceRequestList: React.FC = () => {
     const handleApproveReject = async (requestID: number, action: 'approve' | 'reject', businessGroupID?: number | null) => {
         try {
             setIsLoadingData(true);
-            
+
             if (action === 'approve') {
                 // Instead of immediate approve, open popup to select Document Operator
                 setRequestIdPendingApprove(requestID);
@@ -847,7 +847,7 @@ const ServiceRequestList: React.FC = () => {
                 const statusID = 8; // Unsuccessful
                 await UpdateRequestServiceAreaStatus(requestID, statusID);
             }
-            
+
             // Refresh the data
             await fetchServiceRequestAreas(
                 selectedStatuses.join(','),
@@ -856,7 +856,7 @@ const ServiceRequestList: React.FC = () => {
                 searchText || undefined,
                 selectedDate ? selectedDate.format('YYYY-MM') : undefined
             );
-            
+
         } catch (error) {
             console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, error);
             // You might want to show a toast notification here
@@ -894,12 +894,12 @@ const ServiceRequestList: React.FC = () => {
     // Filter data in frontend based on search text
     const filteredServiceRequests = requestServiceAreas.filter((request) => {
         if (!searchText) return true;
-        
+
         const searchLower = searchText.toLowerCase();
         const companyName = request.CompanyName?.toLowerCase() || "";
         const userName = request.UserNameCombined?.toLowerCase() || "";
         const requestId = request.ID?.toString() || "";
-        
+
         return (
             companyName.includes(searchLower) ||
             userName.includes(searchLower) ||
@@ -914,10 +914,10 @@ const ServiceRequestList: React.FC = () => {
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     {/* Header Section */}
-                    <Grid 
-                        container 
-                        className="title-box" 
-                        direction={'row'} 
+                    <Grid
+                        container
+                        className="title-box"
+                        direction={'row'}
                         size={{ xs: 5, sm: 5 }}
                         sx={{ gap: 1 }}
                     >
@@ -931,8 +931,8 @@ const ServiceRequestList: React.FC = () => {
                         <>
                             <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
                                 {/* Status Section - Custom for Service Request List (5 statuses only) */}
-                                <RequestStatusCards 
-                                    statusCounts={statusCounts || {}} 
+                                <RequestStatusCards
+                                    statusCounts={statusCounts || {}}
                                     size={{
                                         xs: 12,
                                         sm: 6,
@@ -960,7 +960,7 @@ const ServiceRequestList: React.FC = () => {
                     ) : (
                         <Skeleton variant="rectangular" width="100%" height={320} sx={{ borderRadius: 2 }} />
                     )}
-                    
+
                     {/* Data Table Section */}
                     <Grid size={{ xs: 12, md: 12 }} minHeight={'200px'}>
                         {!isLoadingData && statusCounts ? (
