@@ -2602,6 +2602,33 @@ async function ListRequestServiceAreas(
     return res;
 }
 
+// Service Area Tasks by Operator User ID
+async function GetServiceAreaTasksByUserID(userId: number, options?: {
+    month_year?: string; // รูปแบบ MM/YYYY เช่น "08/2025"
+    business_group_id?: number;
+}) {
+    try {
+        const params = new URLSearchParams();
+        
+        if (options?.month_year) {
+            params.append('month_year', options.month_year);
+        }
+        
+        if (options?.business_group_id) {
+            params.append('business_group_id', options.business_group_id.toString());
+        }
+        
+        const queryString = params.toString();
+        const url = `/service-area-tasks/user/${userId}${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await axiosInstance.get(url);
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching service area tasks by user id:", error);
+        throw error;
+    }
+}
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -2623,6 +2650,7 @@ export {
 
     // Areas
     GetAreas,
+    GetServiceAreaTasksByUserID,
 
     // Rooms
     GetRooms,

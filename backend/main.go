@@ -202,7 +202,7 @@ func main() {
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/request-service-area/:id/status", controller.UpdateRequestServiceAreaStatus)
-		
+
 		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
@@ -224,6 +224,12 @@ func main() {
 
 		// PaymentStatus
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
+	}
+
+	protected.Use(middlewares.Authorizes(middlewares.DocumentOperator)) // ✅ Middleware ตรวจสอบ Token
+	{
+		// Service Area Tasks
+		protected.GET("/service-area-tasks/user/:user_id", controller.GetServiceAreaTasksByUserID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token

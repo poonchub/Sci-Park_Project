@@ -848,6 +848,114 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	})
 }
 
+// GetServiceAreaTasksByUserID ดึงงาน Service Area เฉพาะของผู้ใช้ (Operator) ตาม UserID พร้อม optional filters
+// GET /service-area-tasks/user/:user_id?month_year=MM/YYYY&business_group_id=1
+func GetServiceAreaTasksByUserID(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+
+	// รับ optional query parameters
+	monthYear := c.DefaultQuery("month_year", "") // รูปแบบ MM/YYYY เช่น 12/2024
+	businessGroupIDStr := c.DefaultQuery("business_group_id", "")
+
+	// เชื่อมต่อกับฐานข้อมูล
+	db := config.DB().
+		Preload("User").
+		Preload("RequestServiceArea").
+		Preload("RequestServiceArea.User").
+		Preload("RequestServiceArea.User.AboutCompany").
+		Preload("RequestServiceArea.User.AboutCompany.BusinessGroup").
+		Preload("RequestServiceArea.ServiceAreaDocument").
+		Where("service_area_tasks.user_id = ?", userID)
+
+	// กรองตาม Month/Year และ Business Group ID (ถ้ามีค่า)
+	if monthYear != "" || businessGroupIDStr != "" {
+		// JOIN กับตารางที่จำเป็น
+		db = db.Joins("JOIN request_service_areas rsa ON rsa.id = service_area_tasks.request_service_area_id")
+
+		// กรองตาม Month/Year (ถ้ามีค่า) - กรองตาม created_at ของ RequestServiceArea
+		if monthYear != "" {
+			// แปลง MM/YYYY เป็น YYYY-MM เพื่อใช้ในการ query
+			parts := strings.Split(monthYear, "/")
+			if len(parts) == 2 {
+				month := parts[0]
+				year := parts[1]
+				// เพิ่ม leading zero ให้กับเดือนถ้าจำเป็น
+				if len(month) == 1 {
+					month = "0" + month
+				}
+				dateFilter := year + "-" + month
+
+				// กรองตาม created_at ของ RequestServiceArea (ของผู้แจ้ง)
+				// ใช้ strftime เพื่อแปลงวันที่ให้เป็นรูปแบบที่ต้องการ
+				db = db.Where("strftime('%Y-%m', rsa.created_at) = ?", dateFilter)
+			}
+		}
+
+		// กรองตาม Business Group ID (ถ้ามีค่า) - กรองตาม business_group_id ของผู้แจ้ง
+		if businessGroupIDStr != "" {
+			businessGroupID, err := strconv.Atoi(businessGroupIDStr)
+			if err == nil && businessGroupID > 0 {
+				// JOIN กับ users และ about_companies ของผู้แจ้ง (ไม่ใช่ของ Operator)
+				db = db.Joins("JOIN users requester ON requester.id = rsa.user_id").
+					Joins("JOIN about_companies ac ON ac.user_id = requester.id").
+					Where("ac.business_group_id = ?", businessGroupID)
+			}
+		}
+	}
+
+	// โหลดงานที่มอบหมายให้ผู้ใช้
+	var tasks []entity.ServiceAreaTask
+	if err := db.Order("service_area_tasks.created_at DESC").Find(&tasks).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service area tasks"})
+		return
+	}
+
+	// แปลงผลลัพธ์เป็นรูปแบบ PascalCase ตามที่ระบุ
+	responses := make([]map[string]interface{}, 0, len(tasks))
+	for _, t := range tasks {
+		var businessGroupName string
+		var businessGroupID *uint
+		if t.RequestServiceArea.User.AboutCompany != nil {
+			if t.RequestServiceArea.User.AboutCompany.BusinessGroupID != nil {
+				businessGroupID = t.RequestServiceArea.User.AboutCompany.BusinessGroupID
+			}
+			if t.RequestServiceArea.User.AboutCompany.BusinessGroup.ID != 0 {
+				businessGroupName = t.RequestServiceArea.User.AboutCompany.BusinessGroup.Name
+			}
+		}
+
+		// ชื่อ-นามสกุลผู้ยื่นคำขอ
+		requesterFullName := strings.TrimSpace(t.RequestServiceArea.User.FirstName + " " + t.RequestServiceArea.User.LastName)
+
+		response := map[string]interface{}{
+			"RequestServiceAreaID": t.RequestServiceAreaID,                // 1
+			"CreatedAt":            t.RequestServiceArea.CreatedAt,        // 2
+			"CompanyName":          t.RequestServiceArea.User.CompanyName, // 3
+			"ServiceAreaDocumentId": func() *uint {
+				if t.RequestServiceArea.ServiceAreaDocument != nil {
+					return &t.RequestServiceArea.ServiceAreaDocument.ID
+				}
+				return nil
+			}(), // 4
+			"BusinessGroupName": businessGroupName,                    // 5 (empty if not joined)
+			"UserNameCombined":  requesterFullName,                    // 6
+			"ServiceAreaTaskID": t.ID,                                 // 7
+			"BusinessGroupID":   businessGroupID,                      // 8
+			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
+		}
+		responses = append(responses, response)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": responses,
+	})
+}
+
 // DownloadServiceRequestDocument ให้ดาวน์โหลดไฟล์เอกสารโดยไม่เปิดเผย path ตรง
 func DownloadServiceRequestDocument(c *gin.Context) {
 	// รับ request id จาก path
