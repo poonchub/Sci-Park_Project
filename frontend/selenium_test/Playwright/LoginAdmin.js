@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
   await page.goto('http://localhost:5173/login');
   await page.getByRole('button', { name: 'Accept All' }).click();
   await page.getByRole('textbox', { name: 'Email' }).click();
-  await page.getByRole('textbox', { name: 'Email' }).fill('externaluser1@gmail.com');
+  await page.getByRole('textbox', { name: 'Email' }).fill('internaluser1@gmail.com');
   await page.getByRole('textbox', { name: 'Password' }).click();
   await page.getByRole('textbox', { name: 'Password' }).fill('123456');
   await page.getByRole('button').filter({ hasText: /^$/ }).click();

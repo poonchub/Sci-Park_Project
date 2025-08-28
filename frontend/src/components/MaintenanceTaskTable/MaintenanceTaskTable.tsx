@@ -49,6 +49,14 @@ const MaintenanceTaskTable: React.FC<MaintenanceTaskTableProps> = ({
                         onLimitChange={onLimitChange}
                         noDataText={noData}
                         columnVisibilityModel={columnVisibilityModel}
+                        getRowId={(row) => {
+                            // ใช้ ID ถ้ามีค่า
+                            if (row.ID && row.ID > 0) {
+                                return String(row.ID);
+                            }
+                            // ถ้าไม่มี ID เลย ให้ใช้ unique key
+                            return `maintenance_task_${Date.now()}_${Math.random()}`;
+                        }}
                     />
                 )
             }

@@ -13,7 +13,7 @@ import { GetServiceAreaTasksByUserID, ListBusinessGroups } from "../../services/
 import { Search, BrushCleaning } from "lucide-react";
 import { CalendarMonth } from "@mui/icons-material";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
-import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
+
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -46,17 +46,57 @@ function AcceptWorkDocument() {
 
     const getColumns = (): GridColDef[] => {
         return [
-            { field: "ServiceAreaTaskID", headerName: "Task ID", flex: 0.8, align: "center", headerAlign: "center" },
-            { field: "RequestServiceAreaID", headerName: "Request ID", flex: 0.8, align: "center", headerAlign: "center" },
-            { field: "CompanyName", headerName: "Company", flex: 1.5 },
-            { field: "BusinessGroupName", headerName: "Business Group", flex: 1.2 },
-            { field: "UserNameCombined", headerName: "Requester", flex: 1.2 },
+            { 
+                field: "ServiceAreaTaskID", 
+                headerName: "No.", 
+                flex: 0.8, 
+                align: "center", 
+                headerAlign: "center" 
+            },
+            { 
+                field: "CompanyName", 
+                headerName: "Company", 
+                flex: 1.5 
+            },
             { 
                 field: "CreatedAt", 
-                headerName: "Created Date", 
+                headerName: "Date Assigned", 
                 flex: 1.2,
                 valueFormatter: (params: any) => {
-                    return new Date(params.value).toLocaleDateString('th-TH');
+                    try {
+                        // แก้ไขปัญหา timezone offset โดยใช้ dayjs
+                        const date = dayjs(params.value);
+                        if (!date.isValid()) {
+                            return "Invalid Date";
+                        }
+                        return date.format('DD/MM/YYYY');
+                    } catch (error) {
+                        return "Invalid Date";
+                    }
+                }
+            },
+            { 
+                field: "UserNameCombined", 
+                headerName: "Requester", 
+                flex: 1.2 
+            },
+            { 
+                field: "Actions", 
+                headerName: "Actions", 
+                flex: 1.0,
+                renderCell: (params) => {
+                    return (
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                                // Mock action - ไม่ทำอะไรตอนนี้
+                                console.log("Action clicked for task:", params.row.ServiceAreaTaskID);
+                            }}
+                        >
+                            View
+                        </Button>
+                    );
                 }
             },
         ];
@@ -73,6 +113,8 @@ function AcceptWorkDocument() {
             const options: {
                 month_year?: string;
                 business_group_id?: number;
+                page?: number;
+                limit?: number;
             } = {};
             
             // เพิ่ม month_year filter ถ้ามีการเลือกวันที่
@@ -88,11 +130,32 @@ function AcceptWorkDocument() {
             if (selectedBusinessGroup) {
                 options.business_group_id = selectedBusinessGroup;
             }
+
+            // เพิ่ม pagination
+            options.page = page + 1; // API ใช้ 1-based, frontend ใช้ 0-based
+            options.limit = limit;
             
+            console.log("🔍 [DEBUG] Calling API with options:", options);
             const res = await GetServiceAreaTasksByUserID(currentUserId, options);
+            console.log("🔍 [DEBUG] Raw API Response:", res);
+            
             if (res && res.data) {
+                console.log("🔍 [DEBUG] API data length:", res.data.length);
+                console.log("🔍 [DEBUG] First item in data:", res.data[0]);
+                console.log("🔍 [DEBUG] All ServiceAreaTaskIDs:", res.data.map((item: any) => item.ServiceAreaTaskID));
+                console.log("🔍 [DEBUG] All RequestServiceAreaIDs:", res.data.map((item: any) => item.RequestServiceAreaID));
+                
+                // ตรวจสอบข้อมูลซ้ำ
+                const taskIds = res.data.map((item: any) => item.ServiceAreaTaskID);
+                const requestIds = res.data.map((item: any) => item.RequestServiceAreaID);
+                const duplicateTaskIds = taskIds.filter((id: any, index: number) => taskIds.indexOf(id) !== index);
+                const duplicateRequestIds = requestIds.filter((id: any, index: number) => requestIds.indexOf(id) !== index);
+                
+                console.log("🔍 [DEBUG] Duplicate ServiceAreaTaskIDs:", duplicateTaskIds);
+                console.log("🔍 [DEBUG] Duplicate RequestServiceAreaIDs:", duplicateRequestIds);
+                
                 setRows(res.data);
-                setTotal(res.data.length);
+                setTotal(res.total || res.data.length);
             }
         } catch (error) {
             console.error("Error fetching service area tasks:", error);
@@ -114,7 +177,7 @@ function AcceptWorkDocument() {
 
     useEffect(() => {
         fetchServiceAreaTasks();
-    }, [selectedDate, selectedBusinessGroup]);
+    }, [selectedDate, selectedBusinessGroup, page, limit]);
 
     const handleClearFilter = () => {
         setSelectedDate(null);
@@ -126,28 +189,41 @@ function AcceptWorkDocument() {
         setActiveTab(newValue);
     };
 
-    const filteredRows = useMemo(() => {
-        let filtered = rows;
-        
-        // กรองตาม Tab (StatusID)
-        if (activeTab === 0) {
-            // In Progress Tab - แสดงเฉพาะ StatusID = 3
-            filtered = filtered.filter((r) => r.StatusID === 3);
-        } else {
-            // Complete Tab - แสดงเฉพาะ StatusID = 4
-            filtered = filtered.filter((r) => r.StatusID === 4);
-        }
-        
-        // กรองตาม search text
-        if (!searchText) return filtered;
-        const s = searchText.toLowerCase();
-        return filtered.filter((r) => {
-            const company = (r.CompanyName || "").toLowerCase();
-            const requester = (r.UserNameCombined || "").toLowerCase();
-            const businessGroup = (r.BusinessGroupName || "").toLowerCase();
-            return company.includes(s) || requester.includes(s) || businessGroup.includes(s);
-        });
-    }, [rows, searchText, activeTab]);
+         const filteredRows = useMemo(() => {
+         console.log("🔍 [DEBUG] filteredRows - Original rows:", rows);
+         console.log("🔍 [DEBUG] filteredRows - Active tab:", activeTab);
+         console.log("🔍 [DEBUG] filteredRows - Search text:", searchText);
+         
+         let filtered = rows;
+         
+         // กรองตาม Tab (StatusID)
+         if (activeTab === 0) {
+             // In Progress Tab - แสดงเฉพาะ StatusID = 3
+             filtered = filtered.filter((r) => r.StatusID === 3);
+             console.log("🔍 [DEBUG] filteredRows - After StatusID=3 filter:", filtered.length);
+         } else {
+             // Complete Tab - แสดงเฉพาะ StatusID = 4
+             filtered = filtered.filter((r) => r.StatusID === 4);
+             console.log("🔍 [DEBUG] filteredRows - After StatusID=4 filter:", filtered.length);
+         }
+         
+         // กรองตาม search text
+         if (!searchText) {
+             console.log("🔍 [DEBUG] filteredRows - Final filtered (no search):", filtered.length);
+             console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", filtered.map((r: any) => r.ServiceAreaTaskID));
+             return filtered;
+         }
+         const s = searchText.toLowerCase();
+         const textFiltered = filtered.filter((r) => {
+             const company = (r.CompanyName || "").toLowerCase();
+             const requester = (r.UserNameCombined || "").toLowerCase();
+             const businessGroup = (r.BusinessGroupName || "").toLowerCase();
+             return company.includes(s) || requester.includes(s) || businessGroup.includes(s);
+         });
+         console.log("🔍 [DEBUG] filteredRows - Final filtered (with search):", textFiltered.length);
+         console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", textFiltered.map((r: any) => r.ServiceAreaTaskID));
+         return textFiltered;
+     }, [rows, searchText, activeTab]);
 
     return (
         <Box className="accept-work-document-page">
@@ -257,38 +333,34 @@ function AcceptWorkDocument() {
                                 <Tab label="Complete" />
                             </Tabs>
                         </Grid>
-                        <CustomTabPanel value={activeTab} index={0}>
+                        <Grid size={{ xs: 12 }}>
                             {loading ? (
                                 <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />
                             ) : (
-                                <CustomDataGrid
+                                                                                                 <CustomDataGrid
                                     rows={filteredRows}
                                     columns={getColumns()}
-                                    rowCount={filteredRows.length}
+                                    rowCount={total}
                                     page={page}
                                     limit={limit}
                                     onPageChange={setPage}
                                     onLimitChange={setLimit}
-                                    noDataText="No in progress service requests found."
+                                    noDataText={`No ${activeTab === 0 ? 'in progress' : 'completed'} service requests found.`}
+                                    getRowId={(row) => {
+                                        // ใช้ ServiceAreaTaskID ถ้ามีค่า
+                                        if (row.ServiceAreaTaskID && row.ServiceAreaTaskID > 0) {
+                                            return String(row.ServiceAreaTaskID);
+                                        }
+                                        // Fallback: ใช้ RequestServiceAreaID
+                                        if (row.RequestServiceAreaID && row.RequestServiceAreaID > 0) {
+                                            return String(row.RequestServiceAreaID);
+                                        }
+                                        // ถ้าไม่มี ID เลย ให้ใช้ unique key
+                                        return `service_area_${Date.now()}_${Math.random()}`;
+                                    }}
                                 />
                             )}
-                        </CustomTabPanel>
-                        <CustomTabPanel value={activeTab} index={1}>
-                            {loading ? (
-                                <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />
-                            ) : (
-                                <CustomDataGrid
-                                    rows={filteredRows}
-                                    columns={getColumns()}
-                                    rowCount={filteredRows.length}
-                                    page={page}
-                                    limit={limit}
-                                    onPageChange={setPage}
-                                    onLimitChange={setLimit}
-                                    noDataText="No completed service requests found."
-                                />
-                            )}
-                        </CustomTabPanel>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Container>

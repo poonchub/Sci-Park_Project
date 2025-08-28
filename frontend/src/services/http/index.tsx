@@ -2606,8 +2606,12 @@ async function ListRequestServiceAreas(
 async function GetServiceAreaTasksByUserID(userId: number, options?: {
     month_year?: string; // รูปแบบ MM/YYYY เช่น "08/2025"
     business_group_id?: number;
+    page?: number;
+    limit?: number;
 }) {
     try {
+        console.log("🔍 [DEBUG] GetServiceAreaTasksByUserID called with userId:", userId, "options:", options);
+        
         const params = new URLSearchParams();
         
         if (options?.month_year) {
@@ -2617,11 +2621,22 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
         if (options?.business_group_id) {
             params.append('business_group_id', options.business_group_id.toString());
         }
+
+        if (options?.page) {
+            params.append('page', options.page.toString());
+        }
+
+        if (options?.limit) {
+            params.append('limit', options.limit.toString());
+        }
         
         const queryString = params.toString();
         const url = `/service-area-tasks/user/${userId}${queryString ? `?${queryString}` : ''}`;
         
+        console.log("🔍 [DEBUG] Making request to URL:", url);
+
         const response = await axiosInstance.get(url);
+        console.log("🔍 [DEBUG] API Response received:", response.data);
         return response.data;
     } catch (error: any) {
         console.error("Error fetching service area tasks by user id:", error);

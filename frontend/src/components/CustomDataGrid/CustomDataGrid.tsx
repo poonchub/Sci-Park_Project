@@ -29,6 +29,8 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
     getRowId = ((row) => String(row.id)),
 
 }) => {
+
+
     const EmptyOverlay = () => (
         <Box
             sx={{
@@ -54,7 +56,17 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
             <DataGrid
                 rows={rows}
                 columns={columns}
-                getRowId={(row) => String(row.ID)} // ✅ แก้ตรงนี้
+                getRowId={getRowId || ((row) => {
+                    // Fallback logic ที่ปลอดภัยกว่า
+                    if (row.ID !== undefined && row.ID !== null) {
+                        return String(row.ID);
+                    }
+                    if (row.id !== undefined && row.id !== null) {
+                        return String(row.id);
+                    }
+                    // ถ้าไม่มี ID เลย ให้ใช้ index + timestamp เพื่อป้องกัน key ซ้ำ
+                    return `row_${Date.now()}_${Math.random()}`;
+                })}
                 getRowHeight={() => "auto"}
                 pageSizeOptions={[5, 10, 20, 50]}
                 paginationMode="server"

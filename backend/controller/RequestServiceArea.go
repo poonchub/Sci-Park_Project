@@ -848,19 +848,37 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	})
 }
 
-// GetServiceAreaTasksByUserID ดึงงาน Service Area เฉพาะของผู้ใช้ (Operator) ตาม UserID พร้อม optional filters
-// GET /service-area-tasks/user/:user_id?month_year=MM/YYYY&business_group_id=1
+// GetServiceAreaTasksByUserID ดึงงาน Service Area เฉพาะของผู้ใช้ (Operator) ตาม UserID พร้อม optional filters และ pagination
+// GET /service-area-tasks/user/:user_id?month_year=MM/YYYY&business_group_id=1&page=1&limit=10
 func GetServiceAreaTasksByUserID(c *gin.Context) {
+	fmt.Println("🔍 [DEBUG] GetServiceAreaTasksByUserID called")
+
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil || userID <= 0 {
+		fmt.Printf("🔍 [DEBUG] Invalid user_id: %s, error: %v\n", userIDStr, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
 		return
 	}
+	fmt.Printf("🔍 [DEBUG] UserID: %d\n", userID)
 
-	// รับ optional query parameters
+	// รับ query parameters
 	monthYear := c.DefaultQuery("month_year", "") // รูปแบบ MM/YYYY เช่น 12/2024
 	businessGroupIDStr := c.DefaultQuery("business_group_id", "")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	fmt.Printf("🔍 [DEBUG] Query params - monthYear: %s, businessGroupID: %s, page: %d, limit: %d\n",
+		monthYear, businessGroupIDStr, page, limit)
+
+	// ตรวจสอบค่าที่ส่งมา
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
 
 	// เชื่อมต่อกับฐานข้อมูล
 	db := config.DB().
@@ -877,7 +895,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 		// JOIN กับตารางที่จำเป็น
 		db = db.Joins("JOIN request_service_areas rsa ON rsa.id = service_area_tasks.request_service_area_id")
 
-		// กรองตาม Month/Year (ถ้ามีค่า) - กรองตาม created_at ของ RequestServiceArea
+		// กรองตาม Month/Year (ถ้ามีค่า) - กรองตาม created_at ของ ServiceAreaTask
 		if monthYear != "" {
 			// แปลง MM/YYYY เป็น YYYY-MM เพื่อใช้ในการ query
 			parts := strings.Split(monthYear, "/")
@@ -890,9 +908,9 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 				}
 				dateFilter := year + "-" + month
 
-				// กรองตาม created_at ของ RequestServiceArea (ของผู้แจ้ง)
+				// กรองตาม created_at ของ ServiceAreaTask
 				// ใช้ strftime เพื่อแปลงวันที่ให้เป็นรูปแบบที่ต้องการ
-				db = db.Where("strftime('%Y-%m', rsa.created_at) = ?", dateFilter)
+				db = db.Where("strftime('%Y-%m', service_area_tasks.created_at) = ?", dateFilter)
 			}
 		}
 
@@ -908,16 +926,55 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 		}
 	}
 
-	// โหลดงานที่มอบหมายให้ผู้ใช้
+	// โหลดงานที่มอบหมายให้ผู้ใช้พร้อม pagination
 	var tasks []entity.ServiceAreaTask
-	if err := db.Order("service_area_tasks.created_at DESC").Find(&tasks).Error; err != nil {
+	if err := db.Order("service_area_tasks.created_at DESC").Limit(limit).Offset(offset).Find(&tasks).Error; err != nil {
+		fmt.Printf("🔍 [DEBUG] Database error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service area tasks"})
 		return
 	}
+	fmt.Printf("🔍 [DEBUG] Found %d tasks\n", len(tasks))
+
+	// คำนวณจำนวนทั้งหมด
+	var total int64
+	countQuery := config.DB().Model(&entity.ServiceAreaTask{}).Where("service_area_tasks.user_id = ?", userID)
+
+	// กรองตาม Month/Year และ Business Group ID สำหรับ count query
+	if monthYear != "" || businessGroupIDStr != "" {
+		countQuery = countQuery.Joins("JOIN request_service_areas rsa ON rsa.id = service_area_tasks.request_service_area_id")
+
+		if monthYear != "" {
+			parts := strings.Split(monthYear, "/")
+			if len(parts) == 2 {
+				month := parts[0]
+				year := parts[1]
+				if len(month) == 1 {
+					month = "0" + month
+				}
+				dateFilter := year + "-" + month
+				countQuery = countQuery.Where("strftime('%Y-%m', service_area_tasks.created_at) = ?", dateFilter)
+			}
+		}
+
+		if businessGroupIDStr != "" {
+			businessGroupID, err := strconv.Atoi(businessGroupIDStr)
+			if err == nil && businessGroupID > 0 {
+				countQuery = countQuery.Joins("JOIN users requester ON requester.id = rsa.user_id").
+					Joins("JOIN about_companies ac ON ac.user_id = requester.id").
+					Where("ac.business_group_id = ?", businessGroupID)
+			}
+		}
+	}
+
+	countQuery.Count(&total)
 
 	// แปลงผลลัพธ์เป็นรูปแบบ PascalCase ตามที่ระบุ
 	responses := make([]map[string]interface{}, 0, len(tasks))
-	for _, t := range tasks {
+	fmt.Printf("🔍 [DEBUG] Processing %d tasks for response\n", len(tasks))
+
+	for i, t := range tasks {
+		fmt.Printf("🔍 [DEBUG] Processing task %d: ID=%d, RequestServiceAreaID=%d\n", i+1, t.ID, t.RequestServiceAreaID)
+
 		var businessGroupName string
 		var businessGroupID *uint
 		if t.RequestServiceArea.User.AboutCompany != nil {
@@ -934,7 +991,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 
 		response := map[string]interface{}{
 			"RequestServiceAreaID": t.RequestServiceAreaID,                // 1
-			"CreatedAt":            t.RequestServiceArea.CreatedAt,        // 2
+			"CreatedAt":            t.CreatedAt,                           // 2 - เปลี่ยนเป็น created_at ของ ServiceAreaTask
 			"CompanyName":          t.RequestServiceArea.User.CompanyName, // 3
 			"ServiceAreaDocumentId": func() *uint {
 				if t.RequestServiceArea.ServiceAreaDocument != nil {
@@ -948,11 +1005,21 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			"BusinessGroupID":   businessGroupID,                      // 8
 			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
 		}
+
+		fmt.Printf("🔍 [DEBUG] Task %d response: ServiceAreaTaskID=%v, RequestServiceAreaID=%v\n",
+			i+1, response["ServiceAreaTaskID"], response["RequestServiceAreaID"])
+
 		responses = append(responses, response)
 	}
 
+	fmt.Printf("🔍 [DEBUG] Final response count: %d\n", len(responses))
+
 	c.JSON(http.StatusOK, gin.H{
-		"data": responses,
+		"data":       responses,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
 	})
 }
 

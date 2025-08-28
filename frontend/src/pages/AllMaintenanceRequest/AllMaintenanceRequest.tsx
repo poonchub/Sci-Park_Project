@@ -1010,6 +1010,14 @@ function AllMaintenanceRequest() {
                                 onPageChange={setPage}
                                 onLimitChange={setLimit}
                                 noDataText="Maintenance request information not found."
+                                getRowId={(row) => {
+                                    // ใช้ ID ถ้ามีค่า
+                                    if (row.ID && row.ID > 0) {
+                                        return String(row.ID);
+                                    }
+                                    // ถ้าไม่มี ID เลย ให้ใช้ unique key
+                                    return `maintenance_request_${Date.now()}_${Math.random()}`;
+                                }}
                             />
                         ) : (
                             <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />

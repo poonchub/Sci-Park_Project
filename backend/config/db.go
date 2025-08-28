@@ -560,36 +560,6 @@ func SeedDatabase() {
 			GenderID:       1,
 			IsEmployee:     true,
 		},
-		{
-			CompanyName:     "MediCare",
-			BusinessDetail:  "Healthcare Services",
-			FirstName:       "External",
-			LastName:        "1",
-			Email:           "externaluser1@gmail.com",
-			Password:        "123456",
-			Phone:           "1232323111",
-			ProfilePath:     "",
-			RoleID:          1,
-			JobPositionID:   &[]uint{12}[0], // Lab Technician
-			GenderID:        2,
-			IsEmployee:      false,
-			IsBusinessOwner: true,
-		},
-		{
-			CompanyName:     "Global Innovations Hub",
-			BusinessDetail:  "Technology Solutions",
-			FirstName:       "External",
-			LastName:        "2",
-			Email:           "externaluser2@gmail.com",
-			Password:        "123456",
-			Phone:           "9876543211",
-			ProfilePath:     "",
-			RoleID:          1,
-			JobPositionID:   &[]uint{13}[0], // Administrative Staff
-			GenderID:        1,
-			IsEmployee:      false,
-			IsBusinessOwner: true,
-		},
 	}
 	for i, user := range users {
 		users[i].Password, _ = HashPassword(user.Password)
@@ -742,16 +712,6 @@ func SeedDatabase() {
 			RequestStatusID:   4,
 			AreaID:            1,
 			MaintenanceTypeID: 3,
-		},
-		{
-			Description:       "Fix the AC",
-			StartTime:         startTime,
-			EndTime:           endTime,
-			UserID:            7,
-			RoomID:            3,
-			RequestStatusID:   2,
-			AreaID:            1,
-			MaintenanceTypeID: 2,
 		},
 	}
 	for _, mr := range maintenanceRequests {
@@ -1251,7 +1211,7 @@ func SeedDatabase() {
 		})
 	}
 
-	// AboutCompany data
+	// AboutCompany data for internal users
 	aboutCompanies := []entity.AboutCompany{
 		{
 			UserID:                      1,
@@ -1274,6 +1234,51 @@ func SeedDatabase() {
 			HiringRate:                  15,
 			ResearchInvestmentValue:     2000000.00,
 			ThreeYearGrowthForecast:     "Expected 30% growth in agricultural technology",
+		},
+		// เพิ่ม AboutCompany สำหรับ internal users ที่เหลือ
+		{
+			UserID:                      3,
+			CorporateRegistrationNumber: "1111111111111",
+			BusinessGroupID:             &[]uint{3}[0], // Energy Tech & Material
+			CompanySizeID:               &[]uint{1}[0], // Small (1-50 employees)
+			MainServices:                "Energy Research & Development",
+			RegisteredCapital:           2000000.00,
+			HiringRate:                  8,
+			ResearchInvestmentValue:     300000.00,
+			ThreeYearGrowthForecast:     "Expected 40% growth in energy technology",
+		},
+		{
+			UserID:                      4,
+			CorporateRegistrationNumber: "2222222222222",
+			BusinessGroupID:             &[]uint{4}[0], // Medical & Bio-Tech
+			CompanySizeID:               &[]uint{2}[0], // Medium (51-200 employees)
+			MainServices:                "Medical Research & Biotechnology",
+			RegisteredCapital:           3000000.00,
+			HiringRate:                  12,
+			ResearchInvestmentValue:     400000.00,
+			ThreeYearGrowthForecast:     "Expected 35% growth in medical technology",
+		},
+		{
+			UserID:                      5,
+			CorporateRegistrationNumber: "3333333333333",
+			BusinessGroupID:             &[]uint{1}[0], // IT Software & Digital Content
+			CompanySizeID:               &[]uint{1}[0], // Small (1-50 employees)
+			MainServices:                "Digital Content & Software Solutions",
+			RegisteredCapital:           1500000.00,
+			HiringRate:                  6,
+			ResearchInvestmentValue:     250000.00,
+			ThreeYearGrowthForecast:     "Expected 45% growth in digital content",
+		},
+		{
+			UserID:                      6,
+			CorporateRegistrationNumber: "4444444444444",
+			BusinessGroupID:             &[]uint{2}[0], // Agriculture & Food
+			CompanySizeID:               &[]uint{1}[0], // Small (1-50 employees)
+			MainServices:                "Agricultural Technology & Food Innovation",
+			RegisteredCapital:           1800000.00,
+			HiringRate:                  7,
+			ResearchInvestmentValue:     280000.00,
+			ThreeYearGrowthForecast:     "Expected 38% growth in agricultural technology",
 		},
 	}
 

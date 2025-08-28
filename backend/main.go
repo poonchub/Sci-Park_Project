@@ -226,11 +226,7 @@ func main() {
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 	}
 
-	protected.Use(middlewares.Authorizes(middlewares.DocumentOperator)) // ✅ Middleware ตรวจสอบ Token
-	{
-		// Service Area Tasks
-		protected.GET("/service-area-tasks/user/:user_id", controller.GetServiceAreaTasksByUserID)
-	}
+
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
 	{
@@ -259,6 +255,12 @@ func main() {
 		protected.POST("/invoice-items", controller.CreateInvoiceItem)
 		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
 		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
+	}
+
+	protected.Use(middlewares.Authorizes(middlewares.DocumentOperator)) // ✅ Middleware ตรวจสอบ Token
+	{
+		// Service Area Tasks
+		protected.GET("/service-area-tasks/user/:user_id", controller.GetServiceAreaTasksByUserID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
