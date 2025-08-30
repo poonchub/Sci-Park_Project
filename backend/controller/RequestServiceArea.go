@@ -811,7 +811,6 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 		"ActivitiesInBuilding":               requestServiceArea.ActivitiesInBuilding,
 		"SupportingActivitiesForSciencePark": requestServiceArea.SupportingActivitiesForSciencePark,
 		"ServiceRequestDocument":             requestServiceArea.ServiceRequestDocument,
-		"CollaborationPlans":                 requestServiceArea.CollaborationPlans,
 	}
 
 	// เพิ่มข้อมูลจาก AboutCompany (ถ้ามี)
@@ -841,6 +840,20 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	// เพิ่มข้อมูลจาก ServiceAreaDocument (ถ้ามี)
 	if requestServiceArea.ServiceAreaDocument != nil {
 		response["ServiceAreaDocumentId"] = requestServiceArea.ServiceAreaDocument.ID
+	}
+
+	// เพิ่มข้อมูล CollaborationPlans แบบย่อ (เฉพาะข้อมูลที่จำเป็น)
+	if len(requestServiceArea.CollaborationPlans) > 0 {
+		var simplifiedPlans []gin.H
+		for _, plan := range requestServiceArea.CollaborationPlans {
+			simplifiedPlans = append(simplifiedPlans, gin.H{
+				"ID":                  plan.ID,
+				"CollaborationPlan":   plan.CollaborationPlan,
+				"CollaborationBudget": plan.CollaborationBudget,
+				"ProjectStartDate":    plan.ProjectStartDate,
+			})
+		}
+		response["CollaborationPlans"] = simplifiedPlans
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -1004,6 +1017,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			"ServiceAreaTaskID": t.ID,                                 // 7
 			"BusinessGroupID":   businessGroupID,                      // 8
 			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
+			"UserID":            t.RequestServiceArea.UserID,          // 10
 		}
 
 		fmt.Printf("🔍 [DEBUG] Task %d response: ServiceAreaTaskID=%v, RequestServiceAreaID=%v\n",

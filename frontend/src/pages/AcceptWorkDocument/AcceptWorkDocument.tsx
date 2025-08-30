@@ -14,7 +14,9 @@ import { Search, BrushCleaning, HelpCircle } from "lucide-react";
 import { CalendarMonth } from "@mui/icons-material";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 import { businessGroupConfig } from "../../constants/businessGroupConfig";
-
+import "./AcceptWorkDocument.css";
+import { Tooltip } from "@mui/material";
+import { Check, X, Send, Eye } from "lucide-react";
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -44,6 +46,118 @@ function AcceptWorkDocument() {
     const [loading, setLoading] = useState(false);
 
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+    const renderActionButtons = (data: any, statusName: string) => {
+        const showSubmit = statusName === "In Progress";
+        const showAcceptReject = statusName === "Complete";
+
+        return (
+            <>
+                {showAcceptReject && (
+                    <>
+                        <Tooltip title={"Start"}>
+                            <Button
+                                className="btn-accept"
+                                variant="contained"
+                                onClick={() => {
+                                    console.log("Start clicked for task:", data.ServiceAreaTaskID);
+                                }}
+                                sx={{
+                                    minWidth: "42px",
+                                }}
+                            >
+                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Start
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={"Cancel"}>
+                            <Button
+                                className="btn-reject"
+                                variant="outlinedCancel"
+                                onClick={() => {
+                                    console.log("Cancel clicked for task:", data.ServiceAreaTaskID);
+                                }}
+                                sx={{
+                                    minWidth: "42px",
+                                }}
+                            >
+                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Cancel
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                    </>
+                )}
+
+                {showSubmit && (
+                    <>
+                        <Tooltip title={"Submit"}>
+                            <Button
+                                className="btn-submit"
+                                variant="contained"
+                                onClick={() => {
+                                    console.log("Submit clicked for task:", data.ServiceAreaTaskID);
+                                }}
+                                sx={{
+                                    minWidth: "42px",
+
+                                }}
+                            >
+                                <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Submit
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={"Cancel"}>
+                            <Button
+                                className="btn-reject"
+                                variant="outlinedCancel"
+                                onClick={() => {
+                                    console.log("Cancel clicked for task:", data.ServiceAreaTaskID);
+                                }}
+                                sx={{
+                                    minWidth: "42px",
+
+                                }}
+                            >
+                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                <Typography variant="textButtonClassic" className="text-btn">
+                                    Cancel
+                                </Typography>
+                            </Button>
+                        </Tooltip>
+                    </>
+                )}
+
+                <Tooltip title={"Details"}>
+                    <Button
+                        className="btn-detail"
+                        variant="outlinedGray"
+                        onClick={() => {
+                            console.log("Details clicked for task:", data.ServiceAreaTaskID);
+                        }}
+                        sx={{
+                            minWidth: "42px",
+                            width: !(showSubmit || showAcceptReject) ? "100%" : "",
+                        }}
+                    >
+                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                        {!(showSubmit || showAcceptReject) ? (
+                            <Typography variant="textButtonClassic">Details</Typography>
+                        ) : (
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Details
+                            </Typography>
+                        )}
+                    </Button>
+                </Tooltip>
+            </>
+        );
+    };
 
     const getColumns = (): GridColDef[] => {
         return [
@@ -173,19 +287,22 @@ function AcceptWorkDocument() {
             {
                 field: "Actions",
                 headerName: "Actions",
-                flex: 1.6,
+                flex: 1.5,
                 renderCell: (params) => {
+                    const data = params.row;
+                    const statusName = data.StatusID === 3 ? "In Progress" : "Complete";
+
                     return (
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                                // Mock action - ไม่ทำอะไรตอนนี้
-                                console.log("Action clicked for task:", params.row.ServiceAreaTaskID);
+                        <Box
+                            className="container-btn"
+                            sx={{
+                                display: "flex",
+                                gap: 0.8,
+                                flexWrap: "wrap",
                             }}
                         >
-                            View
-                        </Button>
+                            {renderActionButtons(data, statusName)}
+                        </Box>
                     );
                 }
             },
