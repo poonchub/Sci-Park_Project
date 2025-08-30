@@ -85,7 +85,7 @@ function ServiceAreaDetails() {
         try {
             const encodedId = searchParams.get("service_area_id");
             const serviceAreaID = encodedId ? Base64.decode(decodeURIComponent(encodedId)) : null;
-            
+
             if (!serviceAreaID) {
                 setAlerts((prev) => [...prev, { type: "error", message: "Service area ID not found" }]);
                 return;
@@ -145,10 +145,10 @@ function ServiceAreaDetails() {
 
     const sortedCollaborationPlans = serviceAreaDetails?.CollaborationPlans
         ? [...serviceAreaDetails.CollaborationPlans].sort((a, b) => {
-              const yearA = a?.ProjectStartDate ? new Date(a.ProjectStartDate).getFullYear() : Number.POSITIVE_INFINITY;
-              const yearB = b?.ProjectStartDate ? new Date(b.ProjectStartDate).getFullYear() : Number.POSITIVE_INFINITY;
-              return yearA - yearB;
-          })
+            const yearA = a?.ProjectStartDate ? new Date(a.ProjectStartDate).getFullYear() : Number.POSITIVE_INFINITY;
+            const yearB = b?.ProjectStartDate ? new Date(b.ProjectStartDate).getFullYear() : Number.POSITIVE_INFINITY;
+            return yearA - yearB;
+        })
         : [];
 
     return (
@@ -168,7 +168,7 @@ function ServiceAreaDetails() {
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
                             <Button variant="outlinedGray" onClick={handleBack}>
-                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
+                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
                         </Box>
@@ -217,163 +217,163 @@ function ServiceAreaDetails() {
                                         },
                                     }}
                                 >
-                                    
+
 
                                     {/* Row 1: Service Area Information and Company Information (50/50 split) */}
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Service Area Information */}
-                                        
-                                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                                Service Area Information
-                                            </Typography>
-                                            
-                                            <Grid container spacing={2}>
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Request No.
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.RequestNo || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Requested At
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.RequestedAt ? dateFormat(serviceAreaDetails.RequestedAt) : '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Company Name
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.CompanyName || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Company Description
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.DescriptionCompany || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Purpose of Using Space
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.PurposeOfUsingSpace || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Activities in Building
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.ActivitiesInBuilding || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Supporting Activities for Science Park
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.SupportingActivitiesForSciencePark || '-'}
-                                                    </Typography>
-                                                </Grid>
+
+                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                            Service Area Information
+                                        </Typography>
+
+                                        <Grid container spacing={2}>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Request No.
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.RequestNo || '-'}
+                                                </Typography>
                                             </Grid>
-                                        
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Requested At
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.RequestedAt ? dateFormat(serviceAreaDetails.RequestedAt) : '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Company Name
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.CompanyName || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Company Description
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.DescriptionCompany || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Purpose of Using Space
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.PurposeOfUsingSpace || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Activities in Building
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.ActivitiesInBuilding || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Supporting Activities for Science Park
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.SupportingActivitiesForSciencePark || '-'}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+
                                     </Grid>
 
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Company Information */}
-                                        
-                                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                                Company Information
-                                            </Typography>
-                                            <Grid container spacing={2}>
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Business Group
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.BusinessGroupName || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Company Size
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.CompanySizeName || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Corporate Registration Number
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.CorporateRegistrationNumber || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Main Services
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.MainServices || '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Registered Capital
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.RegisteredCapital ? `฿${serviceAreaDetails.RegisteredCapital.toLocaleString()}` : '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Hiring Rate
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.HiringRate ? `${serviceAreaDetails.HiringRate}%` : '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Research Investment Value
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.ResearchInvestmentValue ? `฿${serviceAreaDetails.ResearchInvestmentValue.toLocaleString()}` : '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid size={{ xs: 12 }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        3-Year Growth Forecast
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails?.ThreeYearGrowthForecast ? `${serviceAreaDetails.ThreeYearGrowthForecast}%` : '-'}
-                                                    </Typography>
-                                                </Grid>
+
+                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                            Company Information
+                                        </Typography>
+                                        <Grid container spacing={2}>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Business Group
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.BusinessGroupName || '-'}
+                                                </Typography>
                                             </Grid>
-                                        
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Company Size
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.CompanySizeName || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Corporate Registration Number
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.CorporateRegistrationNumber || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Main Services
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.MainServices || '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Registered Capital
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.RegisteredCapital ? `฿${serviceAreaDetails.RegisteredCapital.toLocaleString()}` : '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Hiring Rate
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.HiringRate ? `${serviceAreaDetails.HiringRate}%` : '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Research Investment Value
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.ResearchInvestmentValue ? `฿${serviceAreaDetails.ResearchInvestmentValue.toLocaleString()}` : '-'}
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    3-Year Growth Forecast
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                    {serviceAreaDetails?.ThreeYearGrowthForecast ? `${serviceAreaDetails.ThreeYearGrowthForecast}%` : '-'}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+
                                     </Grid>
 
                                     {/* Row 2: Collaboration Plans (full width) */}
@@ -414,11 +414,11 @@ function ServiceAreaDetails() {
                                                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                                                     Documents & Contract Information
                                                 </Typography>
-                                                
+
                                                 {/* Contract Information */}
                                                 {(serviceAreaDetails?.ContractNumber || serviceAreaDetails?.ContractStartAt || serviceAreaDetails?.RoomNumber || serviceAreaDetails?.ServiceUserTypeName) && (
                                                     <Box sx={{ mb: 3 }}>
-                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                                                             Contract Details
                                                         </Typography>
                                                         <Grid container spacing={2}>
@@ -479,7 +479,7 @@ function ServiceAreaDetails() {
                                                 {/* Service Area Documents */}
                                                 {(serviceAreaDetails?.ServiceContractDocument || serviceAreaDetails?.AreaHandoverDocument || serviceAreaDetails?.QuotationDocument || serviceAreaDetails?.RefundGuaranteeDocument) && (
                                                     <Box sx={{ mb: 3 }}>
-                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'black' }}>
                                                             Service Area Documents
                                                         </Typography>
                                                         <Grid container spacing={2}>
@@ -498,7 +498,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.ServiceContractDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.ServiceContractDocument, '_blank')}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -522,7 +522,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.AreaHandoverDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.AreaHandoverDocument, '_blank')}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -546,7 +546,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.QuotationDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.QuotationDocument, '_blank')}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -570,7 +570,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 3 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.RefundGuaranteeDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.RefundGuaranteeDocument, '_blank')}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -583,17 +583,17 @@ function ServiceAreaDetails() {
                                                     </Box>
                                                 )}
 
-                                                                                                {/* Service Request Document (if exists) */}
+                                                {/* Service Request Document (if exists) */}
                                                 {serviceAreaDetails?.ServiceRequestDocument && (
                                                     <Box>
-                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                                                            Service Request Document
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'black' }}>
+                                                            Request Document
                                                         </Typography>
                                                         <Grid container spacing={2} alignItems="center">
                                                             <Grid size={{ xs: 12, sm: 4 }}>
                                                                 <Box>
                                                                     <Typography variant="body2" color="text.secondary">
-                                                                        Document:
+                                                                        Request Document:
                                                                     </Typography>
                                                                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                                         {serviceAreaDetails.ServiceRequestDocument.split('/').pop()}
@@ -602,7 +602,7 @@ function ServiceAreaDetails() {
                                                             </Grid>
                                                             <Grid size={{ xs: 12, sm: 8 }}>
                                                                 <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                    <Button size="small" variant="outlined" onClick={() => DownloadServiceRequestDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.ServiceRequestDocument?.split('/').pop())}>
+                                                                    <Button size="small" variant="outlinedGray" onClick={() => DownloadServiceRequestDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.ServiceRequestDocument?.split('/').pop())}>
                                                                         <Download size={16} style={{ marginRight: 6 }} />
                                                                         Download
                                                                     </Button>
