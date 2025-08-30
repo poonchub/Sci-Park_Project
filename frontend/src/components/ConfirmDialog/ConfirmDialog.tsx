@@ -41,7 +41,12 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     };
 
     return (
-        <Dialog open={open} onClose={() => setOpenConfirm(false)}>
+        <Dialog 
+            open={open} 
+            onClose={() => setOpenConfirm(false)}
+            disableRestoreFocus
+            keepMounted={false}
+        >
             {/* Dialog title with warning icon */}
             <DialogTitle
                 sx={{
