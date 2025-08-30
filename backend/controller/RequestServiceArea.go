@@ -706,6 +706,74 @@ func UpdateRequestServiceAreaStatus(c *gin.Context) {
 	})
 }
 
+// RejectServiceAreaRequest อัปเดตสถานะเป็น Rejected (ID 8) พร้อมเหตุผล
+func RejectServiceAreaRequest(c *gin.Context) {
+	// รับ request ID จาก path parameter
+	requestIDStr := c.Param("id")
+
+	requestID, err := strconv.ParseUint(requestIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// รับข้อมูลจาก request body
+	var requestBody struct {
+		Note string `json:"note" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// ตรวจสอบว่า RequestServiceArea มีอยู่จริงหรือไม่
+	var requestServiceArea entity.RequestServiceArea
+	if err := config.DB().First(&requestServiceArea, requestID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	// อัปเดตสถานะเป็น Rejected (ID 8)
+	requestServiceArea.RequestStatusID = 8
+
+	// บันทึกการเปลี่ยนแปลงใน RequestServiceArea
+	if err := config.DB().Save(&requestServiceArea).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reject service area request"})
+		return
+	}
+
+	// อัปเดต Note ใน ServiceAreaTask ที่เกี่ยวข้อง
+	var serviceAreaTask entity.ServiceAreaTask
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaTask).Error; err != nil {
+		// ถ้าไม่พบ ServiceAreaTask ให้สร้างใหม่
+		serviceAreaTask = entity.ServiceAreaTask{
+			RequestServiceAreaID: uint(requestID),
+			Note:                 requestBody.Note,
+		}
+		if err := config.DB().Create(&serviceAreaTask).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service area task note"})
+			return
+		}
+	} else {
+		// อัปเดต Note ใน ServiceAreaTask ที่มีอยู่
+		serviceAreaTask.Note = requestBody.Note
+		if err := config.DB().Save(&serviceAreaTask).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update service area task note"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Service area request rejected successfully",
+		"data": gin.H{
+			"id":                requestServiceArea.ID,
+			"request_status_id": requestServiceArea.RequestStatusID,
+			"note":              serviceAreaTask.Note,
+		},
+	})
+}
+
 // CreateServiceAreaApproval สร้างบันทึกการอนุมัติ/ปฏิเสธของ Service Area โดยอ้างอิงผู้ปฏิบัติการ
 func CreateServiceAreaApproval(c *gin.Context) {
 	// Expect JSON body: { "user_id": number, "request_service_area_id": number, "operator_user_id": number, "note": string }
@@ -1017,7 +1085,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			"ServiceAreaTaskID": t.ID,                                 // 7
 			"BusinessGroupID":   businessGroupID,                      // 8
 			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
-			"UserID":            t.RequestServiceArea.UserID,          // 10
+
 		}
 
 		fmt.Printf("🔍 [DEBUG] Task %d response: ServiceAreaTaskID=%v, RequestServiceAreaID=%v\n",

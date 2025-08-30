@@ -65,6 +65,33 @@ axiosInstance.interceptors.response.use(
     }
 );
 
+// ==================== SERVICE AREA DOCUMENT FUNCTIONS ====================
+
+// ดึงข้อมูล Rooms ทั้งหมด
+async function GetAllRooms() {
+    try {
+        const response = await axiosInstance.get('/rooms/allrooms');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        throw error;
+    }
+}
+
+// ดึงข้อมูล Service User Types ทั้งหมด
+async function GetAllServiceUserTypes() {
+    try {
+        const response = await axiosInstance.get('/service-user-types');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching service user types:', error);
+        throw error;
+    }
+}
+
+
+// ==================== AUTH FUNCTIONS ====================
+
 // ฟังก์ชันสำหรับการ Login
 async function UserLogin(data: UserInterface) {
     const requestOptions = {
@@ -2327,6 +2354,23 @@ async function UpdateRequestServiceAreaStatus(requestID: number, requestStatusID
     }
 }
 
+async function RejectServiceAreaRequest(requestID: number, note: string): Promise<any> {
+    try {
+        const response = await axiosInstance.patch(`/request-service-area/${requestID}/reject`, {
+            note: note
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error rejecting service area request:", error);
+        throw error;
+    }
+}
+
 async function GetServiceAreaDetailsByID(serviceAreaID: number): Promise<any> {
     try {
         const response = await axiosInstance.get(`/request-service-area/details/${serviceAreaID}`);
@@ -2610,7 +2654,7 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
     limit?: number;
 }) {
     try {
-        console.log("🔍 [DEBUG] GetServiceAreaTasksByUserID called with userId:", userId, "options:", options);
+        
         
         const params = new URLSearchParams();
         
@@ -2633,10 +2677,10 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
         const queryString = params.toString();
         const url = `/service-area-tasks/user/${userId}${queryString ? `?${queryString}` : ''}`;
         
-        console.log("🔍 [DEBUG] Making request to URL:", url);
+        
 
         const response = await axiosInstance.get(url);
-        console.log("🔍 [DEBUG] API Response received:", response.data);
+        
         return response.data;
     } catch (error: any) {
         console.error("Error fetching service area tasks by user id:", error);
@@ -2674,6 +2718,7 @@ export {
     GetRoomByID,
     GetRoomRentalSpaceByOption,
     GetRoomRentalSpaceByID,
+    GetAllRooms,
 
     // RoomTypes
     GetRoomTypes,
@@ -2813,6 +2858,7 @@ export {
     // ServiceUserTypes
     ListServiceUserTypes,
     GetServiceUserTypeByID,
+    GetAllServiceUserTypes,
 
     // ServiceAreaDocuments
     CreateServiceAreaDocument,
@@ -2824,7 +2870,8 @@ export {
     CreateRequestServiceAreaAndAboutCompany,
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
-    UpdateRequestServiceAreaStatus,
+    	UpdateRequestServiceAreaStatus,
+	RejectServiceAreaRequest,
     GetServiceAreaDetailsByID,
     CreateServiceAreaApproval,
     DownloadServiceRequestDocument,

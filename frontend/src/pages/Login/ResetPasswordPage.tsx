@@ -104,9 +104,7 @@ const ResetPasswordPage: React.FC = () => {
         try {
             const response = await ValidateOTP({ token, email });
             if (response.status === 200) {
-                console.log(">>>>>", response);
-                console.log(">>>>>", response.data.token);
-                console.log(">>>>>", response.data.id);
+
                 localStorage.setItem("token", response.data.token);
                 localStorage.setItem("id", response.data.id);
                 setAlerts([...alerts, { type: 'success', message: "OTP verified. Set new password." }]);

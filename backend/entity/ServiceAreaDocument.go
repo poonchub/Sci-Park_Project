@@ -18,8 +18,11 @@ type ServiceAreaDocument struct {
 
 	// เอกสารและข้อมูลเพิ่มเติมเกี่ยวกับสัญญา
 	RefundGuaranteeDocument string    `gorm:"type:varchar(500)"` // เอกสารคืนหลักประกัน (path)
+	
 	ContractNumber          string    `gorm:"type:varchar(100)"` // เลขที่สัญญา
+	
 	ContractStartAt         time.Time // วันเริ่มต้นสัญญา
+
 	ContractEndAt           time.Time // วันสิ้นสุดสัญญา
 
 	// Foreign Keys

@@ -101,6 +101,7 @@ func main() {
 
 		// Rooms
 		protected.GET("/rooms", controller.ListRooms)
+		protected.GET("/rooms/allrooms", controller.GetAllRooms)
 
 		// RoomTypes
 		protected.GET("/room-types", controller.ListRoomTypes)
@@ -185,8 +186,12 @@ func main() {
 		protected.GET("/company-sizes/:id", controller.GetCompanySizeByID)
 
 		// ServiceUserTypes
-		protected.GET("/service-user-types", controller.ListServiceUserTypes)
+		protected.GET("/service-user-types", controller.GetAllServiceUserTypes)
 		protected.GET("/service-user-types/:id", controller.GetServiceUserTypeByID)
+		protected.POST("/service-user-types", controller.CreateServiceUserType)
+		protected.PUT("/service-user-types/:id", controller.UpdateServiceUserType)
+		protected.DELETE("/service-user-types/:id", controller.DeleteServiceUserType)
+
 
 		// ServiceAreaDocuments
 		protected.POST("/service-area-documents/:request_service_area_id", controller.CreateServiceAreaDocument)
@@ -202,6 +207,7 @@ func main() {
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/request-service-area/:id/status", controller.UpdateRequestServiceAreaStatus)
+		protected.PATCH("/request-service-area/:id/reject", controller.RejectServiceAreaRequest)
 
 		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
@@ -225,8 +231,6 @@ func main() {
 		// PaymentStatus
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 	}
-
-
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
 	{
@@ -312,6 +316,8 @@ func main() {
 		protected.GET("/listset-room", controller.ListSetRooms)
 		protected.POST("/create-room", controller.CreateRoom)
 		protected.PATCH("/update-room/:id", controller.UpdateRoom)
+
+
 
 		// Floors
 		protected.POST("/create-floor", controller.CreateFloor)

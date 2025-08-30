@@ -8,6 +8,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -45,7 +46,7 @@ func CreateServiceAreaDocument(c *gin.Context) {
 		}
 	}()
 
-	// แปลง RoomID และ ServiceUserTypeID
+	// แปลงข้อมูลจาก form
 	var roomID uint
 	if roomIDStr := c.PostForm("room_id"); roomIDStr != "" {
 		if id, err := strconv.ParseUint(roomIDStr, 10, 32); err == nil {
@@ -60,28 +61,66 @@ func CreateServiceAreaDocument(c *gin.Context) {
 		}
 	}
 
+	// แปลง ContractStartAt
+	var contractStartAt time.Time
+	if contractStartAtStr := c.PostForm("contract_start_at"); contractStartAtStr != "" {
+		if parsedTime, err := time.Parse("2006-01-02", contractStartAtStr); err == nil {
+			contractStartAt = parsedTime
+		} else {
+			contractStartAt = time.Now() // ถ้า parse ไม่ได้ใช้เวลาปัจจุบัน
+		}
+	} else {
+		contractStartAt = time.Now() // ถ้าไม่ส่งมาใช้เวลาปัจจุบัน
+	}
+
+	// แปลง ContractNumber
+	contractNumber := c.PostForm("contract_number")
+
 	// สร้าง ServiceAreaDocument
 	serviceAreaDocument := entity.ServiceAreaDocument{
 		RequestServiceAreaID: uint(requestServiceAreaID),
 		RoomID:               roomID,
 		ServiceUserTypeID:    serviceUserTypeID,
+		ContractStartAt:      contractStartAt,
+		ContractNumber:       contractNumber,
 	}
 
-	// จัดการไฟล์เอกสารต่างๆ
-	documentFolder := "./images/ServiceAreaDocuments"
-	if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
-		err := os.MkdirAll(documentFolder, os.ModePerm)
-		if err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
-			return
-		}
+	// จัดการไฟล์เอกสารต่างๆ - สร้างโครงสร้างโฟลเดอร์แบบแยกตาม Request ID
+	baseFolder := "./images/ServiceAreaDocuments"
+	requestFolder := path.Join(baseFolder, fmt.Sprintf("request_%d", requestServiceAreaID))
+	// สร้างโฟลเดอร์หลักและโฟลเดอร์ย่อย
+	if err := os.MkdirAll(requestFolder, os.ModePerm); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory structure"})
+		return
+	}
+
+	// สร้างโฟลเดอร์ย่อยสำหรับแต่ละประเภทเอกสาร
+	contractFolder := path.Join(requestFolder, "contracts")
+	handoverFolder := path.Join(requestFolder, "handovers")
+	quotationFolder := path.Join(requestFolder, "quotations")
+
+	if err := os.MkdirAll(contractFolder, os.ModePerm); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create contract folder"})
+		return
+	}
+	if err := os.MkdirAll(handoverFolder, os.ModePerm); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create handover folder"})
+		return
+	}
+	if err := os.MkdirAll(quotationFolder, os.ModePerm); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create quotation folder"})
+		return
 	}
 
 	// จัดการไฟล์ Service Contract Document
 	if file, err := c.FormFile("service_contract_document"); err == nil {
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("contract_%d_%d%s", requestServiceAreaID, serviceAreaDocument.ID, fileExtension))
+		fileName := fmt.Sprintf("contract_%d%s", serviceAreaDocument.ID, fileExtension)
+		filePath := path.Join(contractFolder, fileName)
 		serviceAreaDocument.ServiceContractDocument = filePath
 
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -94,7 +133,8 @@ func CreateServiceAreaDocument(c *gin.Context) {
 	// จัดการไฟล์ Area Handover Document
 	if file, err := c.FormFile("area_handover_document"); err == nil {
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("handover_%d_%d%s", requestServiceAreaID, serviceAreaDocument.ID, fileExtension))
+		fileName := fmt.Sprintf("handover_%d%s", serviceAreaDocument.ID, fileExtension)
+		filePath := path.Join(handoverFolder, fileName)
 		serviceAreaDocument.AreaHandoverDocument = filePath
 
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -107,7 +147,8 @@ func CreateServiceAreaDocument(c *gin.Context) {
 	// จัดการไฟล์ Quotation Document
 	if file, err := c.FormFile("quotation_document"); err == nil {
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("quotation_%d_%d%s", requestServiceAreaID, serviceAreaDocument.ID, fileExtension))
+		fileName := fmt.Sprintf("quotation_%d%s", serviceAreaDocument.ID, fileExtension)
+		filePath := path.Join(quotationFolder, fileName)
 		serviceAreaDocument.QuotationDocument = filePath
 
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -279,42 +320,5 @@ func DeleteServiceAreaDocument(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Service area document deleted successfully",
-	})
-}
-
-// ListServiceUserTypes ดึงรายการ ServiceUserType ทั้งหมด
-func ListServiceUserTypes(c *gin.Context) {
-	var serviceUserTypes []entity.ServiceUserType
-	if err := config.DB().Find(&serviceUserTypes).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service user types"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": serviceUserTypes,
-	})
-}
-
-// GetServiceUserTypeByID ดึงข้อมูล ServiceUserType ตาม ID
-func GetServiceUserTypeByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid id"})
-		return
-	}
-
-	var serviceUserType entity.ServiceUserType
-	if err := config.DB().First(&serviceUserType, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Service user type not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service user type"})
-		}
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": serviceUserType,
 	})
 }

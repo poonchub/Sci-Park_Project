@@ -9,7 +9,9 @@ import dayjs, { Dayjs } from "dayjs";
 import { GridColDef } from "@mui/x-data-grid";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import theme from "../../styles/Theme";
-import { GetServiceAreaTasksByUserID, ListBusinessGroups } from "../../services/http";
+import { GetServiceAreaTasksByUserID, ListBusinessGroups, UpdateRequestServiceAreaStatus, RejectServiceAreaRequest } from "../../services/http";
+import { useNavigate } from "react-router-dom";
+import { Base64 } from "js-base64";
 import { Search, BrushCleaning, HelpCircle } from "lucide-react";
 import { CalendarMonth } from "@mui/icons-material";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
@@ -17,6 +19,8 @@ import { businessGroupConfig } from "../../constants/businessGroupConfig";
 import "./AcceptWorkDocument.css";
 import { Tooltip } from "@mui/material";
 import { Check, X, Send, Eye } from "lucide-react";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -45,65 +49,104 @@ function AcceptWorkDocument() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
 
+    // State สำหรับ Reject Popup
+    const [openRejectPopup, setOpenRejectPopup] = useState(false);
+    const [selectedTaskForReject, setSelectedTaskForReject] = useState<any>(null);
+    const [isRejecting, setIsRejecting] = useState(false);
+
+    // State สำหรับ Submit Service Area Popup
+    const [openSubmitPopup, setOpenSubmitPopup] = useState(false);
+    const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<any>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // State สำหรับ Alerts
+    const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    const navigate = useNavigate();
+
+    // ฟังก์ชันสำหรับอัพเดทสถานะเป็น ID 6
+    const updateStatusToComplete = async (requestServiceAreaID: number) => {
+        try {
+            await UpdateRequestServiceAreaStatus(requestServiceAreaID, 6);
+            // Refresh data หลังจากอัพเดท
+            fetchServiceAreaTasks();
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    };
+
+    // ฟังก์ชันสำหรับเปิด Reject Popup
+    const handleOpenRejectPopup = (task: any) => {
+        setSelectedTaskForReject(task);
+        setOpenRejectPopup(true);
+    };
+
+    // ฟังก์ชันสำหรับเปิด Submit Service Area Popup
+    const handleOpenSubmitPopup = (task: any) => {
+        setSelectedTaskForSubmit(task);
+        setOpenSubmitPopup(true);
+    };
+
+    // ฟังก์ชันสำหรับ Reject Service Area
+    const handleRejectServiceArea = async (note?: string) => {
+        if (!selectedTaskForReject) return;
+
+        try {
+            setIsRejecting(true);
+            await RejectServiceAreaRequest(selectedTaskForReject.RequestServiceAreaID, note || "");
+            
+            // Refresh data หลังจาก Reject
+            fetchServiceAreaTasks();
+            
+            // ปิด Popup
+            setOpenRejectPopup(false);
+            setSelectedTaskForReject(null);
+        } catch (error) {
+            console.error("Error rejecting service area:", error);
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
+    // ฟังก์ชันสำหรับ Submit Service Area
+    const handleSubmitServiceArea = async (data: any) => {
+        if (!selectedTaskForSubmit) return;
+
+        try {
+            setIsSubmitting(true);
+            
+            // TODO: เรียก API สำหรับ Submit Service Area
+            // await SubmitServiceAreaAPI(selectedTaskForSubmit.ServiceAreaTaskID, data);
+            
+            // Refresh data หลังจาก Submit
+            fetchServiceAreaTasks();
+            
+            // ปิด Popup
+            setOpenSubmitPopup(false);
+            setSelectedTaskForSubmit(null);
+        } catch (error) {
+            console.error("Error submitting service area:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const renderActionButtons = (data: any, statusName: string) => {
-        const showSubmit = statusName === "In Progress";
-        const showAcceptReject = statusName === "Complete";
+        const showSubmit = data.StatusID === 3 || data.StatusID === 4; // Status ID 3 และ 4 = แสดงปุ่ม Submit
+        const showDetailsOnly = data.StatusID === 6; // Status ID 6 = Complete
 
         return (
             <>
-                {showAcceptReject && (
-                    <>
-                        <Tooltip title={"Start"}>
-                            <Button
-                                className="btn-accept"
-                                variant="contained"
-                                onClick={() => {
-                                    console.log("Start clicked for task:", data.ServiceAreaTaskID);
-                                }}
-                                sx={{
-                                    minWidth: "42px",
-                                }}
-                            >
-                                <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                <Typography variant="textButtonClassic" className="text-btn">
-                                    Start
-                                </Typography>
-                            </Button>
-                        </Tooltip>
-                        <Tooltip title={"Cancel"}>
-                            <Button
-                                className="btn-reject"
-                                variant="outlinedCancel"
-                                onClick={() => {
-                                    console.log("Cancel clicked for task:", data.ServiceAreaTaskID);
-                                }}
-                                sx={{
-                                    minWidth: "42px",
-                                }}
-                            >
-                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                <Typography variant="textButtonClassic" className="text-btn">
-                                    Cancel
-                                </Typography>
-                            </Button>
-                        </Tooltip>
-                    </>
-                )}
-
                 {showSubmit && (
                     <>
                         <Tooltip title={"Submit"}>
                             <Button
                                 className="btn-submit"
                                 variant="contained"
-                                onClick={() => {
-                                    console.log("Submit clicked for task:", data.ServiceAreaTaskID);
-                                }}
+                                onClick={() => handleOpenSubmitPopup(data)}
                                 sx={{
                                     minWidth: "42px",
-
                                 }}
                             >
                                 <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
@@ -112,24 +155,23 @@ function AcceptWorkDocument() {
                                 </Typography>
                             </Button>
                         </Tooltip>
-                        <Tooltip title={"Cancel"}>
-                            <Button
-                                className="btn-reject"
-                                variant="outlinedCancel"
-                                onClick={() => {
-                                    console.log("Cancel clicked for task:", data.ServiceAreaTaskID);
-                                }}
-                                sx={{
-                                    minWidth: "42px",
-
-                                }}
-                            >
-                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                <Typography variant="textButtonClassic" className="text-btn">
-                                    Cancel
-                                </Typography>
-                            </Button>
-                        </Tooltip>
+                                                 <Tooltip title={"Cancel"}>
+                             <Button
+                                 className="btn-reject"
+                                 variant="outlinedCancel"
+                                 onClick={() => {
+                                     handleOpenRejectPopup(data);
+                                 }}
+                                 sx={{
+                                     minWidth: "42px",
+                                 }}
+                             >
+                                 <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                 <Typography variant="textButtonClassic" className="text-btn">
+                                     Cancel
+                                 </Typography>
+                             </Button>
+                         </Tooltip>
                     </>
                 )}
 
@@ -137,22 +179,41 @@ function AcceptWorkDocument() {
                     <Button
                         className="btn-detail"
                         variant="outlinedGray"
-                        onClick={() => {
-                            console.log("Details clicked for task:", data.ServiceAreaTaskID);
+                        onClick={async () => {
+                            // Navigate to ServiceAreaDetails page with RequestServiceAreaID
+                            const requestServiceAreaID = data.RequestServiceAreaID;
+                            if (requestServiceAreaID) {
+                                // ถ้า Status เป็น 3 ให้เปลี่ยนเป็น 4 ก่อน navigate
+                                if (data.StatusID === 3) {
+                                    try {
+                                        await UpdateRequestServiceAreaStatus(requestServiceAreaID, 4);
+                                        // Refresh data หลังจากอัพเดท
+                                        fetchServiceAreaTasks();
+                                    } catch (error) {
+                                        console.error("Error updating status:", error);
+                                    }
+                                }
+                                
+                                // Encode the ID using Base64 (same as ServiceAreaDetails page expects)
+                                const encodedId = Base64.encode(String(requestServiceAreaID));
+                                navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
+                            } else {
+                                console.error("RequestServiceAreaID not found for task:", data.ServiceAreaTaskID);
+                            }
                         }}
-                        sx={{
-                            minWidth: "42px",
-                            width: !(showSubmit || showAcceptReject) ? "100%" : "",
-                        }}
+                                                 sx={{
+                             minWidth: "42px",
+                             width: !showSubmit ? "100%" : "",
+                         }}
                     >
-                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                        {!(showSubmit || showAcceptReject) ? (
-                            <Typography variant="textButtonClassic">Details</Typography>
-                        ) : (
-                            <Typography variant="textButtonClassic" className="text-btn">
-                                Details
-                            </Typography>
-                        )}
+                                                 <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                         {!showSubmit ? (
+                             <Typography variant="textButtonClassic">Details</Typography>
+                         ) : (
+                             <Typography variant="textButtonClassic" className="text-btn">
+                                 Details
+                             </Typography>
+                         )}
                     </Button>
                 </Tooltip>
             </>
@@ -342,24 +403,14 @@ function AcceptWorkDocument() {
             options.page = page + 1; // API ใช้ 1-based, frontend ใช้ 0-based
             options.limit = limit;
 
-            console.log("🔍 [DEBUG] Calling API with options:", options);
             const res = await GetServiceAreaTasksByUserID(currentUserId, options);
-            console.log("🔍 [DEBUG] Raw API Response:", res);
 
             if (res && res.data) {
-                console.log("🔍 [DEBUG] API data length:", res.data.length);
-                console.log("🔍 [DEBUG] First item in data:", res.data[0]);
-                console.log("🔍 [DEBUG] All ServiceAreaTaskIDs:", res.data.map((item: any) => item.ServiceAreaTaskID));
-                console.log("🔍 [DEBUG] All RequestServiceAreaIDs:", res.data.map((item: any) => item.RequestServiceAreaID));
-
                 // ตรวจสอบข้อมูลซ้ำ
                 const taskIds = res.data.map((item: any) => item.ServiceAreaTaskID);
                 const requestIds = res.data.map((item: any) => item.RequestServiceAreaID);
                 const duplicateTaskIds = taskIds.filter((id: any, index: number) => taskIds.indexOf(id) !== index);
                 const duplicateRequestIds = requestIds.filter((id: any, index: number) => requestIds.indexOf(id) !== index);
-
-                console.log("🔍 [DEBUG] Duplicate ServiceAreaTaskIDs:", duplicateTaskIds);
-                console.log("🔍 [DEBUG] Duplicate RequestServiceAreaIDs:", duplicateRequestIds);
 
                 setRows(res.data);
                 setTotal(res.total || res.data.length);
@@ -397,27 +448,19 @@ function AcceptWorkDocument() {
     };
 
     const filteredRows = useMemo(() => {
-        console.log("🔍 [DEBUG] filteredRows - Original rows:", rows);
-        console.log("🔍 [DEBUG] filteredRows - Active tab:", activeTab);
-        console.log("🔍 [DEBUG] filteredRows - Search text:", searchText);
-
         let filtered = rows;
 
         // กรองตาม Tab (StatusID)
         if (activeTab === 0) {
-            // In Progress Tab - แสดงเฉพาะ StatusID = 3
-            filtered = filtered.filter((r) => r.StatusID === 3);
-            console.log("🔍 [DEBUG] filteredRows - After StatusID=3 filter:", filtered.length);
+            // In Progress Tab - แสดงทั้ง StatusID = 3 และ 4
+            filtered = filtered.filter((r) => r.StatusID === 3 || r.StatusID === 4);
         } else {
-            // Complete Tab - แสดงเฉพาะ StatusID = 4
-            filtered = filtered.filter((r) => r.StatusID === 4);
-            console.log("🔍 [DEBUG] filteredRows - After StatusID=4 filter:", filtered.length);
+            // Complete Tab - แสดงเฉพาะ StatusID = 6
+            filtered = filtered.filter((r) => r.StatusID === 6);
         }
 
         // กรองตาม search text
         if (!searchText) {
-            console.log("🔍 [DEBUG] filteredRows - Final filtered (no search):", filtered.length);
-            console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", filtered.map((r: any) => r.ServiceAreaTaskID));
             return filtered;
         }
         const s = searchText.toLowerCase();
@@ -427,8 +470,6 @@ function AcceptWorkDocument() {
             const businessGroup = (r.BusinessGroupName || "").toLowerCase();
             return company.includes(s) || requester.includes(s) || businessGroup.includes(s);
         });
-        console.log("🔍 [DEBUG] filteredRows - Final filtered (with search):", textFiltered.length);
-        console.log("🔍 [DEBUG] filteredRows - Final ServiceAreaTaskIDs:", textFiltered.map((r: any) => r.ServiceAreaTaskID));
         return textFiltered;
     }, [rows, searchText, activeTab]);
 
@@ -567,13 +608,34 @@ function AcceptWorkDocument() {
                                     }}
                                 />
                             )}
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </Container>
-        </Box>
-    );
-}
+                                                 </Grid>
+                     </Grid>
+                 </Grid>
+             </Container>
+
+             {/* Reject Service Area Popup */}
+             <ConfirmDialog
+                 open={openRejectPopup}
+                 setOpenConfirm={setOpenRejectPopup}
+                 handleFunction={handleRejectServiceArea}
+                 title="Reject Service Area Request"
+                 message={`Are you sure you want to reject the service area request for ${selectedTaskForReject?.CompanyName || 'this company'}? Please provide a reason for rejection.`}
+                 buttonActive={isRejecting}
+                 showNoteField={true}
+             />
+
+             {/* Submit Service Area Popup */}
+             <SubmitServiceAreaPopup
+                 open={openSubmitPopup}
+                 onClose={() => setOpenSubmitPopup(false)}
+                 onConfirm={handleSubmitServiceArea}
+                 setAlerts={setAlerts}
+                 companyName={selectedTaskForSubmit?.CompanyName}
+                 buttonActive={isSubmitting}
+             />
+         </Box>
+     );
+ }
 
 export default AcceptWorkDocument;
 

@@ -135,7 +135,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       RequestTypeID: Number(selectedRequestType) || 1,
     };
 
-    console.log('Form data to send:', formDataToSend);
+    
 
     if(formDataToSend.RoleID === 0) {
       setAlerts(prev => [

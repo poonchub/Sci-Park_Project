@@ -117,127 +117,125 @@ func ListRooms(c *gin.Context) {
 }
 
 // GET /rooms
-    func ListSetRooms(c *gin.Context) {
-        var rooms []entity.Room
+func ListSetRooms(c *gin.Context) {
+	var rooms []entity.Room
 
-        floorID, _ := strconv.Atoi(c.DefaultQuery("floor", "0"))
-        roomTypeID, _ := strconv.Atoi(c.DefaultQuery("room_type", "0"))
-        roomStatusID, _ := strconv.Atoi(c.DefaultQuery("room_status", "0"))
-        // capacityMin, capacityMax เอาออก เพราะไม่อยู่ใน Room ตารางนี้
+	floorID, _ := strconv.Atoi(c.DefaultQuery("floor", "0"))
+	roomTypeID, _ := strconv.Atoi(c.DefaultQuery("room_type", "0"))
+	roomStatusID, _ := strconv.Atoi(c.DefaultQuery("room_status", "0"))
+	// capacityMin, capacityMax เอาออก เพราะไม่อยู่ใน Room ตารางนี้
 
-        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-        if page < 1 {
-            page = 1
-        }
-        if limit < 1 {
-            limit = 10
-        }
-        offset := (page - 1) * limit
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
 
-        db := config.DB()
+	db := config.DB()
 
-        if floorID > 0 {
-            db = db.Where("floor_id = ?", floorID)
-        }
-        if roomTypeID > 0 {
-            db = db.Where("room_type_id = ?", roomTypeID)
-        }
-        if roomStatusID > 0 {
-            db = db.Where("room_status_id = ?", roomStatusID)
-        }
+	if floorID > 0 {
+		db = db.Where("floor_id = ?", floorID)
+	}
+	if roomTypeID > 0 {
+		db = db.Where("room_type_id = ?", roomTypeID)
+	}
+	if roomStatusID > 0 {
+		db = db.Where("room_status_id = ?", roomStatusID)
+	}
 
-        query := db.Preload("Floor").
-                    Preload("RoomType.RoomTypeLayouts").  // โหลด RoomTypeLayouts ด้วย
-                    Preload("RoomStatus").
-                    Order("rooms.created_at DESC").
-                    Limit(limit).
-                    Offset(offset)
+	query := db.Preload("Floor").
+		Preload("RoomType.RoomTypeLayouts"). // โหลด RoomTypeLayouts ด้วย
+		Preload("RoomStatus").
+		Order("rooms.created_at DESC").
+		Limit(limit).
+		Offset(offset)
 
-        if err := query.Find(&rooms).Error; err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch rooms"})
-            return
-        }
+	if err := query.Find(&rooms).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch rooms"})
+		return
+	}
 
-        var total int64
-        countQuery := config.DB().Model(&entity.Room{})
+	var total int64
+	countQuery := config.DB().Model(&entity.Room{})
 
-        if floorID > 0 {
-            countQuery = countQuery.Where("floor_id = ?", floorID)
-        }
-        if roomTypeID > 0 {
-            countQuery = countQuery.Where("room_type_id = ?", roomTypeID)
-        }
-        if roomStatusID > 0 {
-            countQuery = countQuery.Where("room_status_id = ?", roomStatusID)
-        }
-        countQuery.Count(&total)
+	if floorID > 0 {
+		countQuery = countQuery.Where("floor_id = ?", floorID)
+	}
+	if roomTypeID > 0 {
+		countQuery = countQuery.Where("room_type_id = ?", roomTypeID)
+	}
+	if roomStatusID > 0 {
+		countQuery = countQuery.Where("room_status_id = ?", roomStatusID)
+	}
+	countQuery.Count(&total)
 
-        var roomResponses []map[string]interface{}
-        for _, room := range rooms {
-            capacity := 0
-            if len(room.RoomType.RoomTypeLayouts) > 0 {
-                capacity = room.RoomType.RoomTypeLayouts[0].Capacity
-            }
-            roomResponse := map[string]interface{}{
-                "ID":           room.ID,
-                "RoomNumber":   room.RoomNumber,
-                "Capacity":     capacity,  // ดึงจาก RoomTypeLayout
-                "FloorID":      room.FloorID,
-                "RoomTypeID":   room.RoomTypeID,
-                "RoomStatusID": room.RoomStatusID,
-                "Floor":        room.Floor.Number,
-                "RoomType":     room.RoomType.TypeName,
-                "RoomStatus":   room.RoomStatus.StatusName,
-            }
-            roomResponses = append(roomResponses, roomResponse)
-        }
+	var roomResponses []map[string]interface{}
+	for _, room := range rooms {
+		capacity := 0
+		if len(room.RoomType.RoomTypeLayouts) > 0 {
+			capacity = room.RoomType.RoomTypeLayouts[0].Capacity
+		}
+		roomResponse := map[string]interface{}{
+			"ID":           room.ID,
+			"RoomNumber":   room.RoomNumber,
+			"Capacity":     capacity, // ดึงจาก RoomTypeLayout
+			"FloorID":      room.FloorID,
+			"RoomTypeID":   room.RoomTypeID,
+			"RoomStatusID": room.RoomStatusID,
+			"Floor":        room.Floor.Number,
+			"RoomType":     room.RoomType.TypeName,
+			"RoomStatus":   room.RoomStatus.StatusName,
+		}
+		roomResponses = append(roomResponses, roomResponse)
+	}
 
-        c.JSON(http.StatusOK, gin.H{
-            "data":       roomResponses,
-            "page":       page,
-            "limit":      limit,
-            "total":      total,
-            "totalPages": (total + int64(limit) - 1) / int64(limit),
-        })
-    }
-
-
+	c.JSON(http.StatusOK, gin.H{
+		"data":       roomResponses,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	})
+}
 
 // GET /room/:id
 func GetRoomByID(c *gin.Context) {
-    roomID := c.Param("id")
-    var room entity.Room
+	roomID := c.Param("id")
+	var room entity.Room
 
-    // preload ให้ครบทั้ง Floor, RoomTypeLayouts, RoomStatus
-    if err := config.DB().
-        Preload("Floor").
-        Preload("RoomType.RoomTypeLayouts").
-        Preload("RoomStatus").
-        First(&room, roomID).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
-        return
-    }
+	// preload ให้ครบทั้ง Floor, RoomTypeLayouts, RoomStatus
+	if err := config.DB().
+		Preload("Floor").
+		Preload("RoomType.RoomTypeLayouts").
+		Preload("RoomStatus").
+		First(&room, roomID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+		return
+	}
 
-    // ดึง capacity จาก RoomTypeLayouts (ตัวแรก)
-    capacity := 0
-    if len(room.RoomType.RoomTypeLayouts) > 0 {
-        capacity = room.RoomType.RoomTypeLayouts[0].Capacity
-    }
+	// ดึง capacity จาก RoomTypeLayouts (ตัวแรก)
+	capacity := 0
+	if len(room.RoomType.RoomTypeLayouts) > 0 {
+		capacity = room.RoomType.RoomTypeLayouts[0].Capacity
+	}
 
-    // ส่งข้อมูลครบสำหรับใช้ในหน้า Edit Room
-    c.JSON(http.StatusOK, gin.H{
-        "ID":           room.ID,
-        "RoomNumber":   room.RoomNumber,
-        "RoomStatusID": room.RoomStatusID,
-        "FloorID":      room.FloorID,
-        "RoomTypeID":   room.RoomTypeID,
-        "Capacity":     capacity,
-        "Floor":        room.Floor.Number,
-        "RoomType":     room.RoomType.TypeName,
-        "RoomStatus":   room.RoomStatus.StatusName,
-    })
+	// ส่งข้อมูลครบสำหรับใช้ในหน้า Edit Room
+	c.JSON(http.StatusOK, gin.H{
+		"ID":           room.ID,
+		"RoomNumber":   room.RoomNumber,
+		"RoomStatusID": room.RoomStatusID,
+		"FloorID":      room.FloorID,
+		"RoomTypeID":   room.RoomTypeID,
+		"Capacity":     capacity,
+		"Floor":        room.Floor.Number,
+		"RoomType":     room.RoomType.TypeName,
+		"RoomStatus":   room.RoomStatus.StatusName,
+	})
 }
 
 // handler.go
@@ -330,11 +328,11 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 
 // GET /room-rental-space/:id
 func GetRoomRentalSpaceByID(c *gin.Context) {
-    roomID := c.Param("id")
+	roomID := c.Param("id")
 
-    var room entity.Room
+	var room entity.Room
 
-    db := config.DB()
+	db := config.DB()
 
 	result := db.
 		Preload("Floor").
@@ -349,4 +347,30 @@ func GetRoomRentalSpaceByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, &room)
+}
+
+// GET /rooms
+func GetAllRooms(c *gin.Context) {
+	var rooms []entity.Room
+	db := config.DB()
+
+	// ดึงข้อมูลห้องทั้งหมด
+	if err := db.Find(&rooms).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// สร้าง response ที่มีเฉพาะ roomID และ roomNumber
+	var roomList []gin.H
+	for _, room := range rooms {
+		roomList = append(roomList, gin.H{
+			"roomID":     room.ID,
+			"roomNumber": room.RoomNumber,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   roomList,
+	})
 }
