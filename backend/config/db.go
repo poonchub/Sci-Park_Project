@@ -1184,32 +1184,7 @@ func SeedDatabase() {
 		})
 	}
 
-	// Service Area Document
-	serviceAreaDocuments := []entity.ServiceAreaDocument{
-		{
-			RequestServiceAreaID:    1,
-			ServiceContractDocument: "/files/contracts/contract1.pdf",
-			AreaHandoverDocument:    "/files/handover/handover1.pdf",
-			QuotationDocument:       "/files/quotation/quotation1.pdf",
-			RoomID:                  1,
-			ServiceUserTypeID:       1,
-		},
-		{
-			RequestServiceAreaID:    2,
-			ServiceContractDocument: "/files/contracts/contract2.pdf",
-			AreaHandoverDocument:    "/files/handover/handover2.pdf",
-			QuotationDocument:       "/files/quotation/quotation2.pdf",
-			RoomID:                  2,
-			ServiceUserTypeID:       2,
-		},
-	}
-
-	for _, doc := range serviceAreaDocuments {
-		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
-			RequestServiceAreaID: doc.RequestServiceAreaID,
-			RoomID:               doc.RoomID,
-		})
-	}
+	
 
 	// AboutCompany data for internal users
 	aboutCompanies := []entity.AboutCompany{

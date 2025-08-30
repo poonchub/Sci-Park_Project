@@ -36,12 +36,23 @@ interface ServiceAreaDetailsInterface {
     RegisteredCapital?: number;
     HiringRate?: number;
     ResearchInvestmentValue?: number;
-    ThreeYearGrowthForecast?: number;
+    ThreeYearGrowthForecast?: string;
     ApproverUserName?: string;
     ApprovalNote?: string;
     TaskUserName?: string;
     TaskNote?: string;
     ServiceAreaDocumentId?: number;
+    // New Service Area Document fields
+    ServiceContractDocument?: string;
+    AreaHandoverDocument?: string;
+    QuotationDocument?: string;
+    RefundGuaranteeDocument?: string;
+    ContractNumber?: string;
+    ContractStartAt?: string;
+    ContractEndAt?: string;
+    RoomNumber?: string;
+    ServiceUserTypeID?: number;
+    ServiceUserTypeName?: string;
 }
 
 function ServiceAreaDetails() {
@@ -156,7 +167,7 @@ function ServiceAreaDetails() {
                     </Grid>
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
-                            <Button variant="outlined" onClick={handleBack}>
+                            <Button variant="outlinedGray" onClick={handleBack}>
                                 <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
@@ -396,25 +407,210 @@ function ServiceAreaDetails() {
                                         </Grid>
                                     )}
 
-                                    {/* Row 3: Documents */}
-                                    {serviceAreaDetails?.ServiceRequestDocument && (
+                                    {/* Row 3: Service Area Documents and Contract Information */}
+                                    {(serviceAreaDetails?.ServiceAreaDocumentId || serviceAreaDetails?.ServiceRequestDocument) && (
                                         <Grid size={{ xs: 12, md: 12 }}>
                                             <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
                                                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                                    Documents
+                                                    Documents & Contract Information
                                                 </Typography>
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Service Request Document:
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {serviceAreaDetails.ServiceRequestDocument.split('/').pop()}
-                                                    </Typography>
-                                                    <Button size="small" variant="outlined" onClick={() => DownloadServiceRequestDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.ServiceRequestDocument?.split('/').pop())} sx={{ ml: 1 }}>
-                                                        <Download size={16} style={{ marginRight: 6 }} />
-                                                        Download
-                                                    </Button>
-                                                </Box>
+                                                
+                                                {/* Contract Information */}
+                                                {(serviceAreaDetails?.ContractNumber || serviceAreaDetails?.ContractStartAt || serviceAreaDetails?.RoomNumber || serviceAreaDetails?.ServiceUserTypeName) && (
+                                                    <Box sx={{ mb: 3 }}>
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                                            Contract Details
+                                                        </Typography>
+                                                        <Grid container spacing={2}>
+                                                            {serviceAreaDetails?.ContractNumber && (
+                                                                <Grid size={{ xs: 12, sm: 6 }}>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Contract Number
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {serviceAreaDetails.ContractNumber}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.ContractStartAt && (
+                                                                <Grid size={{ xs: 12, sm: 6 }}>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Contract Start Date
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {dateFormat(serviceAreaDetails.ContractStartAt)}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.ContractEndAt && serviceAreaDetails.ContractEndAt !== "0001-01-01T00:00:00Z" && (
+                                                                <Grid size={{ xs: 12, sm: 6 }}>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Contract End Date
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {dateFormat(serviceAreaDetails.ContractEndAt)}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.RoomNumber && (
+                                                                <Grid size={{ xs: 12, sm: 6 }}>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Room Number
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {serviceAreaDetails.RoomNumber}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.ServiceUserTypeName && (
+                                                                <Grid size={{ xs: 12, sm: 6 }}>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Service User Type
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {serviceAreaDetails.ServiceUserTypeName}
+                                                                    </Typography>
+                                                                </Grid>
+                                                            )}
+                                                        </Grid>
+                                                    </Box>
+                                                )}
+
+                                                {/* Service Area Documents */}
+                                                {(serviceAreaDetails?.ServiceContractDocument || serviceAreaDetails?.AreaHandoverDocument || serviceAreaDetails?.QuotationDocument || serviceAreaDetails?.RefundGuaranteeDocument) && (
+                                                    <Box sx={{ mb: 3 }}>
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                                            Service Area Documents
+                                                        </Typography>
+                                                        <Grid container spacing={2}>
+                                                            {serviceAreaDetails?.ServiceContractDocument && (
+                                                                <Grid size={{ xs: 12, sm: 12 }}>
+                                                                    <Grid container spacing={2} alignItems="center">
+                                                                        <Grid size={{ xs: 12, sm: 4 }}>
+                                                                            <Box>
+                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                    Service Contract Document:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                    {serviceAreaDetails.ServiceContractDocument.split('/').pop()}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid size={{ xs: 12, sm: 8 }}>
+                                                                            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.ServiceContractDocument, '_blank')}>
+                                                                                    <Download size={16} style={{ marginRight: 6 }} />
+                                                                                    Download
+                                                                                </Button>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.AreaHandoverDocument && (
+                                                                <Grid size={{ xs: 12, sm: 12 }}>
+                                                                    <Grid container spacing={2} alignItems="center">
+                                                                        <Grid size={{ xs: 12, sm: 4 }}>
+                                                                            <Box>
+                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                    Area Handover Document:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                    {serviceAreaDetails.AreaHandoverDocument.split('/').pop()}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid size={{ xs: 12, sm: 8 }}>
+                                                                            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.AreaHandoverDocument, '_blank')}>
+                                                                                    <Download size={16} style={{ marginRight: 6 }} />
+                                                                                    Download
+                                                                                </Button>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.QuotationDocument && (
+                                                                <Grid size={{ xs: 12, sm: 12 }}>
+                                                                    <Grid container spacing={2} alignItems="center">
+                                                                        <Grid size={{ xs: 12, sm: 4 }}>
+                                                                            <Box>
+                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                    Quotation Document:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                    {serviceAreaDetails.QuotationDocument.split('/').pop()}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid size={{ xs: 12, sm: 8 }}>
+                                                                            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.QuotationDocument, '_blank')}>
+                                                                                    <Download size={16} style={{ marginRight: 6 }} />
+                                                                                    Download
+                                                                                </Button>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            )}
+                                                            {serviceAreaDetails?.RefundGuaranteeDocument && (
+                                                                <Grid size={{ xs: 12, sm: 12 }}>
+                                                                    <Grid container spacing={2} alignItems="center">
+                                                                        <Grid size={{ xs: 12, sm: 9 }}>
+                                                                            <Box>
+                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                    Refund Guarantee Document:
+                                                                                </Typography>
+                                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                    {serviceAreaDetails.RefundGuaranteeDocument.split('/').pop()}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid size={{ xs: 12, sm: 3 }}>
+                                                                            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                                                                <Button size="small" variant="outlined" onClick={() => window.open(serviceAreaDetails.RefundGuaranteeDocument, '_blank')}>
+                                                                                    <Download size={16} style={{ marginRight: 6 }} />
+                                                                                    Download
+                                                                                </Button>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            )}
+                                                        </Grid>
+                                                    </Box>
+                                                )}
+
+                                                                                                {/* Service Request Document (if exists) */}
+                                                {serviceAreaDetails?.ServiceRequestDocument && (
+                                                    <Box>
+                                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
+                                                            Service Request Document
+                                                        </Typography>
+                                                        <Grid container spacing={2} alignItems="center">
+                                                            <Grid size={{ xs: 12, sm: 4 }}>
+                                                                <Box>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Document:
+                                                                    </Typography>
+                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                        {serviceAreaDetails.ServiceRequestDocument.split('/').pop()}
+                                                                    </Typography>
+                                                                </Box>
+                                                            </Grid>
+                                                            <Grid size={{ xs: 12, sm: 8 }}>
+                                                                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                    <Button size="small" variant="outlined" onClick={() => DownloadServiceRequestDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.ServiceRequestDocument?.split('/').pop())}>
+                                                                        <Download size={16} style={{ marginRight: 6 }} />
+                                                                        Download
+                                                                    </Button>
+                                                                </Box>
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Box>
+                                                )}
                                             </Box>
                                         </Grid>
                                     )}

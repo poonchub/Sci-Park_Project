@@ -1304,7 +1304,7 @@ const CreateServiceAreaForm: React.FC = () => {
                     <Typography variant="body1" className="title-field">Collaboration Plans</Typography>
                     <Button
                       type="button"
-                      variant="outlined"
+                      variant="contained"
                       size="small"
                       onClick={addCollaborationPlan}
                       sx={{ backgroundColor: '#ff6f00', color: 'white', '&:hover': { backgroundColor: '#e65100' } }}
@@ -1322,7 +1322,7 @@ const CreateServiceAreaForm: React.FC = () => {
                         {collaborationPlans.length > 1 && (
                           <Button
                             type="button"
-                            variant="outlined"
+                            variant="outlinedGray"
                             size="small"
                             color="error"
                             onClick={() => removeCollaborationPlan(index)}
@@ -1495,7 +1495,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 <Grid size={{ xs: 12 }} className="submit-button-container">
                   <Button
                     type="button"
-                    variant="outlined"
+                    variant="outlinedGray"
                     startIcon={<FontAwesomeIcon icon={faRotateRight} />}
                     sx={{ marginRight: 2 }}
                     onClick={handleBack}

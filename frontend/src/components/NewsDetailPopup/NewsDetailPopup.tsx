@@ -71,6 +71,24 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
     const [openDelete, setOpenDelete] = useState(false);
     const [openImage, setOpenImage] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string>("");
+    
+    // Ref สำหรับเก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+
+    // จัดการ focus management เพื่อป้องกัน aria-hidden warning
+    useEffect(() => {
+        if (open) {
+            // เก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+            previousFocusRef.current = document.activeElement as HTMLElement;
+        } else {
+            // เมื่อ dialog ปิด ให้ return focus ไปยัง element เดิม
+            if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+                setTimeout(() => {
+                    previousFocusRef.current?.focus();
+                }, 0);
+            }
+        }
+    }, [open]);
 
     const handleUpdatePinned = async () => {
         try {
@@ -273,6 +291,10 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 setOpenImage(false);
             }}
             maxWidth={false}
+            disableRestoreFocus
+            keepMounted={false}
+            disableEnforceFocus
+            disableAutoFocus
             sx={{
                 '& .MuiDialog-paper': {
                     maxWidth: '70vw',
@@ -304,6 +326,10 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 handleResetData();
                 setAlerts([]);
             }}
+            disableRestoreFocus
+            keepMounted={false}
+            disableEnforceFocus
+            disableAutoFocus
             slotProps={{
                 paper: {
                     sx: {

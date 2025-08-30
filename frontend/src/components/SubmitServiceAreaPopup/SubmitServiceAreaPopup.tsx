@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -39,6 +39,8 @@ interface SubmitServiceAreaData {
     serviceUserTypeID: number;
     contractNumber: string;
     contractStartAt: Dayjs | null;
+    requestServiceAreaID?: number;
+    success?: boolean;
 }
 
 const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
@@ -78,6 +80,9 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
     }>>([]);
 
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Ref สำหรับเก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+    const previousFocusRef = useRef<HTMLElement | null>(null);
 
     // Function สำหรับดึงข้อมูล Rooms จาก API
     const fetchRooms = async () => {
@@ -114,6 +119,21 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
         if (open) {
             fetchRooms();
             fetchServiceUserTypes();
+        }
+    }, [open]);
+
+    // จัดการ focus management เพื่อป้องกัน aria-hidden warning
+    useEffect(() => {
+        if (open) {
+            // เก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+            previousFocusRef.current = document.activeElement as HTMLElement;
+        } else {
+            // เมื่อ dialog ปิด ให้ return focus ไปยัง element เดิม
+            if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+                setTimeout(() => {
+                    previousFocusRef.current?.focus();
+                }, 0);
+            }
         }
     }, [open]);
 
@@ -220,12 +240,21 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
 
             // ส่งข้อมูลไปยัง Backend
             const result = await CreateServiceAreaDocument(requestServiceAreaID, submitFormData);
-            setAlerts(prev => [...prev, { type: 'success', message: 'Service area document created successfully!' }]);
             
-            // เรียก onConfirm หลังจากแสดง success alert
-            setTimeout(() => {
-                onConfirm(formData);
-            }, 1500);
+            if (result) {
+                setAlerts(prev => [...prev, { type: 'success', message: 'Service area document created successfully!' }]);
+                
+                // เรียก onConfirm หลังจากแสดง success alert พร้อมส่งข้อมูลที่จำเป็น
+                setTimeout(() => {
+                    onConfirm({
+                        ...formData,
+                        requestServiceAreaID: requestServiceAreaID,
+                        success: true
+                    });
+                }, 1500);
+            } else {
+                throw new Error('Failed to create service area document');
+            }
         } catch (error) {
             console.error('Error creating service area document:', error);
             setAlerts(prev => [...prev, { type: 'error', message: 'Network error occurred. Please try again.' }]);
@@ -263,6 +292,8 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
                 maxWidth={false}
                 disableRestoreFocus
                 keepMounted={false}
+                disableEnforceFocus
+                disableAutoFocus
                 sx={{
                     '& .MuiDialog-paper': {
                         minWidth: '400px',

@@ -74,6 +74,11 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                 columnVisibilityModel={columnVisibilityModel}
                 disableRowSelectionOnClick
                 disableColumnResize={false}
+                disableVirtualization={false}
+                disableColumnMenu
+                disableColumnFilter
+                disableColumnSelector
+                disableDensitySelector
                 slots={{
                     noRowsOverlay: EmptyOverlay,
                     noResultsOverlay: EmptyOverlay,

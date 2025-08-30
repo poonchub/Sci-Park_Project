@@ -9,7 +9,7 @@ import {
     DialogTitle
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -33,6 +33,24 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
 
     const [note, setNote] = useState("");
+    
+    // Ref สำหรับเก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+
+    // จัดการ focus management เพื่อป้องกัน aria-hidden warning
+    useEffect(() => {
+        if (open) {
+            // เก็บ reference ของ element ที่มี focus ก่อนเปิด dialog
+            previousFocusRef.current = document.activeElement as HTMLElement;
+        } else {
+            // เมื่อ dialog ปิด ให้ return focus ไปยัง element เดิม
+            if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+                setTimeout(() => {
+                    previousFocusRef.current?.focus();
+                }, 0);
+            }
+        }
+    }, [open]);
 
     const handleConfirm = () => {
         handleFunction(note);
@@ -46,6 +64,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClose={() => setOpenConfirm(false)}
             disableRestoreFocus
             keepMounted={false}
+            disableEnforceFocus
+            disableAutoFocus
         >
             {/* Dialog title with warning icon */}
             <DialogTitle

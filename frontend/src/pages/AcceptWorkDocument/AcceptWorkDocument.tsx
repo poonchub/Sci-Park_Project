@@ -116,17 +116,43 @@ function AcceptWorkDocument() {
         try {
             setIsSubmitting(true);
             
-            // TODO: เรียก API สำหรับ Submit Service Area
-            // await SubmitServiceAreaAPI(selectedTaskForSubmit.ServiceAreaTaskID, data);
+            // อัพเดท status ID เป็น 6 (Complete) หลังจาก submit สำเร็จ
+            const requestServiceAreaID = selectedTaskForSubmit.RequestServiceAreaID;
+            if (requestServiceAreaID) {
+                try {
+                    await UpdateRequestServiceAreaStatus(requestServiceAreaID, 6);
+                    console.log("Status updated to Complete (ID: 6) for RequestServiceAreaID:", requestServiceAreaID);
+                } catch (error) {
+                    console.error("Error updating status to Complete:", error);
+                    throw error; // Throw error เพื่อให้ catch block จัดการ
+                }
+            }
             
-            // Refresh data หลังจาก Submit
-            fetchServiceAreaTasks();
+            // Refresh data หลังจากอัพเดท status
+            await fetchServiceAreaTasks();
             
             // ปิด Popup
             setOpenSubmitPopup(false);
             setSelectedTaskForSubmit(null);
+            
+            // แสดง success alert
+            setAlerts(prev => [...prev, { 
+                type: 'success', 
+                message: `Service area task completed successfully! Status updated to Complete.` 
+            }]);
+            
+            // Return success
+            return { success: true, message: "Service area submitted successfully" };
         } catch (error) {
             console.error("Error submitting service area:", error);
+            
+            // แสดง error alert
+            setAlerts(prev => [...prev, { 
+                type: 'error', 
+                message: `Failed to complete service area task: ${error instanceof Error ? error.message : 'Unknown error'}` 
+            }]);
+            
+            throw error; // Re-throw error เพื่อให้ caller จัดการ
         } finally {
             setIsSubmitting(false);
         }
@@ -145,6 +171,8 @@ function AcceptWorkDocument() {
                                 className="btn-submit"
                                 variant="contained"
                                 onClick={() => handleOpenSubmitPopup(data)}
+                                disableRipple
+                                disableFocusRipple
                                 sx={{
                                     minWidth: "42px",
                                 }}
@@ -162,6 +190,8 @@ function AcceptWorkDocument() {
                                  onClick={() => {
                                      handleOpenRejectPopup(data);
                                  }}
+                                 disableRipple
+                                 disableFocusRipple
                                  sx={{
                                      minWidth: "42px",
                                  }}
@@ -201,6 +231,8 @@ function AcceptWorkDocument() {
                                 console.error("RequestServiceAreaID not found for task:", data.ServiceAreaTaskID);
                             }
                         }}
+                        disableRipple
+                        disableFocusRipple
                                                  sx={{
                              minWidth: "42px",
                              width: !showSubmit ? "100%" : "",
@@ -547,21 +579,23 @@ function AcceptWorkDocument() {
                                 </FormControl>
                             </Grid>
                             <Grid size={{ xs: 2, sm: 1 }}>
-                                <Button
-                                    onClick={handleClearFilter}
-                                    sx={{
-                                        minWidth: 0,
-                                        width: "100%",
-                                        height: "45px",
-                                        borderRadius: "10px",
-                                        border: "1px solid rgb(109, 110, 112, 0.4)",
-                                        "&:hover": {
-                                            boxShadow: "none",
-                                            borderColor: "primary.main",
-                                            backgroundColor: "transparent",
-                                        },
-                                    }}
-                                >
+                                                                 <Button
+                                     onClick={handleClearFilter}
+                                     disableRipple
+                                     disableFocusRipple
+                                     sx={{
+                                         minWidth: 0,
+                                         width: "100%",
+                                         height: "45px",
+                                         borderRadius: "10px",
+                                         border: "1px solid rgb(109, 110, 112, 0.4)",
+                                         "&:hover": {
+                                             boxShadow: "none",
+                                             borderColor: "primary.main",
+                                             backgroundColor: "transparent",
+                                         },
+                                     }}
+                                 >
                                     <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                                 </Button>
                             </Grid>
@@ -624,15 +658,15 @@ function AcceptWorkDocument() {
                  showNoteField={true}
              />
 
-             {/* Submit Service Area Popup */}
-             <SubmitServiceAreaPopup
-                 open={openSubmitPopup}
-                 onClose={() => setOpenSubmitPopup(false)}
-                 onConfirm={handleSubmitServiceArea}
-                 setAlerts={setAlerts}
-                 companyName={selectedTaskForSubmit?.CompanyName}
-                 buttonActive={isSubmitting}
-             />
+                           {/* Submit Service Area Popup */}
+              <SubmitServiceAreaPopup
+                  open={openSubmitPopup}
+                  onClose={() => setOpenSubmitPopup(false)}
+                  onConfirm={handleSubmitServiceArea}
+                  companyName={selectedTaskForSubmit?.CompanyName}
+                  buttonActive={isSubmitting}
+                  requestServiceAreaID={selectedTaskForSubmit?.RequestServiceAreaID || 0}
+              />
          </Box>
      );
  }

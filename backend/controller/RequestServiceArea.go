@@ -847,7 +847,8 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 		Preload("CollaborationPlans").
 		Preload("ServiceAreaApproval.User").
 		Preload("ServiceAreaTask.User").
-		Preload("ServiceAreaDocument").
+		Preload("ServiceAreaDocument.Room").
+		Preload("ServiceAreaDocument.ServiceUserType").
 		First(&requestServiceArea, serviceAreaID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Service area not found"})
@@ -908,6 +909,16 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	// เพิ่มข้อมูลจาก ServiceAreaDocument (ถ้ามี)
 	if requestServiceArea.ServiceAreaDocument != nil {
 		response["ServiceAreaDocumentId"] = requestServiceArea.ServiceAreaDocument.ID
+		response["ServiceContractDocument"] = requestServiceArea.ServiceAreaDocument.ServiceContractDocument
+		response["AreaHandoverDocument"] = requestServiceArea.ServiceAreaDocument.AreaHandoverDocument
+		response["QuotationDocument"] = requestServiceArea.ServiceAreaDocument.QuotationDocument
+		response["RefundGuaranteeDocument"] = requestServiceArea.ServiceAreaDocument.RefundGuaranteeDocument
+		response["ContractNumber"] = requestServiceArea.ServiceAreaDocument.ContractNumber
+		response["ContractStartAt"] = requestServiceArea.ServiceAreaDocument.ContractStartAt
+		response["ContractEndAt"] = requestServiceArea.ServiceAreaDocument.ContractEndAt
+		response["RoomNumber"] = requestServiceArea.ServiceAreaDocument.Room.RoomNumber
+		response["ServiceUserTypeName"] = requestServiceArea.ServiceAreaDocument.ServiceUserType.Name
+		response["ServiceUserTypeID"] = requestServiceArea.ServiceAreaDocument.ServiceUserTypeID
 	}
 
 	// เพิ่มข้อมูล CollaborationPlans แบบย่อ (เฉพาะข้อมูลที่จำเป็น)

@@ -314,11 +314,12 @@ function News() {
         };
     }, []);
 
+    // จัดการ focus management แทนการใช้ inert attribute เพื่อป้องกัน aria-hidden warning
     useEffect(() => {
         if (openPopupCard) {
-            document.getElementById('root')?.setAttribute('inert', '');
+            // ไม่ต้องทำอะไรเมื่อเปิด popup เพราะ Dialog จะจัดการ focus management เอง
         } else {
-            document.getElementById('root')?.removeAttribute('inert');
+            // เมื่อปิด popup ไม่ต้องทำอะไร
         }
     }, [openPopupCard]);
 

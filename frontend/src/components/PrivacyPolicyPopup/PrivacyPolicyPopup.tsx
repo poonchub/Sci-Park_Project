@@ -165,18 +165,9 @@ const PrivacyPolicyPopup: React.FC<PrivacyPolicyPopupProps> = ({
 
             <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
                 <Button
-                    variant="outlined"
+                    variant="outlinedCancel"
                     onClick={onDecline}
-                    sx={{ 
-                        minWidth: 120,
-                        borderColor: 'error.main',
-                        color: 'error.main',
-                        '&:hover': {
-                            borderColor: 'error.dark',
-                            backgroundColor: 'error.light',
-                            color: 'error.dark'
-                        }
-                    }}
+                    
                 >
                     {content.declineButton}
                 </Button>
@@ -184,17 +175,7 @@ const PrivacyPolicyPopup: React.FC<PrivacyPolicyPopupProps> = ({
                     variant="contained"
                     onClick={handleAccept}
                     disabled={!isChecked}
-                    sx={{ 
-                        minWidth: 120,
-                        backgroundColor: '#ff6f00',
-                        '&:hover': {
-                            backgroundColor: '#e65100'
-                        },
-                        '&:disabled': {
-                            backgroundColor: '#ccc',
-                            color: '#666'
-                        }
-                    }}
+                    
                 >
                     {content.acceptButton}
                 </Button>

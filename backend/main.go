@@ -192,7 +192,6 @@ func main() {
 		protected.PUT("/service-user-types/:id", controller.UpdateServiceUserType)
 		protected.DELETE("/service-user-types/:id", controller.DeleteServiceUserType)
 
-
 		// ServiceAreaDocuments
 		protected.POST("/service-area-documents/:request_service_area_id", controller.CreateServiceAreaDocument)
 		protected.GET("/service-area-documents/:request_service_area_id", controller.GetServiceAreaDocumentByRequestID)
@@ -316,8 +315,6 @@ func main() {
 		protected.GET("/listset-room", controller.ListSetRooms)
 		protected.POST("/create-room", controller.CreateRoom)
 		protected.PATCH("/update-room/:id", controller.UpdateRoom)
-
-
 
 		// Floors
 		protected.POST("/create-floor", controller.CreateFloor)
