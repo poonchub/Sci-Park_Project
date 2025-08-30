@@ -37,10 +37,7 @@ const DocumentOperatorRoutes = (): RouteObject => {
                 path: "/booking-room",
                 element: <BookingRoom />,
             },
-            {
-                path: "/maintenance/accept-work",
-                element: <AcceptWork />,
-            },
+            
             {
                 path: "/maintenance/my-maintenance-request",
                 element: <MyMaintenanceRequest />,

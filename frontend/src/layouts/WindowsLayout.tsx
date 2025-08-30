@@ -46,6 +46,7 @@ import {
     NotebookPen,
     DoorClosed,
     NotepadText,
+    ClipboardCheck
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
 import { OrganizationInfoInterface } from "../interfaces/IOrganizationInfo";
@@ -236,8 +237,8 @@ const WindowsLayout: React.FC = (props: any) => {
         },
         {
             segment: "service-area/accept-work-document",
-            title: "Document Operator",
-            icon: <HardHat />,
+            title: "My Work",
+            icon: <ClipboardCheck />,
         },
         {
             segment: "user",
@@ -399,7 +400,6 @@ const WindowsLayout: React.FC = (props: any) => {
             "my-account",
             "news",
 
-            "maintenance/accept-work",
             "document-management",
             "rental-space",
         ],
