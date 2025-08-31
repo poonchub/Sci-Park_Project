@@ -1476,7 +1476,7 @@ const CreateServiceAreaForm: React.FC = () => {
                     <input
                       type="file"
                       hidden
-                      accept=".pdf,.doc,.docx"
+                      accept=".pdf"
                       onChange={handleDocumentChange}
                     />
                   </Button>
@@ -1486,7 +1486,7 @@ const CreateServiceAreaForm: React.FC = () => {
                     </Typography>
                   ) : (
                     <Typography variant="body2" sx={{ mt: 1, color: '#666' }}>
-                      Please upload a service request document (.pdf, .doc, .docx)
+                      Please upload a service request document (.pdf)
                     </Typography>
                   )}
                 </Grid>

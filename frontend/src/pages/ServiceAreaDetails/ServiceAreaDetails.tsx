@@ -4,18 +4,22 @@ import { useNavigate } from "react-router-dom";
 
 import "./ServiceAreaDetails.css";
 
-import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument } from "../../services/http";
+import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest } from "../../services/http";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
+import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import InfoCard from "../../components/InfoCard/InfoCard";
 import ServiceAreaStepper from "../../components/ServiceAreaStepper/ServiceAreaStepper";
+import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 import dateFormat from "../../utils/dateFormat";
+import { isAdmin } from "../../routes";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { ChevronLeft, NotebookText, Download } from "lucide-react";
+import { ChevronLeft, NotebookText, Download, Check, X } from "lucide-react";
 
 // Interface for Service Area Details response
 interface ServiceAreaDetailsInterface {
@@ -60,10 +64,16 @@ function ServiceAreaDetails() {
     const [serviceAreaDetails, setServiceAreaDetails] = useState<ServiceAreaDetailsInterface>();
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [requestStatusID, setRequestStatusID] = useState(0);
+    const [businessGroups, setBusinessGroups] = useState<BusinessGroupInterface[]>([]);
 
     // UI state
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
+
+    // Approve/Reject state
+    const [openApprovePopup, setOpenApprovePopup] = useState(false);
+    const [openRejectPopup, setOpenRejectPopup] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -79,6 +89,8 @@ function ServiceAreaDetails() {
 
     const RequestStatus = requestStatuses.find(status => status.ID === serviceAreaDetails?.RequestStatusId)?.Name;
     const isUnsuccessful = RequestStatus === "Unsuccessful";
+    const isPending = RequestStatus === "Pending";
+    const canShowActionButtons = isAdmin() && isPending;
 
     // Fetch service area details by ID
     const getServiceAreaDetails = async () => {
@@ -115,6 +127,45 @@ function ServiceAreaDetails() {
         }
     };
 
+    // Fetch business groups for approve popup
+    const getBusinessGroups = async () => {
+        try {
+            const res = await ListBusinessGroups();
+            if (res) {
+                setBusinessGroups(res);
+            }
+        } catch (error) {
+            console.error("Error fetching business groups:", error);
+        }
+    };
+
+    // Handle approve action
+    const handleApprove = () => {
+        setOpenApprovePopup(true);
+    };
+
+    // Handle reject action
+    const handleReject = async (note?: string) => {
+        if (!serviceAreaDetails?.RequestNo) return;
+        
+        try {
+            setIsSubmitting(true);
+            const userID = Number(localStorage.getItem('userId')) || 0;
+            
+            // ใช้ API ที่รองรับทั้ง Operator และ Admin
+            await RejectServiceAreaRequest(serviceAreaDetails.RequestNo, userID, note || "", "Admin");
+            
+            // Refresh data
+            await getServiceAreaDetails();
+            setAlerts((prev) => [...prev, { type: "success", message: "Service area request rejected successfully" }]);
+        } catch (error) {
+            console.error("Error rejecting request:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to reject request" }]);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     // Handle back navigation
     const handleBack = () => {
         navigate(-1);
@@ -124,7 +175,7 @@ function ServiceAreaDetails() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getServiceAreaDetails(), getRequestStatuses()]);
+                await Promise.all([getServiceAreaDetails(), getRequestStatuses(), getBusinessGroups()]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -625,7 +676,7 @@ function ServiceAreaDetails() {
                                                 {approvalNote && (
                                                     <Box sx={{ mb: 2 }}>
                                                         <Typography variant="body2" color="text.secondary">
-                                                            Approval Note
+                                                        Cancellation
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                             {approvalNote}
@@ -635,7 +686,7 @@ function ServiceAreaDetails() {
                                                 {taskNote && (
                                                     <Box>
                                                         <Typography variant="body2" color="text.secondary">
-                                                            Task Note
+                                                        Cancellation
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                             {taskNote}
@@ -645,12 +696,70 @@ function ServiceAreaDetails() {
                                             </Box>
                                         </Grid>
                                     )}
+
+                                    {/* Action buttons for Admin when status is Pending */}
+                                    <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
+                                        {canShowActionButtons && (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                {/* Reject button */}
+                                                <Button
+                                                    variant="outlinedCancel"
+                                                    onClick={() => setOpenRejectPopup(true)}
+                                                    disabled={isSubmitting}
+                                                    sx={{
+                                                        minWidth: "0px",
+                                                        px: 2,
+                                                        py: 1,
+                                                    }}
+                                                >
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                    <Typography variant="textButtonClassic">Reject</Typography>
+                                                </Button>
+
+                                                {/* Approve button */}
+                                                <Button 
+                                                    variant="contained" 
+                                                    onClick={handleApprove}
+                                                    disabled={isSubmitting}
+                                                    sx={{ px: 4, py: 1 }}
+                                                >
+                                                    <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                    <Typography variant="textButtonClassic">Approve</Typography>
+                                                </Button>
+                                            </Box>
+                                        )}
+                                    </Grid>
                                 </Grid>
                             </CardContent>
                         </Card>
                     )}
                 </Grid>
             </Container>
+
+            {/* Approve Service Area Controller */}
+            <ApproveServiceAreaController
+                open={openApprovePopup}
+                onClose={() => setOpenApprovePopup(false)}
+                requestId={serviceAreaDetails?.RequestNo || null}
+                businessGroupId={null}
+                businessGroups={businessGroups}
+                companyName={serviceAreaDetails?.CompanyName}
+                onApproved={async () => {
+                    await getServiceAreaDetails();
+                    setAlerts((prev) => [...prev, { type: "success", message: "Service area request approved successfully" }]);
+                }}
+            />
+
+            {/* Admin Reject Service Area Popup */}
+            <ConfirmDialog
+                open={openRejectPopup}
+                setOpenConfirm={setOpenRejectPopup}
+                handleFunction={handleReject}
+                title="Reject Service Area Request"
+                message={`Are you sure you want to reject the service area request for ${serviceAreaDetails?.CompanyName || 'this company'}? Please provide a reason for rejection.`}
+                buttonActive={isSubmitting}
+                showNoteField={true}
+            />
         </Box>
     );
 }

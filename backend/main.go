@@ -76,7 +76,7 @@ func main() {
 		r.POST("/layouts", controller.CreateLayout)
 
 		// router.go (ตัวอย่าง)
-	
+
 		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
 		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
 		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)

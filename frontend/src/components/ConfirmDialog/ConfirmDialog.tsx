@@ -101,13 +101,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button
                     onClick={() => setOpenConfirm(false)}
-                    sx={{
-                        color: 'customBlue',
-                        "&:hover": {
-                            background: 'none',
-                            boxShadow: 'none'
-                        }
-                    }}
+                    variant="outlinedGray"
+                    
                 >
                     Cancel
                 </Button>
@@ -117,7 +112,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                         setOpenConfirm(false);
                     }}
                     variant="contained"
-                    disabled={buttonActive}
+                    disabled={buttonActive || (showNoteField && !note.trim())}
                 >
                     Confirm
                 </Button>

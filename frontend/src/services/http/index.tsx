@@ -2526,10 +2526,12 @@ async function UpdateRequestServiceAreaStatus(requestID: number, requestStatusID
     }
 }
 
-async function RejectServiceAreaRequest(requestID: number, note: string): Promise<any> {
+async function RejectServiceAreaRequest(requestID: number, userID: number, note: string, role: string): Promise<any> {
     try {
         const response = await axiosInstance.patch(`/request-service-area/${requestID}/reject`, {
-            note: note
+            user_id: userID,
+            note: note,
+            role: role
         }, {
             headers: {
                 "Content-Type": "application/json",
@@ -2542,6 +2544,8 @@ async function RejectServiceAreaRequest(requestID: number, note: string): Promis
         throw error;
     }
 }
+
+
 
 async function GetServiceAreaDetailsByID(serviceAreaID: number): Promise<any> {
     try {
@@ -3280,7 +3284,7 @@ export {
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
     	UpdateRequestServiceAreaStatus,
-	RejectServiceAreaRequest,
+	    RejectServiceAreaRequest,
     GetServiceAreaDetailsByID,
     CreateServiceAreaApproval,
     DownloadServiceRequestDocument,
