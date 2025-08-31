@@ -1,7 +1,6 @@
-export interface IJobPosition {
+export interface JobPositionInterface {
     ID: number;
     Name: string;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt: string | null;
+    CreatedAt?: string;
+    UpdatedAt?: string;
 }

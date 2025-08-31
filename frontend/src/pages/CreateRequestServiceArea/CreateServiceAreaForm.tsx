@@ -25,7 +25,7 @@ import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 import { TextArea } from '../../components/TextField/TextArea';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRotateRight, faBook, faFileUpload } from "@fortawesome/free-solid-svg-icons";
+import { faRotateRight, faFileUpload } from "@fortawesome/free-solid-svg-icons";
 import { Building2 } from "lucide-react";
 import { DatePicker } from '../../components/DatePicker/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -643,24 +643,7 @@ const CreateServiceAreaForm: React.FC = () => {
           <Building2 size={26} />
           <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Create Service Area Request</Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<FontAwesomeIcon icon={faBook} />}
-          onClick={() => {
-            const manualContent = `CREATE SERVICE AREA REQUEST MANUAL\n\nThis form allows you to create a service area request with company information.`;
-            const blob = new Blob([manualContent], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'CreateServiceAreaRequest_Manual.txt';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-          }}
-        >
-          Download Manual
-        </Button>
+
       </div>
 
       <div className="create-service-area">

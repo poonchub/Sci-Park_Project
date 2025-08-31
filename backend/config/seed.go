@@ -99,7 +99,7 @@ func seedBookingDemoData(db *gorm.DB) {
 	now := time.Now()
 
 	// 7.1 pending (= unconfirmed) ยังไม่จ่าย
-	_ =createBooking(entity.BookingRoom{
+	_ = createBooking(entity.BookingRoom{
 		Purpose:        "Team sync (pending/unpaid)",
 		UserID:         uInt1.ID,
 		RoomID:         rA302.ID,

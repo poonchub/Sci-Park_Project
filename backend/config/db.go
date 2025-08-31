@@ -146,21 +146,19 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล JobPosition
 	jobPositions := []entity.JobPosition{
-		{Name: "Software Developer"},
-		{Name: "System Administrator"},
-		{Name: "Project Manager"},
-		{Name: "Business Analyst"},
-		{Name: "Data Scientist"},
-		{Name: "Network Engineer"},
-		{Name: "Quality Assurance"},
-		{Name: "UI/UX Designer"},
-		{Name: "DevOps Engineer"},
-		{Name: "Product Manager"},
-		{Name: "Research Assistant"},
-		{Name: "Lab Technician"},
-		{Name: "Administrative Staff"},
-		{Name: "Marketing Specialist"},
-		{Name: "Financial Analyst"},
+		{Name: "Head of Central Administration and Infrastructure Development Unit"},
+		{Name: "Central Administration and Infrastructure Development Unit"},
+		{Name: "Head of Innovation and Key Account Services Unit (IKD)"},
+		{Name: "Innovation and Key Account Services Unit (IKD)"},
+		{Name: "Head of Network Coordination Unit"},
+		{Name: "Network Coordination Unit"},
+		{Name: "Head of Business Development and Innovation Cluster Unit (BCD)"},
+		{Name: "Business Development and Innovation Cluster Unit (BCD)"},
+		{Name: "Head of Future Learning and Skills Innovation Unit"},
+		{Name: "Future Learning and Skills Innovation Unit"},
+		{Name: "Head of Marketing, Customer Service and Public Relations Unit"},
+		{Name: "Marketing, Customer Service and Public Relations Unit"},
+		{Name: "Regional Operations Support Unit"},
 	}
 	for _, jobPosition := range jobPositions {
 		db.FirstOrCreate(&jobPosition, entity.JobPosition{Name: jobPosition.Name})
@@ -432,8 +430,8 @@ func SeedDatabase() {
 			Phone:          "1234567890",
 			ProfilePath:    "",
 			SignaturePath:  "images/users/user_1/signature.jpg",
-			RoleID:         5,             // Admin (ID 5)
-			JobPositionID:  &[]uint{1}[0], // Software Developer
+			RoleID:         5, // Admin (ID 5)
+			JobPositionID:  1, // Software Developer
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  3,
@@ -449,8 +447,8 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         4,             // Manager (ID 4)
-			JobPositionID:  &[]uint{3}[0], // Project Manager
+			RoleID:         4, // Manager (ID 4)
+			JobPositionID:  3, // Project Manager
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  1,
@@ -465,8 +463,8 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         4,              // Manager (ID 4)
-			JobPositionID:  &[]uint{10}[0], // Product Manager
+			RoleID:         4,  // Manager (ID 4)
+			JobPositionID:  10, // Product Manager
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  2,
@@ -482,7 +480,7 @@ func SeedDatabase() {
 			Phone:          "1232323221",
 			ProfilePath:    "",
 			RoleID:         2,
-			JobPositionID:  &[]uint{2}[0], // System Administrator
+			JobPositionID:  2, // System Administrator
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -497,7 +495,7 @@ func SeedDatabase() {
 			Phone:          "1232323222",
 			ProfilePath:    "",
 			RoleID:         2,
-			JobPositionID:  &[]uint{6}[0], // Network Engineer
+			JobPositionID:  2, // Network Engineer
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -512,7 +510,7 @@ func SeedDatabase() {
 			Phone:          "1232323223",
 			ProfilePath:    "",
 			RoleID:         3,             // Document Operator (ID 3)
-			JobPositionID:  &[]uint{4}[0], // Business Analyst
+			JobPositionID:  2, // Business Analyst
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -527,7 +525,7 @@ func SeedDatabase() {
 			Phone:          "1232323224",
 			ProfilePath:    "",
 			RoleID:         3,             // Document Operator (ID 3)
-			JobPositionID:  &[]uint{7}[0], // Quality Assurance
+			JobPositionID:  4, // Quality Assurance
 			GenderID:       1,
 			IsEmployee:     true,
 		},
@@ -542,7 +540,7 @@ func SeedDatabase() {
 			Phone:          "9876543210",
 			ProfilePath:    "",
 			RoleID:         1,
-			JobPositionID:  &[]uint{5}[0], // Data Scientist
+			JobPositionID:  5, // Data Scientist
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -557,7 +555,7 @@ func SeedDatabase() {
 			Phone:          "9876543210",
 			ProfilePath:    "",
 			RoleID:         1,
-			JobPositionID:  &[]uint{11}[0], // Research Assistant
+			JobPositionID:  2, // Research Assistant
 			GenderID:       1,
 			IsEmployee:     true,
 		},
@@ -1145,8 +1143,6 @@ func SeedDatabase() {
 			UserID: req.UserID,
 		})
 	}
-
-	
 
 	// AboutCompany data for internal users
 	aboutCompanies := []entity.AboutCompany{

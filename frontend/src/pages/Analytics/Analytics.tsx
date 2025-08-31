@@ -48,7 +48,7 @@ import {
     Eye,
     Clock,
     HelpCircle,
-    BookOpen,
+
 } from 'lucide-react';
 import CustomTabPanel from '../../components/CustomTabPanel/CustomTabPanel';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -63,7 +63,7 @@ import {
     PerformanceAnalyticsData,
     KEY_PAGES 
 } from '../../services/analyticsService';
-import { analyticsManualContent } from './manualContent';
+
 import { pageConfig, normalizePageName } from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import ReactApexChart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
@@ -179,18 +179,7 @@ const Analytics: React.FC = () => {
         setEndDate(dayjs());
     };
 
-    const handleDownloadManual = () => {
-        // Use the imported manual content
-        const blob = new Blob([analyticsManualContent], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Analytics_Dashboard_Manual.txt';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-    };
+
 
     function a11yProps(index: number) {
         return {
@@ -445,16 +434,7 @@ const Analytics: React.FC = () => {
                             </Typography>
                         </Box>
                     </Grid>
-                    <Grid size={{ xs: 4, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <Button
-                            variant="outlined"
-                            onClick={handleDownloadManual}
-                            startIcon={<BookOpen size={20} />}
-                            sx={{ minWidth: 'auto', px: 2 }}
-                        >
-                            Download Manual
-                        </Button>
-                    </Grid>
+
 
                     <Grid size={{ xs: 12, md: 12 }}>
                         <Tabs
@@ -723,24 +703,7 @@ const Analytics: React.FC = () => {
                                             >
                                                 <Sparkles size={20} />
                                             </IconButton>
-                                            <IconButton
-                                                onClick={handleDownloadManual}
-                                                color="primary"
-                                                sx={{
-                                                    minWidth: "35px",
-                                                    width: "70px",
-                                                    height: "45px",
-                                                    borderRadius: "10px",
-                                                    border: "1px solid rgb(109, 110, 112, 0.4)",
-                                                    "&:hover": {
-                                                        boxShadow: "none",
-                                                        borderColor: "primary.main",
-                                                        backgroundColor: "transparent",
-                                                    },
-                                                }}
-                                            >
-                                                <BookOpen size={20} />
-                                            </IconButton>
+
                                         </Box>
                                     </CardContent>
                                 </Card>

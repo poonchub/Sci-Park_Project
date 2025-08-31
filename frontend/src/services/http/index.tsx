@@ -179,24 +179,26 @@ async function ListUsers(data: QuarryInterface) {
 
 async function CreateUser(data: any) {
     const formData = new FormData();
-    formData.append("company_name", data.CompanyName || "");
-    formData.append("business_detail", data.BusinessDetail || "");
-    formData.append("first_name", data.FirstName || "");
-    formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID.toString());
-    formData.append("email", data.Email || "");
-    formData.append("password", data.Password || "");
-    formData.append("phone", data.Phone || "");
-    formData.append("role_id", (data.RoleID ?? 1).toString());
-    formData.append("employee_id", data.EmployeeID || "");
-    formData.append("is_employee", data.IsEmployee || "");
-    formData.append("request_type_id", (data.RequestTypeID ?? 1).toString());
+    formData.append("company_name", data.company_name || "");
+    formData.append("business_detail", data.business_detail || "");
+    formData.append("first_name", data.first_name || "");
+    formData.append("last_name", data.last_name || "");
+    formData.append("gender_id", data.gender_id || "1");
+    formData.append("email", data.email || "");
+    formData.append("password", data.password || "");
+    formData.append("phone", data.phone || "");
+    formData.append("role_id", data.role_id || "1");
+    formData.append("employee_id", data.employee_id || "");
+    formData.append("is_employee", data.is_employee || "");
+    formData.append("request_type_id", data.request_type_id || "1");
+    formData.append("prefix_id", data.prefix_id || "1");
+    formData.append("job_position_id", data.job_position_id || "");
 
-    if (data.Profile_Image) {
-        formData.append("profile_image", data.Profile_Image);
+    if (data.profile_image) {
+        formData.append("profile_image", data.profile_image);
     }
 
-    formData.append("package_id", data.UserPackageID?.toString() || "1");
+    formData.append("package_id", data.package_id || "1");
 
     try {
         // Send FormData with axiosInstance
@@ -256,6 +258,8 @@ async function UpdateUserbyID(data: any) {
         formData.append("employee_id", data.EmployeeID || "");
         formData.append("profile_check", data.ImageCheck || "");
         formData.append("request_type_id", (data.RequestTypeID || 1).toString());
+        formData.append("prefix_id", (data.PrefixID || 1).toString());
+        formData.append("job_position_id", (data.JobPositionID || "").toString());
 
         if (data.Profile_Image) {
             formData.append("profile_image", data.Profile_Image);
@@ -1049,6 +1053,27 @@ async function ListJobPositions() {
     };
 
     let res = await fetch(`${apiUrl}/job-positions`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+// TitlePrefixes
+async function ListTitlePrefixes() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/title-prefixes`, requestOptions).then((res) => {
         if (res.status == 200) {
             return res.json();
         } else {
@@ -3178,6 +3203,9 @@ export {
     // JobPositions
     ListJobPositions,
     GetJobPositionByID,
+
+    // TitlePrefixes
+    ListTitlePrefixes,
 
     // ManagerApprovals
     CreateManagerApproval,

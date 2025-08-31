@@ -168,6 +168,10 @@ func main() {
 		protected.GET("/job-positions", controller.ListJobPositions)
 		protected.GET("/job-position/:id", controller.GetJobPositionByID)
 
+		// TitlePrefixes
+		protected.GET("/title-prefixes", controller.ListTitlePrefixes)
+		protected.GET("/title-prefix/:id", controller.GetTitlePrefixByID)
+
 		// Packages
 		protected.GET("/packages", controller.ListPackages)
 
@@ -343,6 +347,11 @@ func main() {
 		protected.POST("/create-job-position", controller.CreateJobPosition)
 		protected.PATCH("/update-job-position/:id", controller.UpdateJobPositionByID)
 		protected.DELETE("/job-position/:id", controller.DeleteJobPositionByID)
+
+		// TitlePrefixes
+		protected.POST("/create-title-prefix", controller.CreateTitlePrefix)
+		protected.PATCH("/update-title-prefix/:id", controller.UpdateTitlePrefixByID)
+		protected.DELETE("/title-prefix/:id", controller.DeleteTitlePrefixByID)
 
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)

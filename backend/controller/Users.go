@@ -88,11 +88,12 @@ func CreateUser(c *gin.Context) {
 	packageIDUint := uint(packageID)
 	user.UserPackageID = &packageIDUint
 
-	// รับ RoleID และ GenderID จากฟอร์ม, ถ้าไม่ส่งค่าเข้ามาจะใช้ค่าเริ่มต้น
+	// รับ RoleID, GenderID, PrefixID และ JobPositionID จากฟอร์ม
 	roleIDStr := c.DefaultPostForm("role_id", "1")
 	genderIDStr := c.DefaultPostForm("gender_id", "1")
+	prefixIDStr := c.DefaultPostForm("prefix_id", "1")
 
-	// แปลง roleID และ genderID จาก string เป็น uint
+	// แปลง roleID, genderID และ prefixID จาก string เป็น uint
 	roleID, err := strconv.ParseUint(roleIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role_id"})
@@ -106,6 +107,44 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	user.GenderID = uint(genderID)
+
+	prefixID, err := strconv.ParseUint(prefixIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid prefix_id"})
+		return
+	}
+	user.PrefixID = uint(prefixID)
+
+	// ตั้งค่า JobPositionID เฉพาะเมื่อเป็น Internal User (IsEmployee = true)
+	if user.IsEmployee {
+		jobPositionIDStr := c.PostForm("job_position_id")
+		if jobPositionIDStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "job_position_id is required for internal users"})
+			return
+		}
+		jobPositionID, err := strconv.ParseUint(jobPositionIDStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job_position_id"})
+			return
+		}
+		user.JobPositionID = uint(jobPositionID)
+	}
+
+	// ตรวจสอบการมีอยู่ของ PrefixID
+	var existingPrefix entity.TitlePrefix
+	if err := config.DB().First(&existingPrefix, user.PrefixID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid prefix_id - prefix not found"})
+		return
+	}
+
+	// ตรวจสอบการมีอยู่ของ JobPositionID (ถ้ามี)
+	if user.JobPositionID != 0 {
+		var existingJobPosition entity.JobPosition
+		if err := config.DB().First(&existingJobPosition, user.JobPositionID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job_position_id - job position not found"})
+			return
+		}
+	}
 
 	// ตรวจสอบการมีอยู่ของอีเมล
 	var existingUser entity.User
@@ -330,7 +369,9 @@ func GetUserByID(c *gin.Context) {
 		Preload("Role").
 		Preload("Gender").
 		Preload("RequestType").
-		Preload("UserPackages.Package"). // ✅ preload package ที่อยู่ใน userPackages
+		Preload("Prefix").
+		Preload("JobPosition").
+		Preload("UserPackages.Package"). // ✅ preload UserPackages และ Package ที่เกี่ยวข้อง
 		First(&user, id).Error; err != nil {
 
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -352,14 +393,30 @@ func GetUserByID(c *gin.Context) {
 		"ProfilePath":    user.ProfilePath,
 		"SignaturePath":  user.SignaturePath,
 		"UserPackageID":  user.UserPackageID,
-		"RoleID":         user.RoleID,
-		"Role":           user.Role,
-		"IsEmployee":     user.IsEmployee,
-		"RequestTypeID":  user.RequestTypeID,
-		"RequestType":    user.RequestType,
-		"UserPackages":   user.UserPackages,
-		"CreatedAt":      user.CreatedAt,
-		"UpdatedAt":      user.UpdatedAt,
+		"PackageID": func() uint {
+			if len(user.UserPackages) > 0 {
+				return user.UserPackages[0].PackageID
+			}
+			return 0
+		}(), // เพิ่ม PackageID จาก UserPackages
+		"Package": func() interface{} {
+			if len(user.UserPackages) > 0 {
+				return user.UserPackages[0].Package
+			}
+			return nil
+		}(), // เพิ่มข้อมูล Package เต็ม
+		"RoleID":        user.RoleID,
+		"Role":          user.Role,
+		"IsEmployee":    user.IsEmployee,
+		"RequestTypeID": user.RequestTypeID,
+		"RequestType":   user.RequestType,
+		"UserPackages":  user.UserPackages,
+		"PrefixID":      user.PrefixID,
+		"Prefix":        user.Prefix,
+		"JobPositionID": user.JobPositionID,
+		"JobPosition":   user.JobPosition,
+		"CreatedAt":     user.CreatedAt,
+		"UpdatedAt":     user.UpdatedAt,
 	}
 
 	// ส่งข้อมูลผู้ใช้กลับไปในรูปแบบ JSON (ไม่มี password)
@@ -582,6 +639,8 @@ func UpdateUserByID(c *gin.Context) {
 		EmployeeID     string `form:"employee_id"`
 		RoleID         uint   `form:"role_id"`
 		GenderID       uint   `form:"gender_id"`
+		PrefixID       uint   `form:"prefix_id"`
+		JobPositionID  uint   `form:"job_position_id"`
 		PackageID      uint   `form:"package_id"`
 		ProfileCheck   string `form:"profile_check"` // สำหรับรับโปรไฟล์ภาพจาก form-data
 		RequestTypeID  uint   `form:"request_type_id"`
@@ -594,6 +653,10 @@ func UpdateUserByID(c *gin.Context) {
 		return
 	}
 
+	// Debug: Log received form data
+	fmt.Printf("DEBUG: Received form data - PrefixID: %d, JobPositionID: %d\n", updateUserData.PrefixID, updateUserData.JobPositionID)
+	fmt.Printf("DEBUG: Raw form data - prefix_id: %s, job_position_id: %s\n", c.PostForm("prefix_id"), c.PostForm("job_position_id"))
+
 	// ดึง UserID จาก URL parameter
 	userID := c.Param("id")
 
@@ -602,6 +665,27 @@ func UpdateUserByID(c *gin.Context) {
 	if err := config.DB().First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
+	}
+
+	// Debug: Log user info
+	fmt.Printf("DEBUG: User IsEmployee: %v, PrefixID: %d, JobPositionID: %v\n", user.IsEmployee, user.PrefixID, user.JobPositionID)
+
+	// ตรวจสอบการมีอยู่ของ PrefixID (ถ้ามีการอัพเดต)
+	if updateUserData.PrefixID != 0 {
+		var existingPrefix entity.TitlePrefix
+		if err := config.DB().First(&existingPrefix, updateUserData.PrefixID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid prefix_id - prefix not found"})
+			return
+		}
+	}
+
+	// ตรวจสอบการมีอยู่ของ JobPositionID (ถ้ามีการอัพเดต)
+	if updateUserData.JobPositionID != 0 {
+		var existingJobPosition entity.JobPosition
+		if err := config.DB().First(&existingJobPosition, updateUserData.JobPositionID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid job_position_id - job position not found"})
+			return
+		}
 	}
 
 	// อัปเดตข้อมูลผู้ใช้
@@ -634,6 +718,12 @@ func UpdateUserByID(c *gin.Context) {
 	}
 	if updateUserData.RequestTypeID != 0 {
 		user.RequestTypeID = updateUserData.RequestTypeID
+	}
+	if updateUserData.PrefixID != 0 {
+		user.PrefixID = updateUserData.PrefixID
+	}
+	if updateUserData.JobPositionID != 0 {
+		user.JobPositionID = updateUserData.JobPositionID
 	}
 	// หากมีการเปลี่ยนแปลงรหัสผ่าน
 	if updateUserData.Password != "" {
@@ -785,15 +875,23 @@ func UpdateUserByID(c *gin.Context) {
 		user.SignaturePath = newSignaturePath
 	}
 
+	// Debug: Log user data before saving to database
+	fmt.Printf("DEBUG: Before Save - PrefixID: %d, JobPositionID: %v\n", user.PrefixID, user.JobPositionID)
+
 	// บันทึกข้อมูลผู้ใช้ที่อัปเดตลงฐานข้อมูล (รวมการอัพเดตรูปภาพ)
 	if err := config.DB().Save(&user).Error; err != nil {
+		fmt.Printf("DEBUG: Database save error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
 	}
 
+	// Debug: Log user data after saving to database
+	fmt.Printf("DEBUG: After Save - PrefixID: %d, JobPositionID: %v\n", user.PrefixID, user.JobPositionID)
+
 	services.NotifySocketEvent("user_updated", updateUserData)
 
 	// ส่งข้อมูลผู้ใช้ที่อัปเดตกลับ
+	fmt.Printf("DEBUG: Sending response - PrefixID: %d, JobPositionID: %v\n", user.PrefixID, user.JobPositionID)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User updated successfully",
 		"data":    user,
