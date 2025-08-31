@@ -59,6 +59,34 @@ func main() {
 		public.GET("/roomtypes/:id/equipment", controller.GetEquipmentByRoomType)
 		public.PATCH("/user-packages/use-quota", controller.UseRoomQuota)
 		public.GET("/roomlayouts", controller.GetAllRoomLayouts)
+		public.DELETE("/room-types/:id", controller.DeleteRoomType)
+		public.PUT("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
+		// delete
+
+		r.GET("/equipments", controller.GetEquipments)
+		r.GET("/equipments/:id", controller.GetEquipment)
+		r.POST("/equipments", controller.CreateEquipment)
+		r.PATCH("/equipments/:id", controller.UpdateEquipment)
+		r.DELETE("/equipments/:id", controller.DeleteEquipment)
+
+		r.GET("/timeslots", controller.GetTimeSlots)
+		r.POST("/timeslots", controller.CreateTimeSlot)
+
+		r.GET("/layouts", controller.GetAllRoomLayouts)
+		r.POST("/layouts", controller.CreateLayout)
+
+		// router.go (ตัวอย่าง)
+	
+		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
+		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
+		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
+		r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
+
+		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
+		r.POST("/payments/:id/approve", controller.ApprovePayment)
+		r.POST("/payments/:id/reject", controller.RejectPayment)
+		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
+		r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
 
 	}
 
@@ -229,6 +257,9 @@ func main() {
 
 		// PaymentStatus
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
+
+		// BookingRooms
+		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
@@ -299,6 +330,8 @@ func main() {
 		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
 		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
 		protected.GET("/invoice-payments/by-date", controller.ListInvoicePaymentsByDateRange)
+		// protected.PATCH("/payment/:id", controller.UpdatePaymentByID)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

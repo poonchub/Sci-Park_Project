@@ -51,6 +51,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
   const [selectedRoomStatus, setSelectedRoomStatus] = useState<number | null>(null);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -66,31 +67,37 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
           setSelectedFloor(roomData.FloorID);
           setSelectedRoomType(roomData.RoomTypeID);
           setSelectedRoomStatus(roomData.RoomStatusID);
-
-          console.log('Fetched room data:', roomData);
         }
 
-        // Fetch additional data for Room Types, Floors, and Room Status
         const [roomTypeData, floorData, roomStatusData] = await Promise.all([
           GetRoomTypes(),
           GetFloors(),
           GetRoomStatus(),
         ]);
 
-        setRoomTypes(roomTypeData);
-        setFloors(floorData);
-        setRoomStatus(roomStatusData);
+        setRoomTypes(normalizeArray<RoomtypesInterface>(roomTypeData));
+        setFloors(normalizeArray<FloorsInterface>(floorData));
+        setRoomStatus(normalizeArray<RoomStatusInterface>(roomStatusData));
       } catch (error) {
         console.error('Error loading room data:', error);
-        setAlerts(prev => [
-          ...prev,
-          { type: 'error', message: 'Failed to load room data. Please try again.' },
-        ]);
+        setAlerts(prev => [...prev, { type: 'error', message: 'Failed to load room data. Please try again.' }]);
       }
     };
 
     fetchData();
   }, [roomID, setValue]);
+
+
+  // ใส่ไว้ในไฟล์นี้ (เหนือ useEffect ก็ได้)
+  function normalizeArray<T>(input: unknown): T[] {
+    if (Array.isArray(input)) return input as T[];
+    // รองรับเคส backend ส่ง { data: [...] }
+    if (input && typeof input === "object" && Array.isArray((input as any).data)) {
+      return (input as any).data as T[];
+    }
+    return []; // กันตก
+  }
+
 
   const handleSave = async (data: RoomsInterface) => {
     const formDataToSend = {
@@ -104,21 +111,21 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
 
     console.log('Form data to send:', formDataToSend);
 
-    if(formDataToSend.FloorID === 0) {
+    if (formDataToSend.FloorID === 0) {
       setAlerts(prev => [
         ...prev,
         { type: 'warning', message: 'Please select a floor' },
       ]);
       return;
     }
-    if(formDataToSend.RoomStatusID === 0) {
+    if (formDataToSend.RoomStatusID === 0) {
       setAlerts(prev => [
         ...prev,
         { type: 'warning', message: 'Please select room status' },
       ]);
       return;
     }
-    if(formDataToSend.RoomTypeID === 0) {
+    if (formDataToSend.RoomTypeID === 0) {
       setAlerts(prev => [
         ...prev,
         { type: 'warning', message: 'Please select room type' },
@@ -191,6 +198,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
                   name="Capacity"
                   control={control}
                   defaultValue={room.Capacity || 0}
+                  disabled
                   rules={{
                     required: 'Please enter room capacity',
                     min: {

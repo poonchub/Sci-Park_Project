@@ -26,6 +26,7 @@ import EditRoomPopup from './EditRoomPopup';
 import { analyticsService } from "../../services/analyticsService";
 
 
+
 function ManageRooms() {
     const [rooms, setRooms] = useState<RoomsInterface[]>([])
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
@@ -45,11 +46,11 @@ function ManageRooms() {
 
     // Columns definition
     const columns: GridColDef[] = [
-        {
-            field: 'ID',
-            headerName: 'ID',
-            flex: 0.5,
-        },
+        // {
+        //     field: 'ID',
+        //     headerName: 'ID',
+        //     flex: 0.5,
+        // },
         {
             field: 'RoomNumber',
             headerName: 'Room Number',
@@ -73,13 +74,13 @@ function ManageRooms() {
             renderCell: (params) => {
                 const statusName = params.row.RoomStatus || "Not Reserved";  // Default to "Not Reserved" if not found
                 const statusKey = params.row.RoomStatus as keyof typeof roomStatusConfig;
-                const { color, colorLite, icon, } = roomStatusConfig[statusKey] ?? { 
-                    color: "#FFF", 
-                    colorLite: "#000", 
-                    icon: faCircleXmark ,
-                    
+                const { color, colorLite,  } = roomStatusConfig[statusKey] ?? {
+                    color: "#FFF",
+                    colorLite: "#000",
+                    icon: faCircleXmark,
+
                 };
-            
+
                 return (
                     <Box sx={{
                         display: 'flex',
@@ -97,7 +98,6 @@ function ManageRooms() {
                             color: color,
                             alignItems: 'center',
                         }}>
-                            <FontAwesomeIcon icon={icon} />
                             <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
                                 {statusName}
                             </Typography>
@@ -105,9 +105,9 @@ function ManageRooms() {
                     </Box>
                 );
             },
-            
+
         },
-        
+
         {
             field: 'Capacity',
             headerName: 'Room Capacity (persons)',
@@ -174,7 +174,7 @@ function ManageRooms() {
     const handleOpenPopup = (roomID: number) => {
         setSelectedRoomID(roomID);  // Set selectedRoomID to the room to be edited
         setOpenPopup(true);  // Open Pop-up
-      };
+    };
 
     useEffect(() => {
         Listrooms();  // Fetch new user data
@@ -185,7 +185,7 @@ function ManageRooms() {
             FecthRoomStatus();  // Fetch room status data
 
         }
-        
+
         // Remove analytics tracking from ManageRooms
         // analyticsService.trackKeyPageVisit('MANAGE_ROOMS', 'Manage Rooms');
     }, []);  // This useEffect will run every time selectedUserId changes
@@ -250,7 +250,7 @@ function ManageRooms() {
         Listrooms();  // Call function to fetch new data
         console.log(alerts); // Log message when popup is closed
     };
-    
+
 
     // Fetch users from the API
     const Listrooms = async () => {
@@ -263,12 +263,12 @@ function ManageRooms() {
                 roomStatus: selectRoomStatus,
             });  // Call the API to get users data
             if (res) {
-                  console.log("API response:", res);
+                console.log("API response:", res);
                 setRooms(res.data);  // Set the fetched users to state
                 console.log(res.data); // Log the fetched data
                 setTotal(res.total);  // Set the total number of users
             }
-        console.log(res);
+            console.log(res);
         } catch (error) {
             console.error("Error fetching users:", error);
         }
@@ -294,8 +294,8 @@ function ManageRooms() {
         handleSearch();
     }, [debouncedSearchText]);
     useEffect(() => {
-    console.log("Rooms data:", rooms);
-}, [rooms]);
+        console.log("Rooms data:", rooms);
+    }, [rooms]);
 
 
     const handleClearFillter = () => {
@@ -376,7 +376,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <LayersOutlinedIcon/>
+                                            <LayersOutlinedIcon />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -402,7 +402,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <VerticalSplitOutlinedIcon/>
+                                            <VerticalSplitOutlinedIcon />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -417,7 +417,7 @@ function ManageRooms() {
                             </FormControl>
                         </Grid>
 
-                        
+
 
                         <Grid size={{ xs: 10, md: 2 }}>
                             <FormControl fullWidth>
@@ -430,7 +430,7 @@ function ManageRooms() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <PublishedWithChangesOutlinedIcon/>
+                                            <PublishedWithChangesOutlinedIcon />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -438,7 +438,7 @@ function ManageRooms() {
                                     <MenuItem value={0}>{'All Status'}</MenuItem>
                                     {
                                         roomStatus.length > 0 ? roomStatus.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}  style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
+                                            <MenuItem key={index} value={item.ID} style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
                                         )) : null
                                     }
                                 </Select>
@@ -446,21 +446,21 @@ function ManageRooms() {
                         </Grid>
 
                         <Grid size={{ xs: 10, md: 1 }}>
-                                                <Button onClick={handleClearFillter}
-                                                    sx={{
-                                                        minWidth: 0,
-                                                        width: '100%',
-                                                        height: '45px',
-                                                        borderRadius: '10px',
-                                                        border: '1px solid rgb(109, 110, 112, 0.4)',
-                                                        "&:hover": {
-                                                            boxShadow: 'none',
-                                                            borderColor: 'primary.main',
-                                                            backgroundColor: 'transparent'
-                                                        },
-                                                    }}
-                                                ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                                            </Grid>
+                            <Button onClick={handleClearFillter}
+                                sx={{
+                                    minWidth: 0,
+                                    width: '100%',
+                                    height: '45px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                    "&:hover": {
+                                        boxShadow: 'none',
+                                        borderColor: 'primary.main',
+                                        backgroundColor: 'transparent'
+                                    },
+                                }}
+                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                        </Grid>
 
                     </Grid>
                 </Grid>
@@ -497,31 +497,18 @@ function ManageRooms() {
                                     paginationModel: { page, pageSize: limit },
                                 },
                             }}
-                            rowCount={total}  // Set the total number of rows
-                            checkboxSelection
-                            disableRowSelectionOnClick
-                            onPaginationModelChange={(params) => {
-                                setPage(params.page + 1);  // Set the page based on pagination changes
-                                setLimit(params.pageSize);  // Set the page size based on pagination changes
-                            }}
-                            disableColumnResize={false}
-                            sx={{
-                                width: "100%",
-                                borderRadius: 2,
-                            }}
-
                         />
                     </Card>
                 </Grid>
 
                 {/* Pop-up for editing room */}
-      {openPopup && selectedRoomID !== null && (
-        <EditRoomPopup
-          roomID={selectedRoomID}  // Pass the selected room ID to the popup
-          open={openPopup}
-          onClose={handleClosePopup}
-        />
-      )}
+                {openPopup && selectedRoomID !== null && (
+                    <EditRoomPopup
+                        roomID={selectedRoomID}  // Pass the selected room ID to the popup
+                        open={openPopup}
+                        onClose={handleClosePopup}
+                    />
+                )}
 
 
             </Grid>

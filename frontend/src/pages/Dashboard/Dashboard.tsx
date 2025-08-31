@@ -26,7 +26,7 @@ import {
 import {
     GetMaintenanceTypes,
     GetUserById,
-    ListBookingRoomByDateRange,
+    // ListBookingRoomByDateRange,
     ListBookingRoomPaymentsByDateRange,
     ListInvoiceByDateRange,
     ListInvoicePaymentsByDateRange,
@@ -191,7 +191,7 @@ function Dashboard() {
 
     const getBookingRooms = async () => {
         try {
-            const res = await ListBookingRoomByDateRange(
+            const res = await ListBookingRoomPaymentsByDateRange(
                 dateRangeRoom.start ? dateRangeRoom.start.format("YYYY-MM-DD") : "",
                 dateRangeRoom.end ? dateRangeRoom.end.format("YYYY-MM-DD") : ""
             );

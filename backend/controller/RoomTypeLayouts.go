@@ -48,3 +48,17 @@ func GetAllRoomLayouts(c *gin.Context) {
 	c.JSON(http.StatusOK, layouts)
 }
 
+// สร้าง Layout ใหม่
+func CreateLayout(c *gin.Context) {
+	db := config.DB()
+	var layout entity.RoomLayout
+	if err := c.ShouldBindJSON(&layout); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+	if err := db.Create(&layout).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้าง layout ได้"})
+		return
+	}
+	c.JSON(http.StatusCreated, layout)
+}
