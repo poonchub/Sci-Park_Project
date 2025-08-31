@@ -36,7 +36,6 @@ import { UserInterface } from "../../interfaces/IUser";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 
 import "./DashBoard.css";
-import ApexLineChart from "../../components/ApexLineChart/ApexLineChart";
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards";
 import ApexDonutChart from "../../components/MaintenanceTypeDonutChart/MaintenanceTypeDonutChart";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -80,6 +79,7 @@ import { PaymentInterface } from "../../interfaces/IPayments";
 import ApexRevenueBarChart from "../../components/ApexRevenueBarChart/ApexRevenueBarChart";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
+import ApexMaintenanceLineChart from "../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -561,6 +561,8 @@ function Dashboard() {
         ],
     };
 
+    console.log("booking: ", bookingRooms)
+
     return (
         <Box className="dashboard-page">
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
@@ -816,7 +818,7 @@ function Dashboard() {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        <ApexLineChart
+                                        <ApexMaintenanceLineChart
                                             selectedDateOption={selectedDateOption}
                                             data={filteredRequest}
                                             height={250}
@@ -928,7 +930,7 @@ function Dashboard() {
                                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
                                     <SummaryCard
                                         title="Total Bookings"
-                                        value={summaryData.totalBookings}
+                                        value={bookingRooms.length}
                                         icon={Check}
                                         color="#1976d2"
                                     />

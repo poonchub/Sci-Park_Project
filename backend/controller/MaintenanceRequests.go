@@ -331,10 +331,10 @@ func parseDateRange(createdAt string) (start, end time.Time, err error) {
 	switch len(createdAt) {
 	case 10: // YYYY-MM-DD
 		start, err = time.ParseInLocation("2006-01-02", createdAt, loc)
-		end = start.Add(24*time.Hour - time.Second)
+		end = time.Date(start.Year(), start.Month(), start.Day(), 23, 59, 59, 999999999, loc)
 	case 7: // YYYY-MM
 		start, err = time.ParseInLocation("2006-01", createdAt, loc)
-		end = start.AddDate(0, 1, 0).Add(-time.Second)
+		end = time.Date(start.Year(), start.Month()+1, 0, 23, 59, 59, 999999999, loc)
 	default:
 		err = fmt.Errorf("invalid date string length")
 	}
@@ -559,7 +559,8 @@ func ListMaintenanceRequestsByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
-			query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+			endDate = endDate.AddDate(0, 0, 1)
+    		query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
 		}
 	}
 

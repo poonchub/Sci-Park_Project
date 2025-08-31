@@ -39,7 +39,7 @@ import {
     ChartPie,
 
 } from "lucide-react";
-import ApexLineChart from '../../components/ApexLineChart/ApexLineChart';
+import ApexLineChart from '../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart';
 import PopularPagesDonutChart from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import {
     Sparkles,

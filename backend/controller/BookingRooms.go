@@ -339,6 +339,7 @@ func ListBookingRoomByDateRange(c *gin.Context) {
 	db := config.DB()
 
 	query := db.
+		Preload("Status").
 		Order("created_at ASC")
 
 	layout := "2006-01-02"
@@ -365,7 +366,10 @@ func ListBookingRoomByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
-			query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+
+			endDate = endDate.AddDate(0, 0, 1)
+
+			query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
 		}
 	}
 
