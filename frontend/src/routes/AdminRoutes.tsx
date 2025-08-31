@@ -27,6 +27,9 @@ import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
 import ServiceAreaDetails from "../pages/ServiceAreaDetails/ServiceAreaDetails";
 import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
+import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
+import ManageRoomType from "../pages/ManageRoomType/ManageRoomType";
+import BookingReview from "../pages/BookingReview/BookingReview";
 
 
 const AdminRoutes = (): RouteObject => {
@@ -44,7 +47,7 @@ const AdminRoutes = (): RouteObject => {
 			},
 			{
 				path: "/room-booking-form",
-				element: <RoomBookingForm roomsOfSameType={[]}/>
+				element: <RoomBookingForm />
 			},
 			{
 				path: "/requests",
@@ -86,6 +89,10 @@ const AdminRoutes = (): RouteObject => {
                 path: "/user/manage-user",
                 element: <ManageUsers/>
             },
+			{
+				path: "room/manage-room-type",
+				element: <ManageRoomType/>
+			},
 
 			{
                 path: "/room/manage-room",
@@ -106,6 +113,14 @@ const AdminRoutes = (): RouteObject => {
             {
 				path: "/all-booking-room",
 				element: <AllBookingRoom/>
+			},
+			{
+				path:   "/booking/review" ,
+				element: <BookingReview />
+			},
+			{ 
+				path: "/my-booking-room",
+				element: <MyBookingRoom/>
 			},
 			{
 				path: "/my-account",

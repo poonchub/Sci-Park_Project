@@ -12,6 +12,8 @@ import MyAccount from "../pages/MyAccount/MyAccount";
 import News from "../pages/News/News";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
+import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
+import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
 import AcceptWorkDocument from "../pages/AcceptWorkDocument/AcceptWorkDocument";
 import ServiceAreaDetails from "../pages/ServiceAreaDetails/ServiceAreaDetails";
@@ -37,7 +39,18 @@ const DocumentOperatorRoutes = (): RouteObject => {
                 path: "/booking-room",
                 element: <BookingRoom />,
             },
-            
+             {
+                path: "/room-booking-form",
+                element: <RoomBookingForm />
+            },
+            {
+				path: "/my-booking-room",
+				element: <MyBookingRoom/>
+			},
+            {
+                path: "/maintenance/accept-work",
+                element: <AcceptWork />,
+            },
             {
                 path: "/maintenance/my-maintenance-request",
                 element: <MyMaintenanceRequest />,

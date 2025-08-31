@@ -13,7 +13,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
 import { MaintenaceImagesInterface } from "../interfaces/IMaintenaceImages";
 import { Container, Chip, useTheme, Skeleton } from "@mui/material";
-
+import {  Warehouse } from 'lucide-react';
 import { Role } from "../constants/navigationConfig";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -278,6 +278,11 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <DoorOpen size={iconSize} />,
             children: [
                 {
+                    segment: "manage-room-type",
+                    title: t("Manage Room Type"),
+                    icon: <ClipboardList />,
+                },
+                {
                     segment: "manage-room",
                     title: t("manageRoom"),
                     icon: <ClipboardList />,
@@ -307,10 +312,16 @@ const WindowsLayout: React.FC = (props: any) => {
                         />
                     ) : null,
         },
+
         {
             segment: "all-booking-room",
             title: "All Booking Room",
             icon: <LayersIcon />,
+        },
+                {
+            segment: "my-booking-room",
+            title: "My Booking Room",
+            icon: < Warehouse />,
         },
         {
             kind: "header",
@@ -346,6 +357,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
+            "my-booking-room",
             "room",
             "user",
             "all-booking-room",
@@ -355,6 +367,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
             "requests",
             "maintenance/all-maintenance-request",
+            "manage-room-type",
             "manage-room",
             "manage-user",
             "add-user",
@@ -366,6 +379,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "home",
             "dashboard",
             "booking-room",
+            "my-booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
             "all-booking-room",
@@ -381,6 +395,7 @@ const WindowsLayout: React.FC = (props: any) => {
         'Maintenance Operator': [
             "home",
             "booking-room",
+            "my-booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
             "room",
@@ -406,6 +421,7 @@ const WindowsLayout: React.FC = (props: any) => {
         User: [
             "home",
             "booking-room",
+            "my-booking-room",
             "maintenance/create-maintenance-request",
             "my-account",
             "news",

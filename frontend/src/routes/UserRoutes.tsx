@@ -13,6 +13,7 @@ import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import CreateServiceAreaForm from "../pages/CreateRequestServiceArea/CreateServiceAreaForm";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
+import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -30,6 +31,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/room-booking-form",
 				element: <RoomBookingForm roomsOfSameType={[]}/>
+			},
+            {
+				path: "/my-booking-room",
+				element: <MyBookingRoom/>
 			},
 			{
 				path: "/maintenance/my-maintenance-request",

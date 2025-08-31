@@ -18,6 +18,7 @@ import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
+import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 const ManagerRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -36,11 +37,11 @@ const ManagerRoutes = (): RouteObject => {
                 element: <RoomBookingForm roomsOfSameType={[]} />
             },
             {
-                path: "/requests",
-                element: <AllMaintenanceRequest />
-            },
+				path: "/my-booking-room",
+				element: <MyBookingRoom/>
+			},
             {
-                path: "/requests/maintenance/all-maintenance-request",
+                path: "/maintenance/all-maintenance-request",
                 element: <AllMaintenanceRequest />
             },
             {

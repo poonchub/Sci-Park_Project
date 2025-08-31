@@ -10,37 +10,47 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"time"
 )
 
-// GET /booking-rooms
+// ===== Struct สำหรับ Response =====
 type TimeSlotMerged struct {
 	TimeSlotName string    `json:"time_slot_name"`
 	StartTime    time.Time `json:"start_time"`
 	EndTime      time.Time `json:"end_time"`
 }
 
+type PaymentSummary struct {
+	ID         uint     `json:"id"`
+	Status     string   `json:"status"`
+	SlipImages []string `json:"slipImages"`
+}
+
 type BookingRoomResponse struct {
-	ID              uint                 `json:"id"`
+	ID              uint                 `json:"ID"`
 	Room            entity.Room          `json:"Room"`
 	BookingDates    []entity.BookingDate `json:"BookingDates"`
-	MergedTimeSlots []TimeSlotMerged     `json:"merged_time_slots"`
+	MergedTimeSlots []TimeSlotMerged     `json:"Merged_time_slots"`
 	User            entity.User          `json:"User"`
-	Purpose         string               `json:"purpose"`
+	Purpose         string               `json:"Purpose"`
 	AdditionalInfo  AdditionalInfo       `json:"AdditionalInfo"`
-	StatusName      string               `json:"status_name"`
+	StatusName      string               `json:"StatusName"`
+	Payment       *PaymentSummary `json:"Payment,omitempty"`
+	DisplayStatus string          `json:"DisplayStatus"`
 }
 
 type AdditionalInfo struct {
-	SetupStyle     string   `json:"setupStyle"`
-	Equipment      []string `json:"equipment"`
-	AdditionalNote string   `json:"additionalNote"`
+	SetupStyle     string   `json:"SetupStyle"`
+	Equipment      []string `json:"Equipment"`
+	AdditionalNote string   `json:"AdditionalNote"`
 }
 
-// ฟังก์ชันรวม TimeSlot และเรียงตามเวลาเริ่ม
+// ===== Helper: รวม TimeSlot =====
 func mergeTimeSlots(slots []entity.TimeSlot, bookingDate time.Time) []TimeSlotMerged {
 	sort.Slice(slots, func(i, j int) bool {
 		return slots[i].StartTime.Before(slots[j].StartTime)
@@ -79,69 +89,228 @@ func mergeTimeSlots(slots []entity.TimeSlot, bookingDate time.Time) []TimeSlotMe
 	return merged
 }
 
-// Controller แสดงรายการจองทั้งหมด
-// Controller แสดงรายการจองทั้งหมด
-func ListBookingRooms(c *gin.Context) {
-    db := config.DB()
-    var bookings []entity.BookingRoom
+func computeDisplayStatus(b entity.BookingRoom) string {
+	if b.CancelledAt != nil {
+		return "cancelled"
+	}
 
-    err := db.
-        Preload("Room.Floor").
-        Preload("BookingDates").
-        Preload("User").
-        Preload("TimeSlots").
-        Preload("Status").
-        Find(&bookings).Error
+	if len(b.Payments) == 0 {
+		return "pending" // จองแต่ยังไม่มี payment record
+	}
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	latest := b.Payments[len(b.Payments)-1]
+	pay := strings.ToLower(latest.Status.Name)
+	booking := strings.ToLower(b.Status.StatusName)
 
-    var result []BookingRoomResponse
-    for _, b := range bookings {
-        roomCopy := b.Room
-        bookingDatesCopy := append([]entity.BookingDate{}, b.BookingDates...)
+	if booking == "pending" {
+		return "pending" // รออนุมัติ booking
+	}
 
-        var merged []TimeSlotMerged
-        if len(bookingDatesCopy) > 0 {
-            merged = mergeTimeSlots(b.TimeSlots, bookingDatesCopy[0].Date)
-        } else {
-            merged = mergeTimeSlots(b.TimeSlots, time.Now())
-        }
+	if booking == "confirmed" {
+		switch pay {
+		case "pending payment":
+			return "approved" // จองผ่านแล้ว แต่ยังไม่อัปโหลดสลิป
+		case "pending verification":
+			return "payment review"
+		case "awaiting receipt", "paid":
+			return "payment"
+		case "rejected":
+			return "rejected"
+		case "refunded":
+			return "refunded"
+		}
+	}
 
-        status := ""
-        if b.CancelledAt != nil {
-            status = "cancelled"
-        } else if b.Status.StatusName != "" {
-            status = b.Status.StatusName
-        }
+	if booking == "completed" {
+		return "completed"
+	}
 
-        // แปลง JSON string -> struct
-        var addInfo AdditionalInfo
-        if err := json.Unmarshal([]byte(b.AdditionalInfo), &addInfo); err != nil {
-            fmt.Println("Error parsing additional_info:", err)
-        }
-
-        result = append(result, BookingRoomResponse{
-            ID:              b.ID,
-            Room:            roomCopy,
-            BookingDates:    bookingDatesCopy,
-            MergedTimeSlots: merged,
-            User:            b.User,
-            Purpose:         b.Purpose,
-            AdditionalInfo:  addInfo, // ✅ ใช้ struct
-            StatusName:      status,
-        })
-    }
-
-    for i, r := range result {
-        fmt.Printf("[%d] ID=%d, Room=%s, Floor=%d\n",
-            i, r.ID, r.Room.RoomNumber, r.Room.Floor.Number)
-    }
-
-    c.JSON(http.StatusOK, result)
+	return "unknown"
 }
+
+// ===== Controller: แสดงรายการ Booking ทั้งหมด =====
+func ListBookingRooms(c *gin.Context) {
+	db := config.DB()
+	var bookings []entity.BookingRoom
+
+	err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("Payments.Status").
+		Find(&bookings).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var result []BookingRoomResponse
+	for _, b := range bookings {
+		// ===== 1) รวม slot =====
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		// ===== 2) สถานะ Booking =====
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		// ===== 3) AdditionalInfo =====
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			if err := json.Unmarshal([]byte(b.AdditionalInfo), &addInfo); err != nil {
+				fmt.Println("Error parsing additional_info:", err)
+			}
+		}
+
+		// ===== 4) Payment Summary (เอาล่าสุดมา) =====
+		var paySummary *PaymentSummary
+		if len(b.Payments) > 0 {
+			latest := b.Payments[len(b.Payments)-1] // เอา payment ล่าสุด
+
+			statusName := ""
+			if latest.Status.ID != 0 {
+				statusName = latest.Status.Name
+			}
+
+			slipImages := []string{}
+			if latest.SlipPath != "" {
+				slipImages = append(slipImages, latest.SlipPath)
+			}
+
+			paySummary = &PaymentSummary{
+				ID:         latest.ID, // ✅ ใช้ latest.ID
+				Status:     uiPaymentStatus(statusName),
+				SlipImages: slipImages,
+			}
+		}
+
+		// ===== 5) Append เข้า response =====
+		result = append(result, BookingRoomResponse{
+			ID:              b.ID,
+			Room:            b.Room,
+			BookingDates:    append([]entity.BookingDate{}, b.BookingDates...),
+			MergedTimeSlots: merged,
+			User:            b.User,
+			Purpose:         b.Purpose,
+			AdditionalInfo:  addInfo,
+			StatusName:      status,
+			Payment:         paySummary,
+			DisplayStatus:   computeDisplayStatus(b), // ✅
+		})
+
+	}
+
+	// ป้องกัน null
+	if result == nil {
+		result = []BookingRoomResponse{}
+	}
+
+	fmt.Println(result)
+
+	c.JSON(http.StatusOK, result)
+}
+
+// controller/BookingRooms.go
+
+func ListBookingRoomsByUser(c *gin.Context) {
+	db := config.DB()
+	userID := c.Param("id") // ดึง user id จาก path เช่น /booking-rooms/user/3
+
+	var bookings []entity.BookingRoom
+
+	err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("Payments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("id desc").Limit(1) // 👈 ดึง payment ล่าสุด
+		}).
+		Preload("Payments.Status").
+		Where("user_id = ?", userID).
+		Find(&bookings).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var result []BookingRoomResponse
+	for _, b := range bookings {
+		// ===== 1) รวม slot =====
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		// ===== 2) สถานะ Booking =====
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		// ===== 3) AdditionalInfo =====
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			if err := json.Unmarshal([]byte(b.AdditionalInfo), &addInfo); err != nil {
+				fmt.Println("Error parsing additional_info:", err)
+			}
+		}
+
+		// ===== 4) Payment Summary (เอาล่าสุดมา) =====
+		var paySummary *PaymentSummary
+		if len(b.Payments) > 0 {
+			latest := b.Payments[len(b.Payments)-1] // เอา payment ล่าสุด
+
+			statusName := ""
+			if latest.Status.ID != 0 {
+				statusName = latest.Status.Name
+			}
+
+			slipImages := []string{}
+			if latest.SlipPath != "" {
+				slipImages = append(slipImages, latest.SlipPath)
+			}
+
+			paySummary = &PaymentSummary{
+				ID:         latest.ID, // ✅ ใช้ latest.ID
+				Status:     uiPaymentStatus(statusName),
+				SlipImages: slipImages,
+			}
+		}
+
+		// ===== 5) Append เข้า response =====
+		result = append(result, BookingRoomResponse{
+			ID:              b.ID,
+			Room:            b.Room,
+			BookingDates:    append([]entity.BookingDate{}, b.BookingDates...),
+			MergedTimeSlots: merged,
+			User:            b.User,
+			Purpose:         b.Purpose,
+			AdditionalInfo:  addInfo,
+			StatusName:      status,
+			Payment:         paySummary,
+			DisplayStatus:   computeDisplayStatus(b), // ✅
+		})
+	}
+
+	// ป้องกัน null
+	if result == nil {
+		result = []BookingRoomResponse{}
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func CreateBookingRoom(c *gin.Context) {
 	db := config.DB()
 
@@ -190,12 +359,30 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 
 	// ตรวจสอบสิทธิ์การจองห้องขนาดใหญ่
-	if room.Capacity > 20 && user.Role.ID != 4 && user.Role.ID != 3 {
-		log.Println("User does not have permission to book large rooms")
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "ห้องนี้ต้องติดต่อเจ้าหน้าที่อุทยานวิทเท่านั้น ไม่สามารถจองด้วยตนเองได้",
-		})
+	// โหลดข้อมูลห้อง พร้อม RoomStatus + RoomType + RoomTypeLayouts
+	if err := db.Preload("RoomType.RoomTypeLayouts").
+		First(&room, input.RoomID).Error; err != nil {
+		log.Println("Error fetching room data:", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลห้องประชุม"})
 		return
+	}
+
+	// ตรวจสอบสิทธิ์การจองห้องขนาดใหญ่
+	if len(room.RoomType.RoomTypeLayouts) > 0 {
+		largestCapacity := 0
+		for _, layout := range room.RoomType.RoomTypeLayouts {
+			if layout.Capacity > largestCapacity {
+				largestCapacity = layout.Capacity
+			}
+		}
+
+		if largestCapacity > 20 && user.Role.ID != 4 && user.Role.ID != 5 {
+			log.Println("User does not have permission to book large rooms")
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "ห้องนี้ต้องติดต่อเจ้าหน้าที่อุทยานวิทย์เท่านั้น ไม่สามารถจองด้วยตนเองได้",
+			})
+			return
+		}
 	}
 
 	// โหลด TimeSlots ตาม TimeSlotIDs ด้วย where id IN ?
@@ -259,6 +446,25 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
+	// ✅ เพิ่ม Payment record เริ่มต้นเลย
+	pendingStatusID, _ := mustPaymentStatusID("Pending Payment")
+
+	payment := entity.Payment{
+		BookingRoomID: booking.ID,
+		StatusID:      pendingStatusID,
+		Amount:        0,              // ยังไม่จ่าย → 0 ไปก่อน
+		SlipPath:      "",             // ยังไม่มีสลิป
+		PaymentDate:   time.Now(),     // หรือ null ได้ถ้าคุณไม่อยากใส่
+		PayerID:       booking.UserID, // default ผู้จองคือคนจ่าย
+		Note:          "Waiting for slip upload",
+	}
+
+	if err := db.Create(&payment).Error; err != nil {
+		log.Println("Error creating initial payment:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้าง Payment เริ่มต้นได้"})
+		return
+	}
+
 	// เพิ่ม BookingDate หลายวัน
 	var bookingDates []entity.BookingDate
 	for _, dateStr := range input.Dates {
@@ -286,7 +492,9 @@ func CancelBookingRoom(c *gin.Context) {
 	bookingID := c.Param("id")
 
 	var booking entity.BookingRoom
-	if err := db.First(&booking, bookingID).Error; err != nil {
+	if err := db.
+		Preload("BookingDates").
+		First(&booking, bookingID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
 		return
 	}
@@ -304,7 +512,6 @@ func CancelBookingRoom(c *gin.Context) {
 
 	// ใช้วันที่แรกสุดใน booking เพื่อตรวจสอบ
 	firstDate := booking.BookingDates[0].Date.Truncate(24 * time.Hour)
-
 	today := time.Now().Truncate(24 * time.Hour)
 	twoDaysLater := today.Add(48 * time.Hour)
 
@@ -316,7 +523,7 @@ func CancelBookingRoom(c *gin.Context) {
 	// ทำการยกเลิก
 	now := time.Now()
 	booking.StatusID = 3
-	booking.CancelledAt = &now // ถ้ามีฟิลด์นี้
+	booking.CancelledAt = &now
 
 	if err := db.Save(&booking).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถยกเลิกการจองได้"})
