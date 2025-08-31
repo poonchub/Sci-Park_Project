@@ -21,7 +21,7 @@ const getModeFromClass = () => {
         : "light";
 };
 
-function ApexLineChart(props: {
+function ApexMaintenanceLineChart(props: {
     data?: MaintenanceRequestsInterface[];
     height: number;
     dateRange?: { start: Dayjs | null; end: Dayjs | null };
@@ -272,4 +272,4 @@ function ApexLineChart(props: {
     );
 }
 
-export default ApexLineChart;
+export default ApexMaintenanceLineChart;

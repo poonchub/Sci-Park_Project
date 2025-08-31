@@ -8,10 +8,12 @@ import (
 	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/validator"
 	"strconv"
 
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -210,6 +212,7 @@ func ListBookingRoomPaymentsByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
+			endDate = endDate.AddDate(0, 0, 1)
 			query = query.Where("payment_date BETWEEN ? AND ?", startDate, endDate)
 		}
 	}
@@ -260,6 +263,7 @@ func ListInvoicePaymentsByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
+			endDate = endDate.AddDate(0, 0, 1)
 			query = query.Where("payment_date BETWEEN ? AND ?", startDate, endDate)
 		}
 	}
@@ -386,6 +390,17 @@ func CreatePayment(c *gin.Context) {
 		PayerID:       uint(payerID),
 		BookingRoomID: bookingRoomID,
 		InvoiceID:     invoiceID,
+	}
+
+	if ok, err := govalidator.ValidateStruct(&payment); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
+	}
+
+	if err := validator.ValidatePayment(&payment);
+	err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
 	}
 
 	// ตรวจสอบว่ามี payment ซ้ำหรือไม่

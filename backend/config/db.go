@@ -859,7 +859,7 @@ func SeedDatabase() {
 			Amount:        500.00,
 			SlipPath:      "/slips/payment1.jpg",
 			Note:          "จองห้องประชุมเช้า",
-			PayerID:       users[6].ID, // internaluser1
+			PayerID:       users[2].ID, // internaluser1
 			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
 			StatusID:      1,
 		},
@@ -868,7 +868,7 @@ func SeedDatabase() {
 			Amount:        1000.00,
 			SlipPath:      "/slips/payment2.jpg",
 			Note:          "อบรมพนักงานใหม่",
-			PayerID:       users[7].ID, // internaluser2
+			PayerID:       users[4].ID, // internaluser2
 			BookingRoomID: 2,
 			StatusID:      2,
 		},

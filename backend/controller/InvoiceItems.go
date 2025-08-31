@@ -5,6 +5,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,6 +48,11 @@ func CreateInvoiceItem(c *gin.Context) {
 	db := config.DB()
 	if err := c.ShouldBindJSON(&invoiceItem); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(&invoiceItem); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
 		return
 	}
 

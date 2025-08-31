@@ -10,20 +10,20 @@ import (
 type Payment struct {
 	gorm.Model
 
-	PaymentDate time.Time
-	Amount      float64
-	SlipPath    string
-	Note        string
+	PaymentDate time.Time	`valid:"required~PaymentDate is required"`
+	Amount      float64		`valid:"required~Amount is required"`
+	SlipPath    string		`valid:"required~Slip file path is required"`
+	Note        string		
 	ReceiptPath string
 
-	StatusID      uint
+	StatusID      uint		`valid:"required~StatusID is required"`
 	Status        PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
-	PayerID       uint
-	Payer         User `gorm:"foreignKey:PayerID" valid:"-"`
-	ApproverID    uint
-	Approver      User `gorm:"foreignKey:ApproverID" valid:"-"`
-	BookingRoomID uint
+	PayerID       uint		`valid:"required~PayerID is required"`
+	Payer         User 		`gorm:"foreignKey:PayerID" valid:"-"`
+	ApproverID    uint		
+	Approver      User 		`gorm:"foreignKey:ApproverID" valid:"-"`
+	BookingRoomID uint		
 	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
-	InvoiceID     uint
+	InvoiceID     uint		
 	Invoice       Invoice `gorm:"foreignKey:InvoiceID" valid:"-"`
 }

@@ -16,6 +16,7 @@ import (
 
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
@@ -175,6 +176,7 @@ func ListInvoiceByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
+			endDate = endDate.AddDate(0, 0, 1)
 			query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
 		}
 	}
@@ -325,6 +327,11 @@ func CreateInvoice(c *gin.Context) {
 		StatusID:      invoice.StatusID,
 		CreaterID:     invoice.CreaterID,
 		CustomerID:    invoice.CustomerID,
+	}
+
+	if ok, err := govalidator.ValidateStruct(&invoiceData); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
+		return
 	}
 
 	var exiting entity.Invoice
