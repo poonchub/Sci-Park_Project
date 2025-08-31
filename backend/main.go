@@ -245,12 +245,14 @@ func main() {
 		// Room
 		protected.GET("/room-rental-space-option", controller.GetRoomRentalSpaceByOption)
 		protected.GET("/room-rental-space/:id", controller.GetRoomRentalSpaceByID)
+		protected.GET("/rooms/rental-space-summary", controller.GetRentalSpaceRoomSummary)
 
 		// Invoice
 		protected.GET("/invoices", controller.ListInvoices)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
 		protected.GET("/invoices/by-date", controller.ListInvoiceByDateRange)
+		protected.GET("/invoices/previous-month-summary", controller.GetPreviousMonthInvoiceSummary)
 
 		// InvoiceItems
 		protected.GET("/invoice-items", controller.ListInvoiceItems)

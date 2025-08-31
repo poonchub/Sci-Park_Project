@@ -553,7 +553,7 @@ const MyAccount: React.FC = () => {
             try {
                 const resGetQuota = await GetQuota();
                 console.log(resGetQuota.data.quota)
-                if (resGetQuota.success && resGetQuota.data.quota > 0) {
+                if (resGetQuota.success && resGetQuota.data.quota > 0 && false) {
                     const formData = new FormData();
                     formData.append("files", slipfile[0]);
 
@@ -567,6 +567,14 @@ const MyAccount: React.FC = () => {
                     } else if (resCheckSlip.success && statusName === "Rejected") {
                         handleClickUpdatePayment();
                     }
+                }
+                else { 
+                    const data = {
+                        data: {
+                            transTimestamp: new Date().toISOString()
+                        }
+                    }
+                    handleUploadSlip(data);
                 }
             } catch (error: any) {
                 setAlerts([]);
@@ -1323,6 +1331,7 @@ const MyAccount: React.FC = () => {
                         const notification = data.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         const billingPeriod = formatToMonthYear(data.BillingPeriod)
+                        const dueDate = dateFormat(data.DueDate)
                         const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
                             style: "currency",
                             currency: "THB",
@@ -1358,7 +1367,8 @@ const MyAccount: React.FC = () => {
                                         <Calendar
                                             size={14}
                                             style={{
-                                                paddingBottom: "4px"
+                                                minHeight: '14px',
+                                                minWidth: '14px',
                                             }}
                                         />
                                         <Typography
@@ -1370,6 +1380,25 @@ const MyAccount: React.FC = () => {
                                             }}
                                         >
                                             {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <Clock
+                                            size={14}
+                                            style={{
+                                                minHeight: '14px',
+                                                minWidth: '14px',
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Due Date: ${dueDate}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -1594,10 +1623,10 @@ const MyAccount: React.FC = () => {
                     },
                 },
                 {
-                    field: "BillingPeriod",
-                    headerName: "Billing Period",
+                    field: "Date",
+                    headerName: "Date",
                     type: "string",
-                    flex: 1.5,
+                    flex: 1.8,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -1608,7 +1637,27 @@ const MyAccount: React.FC = () => {
                                     height: "100%",
                                 }}
                             >
-                                {formatToMonthYear(params.value)}
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {`Billing Period: ${formatToMonthYear(params.row.BillingPeriod)}`}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        color: "text.secondary"
+                                    }}
+                                >
+                                    {`Due Date: ${dateFormat(params.row.DueDate)}`}
+                                </Typography>
                             </Box>
                         );
                     },
@@ -1694,7 +1743,7 @@ const MyAccount: React.FC = () => {
                     field: "Receipt",
                     headerName: "Receipt",
                     type: "string",
-                    flex: 2,
+                    flex: 1.5,
                     renderCell: (item) => {
                         const data = item.row;
                         const receiptPath = data.Payments?.ReceiptPath
@@ -2213,369 +2262,370 @@ const MyAccount: React.FC = () => {
 
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-        <Box className="my-account-page">
-            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+            <Box className="my-account-page">
+                <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-            <PaymentPopup
-                open={openPopupPayment}
-                onClose={() => {
-                    setOpenPopupPayment(false);
-                    setSlipFile([]);
-                }}
-                file={slipfile}
-                onChangeFile={setSlipFile}
-                paymentData={selectedInvoice?.Payments ?? {}}
-                isButtonActive={isButtonActive}
-            />
+                <PaymentPopup
+                    open={openPopupPayment}
+                    onClose={() => {
+                        setOpenPopupPayment(false);
+                        setSlipFile([]);
+                    }}
+                    file={slipfile}
+                    onChangeFile={setSlipFile}
+                    paymentData={selectedInvoice?.Payments ?? {}}
+                    isButtonActive={isButtonActive}
+                />
 
-            <PDFPopup
-                open={openPDF}
-                invoice={selectedInvoice}
-                onClose={() => {
-                    setOpenPDF(false);
-                    setSelectedInvoice(null);
-                }}
-            />
+                <PDFPopup
+                    open={openPDF}
+                    invoice={selectedInvoice}
+                    onClose={() => {
+                        setOpenPDF(false);
+                        setSelectedInvoice(null);
+                    }}
+                />
 
-            {/* Show Alerts */}
-            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+                {/* Show Alerts */}
+                <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-            {/* Inspection Confirm */}
-            <ConfirmDialog
-                open={openConfirmInspection}
-                setOpenConfirm={setOpenConfirmInspection}
-                handleFunction={() => handleClickInspection("Completed", "confirm")}
-                title="Confirm Maintenance Inspection"
-                message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
-                buttonActive={isButtonActive}
-            />
+                {/* Inspection Confirm */}
+                <ConfirmDialog
+                    open={openConfirmInspection}
+                    setOpenConfirm={setOpenConfirmInspection}
+                    handleFunction={() => handleClickInspection("Completed", "confirm")}
+                    title="Confirm Maintenance Inspection"
+                    message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
+                    buttonActive={isButtonActive}
+                />
 
-            {/* Rework Confirm */}
-            <ReworkPopup
-                open={openConfirmRework}
-                setOpenConfirm={setOpenConfirmRework}
-                handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
-                setAlerts={setAlerts}
-                title="Confirm Rework Request"
-                message="Are you sure you want to request a rework for this maintenance job? This action cannot be undone."
-                showNoteField
-                files={requestfiles}
-                onChangeFiles={setRequestFiles}
-            />
+                {/* Rework Confirm */}
+                <ReworkPopup
+                    open={openConfirmRework}
+                    setOpenConfirm={setOpenConfirmRework}
+                    handleFunction={(note) => handleClickInspection("Rework Requested", "rework", note)}
+                    setAlerts={setAlerts}
+                    title="Confirm Rework Request"
+                    message="Are you sure you want to request a rework for this maintenance job? This action cannot be undone."
+                    showNoteField
+                    files={requestfiles}
+                    onChangeFiles={setRequestFiles}
+                />
 
-            {/* Cancellation From OwnRequest Confirm */}
-            <ConfirmDialog
-                open={openConfirmCancelled}
-                setOpenConfirm={setOpenConfirmCancelled}
-                handleFunction={() => handleClickCancel()}
-                title="Confirm Cancel Request"
-                message="Are you sure you want to cancel this request? This action cannot be undone."
-                buttonActive={isButtonActive}
-            />
+                {/* Cancellation From OwnRequest Confirm */}
+                <ConfirmDialog
+                    open={openConfirmCancelled}
+                    setOpenConfirm={setOpenConfirmCancelled}
+                    handleFunction={() => handleClickCancel()}
+                    title="Confirm Cancel Request"
+                    message="Are you sure you want to cancel this request? This action cannot be undone."
+                    buttonActive={isButtonActive}
+                />
 
-            <Container maxWidth={false} sx={{ padding: "0px 0px !important", width: "100%" }}>
-                <Grid container spacing={3} >
-                    <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
-                        <ShieldUser size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            My Account
-                        </Typography>
-                    </Grid>
-
-                    <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
-                        <Link to="/my-account/edit-profile">
-                            <Button variant="containedBlue">
-                                <Pencil size={20} />
-                                <Typography variant="textButtonClassic">Edit Profile</Typography>
-                            </Button>
-                        </Link>
-                    </Grid>
-
-                    <Grid size={{ xs: 12 }}>
-                        {user ? (
-                            <Card
-                                sx={{
-                                    py: 3,
-                                    px: 4,
-                                    borderRadius: 2,
-                                    width: "100%",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 4,
-                                }}
-                            >
-                                <Box sx={{ display: "flex", gap: "30px" }}>
-                                    <Box
-                                        sx={{
-                                            minHeight: "100%",
-                                            width: 120,
-                                            display: "flex",
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Avatar
-                                            sx={{
-                                                width: 120,
-                                                height: 120,
-                                                boxShadow: 3,
-                                            }}
-                                            src={`${apiUrl}/${profileImage}` || ""}
-                                        />
-                                    </Box>
-                                    <Box
-                                        sx={{
-                                            width: "calc(100% - 120px)",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            justifyContent: "center",
-                                        }}
-                                    >
-                                        <Typography
-                                            variant="h6"
-                                            sx={{
-                                                fontSize: 22,
-                                                fontWeight: 600,
-                                                color: `${theme.palette.primary.main} !important`,
-                                                width: "100%",
-                                            }}
-                                        >
-                                            {user?.FirstName} {user?.LastName}
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 18,
-                                                fontWeight: 500,
-                                            }}
-                                            gutterBottom
-                                        >
-                                            {user?.CompanyName}
-                                        </Typography>
-                                        <Grid
-                                            container
-                                            size={{ xs: 12 }}
-                                            columnSpacing={10}
-                                            rowSpacing={1.2}
-                                            sx={{ mt: 2 }}
-                                        >
-                                            <Grid>
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <Briefcase
-                                                        size={16}
-                                                        color={theme.palette.grey[500]}
-                                                    />
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 16,
-                                                            fontWeight: 600,
-                                                            color: `${theme.palette.grey[500]} !important`,
-                                                        }}
-                                                    >
-                                                        Role
-                                                    </Typography>
-                                                </Box>
-                                                <Typography
-                                                    sx={{
-                                                        fontSize: 18,
-                                                        fontWeight: 500,
-                                                        color: "text.primary",
-                                                    }}
-                                                >
-                                                    {user?.Role?.Name}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid>
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <Mail
-                                                        size={16}
-                                                        color={theme.palette.grey[500]}
-                                                    />
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 16,
-                                                            fontWeight: 600,
-                                                            color: `${theme.palette.grey[500]} !important`,
-                                                        }}
-                                                    >
-                                                        Email Address
-                                                    </Typography>
-                                                </Box>
-                                                <Typography
-                                                    sx={{
-                                                        fontSize: 18,
-                                                        fontWeight: 500,
-                                                        color: "text.primary",
-                                                    }}
-                                                >
-                                                    {user?.Email}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid>
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                    <Phone
-                                                        size={16}
-                                                        color={theme.palette.grey[500]}
-                                                    />
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 16,
-                                                            fontWeight: 600,
-                                                            color: `${theme.palette.grey[500]} !important`,
-                                                        }}
-                                                    >
-                                                        Phone Number
-                                                    </Typography>
-                                                </Box>
-                                                <Typography
-                                                    sx={{
-                                                        fontSize: 18,
-                                                        fontWeight: 500,
-                                                        color: "text.primary",
-                                                    }}
-                                                >
-                                                    {user?.Phone}
-                                                </Typography>
-                                            </Grid>
-                                        </Grid>
-                                    </Box>
-                                </Box>
-                            </Card>
-                        ) : (
-                            <Skeleton variant="rectangular" width="100%" height={182} sx={{ borderRadius: 2 }} />
-                        )}
-                    </Grid>
-
-                    <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
-                        <Grid size={{ xs: 9 }}>
-                            <Tabs
-                                value={valueTab}
-                                onChange={handleChange}
-                                variant="scrollable"
-                                allowScrollButtonsMobile
-                            >
-                                <Tab label={
-                                    <Badge invisible={isAdmin() || isManager()} badgeContent={notificationCounts.UnreadRequests} color="primary">
-                                        Maintenance Request
-                                    </Badge>
-                                } {...a11yProps(0)} />
-                                <Tab label="Room Booking" {...a11yProps(1)} />
-                                {
-                                    !(user?.IsEmployee) && user?.Role?.Name === "User" &&
-                                    <Tab label={
-                                        <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
-                                            Invoice
-                                        </Badge>
-                                    } {...a11yProps(2)} />
-                                }
-
-                                <Tab label="Payment" {...a11yProps(3)} />
-                            </Tabs>
+                <Container maxWidth={false} sx={{ padding: "0px 0px !important", width: "100%" }}>
+                    <Grid container spacing={3} >
+                        <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
+                            <ShieldUser size={26} />
+                            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                                My Account
+                            </Typography>
                         </Grid>
-                        <Grid container size={{ xs: 3 }} sx={{ justifyContent: "flex-end" }}>
-                            <Link to="/maintenance/create-maintenance-request">
-                                <Button variant="contained">
-                                    <FileText size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
-                                    <Typography variant="textButtonClassic">Create Request</Typography>
+
+                        <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
+                            <Link to="/my-account/edit-profile">
+                                <Button variant="containedBlue">
+                                    <Pencil size={20} />
+                                    <Typography variant="textButtonClassic">Edit Profile</Typography>
                                 </Button>
                             </Link>
                         </Grid>
-                        <CustomTabPanel value={valueTab} index={0}>
-                            <Grid container size={{ xs: 12 }} spacing={2}>
-                                {/* Filters Section */}
-                                {!statusCounts ? (
-                                    <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
-                                ) : (
-                                    <FilterSection
-                                        searchText={searchText}
-                                        setSearchText={setSearchText}
-                                        selectedDate={selectedDate}
-                                        setSelectedDate={setSelectedDate}
-                                        selectedStatuses={selectedStatuses}
-                                        setSelectedStatuses={setSelectedStatuses}
-                                        handleClearFilter={handleClearFillter}
-                                        requestStatuses={requestStatuses}
-                                    />
-                                )}
-                            </Grid>
 
-                            {/* Data Table */}
-                            <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
-                                {isLoadingData ? (
-                                    <Skeleton
-                                        variant="rectangular"
-                                        width="100%"
-                                        height={200}
-                                        sx={{ borderRadius: 2 }}
-                                    />
-                                ) : (
-                                    <CustomDataGrid
-                                        rows={filteredRequests}
-                                        columns={getColumns()}
-                                        rowCount={total}
-                                        page={page}
-                                        limit={limit}
-                                        onPageChange={setPage}
-                                        onLimitChange={setLimit}
-                                        noDataText="Maintenance request information not found."
-                                    />
-                                )}
+                        <Grid size={{ xs: 12 }}>
+                            {user ? (
+                                <Card
+                                    sx={{
+                                        py: 3,
+                                        px: 4,
+                                        borderRadius: 2,
+                                        width: "100%",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 4,
+                                    }}
+                                >
+                                    <Box sx={{ display: "flex", gap: "30px" }}>
+                                        <Box
+                                            sx={{
+                                                minHeight: "100%",
+                                                width: 120,
+                                                display: "flex",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <Avatar
+                                                sx={{
+                                                    width: 120,
+                                                    height: 120,
+                                                    boxShadow: 3,
+                                                }}
+                                                src={`${apiUrl}/${profileImage}` || ""}
+                                            />
+                                        </Box>
+                                        <Box
+                                            sx={{
+                                                width: "calc(100% - 120px)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "center",
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="h6"
+                                                sx={{
+                                                    fontSize: 22,
+                                                    fontWeight: 600,
+                                                    color: `${theme.palette.primary.main} !important`,
+                                                    width: "100%",
+                                                }}
+                                            >
+                                                {user?.FirstName} {user?.LastName}
+                                            </Typography>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: 18,
+                                                    fontWeight: 500,
+                                                }}
+                                                gutterBottom
+                                            >
+                                                {user?.CompanyName}
+                                            </Typography>
+                                            <Grid
+                                                container
+                                                size={{ xs: 12 }}
+                                                columnSpacing={10}
+                                                rowSpacing={1.2}
+                                                sx={{ mt: 2 }}
+                                            >
+                                                <Grid>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                        <Briefcase
+                                                            size={16}
+                                                            color={theme.palette.grey[500]}
+                                                        />
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: 16,
+                                                                fontWeight: 600,
+                                                                color: `${theme.palette.grey[500]} !important`,
+                                                            }}
+                                                        >
+                                                            Role
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography
+                                                        sx={{
+                                                            fontSize: 18,
+                                                            fontWeight: 500,
+                                                            color: "text.primary",
+                                                        }}
+                                                    >
+                                                        {user?.Role?.Name}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                        <Mail
+                                                            size={16}
+                                                            color={theme.palette.grey[500]}
+                                                        />
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: 16,
+                                                                fontWeight: 600,
+                                                                color: `${theme.palette.grey[500]} !important`,
+                                                            }}
+                                                        >
+                                                            Email Address
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography
+                                                        sx={{
+                                                            fontSize: 18,
+                                                            fontWeight: 500,
+                                                            color: "text.primary",
+                                                        }}
+                                                    >
+                                                        {user?.Email}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                                        <Phone
+                                                            size={16}
+                                                            color={theme.palette.grey[500]}
+                                                        />
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: 16,
+                                                                fontWeight: 600,
+                                                                color: `${theme.palette.grey[500]} !important`,
+                                                            }}
+                                                        >
+                                                            Phone Number
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography
+                                                        sx={{
+                                                            fontSize: 18,
+                                                            fontWeight: 500,
+                                                            color: "text.primary",
+                                                        }}
+                                                    >
+                                                        {user?.Phone}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    </Box>
+                                </Card>
+                            ) : (
+                                <Skeleton variant="rectangular" width="100%" height={182} sx={{ borderRadius: 2 }} />
+                            )}
+                        </Grid>
+
+                        <Grid container size={{ xs: 12, md: 12 }} spacing={2.2}>
+                            <Grid size={{ xs: 9 }}>
+                                <Tabs
+                                    value={valueTab}
+                                    onChange={handleChange}
+                                    variant="scrollable"
+                                    allowScrollButtonsMobile
+                                >
+                                    <Tab label={
+                                        <Badge invisible={isAdmin() || isManager()} badgeContent={notificationCounts.UnreadRequests} color="primary">
+                                            Maintenance Request
+                                        </Badge>
+                                    } {...a11yProps(0)} />
+                                    <Tab label="Room Booking" {...a11yProps(1)} />
+                                    {
+                                        !(user?.IsEmployee) && user?.Role?.Name === "User" &&
+                                        <Tab label={
+                                            <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
+                                                Invoice
+                                            </Badge>
+                                        } {...a11yProps(2)} />
+                                    }
+
+                                    <Tab label="Payment" {...a11yProps(3)} />
+                                </Tabs>
                             </Grid>
-                        </CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={2}>
-                            <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
-                                {isLoadingInvoice ? (
-                                    <Skeleton
-                                        variant="rectangular"
-                                        width="100%"
-                                        height={255}
-                                        sx={{ borderRadius: 2 }}
-                                    />
-                                ) : (
-                                    <CustomDataGrid
-                                        key={JSON.stringify(invoices.map(i => i.StatusID))}
-                                        rows={invoices.toSorted((a, b) =>
-                                            (b.BillingPeriod ?? "").localeCompare(a.BillingPeriod ?? "")
-                                        )}
-                                        columns={getInvoiceColumns()}
-                                        rowCount={invoiceTotal}
-                                        page={invoicePage}
-                                        limit={invoiceLimit}
-                                        onPageChange={setInvoicePage}
-                                        onLimitChange={setInvoiceLimit}
-                                        noDataText="Invoices information not found."
-                                    />
-                                )}
+                            <Grid container size={{ xs: 3 }} sx={{ justifyContent: "flex-end" }}>
+                                <Link to="/maintenance/create-maintenance-request">
+                                    <Button variant="contained">
+                                        <FileText size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                        <Typography variant="textButtonClassic">Create Request</Typography>
+                                    </Button>
+                                </Link>
                             </Grid>
-                        </CustomTabPanel>
-                        <CustomTabPanel value={valueTab} index={3}>
-                            <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
-                                {isLoadingPayment ? (
-                                    <Skeleton
-                                        variant="rectangular"
-                                        width="100%"
-                                        height={255}
-                                        sx={{ borderRadius: 2 }}
-                                    />
-                                ) : (
-                                    <CustomDataGrid
-                                        rows={payments.toSorted((a, b) =>
-                                            (b.PaymentDate ?? "").localeCompare(a.PaymentDate ?? "")
-                                        )}
-                                        columns={getPaymentColumns()}
-                                        rowCount={paymentTotal}
-                                        page={paymentPage}
-                                        limit={paymentLimit}
-                                        onPageChange={setPaymentPage}
-                                        onLimitChange={setPaymentLimit}
-                                        noDataText="Payments information not found."
-                                    />
-                                )}
-                            </Grid>
-                        </CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={0}>
+                                <Grid container size={{ xs: 12 }} spacing={2}>
+                                    {/* Filters Section */}
+                                    {!statusCounts ? (
+                                        <Skeleton variant="rectangular" width="100%" height={70} sx={{ borderRadius: 2 }} />
+                                    ) : (
+                                        <FilterSection
+                                            searchText={searchText}
+                                            setSearchText={setSearchText}
+                                            selectedDate={selectedDate}
+                                            setSelectedDate={setSelectedDate}
+                                            selectedStatuses={selectedStatuses}
+                                            setSelectedStatuses={setSelectedStatuses}
+                                            handleClearFilter={handleClearFillter}
+                                            requestStatuses={requestStatuses}
+                                        />
+                                    )}
+                                </Grid>
+
+                                {/* Data Table */}
+                                <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                    {isLoadingData ? (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width="100%"
+                                            height={200}
+                                            sx={{ borderRadius: 2 }}
+                                        />
+                                    ) : (
+                                        <CustomDataGrid
+                                            rows={filteredRequests}
+                                            columns={getColumns()}
+                                            rowCount={total}
+                                            page={page}
+                                            limit={limit}
+                                            onPageChange={setPage}
+                                            onLimitChange={setLimit}
+                                            noDataText="Maintenance request information not found."
+                                        />
+                                    )}
+                                </Grid>
+                            </CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={2}>
+                                <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                    {isLoadingInvoice ? (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width="100%"
+                                            height={255}
+                                            sx={{ borderRadius: 2 }}
+                                        />
+                                    ) : (
+                                        <CustomDataGrid
+                                            key={JSON.stringify(invoices.map(i => i.StatusID))}
+                                            rows={invoices.toSorted((a, b) =>
+                                                (b.BillingPeriod ?? "").localeCompare(a.BillingPeriod ?? "")
+                                            )}
+                                            columns={getInvoiceColumns()}
+                                            rowCount={invoiceTotal}
+                                            page={invoicePage}
+                                            limit={invoiceLimit}
+                                            onPageChange={setInvoicePage}
+                                            onLimitChange={setInvoiceLimit}
+                                            noDataText="Invoices information not found."
+                                            getRowId={(row) => row.ID} 
+                                        />
+                                    )}
+                                </Grid>
+                            </CustomTabPanel>
+                            <CustomTabPanel value={valueTab} index={3}>
+                                <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                    {isLoadingPayment ? (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width="100%"
+                                            height={255}
+                                            sx={{ borderRadius: 2 }}
+                                        />
+                                    ) : (
+                                        <CustomDataGrid
+                                            rows={payments.toSorted((a, b) =>
+                                                (b.PaymentDate ?? "").localeCompare(a.PaymentDate ?? "")
+                                            )}
+                                            columns={getPaymentColumns()}
+                                            rowCount={paymentTotal}
+                                            page={paymentPage}
+                                            limit={paymentLimit}
+                                            onPageChange={setPaymentPage}
+                                            onLimitChange={setPaymentLimit}
+                                            noDataText="Payments information not found."
+                                        />
+                                    )}
+                                </Grid>
+                            </CustomTabPanel>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Container>
-        </Box>
+                </Container>
+            </Box>
         </Container>
     );
 };

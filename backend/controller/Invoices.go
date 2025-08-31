@@ -272,6 +272,61 @@ func GetInvoicePDF(c *gin.Context) {
 	c.Data(http.StatusOK, "application/pdf", pdfBuf)
 }
 
+// GET /invoices/previous-month-summary
+func GetPreviousMonthInvoiceSummary(c *gin.Context) {
+	db := config.DB()
+
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	now := time.Now().In(loc)
+
+	// หาวันสิ้นเดือนของเดือนก่อนหน้า
+	firstOfCurrentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+	previousMonthEnd := firstOfCurrentMonth.Add(-time.Nanosecond)
+	previousMonthStart := time.Date(previousMonthEnd.Year(), previousMonthEnd.Month(), 1, 0, 0, 0, 0, loc)
+
+	// ดึง invoice ของเดือนนั้น
+	var invoices []entity.Invoice
+	if err := db.Preload("Status").
+		Where("billing_period >= ? AND billing_period <= ?", previousMonthStart, previousMonthEnd).
+   		Find(&invoices).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// คำนวณสถิติ
+	paidStatuses := map[string]bool{
+		"Awaiting Receipt": true,
+		"Paid":             true,
+	}
+
+	var paidCount, overdueCount int
+	var totalRevenue float64
+	nowTime := time.Now().In(loc)
+
+	for _, inv := range invoices {
+		statusName := inv.Status.Name
+		if paidStatuses[statusName] {
+			paidCount++
+			totalRevenue += inv.TotalAmount
+		} else if statusName == "Pending Payment" && inv.DueDate.Before(nowTime) {
+			overdueCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"billing_period":   previousMonthEnd.Format("2006-01-02"),
+		"total_invoices":   len(invoices),
+		"paid_invoices":    paidCount,
+		"overdue_invoices": overdueCount,
+		"total_revenue":    totalRevenue,
+	})
+}
+
 // POST /invoice
 func CreateInvoice(c *gin.Context) {
 	var invoice entity.Invoice
@@ -306,7 +361,7 @@ func CreateInvoice(c *gin.Context) {
 
 	var customer entity.User
 	if err := db.First(&customer, invoice.CustomerID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Creater not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
 		return
 	}
 
@@ -351,7 +406,6 @@ func CreateInvoice(c *gin.Context) {
 		"message": "Create success",
 		"data":    invoiceData,
 	})
-
 }
 
 // PATCH /invoice/:id

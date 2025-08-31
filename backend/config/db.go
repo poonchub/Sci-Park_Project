@@ -852,52 +852,45 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
-	payments := []entity.Payment{
-		{
+	now := time.Now()
+	payments := []entity.Payment{}
 
-			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
-			Amount:        500.00,
-			SlipPath:      "/slips/payment1.jpg",
-			Note:          "จองห้องประชุมเช้า",
-			PayerID:       users[2].ID, // internaluser1
-			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
-			StatusID:      1,
-		},
-		{
-			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:        1000.00,
-			SlipPath:      "/slips/payment2.jpg",
-			Note:          "อบรมพนักงานใหม่",
-			PayerID:       users[4].ID, // internaluser2
-			BookingRoomID: 2,
-			StatusID:      2,
-		},
-		{
-			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:      1000.00,
-			SlipPath:    "/slips/payment2.jpg",
-			Note:        "",
-			PayerID:     users[2].ID, // internaluser2
-			InvoiceID:   2,
-			StatusID:    2,
-		},
-		{
-			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:      1000.00,
-			SlipPath:    "/slips/payment2.jpg",
-			Note:        "",
-			PayerID:     users[3].ID, // internaluser2
-			InvoiceID:   2,
-			StatusID:    2,
-		},
+	// 7 Payments สำหรับ BookingRoomID
+	for i := 0; i < 7; i++ {
+		p := entity.Payment{
+			PaymentDate:   now.AddDate(0, 0, -i),
+			Amount:        float64(500 + i*100), // ตัวอย่าง Amount แตกต่างกัน
+			SlipPath:      fmt.Sprintf("/slips/booking_payment%d.jpg", i+1),
+			Note:          fmt.Sprintf("Payment for BookingRoom %d", i+1),
+			PayerID:       users[2+i%len(users)].ID,
+			StatusID:      2,     // สมมติ Paid
+			BookingRoomID: uint(i + 1), // BookingRoomID 1-7
+		}
+		payments = append(payments, p)
 	}
+
+	// 7 Payments สำหรับ InvoiceID (ข้าม 1-2)
+	for i := 0; i < 7; i++ {
+		p := entity.Payment{
+			PaymentDate: now.AddDate(0, 0, -i),
+			Amount:      float64(1000 + i*200),
+			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
+			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
+			PayerID:     users[2+i%len(users)].ID,
+			StatusID:    2,
+			InvoiceID:   uint(i + 3), // InvoiceID 3-9
+		}
+		payments = append(payments, p)
+	}
+
+	// Seed database
 	for _, p := range payments {
-		result := db.FirstOrCreate(&p, entity.Payment{
+		db.FirstOrCreate(&p, entity.Payment{
 			BookingRoomID: p.BookingRoomID,
+			InvoiceID:     p.InvoiceID,
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
-		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
 	}
 
 	// สมมติ TimeSlotID 1=เช้า, 2=บ่าย, 3=เต็มวัน
@@ -1184,8 +1177,6 @@ func SeedDatabase() {
 		})
 	}
 
-	
-
 	// AboutCompany data for internal users
 	aboutCompanies := []entity.AboutCompany{
 		{
@@ -1324,6 +1315,37 @@ func SeedDatabase() {
 	}
 	for i := range externalUsers {
 		makeRSA(externalUsers[i], i)
+	}
+
+	// ServiceAreaDocument
+	serviceDocs := []entity.ServiceAreaDocument{
+		{
+			RequestServiceAreaID:    1,
+			ServiceContractDocument: "/files/contracts/contract_001.pdf",
+			AreaHandoverDocument:    "/files/handovers/handover_001.pdf",
+			QuotationDocument:       "/files/quotations/quote_001.pdf",
+			RefundGuaranteeDocument: "/files/refunds/refund_001.pdf",
+			ContractNumber:          "CT-2025-001",
+			ContractStartAt:         time.Date(2025, 9, 1, 0, 0, 0, 0, time.Local),
+			ContractEndAt:           time.Date(2026, 8, 31, 23, 59, 59, 0, time.Local),
+			RoomID:                  1,
+			ServiceUserTypeID:       1,
+		},
+		{
+			RequestServiceAreaID:    2,
+			ServiceContractDocument: "/files/contracts/contract_002.pdf",
+			AreaHandoverDocument:    "/files/handovers/handover_002.pdf",
+			QuotationDocument:       "/files/quotations/quote_002.pdf",
+			RefundGuaranteeDocument: "/files/refunds/refund_002.pdf",
+			ContractNumber:          "CT-2025-002",
+			ContractStartAt:         time.Date(2025, 10, 1, 0, 0, 0, 0, time.Local),
+			ContractEndAt:           time.Date(2026, 9, 30, 23, 59, 59, 0, time.Local),
+			RoomID:                  2,
+			ServiceUserTypeID:       2,
+		},
+	}
+	for _, doc := range serviceDocs {
+		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{RequestServiceAreaID: doc.RequestServiceAreaID})
 	}
 
 }

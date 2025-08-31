@@ -28,8 +28,8 @@ export const paymentStatusConfig: Record<string, PaymentStatusConfig> = {
     },
     "Paid": {
         // จ่ายแล้วและตรวจสอบเรียบร้อย
-        color: "#28A745",
-        colorLite: "rgba(40, 167, 69, 0.2)", // light green
+        color: "#10a605",
+        colorLite: "rgba(0, 255, 60, 0.18)", // light green
         icon: CheckCircle,
     },
     "Rejected": {

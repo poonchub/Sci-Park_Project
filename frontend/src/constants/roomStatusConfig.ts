@@ -12,13 +12,13 @@ export interface RoomStatusConfig {
 // Mapping different room statuses to their respective configuration
 export const roomStatusConfig: Record<string, RoomStatusConfig> = {
     "Available": {
-        color: "#28A745", // Green = available
-        colorLite: "rgba(40, 167, 69, 0.2)", // light green
+        color: "#10a605", // Green = available
+        colorLite: "rgba(0, 255, 60, 0.18)", // light green
         icon: Check,
     },
     "Under Maintenance": {
-        color: "#FFC107", // Yellow = maintenance
-        colorLite: "rgba(255, 193, 7, 0.2)", // light yellow
+        color: "#FFA500", // Yellow = maintenance
+        colorLite: "rgba(255, 166, 0, 0.21)", // light yellow
         icon: Wrench,
     },
     "Unavailable": {
@@ -28,7 +28,7 @@ export const roomStatusConfig: Record<string, RoomStatusConfig> = {
     },
     "Damaged": {
         color: "#DC3545", // Red = damaged
-        colorLite: "rgba(220, 53, 69, 0.2)", // light red
+        colorLite: "rgba(220, 53, 70, 0.19)", // light red
         icon: Hammer,
     },
 };

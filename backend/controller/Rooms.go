@@ -374,3 +374,38 @@ func GetAllRooms(c *gin.Context) {
 		"data":   roomList,
 	})
 }
+
+// GET /rooms/rental-space-summary
+func GetRentalSpaceRoomSummary(c *gin.Context) {
+	db := config.DB()
+
+	var roomType entity.RoomType
+	if err := db.Where("type_name = ?", "Rental Space").First(&roomType).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Room Type 'Rental Space' not found"})
+		return
+	}
+
+	var totalRooms int64
+	db.Model(&entity.Room{}).
+		Where("room_type_id = ?", roomType.ID).
+		Count(&totalRooms)
+
+	var availableRooms int64
+	db.Model(&entity.Room{}).
+		Joins("JOIN room_statuses ON rooms.room_status_id = room_statuses.id").
+		Where("rooms.room_type_id = ? AND room_statuses.code = ?", roomType.ID, "available").
+		Count(&availableRooms)
+
+	var maintenanceRooms int64
+	db.Model(&entity.Room{}).
+		Joins("JOIN room_statuses ON rooms.room_status_id = room_statuses.id").
+		Where("rooms.room_type_id = ? AND (room_statuses.code = ? OR room_statuses.code = ?)",
+			roomType.ID, "maintenance", "damaged").
+		Count(&maintenanceRooms)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_rooms":            totalRooms,
+		"available_rooms":        availableRooms,
+		"rooms_under_maintenance": maintenanceRooms,
+	})
+}
