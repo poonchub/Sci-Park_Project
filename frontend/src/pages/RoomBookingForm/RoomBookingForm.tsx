@@ -1243,7 +1243,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           <Button
             startIcon={<ArrowLeft />}
             onClick={onBack || (() => window.history.back())}
-            variant="outlined"
+            variant="text"
             
           >
             Back

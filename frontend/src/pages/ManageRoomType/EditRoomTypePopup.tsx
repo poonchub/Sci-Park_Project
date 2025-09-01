@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Typography,
@@ -28,7 +27,9 @@ import {
   DollarSign,
   Grid3x3,
   Camera,
-  X
+  X,
+  Wrench,
+  LayoutPanelLeft
 } from 'lucide-react';
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -66,6 +67,38 @@ const clampMin1 = (val: any) => {
   return Number.isNaN(n) ? 1 : Math.max(1, Math.floor(n));
 };
 
+type SectionVariant = 'basic' | 'equipments' | 'pricing' | 'layouts' | 'images';
+
+const SectionHeader = ({ variant, title }: { variant: SectionVariant; title: string }) => {
+  const map: Record<SectionVariant, { Icon: any; color: string }> = {
+    basic: { Icon: Settings, color: '#2196f3' },
+    equipments: { Icon: Wrench, color: '#ff9800' },
+    pricing: { Icon: DollarSign, color: '#4caf50' },
+    layouts: { Icon: LayoutPanelLeft, color: '#9c27b0' },
+    images: { Icon: ImageIcon, color: '#f44336' },
+  };
+  const { Icon, color } = map[variant];
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      <Box
+        sx={{
+          p: 1,
+          borderRadius: 2,
+          backgroundColor: `${color}15`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Icon size={20} color={color} />
+      </Box>
+      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
+    </Box>
+  );
+};
+
 const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open, onClose }) => {
   const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm();
   const [roomType, setRoomType] = useState<RoomtypesInterface | null>(null);
@@ -93,66 +126,65 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
     setPendingSelect(null);
   };
 
- // --- แทนที่ฟังก์ชันเดิมทั้งหมด ---
-const handleCreateSubmit = async () => {
-  if (!createForm.name?.trim()) {
-    setAlerts(prev => [...prev, { type: 'warning', message: 'กรุณากรอกชื่อก่อนสร้างข้อมูลใหม่' }]);
-    return;
-  }
-
-  try {
-    if (createType === 'equipment') {
-      // services ของคุณคืน object | false
-      const created = await CreateEquipment({ EquipmentName: createForm.name.trim() });
-      if (!created) {
-        setAlerts(p => [...p, { type: 'error', message: 'สร้างอุปกรณ์ไม่สำเร็จ' }]);
-        return;
-      }
-      setEquipmentsMaster(prev => [...prev, created]);
-      if (pendingSelect && roomType) {
-        const updated = [...(roomType.RoomEquipments ?? [])];
-        updated[pendingSelect.index].EquipmentID = (created.ID ?? created.id);
-        setRoomType({ ...roomType, RoomEquipments: updated });
-      }
-
-    } else if (createType === 'timeslot') {
-      const created = await CreateTimeSlot({
-        TimeSlotName: createForm.name.trim(),
-        Start: createForm.start || '09:00',
-        End: createForm.end || '12:00',
-      });
-      if (!created) {
-        setAlerts(p => [...p, { type: 'error', message: 'สร้าง Time Slot ไม่สำเร็จ' }]);
-        return;
-      }
-      setTimeSlotsMaster(prev => [...prev, created]);
-      if (pendingSelect && roomType) {
-        const updated = [...(roomType.RoomPrices ?? [])];
-        updated[pendingSelect.index].TimeSlotID = (created.ID ?? created.id);
-        setRoomType({ ...roomType, RoomPrices: updated });
-      }
-
-    } else if (createType === 'layout') {
-      const created = await CreateLayout({ LayoutName: createForm.name.trim() });
-      if (!created) {
-        setAlerts(p => [...p, { type: 'error', message: 'สร้าง Layout ไม่สำเร็จ' }]);
-        return;
-      }
-      setLayoutsMaster(prev => [...prev, created]);
-      if (pendingSelect && roomType) {
-        const updated = [...(roomType.RoomTypeLayouts ?? [])];
-        updated[pendingSelect.index].RoomLayoutID = (created.ID ?? created.id);
-        setRoomType({ ...roomType, RoomTypeLayouts: updated });
-      }
+  // --- แทนที่ฟังก์ชันเดิมทั้งหมด ---
+  const handleCreateSubmit = async () => {
+    if (!createForm.name?.trim()) {
+      setAlerts(prev => [...prev, { type: 'warning', message: 'กรุณากรอกชื่อก่อนสร้างข้อมูลใหม่' }]);
+      return;
     }
 
-    setAlerts(prev => [...prev, { type: 'success', message: 'สร้างข้อมูลใหม่เรียบร้อย' }]);
-    closeCreate();
+    try {
+      if (createType === 'equipment') {
+        const created = await CreateEquipment({ EquipmentName: createForm.name.trim() });
+        if (!created) {
+          setAlerts(p => [...p, { type: 'error', message: 'สร้างอุปกรณ์ไม่สำเร็จ' }]);
+          return;
+        }
+        setEquipmentsMaster(prev => [...prev, created]);
+        if (pendingSelect && roomType) {
+          const updated = [...(roomType.RoomEquipments ?? [])];
+          updated[pendingSelect.index].EquipmentID = (created.ID ?? created.id);
+          setRoomType({ ...roomType, RoomEquipments: updated });
+        }
 
-  } catch (e: any) {
-    setAlerts(prev => [...prev, { type: 'error', message: e?.message || 'สร้างข้อมูลไม่สำเร็จ' }]);
-  }
-};
+      } else if (createType === 'timeslot') {
+        const created = await CreateTimeSlot({
+          TimeSlotName: createForm.name.trim(),
+          StartTime: createForm.start || '09:00',
+          EndTime: createForm.end || '12:00',
+        });
+        if (!created) {
+          setAlerts(p => [...p, { type: 'error', message: 'สร้าง Time Slot ไม่สำเร็จ' }]);
+          return;
+        }
+        setTimeSlotsMaster(prev => [...prev, created]);
+        if (pendingSelect && roomType) {
+          const updated = [...(roomType.RoomPrices ?? [])];
+          updated[pendingSelect.index].TimeSlotID = (created.ID ?? created.id);
+          setRoomType({ ...roomType, RoomPrices: updated });
+        }
+
+      } else if (createType === 'layout') {
+        const created = await CreateLayout({ LayoutName: createForm.name.trim() });
+        if (!created) {
+          setAlerts(p => [...p, { type: 'error', message: 'สร้าง Layout ไม่สำเร็จ' }]);
+          return;
+        }
+        setLayoutsMaster(prev => [...prev, created]);
+        if (pendingSelect && roomType) {
+          const updated = [...(roomType.RoomTypeLayouts ?? [])];
+          updated[pendingSelect.index].RoomLayoutID = (created.ID ?? created.id);
+          setRoomType({ ...roomType, RoomTypeLayouts: updated });
+        }
+      }
+
+      setAlerts(prev => [...prev, { type: 'success', message: 'สร้างข้อมูลใหม่เรียบร้อย' }]);
+      closeCreate();
+
+    } catch (e: any) {
+      setAlerts(prev => [...prev, { type: 'error', message: e?.message || 'สร้างข้อมูลไม่สำเร็จ' }]);
+    }
+  };
 
   // ===== Load data =====
   useEffect(() => {
@@ -253,24 +285,6 @@ const handleCreateSubmit = async () => {
     }
   };
 
-  const SectionHeader = ({ icon: Icon, title, color = "#1976d2" }: { icon: any, title: string, color?: string }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-      <Box sx={{
-        p: 1,
-        borderRadius: 2,
-        backgroundColor: `${color}15`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <Icon size={20} color={color} />
-      </Box>
-      <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
-        {title}
-      </Typography>
-    </Box>
-  );
-
   return (
     <Dialog
       open={open}
@@ -295,18 +309,17 @@ const handleCreateSubmit = async () => {
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
-
         {roomType && (
           <form onSubmit={handleSubmit(handleSave)}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
               {/* Basic Information */}
               <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <SectionHeader icon={Settings} title="Basic Information" color="#2196f3" />
+                <SectionHeader variant="basic" title="Basic Information" />
 
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, color: '#555' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
                       Room Type Name *
                     </Typography>
                     <Controller
@@ -328,7 +341,7 @@ const handleCreateSubmit = async () => {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, color: '#555' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1,  }}>
                       Room Size (sq.m.)
                     </Typography>
                     <Controller
@@ -357,7 +370,7 @@ const handleCreateSubmit = async () => {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, color: '#555' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
                       For Rental
                     </Typography>
                     <Controller
@@ -387,7 +400,7 @@ const handleCreateSubmit = async () => {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, color: '#555' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
                       Multiple Sizes
                     </Typography>
                     <Controller
@@ -430,10 +443,10 @@ const handleCreateSubmit = async () => {
                     flexWrap: 'wrap'
                   }}
                 >
-                  <SectionHeader icon={Settings} title="Equipments" color="#ff9800" />
+                  <SectionHeader variant="equipments" title="Equipments" />
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
-                      variant="outlined"
+                      variant="outlinedGray"
                       startIcon={<Plus size={16} />}
                       onClick={() => {
                         setRoomType(prev => {
@@ -446,7 +459,6 @@ const handleCreateSubmit = async () => {
                     >
                       Add Equipment
                     </Button>
-                    {/* Header-level New */}
                     <Button
                       variant="contained"
                       startIcon={<Plus size={16} />}
@@ -472,7 +484,7 @@ const handleCreateSubmit = async () => {
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 5 }}>
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Equipment Type
                             </Typography>
                             <Select
@@ -493,7 +505,7 @@ const handleCreateSubmit = async () => {
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 5 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Quantity
                             </Typography>
                             <TextField
@@ -541,10 +553,10 @@ const handleCreateSubmit = async () => {
                     flexWrap: 'wrap'
                   }}
                 >
-                  <SectionHeader icon={DollarSign} title="Pricing" color="#4caf50" />
+                  <SectionHeader variant="pricing" title="Pricing" />
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
-                      variant="outlined"
+                      variant="outlinedGray"
                       startIcon={<Plus size={16} />}
                       onClick={() => {
                         setRoomType(prev => {
@@ -557,7 +569,6 @@ const handleCreateSubmit = async () => {
                     >
                       Add Price
                     </Button>
-                    {/* Header-level New */}
                     <Button
                       variant="contained"
                       startIcon={<Plus size={16} />}
@@ -583,7 +594,7 @@ const handleCreateSubmit = async () => {
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 6 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Time Slot
                             </Typography>
                             <Select
@@ -604,7 +615,7 @@ const handleCreateSubmit = async () => {
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 1 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Price (THB)
                             </Typography>
                             <TextField
@@ -652,10 +663,10 @@ const handleCreateSubmit = async () => {
                     flexWrap: 'wrap'
                   }}
                 >
-                  <SectionHeader icon={Grid3x3} title="Layouts" color="#9c27b0" />
+                  <SectionHeader variant="layouts" title="Layouts" />
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
-                      variant="outlined"
+                      variant="outlinedGray"
                       startIcon={<Plus size={16} />}
                       onClick={() => {
                         setRoomType(prev => {
@@ -668,7 +679,6 @@ const handleCreateSubmit = async () => {
                     >
                       Add Layout
                     </Button>
-                    {/* Header-level New */}
                     <Button
                       variant="contained"
                       startIcon={<Plus size={16} />}
@@ -694,7 +704,7 @@ const handleCreateSubmit = async () => {
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 4 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Layout Type
                             </Typography>
                             <Select
@@ -715,7 +725,7 @@ const handleCreateSubmit = async () => {
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
                               Capacity
                             </Typography>
                             <TextField
@@ -733,7 +743,7 @@ const handleCreateSubmit = async () => {
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }} >
-                            <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Note
                             </Typography>
                             <TextField
@@ -768,8 +778,8 @@ const handleCreateSubmit = async () => {
               </Paper>
 
               {/* Images Section */}
-              <Paper sx={{ p: 3, borderRadius: 3, boxShadow: '0 2px 20px rgba(0,0,0,0.08)' }}>
-                <SectionHeader icon={ImageIcon} title="Images" color="#f44336" />
+              <Paper sx={{ p: 3, borderRadius: 3 }}>
+                <SectionHeader variant="images" title="Images" />
 
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
                   {(roomType.RoomTypeImages ?? []).map((img: any, index: number) => (
@@ -807,7 +817,7 @@ const handleCreateSubmit = async () => {
                       sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}
                     >
                       <Camera size={24} />
-                      <Typography variant="caption">Add Image</Typography>
+                      <Typography variant="" >Add Image</Typography>
                       <input
                         type="file"
                         accept="image/*"
@@ -886,12 +896,15 @@ const handleCreateSubmit = async () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2, flexWrap: 'wrap', gap: 1 }}>
-          <Button variant="outlined" onClick={closeCreate}>Cancel</Button>
+          <Button variant="outlinedGray" onClick={closeCreate}>Cancel</Button>
           <Button
             variant="contained"
-            onClick={handleCreateSubmit}
+            onClick={() => {
+              // ใช้ไอคอน Lucide ในปุ่ม
+              handleCreateSubmit();
+            }}
             startIcon={<Save size={16} />}
-            sx={{ background: 'linear-gradient(to right, #4caf50, #2e7d32)' }}
+           
           >
             Create
           </Button>
@@ -902,7 +915,7 @@ const handleCreateSubmit = async () => {
       <DialogActions sx={{ p: 3, gap: 2, flexWrap: 'wrap' }}>
         <Button
           onClick={onClose}
-          variant="outlined"
+          variant="outlinedGray"
           sx={{ borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontWeight: 500 }}
           disabled={loading}
         >

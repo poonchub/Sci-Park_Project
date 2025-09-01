@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"log"
+	
 	"net/http"
 	"os"
 	"path"
@@ -70,47 +70,7 @@ func UpdatePaymentStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "อัปเดตสถานะสำเร็จ"})
 }
 
-func CancelExpiredBookings() {
-	db := config.DB()
-	expiryDuration := 15 * time.Minute
-	cutoffTime := time.Now().Add(-expiryDuration)
 
-	var expiredBookings []entity.BookingRoom
-
-	// ดึง BookingRoom ที่สร้างเก่ากว่า cutoffTime
-	err := db.Where("created_at <= ?", cutoffTime).Find(&expiredBookings).Error
-	if err != nil {
-		log.Println("Error fetching expired bookings:", err)
-		return
-	}
-
-	for _, booking := range expiredBookings {
-		var confirmedPayments []entity.Payment
-		err := db.Joins("JOIN payment_statuses ON payment_statuses.id = payments.status_id").
-			Where("payments.booking_room_id = ? AND payment_statuses.name = ?", booking.ID, "confirmed").
-			Find(&confirmedPayments).Error
-		if err != nil {
-			log.Println("Error fetching payments for booking", booking.ID, err)
-			continue
-		}
-
-		if len(confirmedPayments) == 0 {
-			log.Println("Booking", booking.ID, "ไม่มี payment confirmed")
-			if err := db.Delete(&booking).Error; err != nil {
-				log.Println("Error cancelling booking ID", booking.ID, err)
-			} else {
-				log.Println("Cancelled expired booking ID", booking.ID)
-			}
-		} else {
-			log.Println("Booking", booking.ID, "มี payment แล้ว ไม่ลบ")
-		}
-	}
-}
-
-func CancelExpiredBookingsHandler(c *gin.Context) {
-	CancelExpiredBookings() // เรียกฟังก์ชันเดิม
-	c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกการจองที่หมดอายุแล้วเรียบร้อย"})
-}
 
 // GET /payment/:userId
 func GetPaymentByUserID(c *gin.Context) {

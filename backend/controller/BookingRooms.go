@@ -128,6 +128,19 @@ func computeDisplayStatus(b entity.BookingRoom) string {
 	return "unknown"
 }
 
+func minBookingDate(b entity.BookingRoom) (time.Time, bool) {
+	if len(b.BookingDates) == 0 {
+		return time.Time{}, false
+	}
+	min := b.BookingDates[0].Date
+	for _, d := range b.BookingDates {
+		if d.Date.Before(min) {
+			min = d.Date
+		}
+	}
+	// strip time component to compare by day
+	return time.Date(min.Year(), min.Month(), min.Day(), 0, 0, 0, 0, min.Location()), true
+}
 
 
 // ===== Controller: แสดงรายการ Booking ทั้งหมด =====
@@ -523,6 +536,8 @@ func CreateBookingRoom(c *gin.Context) {
 
 
 
+// ห้ามยกเลิกถ้าเหลือน้อยกว่า 2 วันก่อนวันใช้งานแรก
+// (ยังคงเก็บประวัติ: เปลี่ยนสถานะเป็น cancelled ไม่ลบข้อมูล)
 func CancelBookingRoom(c *gin.Context) {
 	db := config.DB()
 	bookingID := c.Param("id")
@@ -534,31 +549,43 @@ func CancelBookingRoom(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
 		return
 	}
-
 	if len(booking.BookingDates) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบวันจองในรายการนี้"})
 		return
 	}
 
+	// หา status "cancelled"
+	var cancelledStatus entity.BookingStatus
+	if err := db.
+		Where("LOWER(code) = ?", "cancelled").
+		Or("LOWER(name) = ?", "cancelled").
+		First(&cancelledStatus).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบสถานะ cancelled"})
+		return
+	}
+
 	// ป้องกันการยกเลิกซ้ำ
-	if booking.StatusID == 3 {
+	if booking.StatusID == cancelledStatus.ID {
 		c.JSON(http.StatusConflict, gin.H{"error": "รายการนี้ถูกยกเลิกไปแล้ว"})
 		return
 	}
 
-	// ใช้วันที่แรกสุดใน booking เพื่อตรวจสอบ
-	firstDate := booking.BookingDates[0].Date.Truncate(24 * time.Hour)
-	today := time.Now().Truncate(24 * time.Hour)
-	twoDaysLater := today.Add(48 * time.Hour)
+	// ตรวจ policy: ต้องยกเลิกล่วงหน้าอย่างน้อย 2 วันก่อนวันใช้งานแรก
+	firstDate, _ := minBookingDate(booking)
+
+	today := time.Now()
+	// เปรียบเทียบแบบรายวัน: ตัดเวลาออก
+	todayDay := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+	twoDaysLater := todayDay.Add(48 * time.Hour)
 
 	if firstDate.Before(twoDaysLater) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "สามารถยกเลิกได้อย่างน้อย 2 วันล่วงหน้าก่อนวันใช้งาน"})
 		return
 	}
 
-	// ทำการยกเลิก
+	// ทำการยกเลิก (เปลี่ยนสถานะ ไม่ลบ)
 	now := time.Now()
-	booking.StatusID = 3
+	booking.StatusID = cancelledStatus.ID
 	booking.CancelledAt = &now
 
 	if err := db.Save(&booking).Error; err != nil {
@@ -569,6 +596,110 @@ func CancelBookingRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "ยกเลิกการจองเรียบร้อยแล้ว",
 		"cancelledAt": now.Format("2006-01-02 15:04:05"),
+	})
+}
+
+// ==========================
+// AUTO-CANCEL (Policy B)
+// ==========================
+// ยกเลิกการจองอัตโนมัติ หากข้าม "00:00 ของวันก่อนใช้งานจริง" มาแล้วและยังไม่มีการชำระที่ยืนยัน
+// - deadline = startOfUsageDay(00:00) - 24h  ==> เท่ากับ 00:00 ของ "วันก่อนใช้งาน"
+// - ถ้า now >= deadline และยังไม่ confirmed/approved → ยกเลิก
+func AutoCancelUnpaidBookings(deadlineHours int) (int, error) {
+	db := config.DB()
+
+	// ไม่ใช้ deadlineHours แบบชั่วโมงแล้ว (นโยบาย B กำหนดชัดเป็น 00:00 ของวันก่อนหน้า)
+	now := time.Now()
+
+	// resolve cancelled status
+	var cancelledStatus entity.BookingStatus
+	if err := db.
+		Where("LOWER(code) = ?", "cancelled").
+		Or("LOWER(name) = ?", "cancelled").
+		First(&cancelledStatus).Error; err != nil {
+		return 0, err
+	}
+
+	// candidates: booking ที่ยังไม่ถูกยกเลิก และมี BookingDates
+	var bookings []entity.BookingRoom
+	if err := db.
+		Preload("BookingDates").
+		Where("status_id <> ?", cancelledStatus.ID).
+		Find(&bookings).Error; err != nil {
+		return 0, err
+	}
+
+	cancelled := 0
+
+	for _, b := range bookings {
+		firstDate, ok := minBookingDate(b)
+		if !ok {
+			continue // ไม่มีวันจอง
+		}
+
+		// startOfUsageDay = 00:00 ของวันใช้งานแรก
+		startOfUsageDay := time.Date(firstDate.Year(), firstDate.Month(), firstDate.Day(), 0, 0, 0, 0, firstDate.Location())
+		// deadline = 00:00 ของ "วันก่อนใช้งาน"
+		deadline := startOfUsageDay.Add(-24 * time.Hour)
+
+		// ยังไม่ถึง 00:00 ของวันก่อนหน้า → ยังไม่ออโต้ยกเลิก
+		if now.Before(deadline) {
+			continue
+		}
+
+		// ตรวจว่ามี payment ยืนยันหรือยัง
+		var cnt int64
+		if err := db.Table("payments").
+			Joins("JOIN payment_statuses ON payment_statuses.id = payments.status_id").
+			Where("payments.booking_room_id = ?", b.ID).
+			Where("LOWER(payment_statuses.name) IN (?)", []string{"confirmed", "approved"}).
+			Count(&cnt).Error; err != nil {
+			log.Println("count payments error for booking", b.ID, ":", err)
+			continue
+		}
+		if cnt > 0 {
+			// จ่าย/อนุมัติแล้ว ไม่ยกเลิก
+			continue
+		}
+
+		// ออโต้ยกเลิก (เปลี่ยนสถานะ ไม่ลบ)
+		tx := db.Begin()
+		nowTs := time.Now()
+		if err := tx.Model(&entity.BookingRoom{}).
+			Where("id = ?", b.ID).
+			Updates(map[string]any{
+				"status_id":    cancelledStatus.ID,
+				"cancelled_at": &nowTs,
+				"updated_at":   nowTs,
+			}).Error; err != nil {
+			tx.Rollback()
+			log.Println("update cancelled failed id=", b.ID, "err:", err)
+			continue
+		}
+		if err := tx.Commit().Error; err != nil {
+			log.Println("commit failed id=", b.ID, "err:", err)
+			continue
+		}
+		cancelled++
+		log.Println("auto-cancel (Policy B) booking id=", b.ID)
+	}
+
+	return cancelled, nil
+}
+
+func AutoCancelUnpaidBookingsHandler(c *gin.Context) {
+	// นโยบาย B: fixed ตาม 00:00 ของวันก่อนใช้งาน → พารามิเตอร์ชั่วโมงไม่ถูกใช้ แต่คง signature ไว้
+	n, err := AutoCancelUnpaidBookings(24)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "เกิดข้อผิดพลาดระหว่างยกเลิกอัตโนมัติ (Policy B)",
+			"error":   err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message":              "ยกเลิกอัตโนมัติสำหรับการจองที่ไม่ชำระภายในกำหนด (Policy B) แล้ว",
+		"auto_cancelled_count": n,
 	})
 }
 

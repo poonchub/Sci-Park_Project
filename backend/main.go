@@ -52,7 +52,7 @@ func main() {
 		public.GET("/get-timeslots-roomprices/:id", controller.GetRoomByIDwithBookings)
 
 		public.POST("/booking-rooms", controller.CreateBookingRoom)
-		public.POST("/cancel-expired", controller.CancelExpiredBookingsHandler)
+
 		public.GET("/pending-payments", controller.GetPendingPayments)
 		public.PUT("/update-payment", controller.UpdatePaymentStatus)
 		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
@@ -377,19 +377,31 @@ func main() {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
 
-	go func() {
-		ticker := time.NewTicker(1 * time.Minute) // ตั้งเวลาให้รันทุก 1 นาที
-		defer ticker.Stop()
+	 go func() {
+        for {
+            now := time.Now()
+            // หาว่าต้องรออีกกี่นาทีถึง 00:05 ของวันถัดไป
+            next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 5, 0, 0, now.Location())
+            d := time.Until(next)
 
-		for range ticker.C {
-			log.Println("Background job: CancelExpiredBookings start")
-			controller.CancelExpiredBookings() // เรียกฟังก์ชันจาก controller
-			log.Println("Background job: CancelExpiredBookings finished")
-		}
-	}()
+            time.Sleep(d) // รอจนถึงเวลา
+
+            // เรียกฟังก์ชัน auto-cancel
+            if n, err := controller.AutoCancelUnpaidBookings(24); err != nil {
+                log.Println("[auto-cancel] error:", err)
+            } else {
+                log.Println("[auto-cancel] cancelled bookings:", n)
+            }
+        }
+    }()
+
+
 
 	// 🚀 Start Server
-	r.Run("localhost:" + PORT) // ✅ รองรับการเข้าถึงจากเครือข่ายอื่น
+	r.Run("localhost:" + PORT) // ✅ 
+
+	
+	
 }
 
 // 🛠 CORS Middleware
@@ -408,3 +420,5 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+
