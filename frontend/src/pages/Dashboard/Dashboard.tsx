@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import {
     GetMaintenanceTypes,
+    GetMeetingRoomSummaryToday,
     GetPreviousMonthInvoiceSummary,
     GetRentalSpaceRoomSummary,
     GetUserById,
@@ -101,6 +102,7 @@ function Dashboard() {
     const [invoices, setInvoices] = useState<InvoiceInterface[]>([])
     const [filteredRequest, setFilteredRequest] = useState<MaintenanceRequestsInterface[]>([]);
     const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
+    
     const [previousMonthInvoiceSummary, setPreviousMonthInvoiceSummary] = useState<{
         billing_period: string;
         overdue_invoices: number;
@@ -112,6 +114,10 @@ function Dashboard() {
         total_rooms: number;
         available_rooms: number;
         rooms_under_maintenance: number;
+    }>()
+    const [meetingRoomSummaryToday, setMeetingRoomSummaryToday] = useState<{
+        available_today: number;
+        total_rooms: number;
     }>()
 
     const [groupedData, setGroupedData] = useState<
@@ -247,9 +253,21 @@ function Dashboard() {
                 dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
                 dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
-
+            console.log(res)
             if (res) {
                 setBookingRooms(res);
+            }
+        } catch (error) {
+            console.error("Error fetching booking rooms:", error);
+        }
+    };
+
+    const getMeetingRoomSummaryToday = async () => {
+        try {
+            const res = await GetMeetingRoomSummaryToday()
+            console.log(res)
+            if (res) {
+                setMeetingRoomSummaryToday(res);
             }
         } catch (error) {
             console.error("Error fetching booking rooms:", error);
@@ -342,6 +360,7 @@ function Dashboard() {
         ) {
             getBookingRoomPayments();
             getBookingRooms();
+            getMeetingRoomSummaryToday()
         }
     }, [dateRangeBookingRoom]);
 
@@ -497,18 +516,6 @@ function Dashboard() {
         }
     }, [dateRangeBookingRoom.end]);
 
-    const theme = useTheme();
-
-    // Mock data for summary cards
-    const summaryData = {
-        totalBookings: 234,
-        availableRooms: 12,
-        totalRevenue: 15670.5,
-        paymentFees: 785.25,
-        netRevenue: 14885.25,
-        totalUsers: 1847,
-    };
-
     const SummaryCard: React.FC<{
         title: string;
         value: string | number;
@@ -638,6 +645,8 @@ function Dashboard() {
             "Adjust the time range or filters to get a clearer view of the data.",
         ],
     };
+
+console.log("bookingRooms: ", bookingRooms)
 
     return (
         <Box className="dashboard-page">
@@ -1007,35 +1016,68 @@ function Dashboard() {
                     <CustomTabPanel value={valueTab} index={1}>
                         <Grid container size={{ xs: 12 }} spacing={3}>
                             {/* Summary Cards */}
-                            <Grid size={{ xs: 6 }} container columnSpacing={3} rowSpacing={2} >
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
                                 <Grid size={{ xs: 12 }}>
-                                    <Typography sx={{ fontWeight: 500, fontSize: 18 }}>Meeting Room</Typography>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Today's Room Summary</Typography>
                                 </Grid>
-                                <Grid size={{ xs: 12 }}>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
-                                        title="Total Bookings"
-                                        value={bookingRooms.length}
-                                        icon={Check}
-                                        color="#1976d2"
-                                        colorLite=""
+                                        title="Total Rooms"
+                                        value={meetingRoomSummaryToday?.total_rooms ?? 0}
+                                        icon={DoorClosed}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
                                     />
                                 </Grid>
-                                <Grid size={{ xs: 12 }}>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Available Rooms"
-                                        value={summaryData.availableRooms}
-                                        icon={DoorOpen}
-                                        color="#4caf50"
-                                        colorLite=""
+                                        value={meetingRoomSummaryToday?.available_today ?? 0}
+                                        icon={Check}
+                                        color={roomStatusConfig["Available"].color}
+                                        colorLite={roomStatusConfig["Available"].colorLite}
                                     />
                                 </Grid>
+                            </Grid>
+
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
                                 <Grid size={{ xs: 12 }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Billing & Revenue This Month</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Total Booking"
+                                        value={previousMonthInvoiceSummary?.total_invoices ?? 0}
+                                        icon={FileText}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Pending Approvals"
+                                        value={previousMonthInvoiceSummary?.paid_invoices ?? 0}
+                                        icon={CheckCircle}
+                                        color={paymentStatusConfig["Paid"].color}
+                                        colorLite={paymentStatusConfig["Paid"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Completed Bookings"
+                                        value={previousMonthInvoiceSummary?.overdue_invoices ?? 0}
+                                        icon={Clock}
+                                        color={paymentStatusConfig["Rejected"].color}
+                                        colorLite={paymentStatusConfig["Rejected"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Total Revenue"
-                                        value={summaryData.totalRevenue}
-                                        icon={ChartLine}
-                                        color="#ff9800"
-                                        colorLite=""
+                                        value={previousMonthInvoiceSummary?.total_revenue ?? 0}
+                                        icon={TrendingUp}
+                                        color="#FFA500"
+                                        colorLite="rgba(255, 166, 0, 0.21)"
                                     />
                                 </Grid>
                             </Grid>

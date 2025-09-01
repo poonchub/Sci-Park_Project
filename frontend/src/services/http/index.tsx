@@ -1529,7 +1529,16 @@ async function ListBookingRoomByDateRange(startDate: string | null, endDate: str
         const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
         return response.data;
     } catch (error) {
-        console.error("Error giting payments:", error);
+        console.error("Error giting booking room:", error);
+        throw error;
+    }
+}
+async function GetMeetingRoomSummaryToday() {
+    try {
+        const response = await axiosInstance.get("/rooms/meeting-room-summary-today");
+        return response.data;
+    } catch (error) {
+        console.error("Error giting meeting room summary:", error);
         throw error;
     }
 }
@@ -2821,6 +2830,7 @@ export {
     // BookingRooms
     ListBookingRooms,
     ListBookingRoomByDateRange,
+    GetMeetingRoomSummaryToday,
 
     // News
     ListNews,

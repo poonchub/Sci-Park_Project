@@ -177,7 +177,7 @@ const ApexBookingRoomRevenueBarChart = (props: {
             },
         },
         tooltip: { theme: mode },
-        colors: ["#3B82F6"],
+        colors: ["#F26522"],
         legend: { show: false },
     };
 

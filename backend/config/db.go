@@ -852,24 +852,22 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
+	// Payment
 	now := time.Now()
 	payments := []entity.Payment{}
-
-	// 7 Payments สำหรับ BookingRoomID
 	for i := 0; i < 7; i++ {
 		p := entity.Payment{
 			PaymentDate:   now.AddDate(0, 0, -i),
-			Amount:        float64(500 + i*100), // ตัวอย่าง Amount แตกต่างกัน
+			Amount:        float64(500 + i*100),
 			SlipPath:      fmt.Sprintf("/slips/booking_payment%d.jpg", i+1),
 			Note:          fmt.Sprintf("Payment for BookingRoom %d", i+1),
 			PayerID:       users[2+i%len(users)].ID,
-			StatusID:      2,     // สมมติ Paid
-			BookingRoomID: uint(i + 1), // BookingRoomID 1-7
+			StatusID:      2,
+			BookingRoomID: uint(i + 1),
 		}
 		payments = append(payments, p)
 	}
 
-	// 7 Payments สำหรับ InvoiceID (ข้าม 1-2)
 	for i := 0; i < 7; i++ {
 		p := entity.Payment{
 			PaymentDate: now.AddDate(0, 0, -i),
@@ -878,12 +876,10 @@ func SeedDatabase() {
 			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
 			PayerID:     users[2+i%len(users)].ID,
 			StatusID:    2,
-			InvoiceID:   uint(i + 3), // InvoiceID 3-9
+			InvoiceID:   uint(i + 3),
 		}
 		payments = append(payments, p)
 	}
-
-	// Seed database
 	for _, p := range payments {
 		db.FirstOrCreate(&p, entity.Payment{
 			BookingRoomID: p.BookingRoomID,

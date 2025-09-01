@@ -6,6 +6,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -407,5 +408,64 @@ func GetRentalSpaceRoomSummary(c *gin.Context) {
 		"total_rooms":            totalRooms,
 		"available_rooms":        availableRooms,
 		"rooms_under_maintenance": maintenanceRooms,
+	})
+}
+
+// GET /rooms/meeting-room-summary-today
+func GetMeetingRoomSummaryToday(c *gin.Context) {
+	db := config.DB()
+
+	// กำหนด timezone
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	today := time.Now().In(loc).Truncate(24 * time.Hour) // 00:00 วันนี้
+
+	// ดึงห้องที่ RoomType != "Rental Space"
+	var rooms []entity.Room
+	if err := db.Preload("RoomStatus").
+		Preload("BookingRoom.BookingDates").
+		Preload("BookingRoom.TimeSlots").
+		Joins("JOIN room_types ON rooms.room_type_id = room_types.id").
+		Where("room_types.type_name != ?", "Rental Space").
+		Find(&rooms).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	totalRooms := len(rooms)
+	availableRooms := 0
+
+	// เช็คแต่ละห้องว่ามี Booking ในวันนี้หรือไม่
+	for _, room := range rooms {
+		if room.RoomStatus.Code != "available" {
+			continue // ห้องไม่ว่างตั้งแต่ status
+		}
+
+		isAvailable := true
+		for _, br := range room.BookingRoom {
+			for _, bd := range br.BookingDates {
+				bookingDate := bd.Date.In(loc).Truncate(24 * time.Hour)
+				if bookingDate.Equal(today) {
+					isAvailable = false
+					break
+				}
+			}
+			if !isAvailable {
+				break
+			}
+		}
+
+		if isAvailable {
+			availableRooms++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_rooms":     totalRooms,
+		"available_today": availableRooms,
 	})
 }

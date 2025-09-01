@@ -2608,7 +2608,7 @@ function RoomRentalSpace() {
                                         borderRadius: "10px",
                                         p: 2,
                                     }}
-                                    rowSpacing={1.4}
+                                    rowSpacing={1}
                                 >
                                     <Grid container size={{ xs: 6 }} sx={{ alignItems: "cennter" }}>
                                         <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 16 }}>
@@ -2627,8 +2627,8 @@ function RoomRentalSpace() {
                                         </Grid>
                                     )}
                                     <Grid size={{ xs: 8 }}>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 500 }} gutterBottom>Description</Typography>
                                         <TextField
-                                            label="Description"
                                             fullWidth
                                             variant="outlined"
                                             name="Description"
@@ -2640,8 +2640,8 @@ function RoomRentalSpace() {
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 4 }}>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 500 }} gutterBottom>Amount</Typography>
                                         <TextField
-                                            label="Amount"
                                             type="number"
                                             fullWidth
                                             variant="outlined"

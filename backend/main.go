@@ -301,6 +301,9 @@ func main() {
 		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
 		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
 		protected.GET("/invoice-payments/by-date", controller.ListInvoicePaymentsByDateRange)
+
+		// Rooms
+		protected.GET("/rooms/meeting-room-summary-today", controller.GetMeetingRoomSummaryToday)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
