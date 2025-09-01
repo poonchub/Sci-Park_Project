@@ -1,7 +1,7 @@
 
 
-import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography,Container } from "@mui/material";
-import {  faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography, Container } from "@mui/material";
+import { faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -24,6 +24,9 @@ import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import 
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import EditRoomPopup from './EditRoomPopup';
 import { analyticsService } from "../../services/analyticsService";
+import { GridPaginationModel } from '@mui/x-data-grid';
+
+
 
 
 
@@ -35,7 +38,7 @@ function ManageRooms() {
     const [selectRoomType, setSelectRoomType] = useState(0);
     const [selectRoomStatus, setSelectRoomStatus] = useState(0);
     const [selectFloor, setSelectFloors] = useState(0);
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
     const [openPopup, setOpenPopup] = useState(false);
@@ -43,6 +46,12 @@ function ManageRooms() {
     const [selectedRoomID, setSelectedRoomID] = useState<number | null>(null);
     const [debouncedSearchText, setDebouncedSearchText] = useState('');
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
+
+    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+        page: 0,
+        pageSize: 10,
+    });
+
 
     // Columns definition
     const columns: GridColDef[] = [
@@ -74,7 +83,7 @@ function ManageRooms() {
             renderCell: (params) => {
                 const statusName = params.row.RoomStatus || "Not Reserved";  // Default to "Not Reserved" if not found
                 const statusKey = params.row.RoomStatus as keyof typeof roomStatusConfig;
-                const { color, colorLite,  } = roomStatusConfig[statusKey] ?? {
+                const { color, colorLite, } = roomStatusConfig[statusKey] ?? {
                     color: "#FFF",
                     colorLite: "#000",
                     icon: faCircleXmark,
@@ -129,11 +138,12 @@ function ManageRooms() {
                 >
                     <Button
                         onClick={() => handleOpenPopup(params.row.ID)}
+                        variant="outlinedGray"
                         sx={{
-                            bgcolor: '#08aff1',
-                            color: '#fff',
+
+
                             fontSize: '14px',
-                            border: '1px solid #08aff1',
+
                             mr: 0.6,
                             "&:hover": {
                                 borderColor: 'transparent'
@@ -176,19 +186,27 @@ function ManageRooms() {
         setOpenPopup(true);  // Open Pop-up
     };
 
+    // 1) mount: โหลด masters ครั้งเดียว + preload หน้าแรก
     useEffect(() => {
-        Listrooms();  // Fetch new user data
-        if (rooms === null || []) {
-            // When popup is closed, reset search or fetch new data from API
-            FecthFloors();  // Fetch floor data
-            FecthRoomTypes();  // Fetch room type data
-            FecthRoomStatus();  // Fetch room status data
+        const timer = setTimeout(() => {
+            setDebouncedSearchText(searchText);
+            setPage(1); // ✅ กลับไปหน้าแรก
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchText]);
 
-        }
+    useEffect(() => {
+        FecthFloors();
+        FecthRoomTypes();
+        FecthRoomStatus();
+        Listrooms();
+    }, []);
 
-        // Remove analytics tracking from ManageRooms
-        // analyticsService.trackKeyPageVisit('MANAGE_ROOMS', 'Manage Rooms');
-    }, []);  // This useEffect will run every time selectedUserId changes
+
+    // 2) ดึงรายการตามตัวกรอง/เพจ/ค้นหา
+    useEffect(() => {
+        Listrooms();
+    }, [selectFloor, selectRoomStatus, selectRoomType, paginationModel, debouncedSearchText]);
 
     const FecthFloors = async () => {
         try {
@@ -245,7 +263,7 @@ function ManageRooms() {
         setSelectRoomType(0);  // Reset room type selection
         setSelectRoomStatus(0);  // Reset room status selection
         setSelectFloors(0);  // Reset floor selection
-        setPage(0);  // Reset to page 1
+        setPage(1);  // Reset to page 1
         setLimit(10);  // Reset page size to default
         Listrooms();  // Call function to fetch new data
         console.log(alerts); // Log message when popup is closed
@@ -258,10 +276,13 @@ function ManageRooms() {
             const res = await ListSetRooms({
                 floor: selectFloor,
                 roomType: selectRoomType,
-                page: page,
-                limit: limit,
                 roomStatus: selectRoomStatus,
-            });  // Call the API to get users data
+                page,                  // ✅ มาจากข้อ 1
+                limit,                 // ✅ มาจากข้อ 1
+                search: debouncedSearchText?.trim() || "",
+            });
+            setRooms(res?.data ?? []);
+            setTotal(res?.total ?? res?.data?.length ?? 0);
             if (res) {
                 console.log("API response:", res);
                 setRooms(res.data);  // Set the fetched users to state
@@ -279,11 +300,15 @@ function ManageRooms() {
 
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchText(searchText);  // When stop typing for 500ms, set debouncedSearchText
-        }, 500);  // delay 500ms (or adjust as appropriate)
-
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => {
+            setDebouncedSearchText(searchText);
+            setPage(1);                         // ✅ หน้า API = 1
+            setPaginationModel(p => ({          // ✅ หน้า UI = 0
+                ...p,
+                page: 0
+            }));
+        }, 500);
+        return () => clearTimeout(t);
     }, [searchText]);
 
     useEffect(() => {
@@ -310,209 +335,203 @@ function ManageRooms() {
 
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-        <div className="manage-users-page">
-            {alerts.map((alert, index) => (
-                <React.Fragment key={index}>
-                    {alert.type === 'success' && (
-                        <SuccessAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                    )}
-                    {alert.type === 'error' && (
-                        <ErrorAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                    )}
-                    {alert.type === 'warning' && (
-                        <WarningAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                    )}
-                    {alert.type === 'info' && (
-                        <InfoAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                    )}
-                </React.Fragment>
-            ))}
+            <div className="manage-users-page">
+                {alerts.map((alert, index) => (
+                    <React.Fragment key={index}>
+                        {alert.type === 'success' && (
+                            <SuccessAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                        )}
+                        {alert.type === 'error' && (
+                            <ErrorAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                        )}
+                        {alert.type === 'warning' && (
+                            <WarningAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                        )}
+                        {alert.type === 'info' && (
+                            <InfoAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
+                        )}
+                    </React.Fragment>
+                ))}
 
-            <Grid container spacing={3}>
-                <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-                    <Typography variant="h6" className="title">Manage Rooms</Typography>
-                </Grid>
-
-
-                <Grid container size={{ xs: 10, md: 12 }} spacing={3}>
-
-                    <Grid container
-                        spacing={2}
-                        className='filter-section'
-                        size={{ xs: 10, md: 12 }}
-                        sx={{ alignItems: "flex-end", height: 'auto' }}>
-                        <Grid size={{ xs: 10, md: 5 }}>
-                            <TextField
-                                fullWidth
-                                className="search-box"
-                                variant="outlined"
-                                placeholder="Search (Room Number)"
-                                margin="none"
-                                value={searchText}
-                                onChange={(e) => {
-                                    setSearchText(e.target.value);  // set searchText value
-                                    //handleSearch();  // call search function
-                                }}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
-                                            </InputAdornment>
-                                        ),
-                                    }
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{ xs: 10, md: 2 }}>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectFloor}
-                                    onChange={(e) => {
-                                        setSelectFloors(Number(e.target.value));  // update selectrole
-                                        handleSearch();  // call filter function
-                                    }}
-                                    displayEmpty
-                                    startAdornment={
-                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <LayersOutlinedIcon />
-                                        </InputAdornment>
-                                    }
-                                    sx={{ borderRadius: 2 }}
-                                >
-                                    <MenuItem value={0}>{'All Floors'}</MenuItem>
-                                    {
-                                        floors.length > 0 ? floors.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}>{item.ID}</MenuItem>
-                                        )) : null
-                                    }
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid size={{ xs: 10, md: 2 }}>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectRoomType}
-                                    onChange={(e) => {
-                                        setSelectRoomType(Number(e.target.value));  // update selectrole
-                                        handleSearch();  // call filter function
-                                    }}
-                                    displayEmpty
-                                    startAdornment={
-                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <VerticalSplitOutlinedIcon />
-                                        </InputAdornment>
-                                    }
-                                    sx={{ borderRadius: 2 }}
-                                >
-                                    <MenuItem value={0}>{'All Types'}</MenuItem>
-                                    {
-                                        roomTypes.length > 0 ? roomTypes.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
-                                        )) : null
-                                    }
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-
-
-                        <Grid size={{ xs: 10, md: 2 }}>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={selectRoomStatus}
-                                    onChange={(e) => {
-                                        setSelectRoomStatus(Number(e.target.value));  // update selectrole
-                                        handleSearch();  // call filter function
-                                    }}
-                                    displayEmpty
-                                    startAdornment={
-                                        <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <PublishedWithChangesOutlinedIcon />
-                                        </InputAdornment>
-                                    }
-                                    sx={{ borderRadius: 2 }}
-                                >
-                                    <MenuItem value={0}>{'All Status'}</MenuItem>
-                                    {
-                                        roomStatus.length > 0 ? roomStatus.map((item, index) => (
-                                            <MenuItem key={index} value={item.ID} style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
-                                        )) : null
-                                    }
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid size={{ xs: 10, md: 1 }}>
-                            <Button onClick={handleClearFillter}
-                                sx={{
-                                    minWidth: 0,
-                                    width: '100%',
-                                    height: '45px',
-                                    borderRadius: '10px',
-                                    border: '1px solid rgb(109, 110, 112, 0.4)',
-                                    "&:hover": {
-                                        boxShadow: 'none',
-                                        borderColor: 'primary.main',
-                                        backgroundColor: 'transparent'
-                                    },
-                                }}
-                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
-                        </Grid>
-
+                <Grid container spacing={3}>
+                    <Grid className='title-box' size={{ xs: 10, md: 12 }}>
+                        <Typography variant="h6" className="title">Manage Rooms</Typography>
                     </Grid>
-                </Grid>
 
-                <Grid size={{ xs: 12, md: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        <DataGrid
-                            rows={rooms}  // Use the users data fetched from the API
-                            columns={columns}  // Columns to display in the data grid
-                            pageSizeOptions={[5, 10, 20]}  // Options for page size
-                            getRowId={(row) => String(row.ID)}  // Set the row ID to be the unique 'ID' value
-                            paginationMode="server"  // Enable server-side pagination
-                            slots={{
-                                noRowsOverlay: () => (
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: '100%',
-                                            color: 'gray',
+
+                    <Grid container size={{ xs: 10, md: 12 }} spacing={3}>
+
+                        <Grid container
+                            spacing={2}
+                            className='filter-section'
+                            size={{ xs: 10, md: 12 }}
+                            sx={{ alignItems: "flex-end", height: 'auto' }}>
+                            <Grid size={{ xs: 10, md: 5 }}>
+                                <TextField
+                                    fullWidth
+                                    className="search-box"
+                                    variant="outlined"
+                                    placeholder="Search (Room Number)"
+                                    margin="none"
+                                    value={searchText}
+                                    onChange={(e) => {
+                                        setSearchText(e.target.value);  // set searchText value
+                                        //handleSearch();  // call search function
+                                    }}
+                                    slotProps={{
+                                        input: {
+                                            startAdornment: (
+                                                <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                    <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
+                                                </InputAdornment>
+                                            ),
+                                        }
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 10, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <Select
+                                        value={selectFloor}
+                                        onChange={(e) => {
+                                            setSelectFloors(Number(e.target.value));  // update selectrole
+                                            handleSearch();  // call filter function
                                         }}
+                                        displayEmpty
+                                        startAdornment={
+                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                <LayersOutlinedIcon />
+                                            </InputAdornment>
+                                        }
+                                        sx={{ borderRadius: 2 }}
                                     >
-                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            No details match your search
-                                        </Typography>
-                                    </Box>
-                                ),
-                            }}
-                            initialState={{
-                                pagination: {
-                                    paginationModel: { page, pageSize: limit },
-                                },
-                            }}
+                                        <MenuItem value={0}>{'All Floors'}</MenuItem>
+                                        {
+                                            floors.length > 0 ? floors.map((item, index) => (
+                                                <MenuItem key={index} value={item.ID}>{item.ID}</MenuItem>
+                                            )) : null
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid size={{ xs: 10, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <Select
+                                        value={selectRoomType}
+                                        onChange={(e) => {
+                                            setSelectRoomType(Number(e.target.value));  // update selectrole
+                                            handleSearch();  // call filter function
+                                        }}
+                                        displayEmpty
+                                        startAdornment={
+                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                <VerticalSplitOutlinedIcon />
+                                            </InputAdornment>
+                                        }
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        <MenuItem value={0}>{'All Types'}</MenuItem>
+                                        {
+                                            roomTypes.length > 0 ? roomTypes.map((item, index) => (
+                                                <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
+                                            )) : null
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+
+
+                            <Grid size={{ xs: 10, md: 2 }}>
+                                <FormControl fullWidth>
+                                    <Select
+                                        value={selectRoomStatus}
+                                        onChange={(e) => {
+                                            setSelectRoomStatus(Number(e.target.value));  // update selectrole
+                                            handleSearch();  // call filter function
+                                        }}
+                                        displayEmpty
+                                        startAdornment={
+                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                                                <PublishedWithChangesOutlinedIcon />
+                                            </InputAdornment>
+                                        }
+                                        sx={{ borderRadius: 2 }}
+                                    >
+                                        <MenuItem value={0}>{'All Status'}</MenuItem>
+                                        {
+                                            roomStatus.length > 0 ? roomStatus.map((item, index) => (
+                                                <MenuItem key={index} value={item.ID} style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
+                                            )) : null
+                                        }
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid size={{ xs: 10, md: 1 }}>
+                                <Button onClick={handleClearFillter}
+                                    sx={{
+                                        minWidth: 0,
+                                        width: '100%',
+                                        height: '45px',
+                                        borderRadius: '10px',
+                                        border: '1px solid rgb(109, 110, 112, 0.4)',
+                                        "&:hover": {
+                                            boxShadow: 'none',
+                                            borderColor: 'primary.main',
+                                            backgroundColor: 'transparent'
+                                        },
+                                    }}
+                                ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                            </Grid>
+
+                        </Grid>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 12 }}>
+                        <Card sx={{ width: "100%", borderRadius: 2 }}>
+                            <DataGrid
+                                rows={rooms ?? []}
+                                columns={columns}
+                                getRowId={(row) => String(row.ID)}
+                                paginationMode="server"
+                                rowCount={total}
+                                paginationModel={paginationModel}
+                                onPaginationModelChange={(m) => {
+                                    setPaginationModel(m);     // คุม UI
+                                    setPage(m.page + 1);       // ✅ คุมพารามิเตอร์ API (0-based -> 1-based)
+                                    setLimit(m.pageSize);      // ✅ คุมพารามิเตอร์ API
+                                }}
+                                slots={{
+                                    noRowsOverlay: () => (
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'gray' }}>
+                                            <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
+                                            <Typography variant="body1" sx={{ mt: 1 }}>
+                                                No details match your search
+                                            </Typography>
+                                        </Box>
+                                    ),
+                                }}
+                                pageSizeOptions={[5, 10, 20]}
+                            />
+
+                        </Card>
+                    </Grid>
+
+                    {/* Pop-up for editing room */}
+                    {openPopup && selectedRoomID !== null && (
+                        <EditRoomPopup
+                            roomID={selectedRoomID}  // Pass the selected room ID to the popup
+                            open={openPopup}
+                            onClose={handleClosePopup}
                         />
-                    </Card>
+                    )}
+
+
                 </Grid>
-
-                {/* Pop-up for editing room */}
-                {openPopup && selectedRoomID !== null && (
-                    <EditRoomPopup
-                        roomID={selectedRoomID}  // Pass the selected room ID to the popup
-                        open={openPopup}
-                        onClose={handleClosePopup}
-                    />
-                )}
-
-
-            </Grid>
-        </div>
+            </div>
         </Container>
     );
 }

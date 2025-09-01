@@ -212,9 +212,9 @@ function ManageRoomType() {
             flex: 0.6,
             renderCell: (params) => (
                 <Button
-                    variant="contained"
+                    variant="outlinedGray"
                     size="small"
-                    sx={{ backgroundColor: "#00AEEF", textTransform: "none" }}
+                   
                     onClick={() => handleOpenPopup(params.row.ID ?? 0)}
                 >
                     Edit

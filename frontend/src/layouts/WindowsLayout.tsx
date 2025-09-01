@@ -13,7 +13,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
 import { MaintenaceImagesInterface } from "../interfaces/IMaintenaceImages";
 import { Container, Chip, useTheme, Skeleton } from "@mui/material";
-import { Warehouse } from 'lucide-react';
+import {  Hotel ,House,HousePlus,LandPlot   } from 'lucide-react';
 import { Role } from "../constants/navigationConfig";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -212,19 +212,18 @@ const WindowsLayout: React.FC = (props: any) => {
                             />
                         ) : null,
                 },
-
+                {
+                    segment: "all-booking-room",   // 👈 segment ตรงไปตรงมา
+                    title: "All Booking Room",
+                    icon: < Hotel size={iconSize} />,
+                },
                 {
                     segment: "service-area/service-request-list",
                     title: "Service Area",
-                    icon: <NotepadText size={iconSize} />,
+                    icon: <LandPlot  size={iconSize} />,
                 },
 
             ],
-        },
-        {
-            segment: "all-booking-room",   // 👈 segment ตรงไปตรงมา
-            title: "All Booking Room",
-            icon: <LayersIcon />,
         },
 
         {
@@ -287,12 +286,12 @@ const WindowsLayout: React.FC = (props: any) => {
                 {
                     segment: "manage-room-type",
                     title: t("Manage Room Type"),
-                    icon: <ClipboardList />,
+                    icon: <HousePlus size={iconSize} />,
                 },
                 {
                     segment: "manage-room",
                     title: t("manageRoom"),
-                    icon: <ClipboardList />,
+                    icon: <House size={iconSize} />,
                 },
                 {
                     segment: "rental-space",

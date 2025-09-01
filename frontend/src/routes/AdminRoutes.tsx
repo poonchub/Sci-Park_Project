@@ -111,7 +111,7 @@ const AdminRoutes = (): RouteObject => {
 				element: <AboutDeveloper/>
 			},
             {
-				path: "/all-booking-room",
+				path: "/requests/all-booking-room",
 				element: <AllBookingRoom/>
 			},
 			{

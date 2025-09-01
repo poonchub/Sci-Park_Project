@@ -767,19 +767,17 @@ func SeedDatabase() {
 		{TimeSlotName: "15:30-16:30", StartTime: parseTime("15:30"), EndTime: parseTime("16:30")},
 	}
 
-	fmt.Println("📌 Seeding TimeSlots")
+	
 	for _, slot := range timeSlots {
-		result := db.FirstOrCreate(&slot, entity.TimeSlot{
+		db.FirstOrCreate(&slot, entity.TimeSlot{
 			TimeSlotName: slot.TimeSlotName,
 			StartTime:    slot.StartTime,
 			EndTime:      slot.EndTime,
 		})
-		fmt.Printf("🧪 TimeSlot: %s | RowsAffected: %d | Error: %v\n", slot.TimeSlotName, result.RowsAffected, result.Error)
+		
 	}
 
-	// ✅ Seeding RoomPrices แบบระบุทุกรายการชัด ๆ สำหรับ RoomTypeID 1..7
-	// TimeSlotID: 1=morning, 2=afternoon, 3=fullDay, 4..12=รายชั่วโมง
-	fmt.Println("📌 Seeding RoomPrices (explicit list for 7 room types)")
+	
 
 	roomPrices := []entity.RoomPrice{
 		// ----- RoomTypeID 1 (ห้องเล็ก) -----
@@ -819,24 +817,22 @@ func SeedDatabase() {
 	// เขียนลงฐาน: ถ้ามีอยู่แล้ว → อัปเดตราคา, ถ้าไม่มี → สร้าง
 	for _, rp := range roomPrices {
 		var out entity.RoomPrice
-		result := db.
+		db.
 			Where("room_type_id = ? AND time_slot_id = ?", rp.RoomTypeID, rp.TimeSlotID).
 			Assign(&entity.RoomPrice{Price: rp.Price}).
 			FirstOrCreate(&out)
 
-		fmt.Printf("💾 RoomPrice rt=%d ts=%d price=%d | RowsAffected=%d | err=%v\n",
-			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
+	
 	}
 
-	fmt.Println("📌 Seeding Roomprices")
+
 	for _, rp := range roomPrices {
-		result := db.FirstOrCreate(&rp, entity.RoomPrice{
+		db.FirstOrCreate(&rp, entity.RoomPrice{
 			TimeSlotID: rp.TimeSlotID,
 			RoomTypeID: rp.RoomTypeID,
 			Price:      rp.Price,
 		})
-		fmt.Printf("🧪 Roomprice: RoomTypeID=%d TimeSlotID=%d Price=%d | RowsAffected: %d | Error: %v\n",
-			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
+		
 	}
 
 	bookingStatus := []entity.BookingStatus{
@@ -861,7 +857,7 @@ func SeedDatabase() {
 		db.FirstOrCreate(&e, entity.Equipment{EquipmentName: e.EquipmentName})
 	}
 
-	fmt.Println("📌 Seeding RoomEquipment")
+	
 	roomEquipments := []entity.RoomEquipment{
 		{RoomTypeID: 1, EquipmentID: 1, Quantity: 1},  // A302 มีโปรเจคเตอร์ 1 ตัว
 		{RoomTypeID: 1, EquipmentID: 2, Quantity: 2},  // A302 มีไมโครโฟน 2 ตัว
@@ -870,13 +866,12 @@ func SeedDatabase() {
 		{RoomTypeID: 2, EquipmentID: 5, Quantity: 20}, // A303 มีเก้าอี้ 20 ตัว
 	}
 	for _, re := range roomEquipments {
-		result := db.FirstOrCreate(&re, entity.RoomEquipment{
+		db.FirstOrCreate(&re, entity.RoomEquipment{
 			RoomTypeID:  re.RoomTypeID,
 			EquipmentID: re.EquipmentID,
 			Quantity:    re.Quantity,
 		})
-		fmt.Printf("🧪 RoomEquipment: RoomID=%d EquipmentID=%d Quantity=%d | RowsAffected: %d\n",
-			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
+		
 	}
 
 	// Payment
@@ -914,8 +909,8 @@ func SeedDatabase() {
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
+		
 	}
-
 	// 🔹 ข้อมูล News
 	news := []entity.News{
 		{
