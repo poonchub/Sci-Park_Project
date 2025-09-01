@@ -58,6 +58,7 @@ interface ServiceAreaDetailsInterface {
     RoomNumber?: string;
     ServiceUserTypeID?: number;
     ServiceUserTypeName?: string;
+    BusinessGroupID?: number; // Added BusinessGroupID
 }
 
 function ServiceAreaDetails() {
@@ -841,7 +842,7 @@ function ServiceAreaDetails() {
                 open={openApprovePopup}
                 onClose={() => setOpenApprovePopup(false)}
                 requestId={serviceAreaDetails?.RequestNo || null}
-                businessGroupId={null}
+                businessGroupId={serviceAreaDetails?.BusinessGroupID || null}
                 businessGroups={businessGroups}
                 companyName={serviceAreaDetails?.CompanyName}
                 onApproved={async () => {

@@ -1224,11 +1224,11 @@ func SeedDatabase() {
 	// ===== Mock External Users with AboutCompany, RequestServiceArea, CollaborationPlans =====
 	// Step 1: Create 5 External Users
 	externalUsers := []entity.User{
-		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456",BusinessDetail: "Healthcare Services", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456",BusinessDetail: "Smart Farming", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456",BusinessDetail: "Renewable Energy Materials", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456",BusinessDetail: "BioTech R&D", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456",BusinessDetail: "Software & Digital", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
 	}
 	for i := range externalUsers {
 		externalUsers[i].Password, _ = HashPassword(externalUsers[i].Password)
@@ -1265,6 +1265,7 @@ func SeedDatabase() {
 				NumberOfEmployees:                  3 + r,
 				ActivitiesInBuilding:               "R&D Activities",
 				SupportingActivitiesForSciencePark: "Collaboration and workshops",
+				ServiceRequestDocument:             "/img/testdocfile/test01.pdf",
 			}
 			db.FirstOrCreate(&req, entity.RequestServiceArea{UserID: user.ID, PurposeOfUsingSpace: req.PurposeOfUsingSpace})
 			// Create 1-3 collaboration plans per request

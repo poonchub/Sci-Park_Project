@@ -138,8 +138,8 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	// จัดการไฟล์ ServiceRequestDocument (หลังจากได้ Request ID แล้ว)
 	file, err := c.FormFile("service_request_document")
 	if err == nil {
-		// สร้างโฟลเดอร์สำหรับเก็บไฟล์
-		documentFolder := "./images/ServiceDocuments"
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
+		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
 		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
 			err := os.MkdirAll(documentFolder, os.ModePerm)
 			if err != nil {
@@ -363,7 +363,8 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	// จัดการไฟล์ใหม่ (ถ้ามี)
 	file, err := c.FormFile("service_request_document")
 	if err == nil {
-		documentFolder := "./images/ServiceDocuments"
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
+		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
 		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
 			err := os.MkdirAll(documentFolder, os.ModePerm)
 			if err != nil {
@@ -373,7 +374,7 @@ func UpdateRequestServiceArea(c *gin.Context) {
 		}
 
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d%s", requestServiceArea.UserID, fileExtension))
+		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d_%d%s", requestServiceArea.UserID, requestServiceArea.ID, fileExtension))
 		requestServiceArea.ServiceRequestDocument = filePath
 
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -930,14 +931,20 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 
 	// เพิ่มข้อมูลจาก AboutCompany (ถ้ามี)
 	if aboutCompany.ID != 0 {
+		fmt.Printf("🔍 [DEBUG] AboutCompany found: ID=%d, BusinessGroupID=%v, BusinessGroup.Name=%s\n",
+			aboutCompany.ID, aboutCompany.BusinessGroupID, aboutCompany.BusinessGroup.Name)
+
 		response["CorporateRegistrationNumber"] = aboutCompany.CorporateRegistrationNumber
 		response["BusinessGroupName"] = aboutCompany.BusinessGroup.Name
+		response["BusinessGroupID"] = aboutCompany.BusinessGroupID
 		response["CompanySizeName"] = aboutCompany.CompanySize.Name
 		response["MainServices"] = aboutCompany.MainServices
 		response["RegisteredCapital"] = aboutCompany.RegisteredCapital
 		response["HiringRate"] = aboutCompany.HiringRate
 		response["ResearchInvestmentValue"] = aboutCompany.ResearchInvestmentValue
 		response["ThreeYearGrowthForecast"] = aboutCompany.ThreeYearGrowthForecast
+	} else {
+		fmt.Printf("🔍 [DEBUG] AboutCompany not found for UserID=%d\n", requestServiceArea.UserID)
 	}
 
 	// เพิ่มข้อมูลจาก ServiceAreaApproval (ถ้ามี)
