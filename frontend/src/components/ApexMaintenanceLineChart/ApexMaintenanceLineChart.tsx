@@ -201,6 +201,7 @@ function ApexMaintenanceLineChart(props: {
                 },
                 zoom: { enabled: false },
             },
+            colors: ["#F26522"],
             dataLabels: { enabled: false },
             stroke: { curve: "smooth" },
             xaxis: {

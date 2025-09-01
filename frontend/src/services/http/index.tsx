@@ -507,7 +507,15 @@ async function GetRoomRentalSpaceByID(roomId: number) {
         throw error;
     }
 }
-
+async function GetRentalSpaceRoomSummary() {
+    try {
+        const response = await axiosInstance.get(`/rooms/rental-space-summary`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching rooms:", error);
+        return false;
+    }
+}
 async function CreateRoom(roomData: RoomsInterface) {
     const requestOptions = {
         method: "POST",
@@ -1543,7 +1551,6 @@ async function ListBookingRooms() {
 
     return res;
 }
-
 async function ListBookingRoomsByUser(userId: number) {
     const requestOptions = {
         method: "GET",
@@ -1562,6 +1569,24 @@ async function ListBookingRoomsByUser(userId: number) {
     });
 
     return res;
+}
+async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null) {
+    try {
+        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting booking room:", error);
+        throw error;
+    }
+}
+async function GetMeetingRoomSummaryToday() {
+    try {
+        const response = await axiosInstance.get("/rooms/meeting-room-summary-today");
+        return response.data;
+    } catch (error) {
+        console.error("Error giting meeting room summary:", error);
+        throw error;
+    }
 }
 
 
@@ -1719,9 +1744,6 @@ export async function CancelBookingRoom(id: number) {
 
     return data;
 }
-
-
-
 
 // Analytics API
 export async function getSystemAnalytics() {
@@ -2656,6 +2678,15 @@ async function ListInvoices(): Promise<InvoiceInterface[]> {
         throw error;
     }
 }
+async function GetPreviousMonthInvoiceSummary() {
+    try {
+        const response = await axiosInstance.get(`/invoices/previous-month-summary`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice:", error);
+        throw error;
+    }
+}
 async function GetInvoiceByID(id: number) {
     try {
         const response = await axiosInstance.get(`/invoice/${id}`);
@@ -3150,6 +3181,7 @@ export {
 
     // Rooms
     GetRooms,
+    GetRentalSpaceRoomSummary,
     CreateRoom,
     UpdateRoom,
     GetRoomByID,
@@ -3242,6 +3274,8 @@ export {
 
     // BookingRooms
     ListBookingRooms,
+    ListBookingRoomByDateRange,
+    GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
 
 
@@ -3324,6 +3358,7 @@ export {
 
     // Invoices
     ListInvoices,
+    GetPreviousMonthInvoiceSummary,
     GetInvoiceByID,
     GetInvoicePDF,
     ListInvoiceByDateRange,

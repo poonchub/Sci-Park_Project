@@ -879,52 +879,41 @@ func SeedDatabase() {
 			re.RoomTypeID, re.EquipmentID, re.Quantity, result.RowsAffected)
 	}
 
-	payments := []entity.Payment{
-		{
-
-			PaymentDate:   time.Date(2025, 6, 25, 0, 0, 0, 0, time.Local),
-			Amount:        500.00,
-			SlipPath:      "/slips/payment1.jpg",
-			Note:          "จองห้องประชุมเช้า",
-			PayerID:       users[2].ID, // internaluser1
-			BookingRoomID: 1,           // อิงจาก seed BookingRoom ด่านบน
-			StatusID:      1,
-		},
-		{
-			PaymentDate:   time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:        1000.00,
-			SlipPath:      "/slips/payment2.jpg",
-			Note:          "อบรมพนักงานใหม่",
-			PayerID:       users[4].ID, // internaluser2
-			BookingRoomID: 2,
+	// Payment
+	now := time.Now()
+	payments := []entity.Payment{}
+	for i := 0; i < 7; i++ {
+		p := entity.Payment{
+			PaymentDate:   now.AddDate(0, 0, -i),
+			Amount:        float64(500 + i*100),
+			SlipPath:      fmt.Sprintf("/slips/booking_payment%d.jpg", i+1),
+			Note:          fmt.Sprintf("Payment for BookingRoom %d", i+1),
+			PayerID:       users[2+i%len(users)].ID,
 			StatusID:      2,
-		},
-		{
-			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:      1000.00,
-			SlipPath:    "/slips/payment2.jpg",
-			Note:        "",
-			PayerID:     users[2].ID, // internaluser2
-			InvoiceID:   2,
+			BookingRoomID: uint(i + 1),
+		}
+		payments = append(payments, p)
+	}
+
+	for i := 0; i < 7; i++ {
+		p := entity.Payment{
+			PaymentDate: now.AddDate(0, 0, -i),
+			Amount:      float64(1000 + i*200),
+			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
+			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
+			PayerID:     users[2+i%len(users)].ID,
 			StatusID:    2,
-		},
-		{
-			PaymentDate: time.Date(2025, 6, 26, 0, 0, 0, 0, time.Local),
-			Amount:      1000.00,
-			SlipPath:    "/slips/payment2.jpg",
-			Note:        "",
-			PayerID:     users[3].ID, // internaluser2
-			InvoiceID:   2,
-			StatusID:    2,
-		},
+			InvoiceID:   uint(i + 3),
+		}
+		payments = append(payments, p)
 	}
 	for _, p := range payments {
-		result := db.FirstOrCreate(&p, entity.Payment{
+		db.FirstOrCreate(&p, entity.Payment{
 			BookingRoomID: p.BookingRoomID,
+			InvoiceID:     p.InvoiceID,
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
-		fmt.Printf("🧾 Payment: BookingRoomID=%d Amount=%.2f | RowsAffected: %d\n", p.BookingRoomID, p.Amount, result.RowsAffected)
 	}
 
 	// 🔹 ข้อมูล News

@@ -554,7 +554,7 @@ const MyAccount: React.FC = () => {
             try {
                 const resGetQuota = await GetQuota();
                 console.log(resGetQuota.data.quota)
-                if (resGetQuota.success && resGetQuota.data.quota > 0) {
+                if (resGetQuota.success && resGetQuota.data.quota > 0 && false) {
                     const formData = new FormData();
                     formData.append("files", slipfile[0]);
 
@@ -568,6 +568,14 @@ const MyAccount: React.FC = () => {
                     } else if (resCheckSlip.success && statusName === "Rejected") {
                         handleClickUpdatePayment();
                     }
+                }
+                else { 
+                    const data = {
+                        data: {
+                            transTimestamp: new Date().toISOString()
+                        }
+                    }
+                    handleUploadSlip(data);
                 }
             } catch (error: any) {
                 setAlerts([]);
@@ -1324,6 +1332,7 @@ const MyAccount: React.FC = () => {
                         const notification = data.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         const billingPeriod = formatToMonthYear(data.BillingPeriod)
+                        const dueDate = dateFormat(data.DueDate)
                         const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
                             style: "currency",
                             currency: "THB",
@@ -1359,7 +1368,8 @@ const MyAccount: React.FC = () => {
                                         <Calendar
                                             size={14}
                                             style={{
-                                                paddingBottom: "4px"
+                                                minHeight: '14px',
+                                                minWidth: '14px',
                                             }}
                                         />
                                         <Typography
@@ -1371,6 +1381,25 @@ const MyAccount: React.FC = () => {
                                             }}
                                         >
                                             {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <Clock
+                                            size={14}
+                                            style={{
+                                                minHeight: '14px',
+                                                minWidth: '14px',
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Due Date: ${dueDate}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -1595,10 +1624,10 @@ const MyAccount: React.FC = () => {
                     },
                 },
                 {
-                    field: "BillingPeriod",
-                    headerName: "Billing Period",
+                    field: "Date",
+                    headerName: "Date",
                     type: "string",
-                    flex: 1.5,
+                    flex: 1.8,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -1609,7 +1638,27 @@ const MyAccount: React.FC = () => {
                                     height: "100%",
                                 }}
                             >
-                                {formatToMonthYear(params.value)}
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {`Billing Period: ${formatToMonthYear(params.row.BillingPeriod)}`}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        color: "text.secondary"
+                                    }}
+                                >
+                                    {`Due Date: ${dateFormat(params.row.DueDate)}`}
+                                </Typography>
                             </Box>
                         );
                     },
@@ -1695,7 +1744,7 @@ const MyAccount: React.FC = () => {
                     field: "Receipt",
                     headerName: "Receipt",
                     type: "string",
-                    flex: 2,
+                    flex: 1.5,
                     renderCell: (item) => {
                         const data = item.row;
                         const receiptPath = data.Payments?.ReceiptPath
@@ -2526,6 +2575,7 @@ const MyAccount: React.FC = () => {
                             <CustomTabPanel value={valueTab} index={1}>
                                 <MyBooking />  {/* หรือ AllBookingRoom */}
                             </CustomTabPanel>
+
                             <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
                             <CustomTabPanel value={valueTab} index={2}>
                                 <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
@@ -2549,11 +2599,11 @@ const MyAccount: React.FC = () => {
                                             onPageChange={setInvoicePage}
                                             onLimitChange={setInvoiceLimit}
                                             noDataText="Invoices information not found."
+                                            getRowId={(row) => row.ID} 
                                         />
                                     )}
                                 </Grid>
                             </CustomTabPanel>
-
 
                             <CustomTabPanel value={valueTab} index={3}>
                                 <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>

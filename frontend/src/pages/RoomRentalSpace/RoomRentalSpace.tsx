@@ -55,6 +55,7 @@ import {
     Calendar,
     Check,
     CirclePlus,
+    Clock,
     DoorClosed,
     Ellipsis,
     File,
@@ -373,7 +374,6 @@ function RoomRentalSpace() {
             invoiceFormData.CreaterID = user?.ID;
         }
 
-        console.log("user: ", user)
         if (!user?.SignaturePath || user.SignaturePath === "") {
             handleSetAlert("warning", "Please upload your signature before proceeding.");
             setIsButtonActive(false);
@@ -387,14 +387,20 @@ function RoomRentalSpace() {
         } else {
             invoiceFormData.RoomID = selectedRoom.ID;
             const serviceAreas = selectedRoom.ServiceAreaDocument?.map((doc) => doc.RequestServiceArea).filter(Boolean);
+            console.log("selectedRoom: ", selectedRoom)
 
             if (serviceAreas && serviceAreas.length > 0) {
                 const lastRequestServiceArea = serviceAreas[serviceAreas.length - 1];
                 invoiceFormData.CustomerID = lastRequestServiceArea?.UserID;
             }
+
+            const dueDate = new Date(invoiceFormData.DueDate ?? "");
+            dueDate.setHours(23, 59, 59, 999);
+            invoiceFormData.DueDate = dueDate.toISOString();
         }
 
         try {
+            console.log("invoiceFormData: ", invoiceFormData)
             const resInvoice = await CreateInvoice(invoiceFormData);
 
             const updatedItems = invoiceItemFormData.map((item) => ({
@@ -483,6 +489,10 @@ function RoomRentalSpace() {
         }
 
         try {
+            const dueDate = new Date(invoiceFormData.DueDate ?? "");
+            dueDate.setHours(23, 59, 59, 999);
+            invoiceFormData.DueDate = dueDate.toISOString();
+
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceFormData);
 
             if (selectedInvoice?.Items) {
@@ -1355,6 +1365,7 @@ function RoomRentalSpace() {
 
                         const invoiceNumber = data.InvoiceNumber
                         const billingPeriod = formatToMonthYear(data.BillingPeriod)
+                        const dueDate = dateFormat(data.DueDate)
                         const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
                             style: "currency",
                             currency: "THB",
@@ -1401,6 +1412,25 @@ function RoomRentalSpace() {
                                             }}
                                         >
                                             {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <Clock
+                                            size={14}
+                                            style={{
+                                                minHeight: '14px',
+                                                minWidth: '14px',
+                                            }}
+                                        />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Due Date: ${dueDate}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -1747,11 +1777,12 @@ function RoomRentalSpace() {
                     },
                 },
                 {
-                    field: "BillingPeriod",
-                    headerName: "Billing Period",
+                    field: "Date",
+                    headerName: "Date",
                     type: "string",
-                    flex: 1.5,
+                    flex: 1.8,
                     renderCell: (params) => {
+                        console.log(params.row)
                         return (
                             <Box
                                 sx={{
@@ -1761,7 +1792,27 @@ function RoomRentalSpace() {
                                     height: "100%",
                                 }}
                             >
-                                {formatToMonthYear(params.value)}
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {`Billing Period: ${formatToMonthYear(params.row.BillingPeriod)}`}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: 14,
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        color: "text.secondary"
+                                    }}
+                                >
+                                    {`Due Date: ${dateFormat(params.row.DueDate)}`}
+                                </Typography>
                             </Box>
                         );
                     },
@@ -1770,7 +1821,7 @@ function RoomRentalSpace() {
                     field: "TotalAmount",
                     headerName: "Total Amount",
                     type: "string",
-                    flex: 1.5,
+                    flex: 1.2,
                     renderCell: (params) => {
                         return (
                             <Box
@@ -1795,7 +1846,7 @@ function RoomRentalSpace() {
                     field: "Status",
                     headerName: "Status",
                     type: "string",
-                    flex: 1.8,
+                    flex: 1.5,
                     renderCell: (item) => {
                         const statusName = item.value.Name || "";
                         const statusKey = item.value.Name as keyof typeof roomStatusConfig;
@@ -1849,7 +1900,7 @@ function RoomRentalSpace() {
                     field: "Receipt",
                     headerName: "Receipt",
                     type: "string",
-                    flex: 2,
+                    flex: 1.5,
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status.Name;
@@ -1913,7 +1964,7 @@ function RoomRentalSpace() {
                                                         />
                                                         <label htmlFor="upload-new-pdf-input">
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                <Upload size={14} style={{ minWidth: '14px', minHeight: '14px' }}/>
+                                                                <Upload size={14} style={{ minWidth: '14px', minHeight: '14px' }} />
                                                                 <Typography component="span" sx={{ fontSize: 14 }}>
                                                                     Upload New File
                                                                 </Typography>
@@ -1927,7 +1978,7 @@ function RoomRentalSpace() {
                                                             onClick={() => handleDeleteReceipt(data)}
                                                         >
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                <Trash2 size={14} style={{ minWidth: '14px', minHeight: '14px', marginBottom: '2px' }}/>
+                                                                <Trash2 size={14} style={{ minWidth: '14px', minHeight: '14px', marginBottom: '2px' }} />
                                                                 <Typography sx={{ fontSize: 14 }}>
                                                                     Delete File
                                                                 </Typography>
@@ -2044,7 +2095,7 @@ function RoomRentalSpace() {
                     field: "Actions",
                     headerName: "Actions",
                     type: "string",
-                    flex: 1.5,
+                    flex: 1.8,
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status.Name;
@@ -2557,7 +2608,7 @@ function RoomRentalSpace() {
                                         borderRadius: "10px",
                                         p: 2,
                                     }}
-                                    rowSpacing={1.4}
+                                    rowSpacing={1}
                                 >
                                     <Grid container size={{ xs: 6 }} sx={{ alignItems: "cennter" }}>
                                         <Typography variant="body1" sx={{ fontWeight: 600, fontSize: 16 }}>
@@ -2576,8 +2627,8 @@ function RoomRentalSpace() {
                                         </Grid>
                                     )}
                                     <Grid size={{ xs: 8 }}>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 500 }} gutterBottom>Description</Typography>
                                         <TextField
-                                            label="Description"
                                             fullWidth
                                             variant="outlined"
                                             name="Description"
@@ -2589,8 +2640,8 @@ function RoomRentalSpace() {
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 4 }}>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 500 }} gutterBottom>Amount</Typography>
                                         <TextField
-                                            label="Amount"
                                             type="number"
                                             fullWidth
                                             variant="outlined"
@@ -2841,6 +2892,7 @@ function RoomRentalSpace() {
                                     onPageChange={setInvoicePage}
                                     onLimitChange={setInvoiceLimit}
                                     noDataText="Invoices information not found."
+                                    getRowId={(row) => row.ID} 
                                 />
                             )}
                         </Grid>

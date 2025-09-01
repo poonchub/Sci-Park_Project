@@ -609,9 +609,7 @@ func ListBookingRoomByDateRange(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format, expected YYYY-MM-DD"})
 				return
 			}
-
 			endDate = endDate.AddDate(0, 0, 1)
-
 			query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
 		}
 	}

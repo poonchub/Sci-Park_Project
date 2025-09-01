@@ -25,6 +25,9 @@ import {
 } from "@mui/material";
 import {
     GetMaintenanceTypes,
+    GetMeetingRoomSummaryToday,
+    GetPreviousMonthInvoiceSummary,
+    GetRentalSpaceRoomSummary,
     GetUserById,
     // ListBookingRoomByDateRange,
     ListBookingRoomPaymentsByDateRange,
@@ -44,12 +47,6 @@ import { DatePicker } from "../../components/DatePicker/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import {
     CalendarMonth,
-    CalendarToday,
-    CheckCircle,
-    Close,
-    Error,
-    HelpOutline,
-    Notifications,
 } from "@mui/icons-material";
 import { MaintenanceTypesInteface } from "../../interfaces/IMaintenanceTypes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -66,13 +63,22 @@ import {
     ChartColumnStacked,
     ChartLine,
     Check,
+    CheckCircle,
+    CircleDollarSign,
+    Clock,
     Coins,
     CreditCard,
+    DoorClosed,
     DoorOpen,
+    FileText,
+    HelpCircle,
     LayoutDashboard,
     LineChart,
     LucideIcon,
+    TrendingUp,
     UserRound,
+    Wrench,
+    X,
 } from "lucide-react";
 import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 import { PaymentInterface } from "../../interfaces/IPayments";
@@ -80,6 +86,10 @@ import ApexRevenueBarChart from "../../components/ApexRevenueBarChart/ApexRevenu
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 import { InvoiceInterface } from "../../interfaces/IInvoices";
 import ApexMaintenanceLineChart from "../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart";
+import ApexBookingRoomRevenueBarChart from "../../components/ApexBookingRoomRevenueBarChart/ApexBookingRoomRevenueBarChart";
+import ApexInvoiceRevenueBarChart from "../../components/ApexInvoiceRevenueBarChart/ApexInvoiceRevenueBarChart";
+import { roomStatusConfig } from "../../constants/roomStatusConfig";
+import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 
 function Dashboard() {
     const [user, setUser] = useState<UserInterface>();
@@ -92,6 +102,24 @@ function Dashboard() {
     const [invoices, setInvoices] = useState<InvoiceInterface[]>([])
     const [filteredRequest, setFilteredRequest] = useState<MaintenanceRequestsInterface[]>([]);
     const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
+    
+    const [previousMonthInvoiceSummary, setPreviousMonthInvoiceSummary] = useState<{
+        billing_period: string;
+        overdue_invoices: number;
+        paid_invoices: number;
+        total_invoices: number;
+        total_revenue: number;
+    }>()
+    const [rentalSpaceRoomSummary, setRentalSpaceRoomSummary] = useState<{
+        total_rooms: number;
+        available_rooms: number;
+        rooms_under_maintenance: number;
+    }>()
+    const [meetingRoomSummaryToday, setMeetingRoomSummaryToday] = useState<{
+        available_today: number;
+        total_rooms: number;
+    }>()
+
     const [groupedData, setGroupedData] = useState<
         Record<string, { total: number; completed: number; completedPercentage: number }>
     >({});
@@ -102,13 +130,21 @@ function Dashboard() {
     const [selectedDateOption, setSelectedDateOption] = useState<string>("daily");
     const [selectedDateOptionRoom, setSelectedDateOptionRoom] = useState<string>("daily");
 
+
+    const today = dayjs();
+    const fifteenDaysAgo = today.subtract(15, "day");
+    const sevenDaysAgo = today.subtract(7, "day");
     const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
-        start: null,
-        end: null,
+        start: fifteenDaysAgo,
+        end: today,
     });
-    const [dateRangeRoom, setDateRangeRoom] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
-        start: null,
-        end: null,
+    const [dateRangeBookingRoom, setDateRangeBookingRoom] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
+        start: sevenDaysAgo,
+        end: today,
+    });
+    const [dateRangeRentalRoom, setDateRangeRentalRoom] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
+        start: sevenDaysAgo,
+        end: today,
     });
 
     const [valueTab, setValueTab] = useState(0);
@@ -147,8 +183,8 @@ function Dashboard() {
     const getBookingRoomPayments = async () => {
         try {
             const res = await ListBookingRoomPaymentsByDateRange(
-                dateRangeRoom.start ? dateRangeRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeRoom.end ? dateRangeRoom.end.format("YYYY-MM-DD") : ""
+                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
+                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
 
             if (res) {
@@ -162,8 +198,8 @@ function Dashboard() {
     const getInvoicePayments = async () => {
         try {
             const res = await ListInvoicePaymentsByDateRange(
-                dateRangeRoom.start ? dateRangeRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeRoom.end ? dateRangeRoom.end.format("YYYY-MM-DD") : ""
+                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
+                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
 
             if (res) {
@@ -177,8 +213,8 @@ function Dashboard() {
     const getInvoices = async () => {
         try {
             const res = await ListInvoiceByDateRange(
-                dateRangeRoom.start ? dateRangeRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeRoom.end ? dateRangeRoom.end.format("YYYY-MM-DD") : ""
+                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
+                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
 
             if (res) {
@@ -189,15 +225,49 @@ function Dashboard() {
         }
     };
 
+    const getPreviousMonthInvoiceSummary = async () => {
+        try {
+            const resInvoice = await GetPreviousMonthInvoiceSummary();
+            if (resInvoice) {
+                setPreviousMonthInvoiceSummary(resInvoice)
+            }
+        } catch (error) {
+            console.error("Error fetching invoice summary:", error);
+        }
+    };
+
+    const getRentalSpaceRoomSummary = async () => {
+        try {
+            const resRoom = await GetRentalSpaceRoomSummary();
+            if (resRoom) {
+                setRentalSpaceRoomSummary(resRoom)
+            }
+        } catch (error) {
+            console.error("Error fetching room summary:", error);
+        }
+    };
+
     const getBookingRooms = async () => {
         try {
-            const res = await ListBookingRoomPaymentsByDateRange(
-                dateRangeRoom.start ? dateRangeRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeRoom.end ? dateRangeRoom.end.format("YYYY-MM-DD") : ""
+            const res = await ListBookingRoomByDateRange(
+                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
+                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
-
+            console.log(res)
             if (res) {
                 setBookingRooms(res);
+            }
+        } catch (error) {
+            console.error("Error fetching booking rooms:", error);
+        }
+    };
+
+    const getMeetingRoomSummaryToday = async () => {
+        try {
+            const res = await GetMeetingRoomSummaryToday()
+            console.log(res)
+            if (res) {
+                setMeetingRoomSummaryToday(res);
             }
         } catch (error) {
             console.error("Error fetching booking rooms:", error);
@@ -236,7 +306,14 @@ function Dashboard() {
     };
 
     const handleClearFillterRoom = () => {
-        setDateRangeRoom({
+        setDateRangeBookingRoom({
+            start: null,
+            end: null,
+        });
+    };
+
+    const handleClearFillterRentalRoom = () => {
+        setDateRangeRentalRoom({
             start: null,
             end: null,
         });
@@ -250,16 +327,19 @@ function Dashboard() {
     }
 
     useEffect(() => {
-        getMaintenanceRequests();
-        getUser();
-        getMaintenanceTypes();
+        const fetchInitialData = async () => {
+            try {
+                await Promise.all([
+                    getMaintenanceRequests(),
+                    getUser(),
+                    getMaintenanceTypes()
+                ]);
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
 
-        getBookingRoomPayments();
-        getInvoicePayments()
-        getInvoices()
-        getBookingRooms()
-        // Remove analytics tracking from Dashboard
-        // analyticsService.trackKeyPageVisit('DASHBOARD', 'Dashboard');
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -274,16 +354,28 @@ function Dashboard() {
 
     useEffect(() => {
         if (
-            (dateRangeRoom.start && selectedDateOptionRoom === "hourly") ||
-            (dateRangeRoom.start && dateRangeRoom.end) ||
-            (!dateRangeRoom.start && !dateRangeRoom.end)
+            (dateRangeBookingRoom.start && selectedDateOptionRoom === "hourly") ||
+            (dateRangeBookingRoom.start && dateRangeBookingRoom.end) ||
+            (!dateRangeBookingRoom.start && !dateRangeBookingRoom.end)
         ) {
             getBookingRoomPayments();
             getBookingRooms();
+            getMeetingRoomSummaryToday()
+        }
+    }, [dateRangeBookingRoom]);
+
+    useEffect(() => {
+        if (
+            (dateRangeRentalRoom.start && selectedDateOptionRoom === "hourly") ||
+            (dateRangeRentalRoom.start && dateRangeRentalRoom.end) ||
+            (!dateRangeRentalRoom.start && !dateRangeRentalRoom.end)
+        ) {
             getInvoicePayments();
             getInvoices();
+            getPreviousMonthInvoiceSummary()
+            getRentalSpaceRoomSummary()
         }
-    }, [dateRangeRoom]);
+    }, [dateRangeRentalRoom]);
 
     const prevDateOption = useRef<string>(selectedDateOption);
     useEffect(() => {
@@ -413,36 +505,25 @@ function Dashboard() {
     }, [dateRange.end]);
 
     useEffect(() => {
-        if (dateRangeRoom.start && !dateRangeRoom.end && selectedDateOptionRoom !== "hourly") {
+        if (dateRangeBookingRoom.start && !dateRangeBookingRoom.end) {
             setTimeout(() => setOpenEndPicker(true), 100);
         }
-    }, [dateRangeRoom.start]);
+    }, [dateRangeBookingRoom.start]);
 
     useEffect(() => {
-        if (dateRangeRoom.end && !dateRangeRoom.start && selectedDateOptionRoom !== "hourly") {
+        if (dateRangeBookingRoom.end && !dateRangeBookingRoom.start) {
             setTimeout(() => setOpenStartPicker(true), 100);
         }
-    }, [dateRangeRoom.end]);
-
-    const theme = useTheme();
-
-    // Mock data for summary cards
-    const summaryData = {
-        totalBookings: 234,
-        availableRooms: 12,
-        totalRevenue: 15670.5,
-        paymentFees: 785.25,
-        netRevenue: 14885.25,
-        totalUsers: 1847,
-    };
+    }, [dateRangeBookingRoom.end]);
 
     const SummaryCard: React.FC<{
         title: string;
         value: string | number;
         icon: LucideIcon;
         color: string;
+        colorLite: string;
         subtitle?: string;
-    }> = ({ title, value, icon, color, subtitle }) => {
+    }> = ({ title, value, icon, color, colorLite, subtitle }) => {
         const Icon = icon;
         return (
             <Card
@@ -484,7 +565,10 @@ function Dashboard() {
                             {(typeof value === "number" &&
                                 title.toLowerCase().includes("revenue")) ||
                                 title.toLowerCase().includes("fee")
-                                ? `฿${value.toLocaleString()}`
+                                ? `฿${value.toLocaleString("th-TH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}`
                                 : value.toLocaleString()}
                         </Typography>
                         {subtitle && (
@@ -512,6 +596,7 @@ function Dashboard() {
                                 width: 55,
                                 height: 55,
                                 color: color,
+                                backgroundColor: colorLite
                             }}
                         >
                             <Icon size={28} style={{ minWidth: "28px", minHeight: "28px" }} />
@@ -561,7 +646,7 @@ function Dashboard() {
         ],
     };
 
-    console.log("booking: ", bookingRooms)
+console.log("bookingRooms: ", bookingRooms)
 
     return (
         <Box className="dashboard-page">
@@ -589,7 +674,8 @@ function Dashboard() {
                             allowScrollButtonsMobile
                         >
                             <Tab label={t("maintenance")} {...a11yProps(0)} />
-                            <Tab label={t("bookingRoom")} {...a11yProps(1)} />
+                            <Tab label={"Booking Room"} {...a11yProps(1)} />
+                            <Tab label={"Rental Room"} {...a11yProps(2)} />
                         </Tabs>
                     </Grid>
 
@@ -826,8 +912,11 @@ function Dashboard() {
                                         />
 
                                         <Button
-                                            startIcon={<HelpOutline />}
+                                            startIcon={<HelpCircle size={18} style={{ minWidth: '18px', minHeight: '18px', marginBottom: '2px' }} />}
                                             variant="outlinedGray"
+                                            sx={{
+                                                backgroundColor: 'transparent'
+                                            }}
                                             onClick={() => setOpen(true)}
                                         >
                                             How to use this chart
@@ -844,13 +933,13 @@ function Dashboard() {
                                                     fontWeight: 700,
                                                     color: "primary.main",
                                                     textAlign: "center",
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: 1
                                                 }}
                                             >
-                                                <FontAwesomeIcon
-                                                    icon={faCircleQuestion}
-                                                    size="lg"
-                                                    style={{ marginRight: "10px" }}
-                                                />
+                                                <HelpCircle size={22} style={{ minWidth: '22px', minHeight: '22px', marginBottom: '2px' }} />
                                                 Chart Usage Guide
                                                 <IconButton
                                                     aria-label="close"
@@ -861,7 +950,7 @@ function Dashboard() {
                                                         top: 8,
                                                     }}
                                                 >
-                                                    <Close />
+                                                    <X size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                                 </IconButton>
                                             </DialogTitle>
 
@@ -923,56 +1012,72 @@ function Dashboard() {
                         </Grid>
                     </CustomTabPanel>
 
+                    {/* Booking Room Dashboard */}
                     <CustomTabPanel value={valueTab} index={1}>
                         <Grid container size={{ xs: 12 }} spacing={3}>
                             {/* Summary Cards */}
-                            <Grid size={{ xs: 12 }} container spacing={3}>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Today's Room Summary</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
-                                        title="Total Bookings"
-                                        value={bookingRooms.length}
-                                        icon={Check}
-                                        color="#1976d2"
+                                        title="Total Rooms"
+                                        value={meetingRoomSummaryToday?.total_rooms ?? 0}
+                                        icon={DoorClosed}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
                                     />
                                 </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Available Rooms"
-                                        value={summaryData.availableRooms}
-                                        icon={DoorOpen}
-                                        color="#4caf50"
+                                        value={meetingRoomSummaryToday?.available_today ?? 0}
+                                        icon={Check}
+                                        color={roomStatusConfig["Available"].color}
+                                        colorLite={roomStatusConfig["Available"].colorLite}
                                     />
                                 </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
+                            </Grid>
+
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Billing & Revenue This Month</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Total Booking"
+                                        value={previousMonthInvoiceSummary?.total_invoices ?? 0}
+                                        icon={FileText}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Pending Approvals"
+                                        value={previousMonthInvoiceSummary?.paid_invoices ?? 0}
+                                        icon={CheckCircle}
+                                        color={paymentStatusConfig["Paid"].color}
+                                        colorLite={paymentStatusConfig["Paid"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Completed Bookings"
+                                        value={previousMonthInvoiceSummary?.overdue_invoices ?? 0}
+                                        icon={Clock}
+                                        color={paymentStatusConfig["Rejected"].color}
+                                        colorLite={paymentStatusConfig["Rejected"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Total Revenue"
-                                        value={summaryData.totalRevenue}
-                                        icon={ChartLine}
-                                        color="#ff9800"
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                    <SummaryCard
-                                        title="Payment Fees"
-                                        value={summaryData.paymentFees}
-                                        icon={CreditCard}
-                                        color="#f44336"
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                    <SummaryCard
-                                        title="Net Revenue"
-                                        value={summaryData.netRevenue}
-                                        icon={Coins}
-                                        color="#9c27b0"
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                    <SummaryCard
-                                        title="Total Users"
-                                        value={summaryData.totalUsers}
-                                        icon={UserRound}
-                                        color="#00bcd4"
+                                        value={previousMonthInvoiceSummary?.total_revenue ?? 0}
+                                        icon={TrendingUp}
+                                        color="#FFA500"
+                                        colorLite="rgba(255, 166, 0, 0.21)"
                                     />
                                 </Grid>
                             </Grid>
@@ -999,13 +1104,13 @@ function Dashboard() {
                                         }}
                                         spacing={1}
                                     >
-                                        <Grid 
+                                        <Grid
                                             container
                                             size={{ xs: 12, sm: 12, sm650: 4 }}
                                             direction={'row'}
                                             alignItems={'center'}
                                         >
-                                            <ChartColumnStacked size={24} style={{ minWidth: '24px', minHeight: '24px' }}/>
+                                            <ChartColumnStacked size={24} style={{ minWidth: '24px', minHeight: '24px' }} />
                                             <Typography
                                                 variant="subtitle1"
                                                 color="text.main"
@@ -1069,14 +1174,14 @@ function Dashboard() {
                                                     >
                                                         <DatePicker
                                                             label="Date"
-                                                            value={dateRangeRoom.start ?? null}
+                                                            value={dateRangeBookingRoom.start ?? null}
                                                             onChange={(newValue) =>
-                                                                setDateRangeRoom((prev) => ({
+                                                                setDateRangeBookingRoom((prev) => ({
                                                                     ...prev,
                                                                     start: newValue ?? null,
                                                                 }))
                                                             }
-                                                            maxDate={dateRangeRoom.end ?? undefined}
+                                                            maxDate={dateRangeBookingRoom.end ?? undefined}
                                                             slots={{
                                                                 openPickerIcon: CalendarMonth,
                                                             }}
@@ -1099,15 +1204,15 @@ function Dashboard() {
                                                         >
                                                             <DatePicker
                                                                 label="Start Date"
-                                                                value={dateRangeRoom.start ?? null}
+                                                                value={dateRangeBookingRoom.start ?? null}
                                                                 onChange={(newValue) =>
-                                                                    setDateRangeRoom((prev) => ({
+                                                                    setDateRangeBookingRoom((prev) => ({
                                                                         ...prev,
                                                                         start: newValue ?? null,
                                                                     }))
                                                                 }
                                                                 maxDate={
-                                                                    dateRangeRoom.end ?? undefined
+                                                                    dateRangeBookingRoom.end ?? undefined
                                                                 }
                                                                 slots={{
                                                                     openPickerIcon:
@@ -1130,15 +1235,15 @@ function Dashboard() {
                                                         >
                                                             <DatePicker
                                                                 label="End Date"
-                                                                value={dateRangeRoom.end ?? null}
+                                                                value={dateRangeBookingRoom.end ?? null}
                                                                 onChange={(newValue) =>
-                                                                    setDateRangeRoom((prev) => ({
+                                                                    setDateRangeBookingRoom((prev) => ({
                                                                         ...prev,
                                                                         end: newValue ?? null,
                                                                     }))
                                                                 }
                                                                 minDate={
-                                                                    dateRangeRoom.start ?? undefined
+                                                                    dateRangeBookingRoom.start ?? undefined
                                                                 }
                                                                 slots={{
                                                                     openPickerIcon:
@@ -1183,11 +1288,306 @@ function Dashboard() {
                                             </Grid>
                                         </Grid>
                                     </Grid>
-                                    <ApexRevenueBarChart
+                                    <ApexBookingRoomRevenueBarChart
                                         bookingPaymentData={bookingRoomPayments}
+                                        height={350}
+                                        dateRange={dateRangeBookingRoom}
+                                        selectedDateOption={selectedDateOptionRoom}
+                                    />
+                                </Card>
+                            </Grid>
+                        </Grid>
+                    </CustomTabPanel>
+
+                    {/* Rental Room Dashboard */}
+                    <CustomTabPanel value={valueTab} index={2}>
+                        <Grid container size={{ xs: 12 }} spacing={3}>
+                            {/* Summary Cards */}
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Room Summary</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 4 }}>
+                                    <SummaryCard
+                                        title="Total Rooms"
+                                        value={rentalSpaceRoomSummary?.total_rooms ?? 0}
+                                        icon={DoorClosed}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 4 }}>
+                                    <SummaryCard
+                                        title="Available Rooms"
+                                        value={rentalSpaceRoomSummary?.available_rooms ?? 0}
+                                        icon={Check}
+                                        color={roomStatusConfig["Available"].color}
+                                        colorLite={roomStatusConfig["Available"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 4 }}>
+                                    <SummaryCard
+                                        title="Rooms Under Maintenance"
+                                        value={rentalSpaceRoomSummary?.rooms_under_maintenance ?? 0}
+                                        icon={Wrench}
+                                        color={roomStatusConfig["Under Maintenance"].color}
+                                        colorLite={roomStatusConfig["Under Maintenance"].colorLite}
+                                    />
+                                </Grid>
+                            </Grid>
+
+                            <Grid size={{ xs: 12 }} container columnSpacing={3} rowSpacing={2} >
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Billing & Revenue This Month</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Total Invoices"
+                                        value={previousMonthInvoiceSummary?.total_invoices ?? 0}
+                                        icon={FileText}
+                                        color="#007BFF"
+                                        colorLite="rgba(0, 123, 255, 0.18)"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Paid Invoices"
+                                        value={previousMonthInvoiceSummary?.paid_invoices ?? 0}
+                                        icon={CheckCircle}
+                                        color={paymentStatusConfig["Paid"].color}
+                                        colorLite={paymentStatusConfig["Paid"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Overdue Invoices"
+                                        value={previousMonthInvoiceSummary?.overdue_invoices ?? 0}
+                                        icon={Clock}
+                                        color={paymentStatusConfig["Rejected"].color}
+                                        colorLite={paymentStatusConfig["Rejected"].colorLite}
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 6 }}>
+                                    <SummaryCard
+                                        title="Total Revenue"
+                                        value={previousMonthInvoiceSummary?.total_revenue ?? 0}
+                                        icon={TrendingUp}
+                                        color="#FFA500"
+                                        colorLite="rgba(255, 166, 0, 0.21)"
+                                    />
+                                </Grid>
+                            </Grid>
+
+                            <Grid size={{ xs: 12 }}>
+                                <Card
+                                    sx={{
+                                        bgcolor: "secondary.main",
+                                        borderRadius: 2,
+                                        py: 2,
+                                        px: 3,
+                                        height: "100%",
+                                        justifyContent: "space-between",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 1,
+                                    }}
+                                >
+                                    <Grid
+                                        container
+                                        size={{ xs: 12, md: 12 }}
+                                        sx={{
+                                            alignItems: "center",
+                                        }}
+                                        spacing={1}
+                                    >
+                                        <Grid
+                                            container
+                                            size={{ xs: 12, sm: 12, sm650: 4 }}
+                                            direction={'row'}
+                                            alignItems={'center'}
+                                        >
+                                            <ChartColumnStacked size={24} style={{ minWidth: '24px', minHeight: '24px' }} />
+                                            <Typography
+                                                variant="subtitle1"
+                                                color="text.main"
+                                                fontWeight={600}
+                                                fontSize={22}
+                                            >
+                                                {`${selectedDateOptionRoom.charAt(0).toUpperCase() + selectedDateOptionRoom.slice(1).toLowerCase()} Revenue`}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid
+                                            container
+                                            size={{ xs: 12, sm: 12, sm650: 8 }}
+                                            spacing={1}
+                                        >
+                                            <Grid
+                                                size={{
+                                                    xs: 12,
+                                                    sm: 12,
+                                                    sm650:
+                                                        selectedDateOptionRoom === "hourly" ? 4 : 3,
+                                                }}
+                                            >
+                                                <FormControl fullWidth>
+                                                    <Select
+                                                        startAdornment={
+                                                            <InputAdornment
+                                                                position="start"
+                                                                sx={{ pl: 0.5 }}
+                                                            >
+                                                                <LineChart
+                                                                    size={20}
+                                                                    strokeWidth={3}
+                                                                />
+                                                            </InputAdornment>
+                                                        }
+                                                        value={selectedDateOptionRoom}
+                                                        onChange={(value) => {
+                                                            setSelectedDateOptionRoom(
+                                                                value.target.value as string
+                                                            );
+                                                        }}
+                                                    >
+                                                        {timeFrameOptionsRoom.map((item, index) => {
+                                                            return (
+                                                                <MenuItem
+                                                                    key={index}
+                                                                    value={item.value}
+                                                                >
+                                                                    {item.label}
+                                                                </MenuItem>
+                                                            );
+                                                        })}
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+
+                                            {selectedDateOption === "hourly" ? (
+                                                <Grid size={{ xs: 6, sm: 5, sm650: 6 }}>
+                                                    <LocalizationProvider
+                                                        dateAdapter={AdapterDayjs}
+                                                    >
+                                                        <DatePicker
+                                                            label="Date"
+                                                            value={dateRangeBookingRoom.start ?? null}
+                                                            onChange={(newValue) =>
+                                                                setDateRangeBookingRoom((prev) => ({
+                                                                    ...prev,
+                                                                    start: newValue ?? null,
+                                                                }))
+                                                            }
+                                                            maxDate={dateRangeBookingRoom.end ?? undefined}
+                                                            slots={{
+                                                                openPickerIcon: CalendarMonth,
+                                                            }}
+                                                            format="DD/MM/YYYY"
+                                                            open={openStartPicker}
+                                                            onOpen={() =>
+                                                                setOpenStartPicker(true)
+                                                            }
+                                                            onClose={() =>
+                                                                setOpenStartPicker(false)
+                                                            }
+                                                        />
+                                                    </LocalizationProvider>
+                                                </Grid>
+                                            ) : (
+                                                <>
+                                                    <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                        <LocalizationProvider
+                                                            dateAdapter={AdapterDayjs}
+                                                        >
+                                                            <DatePicker
+                                                                label="Start Date"
+                                                                value={dateRangeBookingRoom.start ?? null}
+                                                                onChange={(newValue) =>
+                                                                    setDateRangeBookingRoom((prev) => ({
+                                                                        ...prev,
+                                                                        start: newValue ?? null,
+                                                                    }))
+                                                                }
+                                                                maxDate={
+                                                                    dateRangeBookingRoom.end ?? undefined
+                                                                }
+                                                                slots={{
+                                                                    openPickerIcon:
+                                                                        CalendarMonth,
+                                                                }}
+                                                                format="DD/MM/YYYY"
+                                                                open={openStartPicker}
+                                                                onOpen={() =>
+                                                                    setOpenStartPicker(true)
+                                                                }
+                                                                onClose={() =>
+                                                                    setOpenStartPicker(false)
+                                                                }
+                                                            />
+                                                        </LocalizationProvider>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 6, sm: 5, sm650: 3.5 }}>
+                                                        <LocalizationProvider
+                                                            dateAdapter={AdapterDayjs}
+                                                        >
+                                                            <DatePicker
+                                                                label="End Date"
+                                                                value={dateRangeBookingRoom.end ?? null}
+                                                                onChange={(newValue) =>
+                                                                    setDateRangeBookingRoom((prev) => ({
+                                                                        ...prev,
+                                                                        end: newValue ?? null,
+                                                                    }))
+                                                                }
+                                                                minDate={
+                                                                    dateRangeBookingRoom.start ?? undefined
+                                                                }
+                                                                slots={{
+                                                                    openPickerIcon:
+                                                                        CalendarMonth,
+                                                                }}
+                                                                format="DD/MM/YYYY"
+                                                                open={openEndPicker}
+                                                                onOpen={() =>
+                                                                    setOpenEndPicker(true)
+                                                                }
+                                                                onClose={() =>
+                                                                    setOpenEndPicker(false)
+                                                                }
+                                                            />
+                                                        </LocalizationProvider>
+                                                    </Grid>
+                                                </>
+                                            )}
+
+                                            <Grid size={{ xs: 12, sm: 2 }}>
+                                                <Button
+                                                    onClick={handleClearFillterRoom}
+                                                    sx={{
+                                                        minWidth: "35px",
+                                                        width: "100%",
+                                                        height: "45px",
+                                                        borderRadius: "10px",
+                                                        border: "1px solid rgb(109, 110, 112, 0.4)",
+                                                        "&:hover": {
+                                                            boxShadow: "none",
+                                                            borderColor: "primary.main",
+                                                            backgroundColor: "transparent",
+                                                        },
+                                                    }}
+                                                >
+                                                    <BrushCleaning
+                                                        size={22}
+                                                        strokeWidth={2.2}
+                                                        style={{ color: "gray" }}
+                                                    />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                    <ApexInvoiceRevenueBarChart
                                         invoicePaymentData={invoicePayments}
                                         height={350}
-                                        dateRange={dateRangeRoom}
+                                        dateRange={dateRangeBookingRoom}
                                         selectedDateOption={selectedDateOptionRoom}
                                     />
                                 </Card>
