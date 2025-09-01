@@ -2,9 +2,13 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"time"
 
@@ -12,6 +16,7 @@ import (
 	"sci-park_web-application/entity"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // POST /booking-rooms/:id/payments (multipart)  fields: Amount, PayerID, PaymentDate, slip(file)
@@ -34,8 +39,21 @@ func SubmitPaymentSlip(c *gin.Context) {
 		return
 	}
 
-	// บันทึกไฟล์ไปใน server
-	savePath := fmt.Sprintf("images/payment/user_submitted/%s", file.Filename)
+	// เตรียม path และสร้างโฟลเดอร์ถ้ายังไม่มี
+	baseDir := "images/payment/user_submitted"
+	if err := os.MkdirAll(baseDir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างโฟลเดอร์อัพโหลดได้"})
+		return
+	}
+
+	ext := filepath.Ext(file.Filename)
+	name := strings.TrimSuffix(file.Filename, ext)
+	if name == "" {
+		name = "slip"
+	}
+	uniqueName := fmt.Sprintf("booking_%d_%d_%s%s", booking.ID, time.Now().Unix(), name, ext)
+	savePath := filepath.Join(baseDir, uniqueName)
+
 	if err := c.SaveUploadedFile(file, savePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกไฟล์ไม่สำเร็จ"})
 		return
@@ -43,37 +61,69 @@ func SubmitPaymentSlip(c *gin.Context) {
 
 	// รับฟิลด์อื่น ๆ จาก formData
 	amount, _ := strconv.ParseFloat(c.PostForm("Amount"), 64)
-	payerID, _ := strconv.ParseUint(c.PostForm("PayerID"), 10, 64)
+	payerIDu64, _ := strconv.ParseUint(c.PostForm("PayerID"), 10, 64)
 	note := c.PostForm("Note")
 	paymentDate := time.Now()
 
-	// หา status "Pending Verification"
-	psID, _ := mustPaymentStatusID("Pending Verification")
+	// หา/สร้าง PaymentStatus = "Pending Verification"
+	var ps entity.PaymentStatus
+	if err := db.Where("LOWER(name) = ?", strings.ToLower("Pending Verification")).First(&ps).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ps = entity.PaymentStatus{Name: "Pending Verification"}
+			if err := db.Create(&ps).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Pending Verification ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Pending Verification ไม่สำเร็จ"})
+			return
+		}
+	}
 
-	// ❗ ถ้ามี payment เดิม → update, ถ้าไม่มีก็ create
+	// อัปเดต/สร้าง payment ล่าสุดของ booking นี้
 	var payment entity.Payment
-	if err := db.Where("booking_room_id = ?", booking.ID).First(&payment).Error; err == nil {
+	tx := db.Begin()
+	if err := tx.Where("booking_room_id = ?", booking.ID).
+		Order("id DESC").
+		First(&payment).Error; err == nil {
 		// update
 		payment.Amount = amount
 		payment.SlipPath = "/" + savePath
 		payment.Note = note
-		payment.StatusID = psID
+		payment.StatusID = ps.ID
 		payment.PaymentDate = paymentDate
-		payment.PayerID = uint(payerID)
+		payment.PayerID = uint(payerIDu64)
 
-		db.Save(&payment)
-	} else {
+		if err := tx.Save(&payment).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตข้อมูลการชำระเงินไม่สำเร็จ"})
+			return
+		}
+	} else if errors.Is(err, gorm.ErrRecordNotFound) {
 		// create
 		payment = entity.Payment{
 			BookingRoomID: booking.ID,
 			Amount:        amount,
 			SlipPath:      "/" + savePath,
 			Note:          note,
-			StatusID:      psID,
+			StatusID:      ps.ID,
 			PaymentDate:   paymentDate,
-			PayerID:       uint(payerID),
+			PayerID:       uint(payerIDu64),
 		}
-		db.Create(&payment)
+		if err := tx.Create(&payment).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกข้อมูลการชำระเงินไม่สำเร็จ"})
+			return
+		}
+	} else {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ค้นหาข้อมูลการชำระเงินไม่สำเร็จ"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
+		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -81,6 +131,7 @@ func SubmitPaymentSlip(c *gin.Context) {
 		"payment": payment,
 	})
 }
+
 
 // POST /payments/:id/approve
 func ApprovePayment(c *gin.Context) {
@@ -93,13 +144,32 @@ func ApprovePayment(c *gin.Context) {
 		return
 	}
 
-	statusID, _ := mustPaymentStatusID("Paid") // ✅ ใช้ Paid แทน
-	payment.StatusID = statusID
+	// หา/สร้าง "Paid"
+	var ps entity.PaymentStatus
+	if err := db.Where("LOWER(name) = ?", strings.ToLower("Paid")).First(&ps).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ps = entity.PaymentStatus{Name: "Paid"}
+			if err := db.Create(&ps).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Paid ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Paid ไม่สำเร็จ"})
+			return
+		}
+	}
+
+	payment.StatusID = ps.ID
 	payment.Note = "ชำระเงินแล้ว"
-	db.Save(&payment)
+
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสถานะไม่สำเร็จ"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Payment approved", "payment": payment})
 }
+
 
 func MarkPaymentPaid(c *gin.Context) {
 	db := config.DB()
@@ -111,12 +181,29 @@ func MarkPaymentPaid(c *gin.Context) {
 		return
 	}
 
-	statusID, _ := mustPaymentStatusID("Paid")
-	payment.StatusID = statusID
-	db.Save(&payment)
+	var ps entity.PaymentStatus
+	if err := db.Where("LOWER(name) = ?", strings.ToLower("Paid")).First(&ps).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ps = entity.PaymentStatus{Name: "Paid"}
+			if err := db.Create(&ps).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Paid ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Paid ไม่สำเร็จ"})
+			return
+		}
+	}
+
+	payment.StatusID = ps.ID
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสถานะไม่สำเร็จ"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Payment marked as Paid", "payment": payment})
 }
+
 
 // POST /payments/:id/reject
 func RejectPayment(c *gin.Context) {
@@ -129,36 +216,67 @@ func RejectPayment(c *gin.Context) {
 		return
 	}
 
-	statusID, _ := mustPaymentStatusID("Rejected")
-	payment.StatusID = statusID
-	db.Save(&payment)
+	var ps entity.PaymentStatus
+	if err := db.Where("LOWER(name) = ?", strings.ToLower("Rejected")).First(&ps).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ps = entity.PaymentStatus{Name: "Rejected"}
+			if err := db.Create(&ps).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Rejected ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Rejected ไม่สำเร็จ"})
+			return
+		}
+	}
+
+	payment.StatusID = ps.ID
+	if err := db.Save(&payment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสถานะไม่สำเร็จ"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Payment rejected", "payment": payment})
 }
 
+
 func RefundedBookingRoom(c *gin.Context) {
-    db := config.DB()
-    id := c.Param("id") // booking id
+	db := config.DB()
+	id := c.Param("id") // booking id
 
-    var booking entity.BookingRoom
-    if err := db.Preload("Payments").First(&booking, id).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found"})
-        return
-    }
+	var booking entity.BookingRoom
+	if err := db.Preload("Payments").First(&booking, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found"})
+		return
+	}
 
-    if len(booking.Payments) == 0 {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "No payment to refund"})
-        return
-    }
+	if len(booking.Payments) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No payment to refund"})
+		return
+	}
 
-    latestPayment := booking.Payments[len(booking.Payments)-1]
-    refundStatusID, _ := mustPaymentStatusID("Refunded")
-    latestPayment.StatusID = refundStatusID
+	// ใช้รายการล่าสุด
+	latestPayment := booking.Payments[len(booking.Payments)-1]
 
-    if err := db.Save(&latestPayment).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
-        return
-    }
+	var ps entity.PaymentStatus
+	if err := db.Where("LOWER(name) = ?", strings.ToLower("Refunded")).First(&ps).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ps = entity.PaymentStatus{Name: "Refunded"}
+			if err := db.Create(&ps).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Refunded ไม่สำเร็จ"})
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Refunded ไม่สำเร็จ"})
+			return
+		}
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
+	latestPayment.StatusID = ps.ID
+	if err := db.Save(&latestPayment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
 }

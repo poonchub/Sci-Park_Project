@@ -61,7 +61,7 @@ type BookingLike = {
   Payment?: {
 
     id?: number;  // ✅ เพิ่มตรงนี้
-    status?: "paid" | "unpaid" | "refunded" | "submitted";
+    status?: "paid" | "unpaid" | "refunded" | "submitted" | "pending payment" | undefined;
     date?: string;
     method?: string;
     ref?: string;
@@ -562,27 +562,27 @@ export default function BookingReview() {
 
 
                   {/* ถ้ามาจาก mybooking → ให้ upload slip */}
-                  {fromSource === "my"  && !booking?.Payment?.slipImages?.length ? (
-                     <Grid size={{ xs: 12 }}>
-                    <Box sx={{
-                      display: "flex",
-                      justifyContent: "flex-end", // 👉 ชิดขวาสุด
-                      gap: 2,
-                      mt: 2,
-                    }}>
-                      <UploadSlipButton
-                        bookingId={booking.ID}
-                        payerId={Number(localStorage.getItem("userId"))}
-                        onSuccess={() => {
-                          setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
-                          refreshBooking();
-                        }}
-                        onError={(err) => {
-                          setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
-                        }}
-                      />
-                    </Box>
-                  </Grid>
+                  {fromSource === "my" && booking?.Payment?.status === "pending payment" && !booking?.Payment?.slipImages?.length ? (
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{
+                        display: "flex",
+                        justifyContent: "flex-end", // 👉 ชิดขวาสุด
+                        gap: 2,
+                        mt: 2,
+                      }}>
+                        <UploadSlipButton
+                          bookingId={booking.ID}
+                          payerId={Number(localStorage.getItem("userId"))}
+                          onSuccess={() => {
+                            setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
+                            refreshBooking();
+                          }}
+                          onError={(err) => {
+                            setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
+                          }}
+                        />
+                      </Box>
+                    </Grid>
                   ) : getDisplayStatus(booking) === "payment review" ? (
                     role === "Admin" || role === "Manager" ? (
                       <Grid size={{ xs: 12 }}>
@@ -628,9 +628,9 @@ export default function BookingReview() {
                         <Button
                           variant="contained"
                           color="primary"
-                          onClick={() => handleNextAction(next.key)}
+                          onClick={() => handleNextAction(next.key as "approve" | "approvePayment" | "complete" | "reject" | "rejectPayment" | "payment")}
                         >
-                          <PrimaryIcon size={16} />
+                          <Check size={16} />
                           <Typography sx={{ ml: 0.5 }}>{next.label}</Typography>
                         </Button>
                       )}

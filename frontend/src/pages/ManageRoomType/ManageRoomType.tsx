@@ -1,4 +1,4 @@
-import { Dialog, Grid, IconButton, Tooltip } from "@mui/material";
+import { Container, Dialog, Grid, IconButton, Tooltip } from "@mui/material";
 import { Box, Button, Card, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -275,37 +275,38 @@ function ManageRoomType() {
     }, [selectRoomType, page, limit, debouncedSearchText]);
 
     return (
-        <div className="manage-roomtype-page">
-            <Grid container spacing={3}>
-                <Grid className="title-box" size={{ xs: 12 }}>
-                    <Typography variant="h6" className="title">
-                        Manage Room Types
-                    </Typography>
-                </Grid>
-
-                {/* Search + Filter */}
-                <Grid container spacing={2} size={{ xs: 12 }} sx={{ alignItems: "flex-end" }}>
-                    {/* Search Box */}
-                    <Grid size={{ xs: 12, md: 5 }}>
-                        <TextField
-                            fullWidth
-                            placeholder="Search (Room Type Name)"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            slotProps={{
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                            <Search size={18} />
-                                        </InputAdornment>
-                                    ),
-                                },
-                            }}
-                        />
+        <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+            <div className="manage-roomtype-page">
+                <Grid container spacing={3}>
+                    <Grid className="title-box" size={{ xs: 12 }}>
+                        <Typography variant="h6" className="title">
+                            Manage Room Types
+                        </Typography>
                     </Grid>
 
-                    {/* Room Type Filter */}
-                    {/* <Grid size={{ xs: 12, md: 2 }}>
+                    {/* Search + Filter */}
+                    <Grid container spacing={2} size={{ xs: 12 }} sx={{ alignItems: "flex-end" }}>
+                        {/* Search Box */}
+                        <Grid size={{ xs: 12, md: 5 }}>
+                            <TextField
+                                fullWidth
+                                placeholder="Search (Room Type Name)"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                slotProps={{
+                                    input: {
+                                        startAdornment: (
+                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                                <Search size={18} />
+                                            </InputAdornment>
+                                        ),
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Room Type Filter */}
+                        {/* <Grid size={{ xs: 12, md: 2 }}>
                         <FormControl fullWidth>
                             <Select value={selectRoomType} onChange={(e) => setSelectRoomType(Number(e.target.value))} displayEmpty>
                                 <MenuItem value={0}>All Types</MenuItem>
@@ -318,65 +319,67 @@ function ManageRoomType() {
                         </FormControl>
                     </Grid> */}
 
-                    <Grid size={{ xs: 12, md: 1 }}>
-                        <Button
-                            onClick={handleClearFilter}
-                            sx={{
-                                minWidth: 0,
-                                width: "100%",
-                                height: "45px",
-                                borderRadius: "10px",
-                                border: "1px solid rgba(109,110,112,0.4)",
-                            }}
-                        >
-                            <RefreshCw size={18} color="gray" />
-                        </Button>
+                        <Grid size={{ xs: 12, md: 1 }}>
+                            <Button
+                                onClick={handleClearFilter}
+                                sx={{
+                                    minWidth: 0,
+                                    width: "100%",
+                                    height: "45px",
+                                    borderRadius: "10px",
+                                    border: "1px solid rgba(109,110,112,0.4)",
+                                }}
+                            >
+                                <RefreshCw size={18} color="gray" />
+                            </Button>
+                        </Grid>
                     </Grid>
-                </Grid>
 
-                {/* DataGrid */}
-                <Grid size={{ xs: 12 }}>
-                    <Card sx={{ width: "100%", borderRadius: 2 }}>
-                        <DataGrid
-                            rows={roomTypes || []}
-                            columns={columns}
-                            pageSizeOptions={[5, 10, 20, 50, 100]}
-                            paginationMode="server"
-                            rowCount={total}
-                            getRowId={(row) => String(row.ID)}
-                            onPaginationModelChange={(params) => {
-                                setPage(params.page + 1);
-                                setLimit(params.pageSize);
-                            }}
-                            slots={{
-                                noRowsOverlay: () => (
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            height: "100%",
-                                            color: "gray",
-                                        }}
-                                    >
-                                        <SearchOff sx={{ fontSize: 50, color: "gray" }} />
-                                        <Typography variant="body1" sx={{ mt: 1 }}>
-                                            No room types found
-                                        </Typography>
-                                    </Box>
-                                ),
-                            }}
-                        />
-                    </Card>
-                </Grid>
+                    {/* DataGrid */}
+                    <Grid size={{ xs: 12 }}>
+                        <Card sx={{ width: "100%", borderRadius: 2 }}>
+                            <DataGrid
+                                rows={roomTypes || []}
+                                columns={columns}
+                                pageSizeOptions={[5, 10, 20, 50, 100]}
+                                paginationMode="server"
+                                rowCount={total}
+                                getRowId={(row) => String(row.ID)}
+                                onPaginationModelChange={(params) => {
+                                    setPage(params.page + 1);
+                                    setLimit(params.pageSize);
+                                }}
+                                slots={{
+                                    noRowsOverlay: () => (
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                height: "100%",
+                                                color: "gray",
+                                            }}
+                                        >
+                                            <SearchOff sx={{ fontSize: 50, color: "gray" }} />
+                                            <Typography variant="body1" sx={{ mt: 1 }}>
+                                                No room types found
+                                            </Typography>
+                                        </Box>
+                                    ),
+                                }}
+                            />
+                        </Card>
+                    </Grid>
 
-                {openPopup && selectRoomType !== null && (
-                    <EditRoomPopup roomTypeID={selectRoomType} open={openPopup} onClose={handleClosePopup} />
-                )}
-            </Grid>
-        </div>
+                    {openPopup && selectRoomType !== null && (
+                        <EditRoomPopup roomTypeID={selectRoomType} open={openPopup} onClose={handleClosePopup} />
+                    )}
+                </Grid>
+            </div>
+        </Container>
     );
 }
+
 
 export default ManageRoomType;

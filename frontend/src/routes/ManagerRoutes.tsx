@@ -37,9 +37,9 @@ const ManagerRoutes = (): RouteObject => {
                 element: <RoomBookingForm roomsOfSameType={[]} />
             },
             {
-				path: "/my-booking-room",
-				element: <MyBookingRoom/>
-			},
+                path: "/my-booking-room",
+                element: <MyBookingRoom />
+            },
             {
                 path: "/maintenance/all-maintenance-request",
                 element: <AllMaintenanceRequest />
@@ -69,37 +69,42 @@ const ManagerRoutes = (): RouteObject => {
                 element: <ManageUsers />
             },
             {
-				path: "/about-developer",
-				element: <AboutDeveloper/>
-			},
+                path: "/about-developer",
+                element: <AboutDeveloper />
+            },
             {
-				path: "/all-booking-room",
-				element: <AllBookingRoom/>
-			},
+                path: "/requests/all-booking-room",   // ✅ route absolute
+                element: <AllBookingRoom />
+            },
+
             {
-				path: "/my-account",
-				element: <MyAccount/>
-			},
-			{
-				path: "/my-account/edit-profile",
-				element: <EditProfile/>
-			},
+                path: "/my-booking-room",
+                element: <MyBookingRoom />
+            },
             {
-				path: "/news",
-				element: <News/>
-			},
-                        {
-				path: "/room/rental-space",
-				element: <RoomRentalSpace/>
-			},
-			{
-				path: "/requests/service-area/service-request-list",
-				element: <ServiceRequestList/>
-			},
-			{
-				path: "",
-				element: <Home/>
-			},
+                path: "/my-account",
+                element: <MyAccount />
+            },
+            {
+                path: "/my-account/edit-profile",
+                element: <EditProfile />
+            },
+            {
+                path: "/news",
+                element: <News />
+            },
+            {
+                path: "/room/rental-space",
+                element: <RoomRentalSpace />
+            },
+            {
+                path: "/requests/service-area/service-request-list",
+                element: <ServiceRequestList />
+            },
+            {
+                path: "",
+                element: <Home />
+            },
             {
                 path: "*",
                 element: <Home />

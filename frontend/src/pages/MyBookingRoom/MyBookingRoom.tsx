@@ -195,14 +195,19 @@ setStatusCounts(counts);
             },
             {
                 field: "Date",
-                headerName: "Date Submitted",
+                headerName: "Booking Date",
                 flex: 1,
                 renderCell: (params) => {
                     const d = params.row as BookingRoomsInterface;
-                    const date = dateFormat(d.CreatedAt || "");
-                    const time = timeFormat(d.CreatedAt || "");
+
+                    // ใช้วันแรกใน BookingDates ถ้ามี
+                    const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
+
+                    const date = dateFormat(bookingDate || "");
+                    const time = timeFormat(bookingDate || "");
+
                     return (
-                        <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
                             <Typography sx={{ fontSize: 14 }}>{date}</Typography>
                             <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{time}</Typography>
                         </Box>

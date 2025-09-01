@@ -383,12 +383,17 @@ function AllBookingRoom() {
             },
             {
                 field: "Date",
-                headerName: "Date Submitted",
+                headerName: "Booking Date",
                 flex: 1,
                 renderCell: (params) => {
                     const d = params.row as BookingRoomsInterface;
-                    const date = dateFormat(d.CreatedAt || "");
-                    const time = timeFormat(d.CreatedAt || "");
+
+                    // ใช้วันแรกใน BookingDates ถ้ามี
+                    const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
+
+                    const date = dateFormat(bookingDate || "");
+                    const time = timeFormat(bookingDate || "");
+
                     return (
                         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
                             <Typography sx={{ fontSize: 14 }}>{date}</Typography>
@@ -396,7 +401,8 @@ function AllBookingRoom() {
                         </Box>
                     );
                 },
-            },
+            }
+            ,
             {
                 field: "Status",
                 headerName: "Status",
@@ -454,23 +460,62 @@ function AllBookingRoom() {
 
                     return (
                         <Box sx={{ display: "flex", gap: 0.8 }}>
-                            {/* ✅ ปุ่ม Finish (Complete / Refund) */}
-                            <FinishActionButton
-                                row={row}
-                                onComplete={async (row) => {
-                                    await CompleteBookingRoom(row.ID);
-                                    await getBookingRooms();
-                                    setAlerts((a) => [...a, { type: "success", message: "Booking completed" }]);
-                                }}
-                                onRefund={async (row) => {
-                                    console.log("f", row);
-                                    await RefundedBookingRoom(row.ID);
-                                    await getBookingRooms();
-                                    setAlerts((a) => [...a, { type: "success", message: "Booking refunded" }]);
-                                }}
-                            />
+                            {/* ---- CASE 1: Pending ---- */}
+                            {row.DisplayStatus === "pending" && (
+                                <>
+                                    <Tooltip title="Approve">
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={() => handlePrimaryAction("approve", row)}
+                                        >
+                                            Approve
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip title="Reject">
+                                        <Button
+                                            variant="outlinedCancel"
+                                            onClick={() => handlePrimaryAction("reject", row)}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </Tooltip>
+                                </>
+                            )}
 
-                            {/* ปุ่ม Details เดิม */}
+                            {/* ---- CASE 2: Payment Review ---- */}
+                            {row.DisplayStatus === "payment review" && (
+                                <Tooltip title="Review Payment">
+                                    <Button
+                                        variant="contained"
+                                        color="warning"
+                                        onClick={() => handlePrimaryAction("approvePayment", row)}
+                                    >
+                                        Review Payment
+                                    </Button>
+                                </Tooltip>
+                            )}
+
+                            {/* ---- CASE 3: Payment (Complete or Refund) ---- */}
+                            {row.DisplayStatus === "payment" && (
+                                <FinishActionButton
+                                    row={row}
+                                    onComplete={async (r) => {
+                                        await CompleteBookingRoom(r.ID);
+                                        await getBookingRooms();
+                                        setAlerts((a) => [...a, { type: "success", message: "Booking completed" }]);
+                                    }}
+                                    onRefund={async (r) => {
+                                        await RefundedBookingRoom(r.Payment?.id);
+                                        await getBookingRooms();
+                                        setAlerts((a) => [...a, { type: "success", message: "Booking refunded" }]);
+                                    }}
+                                />
+                            )}
+
+                                    
+
+                            {/* ---- Always show Details ---- */}
                             <Tooltip title="Details">
                                 <Button variant="outlinedGray" onClick={() => handleClickCheck(row)}>
                                     <Eye size={18} />
@@ -481,6 +526,8 @@ function AllBookingRoom() {
                     );
                 },
             }
+
+
 
             ,
         ];
