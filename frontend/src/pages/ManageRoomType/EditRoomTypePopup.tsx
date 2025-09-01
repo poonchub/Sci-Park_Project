@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   Typography,
@@ -20,7 +21,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import {
   Save,
-  ImageIcon,
+  Image as ImageIcon,
   Plus,
   Trash2,
   Settings,
@@ -36,26 +37,37 @@ import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
 import InfoAlert from '../../components/Alert/InfoAlert';
 import { RoomtypesInterface } from '../../interfaces/IRoomTypes';
-import { apiUrl, GetRoomTypeById, UpdateRoomType, ListLayouts, ListTimeSlots, ListEquipments } from '../../services/http';
+import {
+  apiUrl,
+  GetRoomTypeById,
+  UpdateRoomType,
+  ListLayouts,
+  ListTimeSlots,
+  ListEquipments,
+  CreateEquipment,
+  CreateTimeSlot,
+  CreateLayout
+} from '../../services/http';
 
 interface EditRoomTypePopupProps {
   roomTypeID: number;
   open: boolean;
   onClose: () => void;
 }
-// กันกด e/E/+/- ใน input type="number"
+
+// Block e/E/+/- in number inputs
 const blockNonNumericKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
   if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
 };
 
-// บังคับค่าต่ำสุด = 1 (จำนวนเต็ม)
+// Clamp to integer min 1
 const clampMin1 = (val: any) => {
   const n = Number(val);
   return Number.isNaN(n) ? 1 : Math.max(1, Math.floor(n));
 };
 
 const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open, onClose }) => {
-  const { control, handleSubmit, formState: { errors }, getValues , setValue } = useForm();
+  const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm();
   const [roomType, setRoomType] = useState<RoomtypesInterface | null>(null);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   const [equipmentsMaster, setEquipmentsMaster] = useState<any[]>([]);
@@ -63,10 +75,86 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
   const [layoutsMaster, setLayoutsMaster] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // popup state
-  const [openEquipmentDialog, setOpenEquipmentDialog] = useState(false);
-  const [openLayoutDialog, setOpenLayoutDialog] = useState(false);
+  // ===== Inline Create Master Dialog =====
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createType, setCreateType] = useState<null | 'equipment' | 'timeslot' | 'layout'>(null);
+  const [pendingSelect, setPendingSelect] = useState<{ type: 'equipment' | 'timeslot' | 'layout', index: number } | null>(null);
+  const [createForm, setCreateForm] = useState<{ name: string; start?: string; end?: string }>({ name: "", start: "09:00", end: "12:00" });
 
+  const openCreate = (type: 'equipment' | 'timeslot' | 'layout', index: number) => {
+    setCreateType(type);
+    setPendingSelect({ type, index });
+    setCreateForm({ name: "", start: "09:00", end: "12:00" });
+    setCreateOpen(true);
+  };
+  const closeCreate = () => {
+    setCreateOpen(false);
+    setCreateType(null);
+    setPendingSelect(null);
+  };
+
+ // --- แทนที่ฟังก์ชันเดิมทั้งหมด ---
+const handleCreateSubmit = async () => {
+  if (!createForm.name?.trim()) {
+    setAlerts(prev => [...prev, { type: 'warning', message: 'กรุณากรอกชื่อก่อนสร้างข้อมูลใหม่' }]);
+    return;
+  }
+
+  try {
+    if (createType === 'equipment') {
+      // services ของคุณคืน object | false
+      const created = await CreateEquipment({ EquipmentName: createForm.name.trim() });
+      if (!created) {
+        setAlerts(p => [...p, { type: 'error', message: 'สร้างอุปกรณ์ไม่สำเร็จ' }]);
+        return;
+      }
+      setEquipmentsMaster(prev => [...prev, created]);
+      if (pendingSelect && roomType) {
+        const updated = [...(roomType.RoomEquipments ?? [])];
+        updated[pendingSelect.index].EquipmentID = (created.ID ?? created.id);
+        setRoomType({ ...roomType, RoomEquipments: updated });
+      }
+
+    } else if (createType === 'timeslot') {
+      const created = await CreateTimeSlot({
+        TimeSlotName: createForm.name.trim(),
+        Start: createForm.start || '09:00',
+        End: createForm.end || '12:00',
+      });
+      if (!created) {
+        setAlerts(p => [...p, { type: 'error', message: 'สร้าง Time Slot ไม่สำเร็จ' }]);
+        return;
+      }
+      setTimeSlotsMaster(prev => [...prev, created]);
+      if (pendingSelect && roomType) {
+        const updated = [...(roomType.RoomPrices ?? [])];
+        updated[pendingSelect.index].TimeSlotID = (created.ID ?? created.id);
+        setRoomType({ ...roomType, RoomPrices: updated });
+      }
+
+    } else if (createType === 'layout') {
+      const created = await CreateLayout({ LayoutName: createForm.name.trim() });
+      if (!created) {
+        setAlerts(p => [...p, { type: 'error', message: 'สร้าง Layout ไม่สำเร็จ' }]);
+        return;
+      }
+      setLayoutsMaster(prev => [...prev, created]);
+      if (pendingSelect && roomType) {
+        const updated = [...(roomType.RoomTypeLayouts ?? [])];
+        updated[pendingSelect.index].RoomLayoutID = (created.ID ?? created.id);
+        setRoomType({ ...roomType, RoomTypeLayouts: updated });
+      }
+    }
+
+    setAlerts(prev => [...prev, { type: 'success', message: 'สร้างข้อมูลใหม่เรียบร้อย' }]);
+    closeCreate();
+
+  } catch (e: any) {
+    setAlerts(prev => [...prev, { type: 'error', message: e?.message || 'สร้างข้อมูลไม่สำเร็จ' }]);
+  }
+};
+
+  // ===== Load data =====
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -79,8 +167,6 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
           setValue('RoomSize', data.RoomSize || '');
           setValue('ForRental', data.ForRental || false);
           setValue('HasMultipleSizes', data.HasMultipleSizes || false);
-
-          console.log('Fetched room type data:', data);
         }
       } catch (error) {
         console.error('Error loading room type:', error);
@@ -106,7 +192,6 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
   }, []);
 
   const handleSave = async (data: RoomtypesInterface) => {
-
     const hasInvalid =
       ((roomType ?? {}).RoomPrices ?? []).some(p => (p.Price ?? 0) < 1) ||
       ((roomType ?? {}).RoomTypeLayouts ?? []).some(l => (l.Capacity ?? 0) < 1) ||
@@ -154,8 +239,6 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
 
     try {
       const response = await UpdateRoomType(roomTypeID, formDataToSend);
-      console.log("📥 Response:", response);
-
       if (response?.status === "success") {
         setAlerts(prev => [...prev, { type: "success", message: "Room Type updated successfully." }]);
         setTimeout(onClose, 2000);
@@ -194,21 +277,12 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
       onClose={onClose}
       fullWidth
       maxWidth="lg"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          minHeight: '80vh',
-
-        }
-      }}
+      PaperProps={{ sx: { borderRadius: 3, minHeight: '80vh' } }}
       TransitionComponent={Slide}
       TransitionProps={{ direction: 'up' } as any}
     >
-      <DialogTitle sx={{
-        borderRadius: '12px 12px 0 0',
-        mb: 0
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <DialogTitle sx={{ borderRadius: '12px 12px 0 0', mb: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, flexWrap: 'wrap' }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
               Edit Room Type
@@ -247,12 +321,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                           placeholder="Enter room type name"
                           error={!!errors.TypeName}
                           helperText={String(errors.TypeName?.message) || ''}
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-
-                            }
-                          }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                         />
                       )}
                     />
@@ -285,8 +354,6 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                         />
                       )}
                     />
-
-
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -302,10 +369,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                           value={field.value ? "yes" : "no"}
                           onChange={(e) => field.onChange(e.target.value === "yes")}
                           fullWidth
-                          sx={{
-                            borderRadius: 2,
-
-                          }}
+                          sx={{ borderRadius: 2 }}
                         >
                           <MenuItem value="yes">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -335,10 +399,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                           value={field.value ? "yes" : "no"}
                           onChange={(e) => field.onChange(e.target.value === "yes")}
                           fullWidth
-                          sx={{
-                            borderRadius: 2,
-
-                          }}
+                          sx={{ borderRadius: 2 }}
                         >
                           <MenuItem value="yes">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -358,43 +419,56 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
               </Paper>
 
               {/* Equipment Section */}
-              <Paper sx={{ p: 3, borderRadius: 3, }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+              <Paper sx={{ p: 3, borderRadius: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'flex-start' },
+                    mb: 2,
+                    gap: 1,
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <SectionHeader icon={Settings} title="Equipments" color="#ff9800" />
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                       variant="outlined"
                       startIcon={<Plus size={16} />}
                       onClick={() => {
-                        setRoomType({
-                          ...roomType,
-                          RoomEquipments: [
-                            ...(roomType.RoomEquipments || []),
-                            { Quantity: 1, EquipmentID: 0 } as any,
-                          ],
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
+                          return next;
                         });
                       }}
                       sx={{ borderRadius: 2 }}
                     >
                       Add Equipment
                     </Button>
-                    {/* <Button
+                    {/* Header-level New */}
+                    <Button
                       variant="contained"
                       startIcon={<Plus size={16} />}
-                      onClick={() => setOpenEquipmentDialog(true)}
-                      sx={{ 
-                        borderRadius: 2,
-                        background: 'linear-gradient(45deg, #ff9800, #f57c00)'
+                      onClick={() => {
+                        const idx = (roomType?.RoomEquipments?.length ?? 0);
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
+                          return next;
+                        });
+                        openCreate('equipment', idx);
                       }}
+                      sx={{ borderRadius: 2 }}
                     >
-                      Create New
-                    </Button> */}
+                      New
+                    </Button>
                   </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomEquipments ?? []).map((eq, index) => (
-                    <Card key={index} sx={{ borderRadius: 2, }}>
+                  {(roomType.RoomEquipments ?? []).map((eq: any, index: number) => (
+                    <Card key={index} sx={{ borderRadius: 2 }}>
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 5 }}>
@@ -406,7 +480,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomEquipments ?? [])];
                                 updated[index].EquipmentID = Number(e.target.value);
-                                setRoomType({ ...roomType, RoomEquipments: updated });
+                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
                               }}
                               fullWidth
                               sx={{ borderRadius: 2 }}
@@ -431,23 +505,19 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomEquipments ?? [])];
                                 updated[index].Quantity = clampMin1(e.target.value);
-                                setRoomType({ ...roomType, RoomEquipments: updated });
+                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
                               }}
                               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-
                           </Grid>
                           <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                             <IconButton
                               color="error"
                               onClick={() => {
-                                const updated = (roomType.RoomEquipments ?? []).filter((_, i) => i !== index);
-                                setRoomType({ ...roomType, RoomEquipments: updated });
+                                const updated = (roomType.RoomEquipments ?? []).filter((_: any, i: number) => i !== index);
+                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
                               }}
-                              sx={{
-                                backgroundColor: '#ffebee',
-                                '&:hover': { backgroundColor: '#ffcdd2' }
-                              }}
+                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
                             >
                               <Trash2 size={16} />
                             </IconButton>
@@ -461,29 +531,54 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
 
               {/* Pricing Section */}
               <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'flex-start' },
+                    mb: 2,
+                    gap: 1,
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <SectionHeader icon={DollarSign} title="Pricing" color="#4caf50" />
-                  <Button
-                    variant="outlined"
-                    startIcon={<Plus size={16} />}
-                    onClick={() => {
-                      setRoomType({
-                        ...roomType,
-                        RoomPrices: [
-                          ...(roomType.RoomPrices || []),
-                          { Price: 1, TimeSlotID: 0 } as any,  // ← เปลี่ยนเป็น 1
-                        ],
-                      });
-                    }}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Add Price
-                  </Button>
-
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Plus size={16} />}
+                      onClick={() => {
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
+                          return next;
+                        });
+                      }}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      Add Price
+                    </Button>
+                    {/* Header-level New */}
+                    <Button
+                      variant="contained"
+                      startIcon={<Plus size={16} />}
+                      onClick={() => {
+                        const idx = (roomType?.RoomPrices?.length ?? 0);
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
+                          return next;
+                        });
+                        openCreate('timeslot', idx);
+                      }}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      New
+                    </Button>
+                  </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomPrices ?? []).map((price, index) => (
+                  {(roomType.RoomPrices ?? []).map((price: any, index: number) => (
                     <Card key={index} sx={{ borderRadius: 2 }}>
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
@@ -496,7 +591,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomPrices ?? [])];
                                 updated[index].TimeSlotID = Number(e.target.value);
-                                setRoomType({ ...roomType, RoomPrices: updated });
+                                setRoomType({ ...(roomType as any), RoomPrices: updated });
                               }}
                               fullWidth
                               sx={{ borderRadius: 2 }}
@@ -521,23 +616,19 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomPrices ?? [])];
                                 updated[index].Price = clampMin1(e.target.value);
-                                setRoomType({ ...roomType, RoomPrices: updated });
+                                setRoomType({ ...(roomType as any), RoomPrices: updated });
                               }}
                               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-
                           </Grid>
                           <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                             <IconButton
                               color="error"
                               onClick={() => {
-                                const updated = (roomType.RoomPrices ?? []).filter((_, i) => i !== index);
-                                setRoomType({ ...roomType, RoomPrices: updated });
+                                const updated = (roomType.RoomPrices ?? []).filter((_: any, i: number) => i !== index);
+                                setRoomType({ ...(roomType as any), RoomPrices: updated });
                               }}
-                              sx={{
-                                backgroundColor: '#ffebee',
-                                '&:hover': { backgroundColor: '#ffcdd2' }
-                              }}
+                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
                             >
                               <Trash2 size={16} />
                             </IconButton>
@@ -551,43 +642,54 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
 
               {/* Layouts Section */}
               <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'flex-start' },
+                    mb: 2,
+                    gap: 1,
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <SectionHeader icon={Grid3x3} title="Layouts" color="#9c27b0" />
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                       variant="outlined"
                       startIcon={<Plus size={16} />}
                       onClick={() => {
-                        setRoomType({
-                          ...roomType,
-                          RoomTypeLayouts: [
-                            ...(roomType.RoomTypeLayouts || []),
-                            // แก้ค่าเริ่มต้นตรงนี้จาก 0 → 1
-                            { Capacity: 1, Note: "", RoomLayoutID: 0 } as any,
-                          ],
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
+                          return next;
                         });
                       }}
                       sx={{ borderRadius: 2 }}
                     >
                       Add Layout
                     </Button>
-
-                    {/* <Button
+                    {/* Header-level New */}
+                    <Button
                       variant="contained"
                       startIcon={<Plus size={16} />}
-                      onClick={() => setOpenLayoutDialog(true)}
-                      sx={{ 
-                        borderRadius: 2,
-                        background: 'linear-gradient(45deg, #9c27b0, #7b1fa2)'
+                      onClick={() => {
+                        const idx = (roomType?.RoomTypeLayouts?.length ?? 0);
+                        setRoomType(prev => {
+                          const next = { ...(prev as any) };
+                          next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
+                          return next;
+                        });
+                        openCreate('layout', idx);
                       }}
+                      sx={{ borderRadius: 2 }}
                     >
-                      Create New
-                    </Button> */}
+                      New
+                    </Button>
                   </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomTypeLayouts ?? []).map((layout, index) => (
+                  {(roomType.RoomTypeLayouts ?? []).map((layout: any, index: number) => (
                     <Card key={index} sx={{ borderRadius: 2 }}>
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
@@ -600,7 +702,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomTypeLayouts ?? [])];
                                 updated[index].RoomLayoutID = Number(e.target.value);
-                                setRoomType({ ...roomType, RoomTypeLayouts: updated });
+                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
                               }}
                               fullWidth
                               sx={{ borderRadius: 2 }}
@@ -625,11 +727,10 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomTypeLayouts ?? [])];
                                 updated[index].Capacity = clampMin1(e.target.value);
-                                setRoomType({ ...roomType, RoomTypeLayouts: updated });
+                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
                               }}
                               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }} >
                             <Typography variant="caption" sx={{ color: '#666', mb: 0.5, display: 'block' }}>
@@ -642,26 +743,19 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                               onChange={(e) => {
                                 const updated = [...(roomType.RoomTypeLayouts ?? [])];
                                 updated[index].Note = e.target.value;
-                                setRoomType({ ...roomType, RoomTypeLayouts: updated });
+                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
                               }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2
-                                }
-                              }}
+                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
                             <IconButton
                               color="error"
                               onClick={() => {
-                                const updated = (roomType.RoomTypeLayouts ?? []).filter((_, i) => i !== index);
-                                setRoomType({ ...roomType, RoomTypeLayouts: updated });
+                                const updated = (roomType.RoomTypeLayouts ?? []).filter((_: any, i: number) => i !== index);
+                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
                               }}
-                              sx={{
-                                backgroundColor: '#ffebee',
-                                '&:hover': { backgroundColor: '#ffcdd2' }
-                              }}
+                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
                             >
                               <Trash2 size={16} />
                             </IconButton>
@@ -678,18 +772,9 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                 <SectionHeader icon={ImageIcon} title="Images" color="#f44336" />
 
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
-                  {(roomType.RoomTypeImages ?? []).map((img, index) => (
+                  {(roomType.RoomTypeImages ?? []).map((img: any, index: number) => (
                     <Fade in={true} key={index}>
-                      <Card sx={{
-                        position: 'relative',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        transition: 'transform 0.2s',
-                        '&:hover': {
-                          transform: 'scale(1.02)'
-                        }
-                      }}>
+                      <Card sx={{ position: 'relative', borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }}>
                         <Box sx={{ position: 'relative' }}>
                           <img
                             src={
@@ -698,32 +783,15 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                                 : `${apiUrl}/${img.FilePath?.replace(/^uploads/, "images")}`
                             }
                             alt="room"
-                            style={{
-                              width: 120,
-                              height: 100,
-                              objectFit: "cover",
-                              display: 'block'
-                            }}
+                            style={{ width: 120, height: 100, objectFit: "cover", display: 'block' }}
                           />
                           <IconButton
                             size="small"
                             onClick={() => {
-                              const updated = (roomType.RoomTypeImages ?? []).filter((_, i) => i !== index);
-                              setRoomType({ ...roomType, RoomTypeImages: updated });
+                              const updated = (roomType.RoomTypeImages ?? []).filter((_: any, i: number) => i !== index);
+                              setRoomType({ ...(roomType as any), RoomTypeImages: updated });
                             }}
-                            sx={{
-                              position: 'absolute',
-                              top: 4,
-                              right: 4,
-                              backgroundColor: 'rgba(244, 67, 54, 0.9)',
-                              color: 'white',
-                              width: 24,
-                              height: 24,
-                              '&:hover': {
-                                backgroundColor: 'rgba(244, 67, 54, 1)',
-                                transform: 'scale(1.1)'
-                              }
-                            }}
+                            sx={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(244, 67, 54, 0.9)', color: 'white', width: 24, height: 24, '&:hover': { backgroundColor: 'rgba(244, 67, 54, 1)', transform: 'scale(1.1)' } }}
                           >
                             <X size={12} />
                           </IconButton>
@@ -733,27 +801,10 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                   ))}
 
                   {/* Add Image Button */}
-                  <Card sx={{
-                    borderRadius: 3,
-                    border: '2px dashed #e0e0e0',
-
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: '#2196f3',
-                      backgroundColor: '#3d67a3ff'
-                    }
-                  }}>
+                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0', cursor: 'pointer', transition: 'all 0.2s', '&:hover': { borderColor: '#2196f3', backgroundColor: '#3d67a3ff' } }}>
                     <Button
                       component="label"
-                      sx={{
-                        width: 120,
-                        height: 100,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1,
-                        color: '#666'
-                      }}
+                      sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}
                     >
                       <Camera size={24} />
                       <Typography variant="caption">Add Image</Typography>
@@ -765,9 +816,9 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];
                             setRoomType({
-                              ...roomType,
+                              ...(roomType as any),
                               RoomTypeImages: [
-                                ...(roomType.RoomTypeImages || []),
+                                ...(roomType?.RoomTypeImages || []),
                                 { file, FilePath: "" } as any,
                               ],
                             });
@@ -783,21 +834,76 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
         )}
       </DialogContent>
 
-      {/* Enhanced Dialog Actions */}
-      <DialogActions sx={{
-        p: 3,
-        gap: 2
-      }}>
+      {/* Create New Master Dialog */}
+      <Dialog open={createOpen} onClose={closeCreate} fullWidth maxWidth="sm">
+        <DialogTitle>
+          {createType === 'equipment' && 'Create Equipment'}
+          {createType === 'timeslot' && 'Create Time Slot'}
+          {createType === 'layout' && 'Create Layout'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="body2" sx={{ mb: 1, color: '#666' }}>
+                {createType === 'equipment' && 'Equipment Name *'}
+                {createType === 'timeslot' && 'Time Slot Name *'}
+                {createType === 'layout' && 'Layout Name *'}
+              </Typography>
+              <TextField
+                value={createForm.name}
+                onChange={(e) => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Enter name"
+                fullWidth
+              />
+            </Grid>
+
+            {createType === 'timeslot' && (
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Typography variant="body2" sx={{ mb: 1, color: '#666' }}>
+                    Start (HH:mm)
+                  </Typography>
+                  <TextField
+                    value={createForm.start}
+                    onChange={(e) => setCreateForm(f => ({ ...f, start: e.target.value }))}
+                    placeholder="09:00"
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Typography variant="body2" sx={{ mb: 1, color: '#666' }}>
+                    End (HH:mm)
+                  </Typography>
+                  <TextField
+                    value={createForm.end}
+                    onChange={(e) => setCreateForm(f => ({ ...f, end: e.target.value }))}
+                    placeholder="12:00"
+                    fullWidth
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Button variant="outlined" onClick={closeCreate}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateSubmit}
+            startIcon={<Save size={16} />}
+            sx={{ background: 'linear-gradient(to right, #4caf50, #2e7d32)' }}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Footer Actions */}
+      <DialogActions sx={{ p: 3, gap: 2, flexWrap: 'wrap' }}>
         <Button
           onClick={onClose}
           variant="outlined"
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 500
-          }}
+          sx={{ borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontWeight: 500 }}
           disabled={loading}
         >
           Cancel
@@ -807,30 +913,15 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
           variant="contained"
           startIcon={loading ? undefined : <Save size={16} />}
           disabled={loading}
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            background: 'linear-gradient(to right, #f44336ff, #d25d19ff)',
-          }}
+          sx={{ borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontWeight: 600, background: 'linear-gradient(to right, #f44336ff, #d25d19ff)' }}
         >
           {loading ? 'Saving...' : 'Save Changes'}
         </Button>
       </DialogActions>
 
-      {/* Enhanced Alert System */}
+      {/* Alerts */}
       {alerts.length > 0 && (
-        <Box sx={{
-          position: 'fixed',
-          top: 20,
-          right: 20,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1
-        }}>
+        <Box sx={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 1 }}>
           {alerts.map((alert, index) => (
             <Fade in={true} key={index}>
               <Box>

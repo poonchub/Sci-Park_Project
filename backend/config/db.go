@@ -118,7 +118,7 @@ func SetupDatabase() {
 	fmt.Println("✅ Database migrated successfully!")
 
 	SeedDatabase()
-	seedBookingDemoData(db)
+	
 }
 
 // ฟังก์ชันเพิ่มข้อมูลตัวอย่าง
@@ -566,6 +566,7 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Rooms
+	const LARGE_ROOM_TYPE_ID =  /* TODO: ใส่ RoomTypeID ของห้องใหญ่ */  5
 	rooms := []entity.Room{
 		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
 		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
@@ -622,6 +623,8 @@ func SeedDatabase() {
 		{RoomNumber: "A305", FloorID: 1, RoomStatusID: 1, RoomTypeID: 6},
 
 		{RoomNumber: "A406", FloorID: 1, RoomStatusID: 1, RoomTypeID: 7},
+
+		{RoomNumber: "LARGE-01", FloorID: 1, RoomStatusID: 1, RoomTypeID:5 , RoomSize: 1000},
 	}
 	for _, room := range rooms {
 		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
@@ -848,11 +851,11 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Equipment
 	equipments := []entity.Equipment{
-		{EquipmentName: "โปรเจคเตอร์"},
-		{EquipmentName: "ไมโครโฟน"},
-		{EquipmentName: "กระดานไวท์บอร์ด"},
-		{EquipmentName: "โต๊ะ"},
-		{EquipmentName: "เก้าอี้"},
+		{EquipmentName: "Projector"},
+		{EquipmentName: "Microphone"},
+		{EquipmentName: "Whiteboard"},
+		{EquipmentName: "Table"},
+		{EquipmentName: "Chair"},
 	}
 	for _, e := range equipments {
 		db.FirstOrCreate(&e, entity.Equipment{EquipmentName: e.EquipmentName})

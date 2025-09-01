@@ -6,6 +6,8 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 func mustPaymentStatusID(name string) (uint, error) {
@@ -45,3 +47,18 @@ func uiPaymentStatus(dbName string) string {
 }
 
 
+// สร้างห้อง 1 ห้องให้ RoomType ที่ยังไม่มีห้องเลย (กันพลาดในข้อมูล)
+func ensureTypeHasRoom(db *gorm.DB, roomTypeID uint, roomNumber string, floorID uint) error {
+    var count int64
+    if err := db.Model(&entity.Room{}).Where("room_type_id = ?", roomTypeID).Count(&count).Error; err != nil {
+        return err
+    }
+    if count == 0 {
+        r := entity.Room{RoomNumber: roomNumber, FloorID: floorID, RoomStatusID: 1, RoomTypeID: roomTypeID}
+        return db.Create(&r).Error
+    }
+    return nil
+}
+
+// ใช้แบบนี้สักครั้งตอน seed:
+// _ = ensureTypeHasRoom(db, LARGE_ROOM_TYPE_ID, "LARGE-01", 1)

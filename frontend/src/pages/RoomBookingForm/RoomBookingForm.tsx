@@ -27,13 +27,14 @@ import {
   InputAdornment,
   Checkbox,
   InputLabel,
-  Select as MUISelect,
   IconButton,
+  Select as MUISelect,
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
+import { Select } from "../../components/Select/Select";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { Calendar, Clock, User, Mail, Phone, ArrowLeft, Check, Building2 } from "lucide-react";
+import { Calendar, Clock, User, Mail, Phone, ArrowLeft, Check, Building2, AlertTriangle, LinkIcon, MapPin, Info, MusicIcon, CheckCircle2, Timer } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
 import {
   GetTimeSlots,
@@ -46,10 +47,11 @@ import {
   UseRoomQuota,
   GetAllRoomLayouts,
   GetOrganizationInfo,
+
 } from "../../services/http/index";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { Select } from "../../components/Select/Select";
+// import { Select } from "../../components/Select/Select";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { Base64 } from "js-base64";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -208,7 +210,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [roomData, setRoomData] = React.useState<RoomsInterface | null>(null);
   const [roomType, setRoomType] = useState<RoomtypesInterface>({});
   const [role, setRole] = useState<any>(null);
-  console.log("ss",role);
+  console.log("ss", role);
   const [searchParams] = useSearchParams();
   const [capacity, setCapacity] = useState<number>(0);
   const isAllowedToBookLargeRoom = capacity >= LARGE_ROOM_MIN_SEATS ? role === 4 || role === 5 : true;
@@ -918,26 +920,49 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               {dateString}
             </Typography>
             {bookingDetails.map((b, i) => (
-              <Box key={i} sx={{ mb: 1, p: 1, bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: "medium" }}>📅 {b.time}</Typography>
-                <Typography variant="caption" display="block">👤 Booked by: {b.bookedBy}</Typography>
+              <Box key={i} sx={{ mb: 1, p: 1, borderRadius: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 0.75 }}
+                >
+                  <Calendar size={14} /> {b.time}
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  display="block"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                >
+                  <User size={14} /> Booked by: {b.bookedBy}
+                </Typography>
+
                 <Typography
                   variant="caption"
                   display="block"
                   sx={{
-                    color: b.status === "confirmed" ? "#4caf50" : "#ff9800",
-                    fontWeight: "medium",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    color: b.status === "confirmed" ? "success.main" : "warning.main",
+                    fontWeight: 500,
                   }}
                 >
-                  ● {b.status === "confirmed" ? "Confirmed" : "Pending"}
+                  {b.status === "confirmed" ? <CheckCircle2 size={14} /> : <Clock size={14} />}{" "}
+                  {b.status === "confirmed" ? "Confirmed" : "Pending"}
                 </Typography>
+
                 {b.hours?.length ? (
-                  <Typography variant="caption" display="block" sx={{ color: "#90caf9" }}>
-                    🕒 Hours: {b.hours.join(", ")}
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75, color: "info.main" }}
+                  >
+                    <Timer size={14} /> Hours: {b.hours.join(", ")}
                   </Typography>
                 ) : null}
               </Box>
             ))}
+
             <Typography
               variant="caption"
               sx={{
@@ -969,7 +994,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           arrow
           placement="top"
           componentsProps={{
-            tooltip: { sx: { bgcolor: "rgba(0, 0, 0, 0.9)", maxWidth: 300, fontSize: "0.75rem" } },
+            tooltip: { sx: { bgcolor: "secondary.main", color: "text.primary", maxWidth: 300, fontSize: "0.75rem" } },
           }}
         >
           <Paper
@@ -1219,7 +1244,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             startIcon={<ArrowLeft />}
             onClick={onBack || (() => window.history.back())}
             variant="outlined"
-            className="button-back-button"
+            
           >
             Back
           </Button>
@@ -1435,7 +1460,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   Select Dates
                 </Typography>
               </Box>
-              {renderCalendar()}
+
+              <Box sx={{ opacity: selectedRoomId && timeOption ? 1 : 0.5, pointerEvents: selectedRoomId && timeOption ? "auto" : "none" }}>
+                {renderCalendar()}
+              </Box>
+
+              {(!selectedRoomId || !timeOption) && (
+                <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+                  <AlertTriangle size={16} /> กรุณาเลือกห้องและช่วงเวลาก่อน
+                </Typography>
+              )}
             </Paper>
 
             {/* Details Modal */}
@@ -1621,8 +1655,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   onClick={() => {
                     setDiscount((prev) => ({ ...prev, used: !prev.used }));
                   }}
-
-
                 >
                   {discount.used ? "Cancel Free Credit" : "Use Free Credit"}
                 </Button>
@@ -1722,7 +1754,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
                     <FormControl fullWidth className="form-control">
                       <InputLabel id="setup-style-label">Room Setup Style</InputLabel>
-                      <MUISelect
+                      <Select
                         labelId="setup-style-label"
                         id="setup-style-select"
                         value={selectedStyle}
@@ -1734,7 +1766,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                             {item.LayoutName}
                           </MenuItem>
                         ))}
-                      </MUISelect>
+                      </Select>
                     </FormControl>
 
                     <Paper elevation={2} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
@@ -1826,8 +1858,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               <Divider className="action-divider" />
 
               {selectedDates.length === 0 && (
-                <Alert severity="info" className="date-alert">
-                  📅 Please select your booking dates from the calendar above to proceed
+                <Alert severity="info" className="date-alert" icon={<Calendar size={16} />}>
+                  Please select your booking dates from the calendar above to proceed
                 </Alert>
               )}
 
@@ -1852,17 +1884,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
                 </Button>
 
-                <Typography variant="body2" color="text.secondary" className="confirmation-note">
-                  🔒 Your booking will be confirmed immediately after payment
+                <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Info size={16} /> Your booking will be confirmed immediately after payment
                 </Typography>
               </Box>
 
               {!isAllowedToBookLargeRoom && (
                 <Box className="error-alert-container" sx={{ mt: 2 }}>
-                  <Alert
-                    severity="error"
-
-                  >
+                  <Alert severity="error">
                     {/* หัวข้อ */}
                     <Typography variant="subtitle1" fontWeight="bold">
                       This room exceeds the seat capacity allowed for online booking.
@@ -1886,21 +1915,28 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         }}
                       >
                         {orgInfo.Address && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            📍 {orgInfo.Address}
+                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <MapPin size={16} />
+                            </span>
+                            {orgInfo.Address}
                           </Typography>
                         )}
                         {orgInfo.Phone && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            📞{" "}
+                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <Phone size={16} />
+                            </span>
                             <a href={`tel:${orgInfo.Phone}`} style={{ textDecoration: "none", color: "inherit" }}>
                               {orgInfo.Phone}
                             </a>
                           </Typography>
                         )}
                         {orgInfo.Email && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            📧{" "}
+                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <Mail size={16} />
+                            </span>
                             <a
                               href={`mailto:${orgInfo.Email}`}
                               style={{ textDecoration: "none", color: "inherit" }}
@@ -1910,8 +1946,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           </Typography>
                         )}
                         {orgInfo.FacebookUrl && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            🔗{" "}
+                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <LinkIcon size={16} />
+                            </span>
                             <a
                               href={orgInfo.FacebookUrl}
                               target="_blank"
@@ -1927,13 +1965,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   </Alert>
                 </Box>
               )}
-
             </Box>
           </Paper>
         </Grid>
       </Grid>
     </Box>
   );
+
 };
 
 export default RoomBookingForm; // ✅ เพิ่มบรรทัดนี้
