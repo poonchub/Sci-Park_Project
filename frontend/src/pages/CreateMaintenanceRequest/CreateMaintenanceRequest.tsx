@@ -147,8 +147,9 @@ function CreateMaintenanceRequestPage() {
     const getRoomTypes = async () => {
         try {
             const res = await GetRoomTypes();
+
             if (res) {
-                setRoomTypes(res);
+                setRoomTypes(res.data);
             }
         } catch (error) {
             console.error("Error fetching room types:", error);

@@ -25,7 +25,7 @@ type User struct {
 	UserPackageID *uint
 	RoleID        uint
 	Role          Role `gorm:"foreignKey:RoleID" valid:"-"`
-	JobPositionID *uint
+	JobPositionID uint
 	JobPosition   JobPosition `gorm:"foreignKey:JobPositionID" valid:"-"`
 	GenderID      uint
 	Gender        Gender `gorm:"foreignKey:GenderID" valid:"-"`

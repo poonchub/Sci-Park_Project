@@ -14,8 +14,8 @@ import {
 
 } from '@mui/material';
 import { useForm, Controller, set } from 'react-hook-form';  // Import useForm and Controller
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook } from "@fortawesome/free-solid-svg-icons";
+
+
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import SaveIcon from '@mui/icons-material/Save';
 import { TextField } from "../../components/TextField/TextField";
@@ -25,6 +25,8 @@ import { RolesInterface } from '../../interfaces/IRoles';
 import { GendersInterface } from '../../interfaces/IGenders';
 import { PackagesInterface } from '../../interfaces/IPackages';
 import { RequestTypeInterface } from '../../interfaces/IRequestTypes';
+import { TitlePrefix } from '../../interfaces/ITitlePrefix';
+import { JobPositionInterface } from '../../interfaces/IJobPosition';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -35,7 +37,9 @@ import {
   ListRoles,
   ListGenders,
   ListPackages,
-  ListRequestTypes
+  ListRequestTypes,
+  ListTitlePrefixes,
+  ListJobPositions
 } from '../../services/http';
 import '../AddUser/AddUserForm.css';
 
@@ -54,8 +58,12 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
   const [selectedRequestType, setSelectedRequestType] = useState<number | null>(null);
   const [selectedGender, setSelectedGender] = useState<number | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
+  const [selectedPrefix, setSelectedPrefix] = useState<number | null>(null);
+  const [selectedJobPosition, setSelectedJobPosition] = useState<number | null>(null);
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
+  const [titlePrefixes, setTitlePrefixes] = useState<TitlePrefix[]>([]);
+  const [jobPositions, setJobPositions] = useState<JobPositionInterface[]>([]);
   const [isemployee, setIsEmployee] = useState<boolean | undefined>(undefined);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
   const [isLoading, setIsLoading] = useState(true); // Loading state
@@ -69,6 +77,8 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
         let userData = null;
         if (userId > 0) {
           userData = await GetUserById(userId);
+
+          console.log(userData);
           setUser(userData);
           setValue('FirstName', userData.FirstName);
           setValue('LastName', userData.LastName);
@@ -80,29 +90,37 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('RoleID', userData.RoleID);
           setValue('UserPackageID', userData.UserPackageID);
           setValue('RequestTypeID', userData.RequestTypeID);
+          setValue('PrefixID', userData.PrefixID);
+          setValue('JobPositionID', userData.JobPositionID);
           setIsEmployee(userData.IsEmployee);
         }
 
 
 
-        const [roleData, genderData, packageData, requiredTypeData] = await Promise.all([
+        const [roleData, genderData, packageData, requiredTypeData, titlePrefixData, jobPositionData] = await Promise.all([
           ListRoles(),
           ListGenders(),
           ListPackages(),
           ListRequestTypes(),
+          ListTitlePrefixes(),
+          ListJobPositions(),
         ]);
 
         setRoles(roleData);
         setGenders(genderData);
         setPackages(packageData);
         setRequiredTypes(requiredTypeData);
+        setTitlePrefixes(titlePrefixData.data || []);
+        setJobPositions(jobPositionData.data || []);
 
         // Set selected values after data is loaded
         if (userData) {
           setSelectedGender(userData.GenderID ?? null);
           setSelectedRole(userData.RoleID ?? null);
-          setSelectedPackage(userData.UserPackageID ?? null);
+          setSelectedPackage(userData.PackageID ?? null);
           setSelectedRequestType(userData.RequestTypeID ?? null);
+          setSelectedPrefix(userData.PrefixID ?? null);
+          setSelectedJobPosition(userData.JobPositionID ?? null);
         }
 
       } catch (error) {
@@ -133,6 +151,8 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       RoleID: Number(selectedRole),
       UserPackageID: Number(selectedPackage),
       RequestTypeID: Number(selectedRequestType) || 1,
+      PrefixID: Number(selectedPrefix) || 1,
+      JobPositionID: isemployee === true ? Number(selectedJobPosition) || 0 : 0,
     };
 
     
@@ -158,6 +178,22 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
         { type: 'warning', message: 'Please select a request type.' },
       ]);
       return; 
+    }
+
+    if(formDataToSend.PrefixID === 0) {
+      setAlerts(prev => [
+        ...prev,
+        { type: 'warning', message: 'Please select title prefix.' },
+      ]);
+      return;
+    }
+
+    if(isemployee === true && formDataToSend.JobPositionID === 0) {
+      setAlerts(prev => [
+        ...prev,
+        { type: 'warning', message: 'Please select job position.' },
+      ]);
+      return;
     }       
       
 
@@ -208,16 +244,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
               Edit User Information
             </Typography>
           </div>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<FontAwesomeIcon icon={faBook} />}
-            component="a"
-            href="/EditUser_Manual.txt"
-            download="EditUser_Manual.txt"
-          >
-            Download Manual
-          </Button>
+
         </div>
       </DialogTitle>
 
@@ -225,6 +252,51 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
         {user && (
           <form onSubmit={handleSubmit(handleSave)}>
             <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth>
+                  <Typography variant="body1" className="title-field">Title Prefix</Typography>
+                  {!isLoading && (
+                    <Select
+                      labelId="prefix-label"
+                      name="PrefixID"
+                      value={selectedPrefix ?? 0}
+                      onChange={(e) => setSelectedPrefix(Number(e.target.value))}
+                      displayEmpty
+                    >
+                      <MenuItem value={0}>
+                        <em>-- Title prefix --</em>
+                      </MenuItem>
+                      {titlePrefixes.map((prefix) => (
+                        <MenuItem key={prefix.ID} value={prefix.ID}>{prefix.PrefixEN}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth error={!!errors.GenderID}>
+                  <Typography variant="body1" className="title-field">Gender</Typography>
+                  {!isLoading && (
+                    <Select
+                      labelId="gender-label"
+                      name="GenderID"
+                      value={selectedGender ?? 0}
+                      onChange={(e) => setSelectedGender(Number(e.target.value))}
+                      displayEmpty
+                    >
+                      <MenuItem value={0}>
+                        <em>-- Please select gender --</em>
+                      </MenuItem>
+                      {genders.map((gender) => (
+                        <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                  {errors.GenderID && <FormHelperText>{String(errors.GenderID.message|| '')}</FormHelperText>}
+                </FormControl>
+              </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="body1" className="title-field">First Name</Typography>
                 <Controller
@@ -382,28 +454,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                 </>
               )}
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth error={!!errors.GenderID}>
-                  <Typography variant="body1" className="title-field">Gender</Typography>
-                  {!isLoading && (
-                    <Select
-                      labelId="gender-label"
-                      name="GenderID"
-                      value={selectedGender ?? 0}
-                      onChange={(e) => setSelectedGender(Number(e.target.value))}
-                      displayEmpty
-                    >
-                      <MenuItem value={0}>
-                        <em>-- Please select gender --</em>
-                      </MenuItem>
-                      {genders.map((gender) => (
-                        <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                  {errors.GenderID && <FormHelperText>{String(errors.GenderID.message|| '')}</FormHelperText>}
-                </FormControl>
-              </Grid>
+              
 
               {isemployee === true && (
                 <>
@@ -429,6 +480,31 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                       {errors.RoleID && <FormHelperText>{String(errors.RoleID.message|| '')}</FormHelperText>}
                     </FormControl>
                   </Grid>
+
+                  {/* Job Position Dropdown - Only for Internal Users */}
+                  {isemployee === true && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <FormControl fullWidth>
+                        <Typography variant="body1" className="title-field">Job Position</Typography>
+                        {!isLoading && (
+                          <Select
+                            labelId="job-position-label"
+                            name="JobPositionID"
+                            value={selectedJobPosition ?? 0}
+                            onChange={(e) => setSelectedJobPosition(Number(e.target.value))}
+                            displayEmpty
+                          >
+                            <MenuItem value={0}>
+                              <em>-- Please select job position --</em>
+                            </MenuItem>
+                            {jobPositions.map((jobPosition) => (
+                              <MenuItem key={jobPosition.ID} value={jobPosition.ID}>{jobPosition.Name}</MenuItem>
+                            ))}
+                          </Select>
+                        )}
+                      </FormControl>
+                    </Grid>
+                  )}
 
                   {(roleID || selectedRole) === 3 && (
       <Grid size={{ xs: 12, sm: 6 }}>
@@ -466,7 +542,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                   {!isLoading && (
                     <Select
                       labelId="package-label"
-                      name="UserPackageID"
+                      name="PackageID"
                       value={selectedPackage ?? 0} // Default to 0 if no package is selected
                       onChange={(e) => setSelectedPackage(Number(e.target.value))}
                       displayEmpty

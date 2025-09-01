@@ -293,8 +293,8 @@
 }
 
 .booking-container .textarea-field .MuiOutlinedInput-root textarea {
-    min-height: 60px;
-    max-height: 120px;
+    /* min-height: 60px;
+    max-height: 120px; */
     resize: vertical;
 }
 
@@ -304,21 +304,21 @@
 
 .booking-container .form-control .MuiFormLabel-root {
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #000000;
+    /* margin-bottom: 8px; */
+    /* color: #000000; */
 }
 
 .booking-container .equipment-section {
     padding: 16px;
-    border: 1px solid #e0e0e0;
+    /* border: 1px solid #e0e0e0; */
     border-radius: 12px;
 }
 
 .booking-container .equipment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8px;
-    margin-top: 8px;
+    /* grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); */
+    /* gap: 8px; */
+    /* margin-top: 8px; */
 }
 
 .booking-container .action-section {
@@ -428,6 +428,6 @@
     }
 
     .details-fields {
-        gap: 16px;
+        /* gap: 16px; */
     }
 }

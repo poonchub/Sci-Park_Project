@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
-import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById } from "../../services/http";
+import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById, RejectServiceAreaRequest } from "../../services/http";
 import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
@@ -17,7 +17,9 @@ import dayjs, { Dayjs } from "dayjs";
 import RequestStatusCards from "../../components/RequestStatusCards/RequestStatusCards";
 import { businessGroupConfig } from "../../constants/businessGroupConfig";
 import "./ServiceRequestList.css";
+import { isAdmin } from "../../routes";
 import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 const ServiceRequestList: React.FC = () => {
     const navigate = useNavigate();
@@ -29,6 +31,11 @@ const ServiceRequestList: React.FC = () => {
     const [openApprovePopup, setOpenApprovePopup] = useState(false);
     const [requestIdPendingApprove, setRequestIdPendingApprove] = useState<number | null>(null);
     const [businessGroupIdPending, setBusinessGroupIdPending] = useState<number | null>(null);
+    
+    // Reject popup state
+    const [openRejectPopup, setOpenRejectPopup] = useState(false);
+    const [requestIdPendingReject, setRequestIdPendingReject] = useState<number | null>(null);
+    const [isRejecting, setIsRejecting] = useState(false);
 
     // Search and filter states
     const [searchText, setSearchText] = useState("");
@@ -831,6 +838,36 @@ const ServiceRequestList: React.FC = () => {
         }
     }, [user, requestStatuses]);
 
+    // Handle reject action
+    const handleReject = async (note?: string) => {
+        if (!requestIdPendingReject) return;
+        
+        try {
+            setIsRejecting(true);
+            const userID = Number(localStorage.getItem('userId')) || 0;
+            const role = isAdmin() ? "Admin" : "Operator";
+            
+            await RejectServiceAreaRequest(requestIdPendingReject, userID, note || "", role);
+            
+            // Refresh the data
+            await fetchServiceRequestAreas(
+                selectedStatuses.join(','),
+                page,
+                limit,
+                searchText || undefined,
+                selectedDate?.format('YYYY-MM')
+            );
+            
+            // Close popup
+            setOpenRejectPopup(false);
+            setRequestIdPendingReject(null);
+        } catch (error) {
+            console.error("Error rejecting request:", error);
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
     // Handle approve/reject actions
     const handleApproveReject = async (requestID: number, action: 'approve' | 'reject', businessGroupID?: number | null) => {
         try {
@@ -844,18 +881,12 @@ const ServiceRequestList: React.FC = () => {
                 setIsLoadingData(false);
                 return;
             } else {
-                const statusID = 8; // Unsuccessful
-                await UpdateRequestServiceAreaStatus(requestID, statusID);
+                // Open reject popup instead of immediate reject
+                setRequestIdPendingReject(requestID);
+                setOpenRejectPopup(true);
+                setIsLoadingData(false);
+                return;
             }
-
-            // Refresh the data
-            await fetchServiceRequestAreas(
-                selectedStatuses.join(','),
-                page,
-                limit,
-                searchText || undefined,
-                selectedDate ? selectedDate.format('YYYY-MM') : undefined
-            );
 
         } catch (error) {
             console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, error);
@@ -873,7 +904,7 @@ const ServiceRequestList: React.FC = () => {
                 0, // Reset to page 0 when filters change
                 limit,
                 undefined,
-                selectedDate ? selectedDate.format("YYYY-MM") : undefined
+                selectedDate?.format("YYYY-MM")
             );
         }
     }, [selectedStatuses, selectedDate]);
@@ -886,7 +917,7 @@ const ServiceRequestList: React.FC = () => {
                 page,
                 limit,
                 searchText || undefined,
-                selectedDate ? selectedDate.format("YYYY-MM") : undefined
+                selectedDate?.format("YYYY-MM")
             );
         }
     }, [page, limit]);
@@ -1004,9 +1035,20 @@ const ServiceRequestList: React.FC = () => {
                             page,
                             limit,
                             searchText || undefined,
-                            selectedDate ? selectedDate.format('YYYY-MM') : undefined
+                            selectedDate?.format('YYYY-MM')
                         );
                     }}
+                />
+
+                {/* Reject Service Area Popup */}
+                <ConfirmDialog
+                    open={openRejectPopup}
+                    setOpenConfirm={setOpenRejectPopup}
+                    handleFunction={handleReject}
+                    title="Reject Service Area Request"
+                    message={`Are you sure you want to reject this service area request? Please provide a reason for rejection.`}
+                    buttonActive={isRejecting}
+                    showNoteField={true}
                 />
             </Container>
         </Box>

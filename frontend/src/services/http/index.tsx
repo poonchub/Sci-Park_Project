@@ -179,24 +179,26 @@ async function ListUsers(data: QuarryInterface) {
 
 async function CreateUser(data: any) {
     const formData = new FormData();
-    formData.append("company_name", data.CompanyName || "");
-    formData.append("business_detail", data.BusinessDetail || "");
-    formData.append("first_name", data.FirstName || "");
-    formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID.toString());
-    formData.append("email", data.Email || "");
-    formData.append("password", data.Password || "");
-    formData.append("phone", data.Phone || "");
-    formData.append("role_id", (data.RoleID ?? 1).toString());
-    formData.append("employee_id", data.EmployeeID || "");
-    formData.append("is_employee", data.IsEmployee || "");
-    formData.append("request_type_id", (data.RequestTypeID ?? 1).toString());
+    formData.append("company_name", data.company_name || "");
+    formData.append("business_detail", data.business_detail || "");
+    formData.append("first_name", data.first_name || "");
+    formData.append("last_name", data.last_name || "");
+    formData.append("gender_id", data.gender_id || "1");
+    formData.append("email", data.email || "");
+    formData.append("password", data.password || "");
+    formData.append("phone", data.phone || "");
+    formData.append("role_id", data.role_id || "1");
+    formData.append("employee_id", data.employee_id || "");
+    formData.append("is_employee", data.is_employee || "");
+    formData.append("request_type_id", data.request_type_id || "1");
+    formData.append("prefix_id", data.prefix_id || "1");
+    formData.append("job_position_id", data.job_position_id || "");
 
-    if (data.Profile_Image) {
-        formData.append("profile_image", data.Profile_Image);
+    if (data.profile_image) {
+        formData.append("profile_image", data.profile_image);
     }
 
-    formData.append("package_id", data.UserPackageID?.toString() || "1");
+    formData.append("package_id", data.package_id || "1");
 
     try {
         // Send FormData with axiosInstance
@@ -256,65 +258,67 @@ async function UpdateUserbyID(data: any) {
         formData.append("employee_id", data.EmployeeID || "");
         formData.append("profile_check", data.ImageCheck || "");
         formData.append("request_type_id", (data.RequestTypeID || 1).toString());
+        formData.append("prefix_id", (data.PrefixID || 1).toString());
+        formData.append("job_position_id", (data.JobPositionID || "").toString());
 
-    if (data.Profile_Image) {
-        formData.append("profile_image", data.Profile_Image);
-    }
-    
-    // Add signature handling
-    formData.append("signature_check", data.SignatureCheck || "");
-    if (data.Signature_Image) {
-        formData.append("signature_image", data.Signature_Image);
-    }
-    
-    const UserID = data.UserID;
-    formData.append("package_id", data.UserPackageID?.toString() || "1");
-
-    const token = localStorage.getItem("token");
-    const requestOptions = {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    };
-
-    try {
-        // Send FormData with requestOptions
-        const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
-
-        // Handle the response and return a custom object
-        if (response.status === 200) {
-            return {
-                status: "success",
-                message: "User updated successfully",
-                data: response.data, // You can return response data
-            };
-        } else {
-            return {
-                status: "error",
-                message: "Failed to updated user",
-                data: response.data, // Include error data in response
-            };
+        if (data.Profile_Image) {
+            formData.append("profile_image", data.Profile_Image);
         }
-    } catch (error) {
-        // If the error is from axios, it will be caught here
-        if (axios.isAxiosError(error)) {
-            // Check if the error has a response and message
-            const errorMessage = error.response?.data?.error || error.message || "An error occurred while creating the user";
 
-            return {
-                status: "error",
-                message: errorMessage,
-                data: null,
-            };
-        } else {
-            // If the error is not from axios, handle it here
-            return {
-                status: "error",
-                message: "An unexpected error occurred",
-                data: null,
-            };
+        // Add signature handling
+        formData.append("signature_check", data.SignatureCheck || "");
+        if (data.Signature_Image) {
+            formData.append("signature_image", data.Signature_Image);
         }
-    }
+
+        const UserID = data.UserID;
+        formData.append("package_id", data.UserPackageID?.toString() || "1");
+
+        const token = localStorage.getItem("token");
+        const requestOptions = {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+
+        try {
+            // Send FormData with requestOptions
+            const response = await axios.patch(`${apiUrl}/update-user/${UserID}`, formData, requestOptions);
+
+            // Handle the response and return a custom object
+            if (response.status === 200) {
+                return {
+                    status: "success",
+                    message: "User updated successfully",
+                    data: response.data, // You can return response data
+                };
+            } else {
+                return {
+                    status: "error",
+                    message: "Failed to updated user",
+                    data: response.data, // Include error data in response
+                };
+            }
+        } catch (error) {
+            // If the error is from axios, it will be caught here
+            if (axios.isAxiosError(error)) {
+                // Check if the error has a response and message
+                const errorMessage = error.response?.data?.error || error.message || "An error occurred while creating the user";
+
+                return {
+                    status: "error",
+                    message: errorMessage,
+                    data: null,
+                };
+            } else {
+                // If the error is not from axios, handle it here
+                return {
+                    status: "error",
+                    message: "An unexpected error occurred",
+                    data: null,
+                };
+            }
+        }
     } catch (error) {
         console.error("Error in UpdateUserbyID:", error);
         return {
@@ -329,7 +333,7 @@ async function UpdateUserSignature(data: any) {
     const formData = new FormData();
     formData.append("signature_check", "true");
     formData.append("signature_image", data.Signature_Image);
-    
+
     const UserID = data.UserID;
 
     const token = localStorage.getItem("token");
@@ -485,7 +489,7 @@ async function GetRooms() {
         return false;
     }
 }
-async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?: number, roomStatusId?: number){
+async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?: number, roomStatusId?: number) {
     try {
         const response = await axiosInstance.get(`/room-rental-space-option?floorId=${floorId}&roomStatusId=${roomStatusId}&page=${page}&limit=${limit}`);
         return response.data;
@@ -494,7 +498,7 @@ async function GetRoomRentalSpaceByOption(page: number, limit: number, floorId?:
         throw error;
     }
 }
-async function GetRoomRentalSpaceByID(roomId: number){
+async function GetRoomRentalSpaceByID(roomId: number) {
     try {
         const response = await axiosInstance.get(`/room-rental-space/${roomId}`);
         return response.data;
@@ -609,23 +613,25 @@ async function CreateRoomType(roomTypeData: RoomtypesInterface) {
     return res;
 }
 
-async function UpdateRoomType(roomTypeData: RoomtypesInterface) {
+async function UpdateRoomType(id: number, formData: FormData) {
     const requestOptions = {
         method: "PATCH",
         headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            // ❌ อย่าใส่ "Content-Type": "application/json"
+            // ✅ fetch จะ set เป็น multipart/form-data ให้เองถ้าใช้ FormData
         },
-        body: JSON.stringify(roomTypeData),
+        body: formData,
     };
 
-    let res = await fetch(`${apiUrl}/update-room-type/${roomTypeData.ID}`, requestOptions).then((res) => {
-        if (res.status === 200) {
-            return res.json(); // Success: Return the updated room type data
-        } else {
-            return false; // Failure
-        }
-    });
+    let res = await fetch(`${apiUrl}/update-room-type/${id}`, requestOptions)
+        .then((res) => {
+            if (res.status === 200) {
+                return res.json(); // success
+            } else {
+                return false; // failure
+            }
+        });
 
     return res;
 }
@@ -1055,6 +1061,27 @@ async function ListJobPositions() {
     };
 
     let res = await fetch(`${apiUrl}/job-positions`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
+
+// TitlePrefixes
+async function ListTitlePrefixes() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/title-prefixes`, requestOptions).then((res) => {
         if (res.status == 200) {
             return res.json();
         } else {
@@ -1524,6 +1551,25 @@ async function ListBookingRooms() {
 
     return res;
 }
+async function ListBookingRoomsByUser(userId: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/booking-rooms/user/${userId}`, requestOptions).then((res) => {
+        if (res.status == 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    });
+
+    return res;
+}
 async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null) {
     try {
         const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
@@ -1541,6 +1587,162 @@ async function GetMeetingRoomSummaryToday() {
         console.error("Error giting meeting room summary:", error);
         throw error;
     }
+}
+
+
+
+// ---------------- ROOM TYPES ----------------
+
+// ✅ GET all room types (with optional filters)
+export async function ListRoomTypes(params?: {
+    page?: number;
+    limit?: number;
+    search?: string; // Add this line
+}) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append("page", params.page.toString());
+    if (params?.limit) query.append("limit", params.limit.toString());
+    if (params?.search) query.append("search", params.search);
+
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-types?${query.toString()}`, requestOptions).then((res) => {
+        if (res.status === 200) return res.json();
+        return false;
+    });
+
+    return res;
+}
+
+// ✅ GET one room type by ID
+export async function GetRoomTypeById(id: number) {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-type/${id}`, requestOptions).then((res) => {
+        console.log("ff", res);
+        if (res.status === 200) return res.json();
+        return false;
+    });
+
+    return res;
+}
+
+// ✅ CREATE room type
+// export async function CreateRoomType(data: any) {
+//   const requestOptions = {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${localStorage.getItem("token")}`,
+//     },
+//     body: JSON.stringify(data),
+//   };
+
+//   let res = await fetch(`${apiUrl}/room-types`, requestOptions).then((res) => {
+//     if (res.status === 201) return res.json();
+//     return false;
+//   });
+
+//   return res;
+// }
+
+// ✅ UPDATE room type
+// export async function UpdateRoomType(id: number, data: any) {
+//   const requestOptions = {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${localStorage.getItem("token")}`,
+//     },
+//     body: JSON.stringify(data),
+//   };
+
+//   let res = await fetch(`${apiUrl}/room-types/${id}`, requestOptions).then((res) => {
+//     if (res.status === 200) return res.json();
+//     return false;
+//   });
+
+//   return res;
+// }
+
+// ✅ DELETE room type
+export async function DeleteRoomType(id: number) {
+    const requestOptions = {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/room-types/${id}`, requestOptions).then((res) => {
+        if (res.status === 200) return true;
+        return false;
+    });
+
+    return res;
+}
+
+export async function RefundedBookingRoom(data: any) {
+    const requestOptions = {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+    console.log(data);
+    let res = await fetch(`${apiUrl}/payments/${data}/refund`, requestOptions).then((res) => {
+        if (res.status === 200) return res.json();
+        return false;
+    })
+    console.log(res);
+
+    if (res) {
+        if (res.status === 200) {
+            return res.json();
+        } else {
+            return false;
+        }
+    }
+}
+
+// services/http.ts
+export async function CancelBookingRoom(id: number) {
+    const res = await fetch(`${apiUrl}/booking-rooms/${id}/cancel`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+    });
+
+    const text = await res.text();
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        data = { message: text };
+    }
+
+    if (!res.ok) {
+        throw new Error(data.error || data.message || "ไม่สามารถยกเลิกการจองได้");
+    }
+
+    return data;
 }
 
 // Analytics API
@@ -1831,13 +2033,13 @@ async function GetRoomQuota(userId?: number) {
 
 
 async function GetRoomsByRoomTypeID(roomTypeId?: number): Promise<RoomsInterface[]> {
-  const requestOptions = {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  };
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
 
     const res = await fetch(`${apiUrl}/rooms/roomtype/${roomTypeId}`, requestOptions)
         .then((res) => {
@@ -1857,27 +2059,27 @@ async function GetRoomsByRoomTypeID(roomTypeId?: number): Promise<RoomsInterface
 }
 
 async function CreateBookingRoom(data: BookingRoomsInterface) {
-console.log("56",data);
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify(data),
-  };
-  const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
+    console.log("56", data);
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+    const res = await fetch(`${apiUrl}/booking-rooms`, requestOptions);
 
-  if (res.status === 200 || res.status === 201 || res.status === 204) {
-    try {
-      const json = await res.json().catch(() => null);
-      return { status: res.status, data: json };
-    } catch {
-      return { status: res.status, data: null };
+    if (res.status === 200 || res.status === 201 || res.status === 204) {
+        try {
+            const json = await res.json().catch(() => null);
+            return { status: res.status, data: json };
+        } catch {
+            return { status: res.status, data: null };
+        }
+    } else {
+        return { status: res.status, data: null };
     }
-  } else {
-    return { status: res.status, data: null };
-  }
 }
 
 
@@ -2311,10 +2513,10 @@ async function CreateRequestServiceAreaAndAboutCompany(userID: number, formData:
         for (let [key, value] of formData.entries()) {
             console.log(key, value);
         }
-        
+
         const token = localStorage.getItem("token");
         console.log('Token exists:', !!token);
-        
+
         const response = await axiosInstance.post(`/request-service-area/${userID}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -2371,10 +2573,12 @@ async function UpdateRequestServiceAreaStatus(requestID: number, requestStatusID
     }
 }
 
-async function RejectServiceAreaRequest(requestID: number, note: string): Promise<any> {
+async function RejectServiceAreaRequest(requestID: number, userID: number, note: string, role: string): Promise<any> {
     try {
         const response = await axiosInstance.patch(`/request-service-area/${requestID}/reject`, {
-            note: note
+            user_id: userID,
+            note: note,
+            role: role
         }, {
             headers: {
                 "Content-Type": "application/json",
@@ -2387,6 +2591,8 @@ async function RejectServiceAreaRequest(requestID: number, note: string): Promis
         throw error;
     }
 }
+
+
 
 async function GetServiceAreaDetailsByID(serviceAreaID: number): Promise<any> {
     try {
@@ -2524,7 +2730,7 @@ async function CreateInvoice(data: InvoiceInterface) {
         throw error;
     }
 }
-async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number, customerId?: number){
+async function GetInvoiceByOption(page: number, limit: number, roomId?: number, statusId?: number, customerId?: number) {
     try {
         const response = await axiosInstance.get(`/room-invoice-option?roomId=${roomId}&statusId=${statusId}&page=${page}&limit=${limit}&customerId=${customerId}`);
         return response.data;
@@ -2633,21 +2839,21 @@ async function ListRequestServiceAreas(
 
     // สร้าง URL parameters ที่มีเฉพาะค่าที่ไม่ใช่ 0, undefined, หรือ empty
     const params = new URLSearchParams();
-    
+
     // เพิ่ม page และ limit เสมอ
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    
+
     // เพิ่ม request_status_id เฉพาะเมื่อไม่ใช่ "0" หรือ "undefined"
     if (requestStatusID && requestStatusID !== "0" && requestStatusID !== "undefined") {
         params.append("request_status_id", requestStatusID);
     }
-    
+
     // เพิ่ม search เฉพาะเมื่อมีข้อความและไม่ใช่ "undefined"
     if (search && search.trim() !== "" && search !== "undefined") {
         params.append("search", search.trim());
     }
-    
+
     // เพิ่ม created_at เฉพาะเมื่อมีค่าและไม่ใช่ "undefined"
     if (createdAt && createdAt.trim() !== "" && createdAt !== "undefined") {
         params.append("created_at", createdAt.trim());
@@ -2713,6 +2919,242 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
         throw error;
     }
 }
+
+
+
+
+
+
+export async function ListEquipments() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/equipments`, requestOptions).then((res) =>
+        res.status === 200 ? res.json() : false
+    );
+
+    return res;
+}
+
+export async function CreateEquipment(data: { EquipmentName: string }) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/equipments`, requestOptions).then((res) =>
+        res.status === 201 ? res.json() : false
+    );
+
+    return res;
+}
+
+export async function ListTimeSlots() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/timeslots`, requestOptions).then((res) =>
+        res.status === 200 ? res.json() : false
+    );
+
+    return res;
+}
+
+export async function CreateTimeSlot(data: { TimeSlotName: string; StartTime: string; EndTime: string }) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/timeslots`, requestOptions).then((res) =>
+        res.status === 201 ? res.json() : false
+    );
+
+    return res;
+}
+
+export async function ListLayouts() {
+    const requestOptions = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    };
+
+    let res = await fetch(`${apiUrl}/layouts`, requestOptions).then((res) =>
+        res.status === 200 ? res.json() : false
+    );
+
+    return res;
+}
+
+export async function CreateLayout(data: { LayoutName: string; Description?: string }) {
+    const requestOptions = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+    };
+
+    let res = await fetch(`${apiUrl}/layouts`, requestOptions).then((res) =>
+        res.status === 201 ? res.json() : false
+    );
+
+    return res;
+}
+
+
+
+
+// ✅ ดึง booking ทั้งหมด
+export async function GetBookingRooms() {
+    try {
+        const res = await axiosInstance.get(`/booking-rooms`);
+        return res.data;
+    } catch (err) {
+        console.error("Error fetching booking rooms:", err);
+        return false;
+    }
+}
+
+// ✅ ดึง booking ตาม id
+export async function GetBookingRoomById(id: number) {
+    try {
+        const res = await axiosInstance.get(`/booking-rooms/${id}`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error fetching booking room ${id}:`, err);
+        return false;
+    }
+}
+
+// ✅ อนุมัติการจอง
+export async function ApproveBookingRoom(id: number) {
+    try {
+        const res = await axiosInstance.post(`/booking-rooms/${id}/approve`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error approving booking room ${id}:`, err);
+        return false;
+    }
+}
+
+// ✅ ปฏิเสธการจอง
+export async function RejectBookingRoom(id: number, note: string | undefined) {
+    try {
+        const res = await axiosInstance.post(`/booking-rooms/${id}/reject`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error rejecting booking room ${id}:`, err);
+        return false;
+    }
+}
+
+export async function MarkPaymentAsCompleted(id: number) {
+    try {
+        const res = await axiosInstance.post(`/payments/${id}/mark-paid`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error marking payment ${id} as completed:`, err);
+        return false;
+    }
+
+}
+
+// ✅ ทำเครื่องหมายเสร็จสิ้น
+export async function CompleteBookingRoom(id: number) {
+    try {
+        const res = await axiosInstance.post(`/booking-rooms/${id}/complete`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error completing booking room ${id}:`, err);
+        return false;
+    }
+
+}
+
+// ✅ อัปโหลดสลิปชำระเงิน (JSON version)
+export async function SubmitPaymentSlip(
+    bookingId: number,
+    file: File,
+        payload: {
+        PaymentDate?: string;
+        Amount: number;
+        Note?: string;
+        PayerID: number;
+        Status: string; // Add this line
+    }
+
+) {
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("Amount", String(payload.Amount));
+        formData.append("PayerID", String(payload.PayerID));
+        if (payload.PaymentDate) formData.append("PaymentDate", payload.PaymentDate);
+        if (payload.Note) formData.append("Note", payload.Note);
+
+        const res = await axiosInstance.post(
+            `/booking-rooms/${bookingId}/payments`,
+            formData,
+            { headers: { "Content-Type": "multipart/form-data" } }
+        );
+
+        return res.data;
+    } catch (err: any) {
+        console.error(`❌ Error submitting payment slip for booking ${bookingId}:`, err.response || err);
+        throw err;
+    }
+}
+
+
+
+
+
+// ✅ อนุมัติการชำระเงิน
+export async function ApprovePayment(paymentId: number) {
+    try {
+        const res = await axiosInstance.post(`/payments/${paymentId}/approve`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error approving payment ${paymentId}:`, err);
+        return false;
+    }
+}
+
+// ✅ ปฏิเสธการชำระเงิน
+export async function RejectPayment(paymentId: number) {
+    try {
+        const res = await axiosInstance.post(`/payments/${paymentId}/reject`);
+        return res.data;
+    } catch (err) {
+        console.error(`Error rejecting payment ${paymentId}:`, err);
+        return false;
+    }
+}
+
+
 
 export {
     // RequestStatuses
@@ -2794,6 +3236,9 @@ export {
     ListJobPositions,
     GetJobPositionByID,
 
+    // TitlePrefixes
+    ListTitlePrefixes,
+
     // ManagerApprovals
     CreateManagerApproval,
 
@@ -2831,6 +3276,8 @@ export {
     ListBookingRooms,
     ListBookingRoomByDateRange,
     GetMeetingRoomSummaryToday,
+    ListBookingRoomsByUser,
+
 
     // News
     ListNews,
@@ -2899,7 +3346,7 @@ export {
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
     	UpdateRequestServiceAreaStatus,
-	RejectServiceAreaRequest,
+	    RejectServiceAreaRequest,
     GetServiceAreaDetailsByID,
     CreateServiceAreaApproval,
     DownloadServiceRequestDocument,

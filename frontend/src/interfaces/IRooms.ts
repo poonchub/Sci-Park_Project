@@ -5,6 +5,7 @@ import { InvoiceInterface } from "./IInvoices";
 import { ServiceAreaDocumentInterface } from "./IServiceAreaDocument";
 
 export interface RoomsInterface {
+    TypeName: string;
     ID?:            number;
     RoomNumber?:    string;
     RoomSize?:      number;

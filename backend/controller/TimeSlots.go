@@ -21,75 +21,15 @@ func ListTimeSlots(c *gin.Context) {
 	c.JSON(http.StatusOK, &timeSlot)
 }
 
-// // GetRoomTypeID ส่งราคาและวันเวลาที่ห้องถูกจองแล้ว
-// func GetRoomTypeID(c *gin.Context) {
-// 	db := config.DB()
-// 	roomTypeID := c.Param("id")
-
-// 	// 1. ดึงราคาโดยใช้ RoomTypeID
-// 	var roomPrices []entity.RoomPrice
-// 	err := db.Preload("TimeSlot").Where("room_type_id = ?", roomTypeID).Find(&roomPrices).Error
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"error":  "failed to get room prices",
-// 			"detail": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	// 2. ดึง Room ทั้งหมดที่อยู่ใน RoomType นี้
-// 	var rooms []entity.Room
-// 	err = db.Where("room_type_id = ?", roomTypeID).Find(&rooms).Error
-// 	if err != nil || len(rooms) == 0 {
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": "ไม่พบห้องในประเภทนี้",
-// 		})
-// 		return
-// 	}
-
-// 	// เอา room_id ทั้งหมดในประเภทนี้ไปดึง BookingRoom
-// 	roomIDs := []uint{}
-// 	for _, room := range rooms {
-// 		roomIDs = append(roomIDs, room.ID)
-// 	}
-
-// 	var bookings []entity.BookingRoom
-// 	err = db.Preload("TimeSlot").Where("room_id IN ?", roomIDs).Find(&bookings).Error
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบข้อมูลการจอง"})
-// 		return
-// 	}
-
-// 	// 3. จัดรูปแบบข้อมูลที่ถูกจอง
-// 	bookedMap := map[string]map[string]bool{}
-// 	for _, b := range bookings {
-// 		dateStr := b.Date.Format("2006-01-02")
-// 		if _, ok := bookedMap[dateStr]; !ok {
-// 			bookedMap[dateStr] = map[string]bool{"morning": false, "afternoon": false}
-// 		}
-// 		switch b.TimeSlot.TimeSlotName {
-// 		case "เช้า":
-// 			bookedMap[dateStr]["morning"] = true
-// 		case "บ่าย":
-// 			bookedMap[dateStr]["afternoon"] = true
-// 		case "เต็มวัน":
-// 			bookedMap[dateStr]["morning"] = true
-// 			bookedMap[dateStr]["afternoon"] = true
-// 		}
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"RoomPrices":  roomPrices,
-// 		"BookedDates": bookedMap,
-// 	})
-// }
 
 func GetRoomByIDwithBookings(c *gin.Context) {
 	db := config.DB()
 	roomID := c.Param("id")
 
 	var room entity.Room
-	err := db.Preload("RoomType").Preload("RoomStatus").First(&room, roomID).Error
+	err := db.Preload("RoomType.RoomTypeLayouts.RoomLayout").
+		Preload("RoomStatus").
+		First(&room, roomID).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบห้อง"})
 		return
@@ -105,6 +45,16 @@ func GetRoomByIDwithBookings(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงราคาห้องได้"})
 		return
+	}
+
+	// >>> คำนวณ Capacity จาก RoomTypeLayouts
+	capacity := 0
+	if len(room.RoomType.RoomTypeLayouts) > 0 {
+		for _, layout := range room.RoomType.RoomTypeLayouts {
+			if layout.Capacity > capacity {
+				capacity = layout.Capacity // ใช้ค่ามากสุด
+			}
+		}
 	}
 
 	var bookings []entity.BookingRoom
@@ -178,6 +128,10 @@ func GetRoomByIDwithBookings(c *gin.Context) {
 	bookedDates := map[string][]map[string]interface{}{}
 
 	for _, booking := range bookings {
+
+		if booking.Status.StatusName == "canceled" {
+			continue
+		}
 		for _, bd := range booking.BookingDates {
 			dateStr := bd.Date.Format("2006-01-02")
 
@@ -285,64 +239,37 @@ func GetRoomByIDwithBookings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"Room":        room,
+		"Capacity":   capacity,
 		"RoomPrices":  roomPrices,
 		"BookedDates": bookedDates,
 	})
 }
 
-// func GetRoomByIDwithBookings(c *gin.Context) {
-//     db := config.DB()
-// 	roomtypeID := c.Param("id")
 
-// 	var roomtype entity.RoomType
-// 	err := db.Preload("Rooms").First(&roomtype, roomtypeID).Error
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบประเภทห้อง"})
-// 		return
-// 	}
 
-// 	var roomPrices []entity.RoomPrice
-// 	err = db.Preload("TimeSlot").Where("room_type_id = ?", roomtype.ID).Find(&roomPrices).Error
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงราคาห้องได้"})
-// 		return
-// 	}
 
-// 	// หา room_id ทั้งหมดจาก roomtype นี้
-// 	var roomIDs []uint
-// 	for _, r := range roomtype.Rooms {
-// 		roomIDs = append(roomIDs, r.ID)
-// 	}
+// ดึง Timeslot ทั้งหมด
+func GetTimeSlots(c *gin.Context) {
+	db := config.DB()
+	var timeslots []entity.TimeSlot
+	if err := db.Find(&timeslots).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูล timeslot ได้"})
+		return
+	}
+	c.JSON(http.StatusOK, timeslots)
+}
 
-// 	// หา bookings ของทุกห้อง
-// 	var bookings []entity.BookingRoom
-// 	err = db.Preload("TimeSlot").Where("room_id IN ?", roomIDs).Find(&bookings).Error
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบข้อมูลการจอง"})
-// 		return
-// 	}
-
-// 	// 4. สร้าง booking map
-// 	bookedMap := map[string]map[string]bool{}
-// 	for _, b := range bookings {
-// 		dateStr := b.Date.Format("2006-01-02")
-// 		if _, ok := bookedMap[dateStr]; !ok {
-// 			bookedMap[dateStr] = map[string]bool{"morning": false, "afternoon": false}
-// 		}
-// 		switch b.TimeSlot.TimeSlotName {
-// 		case "เช้า":
-// 			bookedMap[dateStr]["morning"] = true
-// 		case "บ่าย":
-// 			bookedMap[dateStr]["afternoon"] = true
-// 		case "เต็มวัน":
-// 			bookedMap[dateStr]["morning"] = true
-// 			bookedMap[dateStr]["afternoon"] = true
-// 		}
-// 	}
-
-// 	// 5. ตอบกลับ
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"RoomPrices":  roomPrices,
-// 		"BookedDates": bookedMap,
-// 	})
-// }
+// สร้าง Timeslot ใหม่
+func CreateTimeSlot(c *gin.Context) {
+	db := config.DB()
+	var timeslot entity.TimeSlot
+	if err := c.ShouldBindJSON(&timeslot); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
+		return
+	}
+	if err := db.Create(&timeslot).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้าง timeslot ได้"})
+		return
+	}
+	c.JSON(http.StatusCreated, timeslot)
+}

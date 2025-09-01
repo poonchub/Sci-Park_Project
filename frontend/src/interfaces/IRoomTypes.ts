@@ -1,17 +1,23 @@
-import { RoomEquipmentsInterface } from "./IRoomEquipments";
-import { RoomsInterface } from "./IRooms";
-import { RoomTypeImagesInterface } from "./IRoomTypeImages";
-import { RoomTypeLayouts } from "./IRoomtypeLayouts";
+import { RoomsInterface } from "./IRooms";  
+import { RoomTypeLayouts } from "./IRoomtypeLayouts";  
+import { RoomTypeImagesInterface } from "./IRoomTypeImages";  
+import { RoomEquipmentsInterface } from "./IRoomEquipments";  
+import { RoomPriceInterface } from "./IRoomPrices";  
 
 export interface RoomtypesInterface {
-    [x: string]: any;
-    ID?:            number;
-    TypeName?:      string;
-    HalfDayRate?:   number;
-    FullDayRate?:   number;
-    RoomSize?:      number;
-    Rooms?:         RoomsInterface[];
-    RoomTypeLayouts?:   RoomTypeLayouts[];
-    RoomTypeImages?:    RoomTypeImagesInterface[];
-    RoomEquipments?:     RoomEquipmentsInterface[];
+  ID?: number;
+  CreatedAt?: Date;
+  UpdatedAt?: Date;
+  DeletedAt?: Date | null;
+
+  TypeName?: string;
+  RoomSize?: number;
+  ForRental?: boolean;
+  HasMultipleSizes?: boolean;
+
+  Rooms?: RoomsInterface[];
+  RoomTypeLayouts?: RoomTypeLayouts[];
+  RoomTypeImages?: RoomTypeImagesInterface[];
+  RoomPrices?: RoomPriceInterface[];
+  RoomEquipments?: RoomEquipmentsInterface[];
 }

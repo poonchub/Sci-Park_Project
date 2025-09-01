@@ -59,6 +59,34 @@ func main() {
 		public.GET("/roomtypes/:id/equipment", controller.GetEquipmentByRoomType)
 		public.PATCH("/user-packages/use-quota", controller.UseRoomQuota)
 		public.GET("/roomlayouts", controller.GetAllRoomLayouts)
+		public.DELETE("/room-types/:id", controller.DeleteRoomType)
+		public.PUT("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
+		// delete
+
+		r.GET("/equipments", controller.GetEquipments)
+		r.GET("/equipments/:id", controller.GetEquipment)
+		r.POST("/equipments", controller.CreateEquipment)
+		r.PATCH("/equipments/:id", controller.UpdateEquipment)
+		r.DELETE("/equipments/:id", controller.DeleteEquipment)
+
+		r.GET("/timeslots", controller.GetTimeSlots)
+		r.POST("/timeslots", controller.CreateTimeSlot)
+
+		r.GET("/layouts", controller.GetAllRoomLayouts)
+		r.POST("/layouts", controller.CreateLayout)
+
+		// router.go (ตัวอย่าง)
+
+		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
+		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
+		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
+		r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
+
+		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
+		r.POST("/payments/:id/approve", controller.ApprovePayment)
+		r.POST("/payments/:id/reject", controller.RejectPayment)
+		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
+		r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
 
 	}
 
@@ -139,6 +167,10 @@ func main() {
 		// JobPositions
 		protected.GET("/job-positions", controller.ListJobPositions)
 		protected.GET("/job-position/:id", controller.GetJobPositionByID)
+
+		// TitlePrefixes
+		protected.GET("/title-prefixes", controller.ListTitlePrefixes)
+		protected.GET("/title-prefix/:id", controller.GetTitlePrefixByID)
 
 		// Packages
 		protected.GET("/packages", controller.ListPackages)
@@ -229,6 +261,9 @@ func main() {
 
 		// PaymentStatus
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
+
+		// BookingRooms
+		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
@@ -304,6 +339,7 @@ func main() {
 
 		// Rooms
 		protected.GET("/rooms/meeting-room-summary-today", controller.GetMeetingRoomSummaryToday)
+
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token
@@ -315,6 +351,11 @@ func main() {
 		protected.POST("/create-job-position", controller.CreateJobPosition)
 		protected.PATCH("/update-job-position/:id", controller.UpdateJobPositionByID)
 		protected.DELETE("/job-position/:id", controller.DeleteJobPositionByID)
+
+		// TitlePrefixes
+		protected.POST("/create-title-prefix", controller.CreateTitlePrefix)
+		protected.PATCH("/update-title-prefix/:id", controller.UpdateTitlePrefixByID)
+		protected.DELETE("/title-prefix/:id", controller.DeleteTitlePrefixByID)
 
 		// Rooms
 		protected.GET("/listset-room", controller.ListSetRooms)

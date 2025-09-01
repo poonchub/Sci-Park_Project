@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Button, MenuItem, Container, FormControl, FormHelperText, Avatar, Typography, IconButton, RadioGroup, FormControlLabel, Radio, Grid, Box } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import './AddUserForm.css';  // Import the updated CSS
-import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes } from '../../services/http';  // Assuming these are your API functions
+import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes, ListTitlePrefixes, ListJobPositions } from '../../services/http';  // Assuming these are your API functions
 import { GendersInterface } from '../../interfaces/IGenders';
 import { RolesInterface } from '../../interfaces/IRoles';
 import { PackagesInterface } from '../../interfaces/IPackages';
 import { UserInterface } from '../../interfaces/IUser';
 import { RequestTypeInterface } from '../../interfaces/IRequestTypes';
+import { TitlePrefix } from '../../interfaces/ITitlePrefix';
+import { JobPositionInterface } from '../../interfaces/IJobPosition';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -16,13 +18,12 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 import { TextArea } from '../../components/TextField/TextArea';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRotateRight, faBook } from "@fortawesome/free-solid-svg-icons";
-import { addUserManualContent } from "./manualContent";
+
 import {
 
 
   UserRoundPlus,
+  RotateCcw,
 
 } from "lucide-react";
 
@@ -32,6 +33,8 @@ const AddUserForm: React.FC = () => {
   const [roles, setRoles] = useState<RolesInterface[]>([]);
   const [requiredTypes, setRequiredTypes] = useState<RequestTypeInterface[]>([]); // เก็บประเภทที่ต้องการ
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
+  const [titlePrefixes, setTitlePrefixes] = useState<TitlePrefix[]>([]);
+  const [jobPositions, setJobPositions] = useState<JobPositionInterface[]>([]);
   const [file, setFile] = useState<File | null>(null);  // เก็บไฟล์เดียว
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
@@ -75,11 +78,15 @@ const AddUserForm: React.FC = () => {
       const roleData = await ListRoles();
       const packageData = await ListPackages();
       const requiredTypeData = await ListRequestTypes();  // Assuming you have a function to fetch request types
+      const titlePrefixData = await ListTitlePrefixes();
+      const jobPositionData = await ListJobPositions();
 
       setGenders(genderData);
       setRoles(roleData);
       setPackages(packageData);
       setRequiredTypes(requiredTypeData);
+      setTitlePrefixes(titlePrefixData.data || []);
+      setJobPositions(jobPositionData.data || []);
 
     };
     fetchData();
@@ -88,10 +95,22 @@ const AddUserForm: React.FC = () => {
   const onSubmit = async (data: UserInterface) => {
 
     const formData = {
-      ...data,
-      Profile_Image: file,  // Adding the profile image data to the form data
-      IsEmployee: userType === "internal" ? "true" : "false",  // Set IsEmployee based on userType
-
+      first_name: data.FirstName,
+      last_name: data.LastName,
+      email: data.Email,
+      password: data.Password,
+      phone: data.Phone,
+      employee_id: data.EmployeeID,
+      company_name: data.CompanyName,
+      business_detail: data.BusinessDetail,
+      role_id: data.RoleID || 1,
+      gender_id: data.GenderID || 1,
+      prefix_id: String(data.PrefixID || 1),
+      job_position_id: userType === "internal" ? String(data.JobPositionID) : "",
+      request_type_id: data.RequestTypeID || 1,
+      package_id: data.UserPackageID || 1,
+      is_employee: userType === "internal" ? "true" : "false",
+      profile_image: file,  // Adding the profile image data to the form data
     };
 
     // Call CreateUser function to send data
@@ -173,23 +192,7 @@ const AddUserForm: React.FC = () => {
             <UserRoundPlus size={26} />
             <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<FontAwesomeIcon icon={faBook} />}
-            onClick={() => {
-              const blob = new Blob([addUserManualContent], { type: 'text/plain' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'AddUser_Manual.txt';
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(url);
-              document.body.removeChild(a);
-            }}
-          >
-            Download Manual
-          </Button>
+
         </div>
 
 
@@ -238,7 +241,7 @@ const AddUserForm: React.FC = () => {
                 <Avatar sx={{ width: 150, height: 150 }} src={profileImage || ''} />
 
                 {/* ปุ่มเลือกไฟล์ */}
-                <Button variant="outlined" component="label" className="upload-button" sx={{ marginTop: 2 }}>
+                <Button variant="contained" component="label" className="upload-button" sx={{ marginTop: 2 }}>
                   Add Photo
                   <input type="file" hidden onChange={handleFileChange} />
                 </Button>
@@ -250,11 +253,46 @@ const AddUserForm: React.FC = () => {
 
 
 
+                  
 
               {/* Name Fields */}
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }} >
+                  <Grid size={{ xs: 12, sm: 2 }}>
+                    {/* Title Prefix Dropdown */}
+
+                    <Typography variant="body1" className="title-field">Title Prefix</Typography>
+                    <Controller
+                      name="PrefixID"
+                      control={control}
+                      defaultValue={0}
+                      rules={{
+                        required: 'Please select title prefix',
+                        validate: (value) => {
+                          if (!value || value === 0) return 'Please select title prefix';
+                          return true;
+                        }
+                      }}
+                      render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.PrefixID}>
+                          <Select
+                            {...field}
+                            value={field.value || 0}
+                            displayEmpty
+                          >
+                            <MenuItem value={0}>
+                              <em>-- Title prefix --</em>
+                            </MenuItem>
+                            {titlePrefixes.map((prefix) => (
+                              <MenuItem key={prefix.ID} value={prefix.ID}>{prefix.PrefixEN}</MenuItem>
+                            ))}
+                          </Select>
+                          {errors.PrefixID && <FormHelperText>{String(errors.PrefixID.message)}</FormHelperText>}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 5 }} >
                     <Typography variant="body1" className="title-field">First Name</Typography>
                     <Controller
                       name="FirstName"
@@ -264,20 +302,15 @@ const AddUserForm: React.FC = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          label="Please enter first name (without title)"
+                          placeholder="Please enter first name (without title)"
                           fullWidth
                           error={!!errors.FirstName}
                           helperText={String(errors.FirstName?.message || "")}
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
                         />
                       )}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <Typography variant="body1" className="title-field">Last Name</Typography>
                     <Controller
                       name="LastName"
@@ -287,15 +320,10 @@ const AddUserForm: React.FC = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          label="Please enter last name"
+                          placeholder="Please enter last name"
                           fullWidth
                           error={!!errors.LastName}
                           helperText={String(errors.LastName?.message || "")}
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
                         />
                       )}
                     />
@@ -339,6 +367,8 @@ const AddUserForm: React.FC = () => {
                       )}
                     />
                   </Grid>
+
+
                   <Grid size={{ xs: 12, sm: 3 }}>
                     <Typography variant="body1" className="title-field">Phone Number</Typography>
                     <Controller
@@ -355,16 +385,10 @@ const AddUserForm: React.FC = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          label="Please enter phone number"
+                          placeholder="Please enter phone number"
                           fullWidth
                           error={!!errors.Phone}
                           helperText={String(errors.Phone?.message || "")}
-
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
                         />
                       )}
                     />
@@ -387,15 +411,10 @@ const AddUserForm: React.FC = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          label="Please enter email"
+                          placeholder="Please enter email"
                           fullWidth
                           error={!!errors.Email}
                           helperText={String(errors.Email?.message || "")}
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
                         />
                       )}
                     />
@@ -419,15 +438,12 @@ const AddUserForm: React.FC = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          label="Please enter password"
+                          placeholder="Please enter password"
                           type={showPassword ? 'text' : 'password'}  // ทำให้รหัสผ่านแสดง/ซ่อน
                           fullWidth
                           error={!!errors.Password}
                           helperText={String(errors.Password?.message || "")}
                           slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            },
                             input: {
                               endAdornment: (
                                 <IconButton
@@ -448,6 +464,33 @@ const AddUserForm: React.FC = () => {
 
                 </Grid>
               </Grid>
+
+              {/* EmployeeID Field */}
+              {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="body1" className="title-field">Employee ID</Typography>
+                <Controller
+                  name="EmployeeID"
+                  control={control}
+                  defaultValue=""
+                  rules={{
+                    required: 'Please enter employee ID',
+                    pattern: {
+                      value: /^[0-9]{6}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
+                      message: 'Please enter a valid employee ID with 6 digits'
+                    }
+                  }}
+                  render={({ field }) => (
+                                            <TextField
+                          {...field}
+                          placeholder="Please enter employee ID"
+                          fullWidth
+                          error={!!errors.EmployeeID}  // เปลี่ยนจาก errors.Email เป็น errors.EmployeeID
+                          helperText={String(errors.EmployeeID?.message || "")}
+                        />
+                  )}
+                />
+              </Grid>
+              }
 
               {/* Role Dropdown */}
               {userType === 'internal' && (
@@ -479,6 +522,44 @@ const AddUserForm: React.FC = () => {
                           ))}
                         </Select>
                         {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
+                      </FormControl>
+                    )}
+                  />
+                </Grid>
+              )}
+
+              {/* Job Position Dropdown - Only for Internal Users */}
+              {userType === 'internal' && (
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <Typography variant="body1" className="title-field">Job Position</Typography>
+                  <Controller
+                    name="JobPositionID"
+                    control={control}
+                    defaultValue={0}
+                    rules={{
+                      required: userType === 'internal' ? 'Please select job position' : false,
+                      validate: (value) => {
+                        if (userType === 'internal' && (!value || value === 0)) {
+                          return 'Please select job position';
+                        }
+                        return true;
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.JobPositionID}>
+                        <Select
+                          {...field}
+                          value={field.value || 0}
+                          displayEmpty
+                        >
+                          <MenuItem value={0}>
+                            <em>-- Please select job position --</em>
+                          </MenuItem>
+                          {jobPositions.map((jobPosition) => (
+                            <MenuItem key={jobPosition.ID} value={jobPosition.ID}>{jobPosition.Name}</MenuItem>
+                          ))}
+                        </Select>
+                        {errors.JobPositionID && <FormHelperText>{String(errors.JobPositionID.message)}</FormHelperText>}
                       </FormControl>
                     )}
                   />
@@ -522,41 +603,11 @@ const AddUserForm: React.FC = () => {
               )}
 
 
-              {/* EmployeeID Field */}
-              {userType === 'internal' && <Grid size={{ xs: 12, sm: 3 }}>
-                <Typography variant="body1" className="title-field">Employee ID</Typography>
-                <Controller
-                  name="EmployeeID"
-                  control={control}
-                  defaultValue=""
-                  rules={{
-                    required: 'Please enter employee ID',
-                    pattern: {
-                      value: /^[0-9]{6}$/, // Regular expression สำหรับตรวจสอบรหัสพนักงาน
-                      message: 'Please enter a valid employee ID with 6 digits'
-                    }
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Please enter employee ID"
-                      fullWidth
-                      error={!!errors.EmployeeID}  // เปลี่ยนจาก errors.Email เป็น errors.EmployeeID
-                      helperText={String(errors.EmployeeID?.message || "")}
-                      slotProps={{
-                        inputLabel: {
-                          sx: { color: '#6D6E70' }
-                        }
-                      }}
-                    />
-                  )}
-                />
-              </Grid>
-              }
+              
 
 
               {/* Package Dropdown */}
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <Typography variant="body1" className="title-field">Privileges</Typography>
                 <Controller
                   name="UserPackageID"
@@ -585,7 +636,7 @@ const AddUserForm: React.FC = () => {
               {/* Conditional Rendering based on User Type */}
               {userType === 'external' && (
                 <>
-                  <Grid size={{ xs: 6 }}>
+                  <Grid size={{ xs: 3 }}>
                     <Typography variant="body1" className="title-field">Company Name</Typography>
                     <Controller
                       name="CompanyName"
@@ -593,13 +644,7 @@ const AddUserForm: React.FC = () => {
                       defaultValue=""
                       rules={{ required: 'Please enter company name' }}
                       render={({ field }) => (
-                        <TextField {...field} label="Please enter company name" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")}
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
-                        />
+                        <TextField {...field} placeholder="Please enter company name" fullWidth error={!!errors.CompanyName} helperText={String(errors.CompanyName?.message || "")} />
 
                       )}
                     />
@@ -612,13 +657,7 @@ const AddUserForm: React.FC = () => {
                       defaultValue=""
                       rules={{ required: 'Please enter business description' }}
                       render={({ field }) => (
-                        <TextArea {...field} label="Please enter business description" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "")}
-                          slotProps={{
-                            inputLabel: {
-                              sx: { color: '#6D6E70' }
-                            }
-                          }}
-                        />
+                        <TextArea {...field} placeholder="Please enter business description" fullWidth multiline rows={3} error={!!errors.BusinessDetail} helperText={String(errors.BusinessDetail?.message || "")} />
 
                       )}
 
@@ -628,12 +667,12 @@ const AddUserForm: React.FC = () => {
               )}
 
               {/* Submit Button */}
-              <Grid size={{ xs: 12 }} className="submit-button-container">
+              <Grid size={{ xs: 12 }} className="submit-button-container" sx={{ mt: 2 }}>
                 {/* Reset Button */}
                 <Button
                   type="reset"
-                  variant="outlined"
-                  startIcon={<FontAwesomeIcon icon={faRotateRight} />}
+                  variant="outlinedGray"
+                  startIcon={<RotateCcw size={18} style={{ minWidth: "18px", minHeight: "18px" }} />}
                   sx={{ marginRight: 2 }}
                   onClick={() => { reset(); setProfileImage(""); }} // Reset form and profile image
                 >

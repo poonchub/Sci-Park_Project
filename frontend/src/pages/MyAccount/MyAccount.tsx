@@ -99,6 +99,7 @@ import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import { PaymentInterface } from "../../interfaces/IPayments";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
+import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
 
 
 const MyAccount: React.FC = () => {
@@ -2569,6 +2570,12 @@ const MyAccount: React.FC = () => {
                                     )}
                                 </Grid>
                             </CustomTabPanel>
+
+                            {/* ✅ Room Booking */}
+                            <CustomTabPanel value={valueTab} index={1}>
+                                <MyBooking />  {/* หรือ AllBookingRoom */}
+                            </CustomTabPanel>
+
                             <CustomTabPanel value={valueTab} index={1}></CustomTabPanel>
                             <CustomTabPanel value={valueTab} index={2}>
                                 <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
@@ -2597,6 +2604,7 @@ const MyAccount: React.FC = () => {
                                     )}
                                 </Grid>
                             </CustomTabPanel>
+
                             <CustomTabPanel value={valueTab} index={3}>
                                 <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
                                     {isLoadingPayment ? (

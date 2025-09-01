@@ -17,7 +17,7 @@ type BookingRoom struct {
 
 	StatusID       uint          `valid:"required~กรุณาระบุสถานะ"`
 	Status         BookingStatus `gorm:"foreignKey:StatusID" valid:"-"`
-	Payments       *Payment     `gorm:"foreignKey:BookingRoomID"`
+	Payments       []Payment     `gorm:"foreignKey:BookingRoomID"`
 	CancelledAt    *time.Time    `gorm:"default:null"`                     // << เพิ่มอันนี้
 	AdditionalInfo string        `gorm:"type:text" json:"additional_info"` // ข้อมูลเพิ่มเติม
 	// ✅ เพิ่มความสัมพันธ์กับ BookingDate

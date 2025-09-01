@@ -13,7 +13,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
 import { MaintenaceImagesInterface } from "../interfaces/IMaintenaceImages";
 import { Container, Chip, useTheme, Skeleton } from "@mui/material";
-
+import { Warehouse } from 'lucide-react';
 import { Role } from "../constants/navigationConfig";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -80,7 +80,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
     const demoWindow = window ? window() : undefined;
 
-    const {user, setUser} = useUserStore();
+    const { user, setUser } = useUserStore();
     const [organizationInfo, setOrganizationInfo] =
         useState<OrganizationInfoInterface>();
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -188,8 +188,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <ClipboardList size={iconSize} />,
             action:
                 notificationCounts?.UnreadRequests &&
-                notificationCounts?.UnreadRequests > 0 &&
-                (isAdmin() || isManager()) ? (
+                    notificationCounts?.UnreadRequests > 0 &&
+                    (isAdmin() || isManager()) ? (
                     <Chip
                         label={notificationCounts.UnreadRequests}
                         color="primary"
@@ -203,8 +203,8 @@ const WindowsLayout: React.FC = (props: any) => {
                     icon: <ClipboardList size={iconSize} />,
                     action:
                         notificationCounts?.UnreadRequests &&
-                        notificationCounts?.UnreadRequests > 0 &&
-                        (isAdmin() || isManager()) ? (
+                            notificationCounts?.UnreadRequests > 0 &&
+                            (isAdmin() || isManager()) ? (
                             <Chip
                                 label={notificationCounts.UnreadRequests}
                                 color="primary"
@@ -212,12 +212,19 @@ const WindowsLayout: React.FC = (props: any) => {
                             />
                         ) : null,
                 },
+
                 {
                     segment: "service-area/service-request-list",
                     title: "Service Area",
                     icon: <NotepadText size={iconSize} />,
                 },
+
             ],
+        },
+        {
+            segment: "all-booking-room",   // 👈 segment ตรงไปตรงมา
+            title: "All Booking Room",
+            icon: <LayersIcon />,
         },
 
         {
@@ -226,8 +233,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <HardHat />,
             action:
                 notificationCounts?.UnreadTasks &&
-                notificationCounts.UnreadTasks &&
-                isMaintenanceOperator() ? (
+                    notificationCounts.UnreadTasks &&
+                    isMaintenanceOperator() ? (
                     <Chip
                         label={notificationCounts.UnreadTasks}
                         color="primary"
@@ -278,6 +285,11 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <DoorOpen size={iconSize} />,
             children: [
                 {
+                    segment: "manage-room-type",
+                    title: t("Manage Room Type"),
+                    icon: <ClipboardList />,
+                },
+                {
                     segment: "manage-room",
                     title: t("manageRoom"),
                     icon: <ClipboardList />,
@@ -308,11 +320,6 @@ const WindowsLayout: React.FC = (props: any) => {
                     ) : null,
         },
         {
-            segment: "all-booking-room",
-            title: "All Booking Room",
-            icon: <LayersIcon />,
-        },
-        {
             kind: "header",
             title: "Personal Information",
         },
@@ -336,6 +343,12 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "Organization Info",
             icon: <Building2 />,
         },
+
+        // {
+        //     segment: "my-booking-room",
+        //     title: "My Booking Room",
+        //     icon: < Warehouse />,
+        // },
     ];
 
     const accessibleSegments: Record<Role, string[]> = {
@@ -346,6 +359,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
+            "my-booking-room",
             "room",
             "user",
             "all-booking-room",
@@ -355,6 +369,7 @@ const WindowsLayout: React.FC = (props: any) => {
 
             "requests",
             "maintenance/all-maintenance-request",
+            "manage-room-type",
             "manage-room",
             "manage-user",
             "add-user",
@@ -366,6 +381,7 @@ const WindowsLayout: React.FC = (props: any) => {
             "home",
             "dashboard",
             "booking-room",
+            "my-booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
             "all-booking-room",
@@ -381,6 +397,7 @@ const WindowsLayout: React.FC = (props: any) => {
         'Maintenance Operator': [
             "home",
             "booking-room",
+            "my-booking-room",
             "maintenance",
             "maintenance/create-maintenance-request",
             "room",
@@ -406,6 +423,7 @@ const WindowsLayout: React.FC = (props: any) => {
         User: [
             "home",
             "booking-room",
+            "my-booking-room",
             "maintenance/create-maintenance-request",
             "my-account",
             "news",

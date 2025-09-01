@@ -1,18 +1,12 @@
 import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography,Container } from "@mui/material";
-import { faMagnifyingGlass,faRotateRight,faBook } from "@fortawesome/free-solid-svg-icons";
-import LocalActivityOutlinedIcon from '@mui/icons-material/LocalActivityOutlined';
-import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { ListUsers, ListPackages, ListRoles } from "../../services/http";  // Import ListUsers service 
 import { UserInterface } from "../../interfaces/IUser";
 import { PackagesInterface } from "../../interfaces/IPackages";
 import { RolesInterface } from "../../interfaces/IRoles";
-import { SearchOff } from "@mui/icons-material";
 import SuccessAlert from '../../components/Alert/SuccessAlert';
 import ErrorAlert from '../../components/Alert/ErrorAlert';
 import WarningAlert from '../../components/Alert/WarningAlert';
@@ -21,6 +15,12 @@ import EditUserPopup from "./EditUserPopup";
 import './ManageUsers.css';
 import {
     UserCog,
+    Search,
+    RotateCcw,
+    Ticket,
+    UserCheck,
+    Users,
+    SearchX,
 } from "lucide-react";
 // Remove analytics import - no longer needed
 // import { analyticsService } from "../../services/analyticsService";
@@ -97,16 +97,7 @@ function ManageUsers() {
                 >
                     <Button
                         onClick={() => handleOpenPopup(params.row.ID)}
-                        sx={{
-                            bgcolor: '#08aff1',
-                            color: '#fff',
-                            fontSize: '14px',
-                            border: '1px solid #08aff1',
-                            mr: 0.6,
-                            "&:hover": {
-                                borderColor: 'transparent'
-                            }
-                        }}
+                        variant="contained"
                     >
                         Edit
                     </Button>
@@ -244,17 +235,7 @@ function ManageUsers() {
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Users</Typography>
                     </Box>
 
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<FontAwesomeIcon icon={faBook} />}
-                        component="a"
-                        href="/ManageUsers_Manual.txt"
-                        download="ManageUsers_Manual.txt"
-                        style={{ marginBottom: 16 }}
-                    >
-                        Download Manual
-                    </Button>
+
                 </Grid>
 
                 {selectedUserId !== null && (
@@ -293,9 +274,9 @@ function ManageUsers() {
                                 slotProps={{
                                     input: {
                                         startAdornment: (
-                                            <InputAdornment position="start" sx={{ px: 0.5 }}>
-                                                <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
-                                            </InputAdornment>
+                                                                                    <InputAdornment position="start" sx={{ px: 0.5 }}>
+                                            <Search size={20} />
+                                        </InputAdornment>
                                         ),
                                     }
                                 }}
@@ -312,7 +293,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <PeopleOutlinedIcon/>
+                                            <Users size={20} />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -338,7 +319,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <BadgeOutlinedIcon/>
+                                            <UserCheck size={20} />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -365,7 +346,7 @@ function ManageUsers() {
                                     displayEmpty
                                     startAdornment={
                                         <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                            <LocalActivityOutlinedIcon/>
+                                            <Ticket size={20} />
                                         </InputAdornment>
                                     }
                                     sx={{ borderRadius: 2 }}
@@ -394,7 +375,7 @@ function ManageUsers() {
                                         backgroundColor: 'transparent'
                                     },
                                 }}
-                            ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                            ><RotateCcw size={20} style={{ color: 'gray' }} /></Button>
                         </Grid>
 
                     </Grid>
@@ -420,7 +401,7 @@ function ManageUsers() {
                                             color: 'gray',
                                         }}
                                     >
-                                        <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
+                                        <SearchX size={50} style={{ color: 'gray' }} />
                                         <Typography variant="body1" sx={{ mt: 1 }}>
                                             No details match your search
                                         </Typography>

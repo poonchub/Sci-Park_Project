@@ -46,10 +46,12 @@ const RejectServiceAreaPopup: React.FC<RejectServiceAreaPopupProps> = ({
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 2,
-                    minHeight: "300px",
+            slotProps={{
+                paper: {
+                    sx: {
+                        borderRadius: 2,
+                        minHeight: "300px",
+                    },
                 },
             }}
         >
@@ -109,28 +111,16 @@ const RejectServiceAreaPopup: React.FC<RejectServiceAreaPopupProps> = ({
             <DialogActions sx={{ px: 3, pb: 3 }}>
                 <Button
                     onClick={handleClose}
-                    variant="outlined"
-                    sx={{
-                        borderRadius: 1,
-                        textTransform: "none",
-                        px: 3,
-                    }}
+                    variant="outlinedGray"
+                    
                 >
                     Cancel
                 </Button>
                 <Button
                     onClick={handleConfirm}
-                    variant="contained"
+                    variant="outlinedCancel"
                     disabled={!note.trim() || buttonActive}
-                    sx={{
-                        borderRadius: 1,
-                        textTransform: "none",
-                        px: 3,
-                        backgroundColor: "#d32f2f",
-                        "&:hover": {
-                            backgroundColor: "#b71c1c",
-                        },
-                    }}
+                    
                 >
                     {buttonActive ? "Rejecting..." : "Reject"}
                 </Button>

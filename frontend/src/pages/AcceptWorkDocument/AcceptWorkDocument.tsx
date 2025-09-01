@@ -94,7 +94,10 @@ function AcceptWorkDocument() {
 
         try {
             setIsRejecting(true);
-            await RejectServiceAreaRequest(selectedTaskForReject.RequestServiceAreaID, note || "");
+            const userID = Number(localStorage.getItem('userId')) || 0;
+            const role = "Operator"; // ใน AcceptWorkDocument เป็น Operator เสมอ
+            
+            await RejectServiceAreaRequest(selectedTaskForReject.RequestServiceAreaID, userID, note || "", role);
             
             // Refresh data หลังจาก Reject
             fetchServiceAreaTasks();

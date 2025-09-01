@@ -118,6 +118,7 @@ func SetupDatabase() {
 	fmt.Println("✅ Database migrated successfully!")
 
 	SeedDatabase()
+	
 }
 
 // ฟังก์ชันเพิ่มข้อมูลตัวอย่าง
@@ -145,21 +146,19 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล JobPosition
 	jobPositions := []entity.JobPosition{
-		{Name: "Software Developer"},
-		{Name: "System Administrator"},
-		{Name: "Project Manager"},
-		{Name: "Business Analyst"},
-		{Name: "Data Scientist"},
-		{Name: "Network Engineer"},
-		{Name: "Quality Assurance"},
-		{Name: "UI/UX Designer"},
-		{Name: "DevOps Engineer"},
-		{Name: "Product Manager"},
-		{Name: "Research Assistant"},
-		{Name: "Lab Technician"},
-		{Name: "Administrative Staff"},
-		{Name: "Marketing Specialist"},
-		{Name: "Financial Analyst"},
+		{Name: "Head of Central Administration and Infrastructure Development Unit"},
+		{Name: "Central Administration and Infrastructure Development Unit"},
+		{Name: "Head of Innovation and Key Account Services Unit (IKD)"},
+		{Name: "Innovation and Key Account Services Unit (IKD)"},
+		{Name: "Head of Network Coordination Unit"},
+		{Name: "Network Coordination Unit"},
+		{Name: "Head of Business Development and Innovation Cluster Unit (BCD)"},
+		{Name: "Business Development and Innovation Cluster Unit (BCD)"},
+		{Name: "Head of Future Learning and Skills Innovation Unit"},
+		{Name: "Future Learning and Skills Innovation Unit"},
+		{Name: "Head of Marketing, Customer Service and Public Relations Unit"},
+		{Name: "Marketing, Customer Service and Public Relations Unit"},
+		{Name: "Regional Operations Support Unit"},
 	}
 	for _, jobPosition := range jobPositions {
 		db.FirstOrCreate(&jobPosition, entity.JobPosition{Name: jobPosition.Name})
@@ -431,8 +430,8 @@ func SeedDatabase() {
 			Phone:          "1234567890",
 			ProfilePath:    "",
 			SignaturePath:  "images/users/user_1/signature.jpg",
-			RoleID:         5,             // Admin (ID 5)
-			JobPositionID:  &[]uint{1}[0], // Software Developer
+			RoleID:         5, // Admin (ID 5)
+			JobPositionID:  1, // Software Developer
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  3,
@@ -448,8 +447,8 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         4,             // Manager (ID 4)
-			JobPositionID:  &[]uint{3}[0], // Project Manager
+			RoleID:         4, // Manager (ID 4)
+			JobPositionID:  3, // Project Manager
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  1,
@@ -464,8 +463,8 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1234567890",
 			ProfilePath:    "",
-			RoleID:         4,              // Manager (ID 4)
-			JobPositionID:  &[]uint{10}[0], // Product Manager
+			RoleID:         4,  // Manager (ID 4)
+			JobPositionID:  10, // Product Manager
 			GenderID:       1,
 			IsEmployee:     true,
 			RequestTypeID:  2,
@@ -481,7 +480,7 @@ func SeedDatabase() {
 			Phone:          "1232323221",
 			ProfilePath:    "",
 			RoleID:         2,
-			JobPositionID:  &[]uint{2}[0], // System Administrator
+			JobPositionID:  2, // System Administrator
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -496,7 +495,7 @@ func SeedDatabase() {
 			Phone:          "1232323222",
 			ProfilePath:    "",
 			RoleID:         2,
-			JobPositionID:  &[]uint{6}[0], // Network Engineer
+			JobPositionID:  2, // Network Engineer
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -511,7 +510,7 @@ func SeedDatabase() {
 			Phone:          "1232323223",
 			ProfilePath:    "",
 			RoleID:         3,             // Document Operator (ID 3)
-			JobPositionID:  &[]uint{4}[0], // Business Analyst
+			JobPositionID:  2, // Business Analyst
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -526,7 +525,7 @@ func SeedDatabase() {
 			Phone:          "1232323224",
 			ProfilePath:    "",
 			RoleID:         3,             // Document Operator (ID 3)
-			JobPositionID:  &[]uint{7}[0], // Quality Assurance
+			JobPositionID:  4, // Quality Assurance
 			GenderID:       1,
 			IsEmployee:     true,
 		},
@@ -541,7 +540,7 @@ func SeedDatabase() {
 			Phone:          "9876543210",
 			ProfilePath:    "",
 			RoleID:         1,
-			JobPositionID:  &[]uint{5}[0], // Data Scientist
+			JobPositionID:  5, // Data Scientist
 			GenderID:       2,
 			IsEmployee:     true,
 		},
@@ -556,7 +555,7 @@ func SeedDatabase() {
 			Phone:          "9876543210",
 			ProfilePath:    "",
 			RoleID:         1,
-			JobPositionID:  &[]uint{11}[0], // Research Assistant
+			JobPositionID:  2, // Research Assistant
 			GenderID:       1,
 			IsEmployee:     true,
 		},
@@ -567,6 +566,7 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Rooms
+	const LARGE_ROOM_TYPE_ID =  /* TODO: ใส่ RoomTypeID ของห้องใหญ่ */  5
 	rooms := []entity.Room{
 		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
 		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
@@ -604,8 +604,8 @@ func SeedDatabase() {
 		{RoomNumber: "A210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
 		{RoomNumber: "A211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 216},
 
-		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 19},
-		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1, Capacity: 30},
+		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
+		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
 		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A306", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
 		{RoomNumber: "A307", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
@@ -623,6 +623,8 @@ func SeedDatabase() {
 		{RoomNumber: "A305", FloorID: 1, RoomStatusID: 1, RoomTypeID: 6},
 
 		{RoomNumber: "A406", FloorID: 1, RoomStatusID: 1, RoomTypeID: 7},
+
+		{RoomNumber: "LARGE-01", FloorID: 1, RoomStatusID: 1, RoomTypeID:5 , RoomSize: 1000},
 	}
 	for _, room := range rooms {
 		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
@@ -747,21 +749,24 @@ func SeedDatabase() {
 	}
 	db.FirstOrCreate(&maintenanceImage)
 
-	// 🔹 ข้อมูล TimeSlot
+	// 🔹 ข้อมูล TimeSlot (เวอร์ชันใหม่ 08:30–16:30)
 	timeSlots := []entity.TimeSlot{
-		{TimeSlotName: "morning", StartTime: parseTime("08:00"), EndTime: parseTime("12:00")},
-		{TimeSlotName: "afternoon", StartTime: parseTime("13:00"), EndTime: parseTime("17:00")},
-		{TimeSlotName: "fullDay", StartTime: parseTime("08:00"), EndTime: parseTime("17:00")},
-		{TimeSlotName: "08:00-09:00", StartTime: parseTime("08:00"), EndTime: parseTime("09:00")},
-		{TimeSlotName: "09:00-10:00", StartTime: parseTime("09:00"), EndTime: parseTime("10:00")},
-		{TimeSlotName: "10:00-11:00", StartTime: parseTime("10:00"), EndTime: parseTime("11:00")},
-		{TimeSlotName: "11:00-12:00", StartTime: parseTime("11:00"), EndTime: parseTime("12:00")},
-		{TimeSlotName: "12:00-13:00", StartTime: parseTime("12:00"), EndTime: parseTime("13:00")},
-		{TimeSlotName: "13:00-14:00", StartTime: parseTime("13:00"), EndTime: parseTime("14:00")},
-		{TimeSlotName: "14:00-15:00", StartTime: parseTime("14:00"), EndTime: parseTime("15:00")},
-		{TimeSlotName: "15:00-16:00", StartTime: parseTime("15:00"), EndTime: parseTime("16:00")},
-		{TimeSlotName: "16:00-17:00", StartTime: parseTime("16:00"), EndTime: parseTime("17:00")},
+		// ครึ่งวัน / เต็มวัน
+		{TimeSlotName: "Morning", StartTime: parseTime("08:30"), EndTime: parseTime("12:30")},
+		{TimeSlotName: "Afternoon", StartTime: parseTime("12:30"), EndTime: parseTime("16:30")},
+		{TimeSlotName: "Fullday", StartTime: parseTime("08:30"), EndTime: parseTime("16:30")},
+
+		// รายชั่วโมง (8 ช่วง)
+		{TimeSlotName: "08:30-09:30", StartTime: parseTime("08:30"), EndTime: parseTime("09:30")},
+		{TimeSlotName: "09:30-10:30", StartTime: parseTime("09:30"), EndTime: parseTime("10:30")},
+		{TimeSlotName: "10:30-11:30", StartTime: parseTime("10:30"), EndTime: parseTime("11:30")},
+		{TimeSlotName: "11:30-12:30", StartTime: parseTime("11:30"), EndTime: parseTime("12:30")},
+		{TimeSlotName: "12:30-13:30", StartTime: parseTime("12:30"), EndTime: parseTime("13:30")},
+		{TimeSlotName: "13:30-14:30", StartTime: parseTime("13:30"), EndTime: parseTime("14:30")},
+		{TimeSlotName: "14:30-15:30", StartTime: parseTime("14:30"), EndTime: parseTime("15:30")},
+		{TimeSlotName: "15:30-16:30", StartTime: parseTime("15:30"), EndTime: parseTime("16:30")},
 	}
+
 	fmt.Println("📌 Seeding TimeSlots")
 	for _, slot := range timeSlots {
 		result := db.FirstOrCreate(&slot, entity.TimeSlot{
@@ -772,34 +777,55 @@ func SeedDatabase() {
 		fmt.Printf("🧪 TimeSlot: %s | RowsAffected: %d | Error: %v\n", slot.TimeSlotName, result.RowsAffected, result.Error)
 	}
 
-	// 🔹 ข้อมูล Roomprice (สมมุติว่าห้องขนาดเล็ก = RoomTypeID 1, TimeSlotID ตามข้างบน)
+	// ✅ Seeding RoomPrices แบบระบุทุกรายการชัด ๆ สำหรับ RoomTypeID 1..7
+	// TimeSlotID: 1=morning, 2=afternoon, 3=fullDay, 4..12=รายชั่วโมง
+	fmt.Println("📌 Seeding RoomPrices (explicit list for 7 room types)")
+
 	roomPrices := []entity.RoomPrice{
-		// ✅ เดิม (3 แบบ: เช้า/บ่าย/เต็มวัน)
+		// ----- RoomTypeID 1 (ห้องเล็ก) -----
 		{Price: 500, TimeSlotID: 1, RoomTypeID: 1},  // เช้า
 		{Price: 500, TimeSlotID: 2, RoomTypeID: 1},  // บ่าย
 		{Price: 1000, TimeSlotID: 3, RoomTypeID: 1}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 1},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 1},
 
-		{Price: 1000, TimeSlotID: 1, RoomTypeID: 2}, // เช้า
-		{Price: 1000, TimeSlotID: 2, RoomTypeID: 2}, // บ่าย
-		{Price: 2000, TimeSlotID: 3, RoomTypeID: 2}, // เต็มวัน
+		// ----- RoomTypeID 2..7 (ราคาเท่ากัน) -----
+		// ถ้าต้องการแตกต่างในอนาคต แก้เฉพาะบล็อคของ rt นั้น ๆ ได้เลย
+	}
 
-		// ✅ ใหม่: รายชั่วโมงสำหรับ RoomTypeID 1
-		{Price: 200, TimeSlotID: 4, RoomTypeID: 1},  // 09:00–10:00
-		{Price: 200, TimeSlotID: 5, RoomTypeID: 1},  // 10:00–11:00
-		{Price: 200, TimeSlotID: 6, RoomTypeID: 1},  // 11:00–12:00
-		{Price: 200, TimeSlotID: 7, RoomTypeID: 1},  // 13:00–14:00
-		{Price: 200, TimeSlotID: 8, RoomTypeID: 1},  // 14:00–15:00
-		{Price: 200, TimeSlotID: 9, RoomTypeID: 1},  // 15:00–16:00
-		{Price: 200, TimeSlotID: 10, RoomTypeID: 1}, // 16:00–17:00
+	// เพิ่มรายการของ RoomType 2..7 (morning/afternoon/fullDay + hourly)
+	for rt := 2; rt <= 7; rt++ {
+		roomPrices = append(roomPrices,
+			entity.RoomPrice{Price: 1000, TimeSlotID: 1, RoomTypeID: uint(rt)}, // เช้า
+			entity.RoomPrice{Price: 1000, TimeSlotID: 2, RoomTypeID: uint(rt)}, // บ่าย
+			entity.RoomPrice{Price: 2000, TimeSlotID: 3, RoomTypeID: uint(rt)}, // เต็มวัน
+			entity.RoomPrice{Price: 400, TimeSlotID: 4, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 5, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 6, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 7, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 8, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 9, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 10, RoomTypeID: uint(rt)},
+			entity.RoomPrice{Price: 400, TimeSlotID: 11, RoomTypeID: uint(rt)},
+		)
+	}
 
-		// ✅ ใหม่: รายชั่วโมงสำหรับ RoomTypeID 2
-		{Price: 400, TimeSlotID: 4, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 5, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 6, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 7, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 8, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 9, RoomTypeID: 2},
-		{Price: 400, TimeSlotID: 10, RoomTypeID: 2},
+	// เขียนลงฐาน: ถ้ามีอยู่แล้ว → อัปเดตราคา, ถ้าไม่มี → สร้าง
+	for _, rp := range roomPrices {
+		var out entity.RoomPrice
+		result := db.
+			Where("room_type_id = ? AND time_slot_id = ?", rp.RoomTypeID, rp.TimeSlotID).
+			Assign(&entity.RoomPrice{Price: rp.Price}).
+			FirstOrCreate(&out)
+
+		fmt.Printf("💾 RoomPrice rt=%d ts=%d price=%d | RowsAffected=%d | err=%v\n",
+			rp.RoomTypeID, rp.TimeSlotID, rp.Price, result.RowsAffected, result.Error)
 	}
 
 	fmt.Println("📌 Seeding Roomprices")
@@ -814,9 +840,10 @@ func SeedDatabase() {
 	}
 
 	bookingStatus := []entity.BookingStatus{
-		{StatusName: "confirmed"},
-		{StatusName: "unconfirmed"},
-		{StatusName: "canceled"},
+		{StatusName: "Pending"},
+		{StatusName: "Confirmed"},
+		{StatusName: "Cancelled"},
+		{StatusName: "Completed"},
 	}
 	for _, bs := range bookingStatus {
 		db.FirstOrCreate(&bs, entity.BookingStatus{StatusName: bs.StatusName})
@@ -824,11 +851,11 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล Equipment
 	equipments := []entity.Equipment{
-		{EquipmentName: "โปรเจคเตอร์"},
-		{EquipmentName: "ไมโครโฟน"},
-		{EquipmentName: "กระดานไวท์บอร์ด"},
-		{EquipmentName: "โต๊ะ"},
-		{EquipmentName: "เก้าอี้"},
+		{EquipmentName: "Projector"},
+		{EquipmentName: "Microphone"},
+		{EquipmentName: "Whiteboard"},
+		{EquipmentName: "Table"},
+		{EquipmentName: "Chair"},
 	}
 	for _, e := range equipments {
 		db.FirstOrCreate(&e, entity.Equipment{EquipmentName: e.EquipmentName})
@@ -887,70 +914,6 @@ func SeedDatabase() {
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
-	}
-
-	// สมมติ TimeSlotID 1=เช้า, 2=บ่าย, 3=เต็มวัน
-	type SeedBooking struct {
-		RoomID      uint
-		Date        time.Time
-		TimeSlotIDs []uint
-	}
-
-	bookings := []SeedBooking{
-		{
-			RoomID:      1,
-			Date:        time.Date(2025, 7, 20, 0, 0, 0, 0, time.Local),
-			TimeSlotIDs: []uint{1, 2}, // เช้า + บ่าย
-		},
-		{
-			RoomID:      1,
-			Date:        time.Date(2025, 7, 21, 0, 0, 0, 0, time.Local),
-			TimeSlotIDs: []uint{2}, // เช้า: 2, // บ่าย
-		},
-		{
-			RoomID:      1,
-			Date:        time.Date(2025, 7, 22, 0, 0, 0, 0, time.Local),
-			TimeSlotIDs: []uint{3}, // เต็มวัน
-		},
-	}
-
-	for _, b := range bookings {
-		// สร้าง BookingRoom ก่อน
-		bookingRoom := entity.BookingRoom{
-			RoomID:    b.RoomID,
-			TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
-			StatusID:  1,
-			// ใส่ข้อมูลอื่น ๆ เช่น UserID, Purpose ตามจำเป็น
-		}
-
-		result := db.FirstOrCreate(&bookingRoom, entity.BookingRoom{
-			RoomID:    b.RoomID,
-			TimeSlots: timeSlots, // ใส่หลายช่วงเวลา
-		})
-
-		if result.Error != nil {
-			fmt.Printf("❌ Error creating BookingRoom: %v\n", result.Error)
-			continue
-		}
-
-		// สร้าง BookingDate เชื่อมกับ BookingRoom
-		bookingDate := entity.BookingDate{
-			Date:          b.Date,
-			BookingRoomID: bookingRoom.ID,
-		}
-
-		err := db.FirstOrCreate(&bookingDate, entity.BookingDate{
-			Date:          b.Date,
-			BookingRoomID: bookingRoom.ID,
-		}).Error
-
-		if err != nil {
-			fmt.Printf("❌ Error creating BookingDate: %v\n", err)
-			continue
-		}
-
-		fmt.Printf("📅 Booking created: RoomID=%d Date=%s Slot=%d\n",
-			b.RoomID, b.Date.Format("2006-01-02"), b.TimeSlotIDs)
 	}
 
 	// 🔹 ข้อมูล News
@@ -1253,11 +1216,11 @@ func SeedDatabase() {
 	// ===== Mock External Users with AboutCompany, RequestServiceArea, CollaborationPlans =====
 	// Step 1: Create 5 External Users
 	externalUsers := []entity.User{
-		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456",BusinessDetail: "Healthcare Services", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456",BusinessDetail: "Smart Farming", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456",BusinessDetail: "Renewable Energy Materials", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456",BusinessDetail: "BioTech R&D", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456",BusinessDetail: "Software & Digital", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
 	}
 	for i := range externalUsers {
 		externalUsers[i].Password, _ = HashPassword(externalUsers[i].Password)
@@ -1294,6 +1257,7 @@ func SeedDatabase() {
 				NumberOfEmployees:                  3 + r,
 				ActivitiesInBuilding:               "R&D Activities",
 				SupportingActivitiesForSciencePark: "Collaboration and workshops",
+				ServiceRequestDocument:             "/img/testdocfile/test01.pdf",
 			}
 			db.FirstOrCreate(&req, entity.RequestServiceArea{UserID: user.ID, PurposeOfUsingSpace: req.PurposeOfUsingSpace})
 			// Create 1-3 collaboration plans per request
