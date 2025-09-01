@@ -29,6 +29,7 @@ import {
     GetPreviousMonthInvoiceSummary,
     GetRentalSpaceRoomSummary,
     GetUserById,
+    ListBookingRoomByDateRange,
     // ListBookingRoomByDateRange,
     ListBookingRoomPaymentsByDateRange,
     ListInvoiceByDateRange,
@@ -132,8 +133,8 @@ function Dashboard() {
 
 
     const today = dayjs();
-    const fifteenDaysAgo = today.subtract(15, "day");
-    const sevenDaysAgo = today.subtract(7, "day");
+    const fifteenDaysAgo = today.subtract(14, "day");
+    const sevenDaysAgo = today.subtract(6, "day");
     const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>({
         start: fifteenDaysAgo,
         end: today,
@@ -253,7 +254,6 @@ function Dashboard() {
                 dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
                 dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
             );
-            console.log(res)
             if (res) {
                 setBookingRooms(res);
             }
