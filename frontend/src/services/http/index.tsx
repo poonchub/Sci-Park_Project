@@ -2762,6 +2762,20 @@ async function DeleteInvoiceByID(invoiceID: number): Promise<any> {
         throw error;
     }
 }
+async function UploadInvoicePDF(data: FormData) {
+    try {
+        const response = await axiosInstance.post(`/invoice/upload-pdf`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error uploading invoice PDF:", error);
+        throw error;
+    }
+}
 
 // InvoiceItems
 async function CreateInvoiceItems(data: InvoiceItemInterface) {
@@ -3366,6 +3380,7 @@ export {
     GetInvoiceByOption,
     DeleteInvoiceByID,
     UpdateInvoiceByID,
+    UploadInvoicePDF,
 
     // InvoiceItems
     CreateInvoiceItems,

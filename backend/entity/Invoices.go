@@ -13,6 +13,7 @@ type Invoice struct {
 	DueDate       time.Time		`valid:"required~DueDate is required"`
 	BillingPeriod time.Time		`valid:"required~BillingPeriod is required"`
 	TotalAmount   float64		`valid:"required~TotalAmount is required"`
+	InvoicePDFPath string		
 
 	RoomID        uint	`valid:"required~RoomID is required"`
 	Room          Room 	`gorm:"foreignKey:RoomID" valid:"-"`

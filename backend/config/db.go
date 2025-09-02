@@ -1272,4 +1272,39 @@ func SeedDatabase() {
 		makeRSA(externalUsers[i], i)
 	}
 
+	
+	serviceDocs := []entity.ServiceAreaDocument{
+		{
+			RequestServiceAreaID:     1,
+			ServiceContractDocument:  "path/to/contract1.pdf",
+			AreaHandoverDocument:     "path/to/handover1.pdf",
+			QuotationDocument:        "path/to/quotation1.pdf",
+			RefundGuaranteeDocument:  "path/to/refund1.pdf",
+			ContractNumber:           "SA-001",
+			ContractStartAt:          time.Now(),
+			ContractEndAt:            time.Now().AddDate(1, 0, 0), // +1 ปี
+			RoomID:                   1,
+			ServiceUserTypeID:        1,
+		},
+		{
+			RequestServiceAreaID:     2,
+			ServiceContractDocument:  "path/to/contract2.pdf",
+			AreaHandoverDocument:     "path/to/handover2.pdf",
+			QuotationDocument:        "path/to/quotation2.pdf",
+			RefundGuaranteeDocument:  "path/to/refund2.pdf",
+			ContractNumber:           "SA-002",
+			ContractStartAt:          time.Now(),
+			ContractEndAt:            time.Now().AddDate(1, 0, 0),
+			RoomID:                   2,
+			ServiceUserTypeID:        2,
+		},
+	}
+
+	for _, doc := range serviceDocs {
+		// FirstOrCreate ตาม RequestServiceAreaID เพื่อไม่ให้ซ้ำ
+		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
+			RequestServiceAreaID: doc.RequestServiceAreaID,
+		})
+	}
+
 }

@@ -13,6 +13,7 @@ export interface InvoiceInterface {
     DueDate?:       string;
     BillingPeriod?: string;
     TotalAmount?:   number;
+    InvoicePDFPath?: string;
     RoomID?:        number;
     Room?:          RoomsInterface;
     StatusID?:      number;

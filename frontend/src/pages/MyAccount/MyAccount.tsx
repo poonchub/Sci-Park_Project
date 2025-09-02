@@ -1347,6 +1347,8 @@ const MyAccount: React.FC = () => {
                         const receiptPath = data.Payments?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
+                        const invoicePDFPath = data.InvoicePDFPath
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
@@ -1582,10 +1584,11 @@ const MyAccount: React.FC = () => {
                                                 <Tooltip title="Download PDF">
                                                     <Button
                                                         variant="outlinedGray"
-                                                        onClick={async () => {
-                                                            setOpenPDF(true);
-                                                            setSelectedInvoice(data);
-                                                        }}
+                                                        // onClick={async () => {
+                                                        //     setOpenPDF(true);
+                                                        //     setSelectedInvoice(data);
+                                                        // }}
+                                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
                                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
@@ -1837,6 +1840,7 @@ const MyAccount: React.FC = () => {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status?.Name
+                        const invoicePDFPath = data.InvoicePDFPath
                         return (
                             <Box
                                 className="container-btn"
@@ -1885,10 +1889,11 @@ const MyAccount: React.FC = () => {
                                     <Button
                                         variant="outlinedGray"
                                         className="btn-download-pdf"
-                                        onClick={async () => {
-                                            setOpenPDF(true);
-                                            setSelectedInvoice(data);
-                                        }}
+                                        // onClick={async () => {
+                                        //     setOpenPDF(true);
+                                        //     setSelectedInvoice(data);
+                                        // }}
+                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                         sx={{ minWidth: "42px" }}
                                     >
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
