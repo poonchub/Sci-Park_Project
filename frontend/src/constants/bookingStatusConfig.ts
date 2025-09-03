@@ -3,13 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   Clock,          // Pending
   BadgeCheck,     // Confirmed
-  CheckCircle2,   // Completed
   XCircle,        // Cancelled
   CreditCard,     // Paid/Unpaid
   RotateCcw,      // Refunded
   HelpCircle,
   CircleDollarSign,
-  Search,     // Unknown
+  Search,
+  CheckCircle,     // Unknown
 } from "lucide-react";
 
 /** โครงสร้าง config ของแต่ละสถานะ */
@@ -57,7 +57,7 @@ payment: {
 completed: {
   color: "#059669",        // เขียวเข้ม
   colorLite: "#D1FAE5",
-  icon: CheckCircle2,
+  icon: CheckCircle,
   label: "Completed",
 },
 

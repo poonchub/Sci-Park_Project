@@ -1570,12 +1570,21 @@ async function ListBookingRoomsByUser(userId: number) {
 
     return res;
 }
-async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null) {
+async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null, roomId: number) {
     try {
-        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
+        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}&room_id=${roomId}`);
         return response.data;
     } catch (error) {
         console.error("Error giting booking room:", error);
+        throw error;
+    }
+}
+async function GetBookingRoomSummaryThisMonth() {
+    try {
+        const response = await axiosInstance.get(`/booking-rooms/summary-current-month`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting booking room summary:", error);
         throw error;
     }
 }
@@ -3289,6 +3298,7 @@ export {
     // BookingRooms
     ListBookingRooms,
     ListBookingRoomByDateRange,
+    GetBookingRoomSummaryThisMonth,
     GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
 

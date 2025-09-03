@@ -326,6 +326,7 @@ func main() {
 
 		// Rooms
 		protected.GET("/rooms/meeting-room-summary-today", controller.GetMeetingRoomSummaryToday)
+		protected.GET("/booking-rooms/summary-current-month", controller.GetBookingRoomSummary)
 
 		// Invoice
 		protected.GET("/invoices", controller.ListInvoices)
