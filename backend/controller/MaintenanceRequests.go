@@ -217,13 +217,35 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	db := config.DB()
 
 	var request entity.MaintenanceRequest
-	if err := db.Where("id = ?", ID).Preload("User").First(&request).Error; err != nil {
+	if err := db.Preload("User").
+		Preload("MaintenanceImages").
+		Preload("Notifications").
+		Preload("Inspection").
+		Preload("ManagerApproval").
+		Preload("MaintenanceTask").
+		First(&request, "id = ?", ID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Maintenance request not found"})
 		return
 	}
 
-	if err := db.Where("id = ?", ID).Delete(&entity.MaintenanceRequest{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete Maintenance request"})
+	if len(request.MaintenanceImages) > 0 {
+		db.Delete(&request.MaintenanceImages)
+	}
+	if len(request.Notifications) > 0 {
+		db.Delete(&request.Notifications)
+	}
+	if len(request.Inspection) > 0 {
+		db.Delete(&request.Inspection)
+	}
+	if request.ManagerApproval != nil {
+		db.Delete(&request.ManagerApproval)
+	}
+	if request.MaintenanceTask != nil {
+		db.Delete(&request.MaintenanceTask)
+	}
+
+	if err := db.Delete(&request).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete maintenance request"})
 		return
 	}
 

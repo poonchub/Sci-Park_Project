@@ -62,6 +62,7 @@ import { useTranslation } from "react-i18next";
 import { Select } from "../../components/Select/Select";
 import {
     BrushCleaning,
+    ChartArea,
     ChartColumnStacked,
     ChartLine,
     Check,
@@ -794,11 +795,12 @@ function Dashboard() {
                             allowScrollButtonsMobile
                         >
                             <Tab label={t("maintenance")} {...a11yProps(0)} />
-                            <Tab label={"Booking Room"} {...a11yProps(1)} />
+                            <Tab label={"Room Booking"} {...a11yProps(1)} />
                             <Tab label={"Rental Room"} {...a11yProps(2)} />
                         </Tabs>
                     </Grid>
 
+                    {/* Maintenance Dashboard */}
                     <CustomTabPanel value={valueTab} index={0}>
                         <Grid container size={{ xs: 12 }} spacing={3}>
                             <Grid container size={{ md: 12, lg: 12, xl: 8 }} spacing={3}>
@@ -832,14 +834,26 @@ function Dashboard() {
                                             }}
                                             spacing={1}
                                         >
-                                            <Grid size={{ xs: 12, sm: 12, sm650: 4 }}>
-                                                <Typography
-                                                    variant="subtitle1"
-                                                    color="text.main"
-                                                    fontWeight={600}
+                                            <Grid
+                                                size={{ xs: 12, sm: 12, sm650: 4 }}
+                                            >
+                                                <Box
+                                                    sx={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 1
+                                                    }}
                                                 >
-                                                    Requests
-                                                </Typography>
+                                                    <ChartArea size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                                    <Typography
+                                                        variant="subtitle1"
+                                                        color="text.main"
+                                                        fontWeight={600}
+                                                        fontSize={18}
+                                                    >
+                                                        {`${selectedDateOption.charAt(0).toUpperCase() + selectedDateOption.slice(1).toLowerCase()} Requests`}
+                                                    </Typography>
+                                                </Box>
                                                 <Typography
                                                     variant="h4"
                                                     fontWeight={800}
@@ -1225,28 +1239,20 @@ function Dashboard() {
                                         }}
                                         spacing={1}
                                     >
-                                        <Grid size={{ xs: 12, sm: 12, sm650: 4 }}>
+                                        <Grid
+                                            container
+                                            size={{ xs: 12, sm: 12, sm650: 4 }}
+                                            direction={'row'}
+                                            alignItems={'center'}
+                                        >
+                                            <ChartArea size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                             <Typography
                                                 variant="subtitle1"
                                                 color="text.main"
                                                 fontWeight={600}
+                                                fontSize={18}
                                             >
-                                                Booking
-                                            </Typography>
-                                            <Typography
-                                                variant="h4"
-                                                fontWeight={800}
-                                                color="primary"
-                                            >
-                                                <Box component="span">
-                                                    {`${bookingRooms.length}`}
-                                                </Box>{" "}
-                                                <Box
-                                                    component="span"
-                                                    sx={{ fontSize: 20, fontWeight: 700 }}
-                                                >
-                                                    Items
-                                                </Box>
+                                                {`${selectedDateOptionBookingRoom.charAt(0).toUpperCase() + selectedDateOptionBookingRoom.slice(1).toLowerCase()} Room Bookings`}
                                             </Typography>
                                         </Grid>
                                         <Grid
@@ -1543,14 +1549,14 @@ function Dashboard() {
                                             direction={'row'}
                                             alignItems={'center'}
                                         >
-                                            <ChartColumnStacked size={24} style={{ minWidth: '24px', minHeight: '24px' }} />
+                                            <ChartColumnStacked size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                             <Typography
                                                 variant="subtitle1"
                                                 color="text.main"
                                                 fontWeight={600}
-                                                fontSize={22}
+                                                fontSize={18}
                                             >
-                                                Revenue
+                                                {`${selectedDateOptionBookingRoomRevenue.charAt(0).toUpperCase() + selectedDateOptionBookingRoomRevenue.slice(1).toLowerCase()} Revenue`}
                                             </Typography>
                                         </Grid>
                                         <Grid
@@ -1806,12 +1812,12 @@ function Dashboard() {
                                             direction={'row'}
                                             alignItems={'center'}
                                         >
-                                            <ChartColumnStacked size={24} style={{ minWidth: '24px', minHeight: '24px' }} />
+                                            <ChartColumnStacked size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                                             <Typography
                                                 variant="subtitle1"
                                                 color="text.main"
                                                 fontWeight={600}
-                                                fontSize={22}
+                                                fontSize={18}
                                             >
                                                 {`${selectedDateOptionRentalRoomRevenue.charAt(0).toUpperCase() + selectedDateOptionRentalRoomRevenue.slice(1).toLowerCase()} Revenue`}
                                             </Typography>

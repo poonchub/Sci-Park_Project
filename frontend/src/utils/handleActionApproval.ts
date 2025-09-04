@@ -3,7 +3,6 @@ import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
 import { ManagerApprovalsInterface } from "../interfaces/IManagerApprovals";
 import { NotificationsInterface } from "../interfaces/INotifications";
 import { CreateMaintenanceTask, CreateManagerApproval, CreateNotification, SendMaintenanceStatusEmail, UpdateMaintenanceRequestByID, UpdateNotificationsByRequestID } from "../services/http";
-import { handleUpdateNotification } from "./handleUpdateNotification";
 
 interface AlertMessage {
     type: "error" | "warning" | "success";

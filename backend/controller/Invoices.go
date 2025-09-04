@@ -338,12 +338,18 @@ func CreateInvoice(c *gin.Context) {
 
 	db := config.DB()
 
-	nextInvoiceNumber, err := GenerateNextInvoiceNumber(db)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var invoiceCheck entity.Invoice
+	if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
 		return
 	}
-	invoice.InvoiceNumber = nextInvoiceNumber
+
+	// nextInvoiceNumber, err := GenerateNextInvoiceNumber(db)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// invoice.InvoiceNumber = nextInvoiceNumber
 
 	var status entity.PaymentStatus
 	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {

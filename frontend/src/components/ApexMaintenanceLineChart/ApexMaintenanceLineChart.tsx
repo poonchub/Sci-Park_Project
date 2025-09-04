@@ -64,23 +64,23 @@ function ApexMaintenanceLineChart(props: {
                     break;
                 case "daily":
                     end = now.endOf("day");
-                    start = end.subtract(15, "day");
+                    start = end.subtract(15, "day").startOf("day");
                     break;
                 case "weekly":
                     end = now.endOf("isoWeek");
-                    start = end.subtract(11, "week");
+                    start = end.subtract(11, "week").startOf("isoWeek");
                     break;
                 case "monthly":
                     end = now.endOf("month");
-                    start = end.subtract(11, "month");
+                    start = end.subtract(11, "month").startOf("month");
                     break;
                 case "yearly":
                     end = now.endOf("year");
-                    start = end.subtract(5, "year");
+                    start = end.subtract(5, "year").startOf("year");
                     break;
                 default:
                     end = now.endOf("day");
-                    start = end.subtract(15, "day");
+                    start = end.subtract(15, "day").startOf("day");
             }
         }
 

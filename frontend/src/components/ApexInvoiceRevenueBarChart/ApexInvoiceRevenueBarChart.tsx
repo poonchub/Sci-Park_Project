@@ -46,23 +46,23 @@ const ApexInvoiceRevenueBarChart = (props: {
             switch (option) {
                 case "daily":
                     end = now.endOf("day");
-                    start = end.subtract(6, "day");
+                    start = end.subtract(6, "day").startOf("day");
                     break;
                 case "weekly":
                     end = now.endOf("isoWeek");
-                    start = end.subtract(3, "week");
+                    start = end.subtract(3, "week").startOf("isoWeek");
                     break;
                 case "monthly":
                     end = now.endOf("month");
-                    start = end.subtract(5, "month");
+                    start = end.subtract(5, "month").startOf("month");
                     break;
                 case "yearly":
                     end = now.endOf("year");
-                    start = end.subtract(3, "year");
+                    start = end.subtract(3, "year").startOf("year");
                     break;
                 default:
                     end = now.endOf("month");
-                    start = end.subtract(5, "month");
+                    start = end.subtract(5, "month").startOf("month");
             }
         }
 

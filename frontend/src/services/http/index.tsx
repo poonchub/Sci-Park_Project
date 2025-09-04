@@ -948,24 +948,14 @@ async function UpdateMaintenanceRequestByID(data: MaintenanceRequestsInterface, 
 
     return res;
 }
-async function DeleteMaintenanceRequestByID(bookingID: number | undefined) {
-    const requestOptions = {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/maintenance-request/${bookingID}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+async function DeleteMaintenanceRequestByID(requestID: number | undefined) {
+    try {
+        const response = await axiosInstance.delete(`/maintenance-request/${requestID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting maintenance request:", error);
+        throw error;
+    }
 }
 
 // MaintenanceImages

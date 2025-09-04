@@ -37,12 +37,13 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
-import { Check, ClipboardList, Clock, Eye, FileQuestion, HelpCircle, UserRound, X } from "lucide-react";
+import { Check, ClipboardList, Clock, Eye, FileQuestion, HelpCircle, Trash2, UserRound, X } from "lucide-react";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 import { useUserStore } from "../../store/userStore";
+import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
 function AllMaintenanceRequest() {
-    const {user} = useUserStore();
+    const { user } = useUserStore();
     const [operators, setOperators] = useState<UserInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
@@ -60,6 +61,7 @@ function AllMaintenanceRequest() {
 
     const [openPopupApproved, setOpenPopupApproved] = useState(false);
     const [openConfirmRejected, setOpenConfirmRejected] = useState<boolean>(false);
+    const [openConfirmDelete, setOpenConfirmDelete] = useState<boolean>(false);
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
@@ -80,6 +82,7 @@ function AllMaintenanceRequest() {
                     renderCell: (params) => {
                         const data = params.row;
                         const showButtonApprove = params.row.RequestStatus?.Name === "Pending" && (isManager() || isAdmin());
+                        const showButtonDelete = params.row.RequestStatus?.Name === "Unsuccessful" && isAdmin();
 
                         const statusName = params.row.RequestStatus?.Name || "Pending";
                         const statusKey = params.row.RequestStatus?.Name as keyof typeof statusConfig;
@@ -284,6 +287,47 @@ function AllMaintenanceRequest() {
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 2 }}>
+                                                    <Tooltip title={"Details"}>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                handleClickCheck(data);
+                                                            }}
+                                                            sx={{
+                                                                minWidth: "42px",
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                            {width && width > 650 && (
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Details
+                                                                </Typography>
+                                                            )}
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                            </Grid>
+                                        ) : showButtonDelete ? (
+                                            <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Tooltip title={"Delete"}>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                setOpenConfirmDelete(true);
+                                                                setSelectedRequest(data);
+                                                            }}
+                                                            fullWidth
+                                                        >
+                                                            <Trash2 size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Delete
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Grid>
+                                                <Grid size={{ xs: 6 }}>
                                                     <Tooltip title={"Details"}>
                                                         <Button
                                                             variant="outlinedGray"
@@ -587,6 +631,7 @@ function AllMaintenanceRequest() {
                     renderCell: (item) => {
                         const data = item.row;
                         const showButtonApprove = item.row.RequestStatus?.Name === "Pending" && (isManager() || isAdmin());
+                        const showButtonDelete = item.row.RequestStatus?.Name === "Unsuccessful" && isAdmin();
                         return (
                             <Box
                                 className="container-btn"
@@ -633,6 +678,44 @@ function AllMaintenanceRequest() {
                                                 <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                 <Typography variant="textButtonClassic" className="text-btn">
                                                     Reject
+                                                </Typography>
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title={"Details"}>
+                                            <Button
+                                                className="btn-detail"
+                                                variant="outlinedGray"
+                                                onClick={() => {
+                                                    handleClickCheck(data);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                }}
+                                            >
+                                                <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Details
+                                                </Typography>
+                                            </Button>
+                                        </Tooltip>
+                                    </>
+                                ) : showButtonDelete ? (
+                                    <>
+                                        <Tooltip title={"Delete"}>
+                                            <Button
+                                                className="btn-detail"
+                                                variant="outlinedGray"
+                                                onClick={() => {
+                                                    setSelectedRequest(data);
+                                                    setOpenConfirmDelete(true);
+                                                }}
+                                                sx={{
+                                                    minWidth: "42px",
+                                                }}
+                                            >
+                                                <Trash2 size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                    Delete
                                                 </Typography>
                                             </Button>
                                         </Tooltip>
@@ -774,6 +857,15 @@ function AllMaintenanceRequest() {
         setIsButtonActive(false);
     };
 
+    const handleClickDeleteRequest = () => {
+        handleDeleteMaintenanceRequest({
+            requestID: selectedRequest.ID || 0,
+            setAlerts,
+            setOpenPopup: setOpenConfirmDelete,
+            setIsButtonActive,
+        })
+    }
+
     const handleClearFillter = () => {
         setSelectedDate(null);
         setSearchText("");
@@ -912,6 +1004,16 @@ function AllMaintenanceRequest() {
                 title="Confirm Maintenance Request Rejection"
                 message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
+                buttonActive={isButtonActive}
+            />
+
+            {/* Delete Comfirm */}
+            <ConfirmDialog
+                open={openConfirmDelete}
+                setOpenConfirm={setOpenConfirmDelete}
+                handleFunction={handleClickDeleteRequest}
+                title="Confirm Maintenance Request Deletion"
+                message="Are you sure you want to delete this maintenance request? This action cannot be undone."
                 buttonActive={isButtonActive}
             />
 

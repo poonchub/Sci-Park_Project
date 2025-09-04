@@ -192,7 +192,7 @@ function ApexBookingLineChart(props: {
                 toolbar: { show: false },
                 zoom: { enabled: false },
             },
-            colors: ["#1E90FF"],
+            colors: ["#F26522"],
             dataLabels: { enabled: false },
             stroke: { curve: "smooth" },
             xaxis: {

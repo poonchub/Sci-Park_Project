@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Card, CardContent, Container, Grid, Skeleton, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleLeft, faCheck, faPaperPlane, faRepeat, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import "./CheckRequest.css";
 
@@ -24,20 +22,20 @@ import { maintenanceTypeConfig } from "../../constants/maintenanceTypeConfig";
 import SubmitPopup from "../../components/SubmitPopup/SubmitPopup";
 import handleSubmitWork from "../../utils/handleSubmitWork";
 import TaskInfoTable from "../../components/TaskInfoTable/TaskInfoTable";
-import { isAdmin, isManager, isMaintenanceOperator, isDocumentOperator } from "../../routes";
+import { isAdmin, isManager, isMaintenanceOperator } from "../../routes";
 import handleActionApproval from "../../utils/handleActionApproval";
 import ApprovePopup from "../../components/ApprovePopup/ApprovePopup";
 import handleActionAcception from "../../utils/handleActionAcception";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
-import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 
 import { io } from "socket.io-client";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { Check, ChevronLeft, NotebookText, Repeat, Send, X } from "lucide-react";
+import { Check, ChevronLeft, NotebookText, Repeat, Send, Trash2, X } from "lucide-react";
 import { convertPathsToFiles } from "../../utils/convertPathsToFiles";
+import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
 function CheckRequest() {
     // Request data
@@ -57,6 +55,7 @@ function CheckRequest() {
     const [openConfirmCancelledFromOperator, setOpenConfirmCancelledFromOperator] = useState<boolean>(false);
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
+    const [openConfirmDelete, setOpenConfirmDelete] = useState<boolean>(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
     const [submitfiles, setSubmitFiles] = useState<File[]>([]);
@@ -68,7 +67,7 @@ function CheckRequest() {
 
     const [searchParams] = useSearchParams();
 
-    const [isBottonActive, setIsBottonActive] = useState(false);
+    const [isButtonActive, setIsButtonActive] = useState(false);
 
     // Extract info for cards
     const managerApproval = maintenanceRequest?.ManagerApproval;
@@ -89,8 +88,8 @@ function CheckRequest() {
             ? maintenanceTask?.Note
                 ? `${maintenanceTask?.User?.FirstName} ${maintenanceTask.User?.LastName}`
                 : managerApproval?.Note
-                  ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
-                  : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
+                    ? `${managerApproval.User?.FirstName} ${managerApproval.User?.LastName}`
+                    : `${maintenanceRequest.User?.FirstName} ${maintenanceRequest.User?.LastName}`
             : "";
 
     const cancelDate =
@@ -98,8 +97,8 @@ function CheckRequest() {
             ? maintenanceTask?.Note
                 ? dateFormat(maintenanceTask?.UpdatedAt || "")
                 : managerApproval?.Note
-                  ? dateFormat(managerApproval?.UpdatedAt || "")
-                  : dateFormat(maintenanceRequest?.UpdatedAt || "")
+                    ? dateFormat(managerApproval?.UpdatedAt || "")
+                    : dateFormat(maintenanceRequest?.UpdatedAt || "")
             : "";
 
     const userID = Number(localStorage.getItem("userId"));
@@ -157,11 +156,11 @@ function CheckRequest() {
 
     // Handle sumitting task to an operator
     const onClickSubmit = () => {
-        setIsBottonActive(true);
+        setIsButtonActive(true);
 
         if (!maintenanceRequest) {
             setAlerts((prev) => [...prev, { type: "error", message: "Selected maintenance request not found" }]);
-            setIsBottonActive(false);
+            setIsButtonActive(false);
             return;
         }
 
@@ -173,13 +172,13 @@ function CheckRequest() {
             files: submitfiles,
             setFiles: setSubmitFiles,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     // Handle approval or rejection
     const handleClickApprove = (statusName: "Approved" | "Unsuccessful", actionType: "approve" | "reject", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         handleActionApproval(statusID, {
             userID: Number(userID),
             selectedRequest: maintenanceRequest || {},
@@ -191,12 +190,12 @@ function CheckRequest() {
             actionType,
             note,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClickAcceptWork = (statusName: "In Progress" | "Unsuccessful", actionType: "accept" | "cancel", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         handleActionAcception(statusID, {
             selectedTask: maintenanceTask,
             setAlerts,
@@ -204,12 +203,12 @@ function CheckRequest() {
             actionType,
             note,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClickInspection = (statusName: "Completed" | "Rework Requested", actionType: "confirm" | "rework", note?: string) => {
         const statusID = requestStatuses?.find((item) => item.Name === statusName)?.ID || 0;
-        setIsBottonActive(true);
+        setIsButtonActive(true);
         handleActionInspection(statusID, {
             userID,
             selectedRequest: maintenanceRequest,
@@ -220,12 +219,12 @@ function CheckRequest() {
             note,
             files: requestfiles,
         });
-        setIsBottonActive(false);
+        setIsButtonActive(false);
     };
 
     const handleClickCancel = async () => {
         try {
-            setIsBottonActive(true);
+            setIsButtonActive(true);
             const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
 
             const request: MaintenanceRequestsInterface = {
@@ -239,15 +238,28 @@ function CheckRequest() {
                 setAlerts((prev) => [...prev, { type: "success", message: "Request cancelled successfully" }]);
 
                 setOpenConfirmCancelledFromOwnRequest(false);
-                setIsBottonActive(false);
+                setIsButtonActive(false);
             }, 500);
         } catch (error) {
             console.error("API Error:", error);
             const errMessage = (error as Error).message || "Unknown error!";
             setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
-            setIsBottonActive(false);
+            setIsButtonActive(false);
         }
     };
+
+    const handleClickDeleteRequest = () => {
+        handleDeleteMaintenanceRequest({
+            requestID: maintenanceRequest?.ID || 0,
+            setAlerts,
+            setOpenPopup: setOpenConfirmDelete,
+            setIsButtonActive,
+        })
+
+        setTimeout(() => {
+           handleBack() 
+        }, 500)
+    }
 
     // Handle back navigation
     const handleBack = () => {
@@ -310,7 +322,7 @@ function CheckRequest() {
                 handleFunction={() => handleClickCancel()}
                 title="Confirm Cancel Request"
                 message="Are you sure you want to cancel this request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Approve Popup */}
@@ -323,7 +335,7 @@ function CheckRequest() {
                 setSelectedOperator={setSelectedOperator}
                 operators={operators}
                 maintenanceTypeConfig={maintenanceTypeConfig}
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Rejected Confirm */}
@@ -334,7 +346,7 @@ function CheckRequest() {
                 title="Confirm Maintenance Request Rejection"
                 message="Are you sure you want to reject this maintenance request? This action cannot be undone."
                 showNoteField
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Cancellation From Operator Confirm */}
@@ -345,7 +357,7 @@ function CheckRequest() {
                 title="Confirm Maintenance Cancellation"
                 message="Are you sure you want to cancel this maintenance request? This action cannot be undone."
                 showNoteField
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Inspection Confirm */}
@@ -355,7 +367,7 @@ function CheckRequest() {
                 handleFunction={() => handleClickInspection("Completed", "confirm")}
                 title="Confirm Maintenance Inspection"
                 message="Are you sure you want to confirm the inspection of this maintenance request? This action cannot be undone."
-                buttonActive={isBottonActive}
+                buttonActive={isButtonActive}
             />
 
             {/* Rework Confirm */}
@@ -371,6 +383,16 @@ function CheckRequest() {
                 onChangeFiles={setRequestFiles}
             />
 
+            {/* Delete Comfirm */}
+            <ConfirmDialog
+                open={openConfirmDelete}
+                setOpenConfirm={setOpenConfirmDelete}
+                handleFunction={handleClickDeleteRequest}
+                title="Confirm Maintenance Request Deletion"
+                message="Are you sure you want to delete this maintenance request? This action cannot be undone."
+                buttonActive={isButtonActive}
+            />
+
             {/* Header section with title and back button */}
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
@@ -383,7 +405,7 @@ function CheckRequest() {
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
                             <Button variant="outlined" onClick={handleBack}>
-                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
+                                <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
                         </Box>
@@ -491,13 +513,13 @@ function CheckRequest() {
                                                         py: 1,
                                                     }}
                                                 >
-                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                     <Typography variant="textButtonClassic">Reject</Typography>
                                                 </Button>
 
                                                 {/* Approve button */}
                                                 <Button variant="contained" onClick={() => setOpenPopupApproved(true)} sx={{ px: 4, py: 1 }}>
-                                                    <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                    <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                     <Typography variant="textButtonClassic">Approve</Typography>
                                                 </Button>
                                             </Box>
@@ -525,7 +547,7 @@ function CheckRequest() {
                                                             py: 1,
                                                         }}
                                                     >
-                                                        <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                        <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                         <Typography variant="textButtonClassic">Cancel</Typography>
                                                     </Button>
                                                 ) : isWaitingForReview ? (
@@ -536,7 +558,7 @@ function CheckRequest() {
                                                                 setOpenConfirmRework(true);
                                                             }}
                                                         >
-                                                            <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
+                                                            <Repeat size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
                                                             <Typography variant="textButtonClassic">Rework</Typography>
                                                         </Button>
 
@@ -547,7 +569,7 @@ function CheckRequest() {
                                                             }}
                                                             sx={{ px: 4, py: 1 }}
                                                         >
-                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                             <Typography variant="textButtonClassic">Confirm</Typography>
                                                         </Button>
                                                     </Box>
@@ -570,7 +592,7 @@ function CheckRequest() {
                                                         py: 1,
                                                     }}
                                                 >
-                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                     <Typography variant="textButtonClassic">Cancel</Typography>
                                                 </Button>
 
@@ -582,7 +604,7 @@ function CheckRequest() {
                                                         }}
                                                         sx={{ px: 4, py: 1 }}
                                                     >
-                                                        <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }}/>
+                                                        <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                         <Typography variant="textButtonClassic">Start</Typography>
                                                     </Button>
                                                 ) : isInProgress || isWaitingForReview ? (
@@ -592,13 +614,33 @@ function CheckRequest() {
                                                             setOpenPopupSubmit(true);
                                                         }}
                                                     >
-                                                        <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }}/>
+                                                        <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
                                                         <Typography variant="textButtonClassic">Submit</Typography>
                                                     </Button>
                                                 ) : (
                                                     <></>
                                                 )}
                                             </Box>
+                                        )}
+
+                                        {isUnsuccessful && (isAdmin()) ? (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                {/* Delete button */}
+                                                <Button
+                                                    variant="outlinedGray"
+                                                    onClick={() => setOpenConfirmDelete(true)}
+                                                    sx={{
+                                                        minWidth: "0px",
+                                                        px: 2,
+                                                        py: 1,
+                                                    }}
+                                                >
+                                                    <Trash2 size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                    <Typography variant="textButtonClassic">Delete</Typography>
+                                                </Button>
+                                            </Box>
+                                        ) : (
+                                            <></>
                                         )}
                                     </Grid>
                                 </Grid>

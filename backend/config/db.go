@@ -897,7 +897,7 @@ func SeedDatabase() {
 			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
 			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
 			PayerID:     users[2+i%len(users)].ID,
-			StatusID:    2,
+			StatusID:    4,
 			InvoiceID:   uint(i + 3),
 		}
 		payments = append(payments, p)

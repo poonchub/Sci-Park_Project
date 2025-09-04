@@ -114,6 +114,7 @@ type InvoiceItemError = {
 };
 
 type FormErrors = {
+    InvoiceNumber?: string;
     IssueDate?: string;
     DueDate?: string;
     BillingPeriod?: string;
@@ -155,7 +156,7 @@ function RoomRentalSpace() {
     const dueDate = today.date(15).toISOString();
     const billingPeriod = today.subtract(1, "month").endOf("month").toISOString();
     const [invoiceFormData, setInvoiceFormData] = useState<InvoiceInterface>({
-        ID: 0,
+        InvoiceNumber: "",
         IssueDate: issueDate,
         DueDate: dueDate,
         BillingPeriod: billingPeriod,
@@ -443,7 +444,7 @@ function RoomRentalSpace() {
                     setSelectedRoom(null);
                 }
                 getInvoice()
-            }, 1800);
+            }, 500);
         } catch (error: any) {
             console.error("🚨 Error creating invoice:", error);
             if (error.status === 409) {
@@ -707,6 +708,9 @@ function RoomRentalSpace() {
         const newErrors: { [key: string]: any } = {};
 
         // Validate Invoice
+        if (!invoiceFormData.InvoiceNumber || !invoiceFormData.InvoiceNumber.trim()) {
+            newErrors.InvoiceNumber = "Please select the issue date.";
+        }
         if (!invoiceFormData.IssueDate) {
             newErrors.IssueDate = "Please select the issue date.";
         }
@@ -2481,8 +2485,6 @@ function RoomRentalSpace() {
         );
     };
 
-    console.log("selectedRoom", selectedRoom);
-
     return (
         <Box className="room-rental-space-page">
             {/* Show Alerts */}
@@ -2576,6 +2578,20 @@ function RoomRentalSpace() {
                 </DialogTitle>
                 <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
                     <Grid container size={{ xs: 12 }} spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                                Invoice Number
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                name="InvoiceNumber"
+                                value={invoiceFormData.InvoiceNumber}
+                                onChange={(e) => setInvoiceFormData({ ...invoiceFormData, InvoiceNumber: e.target.value })}
+                                placeholder="Enter invoice number."
+                                error={!!errors.InvoiceNumber}
+                                helperText={errors.InvoiceNumber}
+                            />
+                        </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Issue Date

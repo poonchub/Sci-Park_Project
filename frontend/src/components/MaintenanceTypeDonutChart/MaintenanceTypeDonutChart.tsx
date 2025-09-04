@@ -9,9 +9,11 @@ import {
     Box,
     LinearProgress,
     Avatar,
+    Grid,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig';
+import { ChartPie } from 'lucide-react';
 
 interface Props {
     data: Record<string, { total: number; completed: number; completedPercentage: number }>
@@ -123,9 +125,23 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent>
-                <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                    Maintenance Types
-                </Typography>
+                <Grid
+                    container
+                    size={{ xs: 12, sm: 12, sm650: 4 }}
+                    direction={'row'}
+                    alignItems={'center'}
+                    spacing={1}
+                >
+                    <ChartPie size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                    <Typography
+                        variant="subtitle1"
+                        color="text.main"
+                        fontWeight={600}
+                        fontSize={18}
+                    >
+                        Maintenance Types
+                    </Typography>
+                </Grid>
 
                 <Box display="flex" justifyContent="center" alignItems="center" height={height}>
                     {
@@ -158,7 +174,7 @@ function MaintenanceTypeDonutChart({ data, height = 220, completed }: Props) {
                                                 color: maintenanceTypeConfig[label].color,
                                             }}
                                         >
-                                            <Icon size={16}  style={{ minWidth: '16px', minHeight: '16px', marginBottom: '2px' }}/>
+                                            <Icon size={16} style={{ minWidth: '16px', minHeight: '16px', marginBottom: '2px' }} />
                                         </Avatar>
                                         <Typography variant="body2">{label}</Typography>
                                     </Stack>
