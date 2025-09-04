@@ -948,24 +948,14 @@ async function UpdateMaintenanceRequestByID(data: MaintenanceRequestsInterface, 
 
     return res;
 }
-async function DeleteMaintenanceRequestByID(bookingID: number | undefined) {
-    const requestOptions = {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/maintenance-request/${bookingID}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
-    return res;
+async function DeleteMaintenanceRequestByID(requestID: number | undefined) {
+    try {
+        const response = await axiosInstance.delete(`/maintenance-request/${requestID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting maintenance request:", error);
+        throw error;
+    }
 }
 
 // MaintenanceImages
@@ -1570,12 +1560,21 @@ async function ListBookingRoomsByUser(userId: number) {
 
     return res;
 }
-async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null) {
+async function ListBookingRoomByDateRange(startDate: string | null, endDate: string | null, roomId: number) {
     try {
-        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}`);
+        const response = await axiosInstance.get(`/booking-rooms/by-date?start_date=${startDate}&end_date=${endDate}&room_id=${roomId}`);
         return response.data;
     } catch (error) {
         console.error("Error giting booking room:", error);
+        throw error;
+    }
+}
+async function GetBookingRoomSummaryThisMonth() {
+    try {
+        const response = await axiosInstance.get(`/booking-rooms/summary-current-month`);
+        return response.data;
+    } catch (error) {
+        console.error("Error giting booking room summary:", error);
         throw error;
     }
 }
@@ -2762,6 +2761,20 @@ async function DeleteInvoiceByID(invoiceID: number): Promise<any> {
         throw error;
     }
 }
+async function UploadInvoicePDF(data: FormData) {
+    try {
+        const response = await axiosInstance.post(`/invoice/upload-pdf`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error uploading invoice PDF:", error);
+        throw error;
+    }
+}
 
 // InvoiceItems
 async function CreateInvoiceItems(data: InvoiceItemInterface) {
@@ -3275,6 +3288,7 @@ export {
     // BookingRooms
     ListBookingRooms,
     ListBookingRoomByDateRange,
+    GetBookingRoomSummaryThisMonth,
     GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
 
@@ -3366,6 +3380,7 @@ export {
     GetInvoiceByOption,
     DeleteInvoiceByID,
     UpdateInvoiceByID,
+    UploadInvoicePDF,
 
     // InvoiceItems
     CreateInvoiceItems,

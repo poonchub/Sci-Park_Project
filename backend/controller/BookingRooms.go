@@ -40,8 +40,8 @@ type BookingRoomResponse struct {
 	Purpose         string               `json:"Purpose"`
 	AdditionalInfo  AdditionalInfo       `json:"AdditionalInfo"`
 	StatusName      string               `json:"StatusName"`
-	Payment       *PaymentSummary `json:"Payment,omitempty"`
-	DisplayStatus string          `json:"DisplayStatus"`
+	Payment         *PaymentSummary      `json:"Payment,omitempty"`
+	DisplayStatus   string               `json:"DisplayStatus"`
 }
 
 type AdditionalInfo struct {
@@ -141,7 +141,6 @@ func minBookingDate(b entity.BookingRoom) (time.Time, bool) {
 	// strip time component to compare by day
 	return time.Date(min.Year(), min.Month(), min.Day(), 0, 0, 0, 0, min.Location()), true
 }
-
 
 // ===== Controller: แสดงรายการ Booking ทั้งหมด =====
 func ListBookingRooms(c *gin.Context) {
@@ -534,8 +533,6 @@ func CreateBookingRoom(c *gin.Context) {
 	})
 }
 
-
-
 // ห้ามยกเลิกถ้าเหลือน้อยกว่า 2 วันก่อนวันใช้งานแรก
 // (ยังคงเก็บประวัติ: เปลี่ยนสถานะเป็น cancelled ไม่ลบข้อมูล)
 func CancelBookingRoom(c *gin.Context) {
@@ -705,16 +702,21 @@ func AutoCancelUnpaidBookingsHandler(c *gin.Context) {
 
 // GET /booking-room/by-date
 func ListBookingRoomByDateRange(c *gin.Context) {
-	var booking []entity.BookingRoom
+	var bookings []entity.BookingRoom
 
 	startDateStr := c.Query("start_date")
 	endDateStr := c.Query("end_date")
+	roomIDStr := c.Query("room_id")
 
 	db := config.DB()
 
 	query := db.
 		Preload("Status").
-		Order("created_at ASC")
+		Preload("BookingDates").
+		Joins("JOIN booking_dates ON booking_dates.booking_room_id = booking_rooms.id").
+		Order("booking_dates.date ASC").
+		Model(&entity.BookingRoom{}).
+		Distinct("booking_rooms.id")
 
 	layout := "2006-01-02"
 	loc, err := time.LoadLocation("Asia/Bangkok")
@@ -733,7 +735,7 @@ func ListBookingRoomByDateRange(c *gin.Context) {
 		if endDateStr == "" {
 			startOfDay := startDate
 			endOfDay := startDate.AddDate(0, 0, 1)
-			query = query.Where("created_at >= ? AND created_at < ?", startOfDay, endOfDay)
+			query = query.Where("booking_dates.date >= ? AND booking_dates.date < ?", startOfDay, endOfDay)
 		} else {
 			endDate, errEnd := time.ParseInLocation(layout, endDateStr, loc)
 			if errEnd != nil {
@@ -741,15 +743,67 @@ func ListBookingRoomByDateRange(c *gin.Context) {
 				return
 			}
 			endDate = endDate.AddDate(0, 0, 1)
-			query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
+			query = query.Where("booking_dates.date >= ? AND booking_dates.date < ?", startDate, endDate)
 		}
 	}
 
-	results := query.Find(&booking)
+	if roomIDStr != "" {
+		query = query.Where("booking_rooms.room_id = ?", roomIDStr)
+	}
+
+	results := query.Find(&bookings)
 	if results.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": results.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, &booking)
+	c.JSON(http.StatusOK, gin.H{
+		"bookings": bookings,
+	})
+}
+
+// GET /booking-rooms/summary-current-month
+func GetBookingRoomSummary(c *gin.Context) {
+	type StatusCount struct {
+		StatusName string
+		Count      int64
+	}
+
+	var statusCounts []StatusCount
+	var totalBookings int64
+
+	db := config.DB()
+
+	// กำหนด timezone Asia/Bangkok
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
+		return
+	}
+
+	now := time.Now().In(loc)
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+	// Query นับตามสถานะ
+	db.
+		Table("booking_statuses").
+		Select("booking_statuses.status_name, COUNT(DISTINCT booking_rooms.id) as count").
+		Joins("LEFT JOIN booking_rooms ON booking_rooms.status_id = booking_statuses.id").
+		Joins("LEFT JOIN booking_dates ON booking_dates.booking_room_id = booking_rooms.id AND booking_dates.date >= ? AND booking_dates.date <= ?", startOfMonth, endOfMonth).
+		Group("booking_statuses.status_name").
+		Scan(&statusCounts)
+
+	// Query นับ total bookings ในเดือน
+	db.
+		Model(&entity.BookingRoom{}).
+		Joins("JOIN booking_dates ON booking_dates.booking_room_id = booking_rooms.id").
+		Where("booking_dates.date >= ? AND booking_dates.date <= ?", startOfMonth, endOfMonth).
+		Distinct("booking_rooms.id").
+		Count(&totalBookings)
+
+	c.JSON(http.StatusOK, gin.H{
+		"status_summary": statusCounts,
+		"total_bookings": totalBookings,
+	})
 }

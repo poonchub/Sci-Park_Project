@@ -13,4 +13,4 @@ type TimeSlot struct {
 	EndTime      time.Time	`valid:"required~กรุณาระบุเวลาสิ้นสุด"` 
 	BookingRooms []BookingRoom `gorm:"many2many:booking_room_timeslots;"`
 	RoomPrice    []RoomPrice `gorm:"foreignKey:TimeSlotID"`
-}	
+}

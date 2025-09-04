@@ -100,6 +100,7 @@ import { PaymentInterface } from "../../interfaces/IPayments";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
 import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
+import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
 
 const MyAccount: React.FC = () => {
@@ -145,6 +146,7 @@ const MyAccount: React.FC = () => {
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openPopupPayment, setOpenPopupPayment] = useState(false);
     const [openPDF, setOpenPDF] = useState(false);
+    const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
     const { notificationCounts } = useNotificationStore();
@@ -317,36 +319,45 @@ const MyAccount: React.FC = () => {
         setIsButtonActive(false);
     };
 
-    const handleClickCancel = async () => {
-        try {
-            setIsButtonActive(true);
-            const resRequest = await DeleteMaintenanceRequestByID(selectedRequest?.ID);
-            if (!resRequest || resRequest.error)
-                throw new Error(resRequest?.error || "Failed to delete request status.");
+    // const handleClickCancel = async () => {
+    //     try {
+    //         setIsButtonActive(true);
+    //         const resRequest = await DeleteMaintenanceRequestByID(selectedRequest?.ID);
+    //         if (!resRequest || resRequest.error)
+    //             throw new Error(resRequest?.error || "Failed to delete request status.");
 
-            const notificationDataUpdate: NotificationsInterface = {
-                IsRead: true,
-            };
-            const resUpdateNotification = await UpdateNotificationsByRequestID(
-                notificationDataUpdate,
-                selectedRequest.ID
-            );
-            if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+    //         const notificationDataUpdate: NotificationsInterface = {
+    //             IsRead: true,
+    //         };
+    //         const resUpdateNotification = await UpdateNotificationsByRequestID(
+    //             notificationDataUpdate,
+    //             selectedRequest.ID
+    //         );
+    //         if (!resUpdateNotification || resUpdateNotification.error)
+    //             throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
-            handleSetAlert("success", "Request cancelled successfully.");
-            setTimeout(() => {
-                setOpenConfirmCancelled(false);
-                setIsButtonActive(false);
-            }, 500);
-        } catch (error) {
-            setAlerts([]);
-            console.error("API Error:", error);
-            const errMessage = (error as Error).message || "Unknown error!";
-            handleSetAlert("error", errMessage);
-            setIsButtonActive(false);
-        }
-    };
+    //         handleSetAlert("success", "Request cancelled successfully.");
+    //         setTimeout(() => {
+    //             setOpenConfirmCancelled(false);
+    //             setIsButtonActive(false);
+    //         }, 500);
+    //     } catch (error) {
+    //         setAlerts([]);
+    //         console.error("API Error:", error);
+    //         const errMessage = (error as Error).message || "Unknown error!";
+    //         handleSetAlert("error", errMessage);
+    //         setIsButtonActive(false);
+    //     }
+    // };
+
+    const handleClickDeleteRequest = () => {
+        handleDeleteMaintenanceRequest({
+            requestID: selectedRequest.ID || 0,
+            setAlerts,
+            setOpenPopup: setOpenConfirmDelete,
+            setIsButtonActive,
+        })
+    }
 
     const handleUploadSlip = async (resCheckSlip?: any) => {
         if (!selectedInvoice?.ID) {
@@ -569,7 +580,7 @@ const MyAccount: React.FC = () => {
                         handleClickUpdatePayment();
                     }
                 }
-                else { 
+                else {
                     const data = {
                         data: {
                             transTimestamp: new Date().toISOString()
@@ -900,7 +911,7 @@ const MyAccount: React.FC = () => {
                                                         <Button
                                                             variant="outlinedCancel"
                                                             onClick={() => {
-                                                                setOpenConfirmCancelled(true);
+                                                                setOpenConfirmDelete(true);
                                                                 setSelectedRequest(data);
                                                             }}
                                                             fullWidth
@@ -1249,7 +1260,7 @@ const MyAccount: React.FC = () => {
                                                 className="btn-confirm"
                                                 variant="outlinedCancel"
                                                 onClick={() => {
-                                                    setOpenConfirmCancelled(true);
+                                                    setOpenConfirmDelete(true);
                                                     setSelectedRequest(data);
                                                 }}
                                                 sx={{
@@ -1346,6 +1357,8 @@ const MyAccount: React.FC = () => {
 
                         const receiptPath = data.Payments?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
+
+                        const invoicePDFPath = data.InvoicePDFPath
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -1582,10 +1595,11 @@ const MyAccount: React.FC = () => {
                                                 <Tooltip title="Download PDF">
                                                     <Button
                                                         variant="outlinedGray"
-                                                        onClick={async () => {
-                                                            setOpenPDF(true);
-                                                            setSelectedInvoice(data);
-                                                        }}
+                                                        // onClick={async () => {
+                                                        //     setOpenPDF(true);
+                                                        //     setSelectedInvoice(data);
+                                                        // }}
+                                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
                                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
@@ -1837,6 +1851,7 @@ const MyAccount: React.FC = () => {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status?.Name
+                        const invoicePDFPath = data.InvoicePDFPath
                         return (
                             <Box
                                 className="container-btn"
@@ -1885,10 +1900,11 @@ const MyAccount: React.FC = () => {
                                     <Button
                                         variant="outlinedGray"
                                         className="btn-download-pdf"
-                                        onClick={async () => {
-                                            setOpenPDF(true);
-                                            setSelectedInvoice(data);
-                                        }}
+                                        // onClick={async () => {
+                                        //     setOpenPDF(true);
+                                        //     setSelectedInvoice(data);
+                                        // }}
+                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                         sx={{ minWidth: "42px" }}
                                     >
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
@@ -2314,12 +2330,22 @@ const MyAccount: React.FC = () => {
                 />
 
                 {/* Cancellation From OwnRequest Confirm */}
-                <ConfirmDialog
+                {/* <ConfirmDialog
                     open={openConfirmCancelled}
                     setOpenConfirm={setOpenConfirmCancelled}
                     handleFunction={() => handleClickCancel()}
                     title="Confirm Cancel Request"
                     message="Are you sure you want to cancel this request? This action cannot be undone."
+                    buttonActive={isButtonActive}
+                /> */}
+
+                {/* Delete Comfirm */}
+                <ConfirmDialog
+                    open={openConfirmDelete}
+                    setOpenConfirm={setOpenConfirmDelete}
+                    handleFunction={handleClickDeleteRequest}
+                    title="Confirm Maintenance Request Deletion"
+                    message="Are you sure you want to delete this maintenance request? This action cannot be undone."
                     buttonActive={isButtonActive}
                 />
 
@@ -2599,7 +2625,7 @@ const MyAccount: React.FC = () => {
                                             onPageChange={setInvoicePage}
                                             onLimitChange={setInvoiceLimit}
                                             noDataText="Invoices information not found."
-                                            getRowId={(row) => row.ID} 
+                                            getRowId={(row) => row.ID}
                                         />
                                     )}
                                 </Grid>

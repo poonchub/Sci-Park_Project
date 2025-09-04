@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -61,7 +62,6 @@ func GetInvoiceByID(c *gin.Context) {
 		Preload("Creater.Role").
 		Preload("Creater.JobPosition").
 		Preload("Notifications").
-
 		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
@@ -293,7 +293,7 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 	var invoices []entity.Invoice
 	if err := db.Preload("Status").
 		Where("billing_period >= ? AND billing_period <= ?", previousMonthStart, previousMonthEnd).
-   		Find(&invoices).Error; err != nil {
+		Find(&invoices).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -338,12 +338,18 @@ func CreateInvoice(c *gin.Context) {
 
 	db := config.DB()
 
-	nextInvoiceNumber, err := GenerateNextInvoiceNumber(db)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var invoiceCheck entity.Invoice
+	if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
 		return
 	}
-	invoice.InvoiceNumber = nextInvoiceNumber
+
+	// nextInvoiceNumber, err := GenerateNextInvoiceNumber(db)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	// invoice.InvoiceNumber = nextInvoiceNumber
 
 	var status entity.PaymentStatus
 	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {
@@ -400,11 +406,72 @@ func CreateInvoice(c *gin.Context) {
 		return
 	}
 
+	if err := db.Preload("Creater").Preload("Customer").Preload("Items").First(&invoiceData, invoiceData.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load invoice relations"})
+		return
+	}
+
 	services.NotifySocketEvent("invoice_created", invoiceData)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Create success",
 		"data":    invoiceData,
+	})
+}
+
+// POST /invoice/upload-pdf
+func UploadInvoicePDF(c *gin.Context) {
+	invoiceIDStr := c.PostForm("invoiceId")
+	invoiceID, err := strconv.Atoi(invoiceIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid invoiceId"})
+		return
+	}
+
+	db := config.DB()
+	var invoice entity.Invoice
+	if err := db.First(&invoice, invoiceID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice ID not found"})
+		return
+	}
+
+	file, err := c.FormFile("invoicePDF")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
+	}
+
+	if invoice.InvoicePDFPath != "" {
+		if err := os.Remove(invoice.InvoicePDFPath); err != nil && !os.IsNotExist(err) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to remove old file"})
+			return
+		}
+	}
+
+	// สร้าง path เก็บไฟล์
+	folderPath := fmt.Sprintf("images/invoices/user_%d", invoice.CustomerID)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create folder"})
+		return
+	}
+
+	filename := file.Filename
+	fullPath := path.Join(folderPath, filename)
+
+	if err := c.SaveUploadedFile(file, fullPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save invoice PDF"})
+		return
+	}
+
+	invoice.InvoicePDFPath = fullPath
+	if err := db.Save(&invoice).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update invoice"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "PDF uploaded successfully",
+		"path":    fullPath,
 	})
 }
 

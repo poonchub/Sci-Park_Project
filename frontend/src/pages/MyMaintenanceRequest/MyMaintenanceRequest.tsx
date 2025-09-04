@@ -1,11 +1,3 @@
-import {
-    faCheck,
-    faEye,
-    faFileLines,
-    faQuestionCircle,
-    faRepeat,
-    faXmark,
-} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     Box,
@@ -56,7 +48,8 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
 import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
 import { useInteractionTracker } from "../../hooks/useInteractionTracker";
-import { Check, Eye, FileText, Repeat, Wrench, X } from "lucide-react";
+import { Check, Eye, FileText, HelpCircle, Repeat, Wrench, X } from "lucide-react";
+import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
 function MyMaintenanceRequest() {
     const [maintenanceRequests, setMaintenanceRequests] = useState<
@@ -88,6 +81,7 @@ function MyMaintenanceRequest() {
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] =
         useState<boolean>(false);
+    const [openConfirmDelete, setOpenConfirmDelete] = useState<boolean>(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
     const [alerts, setAlerts] = useState<
@@ -119,8 +113,10 @@ function MyMaintenanceRequest() {
                         } = statusConfig[statusKey] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const StatusIcon = statusIcon
 
                         const dateTime = `${dateFormat(params.row.CreatedAt || "")} ${timeFormat(params.row.CreatedAt || "")}`;
 
@@ -140,8 +136,10 @@ function MyMaintenanceRequest() {
                             maintenanceTypeConfig[maintenanceKey] ?? {
                                 color: "#000",
                                 colorLite: "#000",
-                                icon: faQuestionCircle,
+                                icon: HelpCircle,
                             };
+
+                        const TypeIcon = typeIcon
 
                         const showButtonConfirm =
                             params.row.RequestStatus?.Name ===
@@ -229,7 +227,7 @@ function MyMaintenanceRequest() {
                                             alignItems: "center",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={typeIcon} />
+                                        <TypeIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -260,7 +258,7 @@ function MyMaintenanceRequest() {
                                             width: "100%",
                                         }}
                                     >
-                                        <FontAwesomeIcon icon={statusIcon} />
+                                        <StatusIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                         <Typography
                                             sx={{
                                                 fontSize: 14,
@@ -306,7 +304,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Check size={20}/>
+                                                            <Check size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -330,7 +328,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Repeat size={20}/>
+                                                            <Repeat size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -355,7 +353,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={20}/>
+                                                            <Eye size={20} />
                                                             {width &&
                                                                 width > 530 && (
                                                                     <Typography
@@ -389,7 +387,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <X size={20}/>
+                                                            <X size={20} />
                                                             <Typography
                                                                 variant="textButtonClassic"
                                                                 className="text-btn"
@@ -414,7 +412,7 @@ function MyMaintenanceRequest() {
                                                             }}
                                                             fullWidth
                                                         >
-                                                            <Eye size={20}/>
+                                                            <Eye size={20} />
                                                             {width &&
                                                                 width > 250 && (
                                                                     <Typography
@@ -441,7 +439,7 @@ function MyMaintenanceRequest() {
                                                         width: "100%",
                                                     }}
                                                 >
-                                                    <Eye size={20}/>
+                                                    <Eye size={20} />
                                                     <Typography
                                                         variant="textButtonClassic"
                                                         className="text-btn"
@@ -502,8 +500,10 @@ function MyMaintenanceRequest() {
                         ] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const TypeIcon = icon
 
                         return (
                             <Box
@@ -549,7 +549,7 @@ function MyMaintenanceRequest() {
                                         alignItems: "center",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    <TypeIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                     <Typography
                                         sx={{ fontSize: 14, fontWeight: 600 }}
                                     >
@@ -619,8 +619,10 @@ function MyMaintenanceRequest() {
                         ] ?? {
                             color: "#000",
                             colorLite: "#000",
-                            icon: faQuestionCircle,
+                            icon: HelpCircle,
                         };
+
+                        const StatusIcon = icon
 
                         return (
                             <Box
@@ -645,7 +647,7 @@ function MyMaintenanceRequest() {
                                         width: "100%",
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={icon} />
+                                    <StatusIcon size={18} style={{ minWidth: "18px", minHeight: "18px", paddingBottom: '2px' }} />
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -701,7 +703,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Check size={20}/>
+                                                <Check size={20} />
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -722,7 +724,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Repeat size={20}/>
+                                                <Repeat size={20} />
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -742,7 +744,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={20}/>
+                                                <Eye size={20} />
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -759,7 +761,7 @@ function MyMaintenanceRequest() {
                                                 className="btn-confirm"
                                                 variant="outlinedCancel"
                                                 onClick={() => {
-                                                    setOpenConfirmCancelled(
+                                                    setOpenConfirmDelete(
                                                         true
                                                     );
                                                     setSelectedRequest(data);
@@ -768,7 +770,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <X size={20}/>
+                                                <X size={20} />
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -788,7 +790,7 @@ function MyMaintenanceRequest() {
                                                     minWidth: "42px",
                                                 }}
                                             >
-                                                <Eye size={20}/>
+                                                <Eye size={20} />
                                                 <Typography
                                                     variant="textButtonClassic"
                                                     className="text-btn"
@@ -810,7 +812,7 @@ function MyMaintenanceRequest() {
                                                 minWidth: "42px",
                                             }}
                                         >
-                                            <Eye size={20}/>
+                                            <Eye size={20} />
                                             <Typography
                                                 variant="textButtonClassic"
                                                 className="text-btn"
@@ -924,61 +926,70 @@ function MyMaintenanceRequest() {
         setIsButtonActive(false);
     };
 
-    const handleClickCancel = async () => {
-        try {
-            setIsButtonActive(true);
-            const statusID =
-                requestStatuses?.find((item) => item.Name === "Unsuccessful")
-                    ?.ID || 0;
+    // const handleClickCancel = async () => {
+    //     try {
+    //         setIsButtonActive(true);
+    //         const statusID =
+    //             requestStatuses?.find((item) => item.Name === "Unsuccessful")
+    //                 ?.ID || 0;
 
-            const request: MaintenanceRequestsInterface = {
-                RequestStatusID: statusID,
-            };
+    //         const request: MaintenanceRequestsInterface = {
+    //             RequestStatusID: statusID,
+    //         };
 
-            const resRequest = await UpdateMaintenanceRequestByID(
-                request,
-                selectedRequest?.ID
-            );
-            if (!resRequest || resRequest.error)
-                throw new Error(
-                    resRequest?.error || "Failed to update request status."
-                );
+    //         const resRequest = await UpdateMaintenanceRequestByID(
+    //             request,
+    //             selectedRequest?.ID
+    //         );
+    //         if (!resRequest || resRequest.error)
+    //             throw new Error(
+    //                 resRequest?.error || "Failed to update request status."
+    //             );
 
-            const notificationDataUpdate: NotificationsInterface = {
-                IsRead: true,
-            };
-            const resUpdateNotification = await UpdateNotificationsByRequestID(
-                notificationDataUpdate,
-                selectedRequest.ID
-            );
-            if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(
-                    resUpdateNotification?.error ||
-                        "Failed to update notification."
-                );
+    //         const notificationDataUpdate: NotificationsInterface = {
+    //             IsRead: true,
+    //         };
+    //         const resUpdateNotification = await UpdateNotificationsByRequestID(
+    //             notificationDataUpdate,
+    //             selectedRequest.ID
+    //         );
+    //         if (!resUpdateNotification || resUpdateNotification.error)
+    //             throw new Error(
+    //                 resUpdateNotification?.error ||
+    //                 "Failed to update notification."
+    //             );
 
-            setTimeout(() => {
-                setAlerts((prev) => [
-                    ...prev,
-                    {
-                        type: "success",
-                        message: "Request cancelled successfully",
-                    },
-                ]);
+    //         setTimeout(() => {
+    //             setAlerts((prev) => [
+    //                 ...prev,
+    //                 {
+    //                     type: "success",
+    //                     message: "Request cancelled successfully",
+    //                 },
+    //             ]);
 
-                setOpenConfirmCancelled(false);
-                setIsButtonActive(false);
-            }, 500);
-        } catch (error) {
-            console.error("API Error:", error);
-            const errMessage = (error as Error).message || "Unknown error!";
-            setAlerts((prev) => [
-                ...prev,
-                { type: "error", message: errMessage },
-            ]);
-            setIsButtonActive(false);
-        }
-    };
+    //             setOpenConfirmCancelled(false);
+    //             setIsButtonActive(false);
+    //         }, 500);
+    //     } catch (error) {
+    //         console.error("API Error:", error);
+    //         const errMessage = (error as Error).message || "Unknown error!";
+    //         setAlerts((prev) => [
+    //             ...prev,
+    //             { type: "error", message: errMessage },
+    //         ]);
+    //         setIsButtonActive(false);
+    //     }
+    // };
+
+    const handleClickDeleteRequest = () => {
+        handleDeleteMaintenanceRequest({
+            requestID: selectedRequest.ID || 0,
+            setAlerts,
+            setOpenPopup: setOpenConfirmDelete,
+            setIsButtonActive,
+        })
+    }
 
     const filteredRequests = maintenanceRequests.filter((request) => {
         const requestId = String(request.ID);
@@ -1140,12 +1151,22 @@ function MyMaintenanceRequest() {
             />
 
             {/* Cancellation From OwnRequest Confirm */}
-            <ConfirmDialog
+            {/* <ConfirmDialog
                 open={openConfirmCancelled}
                 setOpenConfirm={setOpenConfirmCancelled}
                 handleFunction={() => handleClickCancel()}
                 title="Confirm Cancel Request"
                 message="Are you sure you want to cancel this request? This action cannot be undone."
+                buttonActive={isButtonActive}
+            /> */}
+
+            {/* Delete Comfirm */}
+            <ConfirmDialog
+                open={openConfirmDelete}
+                setOpenConfirm={setOpenConfirmDelete}
+                handleFunction={handleClickDeleteRequest}
+                title="Confirm Maintenance Request Deletion"
+                message="Are you sure you want to delete this maintenance request? This action cannot be undone."
                 buttonActive={isButtonActive}
             />
 
@@ -1176,7 +1197,7 @@ function MyMaintenanceRequest() {
                     >
                         <Link to="/maintenance/create-maintenance-request">
                             <Button variant="contained">
-                                <FileText size={20}/>
+                                <FileText size={20} />
                                 <Typography variant="textButtonClassic">
                                     Create Request
                                 </Typography>

@@ -3,13 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   Clock,          // Pending
   BadgeCheck,     // Confirmed
-  CheckCircle2,   // Completed
   XCircle,        // Cancelled
   CreditCard,     // Paid/Unpaid
   RotateCcw,      // Refunded
   HelpCircle,
   CircleDollarSign,
-  Search,     // Unknown
+  Search,
+  CheckCircle,     // Unknown
 } from "lucide-react";
 
 /** โครงสร้าง config ของแต่ละสถานะ */
@@ -31,33 +31,33 @@ export interface BookingStatusConfig {
 export const bookingStatusConfig: Record<string, BookingStatusConfig> = {
   // ── สถานะการจอง ─────────────────────────────
   pending: {
-    color: "#F59E0B",        // ส้มทอง
-    colorLite: "#FEF3C7",
+    color: "#FFA500",        // ส้มทอง
+    colorLite: "rgba(255, 166, 0, 0.21)",
     icon: Clock,
     label: "Pending",
   },
   confirmed: {
-    color: "#3B82F6",        // น้ำเงินสด
-    colorLite: "#DBEAFE",
+    color: "#007BFF",        // น้ำเงินสด
+    colorLite: "rgba(0, 123, 255, 0.18)",
     icon: BadgeCheck,
     label: "Confirmed",
   },
   "payment review": {
-    color: "#8B5CF6",        // ม่วงชัดเจน
-    colorLite: "#EDE9FE",
+    color: "#884af7",        // ม่วงชัดเจน
+    colorLite: "rgba(110, 66, 193, 0.18)",
     icon: Search,
     label: "Payment Review",
   },
 payment: {
-  color: "#F97316",        // ส้มเข้ม
-  colorLite: "#FFEDD5",
+  color: "#FFA500",        // ส้มเข้ม
+  colorLite: "rgba(255, 166, 0, 0.21)",
   icon: CircleDollarSign,
   label: "Payment",
 },
 completed: {
-  color: "#059669",        // เขียวเข้ม
-  colorLite: "#D1FAE5",
-  icon: CheckCircle2,
+  color: "#10a605",        // เขียวเข้ม
+  colorLite: "rgba(0, 255, 60, 0.18)",
+  icon: CheckCircle,
   label: "Completed",
 },
 

@@ -897,7 +897,7 @@ func SeedDatabase() {
 			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
 			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
 			PayerID:     users[2+i%len(users)].ID,
-			StatusID:    2,
+			StatusID:    4,
 			InvoiceID:   uint(i + 3),
 		}
 		payments = append(payments, p)
@@ -1272,4 +1272,76 @@ func SeedDatabase() {
 		makeRSA(externalUsers[i], i)
 	}
 
+	
+	serviceDocs := []entity.ServiceAreaDocument{
+		{
+			RequestServiceAreaID:     1,
+			ServiceContractDocument:  "path/to/contract1.pdf",
+			AreaHandoverDocument:     "path/to/handover1.pdf",
+			QuotationDocument:        "path/to/quotation1.pdf",
+			RefundGuaranteeDocument:  "path/to/refund1.pdf",
+			ContractNumber:           "SA-001",
+			ContractStartAt:          time.Now(),
+			ContractEndAt:            time.Now().AddDate(1, 0, 0),
+			RoomID:                   1,
+			ServiceUserTypeID:        1,
+		},
+		{
+			RequestServiceAreaID:     2,
+			ServiceContractDocument:  "path/to/contract2.pdf",
+			AreaHandoverDocument:     "path/to/handover2.pdf",
+			QuotationDocument:        "path/to/quotation2.pdf",
+			RefundGuaranteeDocument:  "path/to/refund2.pdf",
+			ContractNumber:           "SA-002",
+			ContractStartAt:          time.Now(),
+			ContractEndAt:            time.Now().AddDate(1, 0, 0),
+			RoomID:                   2,
+			ServiceUserTypeID:        2,
+		},
+	}
+
+	for _, doc := range serviceDocs {
+		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
+			RequestServiceAreaID: doc.RequestServiceAreaID,
+		})
+	}
+
+	bookingRooms := []entity.BookingRoom{
+		{
+			Purpose:   "ประชุมทีมวิจัยโครงการ A",
+			UserID:    1,
+			RoomID:    1,
+			StatusID:  1, // เช่น "จองสำเร็จ"
+			AdditionalInfo: "ต้องการโปรเจคเตอร์ และไวท์บอร์ด",
+			BookingDates: []entity.BookingDate{
+				{Date: beginningOfDayUTC(time.Now())},
+				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 1))},
+			},
+		},
+		{
+			Purpose:   "จัดอบรมการใช้งานระบบใหม่",
+			UserID:    2,
+			RoomID:    2,
+			StatusID:  2,
+			AdditionalInfo: "มีการสั่งอาหารว่างเพิ่มเติม",
+			BookingDates: []entity.BookingDate{
+				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 3))},
+			},
+		},
+	}
+
+	for _, booking := range bookingRooms {
+		db.FirstOrCreate(&booking, entity.BookingRoom{
+			Purpose: booking.Purpose,
+			UserID:  booking.UserID,
+			RoomID:  booking.RoomID,
+		})
+	}
+}
+
+func beginningOfDayUTC(t time.Time) time.Time {
+    return time.Date(
+        t.Year(), t.Month(), t.Day(),
+        0, 0, 0, 0, time.UTC,
+    )
 }

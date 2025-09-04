@@ -105,6 +105,8 @@ import { handleUpdatePaymentAndInvoice } from "../../utils/handleUpdatePaymentAn
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { io } from "socket.io-client";
 import { useUserStore } from "../../store/userStore";
+import InvoicePDF from "../../components/InvoicePDF/InvoicePDF";
+import { createRoot } from "react-dom/client";
 
 type InvoiceItemError = {
     Description?: string;
@@ -112,6 +114,7 @@ type InvoiceItemError = {
 };
 
 type FormErrors = {
+    InvoiceNumber?: string;
     IssueDate?: string;
     DueDate?: string;
     BillingPeriod?: string;
@@ -153,7 +156,7 @@ function RoomRentalSpace() {
     const dueDate = today.date(15).toISOString();
     const billingPeriod = today.subtract(1, "month").endOf("month").toISOString();
     const [invoiceFormData, setInvoiceFormData] = useState<InvoiceInterface>({
-        ID: 0,
+        InvoiceNumber: "",
         IssueDate: issueDate,
         DueDate: dueDate,
         BillingPeriod: billingPeriod,
@@ -400,7 +403,6 @@ function RoomRentalSpace() {
         }
 
         try {
-            console.log("invoiceFormData: ", invoiceFormData)
             const resInvoice = await CreateInvoice(invoiceFormData);
 
             const updatedItems = invoiceItemFormData.map((item) => ({
@@ -431,6 +433,8 @@ function RoomRentalSpace() {
                 return;
             }
 
+            await handleUploadPDF(resInvoice.data.ID);
+
             handleSetAlert("success", "Invoice created successfully!");
             setTimeout(() => {
                 setIsButtonActive(false);
@@ -440,7 +444,7 @@ function RoomRentalSpace() {
                     setSelectedRoom(null);
                 }
                 getInvoice()
-            }, 1800);
+            }, 500);
         } catch (error: any) {
             console.error("🚨 Error creating invoice:", error);
             if (error.status === 409) {
@@ -451,6 +455,26 @@ function RoomRentalSpace() {
             setIsButtonActive(false);
         }
     };
+
+    const handleUploadPDF = async (invoiceId: number) => {
+        try {
+            const container = document.createElement("div");
+            container.style.display = "none";
+            document.body.appendChild(container);
+
+            const root = createRoot(container);
+
+            const handlePDFCompleted = () => {
+                root.unmount();
+                container.remove();
+            };
+
+            const resInvoice = await GetInvoiceByID(invoiceId);
+            root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+        } catch (error) {
+            console.error("🚨 Error creating invoice:", error);
+        }
+    }
 
     const handleDeleteInvoice = async () => {
         setIsButtonActive(true);
@@ -684,6 +708,9 @@ function RoomRentalSpace() {
         const newErrors: { [key: string]: any } = {};
 
         // Validate Invoice
+        if (!invoiceFormData.InvoiceNumber || !invoiceFormData.InvoiceNumber.trim()) {
+            newErrors.InvoiceNumber = "Please select the issue date.";
+        }
         if (!invoiceFormData.IssueDate) {
             newErrors.IssueDate = "Please select the issue date.";
         }
@@ -898,6 +925,18 @@ function RoomRentalSpace() {
                             (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
                         );
 
+                        const now = new Date();
+                        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                        const hasInvoiceCreated = invoice.some((inv: InvoiceInterface) => {
+                            if (!inv.BillingPeriod) return false;
+
+                            const billDate = new Date(inv.BillingPeriod);
+                            return (
+                                billDate.getFullYear() === prevMonth.getFullYear() &&
+                                billDate.getMonth() === prevMonth.getMonth()
+                            );
+                        });
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
@@ -989,6 +1028,18 @@ function RoomRentalSpace() {
                                             {statusName}
                                         </Typography>
                                     </Box>
+                                    <Typography
+                                        display={statusName === "Unavailable" ? 'block' : 'none'}
+                                        variant="body1"
+                                        sx={{
+                                            fontSize: '12px',
+                                            textAlign: 'center',
+                                            color: 'text.secondary',
+                                            lineHeight: 1
+                                        }}
+                                    >
+                                        {hasInvoiceCreated ? 'Invoice created' : 'Invoice not created'}
+                                    </Typography>
                                 </Grid>
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
@@ -1380,6 +1431,8 @@ function RoomRentalSpace() {
                         const receiptPath = data.Payments?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
+                        const invoicePDFPath = data.InvoicePDFPath
+
                         const notification = data.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === Number(userID) && !n.IsRead);
 
@@ -1688,10 +1741,11 @@ function RoomRentalSpace() {
                                                 <Tooltip title="Download PDF">
                                                     <Button
                                                         variant="outlinedGray"
-                                                        onClick={async () => {
-                                                            setOpenPDF(true);
-                                                            setSelectedInvoice(data);
-                                                        }}
+                                                        // onClick={async () => {
+                                                        //     setOpenPDF(true);
+                                                        //     setSelectedInvoice(data);
+                                                        // }}
+                                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
                                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
@@ -1782,7 +1836,6 @@ function RoomRentalSpace() {
                     type: "string",
                     flex: 1.8,
                     renderCell: (params) => {
-                        console.log(params.row)
                         return (
                             <Box
                                 sx={{
@@ -2099,6 +2152,7 @@ function RoomRentalSpace() {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.Status.Name;
+                        const invoicePDFPath = data.InvoicePDFPath
                         return (
                             <Box
                                 className="container-btn"
@@ -2131,10 +2185,11 @@ function RoomRentalSpace() {
                                 <Tooltip title="Download PDF">
                                     <Button
                                         variant="outlinedGray"
-                                        onClick={async () => {
-                                            setOpenPDF(true);
-                                            setSelectedInvoice(data);
-                                        }}
+                                        // onClick={async () => {
+                                        //     setOpenPDF(true);
+                                        //     setSelectedInvoice(data);
+                                        // }}
+                                        onClick={() => window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
                                         sx={{ minWidth: "42px" }}
                                     >
                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
@@ -2523,6 +2578,20 @@ function RoomRentalSpace() {
                 </DialogTitle>
                 <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
                     <Grid container size={{ xs: 12 }} spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                                Invoice Number
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                name="InvoiceNumber"
+                                value={invoiceFormData.InvoiceNumber}
+                                onChange={(e) => setInvoiceFormData({ ...invoiceFormData, InvoiceNumber: e.target.value })}
+                                placeholder="Enter invoice number."
+                                error={!!errors.InvoiceNumber}
+                                helperText={errors.InvoiceNumber}
+                            />
+                        </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
                                 Issue Date
@@ -2776,6 +2845,7 @@ function RoomRentalSpace() {
 
                     <Button variant="contained"
                         onClick={() => setOpenCreatePopup(true)}
+                        disabled={selectedRoom?.RoomStatus?.status_name === "Available"}
                     >
                         <NotebookPen size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                         <Typography variant="textButtonClassic">Create Invoice</Typography>
@@ -2892,7 +2962,7 @@ function RoomRentalSpace() {
                                     onPageChange={setInvoicePage}
                                     onLimitChange={setInvoiceLimit}
                                     noDataText="Invoices information not found."
-                                    getRowId={(row) => row.ID} 
+                                    getRowId={(row) => row.ID}
                                 />
                             )}
                         </Grid>

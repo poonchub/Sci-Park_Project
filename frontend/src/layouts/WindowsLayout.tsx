@@ -665,6 +665,11 @@ const WindowsLayout: React.FC = (props: any) => {
             loadUserAndImage();
         });
 
+        socket.on("maintenance_deleted", (data) => {
+            console.log("🔄 Maintenance request deleted:", data);
+            getNewUnreadNotificationCounts();
+        });
+
         return () => {
             socket.disconnect();
         };

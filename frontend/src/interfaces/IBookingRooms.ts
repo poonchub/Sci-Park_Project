@@ -2,12 +2,13 @@ import { RoomsInterface } from "./IRooms";
 import { TimeSlotsInterface } from "./ITimeSlot";
 import { UserInterface } from "./IUser";
 import { AdditionalInfo } from "./IAdditionalInfo";
+import { BookingDateInterface } from "./IBookingDate";
 
 export interface BookingRoomsInterface {
   [x: string]: any;
   CreatedAt: string;
   purpose: any;
-  BookingDates: any;
+  BookingDates: BookingDateInterface[];
   TypeID: number;
   Room: any;
   Merged_time_slots: any;

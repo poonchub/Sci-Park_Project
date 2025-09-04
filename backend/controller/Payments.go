@@ -195,8 +195,21 @@ func ListInvoicePaymentsByDateRange(c *gin.Context) {
 
 	db := config.DB()
 
+	var statusAwaitingReceipt entity.PaymentStatus
+	if err := db.Where("name = ?", "Awaiting Receipt").First(&statusAwaitingReceipt).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment status 'Awaiting Receipt' not found"})
+		return
+	}
+
+	var statusPaid entity.PaymentStatus
+	if err := db.Where("name = ?", "Paid").First(&statusPaid).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment status 'Paid' not found"})
+		return
+	}
+
 	query := db.
 		Where("invoice_id > 0").
+		Where("status_id IN (?, ?)", statusAwaitingReceipt.ID, statusPaid.ID).
 		Order("created_at ASC")
 
 	layout := "2006-01-02"
