@@ -165,6 +165,25 @@ func CreateServiceAreaDocument(c *gin.Context) {
 		return
 	}
 
+	// อัปเดตสถานะ Room ให้เป็น "Unavailable" (Code: "unavailable", ID: 3)
+	// เมื่อ Document Operator สร้างเอกสารสัญญาเสร็จแล้ว
+	if roomID > 0 {
+		var room entity.Room
+		if err := tx.First(&room, roomID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find room"})
+			return
+		}
+
+		// อัปเดต RoomStatusID เป็น 3 (Unavailable)
+		room.RoomStatusID = 3
+		if err := tx.Save(&room).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update room status"})
+			return
+		}
+	}
+
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
