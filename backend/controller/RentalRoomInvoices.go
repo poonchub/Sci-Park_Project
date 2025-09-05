@@ -31,7 +31,7 @@ import (
 
 // GET /invoces
 func ListInvoices(c *gin.Context) {
-	var invoces []entity.Invoice
+	var invoces []entity.RentalRoomInvoice
 
 	db := config.DB()
 
@@ -48,7 +48,7 @@ func ListInvoices(c *gin.Context) {
 func GetInvoiceByID(c *gin.Context) {
 	id := c.Param("id")
 
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 
 	db := config.DB()
 
@@ -71,9 +71,24 @@ func GetInvoiceByID(c *gin.Context) {
 	c.JSON(http.StatusOK, &invoice)
 }
 
+// GET /invoices/next-number
+func GetNextInvoiceNumber(c *gin.Context) {
+	db := config.DB()
+
+	nextNumber, err := GenerateNextInvoiceNumber(db)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"next_invoice_number": nextNumber,
+	})
+}
+
 // GET /room-invoice-option
 func GetInvoiceByOption(c *gin.Context) {
-	var invoices []entity.Invoice
+	var invoices []entity.RentalRoomInvoice
 	db := config.DB()
 
 	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
@@ -90,7 +105,7 @@ func GetInvoiceByOption(c *gin.Context) {
 	}
 	offset := (page - 1) * limit
 
-	query := db.Model(&entity.Invoice{})
+	query := db.Model(&entity.RentalRoomInvoice{})
 
 	if statusID != 0 {
 		query = query.Where("status_id = ?", statusID)
@@ -119,7 +134,7 @@ func GetInvoiceByOption(c *gin.Context) {
 	}
 
 	var total int64
-	countQuery := db.Model(&entity.Invoice{})
+	countQuery := db.Model(&entity.RentalRoomInvoice{})
 	if statusID != 0 {
 		countQuery = countQuery.Where("status_id = ?", statusID)
 	}
@@ -142,7 +157,7 @@ func GetInvoiceByOption(c *gin.Context) {
 
 // GET /invoices/by-date
 func ListInvoiceByDateRange(c *gin.Context) {
-	var invoice []entity.Invoice
+	var invoice []entity.RentalRoomInvoice
 
 	startDateStr := c.Query("start_date")
 	endDateStr := c.Query("end_date")
@@ -194,7 +209,7 @@ func GetInvoicePDF(c *gin.Context) {
 	id := c.Param("id")
 	db := config.DB()
 
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 	result := db.
 		Preload("Items").
 		Preload("Creater.Role").
@@ -290,7 +305,7 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 	previousMonthStart := time.Date(previousMonthEnd.Year(), previousMonthEnd.Month(), 1, 0, 0, 0, 0, loc)
 
 	// ดึง invoice ของเดือนนั้น
-	var invoices []entity.Invoice
+	var invoices []entity.RentalRoomInvoice
 	if err := db.Preload("Status").
 		Where("billing_period >= ? AND billing_period <= ?", previousMonthStart, previousMonthEnd).
 		Find(&invoices).Error; err != nil {
@@ -329,7 +344,7 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 
 // POST /invoice
 func CreateInvoice(c *gin.Context) {
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 
 	if err := c.ShouldBindJSON(&invoice); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -338,7 +353,7 @@ func CreateInvoice(c *gin.Context) {
 
 	db := config.DB()
 
-	var invoiceCheck entity.Invoice
+	var invoiceCheck entity.RentalRoomInvoice
 	if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
 		return
@@ -378,7 +393,7 @@ func CreateInvoice(c *gin.Context) {
 
 	loc, _ := time.LoadLocation("Asia/Bangkok")
 
-	invoiceData := entity.Invoice{
+	invoiceData := entity.RentalRoomInvoice{
 		InvoiceNumber: invoice.InvoiceNumber,
 		IssueDate:     invoice.IssueDate.In(loc),
 		DueDate:       invoice.DueDate.In(loc),
@@ -395,7 +410,7 @@ func CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	var exiting entity.Invoice
+	var exiting entity.RentalRoomInvoice
 	if err := db.Where("billing_period = ? AND room_id = ?", invoiceData.BillingPeriod, invoiceData.RoomID).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "An invoice for this billing period already exists."})
 		return
@@ -429,7 +444,7 @@ func UploadInvoicePDF(c *gin.Context) {
 	}
 
 	db := config.DB()
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 	if err := db.First(&invoice, invoiceID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice ID not found"})
 		return
@@ -479,7 +494,7 @@ func UploadInvoicePDF(c *gin.Context) {
 func UpdateInvoiceByID(c *gin.Context) {
 	ID := c.Param("id")
 
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 
 	db := config.DB()
 	result := db.First(&invoice, ID)
@@ -516,20 +531,20 @@ func DeleteInvoiceByID(c *gin.Context) {
 		}
 	}()
 
-	var invoice entity.Invoice
+	var invoice entity.RentalRoomInvoice
 	if err := tx.Where("id = ?", ID).First(&invoice).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
 		return
 	}
 
-	if err := tx.Where("invoice_id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+	if err := tx.Where("rental_room_invoice_id = ?", ID).Delete(&entity.RentalRoomInvoiceItem{}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice items"})
 		return
 	}
 
-	if err := tx.Delete(&entity.Invoice{}, ID).Error; err != nil {
+	if err := tx.Delete(&entity.RentalRoomInvoice{}, ID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
 		return
@@ -567,7 +582,7 @@ func ThaiDateMonthYear(t time.Time) string {
 }
 
 func GenerateNextInvoiceNumber(db *gorm.DB) (string, error) {
-	var lastInvoice entity.Invoice
+	var lastInvoice entity.RentalRoomInvoice
 	// ดึง Invoice ล่าสุดที่ขึ้นต้นด้วย NE2/ ตามลำดับเลขมากที่สุด
 	if err := db.Where("invoice_number LIKE ?", "NE2/%").
 		Order("id DESC"). // หรือ order ตาม created_at ก็ได้

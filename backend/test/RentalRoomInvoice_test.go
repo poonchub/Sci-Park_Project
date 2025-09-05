@@ -14,7 +14,7 @@ func TestInvoiceValidation(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	t.Run("Valid Invoice", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -32,7 +32,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Invoice Number", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			// InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -51,7 +51,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Issue Date", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			// IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -70,7 +70,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Due Date", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			// DueDate: time.Now().AddDate(0, 0, 30),
@@ -89,7 +89,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Billing Period", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -108,7 +108,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Total Amount", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -127,7 +127,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing RoomID", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -146,7 +146,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing StatusID", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -165,7 +165,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing CreaterID", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),
@@ -184,7 +184,7 @@ func TestInvoiceValidation(t *testing.T) {
 	})
 
 	t.Run("Missing CustomerID", func(t *testing.T) {
-		invoice := entity.Invoice{
+		invoice := entity.RentalRoomInvoice{
 			InvoiceNumber: "NE2/001",
 			IssueDate: time.Now(),
 			DueDate: time.Now().AddDate(0, 0, 30),

@@ -1,7 +1,7 @@
 import { FloorsInterface } from "./IFloors";
 import { RoomtypesInterface } from "./IRoomTypes";
 import { RoomStatusInterface } from "./IRoomStatus";
-import { InvoiceInterface } from "./IInvoices";
+import { RentalRoomInvoiceInterface } from "./IRentalRoomInvoices";
 import { ServiceAreaDocumentInterface } from "./IServiceAreaDocument";
 
 export interface RoomsInterface {
@@ -16,6 +16,6 @@ export interface RoomsInterface {
     Floor?:         FloorsInterface
     RoomTypeID?:    number;
     RoomType?:      RoomtypesInterface;
-    Invoices?:      InvoiceInterface[];
+    RentalRoomInvoices?:      RentalRoomInvoiceInterface[];
     ServiceAreaDocument?:   ServiceAreaDocumentInterface[];
 }

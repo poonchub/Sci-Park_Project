@@ -1,6 +1,6 @@
 import { Box } from "@mui/system";
 import React, { useEffect, useState } from "react";
-import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { RentalRoomInvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import {
     apiUrl,
@@ -13,6 +13,7 @@ import {
     GetFloors,
     GetInvoiceByID,
     GetInvoiceByOption,
+    GetNextInvoiceNumber,
     GetRoomRentalSpaceByID,
     GetRoomRentalSpaceByOption,
     GetRoomStatus,
@@ -88,7 +89,7 @@ import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
-import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
+import { RentalRoomInvoiceItemInterface } from "../../interfaces/IRentalRoomInvoiceItems";
 import dayjs from "dayjs";
 import { CalendarMonth, Close } from "@mui/icons-material";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -133,15 +134,16 @@ const Transition = React.forwardRef(function Transition(
 function RoomRentalSpace() {
     const { user } = useUserStore();
     const [rooms, setRooms] = useState<RoomsInterface[]>([]);
-    const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
+    const [invoices, setInvoices] = useState<RentalRoomInvoiceInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
     const [roomstatuses, setRoomStatuses] = useState<RoomStatusInterface[]>([]);
     const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatusInterface[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<RoomsInterface | null>();
-    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceInterface | null>();
+    const [selectedInvoice, setSelectedInvoice] = useState<RentalRoomInvoiceInterface | null>();
     const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
     const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+    const [invoiceNumber, setInvoiceNumber] = useState()
 
     const [searchTextRoom, setSearchTextRoom] = useState("");
     const [searchTextInvoice, setSearchTextInvoice] = useState("");
@@ -155,7 +157,7 @@ function RoomRentalSpace() {
     const issueDate = today.toISOString();
     const dueDate = today.date(15).toISOString();
     const billingPeriod = today.subtract(1, "month").endOf("month").toISOString();
-    const [invoiceFormData, setInvoiceFormData] = useState<InvoiceInterface>({
+    const [invoiceFormData, setInvoiceFormData] = useState<RentalRoomInvoiceInterface>({
         InvoiceNumber: "",
         IssueDate: issueDate,
         DueDate: dueDate,
@@ -164,16 +166,16 @@ function RoomRentalSpace() {
         CreaterID: 0,
         RoomID: 0,
     });
-    const [invoiceItemFormData, setInvoiceItemFormData] = useState<InvoiceItemInterface[]>([
+    const [invoiceItemFormData, setInvoiceItemFormData] = useState<RentalRoomInvoiceItemInterface[]>([
         {
             Description: "ค่าใช้บริการพื้นที่",
             Amount: 0.0,
-            InvoiceID: 0,
+            RentalRoomInvoiceID: 0,
         },
         {
             Description: "ค่าใช้บริการไฟฟ้า",
             Amount: 0.0,
-            InvoiceID: 0,
+            RentalRoomInvoiceID: 0,
         },
     ]);
 
@@ -232,7 +234,19 @@ function RoomRentalSpace() {
                 setIsLoadingInvoice(false);
             }
         } catch (error) {
-            console.error("Error fetching rooms:", error);
+            console.error("Error fetching invoices:", error);
+        }
+    };
+
+    const getInvoiceNumber = async () => {
+        setIsLoadingInvoice(true);
+        try {
+            const resInvoice = await GetNextInvoiceNumber();
+            if (resInvoice) {
+                setInvoiceFormData((prev)=> ({...prev, InvoiceNumber: resInvoice.next_invoice_number}));
+            }
+        } catch (error) {
+            console.error("Error fetching invoice number:", error);
         }
     };
 
@@ -305,7 +319,7 @@ function RoomRentalSpace() {
             {
                 Description: "",
                 Amount: 0,
-                InvoiceID: 0,
+                RentalRoomInvoiceID: 0,
             },
         ]);
     };
@@ -407,7 +421,7 @@ function RoomRentalSpace() {
 
             const updatedItems = invoiceItemFormData.map((item) => ({
                 ...item,
-                InvoiceID: resInvoice.data.ID,
+                RentalRoomInvoiceID: resInvoice.data.ID,
             }));
 
             const results = await Promise.all(
@@ -424,7 +438,7 @@ function RoomRentalSpace() {
             }
 
             const notificationData: NotificationsInterface = {
-                InvoiceID: resInvoice.data.ID,
+                RentalRoomInvoiceID: resInvoice.data.ID,
             };
 
             const resNotification = await CreateNotification(notificationData);
@@ -534,7 +548,7 @@ function RoomRentalSpace() {
                 if (newItems.length > 0) {
                     await Promise.all(
                         newItems.map((item) =>
-                            CreateInvoiceItems({ ...item, InvoiceID: selectedInvoice.ID }).catch((err) => ({
+                            CreateInvoiceItems({ ...item, RentalRoomInvoiceID: selectedInvoice.ID }).catch((err) => ({
                                 error: err,
                                 item,
                             }))
@@ -632,7 +646,7 @@ function RoomRentalSpace() {
 
     const handlePDFUploadReceipt = async (
         event: React.ChangeEvent<HTMLInputElement>,
-        data: InvoiceInterface
+        data: RentalRoomInvoiceInterface
     ) => {
         setAlerts([])
         const file = event.target.files?.[0];
@@ -671,7 +685,7 @@ function RoomRentalSpace() {
         }
     };
 
-    const handleDeleteReceipt = async (data: InvoiceInterface) => {
+    const handleDeleteReceipt = async (data: RentalRoomInvoiceInterface) => {
         setAlerts([])
         try {
             await DeletePaymentReceiptByID(data.Payments?.ID ?? 0);
@@ -738,6 +752,8 @@ function RoomRentalSpace() {
             }
             if (item.Amount === null || item.Amount === undefined || item.Amount === 0) {
                 errorItem.Amount = "Please enter amount.";
+            } else if (item.Amount < 0) {
+                errorItem.Amount = "Amount cannot be negative.";
             }
             itemErrors[index] = errorItem;
         });
@@ -774,12 +790,12 @@ function RoomRentalSpace() {
             {
                 Description: "ค่าใช้บริการพื้นที่",
                 Amount: 0.0,
-                InvoiceID: 0,
+                RentalRoomInvoiceID: 0,
             },
             {
                 Description: "ค่าใช้บริการไฟฟ้า",
                 Amount: 0.0,
-                InvoiceID: 0,
+                RentalRoomInvoiceID: 0,
             },
         ]);
     };
@@ -920,14 +936,14 @@ function RoomRentalSpace() {
                             companyName = doc[doc.length - 1].RequestServiceArea.User.CompanyName;
                         }
 
-                        const invoice = data.Invoices ?? [];
+                        const invoice = data.RentalRoomInvoices ?? [];
                         const hasNotification = invoice.some(
-                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
+                            (inv: RentalRoomInvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
                         );
 
                         const now = new Date();
                         const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                        const hasInvoiceCreated = invoice.some((inv: InvoiceInterface) => {
+                        const hasInvoiceCreated = invoice.some((inv: RentalRoomInvoiceInterface) => {
                             if (!inv.BillingPeriod) return false;
 
                             const billDate = new Date(inv.BillingPeriod);
@@ -1059,6 +1075,7 @@ function RoomRentalSpace() {
                                                         variant="contained"
                                                         onClick={() => {
                                                             setOpenCreatePopup(true);
+                                                            getInvoiceNumber();
                                                             setSelectedRoom(data);
                                                         }}
                                                         sx={{
@@ -1237,10 +1254,10 @@ function RoomRentalSpace() {
                         const Icon = icon
 
                         const data = item.row;
-                        const invoice = data.Invoices ?? [];
+                        const invoice = data.RentalRoomInvoices ?? [];
                         const now = new Date();
                         const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                        const hasInvoiceCreated = invoice.some((inv: InvoiceInterface) => {
+                        const hasInvoiceCreated = invoice.some((inv: RentalRoomInvoiceInterface) => {
                             if (!inv.BillingPeriod) return false;
 
                             const billDate = new Date(inv.BillingPeriod);
@@ -1314,7 +1331,7 @@ function RoomRentalSpace() {
                         const invoice = data.Invoices ?? [];
 
                         const hasNotification = invoice.some(
-                            (inv: InvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
+                            (inv: RentalRoomInvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
                         );
 
                         return (
@@ -1334,6 +1351,7 @@ function RoomRentalSpace() {
                                         onClick={() => {
                                             setOpenCreatePopup(true);
                                             setSelectedRoom(data);
+                                            getInvoiceNumber();
                                         }}
                                         sx={{
                                             minWidth: "42px",
@@ -1730,14 +1748,17 @@ function RoomRentalSpace() {
                                                             sx={{ minWidth: "42px", width: '100%', minHeight: '100%' }}
                                                         >
                                                             <Wallet size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
-                                                                View Slip
-                                                            </Typography>
+                                                            {
+                                                                (width && width > 350) &&
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    View Slip
+                                                                </Typography>
+                                                            }
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
                                             }
-                                            <Grid size={{ xs: statusName === "Pending Payment" ? 5 : 6 }}>
+                                            <Grid size={{ xs: statusName === "Pending Payment" ? 6 : 6 }}>
                                                 <Tooltip title="Download PDF">
                                                     <Button
                                                         variant="outlinedGray"
@@ -1749,19 +1770,22 @@ function RoomRentalSpace() {
                                                         sx={{ minWidth: "42px", width: '100%', height: '100%' }}
                                                     >
                                                         <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Download PDF
-                                                        </Typography>
+                                                        {
+                                                            (width && width > 350) &&
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Download PDF
+                                                            </Typography>
+                                                        }
                                                     </Button>
                                                 </Tooltip>
                                             </Grid>
                                             {
                                                 statusName === "Pending Payment" &&
                                                 <>
-                                                    <Grid size={{ xs: 5 }}>
+                                                    <Grid size={{ xs: 6 }}>
                                                         <Tooltip title="Edit Invoice">
                                                             <Button
-                                                                variant="outlined"
+                                                                variant="outlinedGray"
                                                                 onClick={() => {
                                                                     setIsEditMode(true);
                                                                     setSelectedInvoice(data);
@@ -1770,13 +1794,17 @@ function RoomRentalSpace() {
                                                                 sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', height: '100%' }}
                                                             >
                                                                 <Pencil size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
-                                                                <Typography variant="textButtonClassic" className="text-btn">
-                                                                    Edit
-                                                                </Typography>
+                                                                {
+                                                                    (width && width > 350) &&
+                                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                                        Edit
+                                                                    </Typography>
+                                                                }
+
                                                             </Button>
                                                         </Tooltip>
                                                     </Grid>
-                                                    <Grid size={{ xs: 2 }}>
+                                                    <Grid size={{ xs: 6 }}>
                                                         <Tooltip title="Delete Invoice">
                                                             <Button
                                                                 variant="outlinedCancel"
@@ -1788,11 +1816,16 @@ function RoomRentalSpace() {
 
                                                                     setOpenDeletePopup(true);
                                                                 }}
-                                                                sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', minHeight: '100%' }}
+                                                                sx={{
+                                                                    minWidth: "42px",
+                                                                    bgcolor: "#FFF",
+                                                                    width: '100%',
+                                                                    minHeight: '100%',
+                                                                }}
                                                             >
                                                                 <Trash2 size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                                                 {
-                                                                    (width && width > 670) &&
+                                                                    (width && width > 350) &&
                                                                     <Typography variant="textButtonClassic" className="text-btn">
                                                                         Delete
                                                                     </Typography>
@@ -2585,7 +2618,7 @@ function RoomRentalSpace() {
                             <TextField
                                 fullWidth
                                 name="InvoiceNumber"
-                                value={invoiceFormData.InvoiceNumber}
+                                value={invoiceFormData.InvoiceNumber ?? ""}
                                 onChange={(e) => setInvoiceFormData({ ...invoiceFormData, InvoiceNumber: e.target.value })}
                                 placeholder="Enter invoice number."
                                 error={!!errors.InvoiceNumber}
@@ -3092,7 +3125,7 @@ function RoomRentalSpace() {
                         ) : (
                             <CustomDataGrid
                                 getRowId={(row) =>
-                                    `${row.ID}-${row.Invoices?.map((inv: InvoiceInterface) => inv.StatusID).join("-")}`
+                                    `${row.ID}-${row.Invoices?.map((inv: RentalRoomInvoiceInterface) => inv.StatusID).join("-")}`
                                 }
                                 rows={filteredRooms}
                                 columns={getRoomColumns()}

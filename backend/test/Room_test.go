@@ -13,7 +13,6 @@ func TestRoomValidation(t *testing.T) {
     t.Run("Valid Room", func(t *testing.T) {
         room := entity.Room{
             RoomNumber:   "A101",
-            Capacity:     30,
             RoomStatusID: 1,
             FloorID:      1,
             RoomTypeID:   1,
@@ -26,7 +25,6 @@ func TestRoomValidation(t *testing.T) {
 
     t.Run("Missing Room Number", func(t *testing.T) {
         room := entity.Room{
-            Capacity:     30,
             RoomStatusID: 1,
             FloorID:      1,
             RoomTypeID:   1,
@@ -40,7 +38,6 @@ func TestRoomValidation(t *testing.T) {
     t.Run("Missing RoomStatusID", func(t *testing.T) {
         room := entity.Room{
             RoomNumber: "B102",
-            Capacity:   20,
             // Missing RoomStatusID
             FloorID:    2,
             RoomTypeID: 1,
@@ -54,7 +51,6 @@ func TestRoomValidation(t *testing.T) {
     t.Run("Zero Capacity", func(t *testing.T) {
         room := entity.Room{
             RoomNumber:   "C103",
-            Capacity:     0, // Invalid if you assume must be > 0
             RoomStatusID: 2,
             FloorID:      1,
             RoomTypeID:   3,

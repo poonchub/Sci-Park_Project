@@ -24,6 +24,6 @@ type Payment struct {
 	Approver      User 		`gorm:"foreignKey:ApproverID" valid:"-"`
 	BookingRoomID uint		
 	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
-	InvoiceID     uint		
-	Invoice       Invoice `gorm:"foreignKey:InvoiceID" valid:"-"`
+	RentalRoomInvoiceID     uint		
+	RentalRoomInvoice       RentalRoomInvoice `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
 }

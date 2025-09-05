@@ -319,7 +319,7 @@ function CheckRequest() {
             <ConfirmDialog
                 open={openConfirmCancelledFromOwnRequest}
                 setOpenConfirm={setOpenConfirmCancelledFromOwnRequest}
-                handleFunction={() => handleClickCancel()}
+                handleFunction={() => handleClickDeleteRequest()}
                 title="Confirm Cancel Request"
                 message="Are you sure you want to cancel this request? This action cannot be undone."
                 buttonActive={isButtonActive}

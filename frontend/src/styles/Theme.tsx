@@ -1,4 +1,5 @@
 import { createTheme } from "@mui/material/styles";
+import { borderColor } from "@mui/system";
 
 const theme = createTheme({
     cssVariables: {
@@ -130,13 +131,14 @@ const theme = createTheme({
                 {
                     props: { variant: 'outlinedCancel' },
                     style: {
-                        border: '1px solid #FF3B30',
-                        color: '#FF3B30',
-                        backgroundColor: '#fff',
+                        border: '1px solid rgb(109, 110, 112, 0.4)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#6D6E70',
                         maxHeight: '37px',
                         '&:hover': {
                             backgroundColor: '#FF3B30',
                             color: '#fff',
+                            borderColor: '#FF3B30'
                         },
                     },
                 },

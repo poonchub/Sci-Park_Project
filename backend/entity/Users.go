@@ -50,8 +50,8 @@ type User struct {
 	RequestServiceAreas       []RequestServiceArea       `gorm:"foreignKey:UserID" valid:"-"`
 	CancelRequestServiceAreas []CancelRequestServiceArea `gorm:"foreignKey:UserID" valid:"-"`
 	AboutCompany              *AboutCompany              `gorm:"foreignKey:UserID" valid:"-"`
-	InvoicesAsCreator         []Invoice                  `gorm:"foreignKey:CreaterID" valid:"-"`
-	InvoicesAsCustomer        []Invoice                  `gorm:"foreignKey:CustomerID" valid:"-"`
+	RentalRoomInvoicesAsCreator         []RentalRoomInvoice                  `gorm:"foreignKey:CreaterID" valid:"-"`
+	RentalRoomInvoicesAsCustomer        []RentalRoomInvoice                  `gorm:"foreignKey:CustomerID" valid:"-"`
 	ServiceAreaApprovals      []ServiceAreaApproval      `gorm:"foreignKey:UserID" valid:"-"`
 	ServiceAreaTasks          []ServiceAreaTask          `gorm:"foreignKey:UserID" valid:"-"`
 }

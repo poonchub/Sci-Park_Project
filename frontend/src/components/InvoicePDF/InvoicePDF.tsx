@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import html2pdf from "html2pdf.js";
-import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { InvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import { apiUrl, UploadInvoicePDF } from "../../services/http";
 
 import tinymce from "tinymce/tinymce";

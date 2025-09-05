@@ -87,7 +87,7 @@ import { faCircleQuestion } from "@fortawesome/free-regular-svg-icons";
 import { PaymentInterface } from "../../interfaces/IPayments";
 import ApexRevenueBarChart from "../../components/ApexRevenueBarChart/ApexRevenueBarChart";
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
-import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { InvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import ApexMaintenanceLineChart from "../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart";
 import ApexBookingRoomRevenueBarChart from "../../components/ApexBookingRoomRevenueBarChart/ApexBookingRoomRevenueBarChart";
 import ApexInvoiceRevenueBarChart from "../../components/ApexInvoiceRevenueBarChart/ApexInvoiceRevenueBarChart";

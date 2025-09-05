@@ -330,6 +330,7 @@ func main() {
 
 		// Invoice
 		protected.GET("/invoices", controller.ListInvoices)
+		protected.GET("/invoices/next-number", controller.GetNextInvoiceNumber)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.POST("/invoice/upload-pdf", controller.UploadInvoicePDF)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)

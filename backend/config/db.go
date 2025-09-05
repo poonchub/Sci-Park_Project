@@ -101,8 +101,8 @@ func SetupDatabase() {
 		&entity.ServiceUserType{},
 		&entity.ServiceAreaDocument{},
 		&entity.CancelRequestServiceArea{},
-		&entity.Invoice{},
-		&entity.InvoiceItem{},
+		&entity.RentalRoomInvoice{},
+		&entity.RentalRoomInvoiceItem{},
 		&entity.TitlePrefix{},
 		&entity.BookingDate{}, // ← ✅ ต้องใส่ให้ migrate ตาราง booking_dates
 		&entity.BookingStatus{},
@@ -898,14 +898,14 @@ func SeedDatabase() {
 			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
 			PayerID:     users[2+i%len(users)].ID,
 			StatusID:    4,
-			InvoiceID:   uint(i + 3),
+			RentalRoomInvoiceID:   uint(i + 3),
 		}
 		payments = append(payments, p)
 	}
 	for _, p := range payments {
 		db.FirstOrCreate(&p, entity.Payment{
 			BookingRoomID: p.BookingRoomID,
-			InvoiceID:     p.InvoiceID,
+			RentalRoomInvoiceID:     p.RentalRoomInvoiceID,
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
