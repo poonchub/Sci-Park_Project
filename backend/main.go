@@ -80,20 +80,20 @@ func main() {
 		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
 		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
 		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
-		r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
+		// r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
 
 		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
-		r.POST("/payments/:id/approve", controller.ApprovePayment)
+		// r.POST("/payments/:id/approve", controller.ApprovePayment)
 		r.POST("/payments/:id/reject", controller.RejectPayment)
 		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
-		r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
+		// r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
 
 		// Invoice flow (ใหม่)
-		r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
-		r.POST("/booking-rooms/:id/invoices/full", controller.CreateFullInvoiceHandler)
-		r.POST("/booking-rooms/:id/invoices/final", controller.CreateFinalInvoiceHandler)
-		r.POST("/invoices/mark-overdue", controller.MarkOverdueInvoicesHandler)
-		r.POST("/invoices/:invoiceId/upload-slip", controller.UploadInvoiceSlip)
+		// r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
+		// r.POST("/booking-rooms/:id/invoices/full", controller.CreateFullInvoiceHandler)
+		// r.POST("/booking-rooms/:id/invoices/final", controller.CreateFinalInvoiceHandler)
+		// r.POST("/invoices/mark-overdue", controller.MarkOverdueInvoicesHandler)
+		// r.POST("/invoices/:invoiceId/upload-slip", controller.UploadInvoiceSlip)
 
 	}
 

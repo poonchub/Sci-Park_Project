@@ -48,6 +48,8 @@ import {
   Info,
   CheckCircle2,
   Timer,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
 import {
@@ -61,6 +63,7 @@ import {
   UseRoomQuota,
   GetAllRoomLayouts,
   GetOrganizationInfo,
+  CreateRoomBookingInvoice,
 } from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -73,6 +76,8 @@ import "./Calendar.css";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import PDFPopup from "../../components/PDFPopup/PDFPopup";
 
 /* ========= Config / URL helper ========= */
 const API_BASE =
@@ -1121,6 +1126,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
       }
 
+      const invoiceData: RoomBookingInvoiceInterface = {
+        DepositAmount: calculatedPrice / 2,
+        DiscountAmount: 0,
+        TotalAmount: calculatedPrice,
+        Address: `${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
+        CustomerID: userId,
+        TaxID: addressFormData?.TaxID,
+        BookingRoomID: resBooking.data.booking_id
+      }
+      console.log("invoiceData: ", invoiceData)
+      await CreateRoomBookingInvoice(invoiceData)
+
       await fetchBookingMapOnly(roomData.ID as number);
 
       setSelectedDates([]);
@@ -1169,9 +1186,120 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
   }, [roomType]);
 
+  const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface | null>();
+  const [addressFormData, setAddressFormdata] = useState<{
+    AddressNumber?: string;
+    Street?: string;
+    SubDistrict?: string;
+    District?: string;
+    Province?: string;
+    PostalCode?: string;
+    TaxID?: string;
+  }>()
+  const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
+
+  const serviceConditions = {
+    title: "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
+    points: [
+      "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
+      "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
+      "   • แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)",
+      "   • พื้นที่จอดรถด้านหน้าอาคาร",
+      "   • การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)",
+      "   • จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)",
+      "เงื่อนไขการชำระเงิน",
+      "   • ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด",
+      "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
+      "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
+      "หมายเหตุ",
+      "• กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
+      "• กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
+    ],
+  };
+
+
   /* ===== Render ===== */
   return (
     <Box className="booking-container">
+
+      <Dialog
+        open={openPopupInvoiceCondition}
+        onClose={() => setOpenPopupInvoiceCondition(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: "primary.main",
+            textAlign: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1
+          }}
+        >
+          <HelpCircle size={22} style={{ minWidth: '22px', minHeight: '22px', marginBottom: '2px' }} />
+          Room Booking Condition
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenPopupInvoiceCondition(false)}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+            }}
+          >
+            <X size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ px: 5 }}>
+          <Typography
+            sx={{
+              whiteSpace: "pre-line",
+              fontSize: 18,
+              fontWeight: 600,
+            }}
+            gutterBottom
+          >
+            {serviceConditions.title}
+          </Typography>
+          {serviceConditions.points.map((line, index) => {
+            const trimmed = line.trimStart();
+            const isBullet = trimmed.startsWith("•");
+
+            return (
+              <Typography
+                key={index}
+                component="div"
+                sx={{
+                  pl: isBullet ? 3 : 0,
+                  whiteSpace: "normal",
+                  mb: 0.5,
+                  color: isBullet
+                    ? "text.secondary"
+                    : "text.primary",
+                }}
+              >
+                {line}
+              </Typography>
+            );
+          })}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              handleSubmitBooking()
+            }}
+            variant="contained"
+            startIcon={<Check size={18} />}
+          >
+            Confirm Booking
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
       {/* Header */}
@@ -1672,6 +1800,72 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       }}
                       className="readonly-field"
                     />
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <TextField
+                        label="Address Number"
+                        fullWidth
+                        value={addressFormData?.AddressNumber}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, AddressNumber: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="Street"
+                        fullWidth
+                        value={addressFormData?.Street}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, Street: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="Sub District"
+                        fullWidth
+                        value={addressFormData?.SubDistrict}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, SubDistrict: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="District"
+                        fullWidth
+                        value={addressFormData?.District}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, District: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="Province"
+                        fullWidth
+                        value={addressFormData?.Province}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, Province: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="Postal Code"
+                        fullWidth
+                        value={addressFormData?.PostalCode}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, PostalCode: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                      <TextField
+                        label="Tax ID."
+                        fullWidth
+                        value={addressFormData?.TaxID}
+                        onChange={(e) => setAddressFormdata((prev) => ({
+                          ...prev, TaxID: e.target.value
+                        }))}
+                        variant="outlined"
+                      />
+                    </Box>
                   </Box>
                 </Paper>
               </Grid>
@@ -1814,7 +2008,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => handleSubmitBooking()}
+                  onClick={() => setOpenPopupInvoiceCondition(true)}
                   disabled={
                     loading ||
                     calculatedPrice == null ||

@@ -21,6 +21,7 @@ type BookingRoom struct {
 	CancelledAt    *time.Time    `gorm:"default:null"`
 	AdditionalInfo string        `gorm:"type:text" json:"additional_info"`
 	BookingDates   []BookingDate `gorm:"foreignKey:BookingRoomID"`
+	RoomBookingInvoice *RoomBookingInvoice `gorm:"foreignKey:BookingRoomID"`
 
 	// 🔹 เพิ่มเพื่อรองรับเดดไลน์ 7 วันและเงื่อนไขเลื่อน/คืน
 	ConfirmedAt    *time.Time

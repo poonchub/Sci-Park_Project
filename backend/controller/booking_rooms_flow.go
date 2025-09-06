@@ -4,7 +4,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	// "fmt"
 
 	"net/http"
 	"strings"
@@ -295,126 +295,126 @@ func RejectBookingRoom(c *gin.Context) {
 }
 
 // POST /booking-rooms/:id/complete
-func CompleteBookingRoom(c *gin.Context) {
-	db := config.DB()
-	id := c.Param("id")
+// func CompleteBookingRoom(c *gin.Context) {
+// 	db := config.DB()
+// 	id := c.Param("id")
 
-	tx := db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+// 	tx := db.Begin()
+// 	defer func() {
+// 		if r := recover(); r != nil {
+// 			tx.Rollback()
+// 		}
+// 	}()
 
-	var b entity.BookingRoom
-	if err := tx.First(&b, id).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
-		return
-	}
-	if b.CancelledAt != nil {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "การจองถูกยกเลิกแล้ว"})
-		return
-	}
+// 	var b entity.BookingRoom
+// 	if err := tx.First(&b, id).Error; err != nil {
+// 		tx.Rollback()
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
+// 		return
+// 	}
+// 	if b.CancelledAt != nil {
+// 		tx.Rollback()
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "การจองถูกยกเลิกแล้ว"})
+// 		return
+// 	}
 
-	// หา BookingStatus = "Completed"
-	var bs entity.BookingStatus
-	if err := tx.Where("LOWER(status_name) = ?", "completed").First(&bs).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			bs = entity.BookingStatus{StatusName: "Completed"}
-			if err := tx.Create(&bs).Error; err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Completed ไม่สำเร็จ"})
-				return
-			}
-		} else {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Completed ไม่สำเร็จ"})
-			return
-		}
-	}
+// 	// หา BookingStatus = "Completed"
+// 	var bs entity.BookingStatus
+// 	if err := tx.Where("LOWER(status_name) = ?", "completed").First(&bs).Error; err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			bs = entity.BookingStatus{StatusName: "Completed"}
+// 			if err := tx.Create(&bs).Error; err != nil {
+// 				tx.Rollback()
+// 				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Completed ไม่สำเร็จ"})
+// 				return
+// 			}
+// 		} else {
+// 			tx.Rollback()
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Completed ไม่สำเร็จ"})
+// 			return
+// 		}
+// 	}
 
-	if err := tx.Model(&entity.BookingRoom{}).
-		Where("id = ?", b.ID).
-		Updates(map[string]interface{}{"status_id": bs.ID, "updated_at": time.Now()}).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถปิดงานได้"})
-		return
-	}
+// 	if err := tx.Model(&entity.BookingRoom{}).
+// 		Where("id = ?", b.ID).
+// 		Updates(map[string]interface{}{"status_id": bs.ID, "updated_at": time.Now()}).Error; err != nil {
+// 		tx.Rollback()
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถปิดงานได้"})
+// 		return
+// 	}
 
-	// ===== ออกใบแจ้งหนี้งวดสุดท้าย (ถ้ามียอดคงเหลือ) =====
-	// รับยอดรวมทั้งงานจาก FE (หรือคุณจะคำนวณเองฝั่งเซิร์ฟเวอร์ก็ได้)
-	var body struct {
-		BookingTotal float64 `json:"booking_total"`
-	}
-	_ = c.ShouldBindJSON(&body)
+// 	// ===== ออกใบแจ้งหนี้งวดสุดท้าย (ถ้ามียอดคงเหลือ) =====
+// 	// รับยอดรวมทั้งงานจาก FE (หรือคุณจะคำนวณเองฝั่งเซิร์ฟเวอร์ก็ได้)
+// 	var body struct {
+// 		BookingTotal float64 `json:"booking_total"`
+// 	}
+// 	_ = c.ShouldBindJSON(&body)
 
-	if body.BookingTotal > 0 {
-		// รวมยอดที่จ่ายแล้วจากทุก invoice ของ booking นี้
-		var invs []entity.Invoice
-		if err := tx.Where("booking_room_id = ?", b.ID).Find(&invs).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "คำนวณยอดที่ชำระแล้วไม่สำเร็จ"})
-			return
-		}
-		var paidSum float64
-		for _, iv := range invs {
-			paidSum += iv.PaidAmount
-		}
+// 	if body.BookingTotal > 0 {
+// 		// รวมยอดที่จ่ายแล้วจากทุก invoice ของ booking นี้
+// 		var invs []entity.Invoice
+// 		if err := tx.Where("booking_room_id = ?", b.ID).Find(&invs).Error; err != nil {
+// 			tx.Rollback()
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "คำนวณยอดที่ชำระแล้วไม่สำเร็จ"})
+// 			return
+// 		}
+// 		var paidSum float64
+// 		for _, iv := range invs {
+// 			paidSum += iv.PaidAmount
+// 		}
 
-		remain := body.BookingTotal - paidSum
-		if remain > 0 {
-			// วันสิ้นสุดกิจกรรม
-			end := time.Now()
-			if err := tx.Preload("BookingDates").First(&b, b.ID).Error; err == nil {
-				if t, ok := lastBookingDate(&b); ok {
-					end = t
-				}
-			}
+// 		remain := body.BookingTotal - paidSum
+// 		if remain > 0 {
+// 			// วันสิ้นสุดกิจกรรม
+// 			end := time.Now()
+// 			if err := tx.Preload("BookingDates").First(&b, b.ID).Error; err == nil {
+// 				if t, ok := lastBookingDate(&b); ok {
+// 					end = t
+// 				}
+// 			}
 
-			// หา/สร้างสถานะ Unpaid
-			var unpaid entity.PaymentStatus
-			if err := tx.Where("LOWER(name)=?", "unpaid").First(&unpaid).Error; err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					unpaid = entity.PaymentStatus{Name: "Unpaid"}
-					if err := tx.Create(&unpaid).Error; err != nil {
-						tx.Rollback()
-						c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Unpaid ไม่สำเร็จ"})
-						return
-					}
-				} else {
-					tx.Rollback()
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Unpaid ไม่สำเร็จ"})
-					return
-				}
-			}
+// 			// หา/สร้างสถานะ Unpaid
+// 			var unpaid entity.PaymentStatus
+// 			if err := tx.Where("LOWER(name)=?", "unpaid").First(&unpaid).Error; err != nil {
+// 				if errors.Is(err, gorm.ErrRecordNotFound) {
+// 					unpaid = entity.PaymentStatus{Name: "Unpaid"}
+// 					if err := tx.Create(&unpaid).Error; err != nil {
+// 						tx.Rollback()
+// 						c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Unpaid ไม่สำเร็จ"})
+// 						return
+// 					}
+// 				} else {
+// 					tx.Rollback()
+// 					c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Unpaid ไม่สำเร็จ"})
+// 					return
+// 				}
+// 			}
 
-			finalInv := entity.Invoice{
-				BookingRoomID: b.ID,
-				InvoiceNumber: fmt.Sprintf("FIN-%d-%d", b.ID, time.Now().Unix()),
-				IssueDate:     time.Now(),
-				DueDate:       end.Add(7 * 24 * time.Hour), // +7 วันหลังจบกิจกรรม
-				BillingPeriod: end,
-				TotalAmount:   remain,
-				InvoiceType:   "final",
-				PaidAmount:    0,
-				StatusID:      unpaid.ID,
-				RoomID:        b.RoomID,
-				CreaterID:     b.UserID,
-				CustomerID:    b.UserID,
-			}
-			if err := tx.Create(&finalInv).Error; err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างใบแจ้งหนี้งวดสุดท้ายไม่สำเร็จ"})
-				return
-			}
-		}
-	}
+// 			finalInv := entity.Invoice{
+// 				BookingRoomID: b.ID,
+// 				InvoiceNumber: fmt.Sprintf("FIN-%d-%d", b.ID, time.Now().Unix()),
+// 				IssueDate:     time.Now(),
+// 				DueDate:       end.Add(7 * 24 * time.Hour), // +7 วันหลังจบกิจกรรม
+// 				BillingPeriod: end,
+// 				TotalAmount:   remain,
+// 				InvoiceType:   "final",
+// 				PaidAmount:    0,
+// 				StatusID:      unpaid.ID,
+// 				RoomID:        b.RoomID,
+// 				CreaterID:     b.UserID,
+// 				CustomerID:    b.UserID,
+// 			}
+// 			if err := tx.Create(&finalInv).Error; err != nil {
+// 				tx.Rollback()
+// 				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างใบแจ้งหนี้งวดสุดท้ายไม่สำเร็จ"})
+// 				return
+// 			}
+// 		}
+// 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "ปิดงานสำเร็จ"})
-}
+// 	if err := tx.Commit().Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, gin.H{"message": "ปิดงานสำเร็จ"})
+// }
