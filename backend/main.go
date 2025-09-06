@@ -88,6 +88,13 @@ func main() {
 		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
 		r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
 
+		// Invoice flow (ใหม่)
+		r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
+		r.POST("/booking-rooms/:id/invoices/full", controller.CreateFullInvoiceHandler)
+		r.POST("/booking-rooms/:id/invoices/final", controller.CreateFinalInvoiceHandler)
+		r.POST("/invoices/mark-overdue", controller.MarkOverdueInvoicesHandler)
+		r.POST("/invoices/:invoiceId/upload-slip", controller.UploadInvoiceSlip)
+
 	}
 
 	// 🔒 Protected API (ต้องใช้ Token)

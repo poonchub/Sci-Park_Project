@@ -2,7 +2,7 @@ import { Container, Dialog, Grid, IconButton, Tooltip } from "@mui/material";
 import { Box, Button, Card, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
-import { Search, RefreshCw, Check, } from "lucide-react";
+import { Search, RefreshCw, Check, HousePlus, } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { ListRoomTypes, GetRoomTypes, apiUrl } from "../../services/http";
@@ -278,8 +278,9 @@ function ManageRoomType() {
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
             <div className="manage-roomtype-page">
                 <Grid container spacing={3}>
-                    <Grid className="title-box" size={{ xs: 12 }}>
-                        <Typography variant="h6" className="title">
+                    <Grid container className="title-box" direction={"row"} size={{ xs: 12 }} sx={{ gap: 1 }}>
+                        <HousePlus size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
                             Manage Room Types
                         </Typography>
                     </Grid>

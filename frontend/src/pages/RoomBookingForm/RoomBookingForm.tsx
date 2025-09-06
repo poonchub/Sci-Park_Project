@@ -28,13 +28,27 @@ import {
   Checkbox,
   InputLabel,
   IconButton,
-  Select as MUISelect,
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { Calendar, Clock, User, Mail, Phone, ArrowLeft, Check, Building2, AlertTriangle, LinkIcon, MapPin, Info, MusicIcon, CheckCircle2, Timer } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  User,
+  Mail,
+  Phone,
+  ArrowLeft,
+  Check,
+  Building2,
+  AlertTriangle,
+  LinkIcon,
+  MapPin,
+  Info,
+  CheckCircle2,
+  Timer,
+} from "lucide-react";
 import Carousel from "react-material-ui-carousel";
 import {
   GetTimeSlots,
@@ -47,11 +61,9 @@ import {
   UseRoomQuota,
   GetAllRoomLayouts,
   GetOrganizationInfo,
-
-} from "../../services/http/index";
+} from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
-// import { Select } from "../../components/Select/Select";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { Base64 } from "js-base64";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
@@ -62,47 +74,19 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
 
+/* ========= Config / URL helper ========= */
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || "http://localhost:8000";
 
-interface RoomBookingFormProps {
-  room?: {
-    id: number;
-    TypeName: string;
-    image?: string;
-  };
-  onBack?: () => void;
+function toPublicUrl(p?: string) {
+  if (!p) return "";
+  let u = String(p).trim().replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(u)) return u;
+  if (!u.startsWith("/")) u = "/" + u; // "images/..." → "/images/..."
+  return `${API_BASE}${u}`;
 }
 
-interface BookingDetail {
-  time: string;
-  bookedBy: string;
-  status: string;
-  type: "Fullday" | "Morning" | "Afternoon" | "hourly" | "half";
-  hours?: string[];
-}
-
-interface BookedDate {
-  bookedBy: string;
-  status: string;
-  fullDay?: boolean;
-  morning?: boolean;
-  afternoon?: boolean;
-  type?: string;
-  hours?: string[]; // normalized to ranges "HH:MM-HH:MM"
-  hourlyBookedBy?: string;
-  hourlyStatus?: string;
-  morningBookedBy?: string;
-  morningStatus?: string;
-  afternoonBookedBy?: string;
-  afternoonStatus?: string;
-  bookedHours?: string[]; // normalized to ranges
-  hourly?: string[]; // normalized to ranges
-}
-
-type BookedDates = {
-  [date: string]: BookedDate[];
-};
-
-/** ========= Canonical time slots (08:30–16:30) ========= */
+/* ========= Canonical time slots (08:30–16:30) ========= */
 const HOURLY_SLOTS = [
   "08:30-09:30",
   "09:30-10:30",
@@ -113,28 +97,21 @@ const HOURLY_SLOTS = [
   "14:30-15:30",
   "15:30-16:30",
 ];
-// half-day: map to slot groups
-const MORNING_SLOTS = HOURLY_SLOTS.slice(0, 4); // 08:30..12:30
-const AFTERNOON_SLOTS = HOURLY_SLOTS.slice(4); // 12:30..16:30
-
-// numeric start-hour bands for half-day conflict checks (8..15)
+const MORNING_SLOTS = HOURLY_SLOTS.slice(0, 4);
+const AFTERNOON_SLOTS = HOURLY_SLOTS.slice(4);
 export const MORNING_HOUR_NUMS = [8, 9, 10, 11];
 export const AFTERNOON_HOUR_NUMS = [12, 13, 14, 15];
 
 const LARGE_ROOM_MIN_SEATS = 20;
-const HOURLY_ALLOWED_ROLES = new Set([3, 4]);
 
-/** ========= Helpers ========= */
-
+/* ========= Small helpers ========= */
 const toRangeFromStart = (startHHMM: string): string => {
-  // "08:30" -> "08:30-09:30"
   const [h, m] = startHHMM.split(":").map(Number);
   const endH = h + 1;
   const end = `${String(endH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   return `${startHHMM}-${end}`;
 };
 const numHourToRange = (n: number): string | null => {
-  // 8..15 -> pick from HOURLY_SLOTS (8->index 0)
   const idx = n - 8;
   return HOURLY_SLOTS[idx] ?? null;
 };
@@ -143,7 +120,7 @@ const normalizeToRanges = (arr?: any[]): string[] => {
   return arr
     .map((h) => {
       if (typeof h === "string") {
-        if (h.includes("-")) return h; // already range
+        if (h.includes("-")) return h;
         if (/^\d{2}:\d{2}$/.test(h)) return toRangeFromStart(h);
         return null;
       }
@@ -152,15 +129,8 @@ const normalizeToRanges = (arr?: any[]): string[] => {
     })
     .filter((x): x is string => !!x);
 };
-const uniq = <T,>(arr: T[]) => Array.from(new Set(arr));
-
-const startHourFromRange = (range: string) => {
-  // "08:30-09:30" -> 8
-  const start = range.split("-")[0];
-  return parseInt(start.split(":")[0], 10);
-};
+const startHourFromRange = (range: string) => parseInt(range.split("-")[0].split(":")[0], 10);
 const endFromRange = (range: string) => range.split("-")[1];
-
 const groupContiguousByIndex = (ranges: string[]): string[][] => {
   const idxs = Array.from(new Set(ranges.map((r) => HOURLY_SLOTS.indexOf(r))))
     .filter((i) => i >= 0)
@@ -180,11 +150,44 @@ const groupContiguousByIndex = (ranges: string[]): string[][] => {
 };
 const coversAll = (booked: Set<string>, required: string[]) => required.every((h) => booked.has(h));
 
-/** ========= Component ========= */
+/* ========= Types ========= */
+interface RoomBookingFormProps {
+  room?: {
+    id: number;
+    TypeName: string;
+    image?: string;
+  };
+  onBack?: () => void;
+}
+interface BookingDetail {
+  time: string;
+  bookedBy: string;
+  status: string;
+  type: "Fullday" | "Morning" | "Afternoon" | "hourly" | "half";
+  hours?: string[];
+}
+interface BookedDate {
+  bookedBy: string;
+  status: string;
+  fullDay?: boolean;
+  morning?: boolean;
+  afternoon?: boolean;
+  type?: string;
+  hours?: string[];
+  hourlyBookedBy?: string;
+  hourlyStatus?: string;
+  morningBookedBy?: string;
+  morningStatus?: string;
+  afternoonBookedBy?: string;
+  afternoonStatus?: string;
+  bookedHours?: string[];
+  hourly?: string[];
+}
+type BookedDates = Record<string, BookedDate[]>;
+
+/* ========= Component ========= */
 const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
-  const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>(
-    []
-  );
+  const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
   const [timeRange, setTimeRange] = React.useState<"Morning" | "Afternoon" | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -197,11 +200,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [roomsOfSameType, setRoomsOfSameType] = useState<
     { RoomStatusID: number; id: number; roomnumber: string; RoomStatus?: RoomStatusInterface }[]
   >([]);
-  const [bookingMap, setBookingMap] = useState<{ [date: string]: BookingDetail[] }>({});
-  const [selectedDateDetails, setSelectedDateDetails] = useState<{
-    date: string;
-    bookings: BookingDetail[];
-  } | null>(null);
+  // const [bookingMap, setBookingMap] = useState<{ [date: string]: BookingDetail[] }>({});
+  const [selectedDateDetails, setSelectedDateDetails] = useState<{ date: string; bookings: BookingDetail[] } | null>(
+    null
+  );
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const location = useLocation();
@@ -210,10 +212,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [roomData, setRoomData] = React.useState<RoomsInterface | null>(null);
   const [roomType, setRoomType] = useState<RoomtypesInterface>({});
   const [role, setRole] = useState<any>(null);
-  console.log("ss", role);
+
   const [searchParams] = useSearchParams();
   const [capacity, setCapacity] = useState<number>(0);
-  const isAllowedToBookLargeRoom = capacity >= LARGE_ROOM_MIN_SEATS ? role === 4 || role === 5 : true;
+  const isAllowedToBookLargeRoom = capacity < LARGE_ROOM_MIN_SEATS ? true : role === 4 || role === 5;
 
   const [setupStyles, setSetupStyles] = useState<{ ID: number; LayoutName: string }[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>("");
@@ -223,66 +225,57 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [pricing, setPricing] = useState<RoomPriceInterface[]>([]);
   const [timeOption, setTimeOption] = useState<"hourly" | "half" | "full" | "none">("none");
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
-  const [openPopupCard, setOpenPopupCard] = useState<boolean>(false);
-  const [slipfile, setSlipFile] = useState<File | null>(null);
-
 
   const [isEmployee, setIsEmployee] = useState(false);
-  const isHourlyAllowed = isEmployee;   // ✅ ถ้าเป็นพนักงาน = true
+  const isHourlyAllowed = isEmployee;
   const [orgInfo, setOrgInfo] = useState<OrganizationInfoInterface | null>(null);
 
-
-
-
-  /** ===== Fetch/Init ===== */
-
+  /* Alerts helper */
   const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
     setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
   };
 
+  /* Load org info (contact card) */
   useEffect(() => {
-    const loadOrg = async () => {
+    (async () => {
       try {
         setLoading(true);
         const data: OrganizationInfoInterface | false = await GetOrganizationInfo();
         if (!data) {
           setOrgInfo(null);
-          setOrgError("ไม่สามารถโหลดข้อมูลหน่วยงานได้");
+          handleSetAlert("error", "ไม่สามารถโหลดข้อมูลหน่วยงานได้");
           return;
         }
         setOrgInfo(data);
       } catch (err) {
         console.error("Load org info error:", err);
-        setOrgError("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+        handleSetAlert("error", "เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน");
       } finally {
         setLoading(false);
       }
-    };
-
-    loadOrg(); // 👈 เรียกที่นี่
+    })();
   }, []);
 
-
-
-
+  /* Load user profile */
   async function fetchUserData(userId: number) {
     setLoading(true);
     try {
       const res = await GetUserById(userId);
-      console.log(res);
       if (res) {
         setName(res.FirstName + " " + res.LastName);
         setPhone(res.Phone);
         setEmail(res.Email);
         setRole(res.RoleID);
-        setIsEmployee(res.IsEmployee);   // ✅ ใช้ค่า IsEmployee ที่ backend ส่งมา
+        setIsEmployee(res.IsEmployee);
       }
     } catch (err) {
       console.error("Failed to fetch user data", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
+  /* Load room type from query */
   const getRoomtype = async () => {
     try {
       const encodedId = searchParams.get("roomtype_id");
@@ -294,6 +287,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   };
 
+  /* Load basic room data, pricing, bookings */
   async function fetchRoomData(roomId: number) {
     setLoading(true);
     try {
@@ -304,17 +298,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       }
     } catch (err) {
       console.error("Failed to fetch room data", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const fetchRoomPricing = async (roomId: number) => {
     setLoading(true);
     try {
       const res = await GetTimeSlots(roomId);
-      if (res) {
-        setPricing(res.RoomPrices || []);
-      }
+      if (res) setPricing(res.RoomPrices || []);
     } catch (error) {
       console.error("Error fetching pricing:", error);
     } finally {
@@ -322,7 +315,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   };
 
-  // Booking map/dates only
   const fetchBookingMapOnly = async (roomId: number) => {
     setLoading(true);
     try {
@@ -330,25 +322,25 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       if (res.BookedDates) {
         const convertedData: BookedDates = convertBookedDates(res.BookedDates);
         setBookedDates(convertedData);
-
         const bookingDetailMap: { [date: string]: BookingDetail[] } = {};
         for (const date in convertedData) {
           bookingDetailMap[date] = getBookingDetailsFromArray(convertedData[date]);
         }
-        setBookingMap(bookingDetailMap);
+        // setBookingMap(bookingDetailMap);
       } else {
         setBookedDates({});
-        setBookingMap({});
+        // setBookingMap({});
       }
     } catch (error) {
       console.error("Error fetching booking map:", error);
       setBookedDates({});
-      setBookingMap({});
+      // setBookingMap({});
     } finally {
       setLoading(false);
     }
   };
 
+  /* Bootstrap */
   useEffect(() => {
     const userId = Number(localStorage.getItem("userId") || "0");
     if (userId) fetchUserData(userId);
@@ -387,6 +379,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   }, [roomType?.ID]);
 
   useEffect(() => {
+    GetAllRoomLayouts().then((data) => {
+      setSetupStyles(data || []);
+    });
+  }, []);
+
+  useEffect(() => {
     const loadQuota = async () => {
       const userId = parseInt(localStorage.getItem("userId") || "");
       const res = await GetRoomQuota(userId);
@@ -403,14 +401,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     loadQuota();
   }, []);
 
-  useEffect(() => {
-    GetAllRoomLayouts().then((data) => {
-      setSetupStyles(data || []);
-    });
-  }, []);
-
-  /** ===== Pricing ===== */
-
+  /* Discounts (free-use quota) */
   const [discount, setDiscount] = useState<{
     type: "free-use";
     name: string;
@@ -429,19 +420,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     used: false,
   });
 
-
-
+  /* Price calc */
   const slotIdByName = useMemo<Record<string, number>>(() => {
     const map: Record<string, number> = {};
     for (const p of pricing) {
-      const name =
-        (p as any)?.TimeSlot?.TimeSlotName ??
-        (p as any)?.TimeSlotName ??
-        (p as any)?.name;
-      const id =
-        (p as any)?.TimeSlot?.ID ??
-        (p as any)?.ID ??
-        (p as any)?.TimeSlotID;
+      const name = (p as any)?.TimeSlot?.TimeSlotName ?? (p as any)?.TimeSlotName ?? (p as any)?.name;
+      const id = (p as any)?.TimeSlot?.ID ?? (p as any)?.ID ?? (p as any)?.TimeSlotID;
       if (name && typeof id === "number") map[name] = id;
     }
     return map;
@@ -467,10 +451,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       return [];
     }
     if (timeOption === "hourly") {
-      // selectedHours = range names like "08:30-09:30"
-      return selectedHours
-        .map((name) => id(name))
-        .filter((n): n is number => typeof n === "number");
+      return selectedHours.map((name) => id(name)).filter((n): n is number => typeof n === "number");
     }
     return [];
   };
@@ -501,33 +482,27 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       }
       totalPrice *= dates.length;
     }
-
     return totalPrice;
   };
 
   useEffect(() => {
     if (selectedDates.length > 0 && timeOption !== "none") {
-      const totalPrice = calculatePrice(
-        selectedDates, timeOption, timeRange, selectedHours, pricing
-      );
+      const totalPrice = calculatePrice(selectedDates, timeOption, timeRange, selectedHours, pricing);
       setCalculatedPrice(totalPrice);
     } else {
       setCalculatedPrice(0);
     }
-  }, [selectedDates, timeOption, timeRange, selectedHours, pricing, discount.used]); // 👈 เพิ่ม discount.used
-
+  }, [selectedDates, timeOption, timeRange, selectedHours, pricing, discount.used]);
 
   useEffect(() => {
     if (!isHourlyAllowed && timeOption === "hourly") {
       setTimeOption("none");
       setSelectedHours([]);
-      // ✅ รีเซ็ตวันที่ที่เลือกในปฏิทิน เพื่อกันชน/ไม่ซ้อนทับ
       setSelectedDates([]);
     }
   }, [isHourlyAllowed, timeOption]);
 
-  /** ===== Booking detail computation (08:30–16:30 canonical) ===== */
-
+  /* Booking detail computation */
   const getBookingDetailsFromArray = (bookings: BookedDate[]): BookingDetail[] => {
     if (!bookings || bookings.length === 0) return [];
     const details: BookingDetail[] = [];
@@ -536,7 +511,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       const bookedHours = normalizeToRanges(b.hours);
       const bookedSet = new Set(bookedHours);
 
-      // --- Full Day: flag หรือครอบคลุมทุกช่วง ---
       const isFullDayBooking = b.type === "Fullday" || coversAll(bookedSet, HOURLY_SLOTS);
       if (isFullDayBooking) {
         details.push({
@@ -549,15 +523,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         return;
       }
 
-      // --- แยกการตัดสินใจ Morning/Afternoon ---
       const isMorningByFlag = !!b.morning || b.type === "morning";
       const isAfternoonByFlag = !!b.afternoon || b.type === "afternoon";
 
-      // อย่านับ coverage เป็น morning/afternoon หาก booking เป็น 'hourly'
       const isMorningByCoverage = b.type !== "hourly" && coversAll(bookedSet, MORNING_SLOTS);
       const isAfternoonByCoverage = b.type !== "hourly" && coversAll(bookedSet, AFTERNOON_SLOTS);
 
-      // รวมผลสุดท้าย (แต่กันซ้ำด้วย set)
       const addedTypes = new Set<"morning" | "afternoon">();
 
       const pushMorning = () => {
@@ -584,15 +555,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         addedTypes.add("afternoon");
       };
 
-      // ถ้า flag และ coverage ซ้อนกัน → จะ push แค่ครั้งเดียว
       if (isMorningByFlag || isMorningByCoverage) pushMorning();
       if (isAfternoonByFlag || isAfternoonByCoverage) pushAfternoon();
 
-      // เคสเช้า+บ่ายใน booking เดียวกัน → สรุปเป็น Full Day
       if (addedTypes.has("morning") && addedTypes.has("afternoon")) {
-        // ลบที่เพิ่ง push ออก แล้วแทนด้วย Full Day
-        details.pop(); // afternoon
-        details.pop(); // morning
+        details.pop();
+        details.pop();
         details.push({
           time: "Full Day (08:30-16:30)",
           bookedBy: b.bookedBy || "system",
@@ -603,7 +571,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         return;
       }
 
-      // --- Hourly เฉพาะที่เหลือ (ไม่กินทับครึ่งวัน) ---
       const hourlyBase =
         b.type === "hourly"
           ? bookedHours
@@ -625,7 +592,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       }
     });
 
-    // --- รวม morning+afternoon ข้าม booking record ที่ "คนเดียวกัน/สถานะเดียวกัน" ---
     const key = (d: BookingDetail) => `${d.bookedBy}__${d.status}`;
     const byKey = new Map<string, BookingDetail[]>();
     details.forEach((d) => {
@@ -655,7 +621,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       }
     });
 
-    // --- de-dup รายการที่ยังเหมือนกันทุกประการ ---
     const seen = new Set<string>();
     const deduped = merged.filter((d) => {
       const sig = `${d.type}|${d.time}|${d.bookedBy}|${d.status}`;
@@ -666,7 +631,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
     return deduped;
   };
-
 
   const convertBookedDates = (apiData: Record<string, any>): BookedDates => {
     const converted: BookedDates = {};
@@ -693,6 +657,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     return converted;
   };
 
+  /* Availability & selection */
   const isFullyBooked = (dateString: string): boolean => {
     const bookings = bookedDates[dateString];
     if (!bookings?.length) return false;
@@ -733,34 +698,29 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     return bookings ? getBookingDetailsFromArray(bookings) : [];
   };
 
-  /** ===== Availability & selection ===== */
+  function showDateDetails(dateString: string) {
+    const details = getBookingDetails(dateString);
+    setSelectedDateDetails({ date: dateString, bookings: details });
+    setShowDetailsModal(true);
+  }
 
   const isSlotAvailable = (dateString: string): boolean => {
     const bookings = bookedDates[dateString] ?? [];
     if (!Array.isArray(bookings)) return true;
 
-    if (timeOption === "full") {
-      // Full day: any booking makes it unavailable
-      return bookings.length === 0;
-    }
+    if (timeOption === "full") return bookings.length === 0;
 
     if (timeOption === "half") {
       for (const booking of bookings) {
         if (booking.fullDay) return false;
-
         if (timeRange === "Morning") {
           if (booking.morning) return false;
-          const anyStartInMorning = normalizeToRanges(booking.hours).some(
-            (r) => MORNING_HOUR_NUMS.includes(startHourFromRange(r))
-          );
+          const anyStartInMorning = normalizeToRanges(booking.hours).some((r) => MORNING_HOUR_NUMS.includes(startHourFromRange(r)));
           if (anyStartInMorning) return false;
         }
-
         if (timeRange === "Afternoon") {
           if (booking.afternoon) return false;
-          const anyStartInAfternoon = normalizeToRanges(booking.hours).some(
-            (r) => AFTERNOON_HOUR_NUMS.includes(startHourFromRange(r))
-          );
+          const anyStartInAfternoon = normalizeToRanges(booking.hours).some((r) => AFTERNOON_HOUR_NUMS.includes(startHourFromRange(r)));
           if (anyStartInAfternoon) return false;
         }
       }
@@ -769,24 +729,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
     if (timeOption === "hourly") {
       const selectedHourNums = selectedHours.map((r) => startHourFromRange(r));
-
       for (const booking of bookings) {
         if (booking.fullDay) return false;
-
         if (booking.morning && selectedHourNums.some((h) => MORNING_HOUR_NUMS.includes(h))) return false;
-        if (booking.afternoon && selectedHourNums.some((h) => AFTERNOON_HOUR_NUMS.includes(h)))
-          return false;
+        if (booking.afternoon && selectedHourNums.some((h) => AFTERNOON_HOUR_NUMS.includes(h))) return false;
 
         const bookedStarts: number[] = [];
-        const pushRanges = (arr?: string[]) => {
+        const collect = (arr?: string[]) =>
           normalizeToRanges(arr).forEach((r) => {
             const n = startHourFromRange(r);
             if (!Number.isNaN(n)) bookedStarts.push(n);
           });
-        };
-        pushRanges(booking.hours);
-        pushRanges(booking.bookedHours);
-        pushRanges(booking.hourly);
+        collect(booking.hours);
+        collect(booking.bookedHours);
+        collect(booking.hourly);
 
         if (selectedHourNums.some((n) => bookedStarts.includes(n))) return false;
       }
@@ -795,12 +751,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
     return true;
   };
-
-  function showDateDetails(dateString: string) {
-    const details = getBookingDetails(dateString);
-    setSelectedDateDetails({ date: dateString, bookings: details });
-    setShowDetailsModal(true);
-  }
 
   const toggleDateSelection = (dateString: string) => {
     const today = new Date().toISOString().split("T")[0];
@@ -818,24 +768,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
         const bookedStarts: number[] = [];
         bookings.forEach((b) => {
-          const collect = (arr?: string[]) => {
+          const collect = (arr?: string[]) =>
             normalizeToRanges(arr).forEach((r) => {
               const n = startHourFromRange(r);
               if (!Number.isNaN(n)) bookedStarts.push(n);
             });
-          };
           collect(b.bookedHours);
           collect(b.hours);
           collect(b.hourly);
         });
-
         return !bookedStarts.includes(hourNum);
       });
 
       if (!canSelectDate) {
-        alert(
-          `Cannot select ${dateString} - Selected hours conflict with existing bookings on this date`
-        );
+        alert(`Cannot select ${dateString} - Selected hours conflict with existing bookings on this date`);
         return;
       }
     }
@@ -852,8 +798,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     );
   };
 
-  /** ===== Calendar UI ===== */
-
+  /* Calendar UI */
   const [currentMonthState, setCurrentMonth] = useState(new Date());
 
   const renderCalendar = () => {
@@ -882,7 +827,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       "November",
       "December",
     ];
-
     const futureYears = Array.from({ length: 6 }, (_, i) => today.getFullYear() + i);
 
     const getCellClasses = (
@@ -921,21 +865,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             </Typography>
             {bookingDetails.map((b, i) => (
               <Box key={i} sx={{ mb: 1, p: 1, borderRadius: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 0.75 }}
-                >
+                <Typography variant="body2" sx={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Calendar size={14} /> {b.time}
                 </Typography>
-
-                <Typography
-                  variant="caption"
-                  display="block"
-                  sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
-                >
+                <Typography variant="caption" display="block" sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <User size={14} /> Booked by: {b.bookedBy}
                 </Typography>
-
                 <Typography
                   variant="caption"
                   display="block"
@@ -950,7 +885,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   {b.status === "confirmed" ? <CheckCircle2 size={14} /> : <Clock size={14} />}{" "}
                   {b.status === "confirmed" ? "Confirmed" : "Pending"}
                 </Typography>
-
                 {b.hours?.length ? (
                   <Typography
                     variant="caption"
@@ -962,7 +896,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 ) : null}
               </Box>
             ))}
-
             <Typography
               variant="caption"
               sx={{
@@ -1100,7 +1033,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           {Array.from({ length: firstDay }).map((_, i) => (
             <Box key={`empty-${i}`} />
           ))}
-
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const d = i + 1;
             const dateString = formatDateString(year, month, d);
@@ -1111,16 +1043,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     );
   };
 
-  /** ===== Summary helpers ===== */
+  /* Summary labels */
   const getTimeLabel = () => (timeOption === "half" ? "Half Day" : "Full Day");
   const getTimeRangeLabel = () => (timeRange === "Morning" ? "08:30 - 12:30" : "12:30 - 16:30");
 
-  /** ===== Submit ===== */
-
+  /* Hour slot toggle */
   const handleHourToggle = (hourRange: string) => {
-    setSelectedHours((prev) =>
-      prev.includes(hourRange) ? prev.filter((h) => h !== hourRange) : [...prev, hourRange]
-    );
+    setSelectedHours((prev) => (prev.includes(hourRange) ? prev.filter((h) => h !== hourRange) : [...prev, hourRange]));
   };
 
   function getRoomTypeKey(roomType: string): "meeting" | "training" | "multi" {
@@ -1139,6 +1068,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   }
 
+  /* Submit booking */
   const handleSubmitBooking = async () => {
     if (!isHourlyAllowed && timeOption === "hourly") {
       alert("Your role is not allowed to book hourly.");
@@ -1171,22 +1101,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
     try {
       const resBooking = await CreateBookingRoom(bookingData);
-
       if (resBooking.status !== 200) {
         console.error("❌ Booking failed", resBooking.status, resBooking.data?.error);
         alert(resBooking.data?.error || "เกิดข้อผิดพลาดในการจอง");
         return;
       }
 
-      // ลดโควต้า
       const roomTypeKey = getRoomTypeKey(roomData.TypeName || "");
       const quotaRes = await UseRoomQuota({ user_id: userId, room_type: roomTypeKey });
-
       if (quotaRes.status === 200) {
-        // สมมติ payload แบบเดิมที่เคยใช้ GetRoomQuota
         setDiscount((prev) => ({
           ...prev,
-          used: false, // ใช้เครดิตรอบนี้ไปแล้ว รีเซ็ตปุ่ม
+          used: false,
           totalAllowed: quotaRes.data?.meeting_room?.total ?? prev.totalAllowed,
           usedCount: quotaRes.data?.meeting_room?.used ?? prev.usedCount,
           remaining: quotaRes.data?.meeting_room?.remaining ?? Math.max(prev.remaining - 1, 0),
@@ -1195,10 +1121,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
       }
 
-
       await fetchBookingMapOnly(roomData.ID as number);
 
-      // reset
       setSelectedDates([]);
       setAdditionalNote("");
       setPurpose("");
@@ -1213,18 +1137,39 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   };
 
-  /** ===== Derived data ===== */
-
+  /* Header data */
   const roomDataHeader = {
     id: (roomtype as any).id,
     TypeName: roomType.TypeName,
+
     image:
       (roomtype as any).image ||
       "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
   };
+  console.log(roomType)
 
-  /** ===== Render ===== */
+  /* ===== RoomType images for Carousel (ใช้รูปจริง) ===== */
+  const carouselSrcs = useMemo(() => {
+    type RTImage = { ID?: number; FilePath?: string; IsCover?: boolean; SortOrder?: number };
+    const imgs: RTImage[] = ((roomType as any)?.RoomTypeImages ?? []).slice();
 
+    imgs.sort((a, b) => {
+      const ca = a.IsCover ? 0 : 1;
+      const cb = b.IsCover ? 0 : 1;
+      if (ca !== cb) return ca - cb;
+      const sa = a.SortOrder ?? 9999;
+      const sb = b.SortOrder ?? 9999;
+      if (sa !== sb) return sa - sb;
+      return (a.ID ?? 0) - (b.ID ?? 0);
+    });
+
+    const mapped = imgs.map((img) => toPublicUrl(img.FilePath)).filter(Boolean);
+    return mapped.length
+      ? mapped
+      : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
+  }, [roomType]);
+
+  /* ===== Render ===== */
   return (
     <Box className="booking-container">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
@@ -1240,12 +1185,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               Book meeting rooms online - convenient and fast
             </Typography>
           </Box>
-          <Button
-            startIcon={<ArrowLeft />}
-            onClick={onBack || (() => window.history.back())}
-            variant="text"
-            
-          >
+          <Button startIcon={<ArrowLeft />} onClick={onBack || (() => window.history.back())} variant="text">
             Back
           </Button>
         </Box>
@@ -1254,7 +1194,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       <Grid container spacing={3}>
         {/* Left Column */}
         <Grid size={{ xs: 12, lg: 6 }}>
-          {/* Images */}
+          {/* Images (ใช้รูปจริงของ RoomType) */}
           <Grid size={{ xs: 12 }}>
             <Carousel
               indicators
@@ -1264,17 +1204,26 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               navButtonsAlwaysVisible
               navButtonsProps={{ className: "button-nav-button" }}
             >
-              <CardMedia
-                component="img"
-                image="https://www.executivecentre.com/_next/image/?url=%2F_next%2Fstatic%2Fmedia%2FplanOverview-mr-meetingRoom.1f2225da.jpg&w=3840&q=75"
-                className="carousel-image"
-              />
-              <CardMedia
-                component="img"
-                image="https://www.webex.com/content/dam/www/us/en/images/workspaces/large-meeting-room/modular/large-modular-hero-new.jpg"
-                alt="large meeting room"
-                className="carousel-image"
-              />
+              {carouselSrcs.map((src, idx) => (
+                <CardMedia
+                  key={`rt-img-${idx}`}
+                  component="img"
+                  image={src}
+                  alt={`${roomType?.TypeName || "Room Type"} ${idx + 1}`}
+                  className="carousel-image"
+                  sx={{
+                    height: { xs: 220, sm: 320, md: 420 },
+                    width: "100%",
+                    objectFit: "cover",
+                    borderRadius: 2,
+                    bgcolor: "#f5f5f5",
+                  }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop";
+                  }}
+                />
+              ))}
             </Carousel>
           </Grid>
 
@@ -1351,7 +1300,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 </Box>
               ) : (
                 <>
-                  {/* Duration Options */}
                   <FormControl component="fieldset" className="booking-duration-options">
                     <FormLabel component="legend" className="booking-duration-legend">
                       Duration Options
@@ -1363,7 +1311,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         setTimeOption(val);
                         setTimeRange(null);
                         setSelectedHours([]);
-                        // ✅ รีเซ็ตวันที่ที่เลือกในปฏิทิน เพื่อกันชน/ไม่ซ้อนทับ
                         setSelectedDates([]);
                       }}
                     >
@@ -1399,12 +1346,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           {HOURLY_SLOTS.map((hour) => (
                             <FormControlLabel
                               key={hour}
-                              control={
-                                <Checkbox
-                                  checked={selectedHours.includes(hour)}
-                                  onChange={() => handleHourToggle(hour)}
-                                />
-                              }
+                              control={<Checkbox checked={selectedHours.includes(hour)} onChange={() => handleHourToggle(hour)} />}
                               label={hour}
                             />
                           ))}
@@ -1413,7 +1355,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     </>
                   )}
 
-                  {/* Half Day Slots */}
+                  {/* Half Day */}
                   {timeOption === "half" && (
                     <>
                       <Divider className="booking-time-divider" />
@@ -1435,7 +1377,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     </>
                   )}
 
-                  {/* Full Day Info */}
+                  {/* Full Day info */}
                   {timeOption === "full" && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="body1" fontWeight="600">
@@ -1461,7 +1403,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 </Typography>
               </Box>
 
-              <Box sx={{ opacity: selectedRoomId && timeOption ? 1 : 0.5, pointerEvents: selectedRoomId && timeOption ? "auto" : "none" }}>
+              <Box
+                sx={{
+                  opacity: selectedRoomId && timeOption ? 1 : 0.5,
+                  pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
+                  padding: "44px",
+                }}
+              >
                 {renderCalendar()}
               </Box>
 
@@ -1789,10 +1737,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           <FormControlLabel
                             control={
                               <Checkbox
-                                checked={selectedEquipment.length === equipmentList.length}
+                                checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
                                 indeterminate={
-                                  selectedEquipment.length > 0 &&
-                                  selectedEquipment.length < equipmentList.length
+                                  selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length
                                 }
                                 onChange={(e) => {
                                   if (e.target.checked) setSelectedEquipment(equipmentList);
@@ -1876,15 +1823,22 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     purpose.trim() === "" ||
                     !isAllowedToBookLargeRoom ||
                     (timeOption === "hourly" && !isHourlyAllowed) ||
-                    (timeOption === "half" && !timeRange) // ✅ เพิ่มบรรทัดนี้
+                    (timeOption === "half" && !timeRange)
                   }
                   className="confirm-button"
                   startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : <Check size={24} />}
                 >
-                  {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
+                  {loading
+                    ? "Processing Your Booking..."
+                    : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
                 </Button>
 
-                <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  className="confirmation-note"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
                   <Info size={16} /> Your booking will be confirmed immediately after payment
                 </Typography>
               </Box>
@@ -1892,7 +1846,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               {!isAllowedToBookLargeRoom && (
                 <Box className="error-alert-container" sx={{ mt: 2 }}>
                   <Alert severity="error">
-                    {/* หัวข้อ */}
                     <Typography variant="subtitle1" fontWeight="bold">
                       This room exceeds the seat capacity allowed for online booking.
                     </Typography>
@@ -1900,7 +1853,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       Please contact our staff to make a reservation:
                     </Typography>
 
-                    {/* Contact Card */}
                     {orgInfo && (
                       <Box
                         sx={{
@@ -1937,10 +1889,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                               <Mail size={16} />
                             </span>
-                            <a
-                              href={`mailto:${orgInfo.Email}`}
-                              style={{ textDecoration: "none", color: "inherit" }}
-                            >
+                            <a href={`mailto:${orgInfo.Email}`} style={{ textDecoration: "none", color: "inherit" }}>
                               {orgInfo.Email}
                             </a>
                           </Typography>
@@ -1971,9 +1920,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       </Grid>
     </Box>
   );
-
 };
 
-export default RoomBookingForm; // ✅ เพิ่มบรรทัดนี้
-
-
+export default RoomBookingForm;

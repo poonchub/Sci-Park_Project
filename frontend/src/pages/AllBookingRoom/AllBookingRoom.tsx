@@ -30,7 +30,7 @@ import { CalendarMonth } from "@mui/icons-material";
 import { Select } from "../../components/Select/Select";
 import { getDisplayStatus, getNextAction, ActionKey } from "../../utils/bookingFlow";
 import FinishActionButton from "../../components/FinishActionButton/FinishActionButton";
-
+import {  normalizeBookingRow } from "../../utils/normalizeBooking";
 import {
     GetBookingRooms,
     ApproveBookingRoom,
@@ -153,35 +153,25 @@ function AllBookingRoom() {
     const getBookingRooms = async () => {
         try {
             const res = await GetBookingRooms();
-
-            const rows: BookingRoomsInterface[] = res || [];
-            console.log("d", res);
+            const rows = (res || []).map(normalizeBookingRow);
             setBookingRooms(rows);
 
-
-            // MyBooking / AllBooking
-            const counts = rows.reduce((acc: Record<string, number>, it) => {
-                let key = (it.DisplayStatus || "unknown").toLowerCase();
-
-                // ✅ รวมกลุ่มสถานะย่อยเข้าไปในหลักๆ
+            const counts = rows.reduce((acc: Record<string, number>, it: { DisplayStatus: string; }) => {
+                let key = it.DisplayStatus || "unknown";
                 if (["rejected", "unconfirmed"].includes(key)) key = "pending";
-                if (["awaiting receipt", "refunded"].includes(key)) key = "payment"; // 👈 รวม refunded ด้วย
-                if (!["pending", "confirmed", "payment review", "payment", "completed", "cancelled"].includes(key)) {
-                    key = "unknown"; // กันพลาด
-                }
-
+                if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
+                if (!["pending", "confirmed", "payment review", "payment", "completed", "cancelled"].includes(key)) key = "unknown";
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
             }, {});
             setStatusCounts(counts);
-
-
         } catch (e) {
             setAlerts(a => [...a, { type: "error", message: "โหลด bookings ไม่สำเร็จ" }]);
         } finally {
             setIsLoadingData(false);
         }
     };
+
 
 
 
@@ -513,7 +503,7 @@ function AllBookingRoom() {
                                 />
                             )}
 
-                                    
+
 
                             {/* ---- Always show Details ---- */}
                             <Tooltip title="Details">

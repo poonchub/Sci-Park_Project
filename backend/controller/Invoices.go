@@ -298,22 +298,26 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 		return
 	}
 
-	// คำนวณสถิติ
-	paidStatuses := map[string]bool{
-		"Awaiting Receipt": true,
-		"Paid":             true,
-	}
+	// // คำนวณสถิติ
+	// paidStatuses := map[string]bool{
+	// 	"Awaiting Receipt": true,
+	// 	"Paid":             true,
+	// }
 
-	var paidCount, overdueCount int
+	paidCount, overdueCount := 0, 0
 	var totalRevenue float64
 	nowTime := time.Now().In(loc)
 
 	for _, inv := range invoices {
-		statusName := inv.Status.Name
-		if paidStatuses[statusName] {
+		switch strings.ToLower(inv.Status.Name) {
+		case "paid":
 			paidCount++
-			totalRevenue += inv.TotalAmount
-		} else if statusName == "Pending Payment" && inv.DueDate.Before(nowTime) {
+			totalRevenue += inv.PaidAmount // ✅ นับตามที่จ่ายจริง
+		case "partially paid", "unpaid":
+			if inv.DueDate.Before(nowTime) {
+				overdueCount++
+			}
+		case "overdue":
 			overdueCount++
 		}
 	}
@@ -352,7 +356,7 @@ func CreateInvoice(c *gin.Context) {
 	// invoice.InvoiceNumber = nextInvoiceNumber
 
 	var status entity.PaymentStatus
-	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {
+	if err := db.Where("name = ?", "Unpaid").First(&status).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending Payment' not found"})
 		return
 	}

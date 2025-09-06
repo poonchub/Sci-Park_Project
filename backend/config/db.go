@@ -1091,14 +1091,23 @@ func SeedDatabase() {
 		})
 	}
 
-	// PaymentStatus
-	paymentStatuses := []entity.PaymentStatus{
-		{Name: "Pending Payment"},      // ยังไม่ได้จ่าย
-		{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสอบสลิป
-		{Name: "Awaiting Receipt"},     // ตรวจสอบสลิปแล้ว รอออกใบเสร็จ
-		{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
-		{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัพโหลดใหม่
-		{Name: "Refunded"},             // คืนเงินแล้ว
+// PaymentStatus (ใช้ร่วมกันทั้ง Payment และ Invoice)
+paymentStatuses := []entity.PaymentStatus{
+	// ---- สาย Payment (เดิม) ----
+	{Name: "Pending Payment"},      // ยังไม่ได้จ่าย/รอจ่าย
+	{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสลิป
+	{Name: "Awaiting Receipt"},     // ตรวจสลิปแล้ว รอออกใบเสร็จ
+	{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
+	{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัปโหลดใหม่
+	{Name: "Refunded"},             // คืนเงินแล้ว
+
+	// ---- สาย Invoice (ใหม่) ----
+	{Name: "Unpaid"},         // ออกใบแจ้งหนี้แล้วยังไม่ชำระ
+	{Name: "Partially Paid"}, // ชำระมาแล้วบางส่วน
+	{Name: "Overdue"},        // เกินกำหนดชำระ (เช็กด้วย job รายวัน)
+	{Name: "Voided"},         // ยกเลิกใบแจ้งหนี้ (ไม่ใช้เรียกเก็บแล้ว)
+
+
 	}
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{

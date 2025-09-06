@@ -25,7 +25,6 @@ import {
   Trash2,
   Settings,
   DollarSign,
-  Grid3x3,
   Camera,
   X,
   Wrench,
@@ -817,7 +816,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                       sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}
                     >
                       <Camera size={24} />
-                      <Typography variant="" >Add Image</Typography>
+                      <Typography variant="overline" >Add Image</Typography>
                       <input
                         type="file"
                         accept="image/*"

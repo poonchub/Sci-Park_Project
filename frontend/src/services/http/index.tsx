@@ -7,7 +7,7 @@ import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
@@ -2899,14 +2899,14 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
     limit?: number;
 }) {
     try {
-        
-        
+
+
         const params = new URLSearchParams();
-        
+
         if (options?.month_year) {
             params.append('month_year', options.month_year);
         }
-        
+
         if (options?.business_group_id) {
             params.append('business_group_id', options.business_group_id.toString());
         }
@@ -2918,14 +2918,14 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
         if (options?.limit) {
             params.append('limit', options.limit.toString());
         }
-        
+
         const queryString = params.toString();
         const url = `/service-area-tasks/user/${userId}${queryString ? `?${queryString}` : ''}`;
-        
-        
+
+
 
         const response = await axiosInstance.get(url);
-        
+
         return response.data;
     } catch (error: any) {
         console.error("Error fetching service area tasks by user id:", error);
@@ -3159,41 +3159,27 @@ export async function CompleteBookingRoom(id: number) {
 
 }
 
-// ✅ อัปโหลดสลิปชำระเงิน (JSON version)
 export async function SubmitPaymentSlip(
     bookingId: number,
     file: File,
-        payload: {
-        PaymentDate?: string;
-        Amount: number;
-        Note?: string;
-        PayerID: number;
-        Status: string; // Add this line
-    }
-
+    payload: { PaymentDate?: string; Amount: number; Note?: string; PayerID: number; },
+    cfg?: AxiosRequestConfig
 ) {
-    try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("Amount", String(payload.Amount));
-        formData.append("PayerID", String(payload.PayerID));
-        if (payload.PaymentDate) formData.append("PaymentDate", payload.PaymentDate);
-        if (payload.Note) formData.append("Note", payload.Note);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("Amount", String(payload.Amount));
+    formData.append("PayerID", String(payload.PayerID));
+    if (payload.PaymentDate) formData.append("PaymentDate", payload.PaymentDate);
+    if (payload.Note) formData.append("Note", payload.Note);
 
-        const res = await axiosInstance.post(
-            `/booking-rooms/${bookingId}/payments`,
-            formData,
-            { headers: { "Content-Type": "multipart/form-data" } }
-        );
-
-        return res.data;
-    } catch (err: any) {
-        console.error(`❌ Error submitting payment slip for booking ${bookingId}:`, err.response || err);
-        throw err;
-    }
+    // ไม่ต้องใส่ Content-Type เอง ให้ browser ใส่ boundary ให้
+    const res = await axiosInstance.post(
+        `/booking-rooms/${bookingId}/payments`,
+        formData,
+        { ...(cfg || {}) }
+    );
+    return res.data;
 }
-
-
 
 
 
@@ -3413,8 +3399,8 @@ export {
     CreateRequestServiceAreaAndAboutCompany,
     GetRequestServiceAreaByUserID,
     UpdateRequestServiceArea,
-    	UpdateRequestServiceAreaStatus,
-	    RejectServiceAreaRequest,
+    UpdateRequestServiceAreaStatus,
+    RejectServiceAreaRequest,
     GetServiceAreaDetailsByID,
     CreateServiceAreaApproval,
     DownloadServiceRequestDocument,

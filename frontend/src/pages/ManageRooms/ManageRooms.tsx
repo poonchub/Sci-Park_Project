@@ -25,6 +25,7 @@ import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import EditRoomPopup from './EditRoomPopup';
 import { analyticsService } from "../../services/analyticsService";
 import { GridPaginationModel } from '@mui/x-data-grid';
+import { House } from "lucide-react";
 
 
 
@@ -354,8 +355,9 @@ function ManageRooms() {
                 ))}
 
                 <Grid container spacing={3}>
-                    <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-                        <Typography variant="h6" className="title">Manage Rooms</Typography>
+                    <Grid container className="title-box" direction={"row"} size={{ xs: 12 }} sx={{ gap: 1 }}>
+                         <House size={26} />
+                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Rooms</Typography>
                     </Grid>
 
 
