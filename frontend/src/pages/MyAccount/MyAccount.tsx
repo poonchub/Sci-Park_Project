@@ -2328,6 +2328,14 @@ const MyAccount: React.FC = () => {
 
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+            <PDFPopup
+                open={true}
+                invoice={selectedInvoice}
+                onClose={() => {
+                    setOpenPDF(false);
+                    setSelectedInvoice(null);
+                }}
+            />
             <Box className="my-account-page">
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -2429,10 +2437,10 @@ const MyAccount: React.FC = () => {
                                         gap: 4,
                                     }}
                                 >
-                                    <Box 
-                                        sx={{ 
-                                            display: "flex", 
-                                            gap: "30px", 
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: "30px",
                                             flexDirection: {
                                                 xs: 'column',
                                                 sm: 'row'
@@ -2468,12 +2476,12 @@ const MyAccount: React.FC = () => {
                                                 justifyContent: "center",
                                             }}
                                         >
-                                            <Box 
-                                                sx={{ 
-                                                    display: 'inline-flex', 
-                                                    alignItems: 'center', 
-                                                    gap: 1, 
-                                                    justifyContent: { xs: 'center', sm: 'left'}
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    justifyContent: { xs: 'center', sm: 'left' }
                                                 }}
                                             >
                                                 <Typography
@@ -2486,8 +2494,8 @@ const MyAccount: React.FC = () => {
                                                 >
                                                     {user?.FirstName} {user?.LastName}
                                                 </Typography>
-                                                <Box 
-                                                    sx={{ 
+                                                <Box
+                                                    sx={{
                                                         bgcolor: 'primary.main',
                                                         borderRadius: 4,
                                                         padding: '2px 10px',
@@ -2502,7 +2510,7 @@ const MyAccount: React.FC = () => {
                                                 sx={{
                                                     fontSize: 16,
                                                     fontWeight: 500,
-                                                    textAlign: { xs: 'center', sm: 'left'}
+                                                    textAlign: { xs: 'center', sm: 'left' }
                                                 }}
                                                 gutterBottom
                                             >
@@ -2511,17 +2519,17 @@ const MyAccount: React.FC = () => {
                                             <Grid
                                                 container
                                                 size={{ xs: 12 }}
-                                                columnSpacing={{ xs: 3, sm: 10}}
+                                                columnSpacing={{ xs: 3, sm: 10 }}
                                                 rowSpacing={1.2}
-                                                sx={{ 
-                                                    mt: { xs: 1, sm: 2}, 
+                                                sx={{
+                                                    mt: { xs: 1, sm: 2 },
                                                     width: '100%',
-                                                    justifyContent: { xs: 'center', sm: 'left'}
+                                                    justifyContent: { xs: 'center', sm: 'left' }
                                                 }}
                                             >
-                                                
+
                                                 <Grid>
-                                                    <Box sx={{ display: {xs: "none", sm: "flex"}, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
+                                                    <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
                                                         <Mail size={14} />
                                                         <Typography
                                                             sx={{
@@ -2534,7 +2542,7 @@ const MyAccount: React.FC = () => {
                                                         </Typography>
                                                     </Box>
                                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                        <Box display={{xs: "flex", sm: "none"}}>
+                                                        <Box display={{ xs: "flex", sm: "none" }}>
                                                             <Mail size={18} />
                                                         </Box>
                                                         <Typography
@@ -2549,7 +2557,7 @@ const MyAccount: React.FC = () => {
                                                     </Box>
                                                 </Grid>
                                                 <Grid>
-                                                    <Box sx={{ display: {xs: "none", sm: "flex"}, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
+                                                    <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
                                                         <Phone size={14} />
                                                         <Typography
                                                             sx={{
@@ -2562,7 +2570,7 @@ const MyAccount: React.FC = () => {
                                                         </Typography>
                                                     </Box>
                                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                        <Box display={{xs: "flex", sm: "none"}}>
+                                                        <Box display={{ xs: "flex", sm: "none" }}>
                                                             <Phone size={18} />
                                                         </Box>
                                                         <Typography

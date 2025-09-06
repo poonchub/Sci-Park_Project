@@ -46,7 +46,7 @@ export function thaiDateMonthYear(date: string | Date): string {
     return `${month} ${year}`;
 }
 
-export default function InvoicePDF({ invoice }: InvoicePDFProps) {
+export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     const subjectRef = useRef<HTMLDivElement>(null);
@@ -98,11 +98,11 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
             html2pdf()
                 .from(invoiceRef.current)
                 .set({
-                    margin: [40, 60, 40, 60],
+                    margin: [0, 26, 0, 26],
                     filename: `ใบแจ้งหนี้เดือน ${thaiDateMonthYear(invoice.BillingPeriod || "")}.pdf`,
                     image: { type: "jpeg", quality: 0.98 },
                     html2canvas: { scale: 2, letterRendering: true, useCORS: true },
-                    jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+                    jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
                 })
                 .save()
                 .finally(() => setLoading(false));
@@ -112,10 +112,10 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
     return (
         <div
             style={{
-                width: "794px",
-                height: "1123px",
-                padding: "40px 60px",
-                fontSize: 14,
+                width: "816px",
+                height: "1056px",
+                padding: "26px 26px 10px 26px",
+                fontSize: 15,
             }}
         >
             <Grid size={{ xs: 12 }} textAlign={"end"}>
@@ -170,8 +170,7 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                     }
                     th,
                     td {
-                        border: 1px solid #999;
-                        padding: 6px 10px;
+                        padding: 4px 6px;
                         font-weight: 200;
                     }
                     th {
@@ -219,138 +218,165 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                     <div
                         style={{
                             display: "flex",
-                            justifyContent: "space-between",
+                            justifyContent: "center",
                             alignItems: "center",
                             marginBottom: "12px",
                         }}
                     >
-                        <div style={{ flex: 1 }}>
-                            <h1
-                                style={{
-                                    border: "2px solid",
-                                    padding: "4px 0",
-                                    textAlign: "center",
-                                    width: "80px",
-                                    margin: 0,
-                                    fontSize: 14,
-                                }}
-                            >
-                                ใบแจ้งหนี้
-                            </h1>
-                            <div className="text-normal" style={{ marginTop: "20px" }}>
-                                ที่ {invoice.InvoiceNumber}
-                            </div>
-                        </div>
-                        <div style={{ flex: 2, textAlign: "center" }}>
-                            <img
-                                src="http://localhost:8000/images/organization/logo/logo_1.png"
-                                alt="Logo"
-                                style={{ maxHeight: "80px" }}
-                            />
-                        </div>
-                        <div style={{ flex: 1 }}></div>
+                        <img
+                            src="http://localhost:8000/images/organization/logo/logo_1.png"
+                            alt="Logo"
+                            style={{ maxHeight: "50px" }}
+                        />
+                    </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: 'flex-end',
+                            alignItems: "center",
+                            marginBottom: "12px",
+                        }}
+                    >
+                        <h1
+                            style={{
+                                border: "2px solid",
+                                padding: "3px 30px",
+                                textAlign: "center",
+                                margin: 0,
+                                fontSize: 15,
+                                fontWeight: 500
+                            }}
+                        >
+                            ใบแจ้งหนี้ (Invoice)
+                        </h1>
                     </div>
 
                     {/* Issue Date */}
                     <div
                         style={{
                             display: "flex",
-                            justifyContent: "flex-end",
+                            justifyContent: "space-between",
                             marginBottom: "10px",
-                        }}
-                    >
-                        <div
-                            className="text-normal"
-                            style={{ width: "240px", textAlign: "center" }}
-                        >
-                            วันที่ {thaiDateFull(invoice.IssueDate || "")}
-                        </div>
-                    </div>
-
-                    {/* เรื่อง */}
-                    <div
-                        ref={subjectRef}
-                        className="editable-content"
-                        id="subject-div"
-                        style={{
-                            display: "flex",
-                            gap: "16px",
-                            marginBottom: "10px",
-                            textAlign: "justify",
+                            fontSize: 14
                         }}
                     >
                         <div>
-                            <strong>เรื่อง</strong>
+                            <div
+                                className="text-normal"
+                                style={{ width: "240px" }}
+                            >
+                                เรียน/Attention : {invoice.Customer?.CompanyName}
+                            </div>
+                            <div
+                                className="text-normal"
+                                style={{ width: "240px" }}
+                            >
+                                ที่อยู่/Address : {invoice.Address}
+                            </div>
+                            <div
+                                className="text-normal"
+                                style={{ width: "240px" }}
+                            >
+                                เลขที่
+                            </div>
+                            <div
+                                className="text-normal"
+                                style={{ width: "240px" }}
+                            >
+                                เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : {invoice.TaxID}
+                            </div>
                         </div>
-                        <div className="text-normal">
-                            แจ้งค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ
-                            2 <br /> (จังหวัดนครราชสีมา)
-                        </div>
-                    </div>
 
-                    {/* เรียน */}
-                    <div
-                        ref={toRef}
-                        className="editable-content"
-                        id="to-div"
-                        style={{
-                            display: "flex",
-                            gap: "16px",
-                            marginBottom: "10px",
-                            textAlign: "justify",
-                        }}
-                    >
                         <div>
-                            <strong>เรียน</strong>
+                            <div
+                                className="text-normal"
+                                style={{ width: "200px" }}
+                            >
+                                วันที่/Date : {thaiDateFull(invoice.IssueDate || "")}
+                            </div>
+                            <div
+                                className="text-normal"
+                                style={{ width: "200px" }}
+                            >
+                                เลขที่/No. : {invoice.InvoiceNumber}
+                            </div>
                         </div>
-                        <div className="text-normal">{invoice.Customer?.CompanyName}</div>
-                    </div>
-
-                    {/* Notice */}
-                    <div
-                        ref={noticeRef}
-                        className="editable-content"
-                        id="notice-div"
-                        style={{ marginBottom: "6px", textIndent: "3.2em" }}
-                    >
-                        อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 (จังหวัดนครราชสีมา)
-                        ขอเรียนให้ท่านทราบ
-                        <br />
-                        ถึงรายการค่าใช้จ่ายต่าง ๆ ประจำเดือน
-                        {thaiDateMonthYear(invoice.BillingPeriod || "")} ต้องชำระดังต่อไปนี้
                     </div>
 
                     {/* Table */}
-                    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px", fontSize: 14 }} border={1}>
                         <thead>
                             <tr>
                                 <th
                                     style={{
-                                        border: "1px solid #999",
                                         textAlign: "center",
-                                        width: "70%",
+                                        width: "66%",
                                     }}
+                                    colSpan={2}
                                 >
-                                    รายการ
+                                    รายละเอียด
                                 </th>
                                 <th
                                     style={{
-                                        border: "1px solid #999",
                                         textAlign: "center",
-                                        width: "30%",
+                                        width: "2%",
                                     }}
+                                    colSpan={1}
                                 >
-                                    จำนวนเงิน (บาท)
+                                    จำนวน
+                                </th>
+                                <th
+                                    style={{
+                                        textAlign: "center",
+                                        width: "16%",
+                                    }}
+                                    colSpan={1}
+                                >
+                                    ราคา/หน่วย
+                                </th>
+                                <th
+                                    style={{
+                                        textAlign: "center",
+                                        width: "16%",
+                                    }}
+                                    colSpan={1}
+                                >
+                                    ยอดรวม (บาท)
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
+                            <tr>
+                                <td colSpan={2}>
+                                    ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2
+                                    วันที่........ ห้อง........
+
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    1
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    1,000.00
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    1,000.00
+                                </td>
+                            </tr>
                             {invoice.Items?.map((item, index) => (
                                 <tr key={index}>
                                     <td style={{ border: "1px solid #999" }}>
-                                        {index + 1}. {item.Description}
+                                        {item.Description} วันที่ ......... ห้อง .........
                                     </td>
-                                    <td style={{ border: "1px solid #999", textAlign: "right" }}>
+                                    <td style={{ border: "1px solid #999", textAlign: 'center' }}>
+                                        {item.Quantity}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: 'center' }}>
+                                        {item.UnitPrice?.toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: 'center' }}>
                                         {item.Amount?.toLocaleString("en-US", {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
@@ -361,24 +387,82 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                             <tr>
                                 <td
                                     style={{
-                                        border: "1px solid #999",
-                                        textAlign: "right",
-                                        fontWeight: 500,
+                                        width: "46%"
                                     }}
+                                    className="text-normal"
+                                    rowSpan={2}
                                 >
-                                    รวมค่าใช้จ่ายทั้งสิ้น
+                                    โอนเงินเข้าบัญชีเลขที่ 662-1-84151-5<br />
+                                    ชื่อบัญชี RSP นครราชสีมา โดย เทคโนธานี<br />
+                                    ธนาคารกรุงไทย สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
                                 </td>
                                 <td
                                     style={{
-                                        border: "1px solid #999",
-                                        textAlign: "right",
-                                        fontWeight: 500,
+                                        textAlign: 'center',
+                                        verticalAlign: "middle",
                                     }}
+                                    className="text-bold"
+                                    colSpan={2}
                                 >
-                                    {invoice.TotalAmount?.toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
+                                    ยอดรวม (บาท)
+                                </td>
+                                <td
+                                    style={{
+                                        textAlign: 'center',
+                                        verticalAlign: "middle",
+                                    }}
+                                    colSpan={2}
+                                >
+                                    1,000.00
+                                </td>
+                            </tr>
+                            <tr>
+                                <td
+                                    style={{
+                                        textAlign: 'center',
+                                        verticalAlign: "middle",
+                                    }}
+                                    className="text-bold"
+                                    colSpan={2}
+                                >
+                                    ส่วนลด (บาท)
+                                </td>
+                                <td
+                                    style={{
+                                        textAlign: 'center',
+                                        verticalAlign: "middle",
+                                    }}
+                                    colSpan={2}
+                                >
+                                    0.00
+                                </td>
+                            </tr>
+                            <tr>
+                                <td
+                                    style={{
+                                        textAlign: 'center'
+                                    }}
+                                    className="text-bold"
+                                >
+                                    (ยอดเงินเป็นตัวหนังสือ)
+                                </td>
+                                <td
+                                    style={{
+                                        textAlign: 'center'
+                                    }}
+                                    className="text-bold"
+                                    colSpan={2}
+                                >
+                                    รวมเป็นเงินที่ต้องชำระ (บาท)
+                                </td>
+                                <td
+                                    style={{
+                                        textAlign: 'center'
+                                    }}
+                                    className="text-bold"
+                                    colSpan={2}
+                                >
+                                    1,000.00
                                 </td>
                             </tr>
                         </tbody>
@@ -389,35 +473,60 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                         ref={paymentRef}
                         className="editable-content"
                         id="payment-div"
-                        style={{ marginTop: "20px", textIndent: "3.2em", textAlign: "justify" }}
+                        style={{ marginTop: "20px", textAlign: "justify", paddingLeft: "1em", fontSize: 10 }}
                     >
-                        จึงขอให้ท่านโปรดชำระค่าบริการ
-                        <strong>ภายในวันที่ {thaiDateFull(invoice.DueDate || "")} </strong>
-                        ที่หน่วยบริหารงานกลางและพัฒนาโครงสร้างพื้นฐาน
-                        อุทยานวิทยาศาสตร์ภาคตะวันออกเฉียงเหนือตอนล่าง (จ.นครราชสีมา) หรือโอนเงินเข้า
-                        <strong>บัญชีธนาคารกรุงไทย</strong> สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
-                        <strong>
-                            {" "}
-                            ชื่อบัญชี "RSP นครราชสีมา โดย เทคโนธานี" เลขที่บัญชี 662-1-84151-5&nbsp;
-                        </strong>
-                        และขอให้ท่าน<strong>แนบหลักฐานการโอนเงินผ่านระบบ</strong>&nbsp;
-                        เพื่อออกใบเสร็จรับเงิน หากท่านไม่ชำระเงินตามกำหนด อุทยานวิทยาศาสตร์ฯ
-                        ขอสงวนสิทธิ์ดำเนินการปรับตามข้อตกลงตั้งแต่วันผิดข้อตกลงจนกว่าจะชำระเสร็จสิ้น
-                    </div>
+                        <p className="text-bold">ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)</p>
+                        - เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล<br />
+                        - แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)<br />
+                        - พื้นที่จอดรถด้านหน้าอาคาร<br />
+                        - การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)<br />
+                        - จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)<br />
 
-                    <div className="text-normal" style={{ marginTop: "10px", textIndent: "3.2em" }}>
-                        จึงเรียนมาเพื่อโปรดพิจารณาดำเนินการ
+
+                        <p className="text-bold">เงื่อนไขการชำระเงิน</p>
+                        - ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด<br />
+                        - ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม<br />
+                        - กรณีชำระค่าบริการก่อนวัดจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวัดจัดกิจกรรมได้<br />
+
+
+                        <p className="text-bold">หมายเหตุ</p>
+                        - กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด<br />
+                        - กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน<br />
+                        ท่านต้องรับผิดชอบค่าใช้จ่ายโดยทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด<br />
                     </div>
 
                     {/* Signature */}
-                    <div style={{ height: "40px" }}></div>
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <div style={{ display: "flex", justifyContent: 'space-around', marginTop: '35px' }}>
                         <div
                             className="text-normal"
                             style={{ width: "240px", textAlign: "center" }}
                         >
-                            <span>ขอแสดงความนับถือ</span>
-                            <div style={{ textAlign: "center", height: "80px" }}>
+                            <span>รับทราบและยืนยัน</span>
+                            <div style={{ textAlign: "center", height: "75px" }}>
+                                <img
+                                    src={
+                                        invoice.Customer?.SignaturePath
+                                            ? `${apiUrl}/${invoice.Customer?.SignaturePath}`
+                                            : ""
+                                    }
+                                    alt="Signature"
+                                    style={{ height: "100%" }}
+                                />
+                            </div>
+                            <span>
+                                ({invoice.Approver?.Prefix?.PrefixTH}
+                                {invoice.Approver?.FirstName} {invoice.Approver?.LastName})
+                            </span>
+                            <br />
+                            <span>วันที่ .....</span>
+                        </div>
+
+                        <div
+                            className="text-normal"
+                            style={{ width: "240px", textAlign: "center" }}
+                        >
+                            <span>อนุมัติโดย</span>
+                            <div style={{ textAlign: "center", height: "75px" }}>
                                 <img
                                     src={
                                         invoice.Approver?.SignaturePath
@@ -433,8 +542,15 @@ export default function InvoicePDF({ invoice }: InvoicePDFProps) {
                                 {invoice.Approver?.FirstName} {invoice.Approver?.LastName})
                             </span>
                             <br />
-                            <span>{invoice.Approver?.JobPosition?.Name}</span>
+                            <span>วันที่ .....</span>
                         </div>
+                    </div>
+
+                    <div style={{ marginTop: '35px', fontSize: 10, color: 'rgb(175, 175, 175)', paddingLeft: "1em" }} className="text-normal">
+                        อุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2<br />
+                        อาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 (จังหวัดนครราชสีมา)<br />
+                        เลขที่ 111 ถ.มหาวิทยาลัย ตำบลสุรนารี อำเภอเมือง จังหวัดนคีราชสีมา 30000<br />
+                        โทรศัพท์ 0-4422-3600
                     </div>
                 </div>
             ) : (
