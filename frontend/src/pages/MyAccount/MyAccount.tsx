@@ -2,7 +2,6 @@ import {
     apiUrl,
     CheckSlip,
     CreatePayment,
-    DeleteMaintenanceRequestByID,
     GetInvoiceByID,
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
@@ -13,8 +12,6 @@ import {
     ListPaymentStatus,
     socketUrl,
     UpdateInvoiceByID,
-    UpdateMaintenanceRequestByID,
-    UpdateNotificationsByRequestID,
 } from "../../services/http";
 
 import React, { useState, useEffect } from "react";
@@ -101,6 +98,7 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
 import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 
 
 const MyAccount: React.FC = () => {
@@ -2326,16 +2324,64 @@ const MyAccount: React.FC = () => {
         }
     };
 
+    const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface>({
+        ID: 1,
+        InvoiceNumber: 'NE2/001',
+        IssueDate: '2025-09-05T16:45:57.066+07:00',
+        DueDate: '2025-09-15T23:59:59.999+07:00',
+        DepositAmount: 5000,
+        DiscountAmount: 500,
+        TotalAmount: 9500,
+        InvoicePDFPath: '/invoices/NE2-001.pdf',
+        TaxID: '0123456789012',
+        Address: '123/45 ถนนเทคโนธานี ตำบลในเมือง อำเภอเมือง จังหวัดนครราชสีมา 30000',
+        BookingRoomID: 101,
+        Approver: {
+            ID: 2,
+            FirstName: 'สมชัย',
+            LastName: 'สุวรรณ',
+            CompanyName: 'Tech University',
+            Prefix: { ID: 1, PrefixTH: 'นาย', PrefixEN: 'Mr.' }
+        },
+        CustomerID: 3,
+        Customer: {
+            ID: 3,
+            FirstName: 'สมศรี',
+            LastName: 'รัศมีทอง',
+            CompanyName: 'Acme Co., Ltd.',
+            Prefix: { ID: 2, PrefixTH: 'นางสาว', PrefixEN: 'Ms.' }
+        },
+        Items: [
+            {
+                ID: 1,
+                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
+                Quantity: 1,
+                UnitPrice: 5000,
+                Amount: 5000
+            },
+            {
+                ID: 2,
+                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
+                Quantity: 1,
+                UnitPrice: 4500,
+                Amount: 4500
+            }
+        ]
+    });
+
+
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+
             <PDFPopup
                 open={true}
-                invoice={selectedInvoice}
+                invoice={roomBookingInvoiceFormData}
                 onClose={() => {
                     setOpenPDF(false);
                     setSelectedInvoice(null);
                 }}
             />
+
             <Box className="my-account-page">
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -2351,14 +2397,14 @@ const MyAccount: React.FC = () => {
                     isButtonActive={isButtonActive}
                 />
 
-                <PDFPopup
+                {/* <PDFPopup
                     open={openPDF}
                     invoice={selectedInvoice}
                     onClose={() => {
                         setOpenPDF(false);
                         setSelectedInvoice(null);
                     }}
-                />
+                /> */}
 
                 {/* Show Alerts */}
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />

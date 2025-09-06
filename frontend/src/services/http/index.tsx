@@ -24,6 +24,8 @@ import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
 import { RentalRoomInvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import { RentalRoomInvoiceItemInterface } from "../../interfaces/IRentalRoomInvoiceItems";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -3176,7 +3178,37 @@ export async function RejectPayment(paymentId: number) {
     }
 }
 
+// RoomBookingInvoice
+async function CreateRoomBookingInvoice(data: RoomBookingInvoiceInterface) {
+    try {
+        const response = await axiosInstance.post(`/room-booking-invoice`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
 
+// RoomBookingInvoiceItem
+async function CreateRoomBookingInvoiceItem(data: RoomBookingInvoiceItemInterface) {
+    try {
+        const response = await axiosInstance.post(`/room-booking-invoice-item`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
 
 export {
     // RequestStatuses
@@ -3399,4 +3431,10 @@ export {
 
     // PaymentStatuses
     ListPaymentStatus,
+
+    // RoomBookingInvoice
+    CreateRoomBookingInvoice,
+
+    // RoomBookingInvoiceItem
+    CreateRoomBookingInvoiceItem,
 };

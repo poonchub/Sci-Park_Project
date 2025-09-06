@@ -99,7 +99,7 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                 .from(invoiceRef.current)
                 .set({
                     margin: [0, 26, 0, 26],
-                    filename: `ใบแจ้งหนี้เดือน ${thaiDateMonthYear(invoice.BillingPeriod || "")}.pdf`,
+                    filename: `ใบแจ้งหนี้เดือน ${thaiDateMonthYear("")}.pdf`,
                     image: { type: "jpeg", quality: 0.98 },
                     html2canvas: { scale: 2, letterRendering: true, useCORS: true },
                     jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
@@ -271,17 +271,17 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                                 className="text-normal"
                                 style={{ width: "240px" }}
                             >
-                                ที่อยู่/Address : {invoice.Address}
+                                ที่อยู่/Address :
                             </div>
                             <div
                                 className="text-normal"
-                                style={{ width: "240px" }}
+                                style={{ width: "500px" }}
                             >
-                                เลขที่
+                                เลขที่ {invoice.Address}
                             </div>
                             <div
                                 className="text-normal"
-                                style={{ width: "240px" }}
+                                style={{ width: "500px" }}
                             >
                                 เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : {invoice.TaxID}
                             </div>
@@ -310,7 +310,7 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                                 <th
                                     style={{
                                         textAlign: "center",
-                                        width: "66%",
+                                        width: "70%",
                                     }}
                                     colSpan={2}
                                 >
@@ -328,7 +328,7 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                                 <th
                                     style={{
                                         textAlign: "center",
-                                        width: "16%",
+                                        width: "14%",
                                     }}
                                     colSpan={1}
                                 >
@@ -337,7 +337,7 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                                 <th
                                     style={{
                                         textAlign: "center",
-                                        width: "16%",
+                                        width: "14%",
                                     }}
                                     colSpan={1}
                                 >
@@ -346,25 +346,9 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td colSpan={2}>
-                                    ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2
-                                    วันที่........ ห้อง........
-
-                                </td>
-                                <td style={{ textAlign: 'center' }}>
-                                    1
-                                </td>
-                                <td style={{ textAlign: 'center' }}>
-                                    1,000.00
-                                </td>
-                                <td style={{ textAlign: 'center' }}>
-                                    1,000.00
-                                </td>
-                            </tr>
                             {invoice.Items?.map((item, index) => (
                                 <tr key={index}>
-                                    <td style={{ border: "1px solid #999" }}>
+                                    <td style={{ border: "1px solid #999" }} colSpan={2}>
                                         {item.Description} วันที่ ......... ห้อง .........
                                     </td>
                                     <td style={{ border: "1px solid #999", textAlign: 'center' }}>
@@ -502,20 +486,26 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                             style={{ width: "240px", textAlign: "center" }}
                         >
                             <span>รับทราบและยืนยัน</span>
-                            <div style={{ textAlign: "center", height: "75px" }}>
-                                <img
-                                    src={
-                                        invoice.Customer?.SignaturePath
-                                            ? `${apiUrl}/${invoice.Customer?.SignaturePath}`
-                                            : ""
-                                    }
-                                    alt="Signature"
-                                    style={{ height: "100%" }}
-                                />
+                            <div style={{ height: "75px", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {
+                                    invoice.Customer?.SignaturePath ? (
+                                        <img
+                                            src={
+                                                invoice.Customer?.SignaturePath
+                                                    ? `${apiUrl}/${invoice.Customer?.SignaturePath}`
+                                                    : ""
+                                            }
+                                            alt="Signature"
+                                            style={{ height: "100%" }}
+                                        />
+                                    ) : (
+                                        <p style={{ color: 'rgb(175, 175, 175)' }}>Signature</p>
+                                    )
+                                }
                             </div>
                             <span>
-                                ({invoice.Approver?.Prefix?.PrefixTH}
-                                {invoice.Approver?.FirstName} {invoice.Approver?.LastName})
+                                ({invoice.Customer?.Prefix?.PrefixTH}
+                                {invoice.Customer?.FirstName} {invoice.Customer?.LastName})
                             </span>
                             <br />
                             <span>วันที่ .....</span>
@@ -526,16 +516,22 @@ export default function RoomBookingInvoicePDF({ invoice }: InvoicePDFProps) {
                             style={{ width: "240px", textAlign: "center" }}
                         >
                             <span>อนุมัติโดย</span>
-                            <div style={{ textAlign: "center", height: "75px" }}>
-                                <img
-                                    src={
-                                        invoice.Approver?.SignaturePath
-                                            ? `${apiUrl}/${invoice.Approver?.SignaturePath}`
-                                            : ""
-                                    }
-                                    alt="Signature"
-                                    style={{ height: "100%" }}
-                                />
+                            <div style={{ height: "75px", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {
+                                    invoice.Approver?.SignaturePath ? (
+                                        <img
+                                            src={
+                                                invoice.Approver?.SignaturePath
+                                                    ? `${apiUrl}/${invoice.Approver?.SignaturePath}`
+                                                    : ""
+                                            }
+                                            alt="Signature"
+                                            style={{ height: "100%" }}
+                                        />
+                                    ) : (
+                                        <p style={{ color: 'rgb(175, 175, 175)' }}>Signature</p>
+                                    )
+                                }
                             </div>
                             <span>
                                 ({invoice.Approver?.Prefix?.PrefixTH}

@@ -109,6 +109,8 @@ func SetupDatabase() {
 		&entity.CollaborationPlan{},
 		&entity.ServiceAreaApproval{},
 		&entity.ServiceAreaTask{},
+		&entity.RoomBookingInvoice{},
+		&entity.RoomBookingInvoiceItem{},
 	)
 
 	if err != nil {

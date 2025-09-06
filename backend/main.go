@@ -264,6 +264,12 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
+
+		// RoomBookingInvoices
+		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
+		
+		// RoomBookingInvoiceItems
+		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
