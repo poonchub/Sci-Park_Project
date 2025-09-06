@@ -4,5 +4,5 @@ export interface NotificationsInterface{
     RequestID?: number;
     TaskID?:    number;
     UserID?:    number;
-    InvoiceID?: number;
+    RentalRoomInvoiceID?: number;
 }

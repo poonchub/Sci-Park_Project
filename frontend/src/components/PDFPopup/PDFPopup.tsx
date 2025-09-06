@@ -1,6 +1,6 @@
 import React from "react";
 import { Dialog } from "@mui/material";
-import InvoicePDF from "../InvoicePDF/InvoicePDF";
+import RoomBookingInvoicePDF from "../InvoicePDF/RoomBookingInvoice";
 
 interface PDFPopupProps {
     open: boolean;
@@ -23,7 +23,7 @@ const PDFPopup: React.FC<PDFPopupProps> = ({ open, invoice, onClose }) => {
                 },
             }}
         >
-            <InvoicePDF invoice={invoice ?? {}} />
+            <RoomBookingInvoicePDF invoice={invoice ?? {}} />
         </Dialog>
     );
 };

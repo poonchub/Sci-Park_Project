@@ -20,7 +20,7 @@ type Room struct {
 	RoomType   RoomType `gorm:"foreignKey:RoomTypeID" valid:"-"`
 
     BookingRoom []BookingRoom `gorm:"foreignKey:RoomID"`
-    Invoices     []Invoice     `gorm:"foreignKey:RoomID"`
+    RentalRoomInvoices     []RentalRoomInvoice     `gorm:"foreignKey:RoomID"`
 	ServiceAreaDocument	[]ServiceAreaDocument	`gorm:"foreignKey:RoomID"`
 }
 

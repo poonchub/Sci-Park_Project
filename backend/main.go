@@ -273,6 +273,12 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
+
+		// RoomBookingInvoices
+		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
+		
+		// RoomBookingInvoiceItems
+		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
@@ -339,6 +345,7 @@ func main() {
 
 		// Invoice
 		protected.GET("/invoices", controller.ListInvoices)
+		protected.GET("/invoices/next-number", controller.GetNextInvoiceNumber)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.POST("/invoice/upload-pdf", controller.UploadInvoicePDF)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)

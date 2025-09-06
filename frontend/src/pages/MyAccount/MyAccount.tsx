@@ -2,7 +2,6 @@ import {
     apiUrl,
     CheckSlip,
     CreatePayment,
-    DeleteMaintenanceRequestByID,
     GetInvoiceByID,
     GetInvoiceByOption,
     GetMaintenanceRequestByID,
@@ -81,7 +80,7 @@ import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import { io } from "socket.io-client";
 import { UserInterface } from "../../interfaces/IUser";
-import { InvoiceInterface } from "../../interfaces/IInvoices";
+import { RentalRoomInvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
@@ -102,14 +101,15 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
 import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 
 
 const MyAccount: React.FC = () => {
     const theme = useTheme();
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [user, setUser] = useState<UserInterface | null>();
-    const [invoices, setInvoices] = useState<InvoiceInterface[]>([]);
-    const [selectedInvoice, setSelectedInvoice] = useState<InvoiceInterface | null>();
+    const [invoices, setInvoices] = useState<RentalRoomInvoiceInterface[]>([]);
+    const [selectedInvoice, setSelectedInvoice] = useState<RentalRoomInvoiceInterface | null>();
     const [valueTab, setValueTab] = useState(0);
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
@@ -396,7 +396,7 @@ const MyAccount: React.FC = () => {
                 PaymentDate: resCheckSlip.data.transTimestamp,
                 Amount: selectedInvoice?.TotalAmount,
                 PayerID: userId,
-                InvoiceID: selectedInvoice?.ID,
+                RentalRoomInvoiceID: selectedInvoice?.ID,
             };
 
             const formData = new FormData();
@@ -408,7 +408,7 @@ const MyAccount: React.FC = () => {
             formData.append("slip", slipfile[0]);
             const resPayment = await CreatePayment(formData);
 
-            const invoiceData: InvoiceInterface = {
+            const invoiceData: RentalRoomInvoiceInterface = {
                 StatusID: resPayment.payment.StatusID,
             };
             await UpdateInvoiceByID(selectedInvoice?.ID ?? 0, invoiceData);
@@ -1971,9 +1971,9 @@ const MyAccount: React.FC = () => {
                             icon: HelpCircle,
                         };
 
-                        const invoiceNumber = data.InvoiceNumber
-                        const billingPeriod = formatToMonthYear(data.BillingPeriod)
-                        const totalAmount = data.TotalAmount?.toLocaleString("th-TH", {
+                        const date = dateFormat(data.PaymentDate)
+                        const time = timeFormat(data.PaymentDate)
+                        const amount = data.Amount?.toLocaleString("th-TH", {
                             style: "currency",
                             currency: "THB",
                         })
@@ -1983,6 +1983,9 @@ const MyAccount: React.FC = () => {
                         if (cardItem) {
                             width = cardItem.offsetWidth;
                         }
+
+                        const receiptPath = data?.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -1998,25 +2001,7 @@ const MyAccount: React.FC = () => {
                                                 fontWeight: 500
                                             }}
                                         >
-                                            {invoiceNumber}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                        <Calendar
-                                            size={14}
-                                            style={{
-                                                paddingBottom: "4px"
-                                            }}
-                                        />
-                                        <Typography
-                                            sx={{
-                                                fontSize: 14,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                            }}
-                                        >
-                                            {`Billing Period: ${billingPeriod}`}
+                                            {`${date}, ${time}`}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -2029,7 +2014,7 @@ const MyAccount: React.FC = () => {
                                                 color: 'text.secondary'
                                             }}
                                         >
-                                            Total Amount
+                                            Amount
                                         </Typography>
                                         <Typography
                                             sx={{
@@ -2041,7 +2026,7 @@ const MyAccount: React.FC = () => {
                                                 color: "text.main"
                                             }}
                                         >
-                                            {totalAmount}
+                                            {amount}
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -2077,69 +2062,77 @@ const MyAccount: React.FC = () => {
                                     </Box>
                                 </Grid>
 
-                                <Divider sx={{ width: "100%", my: 1 }} />
-
                                 <Grid size={{ xs: 12 }}>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            gap: 0.8,
-                                            flexWrap: "wrap",
-                                        }}
-                                    >
-                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
-                                            <Grid size={{ xs: 6 }}>
-                                                <Tooltip title="Download PDF">
-                                                    <Button
-                                                        variant="contained"
-                                                        onClick={async () => {
-                                                            setOpenPDF(true);
-                                                            setSelectedInvoice(data);
-                                                        }}
-                                                        sx={{ minWidth: "42px", width: '100%', height: '100%' }}
-                                                    >
-                                                        <FilePdf size={16} />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Download PDF
-                                                        </Typography>
-                                                    </Button>
-                                                </Tooltip>
-                                            </Grid>
-                                            <Grid size={{ xs: 6 }}>
-                                                <Tooltip title={statusName === "Pending Payment" ? "Pay Now" : "View Slip"}>
-                                                    <Button
-                                                        variant="outlinedGray"
-                                                        onClick={() => {
-                                                            setSelectedInvoice((prev) => ({
-                                                                ...prev,
-                                                                ...data,
-                                                            }));
-                                                            setOpenPopupPayment(true);
-                                                        }}
-                                                        sx={{ minWidth: "42px", bgcolor: "#FFF", width: '100%', height: '100%' }}
-                                                    >
-                                                        {
-                                                            (statusName === "Pending Payment" || statusName === "Rejected") ? (
-                                                                <>
-                                                                    <Wallet size={18} />
-                                                                    <Typography variant="textButtonClassic" className="text-btn">
-                                                                        Pay Now
-                                                                    </Typography>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Eye size={18} />
-                                                                    <Typography variant="textButtonClassic" className="text-btn">
-                                                                        View Slip
-                                                                    </Typography>
-                                                                </>
-                                                            )
-                                                        }
-                                                    </Button>
-                                                </Tooltip>
-                                            </Grid>
-                                        </Grid>
-                                    </Box>
+                                    {
+                                        fileName !== "" ? (
+
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    cursor: 'pointer',
+                                                    transition: 'all ease 0.3s',
+                                                    alignItems: 'center',
+                                                    width: {
+                                                        xs: '100%', mobileS: 'auto'
+                                                    },
+                                                    "&:hover": {
+                                                        color: 'primary.main',
+                                                        borderColor: 'primary.main'
+                                                    }
+                                                }}
+                                            >
+                                                <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    {fileName}
+                                                </Typography>
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                                sx={{
+                                                    display: 'inline-flex',
+                                                    gap: 1,
+                                                    border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: '#FFF',
+                                                    alignItems: 'center',
+                                                    color: 'text.secondary',
+                                                    width: {
+                                                        xs: '100%', mobileS: 'auto'
+                                                    },
+                                                }}
+                                            >
+                                                <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    No receipt file uploaded
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    }
                                 </Grid>
                             </Grid>
                         );
@@ -2270,13 +2263,15 @@ const MyAccount: React.FC = () => {
                     },
                 },
                 {
-                    field: "Actions",
-                    headerName: "Actions",
+                    field: "Receipt",
+                    headerName: "Receipt",
                     type: "string",
                     flex: 0.6,
                     renderCell: (item) => {
                         const data = item.row;
-                        const statusName = data.Status?.Name
+                        console.log("data: ", data)
+                        const receiptPath = data.ReceiptPath
+                        const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
                         return (
                             <Box
                                 className="container-btn"
@@ -2288,17 +2283,71 @@ const MyAccount: React.FC = () => {
                                     height: "100%",
                                 }}
                             >
-                                <Tooltip title="Download Receipt">
-                                    <Button
-                                        variant="contained"
-                                        sx={{ minWidth: "42px" }}
-                                    >
-                                        <ReceiptText size={18} />
-                                        <Typography variant="textButtonClassic" >
-                                            Receipt
-                                        </Typography>
-                                    </Button>
-                                </Tooltip>
+                                {
+                                    fileName !== "" ? (
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                gap: 1,
+                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                borderRadius: 1,
+                                                px: 1,
+                                                py: 0.5,
+                                                bgcolor: '#FFF',
+                                                cursor: 'pointer',
+                                                transition: 'all ease 0.3s',
+                                                alignItems: 'center',
+                                                width: '100%',
+                                                "&:hover": {
+                                                    color: 'primary.main',
+                                                    borderColor: 'primary.main'
+                                                }
+                                            }}
+                                        >
+                                            <FileText size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                            <Typography
+                                                variant="body1"
+                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                                sx={{
+                                                    fontSize: 14,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                {fileName}
+                                            </Typography>
+                                        </Box>
+                                    ) : (
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                gap: 1,
+                                                border: '1px solid rgb(109, 110, 112, 0.4)',
+                                                borderRadius: 1,
+                                                px: 1,
+                                                py: 0.5,
+                                                bgcolor: '#FFF',
+                                                alignItems: 'center',
+                                                color: 'text.secondary',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            <File size={16} style={{ minWidth: '16px', minHeight: '16px' }} />
+                                            <Typography
+                                                variant="body1"
+                                                sx={{
+                                                    fontSize: 14,
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                No file uploaded
+                                            </Typography>
+                                        </Box>
+                                    )
+                                }
                             </Box>
                         );
                     },
@@ -2654,9 +2703,65 @@ const MyAccount: React.FC = () => {
             ];
         }
     };
+    
+    const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface>({
+        ID: 1,
+        InvoiceNumber: 'NE2/001',
+        IssueDate: '2025-09-05T16:45:57.066+07:00',
+        DueDate: '2025-09-15T23:59:59.999+07:00',
+        DepositAmount: 5000,
+        DiscountAmount: 500,
+        TotalAmount: 9500,
+        InvoicePDFPath: '/invoices/NE2-001.pdf',
+        TaxID: '0123456789012',
+        Address: '123/45 ถนนเทคโนธานี ตำบลในเมือง อำเภอเมือง จังหวัดนครราชสีมา 30000',
+        BookingRoomID: 101,
+        Approver: {
+            ID: 2,
+            FirstName: 'สมชัย',
+            LastName: 'สุวรรณ',
+            CompanyName: 'Tech University',
+            Prefix: { ID: 1, PrefixTH: 'นาย', PrefixEN: 'Mr.' }
+        },
+        CustomerID: 3,
+        Customer: {
+            ID: 3,
+            FirstName: 'สมศรี',
+            LastName: 'รัศมีทอง',
+            CompanyName: 'Acme Co., Ltd.',
+            Prefix: { ID: 2, PrefixTH: 'นางสาว', PrefixEN: 'Ms.' }
+        },
+        Items: [
+            {
+                ID: 1,
+                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
+                Quantity: 1,
+                UnitPrice: 5000,
+                Amount: 5000
+            },
+            {
+                ID: 2,
+                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
+                Quantity: 1,
+                UnitPrice: 4500,
+                Amount: 4500
+            }
+        ]
+    });
+
 
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+
+            <PDFPopup
+                open={true}
+                invoice={roomBookingInvoiceFormData}
+                onClose={() => {
+                    setOpenPDF(false);
+                    setSelectedInvoice(null);
+                }}
+            />
+
             <Box className="my-account-page">
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
@@ -2672,14 +2777,14 @@ const MyAccount: React.FC = () => {
                     isButtonActive={isButtonActive}
                 />
 
-                <PDFPopup
+                {/* <PDFPopup
                     open={openPDF}
                     invoice={selectedInvoice}
                     onClose={() => {
                         setOpenPDF(false);
                         setSelectedInvoice(null);
                     }}
-                />
+                /> */}
 
                 {/* Show Alerts */}
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />
@@ -2758,7 +2863,17 @@ const MyAccount: React.FC = () => {
                                         gap: 4,
                                     }}
                                 >
-                                    <Box sx={{ display: "flex", gap: "30px" }}>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            gap: "30px",
+                                            flexDirection: {
+                                                xs: 'column',
+                                                sm: 'row'
+                                            },
+                                            alignItems: 'center'
+                                        }}
+                                    >
                                         <Box
                                             sx={{
                                                 minHeight: "100%",
@@ -2778,27 +2893,50 @@ const MyAccount: React.FC = () => {
                                         </Box>
                                         <Box
                                             sx={{
-                                                width: "calc(100% - 120px)",
+                                                width: {
+                                                    xs: "100%",
+                                                    sm: "calc(100% - 120px)"
+                                                },
                                                 display: "flex",
                                                 flexDirection: "column",
                                                 justifyContent: "center",
                                             }}
                                         >
-                                            <Typography
-                                                variant="h6"
+                                            <Box
                                                 sx={{
-                                                    fontSize: 22,
-                                                    fontWeight: 600,
-                                                    color: `${theme.palette.primary.main} !important`,
-                                                    width: "100%",
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    justifyContent: { xs: 'center', sm: 'left' }
                                                 }}
                                             >
-                                                {user?.FirstName} {user?.LastName}
-                                            </Typography>
+                                                <Typography
+                                                    variant="h6"
+                                                    sx={{
+                                                        fontSize: 22,
+                                                        fontWeight: 600,
+                                                        color: `${theme.palette.primary.main} !important`,
+                                                    }}
+                                                >
+                                                    {user?.FirstName} {user?.LastName}
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        bgcolor: 'primary.main',
+                                                        borderRadius: 4,
+                                                        padding: '2px 10px',
+                                                        fontSize: 12,
+                                                        color: '#fff'
+                                                    }}
+                                                >
+                                                    {user?.Role?.Name}
+                                                </Box>
+                                            </Box>
                                             <Typography
                                                 sx={{
-                                                    fontSize: 18,
+                                                    fontSize: 16,
                                                     fontWeight: 500,
+                                                    textAlign: { xs: 'center', sm: 'left' }
                                                 }}
                                                 gutterBottom
                                             >
@@ -2807,87 +2945,70 @@ const MyAccount: React.FC = () => {
                                             <Grid
                                                 container
                                                 size={{ xs: 12 }}
-                                                columnSpacing={10}
+                                                columnSpacing={{ xs: 3, sm: 10 }}
                                                 rowSpacing={1.2}
-                                                sx={{ mt: 2 }}
+                                                sx={{
+                                                    mt: { xs: 1, sm: 2 },
+                                                    width: '100%',
+                                                    justifyContent: { xs: 'center', sm: 'left' }
+                                                }}
                                             >
+
                                                 <Grid>
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                        <Briefcase
-                                                            size={16}
-                                                            color={theme.palette.grey[500]}
-                                                        />
+                                                    <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
+                                                        <Mail size={14} />
                                                         <Typography
                                                             sx={{
-                                                                fontSize: 16,
-                                                                fontWeight: 600,
-                                                                color: `${theme.palette.grey[500]} !important`,
-                                                            }}
-                                                        >
-                                                            Role
-                                                        </Typography>
-                                                    </Box>
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 18,
-                                                            fontWeight: 500,
-                                                            color: "text.primary",
-                                                        }}
-                                                    >
-                                                        {user?.Role?.Name}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid>
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                        <Mail
-                                                            size={16}
-                                                            color={theme.palette.grey[500]}
-                                                        />
-                                                        <Typography
-                                                            sx={{
-                                                                fontSize: 16,
-                                                                fontWeight: 600,
-                                                                color: `${theme.palette.grey[500]} !important`,
+                                                                fontSize: 14,
+                                                                fontWeight: 500,
+                                                                color: 'text.secondary',
                                                             }}
                                                         >
                                                             Email Address
                                                         </Typography>
                                                     </Box>
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 18,
-                                                            fontWeight: 500,
-                                                            color: "text.primary",
-                                                        }}
-                                                    >
-                                                        {user?.Email}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid>
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                                                        <Phone
-                                                            size={16}
-                                                            color={theme.palette.grey[500]}
-                                                        />
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                        <Box display={{ xs: "flex", sm: "none" }}>
+                                                            <Mail size={18} />
+                                                        </Box>
                                                         <Typography
                                                             sx={{
-                                                                fontSize: 16,
-                                                                fontWeight: 600,
-                                                                color: `${theme.palette.grey[500]} !important`,
+                                                                fontSize: 18,
+                                                                fontWeight: 500,
+                                                                color: "text.primary",
+                                                            }}
+                                                        >
+                                                            {user?.Email}
+                                                        </Typography>
+                                                    </Box>
+                                                </Grid>
+                                                <Grid>
+                                                    <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1, mb: 0.5, color: 'text.secondary', }}>
+                                                        <Phone size={14} />
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: 14,
+                                                                fontWeight: 500,
+                                                                color: 'text.secondary',
                                                             }}
                                                         >
                                                             Phone Number
                                                         </Typography>
                                                     </Box>
-                                                    <Typography
-                                                        sx={{
-                                                            fontSize: 18,
-                                                            fontWeight: 500,
-                                                            color: "text.primary",
-                                                        }}
-                                                    >
-                                                        {user?.Phone}
-                                                    </Typography>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                        <Box display={{ xs: "flex", sm: "none" }}>
+                                                            <Phone size={18} />
+                                                        </Box>
+                                                        <Typography
+                                                            sx={{
+                                                                fontSize: 18,
+                                                                fontWeight: 500,
+                                                                color: "text.primary",
+                                                            }}
+                                                        >
+                                                            {user?.Phone}
+                                                        </Typography>
+                                                    </Box>
                                                 </Grid>
                                             </Grid>
                                         </Box>
@@ -2975,6 +3096,7 @@ const MyAccount: React.FC = () => {
                                             onPageChange={setPage}
                                             onLimitChange={setLimit}
                                             noDataText="Maintenance request information not found."
+                                            getRowId={(row) => row.ID}
                                         />
                                     )}
                                 </Grid>

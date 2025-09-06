@@ -296,7 +296,7 @@ func GetRoomRentalSpaceByOption(c *gin.Context) {
 	query = query.
 		Preload("Floor").
 		Preload("RoomStatus").
-		Preload("Invoices.Notifications").
+		Preload("RentalRoomInvoices.Notifications").
 		Preload("ServiceAreaDocument.RequestServiceArea.User").
 		Preload("ServiceAreaDocument.ServiceUserType")
 
@@ -338,7 +338,7 @@ func GetRoomRentalSpaceByID(c *gin.Context) {
 	result := db.
 		Preload("Floor").
 		Preload("RoomStatus").
-		Preload("Invoices.Notifications").
+		Preload("RentalRoomInvoices.Notifications").
 		Preload("ServiceAreaDocument.RequestServiceArea.User").
 		Preload("ServiceAreaDocument.ServiceUserType").
 		First(&room, roomID)

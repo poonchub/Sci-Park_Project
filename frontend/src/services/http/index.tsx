@@ -21,9 +21,11 @@ import { AboutCompanyInterface } from "../../interfaces/IAboutCompany";
 import { RequestServiceAreaInterface } from "../../interfaces/IRequestServiceArea";
 import { ServiceAreaDocumentInterface } from "../../interfaces/IServiceAreaDocument";
 import { ServiceUserTypeInterface } from "../../interfaces/IServiceUserType";
-import { InvoiceInterface } from "../../interfaces/IInvoices";
-import { InvoiceItemInterface } from "../../interfaces/IInvoiceItems";
+import { RentalRoomInvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
+import { RentalRoomInvoiceItemInterface } from "../../interfaces/IRentalRoomInvoiceItems";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -2668,12 +2670,21 @@ async function UpdateAboutCompany(userID: number, formData: FormData): Promise<a
 }
 
 // Invoice
-async function ListInvoices(): Promise<InvoiceInterface[]> {
+async function ListInvoices(): Promise<RentalRoomInvoiceInterface[]> {
     try {
         const response = await axiosInstance.get(`/invoices`);
         return response.data;
     } catch (error) {
         console.error("Error fetching invoice:", error);
+        throw error;
+    }
+}
+async function GetNextInvoiceNumber() {
+    try {
+        const response = await axiosInstance.get(`/invoices/next-number`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice number:", error);
         throw error;
     }
 }
@@ -2715,7 +2726,7 @@ async function ListInvoiceByDateRange(startDate: string | null, endDate: string 
         throw error;
     }
 }
-async function CreateInvoice(data: InvoiceInterface) {
+async function CreateInvoice(data: RentalRoomInvoiceInterface) {
     try {
         const response = await axiosInstance.post(`/invoice`, data, {
             headers: {
@@ -2738,7 +2749,7 @@ async function GetInvoiceByOption(page: number, limit: number, roomId?: number, 
         throw error;
     }
 }
-async function UpdateInvoiceByID(invoiceID: number, data: InvoiceInterface): Promise<any> {
+async function UpdateInvoiceByID(invoiceID: number, data: RentalRoomInvoiceInterface): Promise<any> {
     try {
         const response = await axiosInstance.patch(`/invoice/${invoiceID}`, data, {
             headers: {
@@ -2777,7 +2788,7 @@ async function UploadInvoicePDF(data: FormData) {
 }
 
 // InvoiceItems
-async function CreateInvoiceItems(data: InvoiceItemInterface) {
+async function CreateInvoiceItems(data: RentalRoomInvoiceItemInterface) {
     try {
         const response = await axiosInstance.post(`/invoice-items`, data, {
             headers: {
@@ -2791,7 +2802,7 @@ async function CreateInvoiceItems(data: InvoiceItemInterface) {
         throw error;
     }
 }
-async function UpdateInvoiceItemsByID(id: number, data: InvoiceItemInterface): Promise<InvoiceItemInterface> {
+async function UpdateInvoiceItemsByID(id: number, data: RentalRoomInvoiceItemInterface): Promise<RentalRoomInvoiceItemInterface> {
     try {
         const response = await axiosInstance.patch(`/invoice-item/${id}`, data, {
             headers: {
@@ -3205,7 +3216,37 @@ export async function RejectPayment(paymentId: number) {
     }
 }
 
+// RoomBookingInvoice
+async function CreateRoomBookingInvoice(data: RoomBookingInvoiceInterface) {
+    try {
+        const response = await axiosInstance.post(`/room-booking-invoice`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
 
+// RoomBookingInvoiceItem
+async function CreateRoomBookingInvoiceItem(data: RoomBookingInvoiceItemInterface) {
+    try {
+        const response = await axiosInstance.post(`/room-booking-invoice-item`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
 
 export {
     // RequestStatuses
@@ -3412,6 +3453,7 @@ export {
 
     // Invoices
     ListInvoices,
+    GetNextInvoiceNumber,
     GetPreviousMonthInvoiceSummary,
     GetInvoiceByID,
     GetInvoicePDF,
@@ -3432,4 +3474,10 @@ export {
 
     // Cancel Request Service Area
     CancelRequestServiceArea,
+    
+    // RoomBookingInvoice
+    CreateRoomBookingInvoice,
+
+    // RoomBookingInvoiceItem
+    CreateRoomBookingInvoiceItem,
 };

@@ -28,18 +28,14 @@ type Payment struct {
 	// --- ความสัมพันธ์และสถานะ ---
 	StatusID      uint          `valid:"required~StatusID is required"`
 	Status        PaymentStatus `gorm:"foreignKey:StatusID" valid:"-"`
-	PayerID       uint          `valid:"required~PayerID is required"`
-	Payer         User          `gorm:"foreignKey:PayerID" valid:"-"`
-	ApproverID    uint
-	Approver      User          `gorm:"foreignKey:ApproverID" valid:"-"`
-
-	// ผูกกับ Booking ไว้สำหรับมุมมองรวม
-	BookingRoomID uint          `valid:"required~BookingRoomID is required"`
-	BookingRoom   BookingRoom   `gorm:"foreignKey:BookingRoomID" valid:"-"`
-
-	// ✅ สำคัญ: บังคับให้ผูกกับใบแจ้งหนี้ (เพื่อรองรับ deposit/final/full ชัดเจน)
-	InvoiceID     uint          `valid:"required~InvoiceID is required"`
-	Invoice       Invoice       `gorm:"foreignKey:InvoiceID" valid:"-"`
+	PayerID       uint		`valid:"required~PayerID is required"`
+	Payer         User 		`gorm:"foreignKey:PayerID" valid:"-"`
+	ApproverID    uint		
+	Approver      User 		`gorm:"foreignKey:ApproverID" valid:"-"`
+	BookingRoomID uint		
+	BookingRoom   BookingRoom `gorm:"foreignKey:BookingRoomID" valid:"-"`
+	RentalRoomInvoiceID     uint		
+	RentalRoomInvoice       RentalRoomInvoice `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
 }
 
 

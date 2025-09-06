@@ -11,7 +11,7 @@ import (
 
 // GET /invoice-items
 func ListInvoiceItems(c *gin.Context) {
-	var invoiceItems []entity.InvoiceItem
+	var invoiceItems []entity.RentalRoomInvoiceItem
 
 	db := config.DB()
 
@@ -28,7 +28,7 @@ func ListInvoiceItems(c *gin.Context) {
 func GetInvoiceItemByID(c *gin.Context) {
 	id := c.Param("id")
 
-	var invoiceItem entity.InvoiceItem
+	var invoiceItem entity.RentalRoomInvoiceItem
 
 	db := config.DB()
 
@@ -43,7 +43,7 @@ func GetInvoiceItemByID(c *gin.Context) {
 
 // POST /invoice-item
 func CreateInvoiceItem(c *gin.Context) {
-	var invoiceItem entity.InvoiceItem
+	var invoiceItem entity.RentalRoomInvoiceItem
 
 	db := config.DB()
 	if err := c.ShouldBindJSON(&invoiceItem); err != nil {
@@ -56,20 +56,20 @@ func CreateInvoiceItem(c *gin.Context) {
 		return
 	}
 
-	var invoice entity.Invoice
-	if err := db.First(&invoice, invoiceItem.InvoiceID).Error; err != nil {
+	var invoice entity.RentalRoomInvoice
+	if err := db.First(&invoice, invoiceItem.RentalRoomInvoiceID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice not found"})
 		return
 	}
 
-	invoiceItemData := entity.InvoiceItem{
+	invoiceItemData := entity.RentalRoomInvoiceItem{
 		Description: invoiceItem.Description,
 		Amount:     invoiceItem.Amount,
-		InvoiceID:  invoiceItem.InvoiceID,
+		RentalRoomInvoiceID:  invoiceItem.RentalRoomInvoiceID,
 	}
 
-	var exiting entity.InvoiceItem
-	if err := db.Where("description = ? and invoice_id = ?", invoiceItem.Description, invoiceItem.InvoiceID).First(&exiting).Error; err == nil {
+	var exiting entity.RentalRoomInvoiceItem
+	if err := db.Where("description = ? and rental_room_invoice_id = ?", invoiceItem.Description, invoiceItem.RentalRoomInvoiceID).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice item already exists"})
 		return
 	}
@@ -89,7 +89,7 @@ func CreateInvoiceItem(c *gin.Context) {
 func UpdateInvoiceItemsByID(c *gin.Context) {
 	ID := c.Param("id")
 
-	var invoiceItem entity.InvoiceItem
+	var invoiceItem entity.RentalRoomInvoiceItem
 
 	db := config.DB()
 	result := db.Find(&invoiceItem, ID)
@@ -118,13 +118,13 @@ func DeleteInvoiceItemByID(c *gin.Context) {
 
 	db := config.DB()
 
-	var invoiceItem entity.InvoiceItem
+	var invoiceItem entity.RentalRoomInvoiceItem
 	if err := db.Where("id = ?", ID).First(&invoiceItem).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invoice item not found"})
 		return
 	}
 
-	if err := db.Where("id = ?", ID).Delete(&entity.InvoiceItem{}).Error; err != nil {
+	if err := db.Where("id = ?", ID).Delete(&entity.RentalRoomInvoiceItem{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice item"})
 		return
 	}

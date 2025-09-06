@@ -875,10 +875,10 @@ function AllMaintenanceRequest() {
     const handleClickCheck = async (data: MaintenanceRequestsInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.ID));
-            const requestID = data?.ID;
-            const userID = user?.ID ?? 0;
+            // const requestID = data?.ID;
+            // const userID = user?.ID ?? 0;
 
-            await handleUpdateNotification(userID, true, requestID, undefined, undefined);
+            // await handleUpdateNotification(userID, true, requestID, undefined, undefined);
             navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };
