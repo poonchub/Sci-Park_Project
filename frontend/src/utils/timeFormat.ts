@@ -1,4 +1,4 @@
-const timeFormat = (date: string) => {
+const timeFormat = (date: string | undefined | null) => {
     if (!date) return "";
     const d = new Date(date);
     if (isNaN(d.getTime())) return "";

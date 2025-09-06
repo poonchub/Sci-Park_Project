@@ -118,7 +118,7 @@ func SetupDatabase() {
 	fmt.Println("✅ Database migrated successfully!")
 
 	SeedDatabase()
-	
+
 }
 
 // ฟังก์ชันเพิ่มข้อมูลตัวอย่าง
@@ -235,6 +235,14 @@ func SeedDatabase() {
 		{
 			Name:        "Unsuccessful", // Unsuccessful
 			Description: "The maintenance was unsuccessful and could not be completed.",
+		},
+		{
+			Name:        "Cancellation In Progress", // Cancellation In Progress
+			Description: "The service area request cancellation is currently being processed.",
+		},
+		{
+			Name:        "Successfully Cancelled", // Successfully Cancelled
+			Description: "The service area request has been successfully cancelled and the process is complete.",
 		},
 	}
 	for _, status := range requestStatuses {
@@ -509,7 +517,7 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1232323223",
 			ProfilePath:    "",
-			RoleID:         3,             // Document Operator (ID 3)
+			RoleID:         3, // Document Operator (ID 3)
 			JobPositionID:  2, // Business Analyst
 			GenderID:       2,
 			IsEmployee:     true,
@@ -524,7 +532,7 @@ func SeedDatabase() {
 			Password:       "123456",
 			Phone:          "1232323224",
 			ProfilePath:    "",
-			RoleID:         3,             // Document Operator (ID 3)
+			RoleID:         3, // Document Operator (ID 3)
 			JobPositionID:  4, // Quality Assurance
 			GenderID:       1,
 			IsEmployee:     true,
@@ -566,7 +574,7 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Rooms
-	const LARGE_ROOM_TYPE_ID =  /* TODO: ใส่ RoomTypeID ของห้องใหญ่ */  5
+	const LARGE_ROOM_TYPE_ID = /* TODO: ใส่ RoomTypeID ของห้องใหญ่ */ 5
 	rooms := []entity.Room{
 		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
 		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
@@ -624,7 +632,7 @@ func SeedDatabase() {
 
 		{RoomNumber: "A406", FloorID: 1, RoomStatusID: 1, RoomTypeID: 7},
 
-		{RoomNumber: "LARGE-01", FloorID: 1, RoomStatusID: 1, RoomTypeID:5 , RoomSize: 1000},
+		{RoomNumber: "LARGE-01", FloorID: 1, RoomStatusID: 1, RoomTypeID: 5, RoomSize: 1000},
 	}
 	for _, room := range rooms {
 		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
@@ -767,17 +775,14 @@ func SeedDatabase() {
 		{TimeSlotName: "15:30-16:30", StartTime: parseTime("15:30"), EndTime: parseTime("16:30")},
 	}
 
-	
 	for _, slot := range timeSlots {
 		db.FirstOrCreate(&slot, entity.TimeSlot{
 			TimeSlotName: slot.TimeSlotName,
 			StartTime:    slot.StartTime,
 			EndTime:      slot.EndTime,
 		})
-		
-	}
 
-	
+	}
 
 	roomPrices := []entity.RoomPrice{
 		// ----- RoomTypeID 1 (ห้องเล็ก) -----
@@ -822,9 +827,7 @@ func SeedDatabase() {
 			Assign(&entity.RoomPrice{Price: rp.Price}).
 			FirstOrCreate(&out)
 
-	
 	}
-
 
 	for _, rp := range roomPrices {
 		db.FirstOrCreate(&rp, entity.RoomPrice{
@@ -832,7 +835,7 @@ func SeedDatabase() {
 			RoomTypeID: rp.RoomTypeID,
 			Price:      rp.Price,
 		})
-		
+
 	}
 
 	bookingStatus := []entity.BookingStatus{
@@ -857,7 +860,6 @@ func SeedDatabase() {
 		db.FirstOrCreate(&e, entity.Equipment{EquipmentName: e.EquipmentName})
 	}
 
-	
 	roomEquipments := []entity.RoomEquipment{
 		{RoomTypeID: 1, EquipmentID: 1, Quantity: 1},  // A302 มีโปรเจคเตอร์ 1 ตัว
 		{RoomTypeID: 1, EquipmentID: 2, Quantity: 2},  // A302 มีไมโครโฟน 2 ตัว
@@ -871,7 +873,7 @@ func SeedDatabase() {
 			EquipmentID: re.EquipmentID,
 			Quantity:    re.Quantity,
 		})
-		
+
 	}
 
 	// Payment
@@ -909,7 +911,7 @@ func SeedDatabase() {
 			PayerID:       p.PayerID,
 			Amount:        p.Amount,
 		})
-		
+
 	}
 	// 🔹 ข้อมูล News
 	news := []entity.News{
@@ -1211,11 +1213,11 @@ func SeedDatabase() {
 	// ===== Mock External Users with AboutCompany, RequestServiceArea, CollaborationPlans =====
 	// Step 1: Create 5 External Users
 	externalUsers := []entity.User{
-		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456",BusinessDetail: "Healthcare Services", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456",BusinessDetail: "Smart Farming", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456",BusinessDetail: "Renewable Energy Materials", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456",BusinessDetail: "BioTech R&D", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
-		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456",BusinessDetail: "Software & Digital", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "MediCare", FirstName: "External", LastName: "A", Email: "ext.a@example.com", Password: "123456", BusinessDetail: "Healthcare Services", Phone: "0800000001", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "AgriNova", FirstName: "External", LastName: "B", Email: "ext.b@example.com", Password: "123456", BusinessDetail: "Smart Farming", Phone: "0800000002", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "EnergyTech Co.", FirstName: "External", LastName: "C", Email: "ext.c@example.com", Password: "123456", BusinessDetail: "Renewable Energy Materials", Phone: "0800000003", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "BioHealth Ltd.", FirstName: "External", LastName: "D", Email: "ext.d@example.com", Password: "123456", BusinessDetail: "BioTech R&D", Phone: "0800000004", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
+		{CompanyName: "SoftLab Studio", FirstName: "External", LastName: "E", Email: "ext.e@example.com", Password: "123456", BusinessDetail: "Software & Digital", Phone: "0800000005", RoleID: 1, IsEmployee: false, IsBusinessOwner: true},
 	}
 	for i := range externalUsers {
 		externalUsers[i].Password, _ = HashPassword(externalUsers[i].Password)
@@ -1272,31 +1274,30 @@ func SeedDatabase() {
 		makeRSA(externalUsers[i], i)
 	}
 
-	
 	serviceDocs := []entity.ServiceAreaDocument{
 		{
-			RequestServiceAreaID:     1,
-			ServiceContractDocument:  "path/to/contract1.pdf",
-			AreaHandoverDocument:     "path/to/handover1.pdf",
-			QuotationDocument:        "path/to/quotation1.pdf",
-			RefundGuaranteeDocument:  "path/to/refund1.pdf",
-			ContractNumber:           "SA-001",
-			ContractStartAt:          time.Now(),
-			ContractEndAt:            time.Now().AddDate(1, 0, 0),
-			RoomID:                   1,
-			ServiceUserTypeID:        1,
+			RequestServiceAreaID:    1,
+			ServiceContractDocument: "path/to/contract1.pdf",
+			AreaHandoverDocument:    "path/to/handover1.pdf",
+			QuotationDocument:       "path/to/quotation1.pdf",
+			RefundGuaranteeDocument: "path/to/refund1.pdf",
+			ContractNumber:          "SA-001",
+			ContractStartAt:         time.Now(),
+			ContractEndAt:           time.Now().AddDate(1, 0, 0),
+			RoomID:                  1,
+			ServiceUserTypeID:       1,
 		},
 		{
-			RequestServiceAreaID:     2,
-			ServiceContractDocument:  "path/to/contract2.pdf",
-			AreaHandoverDocument:     "path/to/handover2.pdf",
-			QuotationDocument:        "path/to/quotation2.pdf",
-			RefundGuaranteeDocument:  "path/to/refund2.pdf",
-			ContractNumber:           "SA-002",
-			ContractStartAt:          time.Now(),
-			ContractEndAt:            time.Now().AddDate(1, 0, 0),
-			RoomID:                   2,
-			ServiceUserTypeID:        2,
+			RequestServiceAreaID:    2,
+			ServiceContractDocument: "path/to/contract2.pdf",
+			AreaHandoverDocument:    "path/to/handover2.pdf",
+			QuotationDocument:       "path/to/quotation2.pdf",
+			RefundGuaranteeDocument: "path/to/refund2.pdf",
+			ContractNumber:          "SA-002",
+			ContractStartAt:         time.Now(),
+			ContractEndAt:           time.Now().AddDate(1, 0, 0),
+			RoomID:                  2,
+			ServiceUserTypeID:       2,
 		},
 	}
 
@@ -1308,10 +1309,10 @@ func SeedDatabase() {
 
 	bookingRooms := []entity.BookingRoom{
 		{
-			Purpose:   "ประชุมทีมวิจัยโครงการ A",
-			UserID:    1,
-			RoomID:    1,
-			StatusID:  1, // เช่น "จองสำเร็จ"
+			Purpose:        "ประชุมทีมวิจัยโครงการ A",
+			UserID:         1,
+			RoomID:         1,
+			StatusID:       1, // เช่น "จองสำเร็จ"
 			AdditionalInfo: "ต้องการโปรเจคเตอร์ และไวท์บอร์ด",
 			BookingDates: []entity.BookingDate{
 				{Date: beginningOfDayUTC(time.Now())},
@@ -1319,10 +1320,10 @@ func SeedDatabase() {
 			},
 		},
 		{
-			Purpose:   "จัดอบรมการใช้งานระบบใหม่",
-			UserID:    2,
-			RoomID:    2,
-			StatusID:  2,
+			Purpose:        "จัดอบรมการใช้งานระบบใหม่",
+			UserID:         2,
+			RoomID:         2,
+			StatusID:       2,
 			AdditionalInfo: "มีการสั่งอาหารว่างเพิ่มเติม",
 			BookingDates: []entity.BookingDate{
 				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 3))},
@@ -1340,8 +1341,8 @@ func SeedDatabase() {
 }
 
 func beginningOfDayUTC(t time.Time) time.Time {
-    return time.Date(
-        t.Year(), t.Month(), t.Day(),
-        0, 0, 0, 0, time.UTC,
-    )
+	return time.Date(
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0, time.UTC,
+	)
 }

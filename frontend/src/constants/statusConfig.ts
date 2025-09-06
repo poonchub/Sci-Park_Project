@@ -1,6 +1,6 @@
 // Importing necessary Lucide React icons
 import { Hourglass, LucideIcon, Repeat } from "lucide-react";
-import { RotateCcw, Check, X, ClipboardCheck, Flag, Clock, RotateCcw as Redo } from "lucide-react";
+import { RotateCcw, Check, X, ClipboardCheck, Flag, Clock, RotateCcw as Redo, AlertTriangle, Ban } from "lucide-react";
 
 // Interface defining the configuration for each status type
 export interface StatusConfig {
@@ -50,5 +50,15 @@ export const statusConfig: Record<string, StatusConfig> = {
         color: "#FFA500",
         colorLite: "rgba(255, 166, 0, 0.21)",
         icon: Repeat
+    },
+    "Cancellation In Progress": {
+        color: "#FF6B35",
+        colorLite: "rgba(255, 107, 53, 0.18)",
+        icon: AlertTriangle
+    },
+    "Successfully Cancelled": {
+        color: "#6C757D",
+        colorLite: "rgba(108, 117, 125, 0.18)",
+        icon: Ban
     },
 };

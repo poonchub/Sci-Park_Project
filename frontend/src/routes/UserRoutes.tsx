@@ -14,6 +14,7 @@ import CreateServiceAreaForm from "../pages/CreateRequestServiceArea/CreateServi
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
+import CancelRequestServiceArea from "../pages/CancelRequestServiceArea/CancelRequestServiceArea";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -67,6 +68,10 @@ const UserRoutes = (): RouteObject => {
 			{
 				path: "/create-service-area-request",
 				element: <CreateServiceAreaForm/>
+			},
+			{
+				path: "/service-area/cancel-request",
+				element: <CancelRequestServiceArea/>
 			},
 			{
 				path: "/room/rental-space",

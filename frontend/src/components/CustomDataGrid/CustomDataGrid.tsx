@@ -64,6 +64,9 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                     if (row.id !== undefined && row.id !== null) {
                         return String(row.id);
                     }
+                    if (row.RequestServiceAreaID !== undefined && row.RequestServiceAreaID !== null) {
+                        return String(row.RequestServiceAreaID);
+                    }
                     // ถ้าไม่มี ID เลย ให้ใช้ index + timestamp เพื่อป้องกัน key ซ้ำ
                     return `row_${Date.now()}_${Math.random()}`;
                 })}

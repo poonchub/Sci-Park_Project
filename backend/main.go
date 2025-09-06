@@ -234,6 +234,7 @@ func main() {
 		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
 		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
 		protected.GET("/request-service-areas", controller.ListRequestServiceAreas)
+		protected.GET("/request-service-areas/user/:user_id", controller.GetRequestServiceAreasByUserID)
 		protected.GET("/request-service-area-document/:id", controller.DownloadServiceRequestDocument)
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
@@ -241,6 +242,7 @@ func main() {
 		protected.PATCH("/request-service-area/:id/reject", controller.RejectServiceAreaRequest)
 
 		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
+		protected.POST("/request-service-area/cancel/:request_id", controller.CancelRequestServiceArea)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
 		// Payment
@@ -380,31 +382,27 @@ func main() {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
 
-	 go func() {
-        for {
-            now := time.Now()
-            // หาว่าต้องรออีกกี่นาทีถึง 00:05 ของวันถัดไป
-            next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 5, 0, 0, now.Location())
-            d := time.Until(next)
+	go func() {
+		for {
+			now := time.Now()
+			// หาว่าต้องรออีกกี่นาทีถึง 00:05 ของวันถัดไป
+			next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 5, 0, 0, now.Location())
+			d := time.Until(next)
 
-            time.Sleep(d) // รอจนถึงเวลา
+			time.Sleep(d) // รอจนถึงเวลา
 
-            // เรียกฟังก์ชัน auto-cancel
-            if n, err := controller.AutoCancelUnpaidBookings(24); err != nil {
-                log.Println("[auto-cancel] error:", err)
-            } else {
-                log.Println("[auto-cancel] cancelled bookings:", n)
-            }
-        }
-    }()
-
-
+			// เรียกฟังก์ชัน auto-cancel
+			if n, err := controller.AutoCancelUnpaidBookings(24); err != nil {
+				log.Println("[auto-cancel] error:", err)
+			} else {
+				log.Println("[auto-cancel] cancelled bookings:", n)
+			}
+		}
+	}()
 
 	// 🚀 Start Server
-	r.Run("localhost:" + PORT) // ✅ 
+	r.Run("localhost:" + PORT) // ✅
 
-	
-	
 }
 
 // 🛠 CORS Middleware
@@ -423,5 +421,3 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-

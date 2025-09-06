@@ -1,34 +1,22 @@
 package entity
 
-import (
-	"gorm.io/gorm"
-)
+import "time"
 
-// CancelRequestServiceArea represents a user's request to cancel the service area usage
-// Company information can be derived via UserID -> AboutCompany
+// CancelRequestServiceArea represents a cancellation request for a service area
 type CancelRequestServiceArea struct {
-	gorm.Model
+	ID                    uint       `gorm:"primaryKey" json:"id"`
+	RequestServiceAreaID  uint       `gorm:"not null" json:"request_service_area_id"`
+	UserID                uint       `gorm:"not null" json:"user_id"`
+	PurposeOfCancellation string     `gorm:"not null" json:"purpose_of_cancellation"`
+	ProjectActivities     string     `json:"project_activities"` // Optional field
+	AnnualIncome          float64    `json:"annual_income"`
+	CancellationDocument  string     `json:"cancellation_document"` // File path
+	BankAccountDocument   string     `json:"bank_account_document"` // File path
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
+	DeletedAt             *time.Time `gorm:"index" json:"deleted_at,omitempty"`
 
-	// Relations
-	UserID uint `gorm:"index"`
-	User   User `gorm:"foreignKey:UserID"`
-
-	// เชื่อมกับคำขอบริการพื้นที่ (1:1)
-	RequestServiceAreaID uint               `gorm:"uniqueIndex"`
-	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
-
-	// 1) วัตถุประสงค์ของการขอยกเลิกใช้บริการพื้นที่
-	CancellationPurpose string `gorm:"type:varchar(500)"`
-
-	// 2) โครงการ กิจกรรม หรือผลิตภัณฑ์ ที่เกี่ยวข้องกับการยกเลิก
-	RelatedProjectOrProduct string `gorm:"type:varchar(500)"`
-
-	// 3) รายได้ระหว่างการให้บริการในอุทยานวิทยาศาสตร์ (รายปี)
-	AnnualRevenue float64 `gorm:"type:decimal(18,2)"`
-
-	// 4) แนบเอกสารแสดงความประสงค์ (เก็บเป็น path)
-	IntentDocumentPath string `gorm:"type:varchar(500)"`
-
-	// 5) แนบสำเนาบัญชีธนาคาร (เก็บเป็น path)
-	BankAccountCopyPath string `gorm:"type:varchar(500)"`
+	// Relationships
+	RequestServiceArea RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID" json:"request_service_area,omitempty"`
+	User               User               `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }

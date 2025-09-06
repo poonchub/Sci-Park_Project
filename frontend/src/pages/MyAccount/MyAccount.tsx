@@ -15,6 +15,7 @@ import {
     UpdateInvoiceByID,
     UpdateMaintenanceRequestByID,
     UpdateNotificationsByRequestID,
+    GetRequestServiceAreasByUserID,
 } from "../../services/http";
 
 import React, { useState, useEffect } from "react";
@@ -133,6 +134,13 @@ const MyAccount: React.FC = () => {
     const [paymentPage, setPaymentPage] = useState(0);
     const [paymentLimit, setPaymentLimit] = useState(10);
     const [paymentTotal, setPaymentTotal] = useState(0);
+
+    // Service Area Request states
+    const [serviceAreaRequests, setServiceAreaRequests] = useState<any[]>([]);
+    const [serviceAreaPage, setServiceAreaPage] = useState(0);
+    const [serviceAreaLimit, setServiceAreaLimit] = useState(10);
+    const [serviceAreaTotal, setServiceAreaTotal] = useState(0);
+    const [isLoadingServiceArea, setIsLoadingServiceArea] = useState<boolean>(true);
 
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
@@ -286,6 +294,22 @@ const MyAccount: React.FC = () => {
             console.error("Error to fetching payments", error)
         }
     }
+
+    const getServiceAreaRequests = async () => {
+        setIsLoadingServiceArea(true);
+        try {
+            const userId = Number(localStorage.getItem("userId"));
+            const res = await GetRequestServiceAreasByUserID(userId, serviceAreaPage + 1, serviceAreaLimit);
+            if (res) {
+                setServiceAreaTotal(res.total);
+                setServiceAreaRequests(res.data);
+                setIsLoadingServiceArea(false);
+            }
+        } catch (error) {
+            console.error("Error fetching service area requests:", error);
+            setIsLoadingServiceArea(false);
+        }
+    };
 
     const handleClickCheck = async (data: MaintenanceRequestsInterface) => {
         if (data) {
@@ -545,6 +569,10 @@ const MyAccount: React.FC = () => {
     }, [paymentPage, paymentLimit]);
 
     useEffect(() => {
+        getServiceAreaRequests();
+    }, [serviceAreaPage, serviceAreaLimit]);
+
+    useEffect(() => {
         if (requestStatuses) {
             getMaintenanceRequests(1, true);
         }
@@ -556,6 +584,8 @@ const MyAccount: React.FC = () => {
             getPaymentStatuses();
         } else if (valueTab === 3) {
             getPayment()
+        } else if (valueTab === 4) {
+            getServiceAreaRequests();
         }
     }, [valueTab]);
 
@@ -2277,6 +2307,354 @@ const MyAccount: React.FC = () => {
         }
     };
 
+    const getServiceAreaColumns = (): GridColDef[] => {
+        if (isSmallScreen) {
+            return [
+                {
+                    field: "All Service Area Requests",
+                    headerName: "All Service Area Requests",
+                    flex: 1,
+                    renderCell: (params) => {
+                        const data = params.row;
+                        const requestID = data.RequestServiceAreaID;
+                        const companyName = data.CompanyName;
+                        const userName = data.UserNameCombined;
+                        const businessGroupName = data.BusinessGroupName;
+                        const createdAt = dateFormat(data.CreatedAt);
+                        const statusID = data.StatusID;
+
+                        // Map status ID to status name (same as ServiceRequestList)
+                        let statusName = "Unknown";
+                        if (statusID === 1) statusName = "Created";
+                        else if (statusID === 2) statusName = "Pending";
+                        else if (statusID === 3) statusName = "Approved";
+                        else if (statusID === 4) statusName = "In Progress";
+                        else if (statusID === 6) statusName = "Completed";
+                        else if (statusID === 8) statusName = "Unsuccessful";
+                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 10) statusName = "Successfully Cancelled";
+
+                        // Get status config from statusConfig
+                        const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
+                        const statusColor = statusConfigItem?.color || "#000";
+                        const statusColorLite = statusConfigItem?.colorLite || "#000";
+                        const StatusIcon = statusConfigItem?.icon || HelpCircle;
+
+                        return (
+                            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
+                                <Grid size={{ xs: 12, sm: 7 }}>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 16,
+                                            fontWeight: 600,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            maxWidth: "100%",
+                                        }}
+                                    >
+                                        Request #{requestID}
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            color: "text.secondary",
+                                            my: 0.5,
+                                        }}
+                                    >
+                                        {companyName}
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            color: "text.secondary",
+                                            my: 0.5,
+                                        }}
+                                    >
+                                        {userName}
+                                    </Typography>
+                                    {businessGroupName && (
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                color: "text.secondary",
+                                                my: 0.5,
+                                            }}
+                                        >
+                                            {businessGroupName}
+                                        </Typography>
+                                    )}
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                        <Calendar size={14} style={{ minHeight: '14px', minWidth: '14px' }} />
+                                        <Typography sx={{ fontSize: 14 }}>
+                                            {createdAt}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid size={{ xs: 12, sm: 5 }} container direction="column">
+                                    <Box
+                                        sx={{
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
+                                        }}
+                                    >
+                                        {StatusIcon && React.createElement(StatusIcon, {
+                                            size: 18,
+                                            style: { minWidth: "18px", minHeight: "18px" }
+                                        })}
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {statusName}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Divider sx={{ width: "100%", my: 1 }} />
+
+                                <Grid size={{ xs: 12 }}>
+                                    <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap" }}>
+                                        <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Box
+                                                    className="container-btn"
+                                                    sx={{
+                                                        display: "flex",
+                                                        gap: 0.8,
+                                                        flexWrap: "wrap",
+                                                        alignItems: "center",
+                                                        width: "100%"
+                                                    }}
+                                                >
+                                                    {statusID === 6 && ( // StatusID 6 = Completed
+                                                        <Tooltip title="Cancel Request">
+                                                            <Button
+                                                                variant="outlinedCancel"
+                                                                onClick={() => {
+                                                                    // Navigate to cancel request page
+                                                                    navigate(`/service-area/cancel-request?request_id=${requestID}`);
+                                                                }}
+                                                                sx={{ minWidth: "42px" }}
+                                                            >
+                                                                <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Cancel
+                                                                </Typography>
+                                                            </Button>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Tooltip title="View Details">
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => {
+                                                                // Navigate to service area details page
+                                                                console.log("View service area request:", requestID);
+                                                            }}
+                                                            sx={{ minWidth: "42px" }}
+                                                        >
+                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Details
+                                                            </Typography>
+                                                        </Button>
+                                                    </Tooltip>
+                                                </Box>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        );
+                    },
+                },
+            ];
+        } else {
+            return [
+                {
+                    field: "RequestServiceAreaID",
+                    headerName: "Request No.",
+                    flex: 0.5,
+                    align: "center",
+                    headerAlign: "center",
+                    renderCell: (params) => {
+                        return (
+                            <Typography sx={{ fontSize: 14 }}>
+                                {params.value}
+                            </Typography>
+                        );
+                    },
+                },
+                {
+                    field: "CompanyName",
+                    headerName: "Company",
+                    type: "string",
+                    flex: 1.5,
+                    renderCell: (params) => {
+                        return (
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+                                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                    {params.value}
+                                </Typography>
+                                <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+                                    {params.row.UserNameCombined}
+                                </Typography>
+                                {params.row.BusinessGroupName && (
+                                    <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+                                        {params.row.BusinessGroupName}
+                                    </Typography>
+                                )}
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "CreatedAt",
+                    headerName: "Date Submitted",
+                    type: "string",
+                    flex: 1,
+                    renderCell: (params) => {
+                        const date = dateFormat(params.value);
+                        const time = timeFormat(params.value);
+                        return (
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+                                <Typography sx={{ fontSize: 14 }}>
+                                    {date}
+                                </Typography>
+                                <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+                                    {time}
+                                </Typography>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "StatusID",
+                    headerName: "Status",
+                    type: "string",
+                    flex: 1,
+                    renderCell: (params) => {
+                        const statusID = params.value;
+                        
+                        // Map status ID to status name (same as ServiceRequestList)
+                        let statusName = "Unknown";
+                        if (statusID === 1) statusName = "Created";
+                        else if (statusID === 2) statusName = "Pending";
+                        else if (statusID === 3) statusName = "Approved";
+                        else if (statusID === 4) statusName = "In Progress";
+                        else if (statusID === 6) statusName = "Completed";
+                        else if (statusID === 8) statusName = "Unsuccessful";
+                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 10) statusName = "Successfully Cancelled";
+
+                        // Get status config from statusConfig
+                        const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
+                        const statusColor = statusConfigItem?.color || "#000";
+                        const statusColorLite = statusConfigItem?.colorLite || "#000";
+                        const StatusIcon = statusConfigItem?.icon || HelpCircle;
+
+                        return (
+                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+                                <Box
+                                    sx={{
+                                        bgcolor: statusColorLite,
+                                        borderRadius: 10,
+                                        px: 1.5,
+                                        py: 0.5,
+                                        display: "flex",
+                                        gap: 1,
+                                        color: statusColor,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: "100%",
+                                    }}
+                                >
+                                    {StatusIcon && React.createElement(StatusIcon, {
+                                        size: 18,
+                                        style: { minWidth: "18px", minHeight: "18px" }
+                                    })}
+                                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                        {statusName}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        );
+                    },
+                },
+                {
+                    field: "Actions",
+                    headerName: "Actions",
+                    type: "string",
+                    flex: 1,
+                    renderCell: (params) => {
+                        const requestID = params.row.RequestServiceAreaID;
+                        const statusID = params.row.StatusID;
+                        return (
+                            <Box
+                                className="container-btn"
+                                sx={{
+                                    display: "flex",
+                                    gap: 0.8,
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                    height: "100%",
+                                }}
+                            >
+                                {statusID === 6 && ( // StatusID 6 = Completed
+                                    <Tooltip title="Cancel Request">
+                                        <Button
+                                            variant="outlinedCancel"
+                                            onClick={() => {
+                                                // Navigate to cancel request page
+                                                navigate(`/service-area/cancel-request?request_id=${requestID}`);
+                                            }}
+                                            sx={{ minWidth: "42px" }}
+                                        >
+                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Cancel
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                )}
+                                <Tooltip title="View Details">
+                                    <Button
+                                        variant="outlinedGray"
+                                        onClick={() => {
+                                            // Navigate to service area details page
+                                            console.log("View service area request:", requestID);
+                                        }}
+                                        sx={{ minWidth: "42px" }}
+                                    >
+                                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                        <Typography variant="textButtonClassic" className="text-btn">
+                                            Details
+                                        </Typography>
+                                    </Button>
+                                </Tooltip>
+                            </Box>
+                        );
+                    },
+                },
+            ];
+        }
+    };
+
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
             <Box className="my-account-page">
@@ -2544,6 +2922,11 @@ const MyAccount: React.FC = () => {
                                     }
 
                                     <Tab label="Payment" {...a11yProps(3)} />
+                                    
+                                    {
+                                        !(user?.IsEmployee) && user?.Role?.Name === "User" &&
+                                        <Tab label="Service Area Request" {...a11yProps(4)} />
+                                    }
                                 </Tabs>
                             </Grid>
                             <Grid container size={{ xs: 3 }} sx={{ justifyContent: "flex-end" }}>
@@ -2652,6 +3035,33 @@ const MyAccount: React.FC = () => {
                                             onPageChange={setPaymentPage}
                                             onLimitChange={setPaymentLimit}
                                             noDataText="Payments information not found."
+                                        />
+                                    )}
+                                </Grid>
+                            </CustomTabPanel>
+
+                            <CustomTabPanel value={valueTab} index={4}>
+                                <Grid size={{ xs: 12, md: 12 }} minHeight={"200px"}>
+                                    {isLoadingServiceArea ? (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width="100%"
+                                            height={255}
+                                            sx={{ borderRadius: 2 }}
+                                        />
+                                    ) : (
+                                        <CustomDataGrid
+                                            rows={serviceAreaRequests.toSorted((a, b) =>
+                                                (b.CreatedAt ?? "").localeCompare(a.CreatedAt ?? "")
+                                            )}
+                                            columns={getServiceAreaColumns()}
+                                            rowCount={serviceAreaTotal}
+                                            page={serviceAreaPage}
+                                            limit={serviceAreaLimit}
+                                            onPageChange={setServiceAreaPage}
+                                            onLimitChange={setServiceAreaLimit}
+                                            noDataText="Service area requests information not found."
+                                            getRowId={(row) => String(row.RequestServiceAreaID)}
                                         />
                                     )}
                                 </Grid>

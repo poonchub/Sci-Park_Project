@@ -1169,6 +1169,321 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 	})
 }
 
+// GetRequestServiceAreasByUserID ดึงคำขอ Service Area เฉพาะของผู้ใช้ (ผู้ยื่นคำขอ) ตาม UserID พร้อม optional filters และ pagination
+// GET /request-service-areas/user/:user_id?month_year=MM/YYYY&page=1&limit=10
+func GetRequestServiceAreasByUserID(c *gin.Context) {
+	fmt.Println("🔍 [DEBUG] GetRequestServiceAreasByUserID called")
+
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		fmt.Printf("🔍 [DEBUG] Invalid user_id: %s, error: %v\n", userIDStr, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	fmt.Printf("🔍 [DEBUG] UserID: %d\n", userID)
+
+	// รับ query parameters
+	monthYear := c.DefaultQuery("month_year", "") // รูปแบบ MM/YYYY เช่น 12/2024
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	fmt.Printf("🔍 [DEBUG] Query params - monthYear: %s, page: %d, limit: %d\n",
+		monthYear, page, limit)
+
+	// ตรวจสอบค่าที่ส่งมา
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	// เชื่อมต่อกับฐานข้อมูล
+	db := config.DB().
+		Preload("User").
+		Preload("User.AboutCompany").
+		Preload("User.AboutCompany.BusinessGroup").
+		Preload("RequestStatus").
+		Preload("ServiceAreaDocument").
+		Where("request_service_areas.user_id = ?", userID)
+
+	// กรองตาม Month/Year (ถ้ามีค่า)
+	if monthYear != "" {
+		// แปลง MM/YYYY เป็น YYYY-MM เพื่อใช้ในการ query
+		parts := strings.Split(monthYear, "/")
+		if len(parts) == 2 {
+			month := parts[0]
+			year := parts[1]
+			// เพิ่ม leading zero ให้กับเดือนถ้าจำเป็น
+			if len(month) == 1 {
+				month = "0" + month
+			}
+			dateFilter := year + "-" + month
+
+			// กรองตาม created_at ของ RequestServiceArea
+			// ใช้ strftime เพื่อแปลงวันที่ให้เป็นรูปแบบที่ต้องการ
+			db = db.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", dateFilter)
+		}
+	}
+
+	// โหลดคำขอที่ผู้ใช้ยื่นเองพร้อม pagination
+	var requestServiceAreas []entity.RequestServiceArea
+	if err := db.Order("request_service_areas.created_at DESC").Limit(limit).Offset(offset).Find(&requestServiceAreas).Error; err != nil {
+		fmt.Printf("🔍 [DEBUG] Database error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service areas"})
+		return
+	}
+	fmt.Printf("🔍 [DEBUG] Found %d request service areas\n", len(requestServiceAreas))
+
+	// คำนวณจำนวนทั้งหมด
+	var total int64
+	countQuery := config.DB().Model(&entity.RequestServiceArea{}).Where("request_service_areas.user_id = ?", userID)
+
+	// กรองตาม Month/Year สำหรับ count query
+	if monthYear != "" {
+		parts := strings.Split(monthYear, "/")
+		if len(parts) == 2 {
+			month := parts[0]
+			year := parts[1]
+			if len(month) == 1 {
+				month = "0" + month
+			}
+			dateFilter := year + "-" + month
+			countQuery = countQuery.Where("strftime('%Y-%m', request_service_areas.created_at) = ?", dateFilter)
+		}
+	}
+
+	countQuery.Count(&total)
+
+	// แปลงผลลัพธ์เป็นรูปแบบ PascalCase ตามที่ระบุ
+	responses := make([]map[string]interface{}, 0, len(requestServiceAreas))
+	fmt.Printf("🔍 [DEBUG] Processing %d request service areas for response\n", len(requestServiceAreas))
+
+	for i, rsa := range requestServiceAreas {
+		fmt.Printf("🔍 [DEBUG] Processing request service area %d: ID=%d, UserID=%d\n", i+1, rsa.ID, rsa.UserID)
+
+		var businessGroupName string
+		var businessGroupID *uint
+		if rsa.User.AboutCompany != nil {
+			if rsa.User.AboutCompany.BusinessGroupID != nil {
+				businessGroupID = rsa.User.AboutCompany.BusinessGroupID
+			}
+			if rsa.User.AboutCompany.BusinessGroup.ID != 0 {
+				businessGroupName = rsa.User.AboutCompany.BusinessGroup.Name
+			}
+		}
+
+		// ชื่อ-นามสกุลผู้ยื่นคำขอ
+		requesterFullName := strings.TrimSpace(rsa.User.FirstName + " " + rsa.User.LastName)
+
+		response := map[string]interface{}{
+			"RequestServiceAreaID": rsa.ID,               // 1
+			"CreatedAt":            rsa.CreatedAt,        // 2 - เปลี่ยนเป็น created_at ของ RequestServiceArea
+			"CompanyName":          rsa.User.CompanyName, // 3
+			"ServiceAreaDocumentId": func() *uint {
+				if rsa.ServiceAreaDocument != nil {
+					return &rsa.ServiceAreaDocument.ID
+				}
+				return nil
+			}(), // 4
+			"BusinessGroupName": businessGroupName,   // 5 (empty if not joined)
+			"UserNameCombined":  requesterFullName,   // 6
+			"BusinessGroupID":   businessGroupID,     // 7
+			"StatusID":          rsa.RequestStatusID, // 8
+		}
+
+		fmt.Printf("🔍 [DEBUG] Request service area %d response: RequestServiceAreaID=%v, UserID=%v\n",
+			i+1, response["RequestServiceAreaID"], rsa.UserID)
+
+		responses = append(responses, response)
+	}
+
+	fmt.Printf("🔍 [DEBUG] Final response count: %d\n", len(responses))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":       responses,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	})
+}
+
+// CancelRequestServiceArea สร้างคำขอยกเลิก Service Area
+func CancelRequestServiceArea(c *gin.Context) {
+	fmt.Println("=== CancelRequestServiceArea called ===")
+
+	// รับ request_id จาก path parameter
+	requestIDStr := c.Param("request_id")
+	fmt.Printf("Request ID from param: %s\n", requestIDStr)
+
+	requestID, err := strconv.ParseUint(requestIDStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Error parsing request_id: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request_id"})
+		return
+	}
+	fmt.Printf("Parsed Request ID: %d\n", requestID)
+
+	// ตรวจสอบว่า RequestServiceArea มีอยู่จริงหรือไม่
+	var requestServiceArea entity.RequestServiceArea
+	if err := config.DB().First(&requestServiceArea, requestID).Error; err != nil {
+		fmt.Printf("RequestServiceArea not found error: %v\n", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+	fmt.Printf("RequestServiceArea found: ID=%d, UserID=%d\n", requestServiceArea.ID, requestServiceArea.UserID)
+
+	// เริ่ม transaction
+	tx := config.DB().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// ===== UPDATE ABOUT COMPANY =====
+	// อัปเดต Corporate Registration Number ใน AboutCompany
+	var aboutCompany entity.AboutCompany
+	if err := tx.Where("user_id = ?", requestServiceArea.UserID).First(&aboutCompany).Error; err != nil {
+		fmt.Printf("AboutCompany not found error: %v\n", err)
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "About company not found for this user"})
+		return
+	}
+
+	// อัปเดต Corporate Registration Number
+	aboutCompany.CorporateRegistrationNumber = c.PostForm("corporate_registration_number")
+	if err := tx.Save(&aboutCompany).Error; err != nil {
+		fmt.Printf("Error updating AboutCompany: %v\n", err)
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update about company"})
+		return
+	}
+	fmt.Printf("AboutCompany updated: CorporateRegistrationNumber = %s\n", aboutCompany.CorporateRegistrationNumber)
+
+	// ===== CANCEL REQUEST SERVICE AREA =====
+	fmt.Println("Creating CancelRequestServiceArea...")
+	fmt.Printf("Purpose of Cancellation: %s\n", c.PostForm("purpose_of_cancellation"))
+	fmt.Printf("Project Activities: %s\n", c.PostForm("project_activities"))
+	fmt.Printf("Annual Income: %s\n", c.PostForm("annual_income"))
+
+	// สร้าง CancelRequestServiceArea (ไม่เก็บ CompanyName และ CorporateRegistrationNumber)
+	cancelRequest := entity.CancelRequestServiceArea{
+		RequestServiceAreaID:  uint(requestID),
+		UserID:                requestServiceArea.UserID,
+		PurposeOfCancellation: c.PostForm("purpose_of_cancellation"),
+		ProjectActivities:     c.PostForm("project_activities"),
+		AnnualIncome:          parseFloat(c.PostForm("annual_income")),
+	}
+
+	// บันทึก CancelRequestServiceArea ก่อนเพื่อได้ ID
+	fmt.Println("Saving CancelRequestServiceArea to database...")
+	if err := tx.Create(&cancelRequest).Error; err != nil {
+		fmt.Printf("Error creating CancelRequestServiceArea: %v\n", err)
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cancel request"})
+		return
+	}
+	fmt.Printf("CancelRequestServiceArea created with ID: %d\n", cancelRequest.ID)
+
+	// ===== FILE UPLOADS =====
+	// จัดการไฟล์ Cancellation Document
+	cancellationFile, err := c.FormFile("cancellation_document")
+	if err == nil {
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
+		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
+		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(documentFolder, os.ModePerm)
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				return
+			}
+		}
+
+		fileExtension := path.Ext(cancellationFile.Filename)
+		// ใช้ RequestID + CancelID เพื่อป้องกันไฟล์ซ้ำ
+		filePath := path.Join(documentFolder, fmt.Sprintf("cancellation_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
+		cancelRequest.CancellationDocument = filePath
+
+		// บันทึกไฟล์
+		if err := c.SaveUploadedFile(cancellationFile, filePath); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save cancellation document"})
+			return
+		}
+	}
+
+	// จัดการไฟล์ Bank Account Document
+	bankAccountFile, err := c.FormFile("bank_account_document")
+	if err == nil {
+		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
+		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
+		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(documentFolder, os.ModePerm)
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				return
+			}
+		}
+
+		fileExtension := path.Ext(bankAccountFile.Filename)
+		// ใช้ RequestID + CancelID เพื่อป้องกันไฟล์ซ้ำ
+		filePath := path.Join(documentFolder, fmt.Sprintf("bank_account_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
+		cancelRequest.BankAccountDocument = filePath
+
+		// บันทึกไฟล์
+		if err := c.SaveUploadedFile(bankAccountFile, filePath); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save bank account document"})
+			return
+		}
+	}
+
+	// อัปเดต path ในฐานข้อมูล
+	if err := tx.Save(&cancelRequest).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update file paths"})
+		return
+	}
+
+	// ===== UPDATE REQUEST SERVICE AREA STATUS =====
+	// อัปเดตสถานะเป็น "Cancellation In Progress" (StatusID 9)
+	requestServiceArea.RequestStatusID = 9
+	if err := tx.Save(&requestServiceArea).Error; err != nil {
+		fmt.Printf("Error updating RequestServiceArea status: %v\n", err)
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request status"})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
+	fmt.Printf("=== Success: Cancel request created and status updated ===\n")
+	fmt.Printf("CancelRequestServiceArea ID: %d\n", cancelRequest.ID)
+	fmt.Printf("RequestServiceArea Status updated to: %d (Cancellation In Progress)\n", requestServiceArea.RequestStatusID)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Service area cancellation request submitted successfully",
+		"data": gin.H{
+			"cancel_request_id":             cancelRequest.ID,
+			"request_service_area_id":       requestServiceArea.ID,
+			"new_status_id":                 requestServiceArea.RequestStatusID,
+			"status_name":                   "Cancellation In Progress",
+			"company_name":                  requestServiceArea.User.CompanyName, // ดึงจาก User
+			"corporate_registration_number": aboutCompany.CorporateRegistrationNumber,
+		},
+	})
+}
+
 // DownloadServiceRequestDocument ให้ดาวน์โหลดไฟล์เอกสารโดยไม่เปิดเผย path ตรง
 func DownloadServiceRequestDocument(c *gin.Context) {
 	// รับ request id จาก path

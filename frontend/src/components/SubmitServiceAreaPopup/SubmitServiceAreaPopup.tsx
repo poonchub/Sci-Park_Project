@@ -20,7 +20,7 @@ import { Select } from '../Select/Select';
 import { TextField } from '../TextField/TextField';
 import DocumentUploader from '../DocumentUploader/DocumentUploader';
 import AlertGroup from '../AlertGroup/AlertGroup';
-import { GetAllRooms, GetAllServiceUserTypes, CreateServiceAreaDocument } from '../../services/http';
+import { GetAllRooms, GetAllServiceUserTypes, CreateServiceAreaDocument, UpdateServiceAreaDocument } from '../../services/http';
 
 interface SubmitServiceAreaPopupProps {
     open: boolean;
@@ -238,12 +238,25 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
                 submitFormData.append('quotation_document', formData.quotationDocument[0]);
             }
 
-            // ส่งข้อมูลไปยัง Backend
-            const result = await CreateServiceAreaDocument(requestServiceAreaID, submitFormData);
+            // ตรวจสอบว่ามี ServiceAreaDocument อยู่แล้วหรือไม่
+            let result;
+            try {
+                // ลองสร้างใหม่ก่อน
+                result = await CreateServiceAreaDocument(requestServiceAreaID, submitFormData);
+                setAlerts(prev => [...prev, { type: 'success', message: 'Service area document created successfully!' }]);
+            } catch (error: any) {
+                // ถ้าได้ 409 Conflict แสดงว่ามีอยู่แล้ว ให้ใช้ Update แทน
+                if (error.response?.status === 409) {
+                    console.log('Service area document already exists, updating instead...');
+                    result = await UpdateServiceAreaDocument(requestServiceAreaID, submitFormData);
+                    setAlerts(prev => [...prev, { type: 'success', message: 'Service area document updated successfully!' }]);
+                } else {
+                    // ถ้าเป็น error อื่น ให้ throw ต่อ
+                    throw error;
+                }
+            }
             
             if (result) {
-                setAlerts(prev => [...prev, { type: 'success', message: 'Service area document created successfully!' }]);
-                
                 // เรียก onConfirm หลังจากแสดง success alert พร้อมส่งข้อมูลที่จำเป็น
                 setTimeout(() => {
                     onConfirm({
@@ -253,7 +266,7 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
                     });
                 }, 1500);
             } else {
-                throw new Error('Failed to create service area document');
+                throw new Error('Failed to create/update service area document');
             }
         } catch (error) {
             console.error('Error creating service area document:', error);

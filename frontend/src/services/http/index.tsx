@@ -2933,6 +2933,58 @@ async function GetServiceAreaTasksByUserID(userId: number, options?: {
     }
 }
 
+// Service Area Requests by User ID (for External Users)
+async function GetRequestServiceAreasByUserID(userId: number, page: number = 1, limit: number = 10, options?: {
+    month_year?: string; // รูปแบบ MM/YYYY เช่น "08/2025"
+}) {
+    try {
+        const params = new URLSearchParams();
+        
+        params.append('page', page.toString());
+        params.append('limit', limit.toString());
+        
+        if (options?.month_year) {
+            params.append('month_year', options.month_year);
+        }
+        
+        const queryString = params.toString();
+        const url = `/request-service-areas/user/${userId}${queryString ? `?${queryString}` : ''}`;
+        
+        const response = await axiosInstance.get(url);
+        
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching request service areas by user id:", error);
+        throw error;
+    }
+}
+
+// Get Request Service Area by ID
+async function GetRequestServiceAreaByID(requestId: number) {
+    try {
+        const response = await axiosInstance.get(`/request-service-area/details/${requestId}`);
+        return response.data;
+    } catch (error: any) {
+        console.error("Error fetching request service area by id:", error);
+        throw error;
+    }
+}
+
+// Cancel Request Service Area
+async function CancelRequestServiceArea(requestId: number, formData: FormData) {
+    try {
+        const response = await axiosInstance.post(`/request-service-area/cancel/${requestId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error: any) {
+        console.error("Error cancelling request service area:", error);
+        throw error;
+    }
+}
+
 
 
 
@@ -3191,6 +3243,8 @@ export {
     // Areas
     GetAreas,
     GetServiceAreaTasksByUserID,
+    GetRequestServiceAreasByUserID,
+    GetRequestServiceAreaByID,
 
     // Rooms
     GetRooms,
@@ -3389,4 +3443,7 @@ export {
 
     // PaymentStatuses
     ListPaymentStatus,
+
+    // Cancel Request Service Area
+    CancelRequestServiceArea,
 };
