@@ -321,21 +321,21 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 
 	paidCount, overdueCount := 0, 0
 	var totalRevenue float64
-	nowTime := time.Now().In(loc)
+	// nowTime := time.Now().In(loc)
 
-	for _, inv := range invoices {
-		switch strings.ToLower(inv.Status.Name) {
-		case "paid":
-			paidCount++
-			totalRevenue += inv.PaidAmount // ✅ นับตามที่จ่ายจริง
-		case "partially paid", "unpaid":
-			if inv.DueDate.Before(nowTime) {
-				overdueCount++
-			}
-		case "overdue":
-			overdueCount++
-		}
-	}
+	// for _, inv := range invoices {
+	// 	switch strings.ToLower(inv.Status.Name) {
+	// 	case "paid":
+	// 		paidCount++
+	// 		totalRevenue += inv.PaidAmount // ✅ นับตามที่จ่ายจริง
+	// 	case "partially paid", "unpaid":
+	// 		if inv.DueDate.Before(nowTime) {
+	// 			overdueCount++
+	// 		}
+	// 	case "overdue":
+	// 		overdueCount++
+	// 	}
+	// }
 
 	c.JSON(http.StatusOK, gin.H{
 		"billing_period":   previousMonthEnd.Format("2006-01-02"),

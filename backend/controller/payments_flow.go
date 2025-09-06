@@ -148,103 +148,103 @@ func SubmitPaymentSlip(c *gin.Context) {
 	})
 }
 
-func applyPaymentToInvoice(db *gorm.DB, invoiceID uint, amount float64, paidAt time.Time) error {
-    var inv entity.Invoice
-    if err := db.First(&inv, invoiceID).Error; err != nil { return err }
+// func applyPaymentToInvoice(db *gorm.DB, invoiceID uint, amount float64, paidAt time.Time) error {
+//     var inv entity.Invoice
+//     if err := db.First(&inv, invoiceID).Error; err != nil { return err }
 
-    newPaid := inv.PaidAmount + amount
-    statusName := "Partially Paid"
-    if newPaid <= 0 {
-        statusName = "Unpaid"
-    } else if newPaid+1e-6 >= inv.TotalAmount { // กันพลาด float
-        statusName = "Paid"
-        newPaid = inv.TotalAmount
-    }
-    var st entity.PaymentStatus
-    if err := db.Where("LOWER(name)=?", strings.ToLower(statusName)).First(&st).Error; err != nil {
-        st = entity.PaymentStatus{Name: statusName}
-        if err := db.Create(&st).Error; err != nil { return err }
-    }
+//     newPaid := inv.PaidAmount + amount
+//     statusName := "Partially Paid"
+//     if newPaid <= 0 {
+//         statusName = "Unpaid"
+//     } else if newPaid+1e-6 >= inv.TotalAmount { // กันพลาด float
+//         statusName = "Paid"
+//         newPaid = inv.TotalAmount
+//     }
+//     var st entity.PaymentStatus
+//     if err := db.Where("LOWER(name)=?", strings.ToLower(statusName)).First(&st).Error; err != nil {
+//         st = entity.PaymentStatus{Name: statusName}
+//         if err := db.Create(&st).Error; err != nil { return err }
+//     }
 
-    return db.Model(&entity.Invoice{}).
-        Where("id = ?", inv.ID).
-        Updates(map[string]any{
-            "paid_amount": newPaid,
-            "status_id":   st.ID,
-            "updated_at":  time.Now(),
-        }).Error
-}
+//     return db.Model(&entity.Invoice{}).
+//         Where("id = ?", inv.ID).
+//         Updates(map[string]any{
+//             "paid_amount": newPaid,
+//             "status_id":   st.ID,
+//             "updated_at":  time.Now(),
+//         }).Error
+// }
 
 // POST /payments/:id/approve
-func ApprovePayment(c *gin.Context) {
-    db := config.DB()
-    id := c.Param("id")
+// func ApprovePayment(c *gin.Context) {
+//     db := config.DB()
+//     id := c.Param("id")
 
-    var p entity.Payment
-    if err := db.First(&p, id).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error":"ไม่พบ payment"}); return
-    }
+//     var p entity.Payment
+//     if err := db.First(&p, id).Error; err != nil {
+//         c.JSON(http.StatusNotFound, gin.H{"error":"ไม่พบ payment"}); return
+//     }
 
-    // → เซ็ตสถานะ Paid ให้ payment
-    var ps entity.PaymentStatus
-    if err := db.Where("LOWER(name)=?","paid").First(&ps).Error; err != nil {
-        ps = entity.PaymentStatus{Name:"Paid"}; _ = db.Create(&ps).Error
-    }
-    p.StatusID = ps.ID
-    if err := db.Save(&p).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error":"อัปเดตสถานะไม่สำเร็จ"}); return
-    }
+//     // → เซ็ตสถานะ Paid ให้ payment
+//     var ps entity.PaymentStatus
+//     if err := db.Where("LOWER(name)=?","paid").First(&ps).Error; err != nil {
+//         ps = entity.PaymentStatus{Name:"Paid"}; _ = db.Create(&ps).Error
+//     }
+//     p.StatusID = ps.ID
+//     if err := db.Save(&p).Error; err != nil {
+//         c.JSON(http.StatusInternalServerError, gin.H{"error":"อัปเดตสถานะไม่สำเร็จ"}); return
+//     }
 
-    // → ตัดยอดเข้า invoice ถ้ามี
-    if p.InvoiceID != 0 && p.Amount > 0 {
-        if err := applyPaymentToInvoice(db, p.InvoiceID, p.Amount, p.PaymentDate); err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error":"ตัดยอดเข้าใบแจ้งหนี้ไม่สำเร็จ"}); return
-        }
-    }
+//     // → ตัดยอดเข้า invoice ถ้ามี
+//     if p.InvoiceID != 0 && p.Amount > 0 {
+//         if err := applyPaymentToInvoice(db, p.InvoiceID, p.Amount, p.PaymentDate); err != nil {
+//             c.JSON(http.StatusInternalServerError, gin.H{"error":"ตัดยอดเข้าใบแจ้งหนี้ไม่สำเร็จ"}); return
+//         }
+//     }
 
-    c.JSON(http.StatusOK, gin.H{"message": "Payment approved", "payment": p})
-}
+//     c.JSON(http.StatusOK, gin.H{"message": "Payment approved", "payment": p})
+// }
 
 
-func MarkPaymentPaid(c *gin.Context) {
-	db := config.DB()
-	id := c.Param("id")
+// func MarkPaymentPaid(c *gin.Context) {
+// 	db := config.DB()
+// 	id := c.Param("id")
 
-	var payment entity.Payment
-	if err := db.First(&payment, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบ payment"})
-		return
-	}
+// 	var payment entity.Payment
+// 	if err := db.First(&payment, id).Error; err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบ payment"})
+// 		return
+// 	}
 
-	var ps entity.PaymentStatus
-	if err := db.Where("LOWER(name) = ?", strings.ToLower("Paid")).First(&ps).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			ps = entity.PaymentStatus{Name: "Paid"}
-			if err := db.Create(&ps).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Paid ไม่สำเร็จ"})
-				return
-			}
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Paid ไม่สำเร็จ"})
-			return
-		}
-	}
+// 	var ps entity.PaymentStatus
+// 	if err := db.Where("LOWER(name) = ?", strings.ToLower("Paid")).First(&ps).Error; err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			ps = entity.PaymentStatus{Name: "Paid"}
+// 			if err := db.Create(&ps).Error; err != nil {
+// 				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Paid ไม่สำเร็จ"})
+// 				return
+// 			}
+// 		} else {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Paid ไม่สำเร็จ"})
+// 			return
+// 		}
+// 	}
 
-	payment.StatusID = ps.ID
-	if err := db.Save(&payment).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสถานะไม่สำเร็จ"})
-		return
-	}
+// 	payment.StatusID = ps.ID
+// 	if err := db.Save(&payment).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสถานะไม่สำเร็จ"})
+// 		return
+// 	}
 
-	if payment.InvoiceID != 0 {
-		if err := ApplyPaymentToInvoiceID(payment.InvoiceID, payment.Amount, payment.PaymentDate); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ปรับยอดใบแจ้งหนี้ไม่สำเร็จ"})
-			return
-		}
-	}
+// 	if payment.InvoiceID != 0 {
+// 		if err := ApplyPaymentToInvoiceID(payment.InvoiceID, payment.Amount, payment.PaymentDate); err != nil {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "ปรับยอดใบแจ้งหนี้ไม่สำเร็จ"})
+// 			return
+// 		}
+// 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Payment marked as Paid", "payment": payment})
-}
+// 	c.JSON(http.StatusOK, gin.H{"message": "Payment marked as Paid", "payment": payment})
+// }
 
 // POST /payments/:id/reject
 func RejectPayment(c *gin.Context) {

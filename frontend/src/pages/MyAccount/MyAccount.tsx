@@ -2707,8 +2707,8 @@ const MyAccount: React.FC = () => {
     const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface>({
         ID: 1,
         InvoiceNumber: 'NE2/001',
-        IssueDate: '2025-09-05T16:45:57.066+07:00',
-        DueDate: '2025-09-15T23:59:59.999+07:00',
+        IssueDate: '2025-09-05 16:45:57.066+07:00',
+        DueDate: '2025-09-15 23:59:59.999+07:00',
         DepositAmount: 5000,
         DiscountAmount: 500,
         TotalAmount: 9500,

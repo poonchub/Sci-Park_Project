@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
-	"time"
+	// "time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,16 +20,18 @@ func CreateRoomBookingInvoice(c *gin.Context) {
 
 	db := config.DB()
 
-	var invoiceCheck entity.RoomBookingInvoice
-	if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
-		return
-	}
+	// var invoiceCheck entity.RoomBookingInvoice
+	// if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
+	// 	c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
+	// 	return
+	// }
 
-	var approver entity.User
-	if err := db.First(&approver, invoice.ApproverID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Approver not found"})
-		return
+	if invoice.ApproverID != 0 {
+		var approver entity.User
+		if err := db.First(&approver, invoice.ApproverID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Approver not found"})
+			return
+		}
 	}
 
 	var customer entity.User
@@ -40,22 +42,22 @@ func CreateRoomBookingInvoice(c *gin.Context) {
 
 	var booking entity.BookingRoom
 	if err := db.First(&booking, invoice.BookingRoomID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Room not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking not found"})
 	}
 
-	loc, _ := time.LoadLocation("Asia/Bangkok")
+	// loc, _ := time.LoadLocation("Asia/Bangkok")
 
 	invoiceData := entity.RoomBookingInvoice{
-		InvoiceNumber:  invoice.InvoiceNumber,
-		IssueDate:      invoice.IssueDate.In(loc),
-		DueDate:        invoice.DueDate.In(loc),
+		// InvoiceNumber:  invoice.InvoiceNumber,
+		// IssueDate:      invoice.IssueDate.In(loc),
+		// DueDate:        invoice.DueDate.In(loc),
 		DepositAmount:  invoice.DepositAmount,
 		DiscountAmount: invoice.DiscountAmount,
 		TotalAmount:    invoice.TotalAmount,
 		TaxID:          invoice.TaxID,
 		Address:        invoice.Address,
 		BookingRoomID:  invoice.BookingRoomID,
-		ApproverID:     invoice.ApproverID,
+		// ApproverID:     invoice.ApproverID,
 		CustomerID:     invoice.CustomerID,
 	}
 
@@ -75,7 +77,7 @@ func CreateRoomBookingInvoice(c *gin.Context) {
 		return
 	}
 
-	if err := db.Preload("Creater").Preload("Customer").Preload("Items").First(&invoiceData, invoiceData.ID).Error; err != nil {
+	if err := db.Preload("Customer").Preload("Items").First(&invoiceData, invoiceData.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load invoice relations"})
 		return
 	}
