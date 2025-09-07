@@ -2,6 +2,7 @@ import { BookingRoomsInterface } from "./IBookingRooms"
 import { RentalRoomInvoiceInterface } from "./IRentalRoomInvoices"
 import { PaymentStatusInterface } from "./IPaymentStatuses"
 import { UserInterface } from "./IUser"
+import { PaymentTypeInterface } from "./IPaymentType"
 
 export interface PaymentInterface {
     ID?:            number
@@ -21,4 +22,6 @@ export interface PaymentInterface {
     RentalRoomInvoice?:       RentalRoomInvoiceInterface
     StatusID?:      number
     Status?:        PaymentStatusInterface
+    PaymentTypeID?: number;
+    PaymentType?:   PaymentTypeInterface
 }

@@ -15,6 +15,7 @@ import {
     UpdateMaintenanceRequestByID,
     UpdateNotificationsByRequestID,
     GetRequestServiceAreasByUserID,
+    ListPaymentType,
 } from "../../services/http";
 
 import React, { useState, useEffect } from "react";
@@ -102,6 +103,7 @@ import { isAdmin, isManager } from "../../routes";
 import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import { PaymentTypeInterface } from "../../interfaces/IPaymentType";
 
 
 const MyAccount: React.FC = () => {
@@ -117,6 +119,7 @@ const MyAccount: React.FC = () => {
     const [slipfile, setSlipFile] = useState<File[]>([]);
     const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatusInterface[]>([]);
     const [payments, setPayments] = useState<PaymentInterface[]>([])
+    const [paymentTypes, setPaymentTypes] = useState<PaymentTypeInterface[]>([])
 
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>();
     const [searchText, setSearchText] = useState("");
@@ -280,6 +283,17 @@ const MyAccount: React.FC = () => {
         }
     };
 
+    const getPaymentTypes = async () => {
+        try {
+            const res = await ListPaymentType();
+            if (res) {
+                setPaymentTypes(res);
+            }
+        } catch (error) {
+            console.error("Error fetching payment types:", error);
+        }
+    };
+
     const getPayment = async () => {
         setIsLoadingPayment(true)
         try {
@@ -343,37 +357,6 @@ const MyAccount: React.FC = () => {
         setIsButtonActive(false);
     };
 
-    // const handleClickCancel = async () => {
-    //     try {
-    //         setIsButtonActive(true);
-    //         const resRequest = await DeleteMaintenanceRequestByID(selectedRequest?.ID);
-    //         if (!resRequest || resRequest.error)
-    //             throw new Error(resRequest?.error || "Failed to delete request status.");
-
-    //         const notificationDataUpdate: NotificationsInterface = {
-    //             IsRead: true,
-    //         };
-    //         const resUpdateNotification = await UpdateNotificationsByRequestID(
-    //             notificationDataUpdate,
-    //             selectedRequest.ID
-    //         );
-    //         if (!resUpdateNotification || resUpdateNotification.error)
-    //             throw new Error(resUpdateNotification?.error || "Failed to update notification.");
-
-    //         handleSetAlert("success", "Request cancelled successfully.");
-    //         setTimeout(() => {
-    //             setOpenConfirmCancelled(false);
-    //             setIsButtonActive(false);
-    //         }, 500);
-    //     } catch (error) {
-    //         setAlerts([]);
-    //         console.error("API Error:", error);
-    //         const errMessage = (error as Error).message || "Unknown error!";
-    //         handleSetAlert("error", errMessage);
-    //         setIsButtonActive(false);
-    //     }
-    // };
-
     const handleClickDeleteRequest = () => {
         handleDeleteMaintenanceRequest({
             requestID: selectedRequest.ID || 0,
@@ -392,11 +375,13 @@ const MyAccount: React.FC = () => {
 
         try {
             const userId = Number(localStorage.getItem("userId"));
+            const paymentTypeID = paymentTypes.find((t) => t.TypeName === "Full")?.ID
             const paymentData: PaymentInterface = {
                 PaymentDate: resCheckSlip.data.transTimestamp,
                 Amount: selectedInvoice?.TotalAmount,
                 PayerID: userId,
                 RentalRoomInvoiceID: selectedInvoice?.ID,
+                PaymentTypeID: paymentTypeID
             };
 
             const formData = new FormData();
@@ -544,7 +529,7 @@ const MyAccount: React.FC = () => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                await Promise.all([getRequestStatuses(), getUser()]);
+                await Promise.all([getRequestStatuses(), getUser(), getPaymentTypes()]);
                 setIsLoadingData(false);
             } catch (error) {
                 console.error("Error fetching initial data:", error);
@@ -2703,64 +2688,9 @@ const MyAccount: React.FC = () => {
             ];
         }
     };
-    
-    const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface>({
-        ID: 1,
-        InvoiceNumber: 'NE2/001',
-        IssueDate: '2025-09-05 16:45:57.066+07:00',
-        DueDate: '2025-09-15 23:59:59.999+07:00',
-        DepositAmount: 5000,
-        DiscountAmount: 500,
-        TotalAmount: 9500,
-        InvoicePDFPath: '/invoices/NE2-001.pdf',
-        TaxID: '0123456789012',
-        Address: '123/45 ถนนเทคโนธานี ตำบลในเมือง อำเภอเมือง จังหวัดนครราชสีมา 30000',
-        BookingRoomID: 101,
-        Approver: {
-            ID: 2,
-            FirstName: 'สมชัย',
-            LastName: 'สุวรรณ',
-            CompanyName: 'Tech University',
-            Prefix: { ID: 1, PrefixTH: 'นาย', PrefixEN: 'Mr.' }
-        },
-        CustomerID: 3,
-        Customer: {
-            ID: 3,
-            FirstName: 'สมศรี',
-            LastName: 'รัศมีทอง',
-            CompanyName: 'Acme Co., Ltd.',
-            Prefix: { ID: 2, PrefixTH: 'นางสาว', PrefixEN: 'Ms.' }
-        },
-        Items: [
-            {
-                ID: 1,
-                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
-                Quantity: 1,
-                UnitPrice: 5000,
-                Amount: 5000
-            },
-            {
-                ID: 2,
-                Description: 'ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2',
-                Quantity: 1,
-                UnitPrice: 4500,
-                Amount: 4500
-            }
-        ]
-    });
-
 
     return (
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-
-            <PDFPopup
-                open={true}
-                invoice={roomBookingInvoiceFormData}
-                onClose={() => {
-                    setOpenPDF(false);
-                    setSelectedInvoice(null);
-                }}
-            />
 
             <Box className="my-account-page">
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />
@@ -2776,15 +2706,6 @@ const MyAccount: React.FC = () => {
                     paymentData={selectedInvoice?.Payments ?? {}}
                     isButtonActive={isButtonActive}
                 />
-
-                {/* <PDFPopup
-                    open={openPDF}
-                    invoice={selectedInvoice}
-                    onClose={() => {
-                        setOpenPDF(false);
-                        setSelectedInvoice(null);
-                    }}
-                /> */}
 
                 {/* Show Alerts */}
                 <AlertGroup alerts={alerts} setAlerts={setAlerts} />

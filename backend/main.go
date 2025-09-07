@@ -274,11 +274,8 @@ func main() {
 		// BookingRooms
 		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
 
-		// RoomBookingInvoices
-		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
-		
-		// RoomBookingInvoiceItems
-		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
+		// PaymentType
+		protected.GET("/payment-types", controller.ListPaymentTypes)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
@@ -358,6 +355,15 @@ func main() {
 		protected.POST("/invoice-items", controller.CreateInvoiceItem)
 		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
 		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
+
+		// RoomBookingInvoices
+		protected.GET("/room-booking-invoice/:id", controller.GetRoomBookingInvoiceByID)
+		protected.GET("/room-booking-invoice/next-number", controller.GetNextRoomBookingInvoiceNumber)
+		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
+		protected.POST("/room-booking-invoice/upload-pdf", controller.UploadRoomBookingInvoicePDF)
+		
+		// RoomBookingInvoiceItems
+		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
 
 	}
 

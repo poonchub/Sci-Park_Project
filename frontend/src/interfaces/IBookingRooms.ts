@@ -41,4 +41,10 @@ export interface BookingRoomsInterface {
     note?: string;
     slipImages?: string[];
   };
+
+  DepositAmount?:   number;
+  DiscountAmount?:  number;
+  TotalAmount?:     number;
+  TaxID?:          string;
+  Address?:        string;
 }

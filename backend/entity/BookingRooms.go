@@ -29,6 +29,12 @@ type BookingRoom struct {
 	EventEndAt     time.Time
 	IsFullyPrepaid bool `gorm:"default:false"` // จ่ายครบก่อนเริ่มงาน
 	CanReschedule  bool `gorm:"default:false"` // เปิดสิทธิ์เลื่อนเมื่อ fully prepaid
+	
+	DepositAmount  float64
+	DiscountAmount float64
+	TotalAmount    float64
+	TaxID          string
+	Address        string
 }
 
 

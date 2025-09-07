@@ -1,6 +1,6 @@
 import React from "react";
 import { Dialog } from "@mui/material";
-import RoomBookingInvoicePDF from "../InvoicePDF/RoomBookingInvoice";
+import RoomBookingInvoicePDF from "../InvoicePDF/RoomBookingInvoicePDF";
 
 interface PDFPopupProps {
     open: boolean;

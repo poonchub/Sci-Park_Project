@@ -8,12 +8,7 @@ export interface RoomBookingInvoiceInterface {
     InvoiceNumber?: string;
     IssueDate?:     string;
     DueDate?:       string;
-    DepositAmount?:   number;
-    DiscountAmount?:  number;
-    TotalAmount?:     number;
     InvoicePDFPath?: string;
-    TaxID?:          string;
-    Address?:        string;
 
     BookingRoomID?:  number;
     BookingRoom?:    BookingRoomsInterface;

@@ -26,6 +26,7 @@ import { RentalRoomInvoiceItemInterface } from "../../interfaces/IRentalRoomInvo
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
+import { PaymentTypeInterface } from "../../interfaces/IPaymentType";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -3231,6 +3232,38 @@ async function CreateRoomBookingInvoice(data: RoomBookingInvoiceInterface) {
         throw error;
     }
 }
+async function GetRoomBookingInvoiceByID(id: number) {
+    try {
+        const response = await axiosInstance.get(`/room-booking-invoice/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
+        throw error;
+    }
+}
+async function GetNextRoomBookingInvoiceNumber() {
+    try {
+        const response = await axiosInstance.get(`/room-booking-invoice/next-number`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice number:", error);
+        throw error;
+    }
+}
+async function UploadRoomBookingInvoicePDF(data: FormData) {
+    try {
+        const response = await axiosInstance.post(`/room-booking-invoice/upload-pdf`, data, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error uploading invoice PDF:", error);
+        throw error;
+    }
+}
 
 // RoomBookingInvoiceItem
 async function CreateRoomBookingInvoiceItem(data: RoomBookingInvoiceItemInterface) {
@@ -3244,6 +3277,17 @@ async function CreateRoomBookingInvoiceItem(data: RoomBookingInvoiceItemInterfac
         return response.data;
     } catch (error) {
         console.error("Error creating invoice:", error);
+        throw error;
+    }
+}
+
+// PaymentStatus
+async function ListPaymentType(): Promise<PaymentTypeInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/payment-types`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching invoice by id:", error);
         throw error;
     }
 }
@@ -3477,7 +3521,13 @@ export {
     
     // RoomBookingInvoice
     CreateRoomBookingInvoice,
+    GetRoomBookingInvoiceByID,
+    GetNextRoomBookingInvoiceNumber,
+    UploadRoomBookingInvoicePDF,
 
     // RoomBookingInvoiceItem
     CreateRoomBookingInvoiceItem,
+
+    // PaymentTypes
+    ListPaymentType,
 };

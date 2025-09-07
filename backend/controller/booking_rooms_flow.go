@@ -112,106 +112,100 @@ func ApproveBookingRoom(c *gin.Context) {
 	}()
 
 	var b entity.BookingRoom
-	if err := tx.Preload("Payments").First(&b, id).Error; err != nil {
+	if err := tx.Preload("Payments").Preload("BookingDates").First(&b, id).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found"})
 		return
 	}
 	if b.CancelledAt != nil {
 		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "การจองถูกยกเลิกแล้ว"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking has been cancelled"})
 		return
 	}
 
-	// --- เซ็ตเวลายืนยันครั้งแรก ---
+	// --- Set confirmed time ---
 	if b.ConfirmedAt == nil {
 		now := time.Now()
-		if err := tx.Model(&entity.BookingRoom{}).
-			Where("id = ?", b.ID).
-			Update("confirmed_at", &now).Error; err != nil {
+		if err := tx.Model(&entity.BookingRoom{}).Where("id = ?", b.ID).Update("confirmed_at", &now).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ตั้งเวลา ConfirmedAt ไม่สำเร็จ"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set confirmed time"})
 			return
 		}
 	}
 
-	// --- บันทึกวันเริ่ม/จบงานจาก BookingDates (ถ้ามีและยังว่าง) ---
-	if err := tx.Preload("BookingDates").First(&b, b.ID).Error; err == nil && len(b.BookingDates) > 0 {
+	// --- Set event start/end ---
+	if len(b.BookingDates) > 0 {
 		first, _ := minBookingDate(b)
-		last, _ := lastBookingDate(&b) // คุณเพิ่ม helper นี้ไปแล้วในขั้นก่อนหน้า
-		updates := map[string]any{"updated_at": time.Now()}
+		last, _ := lastBookingDate(&b)
+		updates := map[string]interface{}{"updated_at": time.Now()}
 		if b.EventStartAt.IsZero() {
 			updates["event_start_at"] = first
 		}
 		if b.EventEndAt.IsZero() {
 			updates["event_end_at"] = last
 		}
-		if len(updates) > 1 { // มีอย่างน้อย 1 ฟิลด์จริง ๆ
-			if err := tx.Model(&entity.BookingRoom{}).
-				Where("id = ?", b.ID).
-				Updates(updates).Error; err != nil {
+		if len(updates) > 1 {
+			if err := tx.Model(&entity.BookingRoom{}).Where("id = ?", b.ID).Updates(updates).Error; err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "ตั้ง EventStart/End ไม่สำเร็จ"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set event start/end"})
 				return
 			}
 		}
 	}
 
-	// หา BookingStatus = "Confirmed" แบบ case-insensitive (ถ้าไม่มีให้สร้าง)
+	// --- Booking status "Confirmed" ---
 	var bs entity.BookingStatus
 	if err := tx.Where("LOWER(status_name) = ?", "confirmed").First(&bs).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			bs = entity.BookingStatus{StatusName: "Confirmed"}
 			if err := tx.Create(&bs).Error; err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Confirmed ไม่สำเร็จ"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Confirmed status"})
 				return
 			}
 		} else {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Confirmed ไม่สำเร็จ"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Confirmed status"})
 			return
 		}
 	}
 
-	// อัปเดตสถานะการจอง
-	if err := tx.Model(&entity.BookingRoom{}).
-		Where("id = ?", b.ID).
-		Updates(map[string]interface{}{"status_id": bs.ID, "updated_at": time.Now()}).Error; err != nil {
+	if err := tx.Model(&entity.BookingRoom{}).Where("id = ?", b.ID).Updates(map[string]interface{}{
+		"status_id":  bs.ID,
+		"updated_at": time.Now(),
+	}).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถอนุมัติได้"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to approve booking"})
 		return
 	}
 
-	// หา PaymentStatus = "Pending Payment" (ถ้าไม่มีให้สร้าง)
+	// --- Payment status "Pending Payment" ---
 	var ps entity.PaymentStatus
-	if err := tx.Where("LOWER(name) = ?", strings.ToLower("Pending Payment")).First(&ps).Error; err != nil {
+	if err := tx.Where("LOWER(name) = ?", "pending payment").First(&ps).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ps = entity.PaymentStatus{Name: "Pending Payment"}
 			if err := tx.Create(&ps).Error; err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Pending Payment ไม่สำเร็จ"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Pending Payment status"})
 				return
 			}
 		} else {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Pending Payment ไม่สำเร็จ"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Pending Payment status"})
 			return
 		}
 	}
 
-	// อัปเดต/สร้าง Payment
+	// --- Update or create Payment ---
 	if len(b.Payments) > 0 {
 		latest := b.Payments[len(b.Payments)-1]
-		if err := tx.Model(&entity.Payment{}).
-			Where("id = ?", latest.ID).
-			Updates(map[string]interface{}{
-				"status_id":  ps.ID,
-				"note":       "รอการชำระเงิน",
-				"updated_at": time.Now(),
-			}).Error; err != nil {
+		if err := tx.Model(&entity.Payment{}).Where("id = ?", latest.ID).Updates(map[string]interface{}{
+			"status_id":  ps.ID,
+			"note":       "Waiting for payment",
+			"updated_at": time.Now(),
+		}).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "อัพเดท Payment ไม่สำเร็จ"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
 			return
 		}
 	} else {
@@ -222,20 +216,30 @@ func ApproveBookingRoom(c *gin.Context) {
 			SlipPath:      "",
 			PaymentDate:   time.Now(),
 			PayerID:       b.UserID,
-			Note:          "รอการชำระเงิน",
+			Note:          "Waiting for payment",
 		}
 		if err := tx.Create(&newPayment).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้าง Payment ไม่สำเร็จ"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create payment"})
 			return
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "อนุมัติสำเร็จ"})
+
+	// --- Reload updated booking with relations ---
+	if err := db.Preload("Payments").Preload("BookingDates").Preload("Status").First(&b, b.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load booking data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Booking approved successfully",
+		"data":    b, // return updated booking
+	})
 }
 
 // POST /booking-rooms/:id/reject
