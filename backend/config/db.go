@@ -111,6 +111,7 @@ func SetupDatabase() {
 		&entity.ServiceAreaTask{},
 		&entity.RoomBookingInvoice{},
 		&entity.RoomBookingInvoiceItem{},
+		&entity.PaymentType{},
 	)
 
 	if err != nil {
@@ -900,22 +901,22 @@ func SeedDatabase() {
 
 	for i := 0; i < 7; i++ {
 		p := entity.Payment{
-			PaymentDate: now.AddDate(0, 0, -i),
-			Amount:      float64(1000 + i*200),
-			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
-			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
-			PayerID:     users[2+i%len(users)].ID,
-			StatusID:    4,
-			RentalRoomInvoiceID:   uint(i + 3),
+			PaymentDate:         now.AddDate(0, 0, -i),
+			Amount:              float64(1000 + i*200),
+			SlipPath:            fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
+			Note:                fmt.Sprintf("Payment for Invoice %d", i+3),
+			PayerID:             users[2+i%len(users)].ID,
+			StatusID:            4,
+			RentalRoomInvoiceID: uint(i + 3),
 		}
 		payments = append(payments, p)
 	}
 	for _, p := range payments {
 		db.FirstOrCreate(&p, entity.Payment{
-			BookingRoomID: p.BookingRoomID,
-			RentalRoomInvoiceID:     p.RentalRoomInvoiceID,
-			PayerID:       p.PayerID,
-			Amount:        p.Amount,
+			BookingRoomID:       p.BookingRoomID,
+			RentalRoomInvoiceID: p.RentalRoomInvoiceID,
+			PayerID:             p.PayerID,
+			Amount:              p.Amount,
 		})
 
 	}
@@ -1097,27 +1098,30 @@ func SeedDatabase() {
 		})
 	}
 
-// PaymentStatus (ใช้ร่วมกันทั้ง Payment และ Invoice)
-paymentStatuses := []entity.PaymentStatus{
-	// ---- สาย Payment (เดิม) ----
-	{Name: "Pending Payment"},      // ยังไม่ได้จ่าย/รอจ่าย
-	{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสลิป
-	{Name: "Awaiting Receipt"},     // ตรวจสลิปแล้ว รอออกใบเสร็จ
-	{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
-	{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัปโหลดใหม่
-	{Name: "Refunded"},             // คืนเงินแล้ว
-
-	// ---- สาย Invoice (ใหม่) ----
-	{Name: "Unpaid"},         // ออกใบแจ้งหนี้แล้วยังไม่ชำระ
-	{Name: "Partially Paid"}, // ชำระมาแล้วบางส่วน
-	{Name: "Overdue"},        // เกินกำหนดชำระ (เช็กด้วย job รายวัน)
-	{Name: "Voided"},         // ยกเลิกใบแจ้งหนี้ (ไม่ใช้เรียกเก็บแล้ว)
-
-
+	// PaymentStatus
+	paymentStatuses := []entity.PaymentStatus{
+		{Name: "Pending Payment"},
+		{Name: "Pending Verification"},
+		{Name: "Awaiting Receipt"},
+		{Name: "Paid"},
+		{Name: "Rejected"},
+		{Name: "Refunded"},
 	}
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{
 			Name: status.Name,
+		})
+	}
+
+	// PaymentTypes
+	paymentTypes := []entity.PaymentType{
+		{TypeName: "Deposit"},
+		{TypeName: "Balance"},
+		{TypeName: "Full"},
+	}
+	for _, ptype := range paymentTypes {
+		db.FirstOrCreate(&ptype, entity.PaymentType{
+			TypeName: ptype.TypeName,
 		})
 	}
 

@@ -20,19 +20,18 @@ import (
 
 // ===== Struct สำหรับ Response =====
 type TimeSlotMerged struct {
-	TimeSlotName string     `json:"time_slot_name"`
-	StartTime    time.Time  `json:"start_time"`
-	EndTime      time.Time  `json:"end_time"`
-	
+	TimeSlotName string    `json:"time_slot_name"`
+	StartTime    time.Time `json:"start_time"`
+	EndTime      time.Time `json:"end_time"`
 }
 
 type PaymentSummary struct {
-	ID         uint     `json:"id"`
-	Status     string   `json:"status"`
-	SlipImages []string `json:"slipImages"`
-	Note         string     `json:"note,omitempty"`        // ✅ หมายเหตุที่ผู้ใช้กรอก
-	Amount       float64    `json:"amount,omitempty"`      // (เผื่ออยากแสดงยอดด้วย)
-	PaymentDate  *time.Time `json:"paymentDate,omitempty"` // (เผื่อเอาวันที่โอนไปแสดง)
+	ID          uint       `json:"id"`
+	Status      string     `json:"status"`
+	SlipImages  []string   `json:"slipImages"`
+	Note        string     `json:"note,omitempty"`        // ✅ หมายเหตุที่ผู้ใช้กรอก
+	Amount      float64    `json:"amount,omitempty"`      // (เผื่ออยากแสดงยอดด้วย)
+	PaymentDate *time.Time `json:"paymentDate,omitempty"` // (เผื่อเอาวันที่โอนไปแสดง)
 }
 
 type BookingRoomResponse struct {
@@ -148,88 +147,87 @@ func minBookingDate(b entity.BookingRoom) (time.Time, bool) {
 
 // ===== Controller: แสดงรายการ Booking ทั้งหมด =====
 func ListBookingRooms(c *gin.Context) {
-  db := config.DB()
-  var bookings []entity.BookingRoom
+	db := config.DB()
+	var bookings []entity.BookingRoom
 
-  err := db.
-    Preload("Room.Floor").
-    Preload("BookingDates").
-    Preload("User").
-    Preload("TimeSlots").
-    Preload("Status").
-    Preload("Payments", func(tx *gorm.DB) *gorm.DB {
-      return tx.Order("id ASC").Preload("Status")
-    }).
-    Find(&bookings).Error
-  if err != nil {
-    c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-    return
-  }
+	err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("id ASC").Preload("Status")
+		}).
+		Find(&bookings).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-  var result []BookingRoomResponse
-  for _, b := range bookings {
-    // slot
-    bookingDate := time.Now()
-    if len(b.BookingDates) > 0 {
-      bookingDate = b.BookingDates[0].Date
-    }
-    merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+	var result []BookingRoomResponse
+	for _, b := range bookings {
+		// slot
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
 
-    status := b.Status.StatusName
-    if b.CancelledAt != nil {
-      status = "cancelled"
-    }
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
 
-    var addInfo AdditionalInfo
-    if b.AdditionalInfo != "" {
-      _ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
-    }
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+		}
 
-    // payment summary (ล่าสุด)
-    var paySummary *PaymentSummary
-    if len(b.Payments) > 0 {
-      latest := b.Payments[len(b.Payments)-1]
-      img := []string{}
-      if latest.SlipPath != "" {
-        img = append(img, latest.SlipPath)
-      }
+		// payment summary (ล่าสุด)
+		var paySummary *PaymentSummary
+		if len(b.Payments) > 0 {
+			latest := b.Payments[len(b.Payments)-1]
+			img := []string{}
+			if latest.SlipPath != "" {
+				img = append(img, latest.SlipPath)
+			}
 
-      statusName := latest.Status.Name
-      if statusName == "" {
-        statusName = "unpaid"
-      }
-      payDate := latest.PaymentDate
-      paySummary = &PaymentSummary{
-        ID:          latest.ID,
-        Status:      strings.ToLower(statusName), // หรือ uiPaymentStatus(statusName)
-        SlipImages:  img,
-        Note:        latest.Note,                 // ✅ รวมหมายเหตุไปด้วย
-        Amount:      latest.Amount,               // (option)
-        PaymentDate: &payDate,                    // (option)
-      }
-    }
+			statusName := latest.Status.Name
+			if statusName == "" {
+				statusName = "unpaid"
+			}
+			payDate := latest.PaymentDate
+			paySummary = &PaymentSummary{
+				ID:          latest.ID,
+				Status:      strings.ToLower(statusName), // หรือ uiPaymentStatus(statusName)
+				SlipImages:  img,
+				Note:        latest.Note,   // ✅ รวมหมายเหตุไปด้วย
+				Amount:      latest.Amount, // (option)
+				PaymentDate: &payDate,      // (option)
+			}
+		}
 
-    result = append(result, BookingRoomResponse{
-      ID:              b.ID,
-      Room:            b.Room,
-      BookingDates:    append([]entity.BookingDate{}, b.BookingDates...),
-      MergedTimeSlots: merged,
-      User:            b.User,
-      Purpose:         b.Purpose,
-      AdditionalInfo:  addInfo,
-      StatusName:      status,
-      Payment:         paySummary,
-      DisplayStatus:   computeDisplayStatus(b),
-    })
-  }
+		result = append(result, BookingRoomResponse{
+			ID:              b.ID,
+			Room:            b.Room,
+			BookingDates:    append([]entity.BookingDate{}, b.BookingDates...),
+			MergedTimeSlots: merged,
+			User:            b.User,
+			Purpose:         b.Purpose,
+			AdditionalInfo:  addInfo,
+			StatusName:      status,
+			Payment:         paySummary,
+			DisplayStatus:   computeDisplayStatus(b),
+		})
+	}
 
-  if result == nil {
-    result = []BookingRoomResponse{}
-  }
+	if result == nil {
+		result = []BookingRoomResponse{}
+	}
 
-  c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, result)
 }
-
 
 // controller/BookingRooms.go
 
@@ -335,6 +333,11 @@ func CreateBookingRoom(c *gin.Context) {
 		Purpose        string   `json:"Purpose" binding:"required"`
 		Dates          []string `json:"Dates" binding:"required"`
 		AdditionalInfo string   `json:"AdditionalInfo"`
+		TaxID          string   `json:"TaxID"`
+		Address        string   `json:"Address"`
+		DepositAmount  float64  `json:"DepositAmount"`
+		DiscountAmount float64  `json:"DiscountAmount"`
+		TotalAmount    float64  `json:"TotalAmount"`
 	}
 
 	// อ่าน raw body log เพื่อ debug (ไม่บังคับ)
@@ -454,6 +457,11 @@ func CreateBookingRoom(c *gin.Context) {
 		TimeSlots:      timeSlots,
 		StatusID:       bs.ID,
 		AdditionalInfo: input.AdditionalInfo,
+		DepositAmount:  input.DepositAmount,
+		DiscountAmount: input.DiscountAmount,
+		TotalAmount:    input.TotalAmount,
+		Address:        input.Address,
+		TaxID:          input.TaxID,
 	}
 	if err := db.Create(&booking).Error; err != nil {
 		log.Println("Error creating booking:", err)

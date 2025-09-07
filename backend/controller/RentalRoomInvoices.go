@@ -364,7 +364,7 @@ func CreateInvoice(c *gin.Context) {
 	}
 
 	var status entity.PaymentStatus
-	if err := db.Where("name = ?", "Unpaid").First(&status).Error; err != nil {
+	if err := db.Where("name = ?", "Pending Payment").First(&status).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request status 'Pending Payment' not found"})
 		return
 	}

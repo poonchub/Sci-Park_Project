@@ -259,6 +259,7 @@ func CreatePayment(c *gin.Context) {
 	payerIDStr := c.PostForm("PayerID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
 	invoiceIDStr := c.PostForm("RentalRoomInvoiceID")
+	paymentTypeIDStr := c.PostForm("PaymentTypeID")
 
 	// แปลง string เป็นค่าที่ต้องการ
 	amount, err := strconv.ParseFloat(amountStr, 64)
@@ -268,6 +269,12 @@ func CreatePayment(c *gin.Context) {
 	}
 
 	payerID, err := strconv.ParseUint(payerIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
+		return
+	}
+
+	paymentTypeID, err := strconv.ParseUint(paymentTypeIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UserID"})
 		return
@@ -284,6 +291,14 @@ func CreatePayment(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
+
+	var paymentType entity.PaymentType
+	if err := db.First(&paymentType, paymentTypeID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "payment type not found"})
+		return
+	}
+
+	fmt.Print(paymentType)
 
 	var bookingRoomID, invoiceID uint
 	if bookingRoomIDStr != "" {
@@ -363,6 +378,7 @@ func CreatePayment(c *gin.Context) {
 		PayerID:       uint(payerID),
 		BookingRoomID: bookingRoomID,
 		RentalRoomInvoiceID:     invoiceID,
+		PaymentTypeID: paymentType.ID,
 	}
 
 	if ok, err := govalidator.ValidateStruct(&payment); !ok {
