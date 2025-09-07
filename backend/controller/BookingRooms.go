@@ -338,6 +338,7 @@ func CreateBookingRoom(c *gin.Context) {
 		DepositAmount  float64  `json:"DepositAmount"`
 		DiscountAmount float64  `json:"DiscountAmount"`
 		TotalAmount    float64  `json:"TotalAmount"`
+		PaymentOptionID	uint 	`json:"PaymentOptionID"`
 	}
 
 	// อ่าน raw body log เพื่อ debug (ไม่บังคับ)
@@ -462,6 +463,7 @@ func CreateBookingRoom(c *gin.Context) {
 		TotalAmount:    input.TotalAmount,
 		Address:        input.Address,
 		TaxID:          input.TaxID,
+		PaymentOptionID: input.PaymentOptionID,
 	}
 	if err := db.Create(&booking).Error; err != nil {
 		log.Println("Error creating booking:", err)

@@ -27,6 +27,9 @@ func GetRoomBookingInvoiceByID(c *gin.Context) {
 
 	result := db.
 		Preload("BookingRoom").
+		Preload("Items").
+		Preload("Customer.Prefix").
+		Preload("Approver.Prefix").
 		First(&invoice, id)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})

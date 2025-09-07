@@ -1,4 +1,5 @@
 import { AdditionalInfo } from "./IAdditionalInfo";
+import { PaymentOptionInterface } from "./IPaymentOption";
 import { RoomsInterface } from "./IRooms";
 import { UserInterface } from "./IUser";
 
@@ -47,4 +48,6 @@ export interface BookingRoomsInterface {
   TotalAmount?:     number;
   TaxID?:          string;
   Address?:        string;
+  PaymentOptionID?: number;
+  PaymentOption?:   PaymentOptionInterface;
 }

@@ -22,6 +22,8 @@ type BookingRoom struct {
 	AdditionalInfo string        `gorm:"type:text" json:"additional_info"`
 	BookingDates   []BookingDate `gorm:"foreignKey:BookingRoomID"`
 	RoomBookingInvoice *RoomBookingInvoice `gorm:"foreignKey:BookingRoomID"`
+	PaymentOptionID	uint
+	PaymentOption	PaymentOption `gorm:"foreignKey:PaymentOptionID" valid:"-"`
 
 	// 🔹 เพิ่มเพื่อรองรับเดดไลน์ 7 วันและเงื่อนไขเลื่อน/คืน
 	ConfirmedAt    *time.Time

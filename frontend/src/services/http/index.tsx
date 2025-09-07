@@ -27,6 +27,7 @@ import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 import { PaymentTypeInterface } from "../../interfaces/IPaymentType";
+import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 
 // สร้าง axios instance สำหรับจัดการ interceptor
 const axiosInstance = axios.create({
@@ -3449,7 +3450,18 @@ async function ListPaymentType(): Promise<PaymentTypeInterface[]> {
         const response = await axiosInstance.get(`/payment-types`);
         return response.data;
     } catch (error) {
-        console.error("Error fetching invoice by id:", error);
+        console.error("Error fetching payment types:", error);
+        throw error;
+    }
+}
+
+// PaymentOptions
+async function ListPaymentOptions(): Promise<PaymentOptionInterface[]> {
+    try {
+        const response = await axiosInstance.get(`/payment-options`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching payment options:", error);
         throw error;
     }
 }
@@ -3700,4 +3712,7 @@ export {
 
     // PaymentTypes
     ListPaymentType,
+
+    // PaymentOptions
+    ListPaymentOptions,
 };

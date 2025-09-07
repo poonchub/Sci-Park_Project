@@ -50,6 +50,8 @@ export function thaiDateMonthYear(date: string | Date): string {
 export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
     const invoiceRef = useRef<HTMLDivElement>(null);
 
+    console.log("invoice: ", invoice)
+
     useEffect(() => {
         const targets = [
             invoiceRef.current,
@@ -280,13 +282,13 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             className="text-normal"
                             style={{ width: "500px" }}
                         >
-                            {/* เลขที่ {invoice.Address} */}
+                            เลขที่ ....
                         </div>
                         <div
                             className="text-normal"
                             style={{ width: "500px" }}
                         >
-                            {/* เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : {invoice.TaxID} */}
+                            เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : ....
                         </div>
                     </div>
 
@@ -313,7 +315,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             <th
                                 style={{
                                     textAlign: "center",
-                                    width: "70%",
+                                    width: "68%",
                                 }}
                                 colSpan={2}
                             >
@@ -331,7 +333,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             <th
                                 style={{
                                     textAlign: "center",
-                                    width: "14%",
+                                    width: "15%",
                                 }}
                                 colSpan={1}
                             >
@@ -340,7 +342,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             <th
                                 style={{
                                     textAlign: "center",
-                                    width: "14%",
+                                    width: "15%",
                                 }}
                                 colSpan={1}
                             >
@@ -550,7 +552,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         color: 'rgb(175, 175, 175)',
                         paddingLeft: "1em",
                         position: 'absolute',
-                        bottom: '15px',
+                        bottom: '6px',
                     }}
                     className="text-normal"
                 >

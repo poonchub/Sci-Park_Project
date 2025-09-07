@@ -282,7 +282,10 @@ func main() {
 
 		// PaymentType
 		protected.GET("/payment-types", controller.ListPaymentTypes)
-	}
+
+		// PaymentOptions
+		protected.GET("/payment-options", controller.ListPaymentOptions)
+	}	
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
 	{
