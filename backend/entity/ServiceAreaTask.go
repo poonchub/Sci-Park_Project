@@ -10,4 +10,5 @@ type ServiceAreaTask struct {
 	User                 User               `gorm:"foreignKey:UserID" valid:"-"`
 	RequestServiceAreaID uint               `valid:"required~RequestServiceAreaID is required"`
 	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID" valid:"-"`
+	IsCancel             bool               `gorm:"default:false"` // แยกว่างานนี้เป็นงานสำหรับการร้องขอ (false) หรืองานยกเลิก (true)
 }

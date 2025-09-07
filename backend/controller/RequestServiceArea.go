@@ -796,6 +796,7 @@ func RejectServiceAreaRequest(c *gin.Context) {
 			serviceAreaTask = entity.ServiceAreaTask{
 				RequestServiceAreaID: uint(requestID),
 				Note:                 requestBody.Note,
+				IsCancel:             false, // งานปกติ (ไม่ใช่ cancellation)
 			}
 			if err := config.DB().Create(&serviceAreaTask).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service area task note"})
@@ -867,6 +868,7 @@ func CreateServiceAreaApproval(c *gin.Context) {
 		UserID:               body.OperatorUserID,
 		RequestServiceAreaID: body.RequestServiceAreaID,
 		Note:                 "",
+		IsCancel:             false, // งานปกติ (ไม่ใช่ cancellation)
 	}
 	if err := config.DB().Create(&task).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create service area task"})
@@ -874,6 +876,147 @@ func CreateServiceAreaApproval(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Service area approval created", "data": gin.H{"approval": approval, "task": task}})
+}
+
+// CreateCancellationTask สร้าง ServiceAreaTask สำหรับงาน cancellation
+func CreateCancellationTask(c *gin.Context) {
+	// Expect JSON body: { "operator_user_id": number, "request_service_area_id": number, "note": string }
+	var body struct {
+		OperatorUserID       uint   `json:"operator_user_id" binding:"required"`
+		RequestServiceAreaID uint   `json:"request_service_area_id" binding:"required"`
+		Note                 string `json:"note"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate operator user
+	var operator entity.User
+	if err := config.DB().First(&operator, body.OperatorUserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Operator user not found"})
+		return
+	}
+
+	// Validate request service area
+	var req entity.RequestServiceArea
+	if err := config.DB().First(&req, body.RequestServiceAreaID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	// Create cancellation task for selected operator
+	task := entity.ServiceAreaTask{
+		UserID:               body.OperatorUserID,
+		RequestServiceAreaID: body.RequestServiceAreaID,
+		Note:                 body.Note,
+		IsCancel:             true, // งาน cancellation
+	}
+	if err := config.DB().Create(&task).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cancellation task"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Cancellation task created", "data": task})
+}
+
+// AssignCancellationTask สร้างหรืออัพเดท ServiceAreaTask สำหรับงาน cancellation
+func AssignCancellationTask(c *gin.Context) {
+	// Expect JSON body: { "user_id": number, "request_service_area_id": number, "operator_user_id": number, "note": string }
+	var body struct {
+		UserID               uint   `json:"user_id" binding:"required"`
+		RequestServiceAreaID uint   `json:"request_service_area_id" binding:"required"`
+		OperatorUserID       uint   `json:"operator_user_id" binding:"required"`
+		Note                 string `json:"note"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate admin user
+	var adminUser entity.User
+	if err := config.DB().First(&adminUser, body.UserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Admin user not found"})
+		return
+	}
+
+	// Validate operator user
+	var operatorUser entity.User
+	if err := config.DB().First(&operatorUser, body.OperatorUserID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Operator user not found"})
+		return
+	}
+
+	// Validate request service area
+	var req entity.RequestServiceArea
+	if err := config.DB().First(&req, body.RequestServiceAreaID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request service area not found"})
+		return
+	}
+
+	// ตรวจสอบว่ามี ServiceAreaTask สำหรับ cancellation อยู่แล้วหรือไม่
+	var existingTask entity.ServiceAreaTask
+	err := config.DB().Where("request_service_area_id = ? AND is_cancel = ?", body.RequestServiceAreaID, true).First(&existingTask).Error
+
+	if err == gorm.ErrRecordNotFound {
+		// ไม่มี task อยู่ → สร้างใหม่
+		task := entity.ServiceAreaTask{
+			UserID:               body.OperatorUserID,
+			RequestServiceAreaID: body.RequestServiceAreaID,
+			Note:                 body.Note,
+			IsCancel:             true, // งาน cancellation
+		}
+		if err := config.DB().Create(&task).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cancellation task"})
+			return
+		}
+
+		// อัพเดทสถานะเป็น "Cancellation Assigned" (StatusID 10)
+		req.RequestStatusID = 10
+		if err := config.DB().Save(&req).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request status"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Cancellation task assigned successfully",
+			"data": gin.H{
+				"task":            task,
+				"new_status_id":   10,
+				"new_status_name": "Cancellation Assigned",
+			},
+		})
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing cancellation task"})
+		return
+	} else {
+		// มี task อยู่แล้ว → อัพเดท UserID และ Note
+		existingTask.UserID = body.OperatorUserID
+		existingTask.Note = body.Note
+		if err := config.DB().Save(&existingTask).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update cancellation task"})
+			return
+		}
+
+		// อัพเดทสถานะเป็น "Cancellation Assigned" (StatusID 10)
+		req.RequestStatusID = 10
+		if err := config.DB().Save(&req).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request status"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Cancellation task reassigned successfully",
+			"data": gin.H{
+				"task":            existingTask,
+				"new_status_id":   10,
+				"new_status_name": "Cancellation Assigned",
+			},
+		})
+	}
 }
 
 // GetServiceAreaDetailsByID ดึงข้อมูลรายละเอียดของ Service Area ตาม ID
@@ -902,6 +1045,16 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service area details"})
 		}
+		return
+	}
+
+	// ดึงข้อมูล CancelRequestServiceArea (ถ้ามี)
+	var cancelRequestServiceArea entity.CancelRequestServiceArea
+	if err := config.DB().
+		Preload("User").
+		Where("request_service_area_id = ?", serviceAreaID).
+		First(&cancelRequestServiceArea).Error; err != nil && err != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch cancellation details"})
 		return
 	}
 
@@ -986,6 +1139,30 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 			})
 		}
 		response["CollaborationPlans"] = simplifiedPlans
+	}
+
+	// เพิ่มข้อมูล CancelRequestServiceArea (ถ้ามี)
+	if cancelRequestServiceArea.ID != 0 {
+		fmt.Printf("🔍 [DEBUG] CancelRequestServiceArea found: ID=%d, RequestServiceAreaID=%d\n",
+			cancelRequestServiceArea.ID, cancelRequestServiceArea.RequestServiceAreaID)
+
+		response["CancellationDetails"] = gin.H{
+			"ID":                         cancelRequestServiceArea.ID,
+			"RequestServiceAreaID":       cancelRequestServiceArea.RequestServiceAreaID,
+			"UserID":                     cancelRequestServiceArea.UserID,
+			"PurposeOfCancellation":      cancelRequestServiceArea.PurposeOfCancellation,
+			"ProjectActivities":          cancelRequestServiceArea.ProjectActivities,
+			"AnnualIncome":               cancelRequestServiceArea.AnnualIncome,
+			"CancellationDocument":       cancelRequestServiceArea.CancellationDocument,
+			"BankAccountDocument":        cancelRequestServiceArea.BankAccountDocument,
+			"CreatedAt":                  cancelRequestServiceArea.CreatedAt,
+			"UpdatedAt":                  cancelRequestServiceArea.UpdatedAt,
+			"CancellationRequesterName":  cancelRequestServiceArea.User.FirstName + " " + cancelRequestServiceArea.User.LastName,
+			"CancellationRequesterEmail": cancelRequestServiceArea.User.Email,
+		}
+	} else {
+		fmt.Printf("🔍 [DEBUG] CancelRequestServiceArea not found for RequestServiceAreaID=%d\n", serviceAreaID)
+		response["CancellationDetails"] = nil
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -1149,6 +1326,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			"ServiceAreaTaskID": t.ID,                                 // 7
 			"BusinessGroupID":   businessGroupID,                      // 8
 			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
+			"IsCancel":          t.IsCancel,                           // 10
 
 		}
 
@@ -1520,6 +1698,276 @@ func DownloadServiceRequestDocument(c *gin.Context) {
 	c.Header("Content-Transfer-Encoding", "binary")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
 	// เดา content-type จากนามสกุล
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadCancellationDocument ดาวน์โหลด Cancellation Document
+func DownloadCancellationDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล CancelRequestServiceArea เพื่อเอา path ไฟล์
+	var cancelRequest entity.CancelRequestServiceArea
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&cancelRequest).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cancellation request not found"})
+		return
+	}
+
+	if cancelRequest.CancellationDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cancellation document not found"})
+		return
+	}
+
+	filePath := cancelRequest.CancellationDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadBankAccountDocument ดาวน์โหลด Bank Account Document
+func DownloadBankAccountDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล CancelRequestServiceArea เพื่อเอา path ไฟล์
+	var cancelRequest entity.CancelRequestServiceArea
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&cancelRequest).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cancellation request not found"})
+		return
+	}
+
+	if cancelRequest.BankAccountDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bank account document not found"})
+		return
+	}
+
+	filePath := cancelRequest.BankAccountDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadServiceContractDocument ดาวน์โหลด Service Contract Document
+func DownloadServiceContractDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล ServiceAreaDocument เพื่อเอา path ไฟล์
+	var serviceAreaDoc entity.ServiceAreaDocument
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaDoc).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service area document not found"})
+		return
+	}
+
+	if serviceAreaDoc.ServiceContractDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service contract document not found"})
+		return
+	}
+
+	filePath := serviceAreaDoc.ServiceContractDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadAreaHandoverDocument ดาวน์โหลด Area Handover Document
+func DownloadAreaHandoverDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล ServiceAreaDocument เพื่อเอา path ไฟล์
+	var serviceAreaDoc entity.ServiceAreaDocument
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaDoc).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service area document not found"})
+		return
+	}
+
+	if serviceAreaDoc.AreaHandoverDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Area handover document not found"})
+		return
+	}
+
+	filePath := serviceAreaDoc.AreaHandoverDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadQuotationDocument ดาวน์โหลด Quotation Document
+func DownloadQuotationDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล ServiceAreaDocument เพื่อเอา path ไฟล์
+	var serviceAreaDoc entity.ServiceAreaDocument
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaDoc).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service area document not found"})
+		return
+	}
+
+	if serviceAreaDoc.QuotationDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Quotation document not found"})
+		return
+	}
+
+	filePath := serviceAreaDoc.QuotationDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
+		c.Header("Content-Type", "application/pdf")
+	} else {
+		c.Header("Content-Type", "application/octet-stream")
+	}
+
+	// ส่งไฟล์
+	c.File(filePath)
+}
+
+// DownloadRefundGuaranteeDocument ดาวน์โหลด Refund Guarantee Document
+func DownloadRefundGuaranteeDocument(c *gin.Context) {
+	// รับ request id จาก path
+	idStr := c.Param("id")
+	requestID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request id"})
+		return
+	}
+
+	// ดึงข้อมูล ServiceAreaDocument เพื่อเอา path ไฟล์
+	var serviceAreaDoc entity.ServiceAreaDocument
+	if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaDoc).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service area document not found"})
+		return
+	}
+
+	if serviceAreaDoc.RefundGuaranteeDocument == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Refund guarantee document not found"})
+		return
+	}
+
+	filePath := serviceAreaDoc.RefundGuaranteeDocument
+	fileName := path.Base(filePath)
+
+	// ตรวจสอบการมีอยู่ของไฟล์
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// ตั้งค่า header ให้เป็นการดาวน์โหลด
+	c.Header("Content-Description", "File Transfer")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
 	if strings.HasSuffix(strings.ToLower(fileName), ".pdf") {
 		c.Header("Content-Type", "application/pdf")
 	} else {

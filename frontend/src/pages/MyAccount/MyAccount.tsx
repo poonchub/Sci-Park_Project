@@ -2464,7 +2464,8 @@ const MyAccount: React.FC = () => {
                                                             variant="outlinedGray"
                                                             onClick={() => {
                                                                 // Navigate to service area details page
-                                                                console.log("View service area request:", requestID);
+                                                                const encodedId = Base64.encode(String(requestID));
+                                                                navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
                                                             }}
                                                             sx={{ minWidth: "42px" }}
                                                         >
@@ -2637,7 +2638,8 @@ const MyAccount: React.FC = () => {
                                         variant="outlinedGray"
                                         onClick={() => {
                                             // Navigate to service area details page
-                                            console.log("View service area request:", requestID);
+                                            const encodedId = Base64.encode(String(requestID));
+                                            navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
                                         }}
                                         sx={{ minWidth: "42px" }}
                                     >

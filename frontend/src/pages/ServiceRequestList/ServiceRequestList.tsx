@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Typography, Grid, Skeleton, useMediaQuery, Button, Divider, Tooltip } from "@mui/material";
-import { ClipboardList, Check, Eye, X, HelpCircle } from "lucide-react";
+import { ClipboardList, Check, Eye, X, HelpCircle, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
-import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById, RejectServiceAreaRequest } from "../../services/http";
+import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById, RejectServiceAreaRequest, AssignCancellationTask } from "../../services/http";
 import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
@@ -37,6 +37,11 @@ const ServiceRequestList: React.FC = () => {
     const [requestIdPendingReject, setRequestIdPendingReject] = useState<number | null>(null);
     const [isRejecting, setIsRejecting] = useState(false);
 
+    // Assign Cancellation popup state
+    const [openAssignCancellationPopup, setOpenAssignCancellationPopup] = useState(false);
+    const [requestIdPendingAssign, setRequestIdPendingAssign] = useState<number | null>(null);
+    const [isAssigning, setIsAssigning] = useState(false);
+
     // Search and filter states
     const [searchText, setSearchText] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<number[]>([0]);
@@ -53,16 +58,22 @@ const ServiceRequestList: React.FC = () => {
         "Approved": 0,
         "In Progress": 0,
         "Completed": 0,
-        "Unsuccessful": 0
+        "Unsuccessful": 0,
+        "Cancellation In Progress": 0,
+        "Cancellation Assigned": 0,
+        "Successfully Cancelled": 0
     });
 
-    // Using statusConfig from constants for Service Request List (5 statuses)
+    // Using statusConfig from constants for Service Request List (8 statuses)
     const serviceRequestStatusConfig = {
         "Pending": statusConfig["Pending"],
         "Approved": statusConfig["Approved"],
         "In Progress": statusConfig["In Progress"],
         "Completed": statusConfig["Completed"],
-        "Unsuccessful": statusConfig["Unsuccessful"]
+        "Unsuccessful": statusConfig["Unsuccessful"],
+        "Cancellation In Progress": statusConfig["Cancellation In Progress"],
+        "Cancellation Assigned": statusConfig["Cancellation Assigned"],
+        "Successfully Cancelled": statusConfig["Successfully Cancelled"]
     };
 
     // 6 statuses for Service Request List (same as All Maintenance except "Waiting For Review")
@@ -81,8 +92,24 @@ const ServiceRequestList: React.FC = () => {
                     renderCell: (params) => {
                         const data = params.row;
                         const statusID = params.row.StatusID;
-                        const status = requestStatuses.find(s => s.ID === statusID);
-                        const statusName = status?.Name || 'Unknown';
+                        
+                        // Map status ID to status name (consistent with count logic)
+                        let statusName = "Unknown";
+                        if (statusID === 1) statusName = "Created";
+                        else if (statusID === 2) statusName = "Pending";
+                        else if (statusID === 3) statusName = "Approved";
+                        else if (statusID === 4) statusName = "In Progress";
+                        else if (statusID === 6) statusName = "Completed";
+                        else if (statusID === 8) statusName = "Unsuccessful";
+                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 10) statusName = "Cancellation Assigned";
+                        else if (statusID === 11) statusName = "Successfully Cancelled";
+                        
+                        // Fallback: try to get from requestStatuses if available
+                        if (statusName === "Unknown" && requestStatuses.length > 0) {
+                            const status = requestStatuses.find(s => s.ID === statusID);
+                            if (status && status.Name) statusName = status.Name;
+                        }
 
                         const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
 
@@ -227,6 +254,7 @@ const ServiceRequestList: React.FC = () => {
                                             <Grid size={{ xs: 12 }}>
                                                 {(() => {
                                                     const showButtonApprove = statusID === 2; // StatusID 2 = Pending
+                                                    const showButtonAssign = statusID === 9; // StatusID 9 = Cancellation In Progress
                                                     return (
                                                         <Box
                                                             className="container-btn"
@@ -271,6 +299,44 @@ const ServiceRequestList: React.FC = () => {
                                                                             <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                                                             <Typography variant="textButtonClassic" className="text-btn">
                                                                                 Reject
+                                                                            </Typography>
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                    <Tooltip title={"Details"}>
+                                                                        <Button
+                                                                            className="btn-detail"
+                                                                            variant="outlinedGray"
+                                                                            onClick={() => {
+                                                                                const encodedId = Base64.encode(data.ID.toString());
+                                                                                navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                                                            }}
+                                                                            sx={{
+                                                                                minWidth: "42px",
+                                                                            }}
+                                                                        >
+                                                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                                Details
+                                                                            </Typography>
+                                                                        </Button>
+                                                                    </Tooltip>
+                                                                </>
+                                                            ) : showButtonAssign ? (
+                                                                <>
+                                                                    <Tooltip title={"Assign"}>
+                                                                        <Button
+                                                                            className="btn-assign"
+                                                                            variant="contained"
+                                                                            onClick={() => {
+                                                                                handleAssignCancellation(data.ID);
+                                                                            }}
+                                                                            sx={{
+                                                                                minWidth: "42px",
+                                                                            }}
+                                                                        >
+                                                                            <UserCheck size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                                Assign
                                                                             </Typography>
                                                                         </Button>
                                                                     </Tooltip>
@@ -459,8 +525,25 @@ const ServiceRequestList: React.FC = () => {
                 type: "string",
                 flex: 1,
                 renderCell: (params) => {
-                    const status = requestStatuses.find(s => s.ID === params.value);
-                    const statusName = status?.Name || 'Unknown';
+                    const statusID = params.value;
+                    
+                    // Map status ID to status name (consistent with count logic)
+                    let statusName = "Unknown";
+                    if (statusID === 1) statusName = "Created";
+                    else if (statusID === 2) statusName = "Pending";
+                    else if (statusID === 3) statusName = "Approved";
+                    else if (statusID === 4) statusName = "In Progress";
+                    else if (statusID === 6) statusName = "Completed";
+                    else if (statusID === 8) statusName = "Unsuccessful";
+                    else if (statusID === 9) statusName = "Cancellation In Progress";
+                    else if (statusID === 10) statusName = "Cancellation Assigned";
+                    else if (statusID === 11) statusName = "Successfully Cancelled";
+                    
+                    // Fallback: try to get from requestStatuses if available
+                    if (statusName === "Unknown" && requestStatuses.length > 0) {
+                        const status = requestStatuses.find(s => s.ID === statusID);
+                        if (status && status.Name) statusName = status.Name;
+                    }
 
                     const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
 
@@ -570,6 +653,7 @@ const ServiceRequestList: React.FC = () => {
                 renderCell: (item) => {
                     const data = item.row;
                     const showButtonApprove = item.row.StatusID === 2; // StatusID 2 = Pending
+                    const showButtonAssign = item.row.StatusID === 9; // StatusID 9 = Cancellation In Progress
                     return (
                         <Box
                             className="container-btn"
@@ -614,6 +698,44 @@ const ServiceRequestList: React.FC = () => {
                                             <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Reject
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip title={"Details"}>
+                                        <Button
+                                            className="btn-detail"
+                                            variant="outlinedGray"
+                                            onClick={() => {
+                                                const encodedId = Base64.encode(data.ID.toString());
+                                                navigate(`/service-area/details?service_area_id=${encodeURIComponent(encodedId)}`);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Details
+                                            </Typography>
+                                        </Button>
+                                    </Tooltip>
+                                </>
+                            ) : showButtonAssign ? (
+                                <>
+                                    <Tooltip title={"Assign"}>
+                                        <Button
+                                            className="btn-assign"
+                                            variant="contained"
+                                            onClick={() => {
+                                                handleAssignCancellation(data.ID);
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <UserCheck size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Assign
                                             </Typography>
                                         </Button>
                                     </Tooltip>
@@ -681,8 +803,8 @@ const ServiceRequestList: React.FC = () => {
             const res = await GetRequestStatuses();
 
             if (res) {
-                // Filter to only include the 5 statuses used for Service Request List
-                const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
+                // Filter to only include the 8 statuses used for Service Request List
+                const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"];
                 const filteredStatuses = res.filter((status: RequestStatusesInterface) =>
                     serviceRequestStatusNames.includes(status.Name || '')
                 );
@@ -769,7 +891,9 @@ const ServiceRequestList: React.FC = () => {
                     "Approved": 0,
                     "In Progress": 0,
                     "Completed": 0,
-                    "Unsuccessful": 0
+                    "Unsuccessful": 0,
+                    "Cancellation In Progress": 0,
+                    "Successfully Cancelled": 0
                 };
 
                 // Count by status ID based on actual database status IDs
@@ -777,7 +901,7 @@ const ServiceRequestList: React.FC = () => {
                     res.data.forEach((item: any) => {
                         const statusID = item.StatusID;
                         // Map status ID to status name based on actual database
-                        // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful
+                        // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful, 9=Cancellation In Progress, 10=Cancellation Assigned, 11=Successfully Cancelled
                         let statusName = "Unknown";
                         if (statusID === 1) statusName = "Created";
                         else if (statusID === 2) statusName = "Pending";
@@ -785,6 +909,9 @@ const ServiceRequestList: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
+                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 10) statusName = "Cancellation Assigned";
+                        else if (statusID === 11) statusName = "Successfully Cancelled";
 
                         // Only count statuses that are in our display list
                         if (counts.hasOwnProperty(statusName)) {
@@ -865,6 +992,16 @@ const ServiceRequestList: React.FC = () => {
             console.error("Error rejecting request:", error);
         } finally {
             setIsRejecting(false);
+        }
+    };
+
+    // Handle assign cancellation action
+    const handleAssignCancellation = async (requestID: number) => {
+        try {
+            setRequestIdPendingAssign(requestID);
+            setOpenAssignCancellationPopup(true);
+        } catch (error) {
+            console.error("Error opening assign cancellation popup:", error);
         }
     };
 
@@ -972,7 +1109,7 @@ const ServiceRequestList: React.FC = () => {
                                         lg: 4,
                                         xl: 4,
                                     }}
-                                    customDisplayStatuses={["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"]}
+                                    customDisplayStatuses={["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"]}
                                 />
 
                                 {/* Filter Section */}
@@ -1029,6 +1166,32 @@ const ServiceRequestList: React.FC = () => {
                         const current = requestServiceAreas.find(r => r.ID === requestIdPendingApprove);
                         return current?.CompanyName;
                     })()}
+                    onApproved={async () => {
+                        await fetchServiceRequestAreas(
+                            selectedStatuses.join(','),
+                            page,
+                            limit,
+                            searchText || undefined,
+                            selectedDate?.format('YYYY-MM')
+                        );
+                    }}
+                />
+
+                {/* Assign Cancellation Controller */}
+                <ApproveServiceAreaController
+                    open={openAssignCancellationPopup}
+                    onClose={() => { setOpenAssignCancellationPopup(false); setRequestIdPendingAssign(null); }}
+                    requestId={requestIdPendingAssign}
+                    businessGroupId={(() => {
+                        const current = requestServiceAreas.find(r => r.ID === requestIdPendingAssign);
+                        return current?.BusinessGroupID ?? null;
+                    })()}
+                    businessGroups={businessGroups}
+                    companyName={(() => {
+                        const current = requestServiceAreas.find(r => r.ID === requestIdPendingAssign);
+                        return current?.CompanyName;
+                    })()}
+                    isCancellation={true}
                     onApproved={async () => {
                         await fetchServiceRequestAreas(
                             selectedStatuses.join(','),

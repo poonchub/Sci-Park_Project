@@ -15,15 +15,21 @@ const ServiceAreaStepper: React.FC<ServiceAreaStepperProps> = ({ requestStatuses
         return statusName;
     };
 
-    // กำหนด status flow สำหรับ Service Area (5 สถานะหลัก + Unsuccessful)
+    // กำหนด status flow สำหรับ Service Area
     const serviceAreaStatusFlow = useMemo(() => {
         return ["Created", "Pending", "Approved", "In Progress", "Completed"];
     }, []);
 
+    // กำหนด status flow สำหรับการยกเลิก (Cancellation)
+    const cancellationStatusFlow = useMemo(() => {
+        return ["Created", "Pending", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"];
+    }, []);
+
     const unsuccessfulFlow = ["Unsuccessful"];
 
-    const getStatusGroup = (statusName: string): "Normal" | "Unsuccessful" => {
+    const getStatusGroup = (statusName: string): "Normal" | "Unsuccessful" | "Cancellation" => {
         if (statusName === "Unsuccessful") return "Unsuccessful";
+        if (statusName === "Cancellation In Progress" || statusName === "Cancellation Assigned" || statusName === "Successfully Cancelled") return "Cancellation";
         return "Normal";
     };
 
@@ -46,7 +52,19 @@ const ServiceAreaStepper: React.FC<ServiceAreaStepperProps> = ({ requestStatuses
                 }));
         }
     
-        // สำหรับ Service Area ใช้ flow เดียวกันทั้ง admin และ user
+        if (group === "Cancellation") {
+            // สำหรับการยกเลิก ใช้ flow การยกเลิก
+            const steps = requestStatuses
+                .filter(s => cancellationStatusFlow.includes(s.Name || ""))
+                .sort((a, b) => cancellationStatusFlow.indexOf(a.Name || "") - cancellationStatusFlow.indexOf(b.Name || ""))
+                .map(s => ({
+                    ...s,
+                    Name: displayName(s.Name || "", isCreating)
+                }));
+            return steps;
+        }
+    
+        // สำหรับ Service Area ปกติ ใช้ flow ปกติ
         const steps = requestStatuses
             .filter(s => serviceAreaStatusFlow.includes(s.Name || ""))
             .sort((a, b) => serviceAreaStatusFlow.indexOf(a.Name || "") - serviceAreaStatusFlow.indexOf(b.Name || ""))
@@ -55,7 +73,7 @@ const ServiceAreaStepper: React.FC<ServiceAreaStepperProps> = ({ requestStatuses
                 Name: displayName(s.Name || "", isCreating)
             }));
         return steps;
-    }, [requestStatuses, requestStatusID, serviceAreaStatusFlow]);    
+    }, [requestStatuses, requestStatusID, serviceAreaStatusFlow, cancellationStatusFlow]);    
 
     // หา active step
     const activeStep = useMemo(() => {

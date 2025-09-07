@@ -83,8 +83,8 @@ const setupTokenTimeout = (expiresAt: number) => {
 const checkUserActivity = () => {
     const currentTime = Date.now();
     const inactiveTime = currentTime - lastActivityTime;
-    // เปลี่ยนจาก 30 นาที เป็น 10 วินาที
-    const maxInactiveTime = 30 * 60 * 1000; // 10 seconds ไม่ใช่
+    // เปลี่ยนจาก 30 นาที เป็น 1 ชั่วโมง
+    const maxInactiveTime = 60 * 60 * 1000; // 1 ชั่วโมง
 
     
 

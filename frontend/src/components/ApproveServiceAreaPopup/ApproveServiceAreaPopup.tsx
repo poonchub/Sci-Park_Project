@@ -31,6 +31,7 @@ interface ApproveServiceAreaPopupProps {
     operators: UserInterface[];
     businessGroups: BusinessGroupLike[];
     buttonActive: boolean;
+    isCancellation?: boolean;
 }
 
 const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
@@ -45,6 +46,7 @@ const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
     buttonActive,
     companyName,
     purposeOfUsingSpace,
+    isCancellation = false,
 }) => {
     
     const businessGroupId = requestSelected?.BusinessGroupID ?? null;
@@ -62,7 +64,7 @@ const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
                     textAlign: 'center'
                 }}
             >
-                Approve Service Area
+                {isCancellation ? 'Assign Cancellation Task' : 'Approve Service Area'}
             </DialogTitle>
 
             <DialogContent sx={{ minWidth: 500 }}>
@@ -74,7 +76,7 @@ const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
                                 Company: {companyName}
                             </Typography>
                             <Typography sx={{ color: 'text.secondary' }}>
-                                Purpose of Using Space: {purposeOfUsingSpace}
+                                {isCancellation ? 'Purpose of Cancellation:' : 'Purpose of Using Space:'} {purposeOfUsingSpace}
                             </Typography>
                         </Grid>
                     )}

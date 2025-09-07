@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./ServiceAreaDetails.css";
 
-import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest } from "../../services/http";
+import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, DownloadServiceContractDocument, DownloadAreaHandoverDocument, DownloadQuotationDocument, DownloadRefundGuaranteeDocument, DownloadCancellationDocument, DownloadBankAccountDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest } from "../../services/http";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 
@@ -14,6 +14,7 @@ import ServiceAreaStepper from "../../components/ServiceAreaStepper/ServiceAreaS
 import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
+import { ServiceAreaDetailsInterface } from "../../interfaces/IServiceAreaDetailsInterface";
 
 import dateFormat from "../../utils/dateFormat";
 import { isAdmin, isDocumentOperator } from "../../routes";
@@ -23,43 +24,7 @@ import { Base64 } from "js-base64";
 import { ChevronLeft, NotebookText, Download, Check, X, Send } from "lucide-react";
 
 // Interface for Service Area Details response
-interface ServiceAreaDetailsInterface {
-    RequestNo: number;
-    RequestedAt: string;
-    RequestStatusId: number;
-    CompanyName: string;
-    DescriptionCompany: string;
-    PurposeOfUsingSpace: string;
-    ActivitiesInBuilding: string;
-    SupportingActivitiesForSciencePark: string;
-    ServiceRequestDocument: string;
-    CollaborationPlans: any[];
-    CorporateRegistrationNumber?: string;
-    BusinessGroupName?: string;
-    CompanySizeName?: string;
-    MainServices?: string;
-    RegisteredCapital?: number;
-    HiringRate?: number;
-    ResearchInvestmentValue?: number;
-    ThreeYearGrowthForecast?: string;
-    ApproverUserName?: string;
-    ApprovalNote?: string;
-    TaskUserName?: string;
-    TaskNote?: string;
-    ServiceAreaDocumentId?: number;
-    // New Service Area Document fields
-    ServiceContractDocument?: string;
-    AreaHandoverDocument?: string;
-    QuotationDocument?: string;
-    RefundGuaranteeDocument?: string;
-    ContractNumber?: string;
-    ContractStartAt?: string;
-    ContractEndAt?: string;
-    RoomNumber?: string;
-    ServiceUserTypeID?: number;
-    ServiceUserTypeName?: string;
-    BusinessGroupID?: number; // Added BusinessGroupID
-}
+
 
 function ServiceAreaDetails() {
     // Request data
@@ -619,7 +584,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.ServiceContractDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => DownloadServiceContractDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.ServiceContractDocument?.split('/').pop())}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -643,7 +608,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.AreaHandoverDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => DownloadAreaHandoverDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.AreaHandoverDocument?.split('/').pop())}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -667,7 +632,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.QuotationDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => DownloadQuotationDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.QuotationDocument?.split('/').pop())}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -691,7 +656,7 @@ function ServiceAreaDetails() {
                                                                         </Grid>
                                                                         <Grid size={{ xs: 12, sm: 3 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                                                                                <Button size="small" variant="outlinedGray" onClick={() => window.open(serviceAreaDetails.RefundGuaranteeDocument, '_blank')}>
+                                                                                <Button size="small" variant="outlinedGray" onClick={() => DownloadRefundGuaranteeDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.RefundGuaranteeDocument?.split('/').pop())}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -732,6 +697,143 @@ function ServiceAreaDetails() {
                                                         </Grid>
                                                     </Box>
                                                 )}
+                                            </Box>
+                                        </Grid>
+                                    )}
+
+                                    {/* Cancellation Details Section (if exists) */}
+                                    {serviceAreaDetails?.CancellationDetails && (
+                                        <Grid size={{ xs: 12, md: 12 }}>
+                                            <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
+                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, }}>
+                                                    Cancellation Details
+                                                </Typography>
+                                                
+                                                <Grid container spacing={2}>
+                                                    {/* Cancellation Requester Information */}
+                                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Cancellation Requester
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {serviceAreaDetails.CancellationDetails.CancellationRequesterName}
+                                                        </Typography>
+                                                    </Grid>
+
+                                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Requester Email
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {serviceAreaDetails.CancellationDetails.CancellationRequesterEmail}
+                                                        </Typography>
+                                                    </Grid>
+
+                                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Cancellation Date
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {dateFormat(serviceAreaDetails.CancellationDetails.CreatedAt)}
+                                                        </Typography>
+                                                    </Grid>
+
+                                                    {/* Purpose of Cancellation */}
+                                                    <Grid size={{ xs: 12 }}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Purpose of Cancellation
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {serviceAreaDetails.CancellationDetails.PurposeOfCancellation || '-'}
+                                                        </Typography>
+                                                    </Grid>
+
+                                                    {/* Project Activities */}
+                                                    {serviceAreaDetails.CancellationDetails.ProjectActivities && (
+                                                        <Grid size={{ xs: 12 }}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Project Activities
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                {serviceAreaDetails.CancellationDetails.ProjectActivities}
+                                                            </Typography>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Annual Income */}
+                                                    {serviceAreaDetails.CancellationDetails.AnnualIncome && (
+                                                        <Grid size={{ xs: 12, sm: 6 }}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Annual Income
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                ฿{serviceAreaDetails.CancellationDetails.AnnualIncome.toLocaleString()}
+                                                            </Typography>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Cancellation Documents */}
+                                                    {(serviceAreaDetails.CancellationDetails.CancellationDocument || serviceAreaDetails.CancellationDetails.BankAccountDocument) && (
+                                                        <Grid size={{ xs: 12 }}>
+                                                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'black' }}>
+                                                                Cancellation Documents
+                                                            </Typography>
+                                                            <Grid container spacing={2}>
+                                                                {/* Cancellation Document */}
+                                                                {serviceAreaDetails.CancellationDetails.CancellationDocument && (
+                                                                    <Grid size={{ xs: 12, sm: 12 }}>
+                                                                        <Grid container spacing={2} alignItems="center">
+                                                                            <Grid size={{ xs: 12, sm: 4 }}>
+                                                                                <Box>
+                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                        Cancellation Document:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                        {serviceAreaDetails.CancellationDetails.CancellationDocument.split('/').pop()}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                            <Grid size={{ xs: 12, sm: 8 }}>
+                                                                                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                    <Button size="small" variant="outlinedGray" onClick={() => DownloadCancellationDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails.CancellationDetails?.CancellationDocument?.split('/').pop())}>
+                                                                                        <Download size={16} style={{ marginRight: 6 }} />
+                                                                                        Download
+                                                                                    </Button>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
+
+                                                                {/* Bank Account Document */}
+                                                                {serviceAreaDetails.CancellationDetails.BankAccountDocument && (
+                                                                    <Grid size={{ xs: 12, sm: 12 }}>
+                                                                        <Grid container spacing={2} alignItems="center">
+                                                                            <Grid size={{ xs: 12, sm: 4 }}>
+                                                                                <Box>
+                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                        Bank Account Document:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                        {serviceAreaDetails.CancellationDetails.BankAccountDocument.split('/').pop()}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                            <Grid size={{ xs: 12, sm: 8 }}>
+                                                                                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                    <Button size="small" variant="outlinedGray" onClick={() => DownloadBankAccountDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails.CancellationDetails?.BankAccountDocument?.split('/').pop())}>
+                                                                                        <Download size={16} style={{ marginRight: 6 }} />
+                                                                                        Download
+                                                                                    </Button>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
+                                                            </Grid>
+                                                        </Grid>
+                                                    )}
+                                                </Grid>
                                             </Box>
                                         </Grid>
                                     )}

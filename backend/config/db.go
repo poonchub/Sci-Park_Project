@@ -241,6 +241,10 @@ func SeedDatabase() {
 			Description: "The service area request cancellation is currently being processed.",
 		},
 		{
+			Name:        "Cancellation Assigned", // Cancellation Assigned
+			Description: "The cancellation request has been assigned to an operator for processing.",
+		},
+		{
 			Name:        "Successfully Cancelled", // Successfully Cancelled
 			Description: "The service area request has been successfully cancelled and the process is complete.",
 		},

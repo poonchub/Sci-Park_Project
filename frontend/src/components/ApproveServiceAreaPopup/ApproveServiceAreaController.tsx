@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import ApproveServiceAreaPopup from './ApproveServiceAreaPopup';
 import { UserInterface } from '../../interfaces/IUser';
 import { BusinessGroupInterface } from '../../interfaces/IBusinessGroup';
-import { GetDocumentOperators, UpdateRequestServiceAreaStatus, GetServiceAreaDetailsByID, CreateServiceAreaApproval } from '../../services/http';
+import { GetDocumentOperators, UpdateRequestServiceAreaStatus, GetServiceAreaDetailsByID, CreateServiceAreaApproval, AssignCancellationTask } from '../../services/http';
 
 interface Props {
     open: boolean;
@@ -12,9 +12,10 @@ interface Props {
     businessGroups: BusinessGroupInterface[];
     onApproved?: () => Promise<void> | void;
     companyName?: string; // optional from parent for immediate display
+    isCancellation?: boolean; // สำหรับแยกการทำงานระหว่าง approve กับ assign cancellation
 }
 
-export default function ApproveServiceAreaController({ open, onClose, requestId, businessGroupId, businessGroups, onApproved, companyName: initialCompanyName }: Props) {
+export default function ApproveServiceAreaController({ open, onClose, requestId, businessGroupId, businessGroups, onApproved, companyName: initialCompanyName, isCancellation = false }: Props) {
     const [operators, setOperators] = useState<UserInterface[]>([]);
     const [selectedOperator, setSelectedOperator] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -47,7 +48,15 @@ export default function ApproveServiceAreaController({ open, onClose, requestId,
                 console.log('[ApproveServiceAreaController] details fetched:', details);
                 // Support both nested and flat response shapes
                 const nameFromDetails = details?.AboutCompany?.CompanyName ?? details?.CompanyName;
-                const purposeFromDetails = details?.RequestServiceArea?.PurposeOfUsingSpace ?? details?.PurposeOfUsingSpace;
+                
+                // For cancellation, use PurposeOfCancellation; otherwise use PurposeOfUsingSpace
+                let purposeFromDetails;
+                if (isCancellation) {
+                    purposeFromDetails = details?.CancellationDetails?.PurposeOfCancellation;
+                } else {
+                    purposeFromDetails = details?.RequestServiceArea?.PurposeOfUsingSpace ?? details?.PurposeOfUsingSpace;
+                }
+                
                 setCompanyName(nameFromDetails || undefined);
                 setPurpose(purposeFromDetails || undefined);
             } catch (e) {
@@ -61,18 +70,30 @@ export default function ApproveServiceAreaController({ open, onClose, requestId,
         if (!requestId || !selectedOperator) return;
         try {
             setIsSubmitting(true);
-            // Create approval audit record with current user ID
             const approverId = Number(localStorage.getItem('userId')) || 0;
-            if (approverId) {
-                await CreateServiceAreaApproval({ user_id: approverId, request_service_area_id: requestId, operator_user_id: selectedOperator });
+            
+            if (isCancellation) {
+                // สำหรับ cancellation - ใช้ AssignCancellationTask
+                await AssignCancellationTask({
+                    user_id: approverId,
+                    request_service_area_id: requestId,
+                    operator_user_id: selectedOperator,
+                    note: ""
+                });
+            } else {
+                // สำหรับ approve ปกติ
+                if (approverId) {
+                    await CreateServiceAreaApproval({ user_id: approverId, request_service_area_id: requestId, operator_user_id: selectedOperator });
+                }
+                // Update status to Approved
+                await UpdateRequestServiceAreaStatus(requestId, 3);
             }
-            // Update status to Approved
-            await UpdateRequestServiceAreaStatus(requestId, 3);
+            
             if (onApproved) await onApproved();
             setSelectedOperator(0);
             onClose();
         } catch (e) {
-            console.error('Error approving request', e);
+            console.error(`Error ${isCancellation ? 'assigning cancellation' : 'approving'} request`, e);
         } finally {
             setIsSubmitting(false);
         }
@@ -91,6 +112,7 @@ export default function ApproveServiceAreaController({ open, onClose, requestId,
             operators={operators}
             businessGroups={businessGroups}
             buttonActive={isSubmitting}
+            isCancellation={isCancellation}
         />
     );
 }

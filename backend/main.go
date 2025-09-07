@@ -236,6 +236,12 @@ func main() {
 		protected.GET("/request-service-areas", controller.ListRequestServiceAreas)
 		protected.GET("/request-service-areas/user/:user_id", controller.GetRequestServiceAreasByUserID)
 		protected.GET("/request-service-area-document/:id", controller.DownloadServiceRequestDocument)
+		protected.GET("/service-contract-document/:id", controller.DownloadServiceContractDocument)
+		protected.GET("/area-handover-document/:id", controller.DownloadAreaHandoverDocument)
+		protected.GET("/quotation-document/:id", controller.DownloadQuotationDocument)
+		protected.GET("/refund-guarantee-document/:id", controller.DownloadRefundGuaranteeDocument)
+		protected.GET("/cancellation-document/:id", controller.DownloadCancellationDocument)
+		protected.GET("/bank-account-document/:id", controller.DownloadBankAccountDocument)
 		protected.GET("/about-company/:user_id", controller.GetAboutCompanyByUserID)
 		protected.PATCH("/request-service-area/:id", controller.UpdateRequestServiceArea)
 		protected.PATCH("/request-service-area/:id/status", controller.UpdateRequestServiceAreaStatus)
@@ -304,6 +310,8 @@ func main() {
 
 		// Service_area
 		protected.POST("/service-area-approval", controller.CreateServiceAreaApproval)
+		protected.POST("/cancellation-task", controller.CreateCancellationTask)
+		protected.POST("/assign-cancellation-task", controller.AssignCancellationTask)
 
 		// News
 		protected.GET("/news/pinned", controller.ListPinnedNews)

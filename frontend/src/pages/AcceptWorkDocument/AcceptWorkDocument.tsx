@@ -33,6 +33,7 @@ interface ServiceAreaTaskInterface {
     ServiceAreaTaskID: number;
     BusinessGroupID: number | null;
     StatusID: number;
+    IsCancel: boolean; // แยกว่างานนี้เป็นงานสำหรับการร้องขอ (false) หรืองานยกเลิก (true)
 }
 
 function AcceptWorkDocument() {
@@ -162,7 +163,7 @@ function AcceptWorkDocument() {
     };
 
     const renderActionButtons = (data: any, statusName: string) => {
-        const showSubmit = data.StatusID === 3 || data.StatusID === 4; // Status ID 3 และ 4 = แสดงปุ่ม Submit
+        const showSubmit = data.StatusID === 3 || data.StatusID === 4 || data.StatusID === 10; // Status ID 3, 4, และ 10 = แสดงปุ่ม Submit
         const showDetailsOnly = data.StatusID === 6; // Status ID 6 = Complete
 
         return (
@@ -386,7 +387,7 @@ function AcceptWorkDocument() {
                 flex: 1.5,
                 renderCell: (params) => {
                     const data = params.row;
-                    const statusName = data.StatusID === 3 ? "In Progress" : "Complete";
+                    const statusName = data.StatusID === 3 ? "In Progress" : data.StatusID === 10 ? "Cancellation Assigned" : "Complete";
 
                     return (
                         <Box
@@ -487,8 +488,8 @@ function AcceptWorkDocument() {
 
         // กรองตาม Tab (StatusID)
         if (activeTab === 0) {
-            // In Progress Tab - แสดงทั้ง StatusID = 3 และ 4
-            filtered = filtered.filter((r) => r.StatusID === 3 || r.StatusID === 4);
+            // In Progress Tab - แสดงทั้ง StatusID = 3, 4, และ 10
+            filtered = filtered.filter((r) => r.StatusID === 3 || r.StatusID === 4 || r.StatusID === 10);
         } else {
             // Complete Tab - แสดงเฉพาะ StatusID = 6
             filtered = filtered.filter((r) => r.StatusID === 6);

@@ -2641,6 +2641,144 @@ async function DownloadServiceRequestDocument(requestID: number, filename?: stri
     }
 }
 
+async function DownloadServiceContractDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/service-contract-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `service_contract_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading service contract document:", error);
+        throw error;
+    }
+}
+
+async function DownloadAreaHandoverDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/area-handover-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `area_handover_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading area handover document:", error);
+        throw error;
+    }
+}
+
+async function DownloadQuotationDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/quotation-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `quotation_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading quotation document:", error);
+        throw error;
+    }
+}
+
+async function DownloadRefundGuaranteeDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/refund-guarantee-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `refund_guarantee_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading refund guarantee document:", error);
+        throw error;
+    }
+}
+
+async function DownloadCancellationDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/cancellation-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `cancellation_doc_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading cancellation document:", error);
+        throw error;
+    }
+}
+
+async function DownloadBankAccountDocument(requestID: number, filename?: string): Promise<void> {
+    try {
+        const response = await axiosInstance.get(`/bank-account-document/${requestID}`, {
+            responseType: "blob",
+        });
+
+        const blob = new Blob([response.data], { type: response.headers["content-type"] || "application/octet-stream" });
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        const suggested = filename || `bank_account_doc_${requestID}.pdf`;
+        link.download = suggested;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error downloading bank account document:", error);
+        throw error;
+    }
+}
+
 // AboutCompany functions
 async function GetAboutCompanyByUserID(userID: number): Promise<AboutCompanyInterface> {
     try {
@@ -2892,6 +3030,30 @@ async function ListRequestServiceAreas(
 }
 
 // Service Area Tasks by Operator User ID
+async function CreateCancellationTask(operatorUserId: number, requestServiceAreaId: number, note?: string) {
+    try {
+        const response = await axiosInstance.post("/cancellation-task", {
+            operator_user_id: operatorUserId,
+            request_service_area_id: requestServiceAreaId,
+            note: note || ""
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating cancellation task:", error);
+        throw error;
+    }
+}
+
+async function AssignCancellationTask(payload: { user_id: number; request_service_area_id: number; operator_user_id: number; note?: string; }) {
+    try {
+        const response = await axiosInstance.post("/assign-cancellation-task", payload);
+        return response.data;
+    } catch (error) {
+        console.error("Error assigning cancellation task:", error);
+        throw error;
+    }
+}
+
 async function GetServiceAreaTasksByUserID(userId: number, options?: {
     month_year?: string; // รูปแบบ MM/YYYY เช่น "08/2025"
     business_group_id?: number;
@@ -3417,7 +3579,15 @@ export {
 	    RejectServiceAreaRequest,
     GetServiceAreaDetailsByID,
     CreateServiceAreaApproval,
+    CreateCancellationTask,
+    AssignCancellationTask,
     DownloadServiceRequestDocument,
+    DownloadServiceContractDocument,
+    DownloadAreaHandoverDocument,
+    DownloadQuotationDocument,
+    DownloadRefundGuaranteeDocument,
+    DownloadCancellationDocument,
+    DownloadBankAccountDocument,
     ListRequestServiceAreas,
 
     // AboutCompany

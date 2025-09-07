@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"sci-park_web-application/services"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,10 +50,10 @@ func UserLogin(c *gin.Context) {
 	jwtWrapper := services.JwtWrapper{
 		SecretKey:       config.GetSecretKey(), // ใช้คีย์จาก config
 		Issuer:          "AuthService",
-		ExpirationHours: 24,  // หมดอายุใน 24 ชั่วโมง (1 วัน)
+		ExpirationHours: 24, // หมดอายุใน 24 ชั่วโมง (1 วัน)
 	}
 
-		// กำหนด role สำหรับผู้ใช้
+	// กำหนด role สำหรับผู้ใช้
 	role := user.Role.Name // หรือ "user" หรือ "guest" ขึ้นอยู่กับบทบาทที่คุณต้องการให้กับผู้ใช้
 
 	// สร้าง Token โดยส่งทั้ง email และ role
@@ -63,7 +63,6 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-
 	// ส่งข้อมูล User กลับ โดยใช้ PascalCase
 	c.JSON(http.StatusOK, gin.H{
 		"ID":             user.ID,
@@ -71,8 +70,8 @@ func UserLogin(c *gin.Context) {
 		"BusinessDetail": user.BusinessDetail,
 		"FirstName":      user.FirstName,
 		"LastName":       user.LastName,
-		"GenderID":		  user.GenderID,
-		"Gender":		  user.Gender.Name,
+		"GenderID":       user.GenderID,
+		"Gender":         user.Gender.Name,
 		"Email":          user.Email,
 		"Phone":          user.Phone,
 		"ProfilePath":    user.ProfilePath,

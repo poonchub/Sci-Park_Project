@@ -22,6 +22,7 @@ interface ServiceAreaTaskInterface {
     ServiceAreaTaskID: number;
     BusinessGroupID: number | null;
     StatusID: number;
+    IsCancel: boolean; // แยกว่างานนี้เป็นงานสำหรับการร้องขอ (false) หรืองานยกเลิก (true)
 }
 
 function SubmitWork() {
@@ -53,7 +54,7 @@ function SubmitWork() {
                 field: "CreatedAt", 
                 headerName: "Created Date", 
                 flex: 1.2,
-                valueFormatter: (params) => {
+                valueFormatter: (params: any) => {
                     return new Date(params.value).toLocaleDateString('th-TH');
                 }
             },
