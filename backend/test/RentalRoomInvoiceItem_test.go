@@ -13,10 +13,10 @@ func TestInvoiceItemValidation(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	t.Run("Valid InvoiceItem", func(t *testing.T) {
-		invoiceItem := entity.InvoiceItem{
+		invoiceItem := entity.RentalRoomInvoiceItem{
 			Description: "ค่าไฟฟ้า",
 			Amount: 500,
-			InvoiceID: 1,
+			RentalRoomInvoiceID: 1,
 		}
 
 		ok, err := govalidator.ValidateStruct(invoiceItem)
@@ -25,10 +25,10 @@ func TestInvoiceItemValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Description", func(t *testing.T) {
-		invoiceItem := entity.InvoiceItem{
+		invoiceItem := entity.RentalRoomInvoiceItem{
 			// Description: "ค่าไฟฟ้า",
 			Amount: 500,
-			InvoiceID: 1,
+			RentalRoomInvoiceID: 1,
 		}
 
 		ok, err := govalidator.ValidateStruct(invoiceItem)
@@ -38,10 +38,10 @@ func TestInvoiceItemValidation(t *testing.T) {
 	})
 
 	t.Run("Missing Amount", func(t *testing.T) {
-		invoiceItem := entity.InvoiceItem{
+		invoiceItem := entity.RentalRoomInvoiceItem{
 			Description: "ค่าไฟฟ้า",
 			// Amount: 500,
-			InvoiceID: 1,
+			RentalRoomInvoiceID: 1,
 		}
 
 		ok, err := govalidator.ValidateStruct(invoiceItem)
@@ -50,16 +50,16 @@ func TestInvoiceItemValidation(t *testing.T) {
 		g.Expect(err.Error()).To(Equal("Amount is required"))
 	})
 
-	t.Run("Missing InvoiceID", func(t *testing.T) {
-		invoiceItem := entity.InvoiceItem{
+	t.Run("Missing RentalRoomInvoiceID", func(t *testing.T) {
+		invoiceItem := entity.RentalRoomInvoiceItem{
 			Description: "ค่าไฟฟ้า",
 			Amount: 500,
-			// InvoiceID: 1,
+			// RentalRoomInvoiceID: 1,
 		}
 
 		ok, err := govalidator.ValidateStruct(invoiceItem)
 		g.Expect(ok).To(BeFalse())
 		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("InvoiceID is required"))
+		g.Expect(err.Error()).To(Equal("RentalRoomInvoiceID is required"))
 	})
 }

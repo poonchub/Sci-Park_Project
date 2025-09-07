@@ -80,13 +80,20 @@ func main() {
 		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
 		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
 		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
-		r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
+		// r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
 
 		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
-		r.POST("/payments/:id/approve", controller.ApprovePayment)
+		// r.POST("/payments/:id/approve", controller.ApprovePayment)
 		r.POST("/payments/:id/reject", controller.RejectPayment)
 		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
-		r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
+		// r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
+
+		// Invoice flow (ใหม่)
+		// r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
+		// r.POST("/booking-rooms/:id/invoices/full", controller.CreateFullInvoiceHandler)
+		// r.POST("/booking-rooms/:id/invoices/final", controller.CreateFinalInvoiceHandler)
+		// r.POST("/invoices/mark-overdue", controller.MarkOverdueInvoicesHandler)
+		// r.POST("/invoices/:invoiceId/upload-slip", controller.UploadInvoiceSlip)
 
 	}
 
@@ -272,6 +279,12 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
+
+		// RoomBookingInvoices
+		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
+		
+		// RoomBookingInvoiceItems
+		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.MaintenanceOperator)) // ✅ Middleware ตรวจสอบ Token
@@ -340,6 +353,7 @@ func main() {
 
 		// Invoice
 		protected.GET("/invoices", controller.ListInvoices)
+		protected.GET("/invoices/next-number", controller.GetNextInvoiceNumber)
 		protected.POST("/invoice", controller.CreateInvoice)
 		protected.POST("/invoice/upload-pdf", controller.UploadInvoicePDF)
 		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)

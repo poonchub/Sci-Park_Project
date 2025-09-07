@@ -7,5 +7,5 @@ type PaymentStatus struct {
 	Name string `valid:"required~Name is required"`
 
 	Payments []Payment `gorm:"foreignKey:StatusID"`
-	Invoices []Invoice `gorm:"foreignKey:StatusID"`
+	RentalRoomInvoices []RentalRoomInvoice `gorm:"foreignKey:StatusID"`
 }

@@ -1,7 +1,7 @@
 import { RequestTypeInterface } from "./IRequestTypes";
 import { RolesInterface } from "./IRoles";
 import { TitlePrefix } from "./ITitlePrefix";
-import { IJobPosition } from "./IJobPosition";
+import { JobPositionInterface } from "./IJobPosition";
 
 export interface UserInterface {
     ID?: number;
@@ -20,7 +20,7 @@ export interface UserInterface {
     RoleID?: number;
     Role?: RolesInterface;
     JobPositionID?: number;
-    JobPosition?: IJobPosition;
+    JobPosition?: JobPositionInterface;
     Password?: string;
     Profile_Image?: File;
     Token?: string;

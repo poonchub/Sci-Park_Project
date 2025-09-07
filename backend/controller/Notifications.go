@@ -43,7 +43,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 		Count(&taskCount)
 
 	db.Model(&entity.Notification{}).
-		Where("is_read = ? AND invoice_id != 0 AND user_id = ?", false, userID).
+		Where("is_read = ? AND rental_room_invoice_id != 0 AND user_id = ?", false, userID).
 		Count(&invoiceCount)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -97,7 +97,7 @@ func GetNotificationByInvoiceAndUser(c *gin.Context) {
 	db := config.DB()
 
 	var notifications entity.Notification
-	err := db.Where("invoice_id = ? AND user_id = ?", taskID, userID).First(&notifications).Error
+	err := db.Where("rental_room_invoice_id = ? AND user_id = ?", taskID, userID).First(&notifications).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
@@ -112,7 +112,7 @@ func CreateNotification(c *gin.Context) {
 	var notificationInput struct {
 		RequestID uint
 		TaskID    uint
-		InvoiceID uint
+		RentalRoomInvoiceID uint
 	}
 	if err := c.ShouldBindJSON(&notificationInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -266,9 +266,9 @@ func CreateNotification(c *gin.Context) {
 			"count":   1,
 			"data":    noti,
 		})
-	case notificationInput.InvoiceID != 0:
-		var invoice entity.Invoice
-		if err := db.First(&invoice, notificationInput.InvoiceID).Error; err != nil {
+	case notificationInput.RentalRoomInvoiceID != 0:
+		var invoice entity.RentalRoomInvoice
+		if err := db.First(&invoice, notificationInput.RentalRoomInvoiceID).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified invoice was not found."})
 			return
 		}
@@ -284,7 +284,7 @@ func CreateNotification(c *gin.Context) {
 		// สร้าง Notification สำหรับ customer
 		noti := entity.Notification{
 			IsRead:    false,
-			InvoiceID: notificationInput.InvoiceID,
+			RentalRoomInvoiceID: notificationInput.RentalRoomInvoiceID,
 			UserID:    customer.ID,
 		}
 		if err := db.Create(&noti).Error; err != nil {
@@ -296,7 +296,7 @@ func CreateNotification(c *gin.Context) {
 		if invoice.CreaterID != customer.ID {
 			notiForUser := entity.Notification{
 				IsRead:    true,
-				InvoiceID: notificationInput.InvoiceID,
+				RentalRoomInvoiceID: notificationInput.RentalRoomInvoiceID,
 				UserID:    invoice.CreaterID,
 			}
 			if err := db.Create(&notiForUser).Error; err != nil {
@@ -314,7 +314,7 @@ func CreateNotification(c *gin.Context) {
 			"data":    createdNotifications,
 		})
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id or task_id."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id or task_id or rental_room_invoice_id."})
 		return
 	}
 }

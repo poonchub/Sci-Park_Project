@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Invoice struct {
+type RentalRoomInvoice struct {
 	gorm.Model
 	InvoiceNumber string		`valid:"required~InvoiceNumber is required"`
 	IssueDate     time.Time		`valid:"required~IssueDate is required"`
@@ -23,7 +23,7 @@ type Invoice struct {
 	Creater       User 	`gorm:"foreignKey:CreaterID" valid:"-"`
 	CustomerID    uint	`valid:"required~CustomerID is required"`
 	Customer      User           `gorm:"foreignKey:CustomerID" valid:"-"`
-	Items         []InvoiceItem  `gorm:"foreignKey:InvoiceID" valid:"-"`
-	Payments      *Payment       `gorm:"foreignKey:InvoiceID" valid:"-"`
-	Notifications []Notification `gorm:"foreignKey:InvoiceID" valid:"-"`
+	Items         []RentalRoomInvoiceItem  `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
+	Payments      *Payment       `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
+	Notifications []Notification `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
 }

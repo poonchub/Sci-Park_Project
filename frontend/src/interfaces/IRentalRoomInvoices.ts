@@ -1,11 +1,11 @@
-import { InvoiceItemInterface } from "./IInvoiceItems";
+import { RentalRoomInvoiceItemInterface } from "./IRentalRoomInvoiceItems";
 import { NotificationsInterface } from "./INotifications";
 import { PaymentInterface } from "./IPayments";
 import { PaymentStatusInterface } from "./IPaymentStatuses";
 import { RoomsInterface } from "./IRooms";
 import { UserInterface } from "./IUser";
 
-export interface InvoiceInterface {
+export interface RentalRoomInvoiceInterface {
     ID?:    number;
     UpdatedAt?:     number;
     InvoiceNumber?: string;
@@ -22,7 +22,7 @@ export interface InvoiceInterface {
     Creater?:       UserInterface;
     CustomerID?:    number;
     Customer?:      UserInterface;
-    Items?:         InvoiceItemInterface[];
+    Items?:         RentalRoomInvoiceItemInterface[];
     Payments?:      PaymentInterface;
     Notifications?: NotificationsInterface[];
 }

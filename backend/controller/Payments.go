@@ -208,7 +208,7 @@ func ListInvoicePaymentsByDateRange(c *gin.Context) {
 	}
 
 	query := db.
-		Where("invoice_id > 0").
+		Where("rental_room_invoice_id > 0").
 		Where("status_id IN (?, ?)", statusAwaitingReceipt.ID, statusPaid.ID).
 		Order("created_at ASC")
 
@@ -258,7 +258,7 @@ func CreatePayment(c *gin.Context) {
 	amountStr := c.PostForm("Amount")
 	payerIDStr := c.PostForm("PayerID")
 	bookingRoomIDStr := c.PostForm("BookingRoomID")
-	invoiceIDStr := c.PostForm("InvoiceID")
+	invoiceIDStr := c.PostForm("RentalRoomInvoiceID")
 
 	// แปลง string เป็นค่าที่ต้องการ
 	amount, err := strconv.ParseFloat(amountStr, 64)
@@ -309,7 +309,7 @@ func CreatePayment(c *gin.Context) {
 		}
 		invoiceID = uint(invID)
 
-		var invoice entity.Invoice
+		var invoice entity.RentalRoomInvoice
 		if err := db.First(&invoice, invoiceID).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "invoice not found"})
 			return
@@ -362,7 +362,7 @@ func CreatePayment(c *gin.Context) {
 		StatusID:      status.ID,
 		PayerID:       uint(payerID),
 		BookingRoomID: bookingRoomID,
-		InvoiceID:     invoiceID,
+		RentalRoomInvoiceID:     invoiceID,
 	}
 
 	if ok, err := govalidator.ValidateStruct(&payment); !ok {
@@ -386,7 +386,7 @@ func CreatePayment(c *gin.Context) {
 		}
 	}
 	if invoiceID != 0 {
-		if err := db.Where("payer_id = ? AND invoice_id = ?", payment.PayerID, payment.InvoiceID).
+		if err := db.Where("payer_id = ? AND rental_room_invoice_id = ?", payment.PayerID, payment.RentalRoomInvoiceID).
 			First(&existing).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "Payment already exists for this invoice."})
 			return

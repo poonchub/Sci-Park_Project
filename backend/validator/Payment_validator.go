@@ -18,11 +18,11 @@ func ValidatePayment(m *entity.Payment) error {
 
 	db := config.DB()
 
-	if m.BookingRoomID != 0 && m.InvoiceID != 0 {
-		return errors.New("BookingRoomID and InvoiceID cannot both be set, only one is allowed")
+	if m.BookingRoomID != 0 && m.RentalRoomInvoiceID != 0 {
+		return errors.New("BookingRoomID and RentalRoomInvoiceID cannot both be set, only one is allowed")
 	}
-	if m.BookingRoomID == 0 && m.InvoiceID == 0 {
-		return errors.New("Either BookingRoomID or InvoiceID must be set")
+	if m.BookingRoomID == 0 && m.RentalRoomInvoiceID == 0 {
+		return errors.New("Either BookingRoomID or RentalRoomInvoiceID must be set")
 	}
 
 	var rejectedStatus entity.PaymentStatus

@@ -6,14 +6,14 @@ type Notification struct{
 	gorm.Model
 	IsRead   	bool
 
-	RequestID 	uint	`valid:"required~RequestID is required"`
+	RequestID 	uint	
     Request   	MaintenanceRequest	`gorm:"foreignKey:RequestID" valid:"-"`
 
-	TaskID 		uint   	`valid:"required~TaskID is required"`  
+	TaskID 		uint   	
     Task   		MaintenanceTask	`gorm:"foreignKey:TaskID" valid:"-"`
 
-	InvoiceID	uint  	`valid:"required~InvoiceID is required"`
-	Invoice  	Invoice	`gorm:"foreignKey:InvoiceID" valid:"-"`
+	RentalRoomInvoiceID	uint  	
+	RentalRoomInvoice  	RentalRoomInvoice	`gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
 
 	UserID 		uint	`valid:"required~UserID is required"`
 	User        User    `gorm:"foreignKey:UserID" valid:"-"`

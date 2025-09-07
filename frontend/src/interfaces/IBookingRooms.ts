@@ -1,26 +1,44 @@
-import { RoomsInterface } from "./IRooms";
-import { TimeSlotsInterface } from "./ITimeSlot";
-import { UserInterface } from "./IUser";
 import { AdditionalInfo } from "./IAdditionalInfo";
-import { BookingDateInterface } from "./IBookingDate";
+import { RoomsInterface } from "./IRooms";
+import { UserInterface } from "./IUser";
 
 export interface BookingRoomsInterface {
-  [x: string]: any;
-  CreatedAt: string;
-  purpose: any;
-  BookingDates: BookingDateInterface[];
-  TypeID: number;
-  Room: any;
-  Merged_time_slots: any;
-  StatusName: string;
-  User: any;
   ID?: number;
-  Dates?: string[];
-  Date?: string;
-  Purpose?: string;
-  UserID?: number;
-  RoomID?: number;
-  TimeSlotIDs?: number[];  // เปลี่ยนชื่อให้ตรงกับ backend
-  AdditionalInfo?: AdditionalInfo;
-}
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  DeletedAt?: string | null;
 
+  RoomID?: number;
+  UserID?: number;
+
+  Room?: RoomsInterface;
+  User?: UserInterface;
+
+  Purpose?: string;                 // ใช้ตัวใหญ่ให้สม่ำเสมอ
+  AdditionalInfo?: AdditionalInfo | string;
+
+  BookingDates?: { Date: string }[];
+  Merged_time_slots?: { start_time: string; end_time: string }[];
+
+  StatusName?: string;
+
+  // บาง API อาจคืน key เล็ก
+  purpose?: string;
+  Date?: string;
+
+  // เผื่อคุณใช้สรุป payment ในหน้า UI
+  Payment?: {
+    id?: number;
+    status?:
+      | "paid"
+      | "unpaid"
+      | "refunded"
+      | "submitted"
+      | "pending payment"
+      | "pending verification";
+    amount?: number;
+    paymentDate?: string;
+    note?: string;
+    slipImages?: string[];
+  };
+}

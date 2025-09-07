@@ -907,10 +907,10 @@ function AcceptWork() {
     const handleClickCheck = (data: MaintenanceTasksInterface) => {
         if (data) {
             const encodedId = Base64.encode(String(data.RequestID));
-            const taskID = data?.ID;
-            const userID = Number(localStorage.getItem("userId"));
+            // const taskID = data?.ID;
+            // const userID = Number(localStorage.getItem("userId"));
 
-            handleUpdateNotification(userID, true, undefined, taskID, undefined);
+            // handleUpdateNotification(userID, true, undefined, taskID, undefined);
             navigate(`/maintenance/check-requests?request_id=${encodeURIComponent(encodedId)}`);
         }
     };

@@ -34,7 +34,7 @@ const ManagerRoutes = (): RouteObject => {
             },
             {
                 path: "/room-booking-form",
-                element: <RoomBookingForm roomsOfSameType={[]} />
+                element: <RoomBookingForm />
             },
             {
                 path: "/my-booking-room",

@@ -1,5 +1,5 @@
 import { BookingRoomsInterface } from "./IBookingRooms"
-import { InvoiceInterface } from "./IInvoices"
+import { RentalRoomInvoiceInterface } from "./IRentalRoomInvoices"
 import { PaymentStatusInterface } from "./IPaymentStatuses"
 import { UserInterface } from "./IUser"
 
@@ -17,8 +17,8 @@ export interface PaymentInterface {
     Approver?:      UserInterface
     BookingRoomID?: number
     BookingRoom?:   BookingRoomsInterface
-    InvoiceID?:     number
-    Invoice?:       InvoiceInterface
+    RentalRoomInvoiceID?:     number
+    RentalRoomInvoice?:       RentalRoomInvoiceInterface
     StatusID?:      number
     Status?:        PaymentStatusInterface
 }

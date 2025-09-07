@@ -1,3 +1,4 @@
+// pages/BookingReview/BookingReview.tsx
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
@@ -9,19 +10,21 @@ import {
   Skeleton,
   Typography,
   Chip,
+  ImageList,
+  ImageListItem,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { Check, ChevronLeft, NotebookText, X } from "lucide-react";
+import { Check, ChevronLeft, NotebookText } from "lucide-react";
 
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
 import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import BookingStepper from "../../components/BookingStepper/BookingStepper";
 import { getDisplayStatus, getNextAction } from "../../utils/bookingFlow";
-import { ImageList, ImageListItem } from "@mui/material"; // ถ้าจะแสดงสลิปแบบกริดในหน้ารายละเอียด
+import type { PaymentStatus as StepperPaymentStatus } from "../../components/BookingStepper/BookingStepper";
+
 import {
   GetBookingRoomById,
   ApproveBookingRoom,
@@ -29,132 +32,52 @@ import {
   CompleteBookingRoom,
   ApprovePayment,
   RejectPayment,
-
 } from "../../services/http";
-import { CheckCircle } from "@mui/icons-material";
 import UploadSlipButton from "../../components/UploadSlipButton/UploadSlipButton";
 
-
-const bookingStatuses = [
-  { ID: 1, Name: "Pending" },
-  { ID: 2, Name: "Confirmed" },
-  { ID: 3, Name: "Payment" },
-  { ID: 4, Name: "Completed" },
-  { ID: 5, Name: "Cancelled" }
-];
-// import { ApproveBooking, RejectBooking } from "../../services/http"; // ไว้ต่อ API จริง
-
-// ---------- MOCK SWITCH ----------
-const USE_MOCK = false;
-
-// ---------- Types (ยืดหยุ่นรองรับ mock + ของจริง) ----------
+// ---------- Types ----------
 type BookingLike = {
   ID: number;
   CreatedAt?: string;
   Room?: { RoomNumber?: string | number; Floor?: { Number?: number } };
   BookingDates?: { Date: string }[];
   Merged_time_slots?: { start_time: string; end_time: string }[];
-  StatusName?: string; // "pending" | "confirmed" | "cancelled" | "completed"
+  StatusName?: string;
   Purpose?: string;
   purpose?: string;
   User?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+  Payments?: Array<{
+    ID?: number;
+    SlipPath?: string;
+    Note?: string;
+    Amount?: number;
+    PaymentDate?: string;
+    Status?: { Name?: string };
+    Invoice?: { InvoiceType?: string; TotalAmount?: number };
+  }>;
   Payment?: {
-
-    id?: number;  // ✅ เพิ่มตรงนี้
-    status?: "paid" | "unpaid" | "refunded" | "submitted" | "pending payment" | undefined;
-    date?: string;
-    method?: string;
-    ref?: string;
+    id?: number;
+    status?:
+      | "paid"
+      | "unpaid"
+      | "refunded"
+      | "submitted"
+      | "pending verification"
+      | "pending payment";
     slipImages?: string[];
-
-
+    note?: string;
+    amount?: number;
+    paymentDate?: string;
   };
-
   AdditionalInfo?: { SetupStyle?: string; Equipment?: string[]; AdditionalNote?: string };
 };
+type PaymentObj = NonNullable<BookingLike["Payment"]>;
+type PaymentStatus = NonNullable<PaymentObj["status"]>;
 
-// ---------- Minimal mocks ----------
-const BOOKING_MOCKS: BookingLike[] = [
-  {
-    ID: 101,
-    CreatedAt: "2025-08-25T09:00:00Z",
-    Room: { RoomNumber: "A-201", Floor: { Number: 2 } },
-    BookingDates: [{ Date: "2025-08-30" }],
-    Merged_time_slots: [
-      { start_time: "09:00", end_time: "10:00" },
-      { start_time: "10:00", end_time: "11:00" },
-    ],
-    StatusName: "pending",
-    Purpose: "Team sync",
-    User: { FirstName: "Alice", LastName: "Wong", EmployeeID: "EMP001" },
-    Payment: { status: "unpaid" },
-    AdditionalInfo: {
-      SetupStyle: "U-shape",
-      Equipment: ["Projector", "Whiteboard"],
-      AdditionalNote: "Need HDMI cable",
-    },
-  },
-  {
-    ID: 102,
-    CreatedAt: "2025-08-24T13:20:00Z",
-    Room: { RoomNumber: "B-305", Floor: { Number: 3 } },
-    BookingDates: [{ Date: "2025-08-29" }],
-    Merged_time_slots: [{ start_time: "13:00", end_time: "15:00" }],
-    StatusName: "confirmed",
-    Purpose: "Client meeting",
-    User: { FirstName: "Bob", LastName: "Lee", EmployeeID: "EMP002" },
-    Payment: { status: "paid", date: "2025-08-24", method: "QR", ref: "PAY-102" },
-    AdditionalInfo: { SetupStyle: "Classroom", Equipment: ["TV"] },
-  },
-  {
-    ID: 103,
-    CreatedAt: "2025-08-23T08:10:00Z",
-    Room: { RoomNumber: "C-101", Floor: { Number: 1 } },
-    BookingDates: [{ Date: "2025-08-28" }, { Date: "2025-08-29" }],
-    Merged_time_slots: [{ start_time: "14:00", end_time: "17:00" }],
-    StatusName: "cancelled",
-    Purpose: "Workshop",
-    User: { FirstName: "Cara", LastName: "Ng", EmployeeID: "EMP003" },
-    Payment: { status: "refunded", date: "2025-08-24", method: "Credit", ref: "PAY-103" },
-    AdditionalInfo: { SetupStyle: "Theater", Equipment: ["Mic", "Speakers"] },
-  },
-  {
-    ID: 106,
-    CreatedAt: "2025-08-19T09:00:00Z",
-    Room: { RoomNumber: "E-402", Floor: { Number: 4 } },
-    BookingDates: [{ Date: "2025-08-26" }],
-    Merged_time_slots: [{ start_time: "16:00", end_time: "18:00" }],
-    StatusName: "completed",
-    Purpose: "Board review",
-    User: { FirstName: "Frank", LastName: "Lim", EmployeeID: "EMP006" },
-    Payment: { status: "paid", date: "2025-08-19", method: "Cash" },
-  },
-];
-
-const findMockById = (id: number) => BOOKING_MOCKS.find((b) => Number(b.ID) === Number(id)) || null;
-
-
-
-// ---------- Stepper logic ----------
-const STEPS = ["Requested", "Approved", "Payment", "Completed"] as const;
-function getActiveStep(statusName?: string, paymentStatus?: string) {
-  const s = (statusName || "").toLowerCase();
-  const pay = (paymentStatus || "").toLowerCase();
-
-  if (s === "cancelled") return -1;
-
-  if (s === "pending") return 0;
-  if (s === "confirmed") {
-    if (pay === "submitted" || pay === "pending verification") return 2; // ⬅ ไป Payment Review
-    return 1; // แค่ Approved
-  }
-  if (s === "completed") return 3;
-
-  if (pay === "paid") return 2;
-
-  return 0;
+// ---------- Helpers ----------
+function prefixImage(url: string) {
+  return url.startsWith("http") ? url : `http://localhost:8000${url}`;
 }
-
 
 function PaymentChip({ status }: { status?: string }) {
   const st = (status || "unpaid").toLowerCase();
@@ -162,10 +85,18 @@ function PaymentChip({ status }: { status?: string }) {
     st === "paid"
       ? { label: "Paid", color: "#16a34a", bg: "#dcfce7" }
       : st === "refunded"
-        ? { label: "Refunded", color: "#0ea5e9", bg: "#e0f2fe" }
-        : { label: "Unpaid", color: "#ef4444", bg: "#fee2e2" };
+      ? { label: "Refunded", color: "#0ea5e9", bg: "#e0f2fe" }
+      : st === "submitted" || st === "pending verification"
+      ? { label: "Submitted", color: "#b45309", bg: "#fef3c7" }
+      : st === "pending payment"
+      ? { label: "Pending Payment", color: "#6b7280", bg: "#f3f4f6" }
+      : { label: "Unpaid", color: "#ef4444", bg: "#fee2e2" };
+
   return (
-    <Chip label={meta.label} sx={{ color: meta.color, bgcolor: meta.bg, fontWeight: 700, borderRadius: 2 }} />
+    <Chip
+      label={meta.label}
+      sx={{ color: meta.color, bgcolor: meta.bg, fontWeight: 700, borderRadius: 2 }}
+    />
   );
 }
 
@@ -188,24 +119,119 @@ function StatusChip({ statusName }: { statusName?: string }) {
       }}
     >
       <Icon size={18} strokeWidth={2} />
-      <Typography variant="body2" fontWeight={700}>{cfg.label}</Typography>
+      <Typography variant="body2" fontWeight={700}>
+        {cfg.label}
+      </Typography>
     </Box>
   );
 }
 
-// ---------- Page (โครง Maintenance → BookingReview) ----------
+// ✅ แปลงสถานะไปเป็นชนิดที่ BookingStepper รองรับ
+type PaymentSummary = NonNullable<BookingLike["Payment"]>;
+function toStepperPaymentStatus(raw?: PaymentStatus): StepperPaymentStatus {
+  const s = (raw || "").toLowerCase();
+  switch (s) {
+    case "paid":
+      return "paid";
+    case "refunded":
+      return "refunded";
+    case "submitted":
+      return "submitted";
+    case "pending verification":
+      return "pending verification";
+    case "pending payment":
+      return "pending payment";
+    case "unpaid":
+    default:
+      return "pending payment";
+  }
+}
+
+// ---------- Multi-installments ----------
+type InstallmentStep = {
+  key: string; // 'deposit' | 'final' | 'addon' | 'payment-#1' ...
+  label: string; // 'Deposit' | 'Final Payment' | 'Add-on' | 'Payment #1'
+  status: StepperPaymentStatus; // ใช้สถานะที่ stepper รองรับ
+  slipCount: number;
+  paidCount: number;
+  paymentIds: number[];
+};
+
+function mapPaymentStatusFromRecord(p?: BookingLike["Payments"][number]): StepperPaymentStatus {
+  const s = (p?.Status?.Name || "").toLowerCase();
+  if (s.includes("approve") || s === "paid") return "paid";
+  if (s.includes("pending")) return "pending verification";
+  if (s.includes("reject")) return "pending payment";
+  if (p?.SlipPath) return "submitted";
+  return "pending payment";
+}
+
+function labelByInvoiceType(t?: string, i?: number) {
+  const key = (t || "").toLowerCase();
+  if (key === "deposit") return "Deposit";
+  if (key === "final" || key === "final payment") return "Final Payment";
+  if (key === "addon" || key === "add-on") return "Add-on";
+  return `Payment #${(i ?? 0) + 1}`;
+}
+
+function buildInstallments(booking?: BookingLike): InstallmentStep[] {
+  if (!booking?.Payments?.length) return [];
+  const groups: Record<string, InstallmentStep> = {};
+
+  booking.Payments.forEach((p, idx) => {
+    const type = p?.Invoice?.InvoiceType;
+    const key = (type || `payment-${idx + 1}`).toLowerCase();
+    const label = labelByInvoiceType(type, idx);
+    const st = mapPaymentStatusFromRecord(p);
+
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        label,
+        status: "pending payment",
+        slipCount: 0,
+        paidCount: 0,
+        paymentIds: [],
+      };
+    }
+    const g = groups[key];
+
+    if (p?.SlipPath) g.slipCount += 1;
+    if (st === "paid") g.paidCount += 1;
+    g.paymentIds.push(p?.ID || 0);
+
+    // ระดับความเข้มของสถานะ: paid > pending verification/submitted > pending payment
+    if (st === "paid") g.status = "paid";
+    else if (["pending verification", "submitted"].includes(st) && g.status !== "paid") {
+      g.status = st as StepperPaymentStatus;
+    }
+  });
+
+  return Object.values(groups);
+}
+
+function combineOverallPaymentStatus(installments: InstallmentStep[]): StepperPaymentStatus {
+  if (!installments.length) return "pending payment";
+  if (installments.some((i) => i.status === "pending verification" || i.status === "submitted")) {
+    // มีงวดที่กำลังตรวจ/เพิ่งส่งสลิป
+    return "submitted";
+  }
+  if (installments.some((i) => i.status !== "paid")) {
+    // ยังมีงวดที่ยังไม่จ่ายครบ
+    return "pending payment";
+  }
+  // ทุกงวดจ่ายครบ
+  return "paid";
+}
+
+// ---------- Page ----------
 export default function BookingReview() {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const fromSource = new URLSearchParams(location.search).get("source") || "";
+  const fromSource = new URLSearchParams(search).get("source") || "";
 
   const encoded = new URLSearchParams(search).get("booking_id") || "";
-  let bookingId = NaN;
-  try {
-    bookingId = Number(Base64.decode(encoded));
-  } catch {
-    bookingId = Number(encoded);
-  }
+  const bookingId = Number.isNaN(Number(encoded)) ? Number(Base64.decode(encoded)) : Number(encoded);
 
   const [booking, setBooking] = useState<BookingLike | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,13 +239,7 @@ export default function BookingReview() {
     { type: "warning" | "error" | "success"; message: string }[]
   >([]);
 
-  const [openApprove, setOpenApprove] = useState(false);
-  const [openReject, setOpenReject] = useState(false);
-  // const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
-  // ✅ ตรวจ role
-  const role = localStorage.getItem("role"); // "admin", "manager", "user"
-  console.log("Role:", role);
-
+  const role = localStorage.getItem("role"); // "Admin" | "Manager" | "User"
 
   useEffect(() => {
     (async () => {
@@ -229,91 +249,115 @@ export default function BookingReview() {
           setBooking(null);
           return;
         }
+        const b: BookingLike = await GetBookingRoomById(bookingId);
 
-        const b = await GetBookingRoomById(bookingId);
-        console.log("Raw API response:", b);
+        // ----- หา payment ล่าสุด ถ้ามี -----
+        const latest = b?.Payments?.length ? b.Payments[b.Payments.length - 1] : undefined;
 
-        // 🔹 เตรียม slipImages จาก array Payments ก่อน
-        let slipImages: string[] = [];
-        if (b?.Payments?.length) {
-          slipImages = b.Payments
-            .filter((p: any) => p.SlipPath)
-            .map((p: any) =>
-              p.SlipPath.startsWith("http")
-                ? p.SlipPath
-                : `http://localhost:8000${p.SlipPath}`
-            );
-        }
+        // สร้าง slipImages
+        const slipFromArray =
+          b?.Payments?.filter((p) => !!p.SlipPath).map((p) => prefixImage(p.SlipPath!)) || [];
+        const slipFromSummary = b?.Payment?.slipImages || [];
+        const slipImages = slipFromArray.length ? slipFromArray : slipFromSummary;
 
-        // 🔹 สร้าง/แก้ PaymentSummary ให้แน่ใจว่ามี id, status, slipImages
-        const firstPay = b?.Payments?.[0];
+        // ค่าจากสถานะล่าสุด
+        const statusFromLatest = (latest?.Status?.Name?.toLowerCase() ||
+          undefined) as PaymentStatus | undefined;
+
+        // เลือกสถานะที่เหมาะสม
+        const normalizedStatus: PaymentStatus =
+          (b?.Payment?.status as PaymentStatus | undefined) ??
+          statusFromLatest ??
+          (slipImages.length ? "submitted" : "pending payment");
+
+        // note / amount / paymentDate
+        const note = b?.Payment?.note ?? latest?.Note ?? undefined;
+        const amount =
+          typeof b?.Payment?.amount === "number"
+            ? b.Payment!.amount
+            : typeof latest?.Amount === "number"
+            ? latest!.Amount
+            : undefined;
+        const paymentDate = b?.Payment?.paymentDate ?? latest?.PaymentDate ?? undefined;
+
+        // ✅ normalize ให้มี payment summary เสมอ
         b.Payment = {
-          id: firstPay?.ID || b?.Payment?.id || 0,
-          status:
-            b?.Payment?.status ||
-            (slipImages.length > 0 ? "submitted" : "unpaid"),
-          slipImages: slipImages.length > 0
-            ? slipImages
-            : (b?.Payment?.slipImages || []),
+          id: latest?.ID ?? b?.Payment?.id,
+          status: normalizedStatus,
+          slipImages,
+          note,
+          amount,
+          paymentDate,
         };
 
-        console.log("Normalized Payment:", b.Payment);
-
         setBooking(b);
-        console.log("display:", getDisplayStatus(b));
       } finally {
         setLoading(false);
       }
     })();
-  }, [bookingId]);
-
-
+  }, [bookingId, search]);
 
   const statusName = booking?.StatusName || "pending";
-  const paymentStatus = booking?.Payment?.status;
-  const activeStep = useMemo(() => getActiveStep(statusName, paymentStatus), [statusName, paymentStatus]);
-  const isCancelled = statusName.toLowerCase() === "cancelled";
-  const next = useMemo(() => booking ? getNextAction(booking) : null, [booking]);
-  const PrimaryIcon = next?.icon;
 
+  // ✅ ผูก payment summary ตัวเดียว
+  const payment: PaymentSummary = booking?.Payment ?? {};
+
+  // ✅ สร้างงวดการจ่าย + สถานะรวมของการจ่าย
+  const installments = useMemo(() => buildInstallments(booking || undefined), [booking]);
+  const overallPaymentStatus: StepperPaymentStatus = useMemo(
+    () => combineOverallPaymentStatus(installments),
+    [installments]
+  );
+
+  // ใช้สถานะรวมไปแสดงใน Stepper
+  const paymentStatusForStepper: StepperPaymentStatus = overallPaymentStatus;
+
+  const next = useMemo(() => (booking ? getNextAction(booking) : null), [booking]);
 
   const refreshBooking = async () => {
-    if (booking) {
-      const bookingId = booking.ID;
-      const updatedBooking = await GetBookingRoomById(bookingId);
-      setBooking(updatedBooking);
-    }
-  };
-
-  // Actions (hook API จริงภายหลัง)
-  const handleApprove = async () => {
-    setOpenApprove(false);
-    try {
-      await ApproveBookingRoom(bookingId);
-      setAlerts((p) => [...p, { type: "success", message: "Approved booking" }]);
-      const b = await GetBookingRoomById(bookingId);
-      const refreshed = await GetBookingRoomById(bookingId);
-      console.log("Refreshed booking:", refreshed);
-      setBooking(b);
-    } catch {
-      setAlerts((p) => [...p, { type: "error", message: "Approve failed" }]);
-    }
-  };
-
-  const handleReject = async (note?: string) => {
-    setOpenReject(false);
-    try {
-      await RejectBookingRoom(bookingId, note);
-      setAlerts((p) => [...p, { type: "success", message: "Rejected booking" }]);
-      const b = await GetBookingRoomById(bookingId);
-      setBooking(b);
-    } catch {
-      setAlerts((p) => [...p, { type: "error", message: "Reject failed" }]);
-    }
+    if (!booking) return;
+    const updated = await GetBookingRoomById(booking.ID);
+    setBooking(updated);
   };
 
   const handleBack = () => navigate(-1);
 
+  const handleNextAction = async (
+    key: "approve" | "reject" | "approvePayment" | "rejectPayment" | "complete"
+  ) => {
+    try {
+      switch (key) {
+        case "approve":
+          await ApproveBookingRoom(bookingId);
+          setAlerts((p) => [...p, { type: "success", message: "Approved booking" }]);
+          break;
+        case "reject":
+          await RejectBookingRoom(bookingId, undefined);
+          setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
+          break;
+        case "approvePayment":
+          if (!payment?.id) throw new Error("No payment id");
+          await ApprovePayment(payment.id);
+          setAlerts((p) => [...p, { type: "success", message: "Payment approved" }]);
+          break;
+        case "rejectPayment":
+          if (!payment?.id) throw new Error("No payment id");
+          await RejectPayment(payment.id);
+          setAlerts((p) => [...p, { type: "warning", message: "Payment rejected" }]);
+          break;
+        case "complete":
+          await CompleteBookingRoom(bookingId);
+          setAlerts((p) => [...p, { type: "success", message: "Booking marked completed" }]);
+          break;
+      }
+      const refreshed = await GetBookingRoomById(bookingId);
+      setBooking(refreshed);
+    } catch {
+      setAlerts((p) => [...p, { type: "error", message: `Action ${key} failed` }]);
+    }
+  };
+
+  // ---------- UI ----------
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: 3 }}>
@@ -322,10 +366,13 @@ export default function BookingReview() {
       </Container>
     );
   }
+
   if (!booking) {
     return (
       <Container maxWidth="md" sx={{ py: 3 }}>
-        <Typography variant="h6" fontWeight={700}>Booking not found</Typography>
+        <Typography variant="h6" fontWeight={700}>
+          Booking not found
+        </Typography>
         <Button sx={{ mt: 2 }} onClick={handleBack} variant="outlined">
           <ChevronLeft size={18} />
           <Typography sx={{ ml: 0.5 }}>Back</Typography>
@@ -334,64 +381,13 @@ export default function BookingReview() {
     );
   }
 
-  const handleNextAction = async (
-    key: "approve" | "reject" | "approvePayment" | "rejectPayment" | "complete" | "payment"
-  ) => {
-    try {
-      switch (key) {
-        case "approve":
-          await ApproveBookingRoom(bookingId);
-          setAlerts((p) => [...p, { type: "success", message: "Approved booking" }]);
-          break;
-
-        case "reject":
-          await RejectBookingRoom(bookingId, undefined);
-          setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
-          break;
-
-        case "approvePayment":
-          console.log(booking?.Payment);
-          if (!booking?.Payment?.id) throw new Error("No payment id");
-          await ApprovePayment(booking.Payment.id);
-          setAlerts((p) => [...p, { type: "success", message: "Payment approved" }]);
-          break;
-
-        case "rejectPayment":
-          if (!booking?.Payment?.id) throw new Error("No payment id");
-          await RejectPayment(booking.Payment.id);
-          setAlerts((p) => [...p, { type: "warning", message: "Payment rejected" }]);
-          break;
-
-        case "complete":
-          await CompleteBookingRoom(bookingId);
-          setAlerts((p) => [...p, { type: "success", message: "Booking marked completed" }]);
-          break;
-        case "payment":
-          return { key: "complete", label: "Complete", icon: CheckCircle }; // << ตรงนี้ต้องมี
-      }
-
-      // ✅ refresh booking ทุกครั้งหลัง action
-      const refreshed = await GetBookingRoomById(bookingId);
-      setBooking(refreshed);
-
-    } catch (err) {
-      console.error(err);
-      setAlerts((p) => [...p, { type: "error", message: `Action ${key} failed` }]);
-    }
-  };
-
-
-
-
-
-
   return (
     <Box className="booking-review-page">
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
       <Container maxWidth="xl" sx={{ padding: "0px 0px !important" }}>
         <Grid container spacing={3}>
-          {/* Header เหมือน Maintenance */}
+          {/* Header */}
           <Grid container className="title-box" direction={"row"} size={{ xs: 5 }} sx={{ gap: 1 }}>
             <NotebookText size={26} />
             <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
@@ -407,17 +403,38 @@ export default function BookingReview() {
             </Box>
           </Grid>
 
-          {/* แถบสถานะด้านบน (Status + Payment + Stepper) */}
+          {/* Status Bar */}
           <Grid size={{ xs: 12 }}>
             <Card sx={{ p: 2, borderRadius: 2 }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid size={{ xs: 12, md: "auto" }} display="flex" gap={1} alignItems="center">
                   <StatusChip statusName={statusName} />
-                  <PaymentChip status={paymentStatus} />
+                  <PaymentChip status={paymentStatusForStepper} />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <BookingStepper statusName={statusName} paymentStatus={paymentStatus} />
-
+                  <BookingStepper statusName={statusName} paymentStatus={paymentStatusForStepper} />
+                  {/* แสดงสถานะของแต่ละงวด */}
+                  {installments.length > 0 && (
+                    <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      {installments.map((it) => {
+                        const color =
+                          it.status === "paid"
+                            ? { fg: "#16a34a", bg: "#dcfce7" }
+                            : it.status === "refunded"
+                            ? { fg: "#0ea5e9", bg: "#e0f2fe" }
+                            : it.status === "submitted" || it.status === "pending verification"
+                            ? { fg: "#b45309", bg: "#fef3c7" }
+                            : { fg: "#6b7280", bg: "#f3f4f6" };
+                        return (
+                          <Chip
+                            key={it.key}
+                            label={`${it.label}: ${it.status}`}
+                            sx={{ bgcolor: color.bg, color: color.fg, fontWeight: 700, borderRadius: 2 }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
                 </Grid>
                 <Grid size={{ xs: 12, md: "auto" }}>
                   <Typography variant="body2" color="text.secondary">
@@ -428,18 +445,11 @@ export default function BookingReview() {
             </Card>
           </Grid>
 
-          {/* Main Data Card เหมือนฝั่ง Maintenance */}
+          {/* Main */}
           <Grid size={{ xs: 12 }}>
             <Card className="data-card" sx={{ width: "100%", borderRadius: 2 }}>
               <CardContent>
-                <Grid
-                  container
-                  spacing={{ xs: 3 }}
-                  sx={{
-                    px: { xs: 2, md: 6 },
-                    py: { xs: 1, md: 4 },
-                  }}
-                >
+                <Grid container spacing={{ xs: 3 }} sx={{ px: { xs: 2, md: 6 }, py: { xs: 1, md: 4 } }}>
                   <Grid size={{ xs: 12 }}>
                     <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
                       Information
@@ -459,11 +469,11 @@ export default function BookingReview() {
                       <Typography>
                         {booking.BookingDates?.length
                           ? booking.BookingDates.map((d, i) => (
-                            <span key={`d-${i}`}>
-                              {dateFormat(d.Date)}
-                              {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
-                            </span>
-                          ))
+                              <span key={`d-${i}`}>
+                                {dateFormat(d.Date)}
+                                {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
+                              </span>
+                            ))
                           : "-"}
                       </Typography>
                     </Box>
@@ -473,9 +483,10 @@ export default function BookingReview() {
                       <Typography>
                         {booking.Merged_time_slots?.length
                           ? `${timeFormat(booking.Merged_time_slots[0].start_time)} - ${timeFormat(
-                            booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
-                          )} (${booking.Merged_time_slots.length} slot${booking.Merged_time_slots.length > 1 ? "s" : ""
-                          })`
+                              booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
+                            )} (${booking.Merged_time_slots.length} slot${
+                              booking.Merged_time_slots.length > 1 ? "s" : ""
+                            })`
                           : "-"}
                       </Typography>
                     </Box>
@@ -507,69 +518,78 @@ export default function BookingReview() {
                         <li>Note: {booking.AdditionalInfo?.AdditionalNote || "-"}</li>
                       </Box>
                     </Box>
-
-
-
-
                   </Grid>
 
-                  {booking?.Payment?.slipImages?.length ? (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography fontWeight={600} sx={{ mb: 1 }}>
-                        Payment Slip
-                      </Typography>
+                  {/* ===== Payment Section ===== */}
+                  <Grid size={{ xs: 12 }} sx={{ mt: { xs: 2, md: 3 } }}>
+                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600, mb: { xs: 1, md: 2 } }}>
+                      Payment
+                    </Typography>
 
-                      {/* แสดงสลิป */}
-                      <ImageList cols={2} gap={12} rowHeight={500} sx={{ m: 0 }}>
-                        {booking.Payment.slipImages.map((src: string, i: number) => {
-                          // ถ้า path เป็น relative → prefix
-                          const fullUrl = src.startsWith("http") ? src : `http://localhost:8000${src}`;
-                          return (
-                            <ImageListItem
-                              key={`inline-slip-${i}`}
-                              sx={{
-                                borderRadius: 2,
-                                overflow: "hidden",
-                              }}
-                            >
-                              <img
-                                src={fullUrl}
-                                alt={`slip-${i}`}
-                                loading="lazy"
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "contain", // 👈 จะโชว์เต็มรูป ไม่โดนตัด
-                                  backgroundColor: "#f9f9f9", // 👈 เติม bg ให้ดูสะอาด
-                                  borderRadius: "8px",
-                                }}
-                              />
-                            </ImageListItem>
-                          );
-                        })}
-                      </ImageList>
+                    <Grid container spacing={{ xs: 3 }} alignItems="flex-start">
+                      {/* Left: Slip */}
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography fontWeight={600} sx={{ mb: 1 }}>
+                          Payment Slip
+                        </Typography>
 
+                        {payment?.slipImages?.length ? (
+                          <ImageList cols={1} gap={12} rowHeight={420} sx={{ m: 0 }}>
+                            {payment.slipImages.map((src: string, i: number) => (
+                              <ImageListItem key={`inline-slip-${i}`} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                                <img
+                                  src={prefixImage(src)}
+                                  alt={`slip-${i}`}
+                                  loading="lazy"
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                              </ImageListItem>
+                            ))}
+                          </ImageList>
+                        ) : (
+                          <Typography color="text.secondary">ยังไม่มีสลิป</Typography>
+                        )}
+                      </Grid>
 
+                      {/* Right: Payment details */}
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography fontWeight={600} sx={{ mb: 1 }}>
+                          Payment Details
+                        </Typography>
 
+                        <Grid container spacing={{ xs: 2 }}>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography color="text.secondary">Amount</Typography>
+                            <Typography>
+                              {typeof payment?.amount === "number" ? `฿ ${payment.amount.toFixed(2)}` : "-"}
+                            </Typography>
+                          </Grid>
 
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography color="text.secondary">Transfer Date</Typography>
+                            <Typography>{payment?.paymentDate ? dateFormat(payment.paymentDate) : "-"}</Typography>
+                          </Grid>
 
-                    </Box>
-                  ) : null}
+                          <Grid size={{ xs: 12 }}>
+                            <Typography color="text.secondary">Note</Typography>
+                            <Typography sx={{ whiteSpace: "pre-wrap" }}>{payment?.note || "-"}</Typography>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
 
-
-
-
-
-
-                  {/* ถ้ามาจาก mybooking → ให้ upload slip */}
-                  {fromSource === "my" && booking?.Payment?.status === "pending payment" && !booking?.Payment?.slipImages?.length ? (
+                  {/* Actions */}
+                  {fromSource === "my" &&
+                  payment?.status === "pending payment" &&
+                  !payment?.slipImages?.length ? (
                     <Grid size={{ xs: 12 }}>
-                      <Box sx={{
-                        display: "flex",
-                        justifyContent: "flex-end", // 👉 ชิดขวาสุด
-                        gap: 2,
-                        mt: 2,
-                      }}>
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
                         <UploadSlipButton
                           bookingId={booking.ID}
                           payerId={Number(localStorage.getItem("userId"))}
@@ -577,7 +597,7 @@ export default function BookingReview() {
                             setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
                             refreshBooking();
                           }}
-                          onError={(err) => {
+                          onError={() => {
                             setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
                           }}
                         />
@@ -586,15 +606,7 @@ export default function BookingReview() {
                   ) : getDisplayStatus(booking) === "payment review" ? (
                     role === "Admin" || role === "Manager" ? (
                       <Grid size={{ xs: 12 }}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end", // 👉 ชิดขวาสุด
-                            gap: 2,
-                            mt: 2,
-                          }}
-                        >
-                          {/* ปุ่ม Reject */}
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
                           <Button
                             variant="contained"
                             color="error"
@@ -603,8 +615,6 @@ export default function BookingReview() {
                           >
                             Reject Payment
                           </Button>
-
-                          {/* ปุ่ม Approve */}
                           <Button
                             variant="contained"
                             color="primary"
@@ -615,20 +625,23 @@ export default function BookingReview() {
                           </Button>
                         </Box>
                       </Grid>
-                    ) : null   // ❌ ถ้าไม่ใช่ admin/manager → ไม่เห็นปุ่ม
+                    ) : null
                   ) : (
-                    <Grid
-                      size={{ xs: 12 }}
-                      display="flex"
-                      justifyContent="flex-end"
-                      gap={1}
-                      sx={{ mt: 2 }}
-                    >
+                    <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 2 }}>
                       {next && (
                         <Button
                           variant="contained"
                           color="primary"
-                          onClick={() => handleNextAction(next.key as "approve" | "approvePayment" | "complete" | "reject" | "rejectPayment" | "payment")}
+                          onClick={() =>
+                            handleNextAction(
+                              next.key as
+                                | "approve"
+                                | "approvePayment"
+                                | "complete"
+                                | "reject"
+                                | "rejectPayment"
+                            )
+                          }
                         >
                           <Check size={16} />
                           <Typography sx={{ ml: 0.5 }}>{next.label}</Typography>
@@ -636,44 +649,12 @@ export default function BookingReview() {
                       )}
                     </Grid>
                   )}
-
-
-
                 </Grid>
               </CardContent>
-
             </Card>
           </Grid>
-
         </Grid>
-
       </Container>
-
-
-
-
-
-      {/* Dialogs */}
-      <ConfirmDialog
-        open={openApprove}
-        setOpenConfirm={setOpenApprove}
-        handleFunction={() => handleApprove()}
-        title="Confirm Booking Approval"
-        message="Are you sure you want to approve this booking?"
-        buttonActive={false}
-      />
-      <ConfirmDialog
-        open={openReject}
-        setOpenConfirm={setOpenReject}
-        handleFunction={(note) => handleReject(note)}
-        title="Confirm Booking Rejection"
-        message="Are you sure you want to reject this booking? This action cannot be undone."
-        showNoteField
-        buttonActive={false}
-      />
-
-
-
     </Box>
   );
 }

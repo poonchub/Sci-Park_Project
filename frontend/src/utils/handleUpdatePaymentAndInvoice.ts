@@ -1,4 +1,4 @@
-import { InvoiceInterface } from "../interfaces/IInvoices";
+import { RentalRoomInvoiceInterface } from "../interfaces/IRentalRoomInvoices";
 import { PaymentInterface } from "../interfaces/IPayments";
 import { UpdateInvoiceByID, UpdatePaymentByID } from "../services/http";
 
@@ -34,6 +34,6 @@ export const handleUpdatePaymentAndInvoice = async (
 
     await UpdatePaymentByID(paymentId, formData);
 
-    const invoiceData: InvoiceInterface = { StatusID: statusID };
+    const invoiceData: RentalRoomInvoiceInterface = { StatusID: statusID };
     await UpdateInvoiceByID(invoiceId, invoiceData);
 };
