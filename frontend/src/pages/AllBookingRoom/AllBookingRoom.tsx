@@ -20,7 +20,7 @@ import { isAdmin, isManager } from "../../routes";
 import { Base64 } from "js-base64";
 
 // ====== ของ Booking ======
-import { CreateRoomBookingInvoice, GetRoomBookingInvoiceByID, ListBookingRooms, RefundedBookingRoom } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
+import { CreateRoomBookingInvoice, CreateRoomBookingInvoiceItem, GetRoomBookingInvoiceByID, ListBookingRooms, RefundedBookingRoom } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
 // import { ApproveBooking, RejectBooking } from "../../services/http";
 import { TextField } from "../../components/TextField/TextField";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -51,9 +51,10 @@ import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import RefundButton from "../../components/RefundButton/RefundButton";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
-import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoombookingInvoice";
 import { createRoot } from "react-dom/client";
 import RoomBookingInvoicePDF from "../../components/InvoicePDF/RoomBookingInvoicePDF";
+import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
+import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoomBookingInvoice";
 
 
 
@@ -546,14 +547,47 @@ function AllBookingRoom() {
                     const userId = Number(localStorage.getItem("userId"))
                     const invoiceData: RoomBookingInvoiceInterface = {
                         InvoiceNumber: invoiceNumber,
-                        // IssueDate:  "",
-                        // DueDate: "",
+                        IssueDate:  "2025-08-31T16:59:59.999Z",
+                        DueDate: "",
                         BookingRoomID: resApprove.data.ID,
                         ApproverID: userId,
                         CustomerID: resApprove.data.UserID
                     }
 
                     const resInvoice = await CreateRoomBookingInvoice(invoiceData)
+
+                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = [
+                        {
+                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
+                            Quantity: 1,
+                            UnitPrice: 10000,
+                            Amount: 10000,
+                        },
+                        {
+                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
+                            Quantity: 1,
+                            UnitPrice: 10000,
+                            Amount: 10000,
+                        },
+                    ]
+
+                    const updatedItems = invoiceItemData.map((item) => ({
+                        ...item,
+                        RoomBookingInvoiceID: resInvoice.data.ID,
+                    }));
+
+                    const results = await Promise.all(
+                        updatedItems.map((item) =>
+                            CreateRoomBookingInvoiceItem(item).catch((err) => {
+                                return { error: err, item };
+                            })
+                        )
+                    );
+
+                    const failedItems = results.filter((r: any) => r?.error);
+                    if (failedItems.length > 0) {
+                        console.warn("⚠️ Some invoice items failed:", failedItems);
+                    }
 
                     await handleUploadPDF(resInvoice.data.ID);
 
@@ -717,9 +751,9 @@ function AllBookingRoom() {
 
     return (
         <Box className="all-maintenance-request-page">
-            <Button 
+            <Button
                 variant="contained"
-                onClick={() => handleUploadPDF(4)}
+                onClick={() => handleUploadPDF(2)}
             >
                 Click
             </Button>

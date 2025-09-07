@@ -20,5 +20,5 @@ type RoomBookingInvoice struct {
 	Approver      User `gorm:"foreignKey:ApproverID" valid:"-"`
 	CustomerID    uint
 	Customer      User                    `gorm:"foreignKey:CustomerID" valid:"-"`
-	Items         []RentalRoomInvoiceItem `gorm:"foreignKey:RentalRoomInvoiceID" valid:"-"`
+	Items         []RoomBookingInvoiceItem `gorm:"foreignKey:RoomBookingInvoiceID" valid:"-"`
 }

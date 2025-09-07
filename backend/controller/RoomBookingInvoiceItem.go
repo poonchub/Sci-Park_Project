@@ -10,7 +10,7 @@ import (
 
 // POST /room-booking-invoice-item
 func CreateRoomBookingInvoiceItem(c *gin.Context) {
-	var invoiceItem entity.RentalRoomInvoiceItem
+	var invoiceItem entity.RoomBookingInvoiceItem
 
 	db := config.DB()
 	if err := c.ShouldBindJSON(&invoiceItem); err != nil {
@@ -23,20 +23,22 @@ func CreateRoomBookingInvoiceItem(c *gin.Context) {
 	// 	return
 	// }
 
-	var invoice entity.RentalRoomInvoice
-	if err := db.First(&invoice, invoiceItem.RentalRoomInvoiceID).Error; err != nil {
+	var invoice entity.RoomBookingInvoice
+	if err := db.First(&invoice, invoiceItem.RoomBookingInvoiceID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice not found"})
 		return
 	}
 
-	invoiceItemData := entity.RentalRoomInvoiceItem{
+	invoiceItemData := entity.RoomBookingInvoiceItem{
 		Description: invoiceItem.Description,
+		Quantity: invoiceItem.Quantity,
+		UnitPrice: invoiceItem.UnitPrice,
 		Amount:     invoiceItem.Amount,
-		RentalRoomInvoiceID:  invoiceItem.RentalRoomInvoiceID,
+		RoomBookingInvoiceID:  invoiceItem.RoomBookingInvoiceID,
 	}
 
 	var exiting entity.RentalRoomInvoiceItem
-	if err := db.Where("description = ? and rental_room_invoice_id = ?", invoiceItem.Description, invoiceItem.RentalRoomInvoiceID).First(&exiting).Error; err == nil {
+	if err := db.Where("description = ? and room_booking_invoice_id = ?", invoiceItem.Description, invoiceItem.RoomBookingInvoiceID).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice item already exists"})
 		return
 	}

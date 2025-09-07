@@ -417,7 +417,6 @@ function RoomRentalSpace() {
         }
 
         try {
-            console.log("invoiceFormData: ", invoiceFormData)
             const resInvoice = await CreateInvoice(invoiceFormData);
 
             const updatedItems = invoiceItemFormData.map((item) => ({
