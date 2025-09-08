@@ -6,6 +6,6 @@ export interface RoomBookingInvoiceItemInterface {
     Quantity?:      number;
     UnitPrice?:     number;
     Amount?:        number;
-    RentalRoomInvoiceID?:     number;
-    RentalRoomInvoice?:       RoomBookingInvoiceInterface;
+    RoomBookingInvoiceID?:     number;
+    RoomBookingInvoice?:       RoomBookingInvoiceInterface;
 }

@@ -181,7 +181,7 @@ const ApexInvoiceRevenueBarChart = (props: {
         legend: { show: false },
     };
 
-    const chartSeries = [{ name: "Meeting Rooms", data: bookingSeries }];
+    const chartSeries = [{ name: "Total Amount", data: bookingSeries }];
 
     return (
         <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={height} />

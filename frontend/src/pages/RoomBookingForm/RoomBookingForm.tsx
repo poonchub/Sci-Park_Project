@@ -64,6 +64,7 @@ import {
   GetAllRoomLayouts,
   GetOrganizationInfo,
   CreateRoomBookingInvoice,
+  ListPaymentOptions,
 } from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -78,6 +79,7 @@ import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
+import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 
 /* ========= Config / URL helper ========= */
 const API_BASE =
@@ -190,6 +192,16 @@ interface BookedDate {
 }
 type BookedDates = Record<string, BookedDate[]>;
 
+type AddressProps = {
+  AddressNumber?: string;
+  Street?: string;
+  SubDistrict?: string;
+  District?: string;
+  Province?: string;
+  PostalCode?: string;
+  TaxID?: string;
+}
+
 /* ========= Component ========= */
 const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
@@ -234,10 +246,22 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [isEmployee, setIsEmployee] = useState(false);
   const isHourlyAllowed = isEmployee;
   const [orgInfo, setOrgInfo] = useState<OrganizationInfoInterface | null>(null);
+  const [errors, setErrors] = useState<AddressProps>({});
 
   /* Alerts helper */
   const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
     setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+  };
+
+  const getPaymentOption = async () => {
+    try {
+      const resOptions = await ListPaymentOptions();
+      if (resOptions) {
+        setPaymentOptions(resOptions);
+      }
+    } catch (error) {
+      console.error("Error fetching payment options:", error);
+    }
   };
 
   /* Load org info (contact card) */
@@ -252,6 +276,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           return;
         }
         setOrgInfo(data);
+        getPaymentOption()
       } catch (err) {
         console.error("Load org info error:", err);
         handleSetAlert("error", "เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน");
@@ -1102,6 +1127,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         additionalNote,
       }),
       Dates: selectedDates,
+      DepositAmount: calculatedPrice / 2,
+      DiscountAmount: 0,
+      TotalAmount: calculatedPrice,
+      Address: `${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
+      TaxID: addressFormData?.TaxID,
+      PaymentOptionID: selectedOption
     };
 
     try {
@@ -1126,18 +1157,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
       }
 
-      const invoiceData: RoomBookingInvoiceInterface = {
-        DepositAmount: calculatedPrice / 2,
-        DiscountAmount: 0,
-        TotalAmount: calculatedPrice,
-        Address: `${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
-        CustomerID: userId,
-        TaxID: addressFormData?.TaxID,
-        BookingRoomID: resBooking.data.booking_id
-      }
-      console.log("invoiceData: ", invoiceData)
-      await CreateRoomBookingInvoice(invoiceData)
-
       await fetchBookingMapOnly(roomData.ID as number);
 
       setSelectedDates([]);
@@ -1146,6 +1165,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       const val = Number(selectedRoomId);
       setSelectedRoomId(val);
       fetchBookingMapOnly(val);
+      setOpenPopupInvoiceCondition(false)
 
       handleSetAlert("success", "Booking created successfully.");
     } catch (err) {
@@ -1153,6 +1173,43 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       handleSetAlert("error", "An unexpected error occurred during create booking.");
     }
   };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!addressFormData?.AddressNumber || !addressFormData?.AddressNumber.trim()) {
+      newErrors.AddressNumber = "Please enter your house or building number";
+    }
+
+    if (!addressFormData?.Street || !addressFormData?.Street.trim()) {
+      newErrors.Street = "Please enter your street name";
+    }
+
+    if (!addressFormData?.SubDistrict || !addressFormData?.SubDistrict.trim()) {
+      newErrors.SubDistrict = "Please enter your sub-district";
+    }
+
+    if (!addressFormData?.District || !addressFormData?.District.trim()) {
+      newErrors.District = "Please enter your district";
+    }
+
+    if (!addressFormData?.Province || !addressFormData?.Province.trim()) {
+      newErrors.Province = "Please enter your province";
+    }
+
+    if (!addressFormData?.PostalCode || !/^\d{5}$/.test(addressFormData.PostalCode)) {
+      newErrors.PostalCode = "Please enter a valid 5-digit postal code";
+    }
+
+    if (!addressFormData?.TaxID || !/^\d{13}$/.test(addressFormData.TaxID)) {
+      newErrors.TaxID = "Please enter a valid 13-digit Tax ID";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
 
   /* Header data */
   const roomDataHeader = {
@@ -1186,20 +1243,15 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
   }, [roomType]);
 
-  const [roomBookingInvoiceFormData, setRoomBookingInvoiceFormData] = useState<RoomBookingInvoiceInterface | null>();
-  const [addressFormData, setAddressFormdata] = useState<{
-    AddressNumber?: string;
-    Street?: string;
-    SubDistrict?: string;
-    District?: string;
-    Province?: string;
-    PostalCode?: string;
-    TaxID?: string;
-  }>()
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOptionInterface[]>([])
+  const [addressFormData, setAddressFormdata] = useState<AddressProps>()
+  const [selectedOption, setSelectedOption] = useState<number>(0)
   const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
+  const [checked, setChecked] = useState(false);
+
 
   const serviceConditions = {
-    title: "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
+    title: "โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน",
     points: [
       "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
       "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
@@ -1286,12 +1338,54 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               </Typography>
             );
           })}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={checked}
+                onChange={(e) => {
+                  setChecked(e.target.checked);
+                }}
+              />
+            }
+            label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
+          />
+          <Grid size={{ xs: 12, md: 12 }}>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: 600 }}
+              gutterBottom
+            >
+              Payment Option
+            </Typography>
+            <FormControl>
+              <Select
+                displayEmpty
+                defaultValue={0}
+                value={selectedOption || 0}
+                onChange={(e) => setSelectedOption(Number(e.target.value))}
+                sx={{ width: '260px'}}
+              >
+                <MenuItem value={0}>
+                  <em>{"-- Select Payment Option --"}</em>
+                </MenuItem>
+                {paymentOptions.map((item, index) => {
+                  return (
+                    <MenuItem key={index} value={item.ID} >
+                      {item.OptionName}
+                    </MenuItem>
+                  );
+                }
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => {
               handleSubmitBooking()
             }}
+            disabled={!checked || selectedOption === 0}
             variant="contained"
             startIcon={<Check size={18} />}
           >
@@ -1801,71 +1895,126 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       className="readonly-field"
                     />
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <TextField
-                        label="Address Number"
-                        fullWidth
-                        value={addressFormData?.AddressNumber}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, AddressNumber: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="Street"
-                        fullWidth
-                        value={addressFormData?.Street}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, Street: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="Sub District"
-                        fullWidth
-                        value={addressFormData?.SubDistrict}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, SubDistrict: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="District"
-                        fullWidth
-                        value={addressFormData?.District}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, District: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="Province"
-                        fullWidth
-                        value={addressFormData?.Province}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, Province: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="Postal Code"
-                        fullWidth
-                        value={addressFormData?.PostalCode}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, PostalCode: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                      <TextField
-                        label="Tax ID."
-                        fullWidth
-                        value={addressFormData?.TaxID}
-                        onChange={(e) => setAddressFormdata((prev) => ({
-                          ...prev, TaxID: e.target.value
-                        }))}
-                        variant="outlined"
-                      />
-                    </Box>
+                    <Grid container spacing={1} size={{ xs: 12 }}>
+                      {/* Address Number */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Address Number
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.AddressNumber || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))
+                          }
+                          placeholder="Enter your house/building number"
+                          error={!!errors.AddressNumber}
+                          helperText={errors.AddressNumber}
+                        />
+                      </Grid>
+
+                      {/* Street */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Street
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.Street || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))
+                          }
+                          placeholder="Enter street name"
+                          error={!!errors.Street}
+                          helperText={errors.Street}
+                        />
+                      </Grid>
+
+                      {/* Sub-district */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Sub-district
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.SubDistrict || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))
+                          }
+                          placeholder="Enter sub-district"
+                          error={!!errors.SubDistrict}
+                          helperText={errors.SubDistrict}
+                        />
+                      </Grid>
+
+                      {/* District */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          District
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.District || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))
+                          }
+                          placeholder="Enter district"
+                          error={!!errors.District}
+                          helperText={errors.District}
+                        />
+                      </Grid>
+
+                      {/* Province */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Province
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.Province || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, Province: e.target.value }))
+                          }
+                          placeholder="Enter province"
+                          error={!!errors.Province}
+                          helperText={errors.Province}
+                        />
+                      </Grid>
+
+                      {/* Postal Code */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Postal Code
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.PostalCode || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))
+                          }
+                          placeholder="Enter postal code"
+                          error={!!errors.PostalCode}
+                          helperText={errors.PostalCode}
+                        />
+                      </Grid>
+
+                      {/* Tax ID */}
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Tax ID
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.TaxID || ""}
+                          onChange={(e) =>
+                            setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))
+                          }
+                          placeholder="Enter tax ID"
+                          error={!!errors.TaxID}
+                          helperText={errors.TaxID}
+                        />
+                      </Grid>
+                    </Grid>
                   </Box>
                 </Paper>
               </Grid>
@@ -2008,7 +2157,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => setOpenPopupInvoiceCondition(true)}
+                  onClick={() => {
+                    if (!validateForm()) {
+                      return;
+                    }
+                    setOpenPopupInvoiceCondition(true)
+                  }}
                   disabled={
                     loading ||
                     calculatedPrice == null ||

@@ -120,7 +120,7 @@ export default function InvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
 
                 // อัปโหลดไป backend
                 await UploadInvoicePDF(formData);
-                console.log("Upload success");
+                console.log("Upload invoice pdf file success");
 
                 // เรียก callback หลัง upload เสร็จ
                 if (onComplete) onComplete();

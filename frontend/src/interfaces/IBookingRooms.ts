@@ -1,4 +1,5 @@
 import { AdditionalInfo } from "./IAdditionalInfo";
+import { PaymentOptionInterface } from "./IPaymentOption";
 import { RoomsInterface } from "./IRooms";
 import { UserInterface } from "./IUser";
 
@@ -41,4 +42,12 @@ export interface BookingRoomsInterface {
     note?: string;
     slipImages?: string[];
   };
+
+  DepositAmount?:   number;
+  DiscountAmount?:  number;
+  TotalAmount?:     number;
+  TaxID?:          string;
+  Address?:        string;
+  PaymentOptionID?: number;
+  PaymentOption?:   PaymentOptionInterface;
 }

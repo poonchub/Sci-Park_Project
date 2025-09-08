@@ -111,6 +111,8 @@ func SetupDatabase() {
 		&entity.ServiceAreaTask{},
 		&entity.RoomBookingInvoice{},
 		&entity.RoomBookingInvoiceItem{},
+		&entity.PaymentType{},
+		&entity.PaymentOption{},
 	)
 
 	if err != nil {
@@ -1117,6 +1119,29 @@ func SeedDatabase() {
 	for _, status := range paymentStatuses {
 		db.FirstOrCreate(&status, entity.PaymentStatus{
 			Name: status.Name,
+		})
+	}
+
+	// PaymentTypes
+	paymentTypes := []entity.PaymentType{
+		{TypeName: "Deposit"},
+		{TypeName: "Balance"},
+		{TypeName: "Full"},
+	}
+	for _, ptype := range paymentTypes {
+		db.FirstOrCreate(&ptype, entity.PaymentType{
+			TypeName: ptype.TypeName,
+		})
+	}
+
+	// PaymentOptions
+	paymentOptions := []entity.PaymentOption{
+		{OptionName: "Deposit"},
+		{OptionName: "Full"},
+	}
+	for _, op := range paymentOptions {
+		db.FirstOrCreate(&op, entity.PaymentOption{
+			OptionName: op.OptionName,
 		})
 	}
 

@@ -22,6 +22,8 @@ type BookingRoom struct {
 	AdditionalInfo string        `gorm:"type:text" json:"additional_info"`
 	BookingDates   []BookingDate `gorm:"foreignKey:BookingRoomID"`
 	RoomBookingInvoice *RoomBookingInvoice `gorm:"foreignKey:BookingRoomID"`
+	PaymentOptionID	uint
+	PaymentOption	PaymentOption `gorm:"foreignKey:PaymentOptionID" valid:"-"`
 
 	// 🔹 เพิ่มเพื่อรองรับเดดไลน์ 7 วันและเงื่อนไขเลื่อน/คืน
 	ConfirmedAt    *time.Time
@@ -29,6 +31,12 @@ type BookingRoom struct {
 	EventEndAt     time.Time
 	IsFullyPrepaid bool `gorm:"default:false"` // จ่ายครบก่อนเริ่มงาน
 	CanReschedule  bool `gorm:"default:false"` // เปิดสิทธิ์เลื่อนเมื่อ fully prepaid
+	
+	DepositAmount  float64
+	DiscountAmount float64
+	TotalAmount    float64
+	TaxID          string
+	Address        string
 }
 
 

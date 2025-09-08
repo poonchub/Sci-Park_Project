@@ -20,7 +20,7 @@ import { isAdmin, isManager } from "../../routes";
 import { Base64 } from "js-base64";
 
 // ====== ของ Booking ======
-import { ListBookingRooms, RefundedBookingRoom } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
+import { CreateRoomBookingInvoice, CreateRoomBookingInvoiceItem, GetRoomBookingInvoiceByID, ListBookingRooms, RefundedBookingRoom } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
 // import { ApproveBooking, RejectBooking } from "../../services/http";
 import { TextField } from "../../components/TextField/TextField";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -30,7 +30,7 @@ import { CalendarMonth } from "@mui/icons-material";
 import { Select } from "../../components/Select/Select";
 import { getDisplayStatus, getNextAction, ActionKey } from "../../utils/bookingFlow";
 import FinishActionButton from "../../components/FinishActionButton/FinishActionButton";
-import {  normalizeBookingRow } from "../../utils/normalizeBooking";
+import { normalizeBookingRow } from "../../utils/normalizeBooking";
 import {
     GetBookingRooms,
     ApproveBookingRoom,
@@ -49,6 +49,12 @@ import BookingStatusCards from "../../components/BookingStatusCards/BookingStatu
 // import PaymentReviewDialog from "../../components/PaymentReviewDialog/PaymentReviewDialog";
 import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import RefundButton from "../../components/RefundButton/RefundButton";
+import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import PDFPopup from "../../components/PDFPopup/PDFPopup";
+import { createRoot } from "react-dom/client";
+import RoomBookingInvoicePDF from "../../components/InvoicePDF/RoomBookingInvoicePDF";
+import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
+import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoomBookingInvoice";
 
 
 
@@ -99,6 +105,7 @@ function AllBookingRoom() {
     const [openConfirmApprove, setOpenConfirmApprove] = useState(false);
     const [openConfirmReject, setOpenConfirmReject] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BookingRoomsInterface | null>(null);
+    const [roomBookingInvoiceData, setRoomBookingInvoiceData] = useState<RoomBookingInvoiceInterface>()
     // ===== FORCE MOCK (ตั้งเป็น true เพื่อใช้ mock 100%) =====
     // const USE_MOCK = true;
 
@@ -457,7 +464,10 @@ function AllBookingRoom() {
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            onClick={() => handlePrimaryAction("approve", row)}
+                                            onClick={() => {
+                                                setSelectedRow(row);
+                                                setOpenConfirmApprove(true);
+                                            }}
                                         >
                                             Approve
                                         </Button>
@@ -465,7 +475,10 @@ function AllBookingRoom() {
                                     <Tooltip title="Reject">
                                         <Button
                                             variant="outlinedCancel"
-                                            onClick={() => handlePrimaryAction("reject", row)}
+                                            onClick={() => {
+                                                setSelectedRow(row);
+                                                setOpenConfirmReject(true);
+                                            }}
                                         >
                                             Reject
                                         </Button>
@@ -523,12 +536,61 @@ function AllBookingRoom() {
         ];
     };
 
-    const handlePrimaryAction = async (key: ActionKey, row: any) => {
+    const handlePrimaryAction = async (key: ActionKey, row: BookingRoomsInterface, invoiceNumber?: string) => {
         setSelectedRow(row);
         try {
             switch (key) {
                 case "approve":
-                    await ApproveBookingRoom(row.ID);
+                    const resApprove = await ApproveBookingRoom(row.ID);
+                    console.log("resApprove: ", resApprove)
+
+                    const userId = Number(localStorage.getItem("userId"))
+                    const invoiceData: RoomBookingInvoiceInterface = {
+                        InvoiceNumber: invoiceNumber,
+                        IssueDate:  "2025-08-31T16:59:59.999Z",
+                        DueDate: "",
+                        BookingRoomID: resApprove.data.ID,
+                        ApproverID: userId,
+                        CustomerID: resApprove.data.UserID
+                    }
+
+                    const resInvoice = await CreateRoomBookingInvoice(invoiceData)
+
+                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = [
+                        {
+                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
+                            Quantity: 1,
+                            UnitPrice: 10000,
+                            Amount: 10000,
+                        },
+                        {
+                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
+                            Quantity: 1,
+                            UnitPrice: 10000,
+                            Amount: 10000,
+                        },
+                    ]
+
+                    const updatedItems = invoiceItemData.map((item) => ({
+                        ...item,
+                        RoomBookingInvoiceID: resInvoice.data.ID,
+                    }));
+
+                    const results = await Promise.all(
+                        updatedItems.map((item) =>
+                            CreateRoomBookingInvoiceItem(item).catch((err) => {
+                                return { error: err, item };
+                            })
+                        )
+                    );
+
+                    const failedItems = results.filter((r: any) => r?.error);
+                    if (failedItems.length > 0) {
+                        console.warn("⚠️ Some invoice items failed:", failedItems);
+                    }
+
+                    await handleUploadPDF(resInvoice.data.ID);
+
                     break;
 
                 case "approvePayment":
@@ -565,6 +627,25 @@ function AllBookingRoom() {
         }
     };
 
+    const handleUploadPDF = async (invoiceId: number) => {
+        try {
+            const container = document.createElement("div");
+            container.style.display = "none";
+            document.body.appendChild(container);
+
+            const root = createRoot(container);
+
+            const handlePDFCompleted = () => {
+                root.unmount();
+                container.remove();
+            };
+
+            const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
+            root.render(<RoomBookingInvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+        } catch (error) {
+            console.error("🚨 Error creating invoice:", error);
+        }
+    }
 
 
     // const doReject = async (note?: string) => {
@@ -670,22 +751,35 @@ function AllBookingRoom() {
 
     return (
         <Box className="all-maintenance-request-page">
+            <Button
+                variant="contained"
+                onClick={() => handleUploadPDF(2)}
+            >
+                Click
+            </Button>
+
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             {/* Confirm กล่องอนุมัติ/ปฏิเสธ */}
-            <ConfirmDialog
+            <ConfirmDialogRoomBookingInvoice
                 open={openConfirmApprove}
                 setOpenConfirm={setOpenConfirmApprove}
-                handleFunction={() => doApprove()}
+                handleFunction={(invoiceNumber) => handlePrimaryAction("approve", selectedRow!, invoiceNumber)}
                 title="Confirm Booking Approval"
-                message="Approve this booking?" buttonActive={false} />
+                message="Approve this booking?"
+                showInvoiceNumberField
+                buttonActive={false}
+            />
+
             <ConfirmDialog
                 open={openConfirmReject}
                 setOpenConfirm={setOpenConfirmReject}
                 handleFunction={(note) => doReject(note)}
                 title="Confirm Booking Rejection"
                 message="Reject this booking? This action cannot be undone."
-                showNoteField buttonActive={false} />
+                showNoteField
+                buttonActive={false}
+            />
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
