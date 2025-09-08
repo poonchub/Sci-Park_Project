@@ -2768,7 +2768,7 @@ const MyAccount: React.FC = () => {
 
                         <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
                             <Link to="/my-account/edit-profile">
-                                <Button variant="containedBlue">
+                                <Button variant="contained">
                                     <Pencil size={20} />
                                     <Typography variant="textButtonClassic">Edit Profile</Typography>
                                 </Button>
