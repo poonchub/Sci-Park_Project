@@ -46,6 +46,14 @@ function ServiceAreaDetails() {
     const [openSubmitPopup, setOpenSubmitPopup] = useState(false);
     const [isSubmittingSubmit, setIsSubmittingSubmit] = useState(false);
     const [openCancelPopup, setOpenCancelPopup] = useState(false);
+    
+    // Request Cancellation state for Request Owner
+    const [openRequestCancellationPopup, setOpenRequestCancellationPopup] = useState(false);
+    const [isSubmittingCancellationRequest, setIsSubmittingCancellationRequest] = useState(false);
+    
+    // Submit Cancellation state for DocumentOperator
+    const [openSubmitCancellationPopup, setOpenSubmitCancellationPopup] = useState(false);
+    const [isSubmittingCancellation, setIsSubmittingCancellation] = useState(false);
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -64,8 +72,19 @@ function ServiceAreaDetails() {
     const isPending = RequestStatus === "Pending";
     const isApproved = RequestStatus === "Approved";
     const isInProgress = RequestStatus === "In Progress";
+    const isCompleted = RequestStatus === "Completed";
+    const isCancellationInProgress = RequestStatus === "Cancellation In Progress";
+    const isCancellationAssigned = RequestStatus === "Cancellation Assigned";
     const canShowAdminButtons = isAdmin() && isPending;
     const canShowDocumentOperatorButtons = isDocumentOperator() && (isApproved || isInProgress);
+    
+    // ตรวจสอบว่าเป็น User ปกติ (ไม่ใช่ Admin หรือ Operator) และสถานะเป็น Completed
+    const userRole = localStorage.getItem('role') || '';
+    const isRegularUser = userRole === 'User';
+    const canShowCancellationRequestButton = isRegularUser && isCompleted;
+    
+    // ตรวจสอบว่าเป็น DocumentOperator และสถานะเป็น Cancellation In Progress หรือ Cancellation Assigned
+    const canShowCancellationSubmitButton = isDocumentOperator() && (isCancellationInProgress || isCancellationAssigned);
 
     // Fetch service area details by ID
     const getServiceAreaDetails = async () => {
@@ -147,7 +166,7 @@ function ServiceAreaDetails() {
     };
 
     // Handle submit service area
-    const handleSubmitServiceArea = async (data: any) => {
+    const handleSubmitServiceArea = async () => {
         try {
             setIsSubmittingSubmit(true);
             
@@ -198,6 +217,64 @@ function ServiceAreaDetails() {
             setAlerts((prev) => [...prev, { type: "error", message: "Failed to cancel request" }]);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // Handle request cancellation for Request Owner
+    const handleRequestCancellation = () => {
+        setOpenRequestCancellationPopup(true);
+    };
+
+    // Handle request cancellation confirmation for Request Owner
+    const handleRequestCancellationConfirm = async () => {
+        if (!serviceAreaDetails?.RequestNo) return;
+        
+        try {
+            setIsSubmittingCancellationRequest(true);
+            
+            // TODO: เรียก API สำหรับสร้าง CancelRequestServiceArea
+            // await CreateCancelRequestServiceArea(serviceAreaDetails.RequestNo, data);
+            
+            // Refresh data
+            await getServiceAreaDetails();
+            setAlerts((prev) => [...prev, { type: "success", message: "Cancellation request submitted successfully" }]);
+            
+            // ปิด Popup
+            setOpenRequestCancellationPopup(false);
+        } catch (error) {
+            console.error("Error submitting cancellation request:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to submit cancellation request" }]);
+        } finally {
+            setIsSubmittingCancellationRequest(false);
+        }
+    };
+
+    // Handle submit cancellation for DocumentOperator
+    const handleSubmitCancellation = () => {
+        setOpenSubmitCancellationPopup(true);
+    };
+
+    // Handle submit cancellation confirmation for DocumentOperator
+    const handleSubmitCancellationConfirm = async () => {
+        if (!serviceAreaDetails?.RequestNo) return;
+        
+        try {
+            setIsSubmittingCancellation(true);
+            
+            // TODO: เรียก API สำหรับ submit cancellation (อัพเดท status เป็น Successfully Cancelled)
+            // await SubmitCancellation(serviceAreaDetails.RequestNo);
+            
+            // Refresh data
+            await getServiceAreaDetails();
+            setAlerts((prev) => [...prev, { type: "success", message: "Cancellation submitted successfully" }]);
+            
+            // ปิด Popup
+            setOpenSubmitCancellationPopup(false);
+        } catch (error) {
+            console.error("Error submitting cancellation:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to submit cancellation" }]);
+        } finally {
+            setIsSubmittingCancellation(false);
         }
     };
 
@@ -931,6 +1008,38 @@ function ServiceAreaDetails() {
                                                 </Button>
                                             </Box>
                                         )}
+
+                                        {/* Action button for Request Owner when status is Completed */}
+                                        {canShowCancellationRequestButton && (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                {/* Request Cancellation button */}
+                                                <Button 
+                                                    variant="contained" 
+                                                    onClick={handleRequestCancellation}
+                                                    disabled={isSubmittingCancellationRequest}
+                                                    sx={{ px: 4, py: 1 }}
+                                                >
+                                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                    <Typography variant="textButtonClassic">Request Cancellation</Typography>
+                                                </Button>
+                                            </Box>
+                                        )}
+
+                                        {/* Action button for DocumentOperator when status is Cancellation In Progress or Cancellation Assigned */}
+                                        {canShowCancellationSubmitButton && (
+                                            <Box sx={{ gap: 1, display: "flex" }}>
+                                                {/* Submit Cancellation button */}
+                                                <Button 
+                                                    variant="contained" 
+                                                    onClick={handleSubmitCancellation}
+                                                    disabled={isSubmittingCancellation}
+                                                    sx={{ px: 4, py: 1 }}
+                                                >
+                                                    <Send size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                                    <Typography variant="textButtonClassic">Submit Cancellation</Typography>
+                                                </Button>
+                                            </Box>
+                                        )}
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -983,6 +1092,28 @@ function ServiceAreaDetails() {
                 companyName={serviceAreaDetails?.CompanyName}
                 buttonActive={isSubmittingSubmit}
                 requestServiceAreaID={serviceAreaDetails?.RequestNo || 0}
+            />
+
+            {/* Request Cancellation Popup for Request Owner */}
+            <ConfirmDialog
+                open={openRequestCancellationPopup}
+                setOpenConfirm={setOpenRequestCancellationPopup}
+                handleFunction={handleRequestCancellationConfirm}
+                title="Request Service Area Cancellation"
+                message={`Are you sure you want to request cancellation for the service area request for ${serviceAreaDetails?.CompanyName || 'this company'}? Please provide a reason for cancellation.`}
+                buttonActive={isSubmittingCancellationRequest}
+                showNoteField={true}
+            />
+
+            {/* Submit Cancellation Popup for DocumentOperator */}
+            <ConfirmDialog
+                open={openSubmitCancellationPopup}
+                setOpenConfirm={setOpenSubmitCancellationPopup}
+                handleFunction={handleSubmitCancellationConfirm}
+                title="Submit Service Area Cancellation"
+                message={`Are you sure you want to submit the cancellation for the service area request for ${serviceAreaDetails?.CompanyName || 'this company'}? This will mark the cancellation as successfully completed.`}
+                buttonActive={isSubmittingCancellation}
+                showNoteField={false}
             />
         </Box>
     );

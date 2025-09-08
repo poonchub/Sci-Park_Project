@@ -2495,6 +2495,21 @@ async function UpdateServiceAreaDocument(requestServiceAreaID: number, formData:
     }
 }
 
+async function UpdateServiceAreaDocumentForCancellation(requestServiceAreaID: number, formData: FormData): Promise<any> {
+    try {
+        const response = await axiosInstance.put(`/service-area-documents/${requestServiceAreaID}/cancellation`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating service area document for cancellation:", error);
+        throw error;
+    }
+}
+
 async function DeleteServiceAreaDocument(requestServiceAreaID: number): Promise<any> {
     try {
         const response = await axiosInstance.delete(`/service-area-documents/${requestServiceAreaID}`);
@@ -3596,6 +3611,7 @@ export {
     CreateServiceAreaDocument,
     GetServiceAreaDocumentByRequestID,
     UpdateServiceAreaDocument,
+    UpdateServiceAreaDocumentForCancellation,
     DeleteServiceAreaDocument,
 
     // RequestServiceArea

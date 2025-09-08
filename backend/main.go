@@ -235,6 +235,7 @@ func main() {
 		protected.POST("/service-area-documents/:request_service_area_id", controller.CreateServiceAreaDocument)
 		protected.GET("/service-area-documents/:request_service_area_id", controller.GetServiceAreaDocumentByRequestID)
 		protected.PUT("/service-area-documents/:request_service_area_id", controller.UpdateServiceAreaDocument)
+		protected.PUT("/service-area-documents/:request_service_area_id/cancellation", controller.UpdateServiceAreaDocumentForCancellation)
 		protected.DELETE("/service-area-documents/:request_service_area_id", controller.DeleteServiceAreaDocument)
 
 		// RequestServiceArea & AboutCompany
@@ -282,7 +283,7 @@ func main() {
 
 		// RoomBookingInvoices
 		protected.POST("/room-booking-invoice", controller.CreateRoomBookingInvoice)
-		
+
 		// RoomBookingInvoiceItems
 		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
 	}

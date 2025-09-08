@@ -2381,7 +2381,8 @@ const MyAccount: React.FC = () => {
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
                         else if (statusID === 9) statusName = "Cancellation In Progress";
-                        else if (statusID === 10) statusName = "Successfully Cancelled";
+                        else if (statusID === 10) statusName = "Cancellation Assigned";
+                        else if (statusID === 11) statusName = "Successfully Cancelled";
 
                         // Get status config from statusConfig
                         const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
@@ -2610,7 +2611,8 @@ const MyAccount: React.FC = () => {
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
                         else if (statusID === 9) statusName = "Cancellation In Progress";
-                        else if (statusID === 10) statusName = "Successfully Cancelled";
+                        else if (statusID === 10) statusName = "Cancellation Assigned";
+                        else if (statusID === 11) statusName = "Successfully Cancelled";
 
                         // Get status config from statusConfig
                         const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
@@ -2756,7 +2758,7 @@ const MyAccount: React.FC = () => {
         <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
 
             <PDFPopup
-                open={true}
+                open={openPDF}
                 invoice={roomBookingInvoiceFormData}
                 onClose={() => {
                     setOpenPDF(false);

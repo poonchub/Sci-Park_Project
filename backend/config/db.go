@@ -900,22 +900,22 @@ func SeedDatabase() {
 
 	for i := 0; i < 7; i++ {
 		p := entity.Payment{
-			PaymentDate: now.AddDate(0, 0, -i),
-			Amount:      float64(1000 + i*200),
-			SlipPath:    fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
-			Note:        fmt.Sprintf("Payment for Invoice %d", i+3),
-			PayerID:     users[2+i%len(users)].ID,
-			StatusID:    4,
-			RentalRoomInvoiceID:   uint(i + 3),
+			PaymentDate:         now.AddDate(0, 0, -i),
+			Amount:              float64(1000 + i*200),
+			SlipPath:            fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
+			Note:                fmt.Sprintf("Payment for Invoice %d", i+3),
+			PayerID:             users[2+i%len(users)].ID,
+			StatusID:            4,
+			RentalRoomInvoiceID: uint(i + 3),
 		}
 		payments = append(payments, p)
 	}
 	for _, p := range payments {
 		db.FirstOrCreate(&p, entity.Payment{
-			BookingRoomID: p.BookingRoomID,
-			RentalRoomInvoiceID:     p.RentalRoomInvoiceID,
-			PayerID:       p.PayerID,
-			Amount:        p.Amount,
+			BookingRoomID:       p.BookingRoomID,
+			RentalRoomInvoiceID: p.RentalRoomInvoiceID,
+			PayerID:             p.PayerID,
+			Amount:              p.Amount,
 		})
 
 	}
@@ -1097,22 +1097,21 @@ func SeedDatabase() {
 		})
 	}
 
-// PaymentStatus (ใช้ร่วมกันทั้ง Payment และ Invoice)
-paymentStatuses := []entity.PaymentStatus{
-	// ---- สาย Payment (เดิม) ----
-	{Name: "Pending Payment"},      // ยังไม่ได้จ่าย/รอจ่าย
-	{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสลิป
-	{Name: "Awaiting Receipt"},     // ตรวจสลิปแล้ว รอออกใบเสร็จ
-	{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
-	{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัปโหลดใหม่
-	{Name: "Refunded"},             // คืนเงินแล้ว
+	// PaymentStatus (ใช้ร่วมกันทั้ง Payment และ Invoice)
+	paymentStatuses := []entity.PaymentStatus{
+		// ---- สาย Payment (เดิม) ----
+		{Name: "Pending Payment"},      // ยังไม่ได้จ่าย/รอจ่าย
+		{Name: "Pending Verification"}, // จ่ายแล้วแต่รอเจ้าหน้าที่ตรวจสลิป
+		{Name: "Awaiting Receipt"},     // ตรวจสลิปแล้ว รอออกใบเสร็จ
+		{Name: "Paid"},                 // จ่ายแล้วและตรวจสอบเรียบร้อย
+		{Name: "Rejected"},             // สลิปไม่ถูกต้อง / ต้องอัปโหลดใหม่
+		{Name: "Refunded"},             // คืนเงินแล้ว
 
-	// ---- สาย Invoice (ใหม่) ----
-	{Name: "Unpaid"},         // ออกใบแจ้งหนี้แล้วยังไม่ชำระ
-	{Name: "Partially Paid"}, // ชำระมาแล้วบางส่วน
-	{Name: "Overdue"},        // เกินกำหนดชำระ (เช็กด้วย job รายวัน)
-	{Name: "Voided"},         // ยกเลิกใบแจ้งหนี้ (ไม่ใช้เรียกเก็บแล้ว)
-
+		// ---- สาย Invoice (ใหม่) ----
+		{Name: "Unpaid"},         // ออกใบแจ้งหนี้แล้วยังไม่ชำระ
+		{Name: "Partially Paid"}, // ชำระมาแล้วบางส่วน
+		{Name: "Overdue"},        // เกินกำหนดชำระ (เช็กด้วย job รายวัน)
+		{Name: "Voided"},         // ยกเลิกใบแจ้งหนี้ (ไม่ใช้เรียกเก็บแล้ว)
 
 	}
 	for _, status := range paymentStatuses {
@@ -1125,26 +1124,114 @@ paymentStatuses := []entity.PaymentStatus{
 	requestServiceAreas := []entity.RequestServiceArea{
 		{
 			UserID:                             9,
-			RequestStatusID:                    2,
-			PurposeOfUsingSpace:                "Project Alpha",
+			RequestStatusID:                    2, // Pending
+			PurposeOfUsingSpace:                "Project Alpha - AI Research Lab",
 			NumberOfEmployees:                  5,
-			ActivitiesInBuilding:               "Research and Development",
-			SupportingActivitiesForSciencePark: "Collaboration with startups",
-			ServiceRequestDocument:             "/files/service_requests/request1.pdf",
+			ActivitiesInBuilding:               "Research and Development of AI algorithms",
+			SupportingActivitiesForSciencePark: "Collaboration with startups and research institutions",
+			ServiceRequestDocument:             "images/ServiceAreaDocuments/request_3/contracts/contract_0.pdf",
 		},
 		{
 			UserID:                             10,
-			RequestStatusID:                    2,
-			PurposeOfUsingSpace:                "Project Beta",
+			RequestStatusID:                    3, // In Progress
+			PurposeOfUsingSpace:                "Project Beta - Biotech Innovation Center",
 			NumberOfEmployees:                  3,
-			ActivitiesInBuilding:               "Workshop and prototyping",
-			SupportingActivitiesForSciencePark: "Innovation lab support",
-			ServiceRequestDocument:             "/files/service_requests/request2.pdf",
+			ActivitiesInBuilding:               "Workshop and prototyping for biotech products",
+			SupportingActivitiesForSciencePark: "Innovation lab support and mentorship programs",
+			ServiceRequestDocument:             "images/ServiceAreaDocuments/request_4/contracts/contract_0.pdf",
+		},
+		{
+			UserID:                             11,
+			RequestStatusID:                    6, // Completed
+			PurposeOfUsingSpace:                "Project Gamma - Clean Energy Solutions",
+			NumberOfEmployees:                  8,
+			ActivitiesInBuilding:               "Development of renewable energy technologies",
+			SupportingActivitiesForSciencePark: "Supporting green technology startups",
+			ServiceRequestDocument:             "images/ServiceAreaDocuments/request_7/contracts/contract_0.pdf",
+		},
+		{
+			UserID:                             12,
+			RequestStatusID:                    3, // In Progress
+			PurposeOfUsingSpace:                "Project Delta - Fintech Innovation Hub",
+			NumberOfEmployees:                  6,
+			ActivitiesInBuilding:               "Financial technology development and testing",
+			SupportingActivitiesForSciencePark: "Supporting fintech startups and financial innovation",
+			ServiceRequestDocument:             "images/ServiceAreaDocuments/request_8/contracts/contract_0.pdf",
+		},
+		{
+			UserID:                             13,
+			RequestStatusID:                    6, // Completed
+			PurposeOfUsingSpace:                "Project Epsilon - IoT Solutions Lab",
+			NumberOfEmployees:                  4,
+			ActivitiesInBuilding:               "Internet of Things device development and testing",
+			SupportingActivitiesForSciencePark: "Supporting IoT startups and smart city initiatives",
+			ServiceRequestDocument:             "images/ServiceAreaDocuments/request_9/contracts/contract_0.pdf",
 		},
 	}
 	for _, req := range requestServiceAreas {
 		db.FirstOrCreate(&req, entity.RequestServiceArea{
 			UserID: req.UserID,
+		})
+	}
+
+	// Service Area Tasks (สำหรับงานที่ assign ให้ Operator)
+	serviceAreaTasks := []entity.ServiceAreaTask{
+		{
+			UserID:               6, // Operator ID
+			RequestServiceAreaID: 2, // Project Beta (In Progress)
+			Note:                 "Assigned to review and process biotech innovation center setup",
+			IsCancel:             false,
+		},
+		{
+			UserID:               6, // Operator ID
+			RequestServiceAreaID: 4, // Project Delta (In Progress)
+			Note:                 "Assigned to review and process fintech innovation hub setup",
+			IsCancel:             false,
+		},
+		{
+			UserID:               6, // Operator ID
+			RequestServiceAreaID: 1, // Project Alpha (Pending)
+			Note:                 "Assigned to review AI research lab requirements",
+			IsCancel:             false,
+		},
+	}
+	for _, task := range serviceAreaTasks {
+		db.FirstOrCreate(&task, entity.ServiceAreaTask{
+			UserID:               task.UserID,
+			RequestServiceAreaID: task.RequestServiceAreaID,
+		})
+	}
+
+	// Service Area Documents (สำหรับงานที่ Complete แล้ว)
+	serviceAreaDocuments := []entity.ServiceAreaDocument{
+		{
+			RequestServiceAreaID:    3, // Project Gamma (Completed)
+			ServiceContractDocument: "images/ServiceAreaDocuments/request_7/contracts/contract_0.pdf",
+			AreaHandoverDocument:    "images/ServiceAreaDocuments/request_7/handovers/handover_0.pdf",
+			QuotationDocument:       "images/ServiceAreaDocuments/request_7/quotations/quotation_0.pdf",
+			RefundGuaranteeDocument: "images/ServiceAreaDocuments/refund_guarantee_11_1757311043.pdf",
+			ContractNumber:          "SC-2024-001",
+			ContractStartAt:         time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+			ContractEndAt:           time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC),
+			RoomID:                  1,
+			ServiceUserTypeID:       1,
+		},
+		{
+			RequestServiceAreaID:    5, // Project Epsilon (Completed)
+			ServiceContractDocument: "images/ServiceAreaDocuments/request_9/contracts/contract_0.pdf",
+			AreaHandoverDocument:    "images/ServiceAreaDocuments/request_9/handovers/handover_0.pdf",
+			QuotationDocument:       "images/ServiceAreaDocuments/request_9/quotations/quotation_0.pdf",
+			RefundGuaranteeDocument: "images/ServiceAreaDocuments/refund_guarantee_11_1757311043.pdf",
+			ContractNumber:          "SC-2024-002",
+			ContractStartAt:         time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			ContractEndAt:           time.Date(2024, 11, 30, 0, 0, 0, 0, time.UTC),
+			RoomID:                  2,
+			ServiceUserTypeID:       2,
+		},
+	}
+	for _, doc := range serviceAreaDocuments {
+		db.FirstOrCreate(&doc, entity.ServiceAreaDocument{
+			RequestServiceAreaID: doc.RequestServiceAreaID,
 		})
 	}
 

@@ -1,5 +1,6 @@
 export interface ServiceAreaDetailsInterface {
     RequestNo: number;
+    UserID: number;
     RequestedAt: string;
     RequestStatusId: number;
     CompanyName: string;

@@ -305,6 +305,119 @@ func UpdateServiceAreaDocument(c *gin.Context) {
 	})
 }
 
+// UpdateServiceAreaDocumentForCancellation อัปเดต ServiceAreaDocument สำหรับการยกเลิก
+func UpdateServiceAreaDocumentForCancellation(c *gin.Context) {
+	// รับ request_service_area_id จาก path parameter
+	requestServiceAreaIDStr := c.Param("request_service_area_id")
+	requestServiceAreaID, err := strconv.ParseUint(requestServiceAreaIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request_service_area_id"})
+		return
+	}
+
+	// ตรวจสอบว่า ServiceAreaDocument มีอยู่จริงหรือไม่
+	var serviceAreaDocument entity.ServiceAreaDocument
+	if err := config.DB().Where("request_service_area_id = ?", requestServiceAreaID).First(&serviceAreaDocument).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Service area document not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch service area document"})
+		}
+		return
+	}
+
+	// เริ่ม transaction
+	tx := config.DB().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// อัปเดต Contract Number (ถ้ามี)
+	if contractNumber := c.PostForm("contract_number"); contractNumber != "" {
+		serviceAreaDocument.ContractNumber = contractNumber
+	}
+
+	// อัปเดต Contract End Date (ถ้ามี)
+	if contractEndDateStr := c.PostForm("contract_end_date"); contractEndDateStr != "" {
+		if contractEndDate, err := time.Parse("2006-01-02", contractEndDateStr); err == nil {
+			serviceAreaDocument.ContractEndAt = contractEndDate
+		} else {
+			tx.Rollback()
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid contract end date format"})
+			return
+		}
+	}
+
+	// จัดการไฟล์ Refund Guarantee Document
+	if file, header, err := c.Request.FormFile("security_deposit_refund_document"); err == nil {
+		defer file.Close()
+
+		// สร้างโฟลเดอร์ถ้ายังไม่มี
+		uploadDir := "images/ServiceAreaDocuments"
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
+			return
+		}
+
+		// สร้างชื่อไฟล์ใหม่
+		fileExt := path.Ext(header.Filename)
+		fileName := fmt.Sprintf("refund_guarantee_%d_%d%s", requestServiceAreaID, time.Now().Unix(), fileExt)
+		filePath := path.Join(uploadDir, fileName)
+
+		// บันทึกไฟล์
+		if err := c.SaveUploadedFile(header, filePath); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save uploaded file"})
+			return
+		}
+
+		// ลบไฟล์เก่า (ถ้ามี)
+		if serviceAreaDocument.RefundGuaranteeDocument != "" {
+			os.Remove(serviceAreaDocument.RefundGuaranteeDocument)
+		}
+
+		// อัปเดต path ไฟล์ใหม่
+		serviceAreaDocument.RefundGuaranteeDocument = filePath
+	}
+
+	// บันทึกการเปลี่ยนแปลง
+	if err := tx.Save(&serviceAreaDocument).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update service area document"})
+		return
+	}
+
+	// อัปเดตสถานะของ RequestServiceArea เป็น "Successfully Cancelled" (ID: 11)
+	var requestServiceArea entity.RequestServiceArea
+	if err := tx.First(&requestServiceArea, requestServiceAreaID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service area"})
+		return
+	}
+
+	// อัปเดตสถานะเป็น "Successfully Cancelled" (ID: 11)
+	requestServiceArea.RequestStatusID = 11
+	if err := tx.Save(&requestServiceArea).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request service area status"})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Service area document updated successfully for cancellation and status updated to Successfully Cancelled",
+		"data":    serviceAreaDocument,
+	})
+}
+
 // DeleteServiceAreaDocument ลบ ServiceAreaDocument
 func DeleteServiceAreaDocument(c *gin.Context) {
 	requestServiceAreaIDStr := c.Param("request_service_area_id")

@@ -62,8 +62,8 @@ export const statusConfig: Record<string, StatusConfig> = {
         icon: UserCheck
     },
     "Successfully Cancelled": {
-        color: "#6C757D",
-        colorLite: "rgba(108, 117, 125, 0.18)",
+        color: "#DC3545",
+        colorLite: "rgba(220, 53, 70, 0.19)",
         icon: Ban
     },
 };

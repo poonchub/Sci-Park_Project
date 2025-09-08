@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, MenuItem, FormControl, FormHelperText, Typography, Grid, Box } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import './CreateServiceAreaForm.css';
@@ -54,6 +54,14 @@ const CreateServiceAreaForm: React.FC = () => {
   const [user, setUser] = useState<GetUserInterface | null>(null);
   const [aboutCompany, setAboutCompany] = useState<AboutCompanyInterface | null>(null);
   
+  // Refs for scrolling to error fields
+  const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  
+  // Function to set field refs
+  const setFieldRef = useCallback((fieldName: string) => (el: HTMLDivElement | null) => {
+    fieldRefs.current[fieldName] = el;
+  }, []);
+  
   // Initialize interaction tracker
   const { getInteractionCount } = useInteractionTracker({
       pagePath: KEY_PAGES.CREATE_SERVICE_AREA,
@@ -62,6 +70,40 @@ const CreateServiceAreaForm: React.FC = () => {
   
   // Watch all form fields for real-time validation
   const watchedFields = watch();
+
+  // Function to scroll to first error field
+  const scrollToFirstError = () => {
+    // Check for collaboration plan errors first
+    const collaborationPlanErrorKeys = Object.keys(collaborationPlanErrors);
+    if (collaborationPlanErrorKeys.length > 0) {
+      const collaborationElement = fieldRefs.current['CollaborationPlans'];
+      if (collaborationElement) {
+        collaborationElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        return;
+      }
+    }
+
+    // Check for regular form errors
+    const errorFields = Object.keys(errors);
+    if (errorFields.length > 0) {
+      const firstErrorField = errorFields[0];
+      const fieldElement = fieldRefs.current[firstErrorField];
+      if (fieldElement) {
+        fieldElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        // Focus on the input field if possible
+        const inputElement = fieldElement.querySelector('input, textarea, select') as HTMLElement;
+        if (inputElement) {
+          setTimeout(() => inputElement.focus(), 500);
+        }
+      }
+    }
+  };
 
   // Real-time validation for Corporate Registration Number
   useEffect(() => {
@@ -358,8 +400,10 @@ const CreateServiceAreaForm: React.FC = () => {
     const isValid = await trigger(step1Fields);
     
     if (!isValid) {
-      // If validation fails, the form will show red error messages automatically
-      // No need to show alert - just return and let the form display the errors
+      // If validation fails, scroll to first error field
+      setTimeout(() => {
+        scrollToFirstError();
+      }, 100);
       return;
     }
     
@@ -382,6 +426,10 @@ const CreateServiceAreaForm: React.FC = () => {
         type: 'error', 
         message: 'Please fix all validation errors before submitting.' 
       }]);
+      // Scroll to first error field
+      setTimeout(() => {
+        scrollToFirstError();
+      }, 100);
       return;
     }
     
@@ -436,6 +484,10 @@ const CreateServiceAreaForm: React.FC = () => {
           type: 'error', 
           message: 'Please complete all required fields in Service Area Request before submitting.' 
         }]);
+        // Scroll to first error field
+        setTimeout(() => {
+          scrollToFirstError();
+        }, 100);
         return;
       }
     }
@@ -722,7 +774,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Company Name */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('CompanyName')}>
                   <Typography variant="body1" className="title-field">Company Name</Typography>
                   <Controller
                     name="CompanyName"
@@ -760,7 +812,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Corporate Registration Number */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('CorporateRegistrationNumber')}>
                   <Typography variant="body1" className="title-field">Corporate Registration Number</Typography>
                   <Controller
                     name="CorporateRegistrationNumber"
@@ -808,7 +860,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Business Group */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('BusinessGroupID')}>
                   <Typography variant="body1" className="title-field">Business Group</Typography>
                   <Controller
                     name="BusinessGroupID"
@@ -854,7 +906,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Company Size */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('CompanySizeID')}>
                   <Typography variant="body1" className="title-field">Company Size</Typography>
                   <Controller
                     name="CompanySizeID"
@@ -900,7 +952,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Main Services */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('MainServices')}>
                   <Typography variant="body1" className="title-field">Main Services</Typography>
                   <Controller
                     name="MainServices"
@@ -938,7 +990,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Registered Capital */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('RegisteredCapital')}>
                   <Typography variant="body1" className="title-field">Registered Capital (THB)</Typography>
                   <Controller
                     name="RegisteredCapital"
@@ -977,7 +1029,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Hiring Rate */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('HiringRate')}>
                   <Typography variant="body1" className="title-field">Hiring Rate (number of people)</Typography>
                   <Controller
                     name="HiringRate"
@@ -1014,7 +1066,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Research Investment Value */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('ResearchInvestmentValue')}>
                   <Typography variant="body1" className="title-field">Research Investment Value (THB)</Typography>
                   <Controller
                     name="ResearchInvestmentValue"
@@ -1053,7 +1105,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Company Description */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('BusinessDetail')}>
                   <Typography variant="body1" className="title-field">Company Description</Typography>
                   <Controller
                     name="BusinessDetail"
@@ -1093,7 +1145,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Three Year Growth Forecast */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('ThreeYearGrowthForecast')}>
                   <Typography variant="body1" className="title-field">Three Year Growth Forecast</Typography>
                   <Controller
                     name="ThreeYearGrowthForecast"
@@ -1160,7 +1212,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Purpose of Using Space */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('PurposeOfUsingSpace')}>
                   <Typography variant="body1" className="title-field">Purpose of Using Space</Typography>
                   <Controller
                     name="PurposeOfUsingSpace"
@@ -1200,7 +1252,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Number of Employees and Collaboration Budget */}
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }} ref={setFieldRef('NumberOfEmployees')}>
                   <Typography variant="body1" className="title-field">Number of Employees</Typography>
                   <Controller
                     name="NumberOfEmployees"
@@ -1242,7 +1294,7 @@ const CreateServiceAreaForm: React.FC = () => {
 
 
                 {/* Activities in Building */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('ActivitiesInBuilding')}>
                   <Typography variant="body1" className="title-field">Activities in Building</Typography>
                   <Controller
                     name="ActivitiesInBuilding"
@@ -1282,7 +1334,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Collaboration Plans */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('CollaborationPlans')}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                     <Typography variant="body1" className="title-field">Collaboration Plans</Typography>
                     <Button
@@ -1407,7 +1459,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Supporting Activities */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('SupportingActivitiesForSciencePark')}>
                   <Typography variant="body1" className="title-field">Supporting Activities for Science Park</Typography>
                   <Controller
                     name="SupportingActivitiesForSciencePark"
@@ -1447,7 +1499,7 @@ const CreateServiceAreaForm: React.FC = () => {
                 </Grid>
 
                 {/* Document Upload */}
-                <Grid size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }} ref={setFieldRef('DocumentUpload')}>
                   <Typography variant="body1" className="title-field">Service Request Document</Typography>
                   <Button
                     variant="outlinedGray"

@@ -9,6 +9,10 @@ export interface ServiceAreaDocumentInterface {
   ServiceContractDocument?: string; // file path
   AreaHandoverDocument?: string; // file path
   QuotationDocument?: string; // file path
+  RefundGuaranteeDocument?: string; // file path
+  ContractNumber?: string; // เลขที่สัญญา
+  ContractStartAt?: string; // วันเริ่มต้นสัญญา
+  ContractEndAt?: string; // วันสิ้นสุดสัญญา
   RoomID?: number;
   Room?: RoomsInterface;
   ServiceUserTypeID?: number;

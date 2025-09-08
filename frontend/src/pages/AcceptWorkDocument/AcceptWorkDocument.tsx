@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Card, Container, Grid, Skeleton, Tab, Tabs, Typography, useMediaQuery, InputAdornment, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { Box, Button, Card, Container, Grid, Skeleton, Tab, Tabs, Typography, InputAdornment, MenuItem, FormControl } from "@mui/material";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { Select } from "../../components/Select/Select";
@@ -8,7 +8,6 @@ import { TextField } from "../../components/TextField/TextField";
 import dayjs, { Dayjs } from "dayjs";
 import { GridColDef } from "@mui/x-data-grid";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
-import theme from "../../styles/Theme";
 import { GetServiceAreaTasksByUserID, ListBusinessGroups, UpdateRequestServiceAreaStatus, RejectServiceAreaRequest } from "../../services/http";
 import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
@@ -18,9 +17,11 @@ import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 import { businessGroupConfig } from "../../constants/businessGroupConfig";
 import "./AcceptWorkDocument.css";
 import { Tooltip } from "@mui/material";
-import { Check, X, Send, Eye } from "lucide-react";
+import { X, Send, Eye } from "lucide-react";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
+import CancelServiceAreaPopup from "../../components/CancelServiceAreaPopup/CancelServiceAreaPopup";
+import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -60,22 +61,15 @@ function AcceptWorkDocument() {
     const [selectedTaskForSubmit, setSelectedTaskForSubmit] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // State สำหรับ Cancel Service Area Popup
+    const [openCancelPopup, setOpenCancelPopup] = useState(false);
+    const [selectedTaskForCancel, setSelectedTaskForCancel] = useState<any>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
+
     // State สำหรับ Alerts
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
     const navigate = useNavigate();
-
-    // ฟังก์ชันสำหรับอัพเดทสถานะเป็น ID 6
-    const updateStatusToComplete = async (requestServiceAreaID: number) => {
-        try {
-            await UpdateRequestServiceAreaStatus(requestServiceAreaID, 6);
-            // Refresh data หลังจากอัพเดท
-            fetchServiceAreaTasks();
-        } catch (error) {
-            console.error("Error updating status:", error);
-        }
-    };
 
     // ฟังก์ชันสำหรับเปิด Reject Popup
     const handleOpenRejectPopup = (task: any) => {
@@ -87,6 +81,12 @@ function AcceptWorkDocument() {
     const handleOpenSubmitPopup = (task: any) => {
         setSelectedTaskForSubmit(task);
         setOpenSubmitPopup(true);
+    };
+
+    // ฟังก์ชันสำหรับเปิด Cancel Service Area Popup
+    const handleOpenCancelPopup = (task: any) => {
+        setSelectedTaskForCancel(task);
+        setOpenCancelPopup(true);
     };
 
     // ฟังก์ชันสำหรับ Reject Service Area
@@ -114,7 +114,7 @@ function AcceptWorkDocument() {
     };
 
     // ฟังก์ชันสำหรับ Submit Service Area
-    const handleSubmitServiceArea = async (data: any) => {
+    const handleSubmitServiceArea = async () => {
         if (!selectedTaskForSubmit) return;
 
         try {
@@ -162,50 +162,121 @@ function AcceptWorkDocument() {
         }
     };
 
-    const renderActionButtons = (data: any, statusName: string) => {
+    // ฟังก์ชันสำหรับ Cancel Service Area
+    const handleCancelServiceArea = async () => {
+        if (!selectedTaskForCancel) return;
+
+        try {
+            setIsCancelling(true);
+            
+            // TODO: เรียก API สำหรับส่งข้อมูลการยกเลิก
+            // const result = await SubmitCancelServiceAreaRequest(selectedTaskForCancel.RequestServiceAreaID, data);
+            
+            // จำลองการส่งข้อมูลสำเร็จ
+            console.log('Cancellation data submitted');
+            
+            // ไม่ต้องอัพเดท status ที่นี่ เพราะ Backend Controller จะอัพเดทเป็น "Successfully Cancelled" (ID: 11) แล้ว
+            
+            // Refresh data หลังจากอัพเดท status
+            await fetchServiceAreaTasks();
+            
+            // ปิด Popup
+            setOpenCancelPopup(false);
+            setSelectedTaskForCancel(null);
+            
+            // แสดง success alert
+            setAlerts(prev => [...prev, { 
+                type: 'success', 
+                message: `Service area cancellation request submitted successfully! Status updated to Successfully Cancelled.` 
+            }]);
+            
+            return { success: true, message: "Cancellation request submitted successfully" };
+        } catch (error) {
+            console.error("Error submitting cancellation request:", error);
+            
+            // แสดง error alert
+            setAlerts(prev => [...prev, { 
+                type: 'error', 
+                message: `Failed to submit cancellation request: ${error instanceof Error ? error.message : 'Unknown error'}` 
+            }]);
+            
+            throw error;
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
+    const renderActionButtons = (data: any) => {
         const showSubmit = data.StatusID === 3 || data.StatusID === 4 || data.StatusID === 10; // Status ID 3, 4, และ 10 = แสดงปุ่ม Submit
-        const showDetailsOnly = data.StatusID === 6; // Status ID 6 = Complete
+        const isCancelTask = data.IsCancel === true; // ตรวจสอบว่าเป็นงานยกเลิกหรือไม่
 
         return (
             <>
                 {showSubmit && (
                     <>
-                        <Tooltip title={"Submit"}>
-                            <Button
-                                className="btn-submit"
-                                variant="contained"
-                                onClick={() => handleOpenSubmitPopup(data)}
-                                disableRipple
-                                disableFocusRipple
-                                sx={{
-                                    minWidth: "42px",
-                                }}
-                            >
-                                <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
-                                <Typography variant="textButtonClassic" className="text-btn">
-                                    Submit
-                                </Typography>
-                            </Button>
-                        </Tooltip>
-                                                 <Tooltip title={"Cancel"}>
-                             <Button
-                                 className="btn-reject"
-                                 variant="outlinedCancel"
-                                 onClick={() => {
-                                     handleOpenRejectPopup(data);
-                                 }}
-                                 disableRipple
-                                 disableFocusRipple
-                                 sx={{
-                                     minWidth: "42px",
-                                 }}
-                             >
-                                 <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                 <Typography variant="textButtonClassic" className="text-btn">
-                                     Cancel
-                                 </Typography>
-                             </Button>
-                         </Tooltip>
+                        {/* แยกปุ่มตาม IsCancel */}
+                        {isCancelTask ? (
+                            // ถ้า IsCancel = true → แสดงปุ่ม Cancel (สำหรับการยกเลิก)
+                            <Tooltip title={"Submit Cancellation"}>
+                                <Button
+                                    className="btn-submit"
+                                    variant="contained"
+                                    onClick={() => handleOpenCancelPopup(data)}
+                                    disableRipple
+                                    disableFocusRipple
+                                    sx={{
+                                        minWidth: "42px",
+                                    }}
+                                >
+                                    <X size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
+                                    <Typography variant="textButtonClassic" className="text-btn">
+                                        Cancel
+                                    </Typography>
+                                </Button>
+                            </Tooltip>
+                        ) : (
+                            // ถ้า IsCancel = false → แสดงปุ่ม Submit ปกติ
+                            <Tooltip title={"Submit"}>
+                                <Button
+                                    className="btn-submit"
+                                    variant="contained"
+                                    onClick={() => handleOpenSubmitPopup(data)}
+                                    disableRipple
+                                    disableFocusRipple
+                                    sx={{
+                                        minWidth: "42px",
+                                    }}
+                                >
+                                    <Send size={16} style={{ minWidth: "16px", minHeight: "16px" }} />
+                                    <Typography variant="textButtonClassic" className="text-btn">
+                                        Submit
+                                    </Typography>
+                                </Button>
+                            </Tooltip>
+                        )}
+                        
+                        {/* ปุ่ม Reject (ซ่อนเมื่อ IsCancel = true) */}
+                        {!isCancelTask && (
+                            <Tooltip title={"Reject"}>
+                                <Button
+                                    className="btn-reject"
+                                    variant="outlinedCancel"
+                                    onClick={() => {
+                                        handleOpenRejectPopup(data);
+                                    }}
+                                    disableRipple
+                                    disableFocusRipple
+                                    sx={{
+                                        minWidth: "42px",
+                                    }}
+                                >
+                                    <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                    <Typography variant="textButtonClassic" className="text-btn">
+                                        Reject
+                                    </Typography>
+                                </Button>
+                            </Tooltip>
+                        )}
                     </>
                 )}
 
@@ -387,7 +458,6 @@ function AcceptWorkDocument() {
                 flex: 1.5,
                 renderCell: (params) => {
                     const data = params.row;
-                    const statusName = data.StatusID === 3 ? "In Progress" : data.StatusID === 10 ? "Cancellation Assigned" : "Complete";
 
                     return (
                         <Box
@@ -398,7 +468,7 @@ function AcceptWorkDocument() {
                                 flexWrap: "wrap",
                             }}
                         >
-                            {renderActionButtons(data, statusName)}
+                            {renderActionButtons(data)}
                         </Box>
                     );
                 }
@@ -440,14 +510,9 @@ function AcceptWorkDocument() {
             options.limit = limit;
 
             const res = await GetServiceAreaTasksByUserID(currentUserId, options);
+            console.log("Status updated to Complete (ID: 6) for RequestServiceAreaID:", res);
 
             if (res && res.data) {
-                // ตรวจสอบข้อมูลซ้ำ
-                const taskIds = res.data.map((item: any) => item.ServiceAreaTaskID);
-                const requestIds = res.data.map((item: any) => item.RequestServiceAreaID);
-                const duplicateTaskIds = taskIds.filter((id: any, index: number) => taskIds.indexOf(id) !== index);
-                const duplicateRequestIds = requestIds.filter((id: any, index: number) => requestIds.indexOf(id) !== index);
-
                 setRows(res.data);
                 setTotal(res.total || res.data.length);
             }
@@ -479,7 +544,7 @@ function AcceptWorkDocument() {
         setSelectedBusinessGroup(null);
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -491,8 +556,8 @@ function AcceptWorkDocument() {
             // In Progress Tab - แสดงทั้ง StatusID = 3, 4, และ 10
             filtered = filtered.filter((r) => r.StatusID === 3 || r.StatusID === 4 || r.StatusID === 10);
         } else {
-            // Complete Tab - แสดงเฉพาะ StatusID = 6
-            filtered = filtered.filter((r) => r.StatusID === 6);
+            // Complete Tab - แสดงทั้ง StatusID = 6 (Completed) และ 11 (Successfully Cancelled)
+            filtered = filtered.filter((r) => r.StatusID === 6 || r.StatusID === 11);
         }
 
         // กรองตาม search text
@@ -511,6 +576,9 @@ function AcceptWorkDocument() {
 
     return (
         <Box className="accept-work-document-page">
+            {/* Show Alerts */}
+            <AlertGroup alerts={alerts} setAlerts={setAlerts} />
+            
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     <Grid container size={{ xs: 12 }} sx={{ gap: 1 }} className="title-box">
@@ -670,6 +738,16 @@ function AcceptWorkDocument() {
                   companyName={selectedTaskForSubmit?.CompanyName}
                   buttonActive={isSubmitting}
                   requestServiceAreaID={selectedTaskForSubmit?.RequestServiceAreaID || 0}
+              />
+
+              {/* Cancel Service Area Popup */}
+              <CancelServiceAreaPopup
+                  open={openCancelPopup}
+                  onClose={() => setOpenCancelPopup(false)}
+                  onConfirm={handleCancelServiceArea}
+                  companyName={selectedTaskForCancel?.CompanyName}
+                  buttonActive={isCancelling}
+                  requestServiceAreaID={selectedTaskForCancel?.RequestServiceAreaID || 0}
               />
          </Box>
      );

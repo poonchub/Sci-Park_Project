@@ -957,9 +957,9 @@ func AssignCancellationTask(c *gin.Context) {
 		return
 	}
 
-	// ตรวจสอบว่ามี ServiceAreaTask สำหรับ cancellation อยู่แล้วหรือไม่
+	// ตรวจสอบว่ามี ServiceAreaTask สำหรับ user และ service area นี้อยู่แล้วหรือไม่
 	var existingTask entity.ServiceAreaTask
-	err := config.DB().Where("request_service_area_id = ? AND is_cancel = ?", body.RequestServiceAreaID, true).First(&existingTask).Error
+	err := config.DB().Where("request_service_area_id = ? AND user_id = ?", body.RequestServiceAreaID, body.OperatorUserID).First(&existingTask).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// ไม่มี task อยู่ → สร้างใหม่
@@ -993,9 +993,9 @@ func AssignCancellationTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing cancellation task"})
 		return
 	} else {
-		// มี task อยู่แล้ว → อัพเดท UserID และ Note
-		existingTask.UserID = body.OperatorUserID
+		// มี task อยู่แล้ว → อัพเดท record เดิมให้เป็น cancellation
 		existingTask.Note = body.Note
+		existingTask.IsCancel = true
 		if err := config.DB().Save(&existingTask).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update cancellation task"})
 			return
@@ -1009,7 +1009,7 @@ func AssignCancellationTask(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Cancellation task reassigned successfully",
+			"message": "Cancellation task updated for existing operator and service area",
 			"data": gin.H{
 				"task":            existingTask,
 				"new_status_id":   10,
@@ -1072,6 +1072,7 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 	// สร้าง response ในรูปแบบ Pascal Case
 	response := gin.H{
 		"RequestNo":                          requestServiceArea.ID,
+		"UserID":                             requestServiceArea.UserID,
 		"RequestedAt":                        requestServiceArea.CreatedAt,
 		"RequestStatusId":                    requestServiceArea.RequestStatusID,
 		"CompanyName":                        requestServiceArea.User.CompanyName,
@@ -1146,7 +1147,7 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 		fmt.Printf("🔍 [DEBUG] CancelRequestServiceArea found: ID=%d, RequestServiceAreaID=%d\n",
 			cancelRequestServiceArea.ID, cancelRequestServiceArea.RequestServiceAreaID)
 
-		response["CancellationDetails"] = gin.H{
+		cancellationDetails := gin.H{
 			"ID":                         cancelRequestServiceArea.ID,
 			"RequestServiceAreaID":       cancelRequestServiceArea.RequestServiceAreaID,
 			"UserID":                     cancelRequestServiceArea.UserID,
@@ -1160,6 +1161,15 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 			"CancellationRequesterName":  cancelRequestServiceArea.User.FirstName + " " + cancelRequestServiceArea.User.LastName,
 			"CancellationRequesterEmail": cancelRequestServiceArea.User.Email,
 		}
+
+		// เพิ่มข้อมูลจาก ServiceAreaDocument (Contract Number, Contract End Date, Refund Guarantee Document)
+		if requestServiceArea.ServiceAreaDocument != nil {
+			cancellationDetails["ContractNumber"] = requestServiceArea.ServiceAreaDocument.ContractNumber
+			cancellationDetails["ContractEndDate"] = requestServiceArea.ServiceAreaDocument.ContractEndAt
+			cancellationDetails["RefundGuaranteeDocument"] = requestServiceArea.ServiceAreaDocument.RefundGuaranteeDocument
+		}
+
+		response["CancellationDetails"] = cancellationDetails
 	} else {
 		fmt.Printf("🔍 [DEBUG] CancelRequestServiceArea not found for RequestServiceAreaID=%d\n", serviceAreaID)
 		response["CancellationDetails"] = nil
