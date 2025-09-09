@@ -199,6 +199,7 @@ interface BookedDate {
 type BookedDates = Record<string, BookedDate[]>;
 
 type AddressProps = {
+  AddressName?: string;
   AddressNumber?: string;
   Street?: string;
   SubDistrict?: string;
@@ -1106,6 +1107,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
   /* Submit booking */
   const handleSubmitBooking = async () => {
+    if (!user?.SignaturePath || user.SignaturePath === "") {
+      handleSetAlert("warning", "Please upload your signature before proceeding.");
+      setIsButtonActive(false);
+      return;
+    }
+
     if (!isHourlyAllowed && timeOption === "hourly") {
       alert("Your role is not allowed to book hourly.");
       return;
@@ -1136,7 +1143,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       DepositAmount: calculatedPrice / 2,
       DiscountAmount: 0,
       TotalAmount: calculatedPrice,
-      Address: `${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
+      Address: `${addressFormData.AddressName} - ${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
       TaxID: addressFormData?.TaxID,
       PaymentOptionID: selectedOption
     };
@@ -1226,7 +1233,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       (roomtype as any).image ||
       "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
   };
-  console.log(roomType)
 
   /* ===== RoomType images for Carousel (ใช้รูปจริง) ===== */
   const carouselSrcs = useMemo(() => {
@@ -1250,7 +1256,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   }, [roomType]);
 
   const [paymentOptions, setPaymentOptions] = useState<PaymentOptionInterface[]>([])
-  const [addressFormData, setAddressFormdata] = useState<AddressProps>()
+  const [addressFormData, setAddressFormdata] = useState<AddressProps>({
+    AddressName: "มหาวิทยาลัยเทคโนโลยีสุรนารี",
+    AddressNumber: "111",
+    Street: "ถนนมหาวิทยาลัย",
+    SubDistrict: "สุรนารี",
+    District: "เมืองนครราชสีมา",
+    Province: "นครราชสีมา",
+    PostalCode: "30000",
+    TaxID: "3030101234567",
+  })
   const [selectedOption, setSelectedOption] = useState<number>(0)
   const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
@@ -1258,6 +1273,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const { user } = useUserStore()
   const [openPopupSignature, setOpenPopupSignature] = useState(false)
   const sigRef = useRef<SignatureCanvas>(null);
+  const [isButtonActive, setIsButtonActive] = useState(false);
 
   const handleSave = async () => {
     if (sigRef.current?.isEmpty()) {
@@ -1338,8 +1354,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   };
 
   const handleClear = () => {
-        sigRef.current?.clear();
-    };
+    sigRef.current?.clear();
+  };
 
   const serviceConditions = {
     title: "โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน",
@@ -1357,10 +1373,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       "หมายเหตุ",
       "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
       "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
-      "คำประกาศเกี่ยวกับความเป็นส่วนตัว",
+      "เกี่ยวกับความเป็นส่วนตัว",
       "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านซึ่งเป็นผู้ติดต่อหรือตัวแทนของนิติบุคคล เพื่อใช้ในการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
       "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบให้แน่ใจว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
       "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
+      "เงื่อนไขเกี่ยวกับลายเซ็น (สำคัญ)",
+      "   • โปรดอัปโหลดลายเซ็นที่โปรไฟล์เพื่อใช้ในการออกเอกสาร (บังคับ)",
+      "   • ท่านสามารถลบลายเซ็นได้เมื่อได้รับใบแจ้งหนี้แล้ว",
+      "   • หากลบลายเซ็นก่อนที่จะได้รับใบแจ้งหนี้ จะไม่สามารถดำเนินการจองห้องต่อได้",
     ],
   };
 
@@ -1425,8 +1445,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   whiteSpace: "normal",
                   mb: 0.5,
                   color: isBullet
-                    ? "text.secondary"
+                    ? "text.primary"
                     : "text.primary",
+                  mt: isBullet ? 0 : 1.6,
+                  fontWeight: isBullet ? 400 : 500
                 }}
               >
                 {line}
@@ -1435,29 +1457,30 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           })}
           <Grid container size={{ xs: 12 }} direction={'column'} sx={{ my: 1.6 }}>
             <FormControlLabel
-            control={
-              <Checkbox
-                checked={checkedCondition}
-                onChange={(e) => {
-                  setCheckedCondition(e.target.checked);
-                }}
-              />
-            }
-            label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={checkedPrivacy}
-                onChange={(e) => {
-                  setCheckedPrivacy(e.target.checked);
-                }}
-              />
-            }
-            label="ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"
-          />
+              control={
+                <Checkbox
+                  checked={checkedCondition}
+                  onChange={(e) => {
+                    setCheckedCondition(e.target.checked);
+                  }}
+                />
+              }
+              label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={checkedPrivacy}
+                  onChange={(e) => {
+                    setCheckedPrivacy(e.target.checked);
+                  }}
+                />
+              }
+              label="ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"
+            />
           </Grid>
-          
+
+          {/* Payment Option */}
           <Grid size={{ xs: 12, md: 12 }}>
             <Typography
               variant="body1"
@@ -1488,6 +1511,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               </Select>
             </FormControl>
           </Grid>
+
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
@@ -1500,61 +1524,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           >
             Confirm Booking
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Create Signature */}
-      <Dialog open={openPopupSignature} onClose={() => setOpenPopupSignature(false)}>
-        <DialogTitle
-          sx={{
-            fontWeight: 700,
-            color: "primary.main",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          {/* <ScrollText size={26} /> */}
-          Create Signature
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenPopupInvoiceCondition(false)}
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: 8,
-            }}
-          >
-            <X size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
-          <Grid container size={{ xs: 12 }} spacing={2} sx={{ display: "flex", justifyContent: "center" }}>
-            <SignatureCanvas
-              ref={sigRef}
-              penColor="black"
-              canvasProps={{
-                width: 400,
-                height: 300,
-                style: { border: "2px solid #000", borderRadius: "8px" },
-              }}
-            />
-          </Grid>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Zoom in={openPopupSignature} timeout={400}>
-            <Button onClick={handleClear}>Clear</Button>
-          </Zoom>
-          <Zoom in={openPopupSignature} timeout={400}>
-            <Button
-              onClick={handleSave}
-              variant="contained"
-            // startIcon={<CircleX size={18} />}
-            >
-              Save
-            </Button>
-          </Zoom>
         </DialogActions>
       </Dialog>
 

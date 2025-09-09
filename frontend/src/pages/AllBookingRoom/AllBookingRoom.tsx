@@ -52,10 +52,12 @@ import RefundButton from "../../components/RefundButton/RefundButton";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import { createRoot } from "react-dom/client";
-import RoomBookingInvoicePDF from "../../components/InvoicePDF/RoomBookingInvoicePDF";
+import RoomBookingInvoicePDF, { thaiDateFull } from "../../components/InvoicePDF/RoomBookingInvoicePDF";
 import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoomBookingInvoice";
 import { BookingDateInterface } from "../../interfaces/IBookingDate";
+import { useUserStore } from "../../store/userStore";
+import { UserInterface } from "../../interfaces/IUser";
 
 
 
@@ -68,7 +70,7 @@ interface BookingRoomsInterface {
     Merged_time_slots?: Array<{ start_time: string; end_time: string }>;
     StatusName?: string; // "pending" | "confirmed" | "cancelled" | ...
     Purpose?: string;
-    User?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+    User?: UserInterface;
     DisplayStatus?: string;   // ✅ เพิ่มตรงนี้
     Payment?: {
         id?: number;
@@ -87,7 +89,6 @@ function AllBookingRoom() {
 
     // ===== state หลัก =====
     const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([]);
-    console.log("bookingRooms", bookingRooms);
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -113,6 +114,7 @@ function AllBookingRoom() {
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
 
     const [isButtonActive, setIsButtonActive] = useState(false)
+    const { user } = useUserStore()
     // ===== ดึงข้อมูล =====
     // const getBookingRooms = async () => {
     //     try {
@@ -470,7 +472,7 @@ function AllBookingRoom() {
                                                 setOpenConfirmApprove(true);
                                                 setIsButtonActive(true)
                                             }}
-                                            startIcon={isButtonActive && <Loader size={18} style={{ minWidth: '18px', minHeight: '18px' }}/>}
+                                            startIcon={isButtonActive && <Loader size={18} style={{ minWidth: '18px', minHeight: '18px' }} />}
                                         >
                                             {isButtonActive ? "Loading" : "Approve"}
                                         </Button>
@@ -539,13 +541,30 @@ function AllBookingRoom() {
         ];
     };
 
+    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
+        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+    };
+
     const handlePrimaryAction = async (key: ActionKey, row: BookingRoomsInterface, invoiceNumber?: string) => {
         setSelectedRow(row);
         try {
             switch (key) {
                 case "approve":
-                    const resApprove = await ApproveBookingRoom(row.ID);
 
+                    if (!user?.SignaturePath || user.SignaturePath === "") {
+                        handleSetAlert("warning", "Please upload your signature before proceeding.");
+                        setIsButtonActive(false);
+                        return;
+                    }
+
+                    if (!row?.User?.SignaturePath || row?.User?.SignaturePath === "") {
+                        handleSetAlert("warning", "Customer signature not found. Please contact the customer to upload their signature.");
+                        setIsButtonActive(false);
+                        return;
+                    }
+
+                    const resApprove = await ApproveBookingRoom(row.ID);
+                    console.log("resApprove: ", resApprove)
                     const userId = Number(localStorage.getItem("userId"))
                     let invoiceData: RoomBookingInvoiceInterface = {}
 
@@ -595,9 +614,9 @@ function AllBookingRoom() {
 
                     const invoiceItemData: RoomBookingInvoiceItemInterface[] = []
                     if (Array.isArray(BookingDate) && BookingDate.length > 0) {
-                        BookingDate.forEach(() => {
+                        BookingDate.forEach((date) => {
                             invoiceItemData.push({
-                                Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2`,
+                                Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(date.Date)} ห้อง ${resApprove.data.Room.RoomNumber}`,
                                 Quantity: 1,
                                 UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
                                 Amount: resApprove.data.TotalAmount / BookingDate.length,
@@ -687,8 +706,6 @@ function AllBookingRoom() {
             }
         });
     };
-
-
 
     // const doReject = async (note?: string) => {
     //     if (!selectedRow) return;
@@ -795,7 +812,7 @@ function AllBookingRoom() {
         <Box className="all-maintenance-request-page">
             <Button
                 variant="contained"
-                onClick={() => handleUploadPDF(2)}
+                onClick={() => handleUploadPDF(3)}
             >
                 Click
             </Button>

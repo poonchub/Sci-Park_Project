@@ -11,6 +11,7 @@ import "tinymce/plugins/lists";
 import "tinymce/models/dom/model";
 import { Download, Loader } from "lucide-react";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import { numberToThaiBahtText } from "../../utils/numberToThaiBahtText";
 
 interface InvoicePDFProps {
     invoice: RoomBookingInvoiceInterface;
@@ -272,15 +273,15 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         </div>
                         <div
                             className="text-normal"
-                            style={{ width: "240px" }}
+                            style={{ width: "500px" }}
                         >
-                            ที่อยู่/Address :
+                            ที่อยู่/Address : {invoice.BookingRoom?.Address?.split("-")[0].trim()}
                         </div>
                         <div
                             className="text-normal"
                             style={{ width: "500px" }}
                         >
-                            เลขที่ {invoice.BookingRoom?.Address}
+                            เลขที่ {invoice.BookingRoom?.Address?.split("-")[1].trim()}
                         </div>
                         <div
                             className="text-normal"
@@ -352,7 +353,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         {invoice.Items?.map((item, index) => (
                             <tr key={index}>
                                 <td style={{ border: "1px solid #999" }} colSpan={2}>
-                                    {`${item.Description} วันที่ ${thaiDateFull(invoice.BookingRoom?.BookingDates?.[index].Date ?? '')} ห้อง ${invoice.BookingRoom?.Room?.RoomNumber}`}
+                                    {item.Description}
                                 </td>
                                 <td style={{ border: "1px solid #999", textAlign: 'center' }}>
                                     {item.Quantity}
@@ -434,7 +435,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 className="text-bold"
                             >
-                                (ยอดเงินเป็นตัวหนังสือ)
+                                ({numberToThaiBahtText(invoice.BookingRoom?.TotalAmount ?? 0)})
                             </td>
                             <td
                                 style={{

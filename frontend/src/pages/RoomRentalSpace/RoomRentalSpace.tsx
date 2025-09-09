@@ -243,7 +243,7 @@ function RoomRentalSpace() {
         try {
             const resInvoice = await GetNextInvoiceNumber();
             if (resInvoice) {
-                setInvoiceFormData((prev)=> ({...prev, InvoiceNumber: resInvoice.next_invoice_number}));
+                setInvoiceFormData((prev) => ({ ...prev, InvoiceNumber: resInvoice.next_invoice_number }));
             }
         } catch (error) {
             console.error("Error fetching invoice number:", error);
@@ -471,25 +471,29 @@ function RoomRentalSpace() {
         }
     };
 
-    const handleUploadPDF = async (invoiceId: number) => {
-        try {
-            const container = document.createElement("div");
-            container.style.display = "none";
-            document.body.appendChild(container);
+    const handleUploadPDF = (invoiceId: number): Promise<void> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const container = document.createElement("div");
+                container.style.display = "none";
+                document.body.appendChild(container);
 
-            const root = createRoot(container);
+                const root = createRoot(container);
 
-            const handlePDFCompleted = () => {
-                root.unmount();
-                container.remove();
-            };
+                const handlePDFCompleted = () => {
+                    root.unmount();
+                    container.remove();
+                    resolve();
+                };
 
-            const resInvoice = await GetInvoiceByID(invoiceId);
+                const resInvoice = await GetInvoiceByID(invoiceId);
             root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
-        } catch (error) {
-            console.error("🚨 Error creating invoice:", error);
-        }
-    }
+            } catch (error) {
+                console.error("🚨 Error creating invoice:", error);
+                reject(error);
+            }
+        });
+    };
 
     const handleDeleteInvoice = async () => {
         setIsButtonActive(true);
