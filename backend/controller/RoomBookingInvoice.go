@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	// "time"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -26,7 +26,8 @@ func GetRoomBookingInvoiceByID(c *gin.Context) {
 	db := config.DB()
 
 	result := db.
-		Preload("BookingRoom").
+		Preload("BookingRoom.BookingDates").
+		Preload("BookingRoom.Room").
 		Preload("Items").
 		Preload("Customer.Prefix").
 		Preload("Approver.Prefix").
@@ -90,12 +91,13 @@ func CreateRoomBookingInvoice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking not found"})
 	}
 
-	// loc, _ := time.LoadLocation("Asia/Bangkok")
+	loc, _ := time.LoadLocation("Asia/Bangkok")
 
 	invoiceData := entity.RoomBookingInvoice{
 		InvoiceNumber:  invoice.InvoiceNumber,
-		// IssueDate:      invoice.IssueDate.In(loc),
-		// DueDate:        invoice.DueDate.In(loc),
+		IssueDate:      invoice.IssueDate.In(loc),
+		DueDate:        invoice.DueDate.In(loc),
+		DepositDueDate: invoice.DepositDueDate.In(loc),
 		BookingRoomID:  invoice.BookingRoomID,
 		ApproverID:     invoice.ApproverID,
 		CustomerID:     invoice.CustomerID,
@@ -166,7 +168,8 @@ func UploadRoomBookingInvoicePDF(c *gin.Context) {
 		return
 	}
 
-	filename := file.Filename
+	safeName := strings.ReplaceAll(invoice.InvoiceNumber, "/", "_")
+	filename := fmt.Sprintf("ใบแจ้งหนี้เลขที่_%s_%s.pdf", safeName, time.Now().Format("20060102"))
 	fullPath := path.Join(folderPath, filename)
 
 	if err := c.SaveUploadedFile(file, fullPath); err != nil {

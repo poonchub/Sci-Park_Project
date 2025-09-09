@@ -1,5 +1,5 @@
 // src/pages/RoomBookingForm/RoomBookingForm.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Grid,
@@ -28,6 +28,8 @@ import {
   Checkbox,
   InputLabel,
   IconButton,
+  FormHelperText,
+  Zoom,
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -65,6 +67,7 @@ import {
   GetOrganizationInfo,
   CreateRoomBookingInvoice,
   ListPaymentOptions,
+  UpdateUserSignature,
 } from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -80,6 +83,9 @@ import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
+import { provincesData } from "../../constants/provinceData";
+import { useUserStore } from "../../store/userStore";
+import SignatureCanvas from "react-signature-canvas";
 
 /* ========= Config / URL helper ========= */
 const API_BASE =
@@ -1247,8 +1253,93 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [addressFormData, setAddressFormdata] = useState<AddressProps>()
   const [selectedOption, setSelectedOption] = useState<number>(0)
   const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
-  const [checked, setChecked] = useState(false);
+  const [checkedPrivacy, setCheckedPrivacy] = useState(false);
+  const [checkedCondition, setCheckedCondition] = useState(false);
+  const { user } = useUserStore()
+  const [openPopupSignature, setOpenPopupSignature] = useState(false)
+  const sigRef = useRef<SignatureCanvas>(null);
 
+  const handleSave = async () => {
+    if (sigRef.current?.isEmpty()) {
+      alert("กรุณาลงลายเซ็นก่อน");
+      return;
+    }
+
+    try {
+      // Get the canvas element directly
+      const canvas = sigRef.current?.getCanvas();
+      if (!canvas) {
+        setAlerts([{ type: "error", message: "Failed to get signature canvas" }]);
+        return;
+      }
+
+      // Create a new canvas with white background
+      const newCanvas = document.createElement('canvas');
+      const ctx = newCanvas.getContext('2d');
+      if (!ctx) {
+        setAlerts([{ type: "error", message: "Failed to create canvas context" }]);
+        return;
+      }
+
+      // Set canvas size
+      newCanvas.width = canvas.width;
+      newCanvas.height = canvas.height;
+
+      // Fill with white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+
+      // Draw the signature on top
+      ctx.drawImage(canvas, 0, 0);
+
+      // Convert to blob
+      newCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          setAlerts([{ type: "error", message: "Failed to convert signature to image" }]);
+          return;
+        }
+
+        // Create file from blob
+        const file = new File([blob], "signature.jpg", { type: "image/jpeg" });
+
+        // Save signature to backend
+        if (user?.ID) {
+          const result = await UpdateUserSignature({
+            UserID: user.ID,
+            Signature_Image: file
+          });
+
+          if (result.status === "success") {
+            setAlerts([{ type: "success", message: "Signature saved successfully" }]);
+            setOpenPopupSignature(false);
+
+            // Refresh user data to show updated signature
+            try {
+              const updatedUser = await GetUserById(Number(localStorage.getItem("userId")));
+              if (updatedUser) {
+                // setUser(updatedUser);
+                // Load the new signature image
+                if (updatedUser.SignaturePath) {
+                  // await loadSignatureImage(updatedUser.SignaturePath);
+                }
+              }
+            } catch (error) {
+              // Handle error silently
+            }
+          } else {
+            setAlerts([{ type: "error", message: result.message }]);
+          }
+        }
+      }, 'image/jpeg', 0.9);
+
+    } catch (error) {
+      setAlerts([{ type: "error", message: "Failed to save signature. Please try again." }]);
+    }
+  };
+
+  const handleClear = () => {
+        sigRef.current?.clear();
+    };
 
   const serviceConditions = {
     title: "โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน",
@@ -1264,16 +1355,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
       "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
       "หมายเหตุ",
-      "• กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
-      "• กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
+      "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
+      "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
+      "คำประกาศเกี่ยวกับความเป็นส่วนตัว",
+      "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านซึ่งเป็นผู้ติดต่อหรือตัวแทนของนิติบุคคล เพื่อใช้ในการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
+      "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบให้แน่ใจว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
+      "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
     ],
   };
-
 
   /* ===== Render ===== */
   return (
     <Box className="booking-container">
 
+      {/* Condition Popup */}
       <Dialog
         open={openPopupInvoiceCondition}
         onClose={() => setOpenPopupInvoiceCondition(false)}
@@ -1338,17 +1433,31 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               </Typography>
             );
           })}
-          <FormControlLabel
+          <Grid container size={{ xs: 12 }} direction={'column'} sx={{ my: 1.6 }}>
+            <FormControlLabel
             control={
               <Checkbox
-                checked={checked}
+                checked={checkedCondition}
                 onChange={(e) => {
-                  setChecked(e.target.checked);
+                  setCheckedCondition(e.target.checked);
                 }}
               />
             }
             label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
           />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={checkedPrivacy}
+                onChange={(e) => {
+                  setCheckedPrivacy(e.target.checked);
+                }}
+              />
+            }
+            label="ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"
+          />
+          </Grid>
+          
           <Grid size={{ xs: 12, md: 12 }}>
             <Typography
               variant="body1"
@@ -1363,7 +1472,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 defaultValue={0}
                 value={selectedOption || 0}
                 onChange={(e) => setSelectedOption(Number(e.target.value))}
-                sx={{ width: '260px'}}
+                sx={{ width: '260px' }}
               >
                 <MenuItem value={0}>
                   <em>{"-- Select Payment Option --"}</em>
@@ -1385,12 +1494,67 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             onClick={() => {
               handleSubmitBooking()
             }}
-            disabled={!checked || selectedOption === 0}
+            disabled={!checkedCondition || !checkedPrivacy || selectedOption === 0}
             variant="contained"
             startIcon={<Check size={18} />}
           >
             Confirm Booking
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Signature */}
+      <Dialog open={openPopupSignature} onClose={() => setOpenPopupSignature(false)}>
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: "primary.main",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          {/* <ScrollText size={26} /> */}
+          Create Signature
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenPopupInvoiceCondition(false)}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+            }}
+          >
+            <X size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ minWidth: 350, pt: "10px !important" }}>
+          <Grid container size={{ xs: 12 }} spacing={2} sx={{ display: "flex", justifyContent: "center" }}>
+            <SignatureCanvas
+              ref={sigRef}
+              penColor="black"
+              canvasProps={{
+                width: 400,
+                height: 300,
+                style: { border: "2px solid #000", borderRadius: "8px" },
+              }}
+            />
+          </Grid>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Zoom in={openPopupSignature} timeout={400}>
+            <Button onClick={handleClear}>Clear</Button>
+          </Zoom>
+          <Zoom in={openPopupSignature} timeout={400}>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+            // startIcon={<CircleX size={18} />}
+            >
+              Save
+            </Button>
+          </Zoom>
         </DialogActions>
       </Dialog>
 
@@ -1969,16 +2133,35 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Province
                         </Typography>
-                        <TextField
+                        <FormControl
                           fullWidth
-                          value={addressFormData?.Province || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, Province: e.target.value }))
-                          }
-                          placeholder="Enter province"
                           error={!!errors.Province}
-                          helperText={errors.Province}
-                        />
+                        >
+                          <Select
+                            displayEmpty
+                            defaultValue={""}
+                            value={addressFormData?.Province || ""}
+                            onChange={(e) =>
+                              setAddressFormdata((prev) => ({ ...prev, Province: e.target.value as string }))
+                            }
+                            sx={{ width: '100%' }}
+                          >
+                            <MenuItem value={""}>
+                              <em>{"-- เลือกจังหวัด --"}</em>
+                            </MenuItem>
+                            {provincesData.map((item, index) => {
+                              return (
+                                <MenuItem key={index} value={item}>{item}</MenuItem>
+                              );
+                            }
+                            )}
+                          </Select>
+                          {errors.Province && (
+                            <FormHelperText>
+                              {errors.Province}
+                            </FormHelperText>
+                          )}
+                        </FormControl>
                       </Grid>
 
                       {/* Postal Code */}

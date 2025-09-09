@@ -13,7 +13,7 @@ import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
-import { ClipboardList, Eye, Check, X, Clock, HelpCircle, UserRound, Book } from "lucide-react";
+import { ClipboardList, Eye, Check, X, Clock, HelpCircle, UserRound, Book, Loader } from "lucide-react";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
 import { isAdmin, isManager } from "../../routes";
@@ -55,6 +55,7 @@ import { createRoot } from "react-dom/client";
 import RoomBookingInvoicePDF from "../../components/InvoicePDF/RoomBookingInvoicePDF";
 import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoomBookingInvoice";
+import { BookingDateInterface } from "../../interfaces/IBookingDate";
 
 
 
@@ -111,6 +112,7 @@ function AllBookingRoom() {
 
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
 
+    const [isButtonActive, setIsButtonActive] = useState(false)
     // ===== ดึงข้อมูล =====
     // const getBookingRooms = async () => {
     //     try {
@@ -430,8 +432,7 @@ function AllBookingRoom() {
                         </Box>
                     );
                 },
-            }
-            ,
+            },
             {
                 field: "Booker",
                 headerName: "Booker",
@@ -447,7 +448,6 @@ function AllBookingRoom() {
                     );
                 },
             },
-
             {
                 field: "Actions",
                 headerName: "Actions",
@@ -464,12 +464,15 @@ function AllBookingRoom() {
                                         <Button
                                             variant="contained"
                                             color="primary"
+                                            disabled={isButtonActive}
                                             onClick={() => {
                                                 setSelectedRow(row);
                                                 setOpenConfirmApprove(true);
+                                                setIsButtonActive(true)
                                             }}
+                                            startIcon={isButtonActive && <Loader size={18} style={{ minWidth: '18px', minHeight: '18px' }}/>}
                                         >
-                                            Approve
+                                            {isButtonActive ? "Loading" : "Approve"}
                                         </Button>
                                     </Tooltip>
                                     <Tooltip title="Reject">
@@ -542,34 +545,67 @@ function AllBookingRoom() {
             switch (key) {
                 case "approve":
                     const resApprove = await ApproveBookingRoom(row.ID);
-                    console.log("resApprove: ", resApprove)
 
                     const userId = Number(localStorage.getItem("userId"))
-                    const invoiceData: RoomBookingInvoiceInterface = {
-                        InvoiceNumber: invoiceNumber,
-                        IssueDate:  "2025-08-31T16:59:59.999Z",
-                        DueDate: "",
-                        BookingRoomID: resApprove.data.ID,
-                        ApproverID: userId,
-                        CustomerID: resApprove.data.UserID
+                    let invoiceData: RoomBookingInvoiceInterface = {}
+
+                    const today = new Date()
+                    if (resApprove.data.PaymentOption.OptionName === "Deposit") {
+                        const BookingDates = resApprove.data.BookingDates
+                        const maxDate = new Date(
+                            Math.max(...BookingDates.map((item: BookingDateInterface) => new Date(item.Date ?? "").getTime()))
+                        );
+
+                        const depositDue = new Date()
+                        const dueDate = new Date()
+
+                        depositDue.setDate(today.getDate() + 7)
+                        depositDue.setHours(23, 59, 59, 999);
+
+                        dueDate.setDate(maxDate.getDate() + 7)
+                        dueDate.setHours(23, 59, 59, 999);
+
+                        invoiceData = {
+                            InvoiceNumber: invoiceNumber,
+                            IssueDate: today.toISOString(),
+                            DepositeDueDate: depositDue.toISOString(),
+                            DueDate: dueDate.toISOString(),
+                            BookingRoomID: resApprove.data.ID,
+                            ApproverID: userId,
+                            CustomerID: resApprove.data.UserID
+                        }
+                    } else if (resApprove.data.PaymentOption.OptionName === "Full") {
+                        const dueDate = new Date()
+                        dueDate.setDate(today.getDate() + 7)
+                        dueDate.setHours(23, 59, 59, 999);
+
+                        invoiceData = {
+                            InvoiceNumber: invoiceNumber,
+                            IssueDate: today.toISOString(),
+                            DueDate: dueDate.toISOString(),
+                            BookingRoomID: resApprove.data.ID,
+                            ApproverID: userId,
+                            CustomerID: resApprove.data.UserID
+                        }
                     }
 
                     const resInvoice = await CreateRoomBookingInvoice(invoiceData)
 
-                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = [
-                        {
-                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
-                            Quantity: 1,
-                            UnitPrice: 10000,
-                            Amount: 10000,
-                        },
-                        {
-                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
-                            Quantity: 1,
-                            UnitPrice: 10000,
-                            Amount: 10000,
-                        },
-                    ]
+                    const BookingDate: BookingDateInterface = resApprove.data.BookingDates || []
+
+                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = []
+                    if (Array.isArray(BookingDate) && BookingDate.length > 0) {
+                        BookingDate.forEach(() => {
+                            invoiceItemData.push({
+                                Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2`,
+                                Quantity: 1,
+                                UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
+                                Amount: resApprove.data.TotalAmount / BookingDate.length,
+                            });
+                        });
+                    } else {
+                        console.warn("⚠️ BookingDates is empty or undefined", BookingDate);
+                    };
 
                     const updatedItems = invoiceItemData.map((item) => ({
                         ...item,
@@ -590,7 +626,7 @@ function AllBookingRoom() {
                     }
 
                     await handleUploadPDF(resInvoice.data.ID);
-
+                    setIsButtonActive(false)
                     break;
 
                 case "approvePayment":
@@ -623,29 +659,35 @@ function AllBookingRoom() {
             await getBookingRooms();
             setAlerts(p => [...p, { type: "success", message: `Action ${key} success` }]);
         } catch (e) {
+            console.log("Error: ", e)
             setAlerts(p => [...p, { type: "error", message: `Action ${key} failed` }]);
         }
     };
 
-    const handleUploadPDF = async (invoiceId: number) => {
-        try {
-            const container = document.createElement("div");
-            container.style.display = "none";
-            document.body.appendChild(container);
+    const handleUploadPDF = (invoiceId: number): Promise<void> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const container = document.createElement("div");
+                container.style.display = "none";
+                document.body.appendChild(container);
 
-            const root = createRoot(container);
+                const root = createRoot(container);
 
-            const handlePDFCompleted = () => {
-                root.unmount();
-                container.remove();
-            };
+                const handlePDFCompleted = () => {
+                    root.unmount();
+                    container.remove();
+                    resolve();
+                };
 
-            const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
-            root.render(<RoomBookingInvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
-        } catch (error) {
-            console.error("🚨 Error creating invoice:", error);
-        }
-    }
+                const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
+                root.render(<RoomBookingInvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+            } catch (error) {
+                console.error("🚨 Error creating invoice:", error);
+                reject(error);
+            }
+        });
+    };
+
 
 
     // const doReject = async (note?: string) => {

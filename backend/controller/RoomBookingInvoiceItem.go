@@ -37,7 +37,7 @@ func CreateRoomBookingInvoiceItem(c *gin.Context) {
 		RoomBookingInvoiceID:  invoiceItem.RoomBookingInvoiceID,
 	}
 
-	var exiting entity.RentalRoomInvoiceItem
+	var exiting entity.RoomBookingInvoiceItem
 	if err := db.Where("description = ? and room_booking_invoice_id = ?", invoiceItem.Description, invoiceItem.RoomBookingInvoiceID).First(&exiting).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice item already exists"})
 		return

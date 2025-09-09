@@ -231,7 +231,13 @@ func ApproveBookingRoom(c *gin.Context) {
 	}
 
 	// --- Reload updated booking with relations ---
-	if err := db.Preload("Payments").Preload("BookingDates").Preload("Status").First(&b, b.ID).Error; err != nil {
+	if err := db.
+		Preload("Payments").
+		Preload("BookingDates").
+		Preload("Status").
+		Preload("PaymentOption").
+		Preload("Room").
+		First(&b, b.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load booking data"})
 		return
 	}
