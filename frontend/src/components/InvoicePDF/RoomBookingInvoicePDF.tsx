@@ -11,6 +11,7 @@ import "tinymce/plugins/lists";
 import "tinymce/models/dom/model";
 import { Download, Loader } from "lucide-react";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
+import { numberToThaiBahtText } from "../../utils/numberToThaiBahtText";
 
 interface InvoicePDFProps {
     invoice: RoomBookingInvoiceInterface;
@@ -49,8 +50,6 @@ export function thaiDateMonthYear(date: string | Date): string {
 
 export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
     const invoiceRef = useRef<HTMLDivElement>(null);
-
-    console.log("invoice: ", invoice)
 
     useEffect(() => {
         const targets = [
@@ -97,10 +96,10 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                     .from(invoiceRef.current)
                     .set({
                         margin: [0, 26, 0, 26],
-                        filename: `ใบแจ้งหนี้เดือน.pdf`,
+                        filename: `ใบแจ้งหนี้.pdf`,
                         image: { type: "jpeg", quality: 0.98 },
                         html2canvas: { scale: 2, letterRendering: true, useCORS: true },
-                        jsPDF: { unit: "px", format: [816, 1056], orientation: "portrait" },
+                        jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
                     })
                     .output("blob");
 
@@ -114,7 +113,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
 
                 // อัปโหลดไป backend
                 await UploadRoomBookingInvoicePDF(formData);
-                console.log("Upload invoice pdf file success");
+                console.log("✅ Upload invoice pdf file success");
 
                 // เรียก callback หลัง upload เสร็จ
                 if (onComplete) onComplete();
@@ -129,8 +128,8 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
     return (
         <div
             style={{
-                minWidth: "816px",
-                minHeight: "1056px",
+                minWidth: "794px",
+                minHeight: "1123px",
                 padding: "26px 26px 10px 26px",
                 fontSize: 15,
             }}
@@ -217,7 +216,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                     fontSize: "14px",
                     lineHeight: "1.8",
                     position: 'relative',
-                    height: '1056px',
+                    height: '1123px',
                 }}
             >
                 {/* Header */}
@@ -268,27 +267,27 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                     <div>
                         <div
                             className="text-normal"
-                            style={{ width: "240px" }}
+                            style={{ width: "500px" }}
                         >
                             เรียน/Attention : {invoice.Customer?.CompanyName}
                         </div>
                         <div
                             className="text-normal"
-                            style={{ width: "240px" }}
+                            style={{ width: "500px" }}
                         >
-                            ที่อยู่/Address :
+                            ที่อยู่/Address : {invoice.BookingRoom?.Address?.split("-")[0].trim()}
                         </div>
                         <div
                             className="text-normal"
                             style={{ width: "500px" }}
                         >
-                            เลขที่ ....
+                            เลขที่ {invoice.BookingRoom?.Address?.split("-")[1].trim()}
                         </div>
                         <div
                             className="text-normal"
                             style={{ width: "500px" }}
                         >
-                            เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : ....
+                            เลขที่ประจำตัวผู้เสียภาษี/TAX ID. : {invoice.BookingRoom?.TaxID}
                         </div>
                     </div>
 
@@ -354,7 +353,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         {invoice.Items?.map((item, index) => (
                             <tr key={index}>
                                 <td style={{ border: "1px solid #999" }} colSpan={2}>
-                                    {item.Description} วันที่ ......... ห้อง .........
+                                    {item.Description}
                                 </td>
                                 <td style={{ border: "1px solid #999", textAlign: 'center' }}>
                                     {item.Quantity}
@@ -402,7 +401,10 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 colSpan={2}
                             >
-                                1,000.00
+                                {invoice.BookingRoom?.TotalAmount?.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                             </td>
                         </tr>
                         <tr>
@@ -433,7 +435,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 className="text-bold"
                             >
-                                (ยอดเงินเป็นตัวหนังสือ)
+                                ({numberToThaiBahtText(invoice.BookingRoom?.TotalAmount ?? 0)})
                             </td>
                             <td
                                 style={{
@@ -511,7 +513,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             {invoice.Customer?.FirstName} {invoice.Customer?.LastName})
                         </span>
                         <br />
-                        <span>วันที่ .....</span>
+                        <span>{`วันที่ ${thaiDateFull(invoice.BookingRoom?.CreatedAt ?? '')}`}</span>
                     </div>
 
                     <div
@@ -519,7 +521,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         style={{ width: "240px", textAlign: "center" }}
                     >
                         <span>อนุมัติโดย</span>
-                        <div style={{ height: "75px", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ height: "70px", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {
                                 invoice.Approver?.SignaturePath ? (
                                     <img
@@ -541,7 +543,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                             {invoice.Approver?.FirstName} {invoice.Approver?.LastName})
                         </span>
                         <br />
-                        <span>วันที่ .....</span>
+                        <span>{`วันที่ ${thaiDateFull(invoice.IssueDate ?? '')}`}</span>
                     </div>
                 </div>
 
@@ -552,7 +554,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         color: 'rgb(175, 175, 175)',
                         paddingLeft: "1em",
                         position: 'absolute',
-                        bottom: '6px',
+                        bottom: '10px',
                     }}
                     className="text-normal"
                 >

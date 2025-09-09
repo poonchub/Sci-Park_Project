@@ -13,7 +13,7 @@ import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
-import { ClipboardList, Eye, Check, X, Clock, HelpCircle, UserRound, Book } from "lucide-react";
+import { ClipboardList, Eye, Check, X, Clock, HelpCircle, UserRound, Book, Loader } from "lucide-react";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
 import { isAdmin, isManager } from "../../routes";
@@ -52,9 +52,12 @@ import RefundButton from "../../components/RefundButton/RefundButton";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import { createRoot } from "react-dom/client";
-import RoomBookingInvoicePDF from "../../components/InvoicePDF/RoomBookingInvoicePDF";
+import RoomBookingInvoicePDF, { thaiDateFull } from "../../components/InvoicePDF/RoomBookingInvoicePDF";
 import { RoomBookingInvoiceItemInterface } from "../../interfaces/IRoomBookingInvoiceItem";
 import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/ConfirmDialogRoomBookingInvoice";
+import { BookingDateInterface } from "../../interfaces/IBookingDate";
+import { useUserStore } from "../../store/userStore";
+import { UserInterface } from "../../interfaces/IUser";
 
 
 
@@ -67,7 +70,7 @@ interface BookingRoomsInterface {
     Merged_time_slots?: Array<{ start_time: string; end_time: string }>;
     StatusName?: string; // "pending" | "confirmed" | "cancelled" | ...
     Purpose?: string;
-    User?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+    User?: UserInterface;
     DisplayStatus?: string;   // ✅ เพิ่มตรงนี้
     Payment?: {
         id?: number;
@@ -86,7 +89,6 @@ function AllBookingRoom() {
 
     // ===== state หลัก =====
     const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([]);
-    console.log("bookingRooms", bookingRooms);
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -111,6 +113,8 @@ function AllBookingRoom() {
 
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
 
+    const [isButtonActive, setIsButtonActive] = useState(false)
+    const { user } = useUserStore()
     // ===== ดึงข้อมูล =====
     // const getBookingRooms = async () => {
     //     try {
@@ -430,8 +434,7 @@ function AllBookingRoom() {
                         </Box>
                     );
                 },
-            }
-            ,
+            },
             {
                 field: "Booker",
                 headerName: "Booker",
@@ -447,7 +450,6 @@ function AllBookingRoom() {
                     );
                 },
             },
-
             {
                 field: "Actions",
                 headerName: "Actions",
@@ -464,12 +466,15 @@ function AllBookingRoom() {
                                         <Button
                                             variant="contained"
                                             color="primary"
+                                            disabled={isButtonActive}
                                             onClick={() => {
                                                 setSelectedRow(row);
                                                 setOpenConfirmApprove(true);
+                                                setIsButtonActive(true)
                                             }}
+                                            startIcon={isButtonActive && <Loader size={18} style={{ minWidth: '18px', minHeight: '18px' }} />}
                                         >
-                                            Approve
+                                            {isButtonActive ? "Loading" : "Approve"}
                                         </Button>
                                     </Tooltip>
                                     <Tooltip title="Reject">
@@ -536,40 +541,90 @@ function AllBookingRoom() {
         ];
     };
 
+    const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
+        setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+    };
+
     const handlePrimaryAction = async (key: ActionKey, row: BookingRoomsInterface, invoiceNumber?: string) => {
         setSelectedRow(row);
         try {
             switch (key) {
                 case "approve":
+
+                    if (!user?.SignaturePath || user.SignaturePath === "") {
+                        handleSetAlert("warning", "Please upload your signature before proceeding.");
+                        setIsButtonActive(false);
+                        return;
+                    }
+
+                    if (!row?.User?.SignaturePath || row?.User?.SignaturePath === "") {
+                        handleSetAlert("warning", "Customer signature not found. Please contact the customer to upload their signature.");
+                        setIsButtonActive(false);
+                        return;
+                    }
+
                     const resApprove = await ApproveBookingRoom(row.ID);
                     console.log("resApprove: ", resApprove)
-
                     const userId = Number(localStorage.getItem("userId"))
-                    const invoiceData: RoomBookingInvoiceInterface = {
-                        InvoiceNumber: invoiceNumber,
-                        IssueDate:  "2025-08-31T16:59:59.999Z",
-                        DueDate: "",
-                        BookingRoomID: resApprove.data.ID,
-                        ApproverID: userId,
-                        CustomerID: resApprove.data.UserID
+                    let invoiceData: RoomBookingInvoiceInterface = {}
+
+                    const today = new Date()
+                    if (resApprove.data.PaymentOption.OptionName === "Deposit") {
+                        const BookingDates = resApprove.data.BookingDates
+                        const maxDate = new Date(
+                            Math.max(...BookingDates.map((item: BookingDateInterface) => new Date(item.Date ?? "").getTime()))
+                        );
+
+                        const depositDue = new Date()
+                        const dueDate = new Date()
+
+                        depositDue.setDate(today.getDate() + 7)
+                        depositDue.setHours(23, 59, 59, 999);
+
+                        dueDate.setDate(maxDate.getDate() + 7)
+                        dueDate.setHours(23, 59, 59, 999);
+
+                        invoiceData = {
+                            InvoiceNumber: invoiceNumber,
+                            IssueDate: today.toISOString(),
+                            DepositeDueDate: depositDue.toISOString(),
+                            DueDate: dueDate.toISOString(),
+                            BookingRoomID: resApprove.data.ID,
+                            ApproverID: userId,
+                            CustomerID: resApprove.data.UserID
+                        }
+                    } else if (resApprove.data.PaymentOption.OptionName === "Full") {
+                        const dueDate = new Date()
+                        dueDate.setDate(today.getDate() + 7)
+                        dueDate.setHours(23, 59, 59, 999);
+
+                        invoiceData = {
+                            InvoiceNumber: invoiceNumber,
+                            IssueDate: today.toISOString(),
+                            DueDate: dueDate.toISOString(),
+                            BookingRoomID: resApprove.data.ID,
+                            ApproverID: userId,
+                            CustomerID: resApprove.data.UserID
+                        }
                     }
 
                     const resInvoice = await CreateRoomBookingInvoice(invoiceData)
 
-                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = [
-                        {
-                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
-                            Quantity: 1,
-                            UnitPrice: 10000,
-                            Amount: 10000,
-                        },
-                        {
-                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${"resInvoice"} ห้อง ${"resInvoice"}`,
-                            Quantity: 1,
-                            UnitPrice: 10000,
-                            Amount: 10000,
-                        },
-                    ]
+                    const BookingDate: BookingDateInterface = resApprove.data.BookingDates || []
+
+                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = []
+                    if (Array.isArray(BookingDate) && BookingDate.length > 0) {
+                        BookingDate.forEach((date) => {
+                            invoiceItemData.push({
+                                Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(date.Date)} ห้อง ${resApprove.data.Room.RoomNumber}`,
+                                Quantity: 1,
+                                UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
+                                Amount: resApprove.data.TotalAmount / BookingDate.length,
+                            });
+                        });
+                    } else {
+                        console.warn("⚠️ BookingDates is empty or undefined", BookingDate);
+                    };
 
                     const updatedItems = invoiceItemData.map((item) => ({
                         ...item,
@@ -590,7 +645,7 @@ function AllBookingRoom() {
                     }
 
                     await handleUploadPDF(resInvoice.data.ID);
-
+                    setIsButtonActive(false)
                     break;
 
                 case "approvePayment":
@@ -623,30 +678,34 @@ function AllBookingRoom() {
             await getBookingRooms();
             setAlerts(p => [...p, { type: "success", message: `Action ${key} success` }]);
         } catch (e) {
+            console.log("Error: ", e)
             setAlerts(p => [...p, { type: "error", message: `Action ${key} failed` }]);
         }
     };
 
-    const handleUploadPDF = async (invoiceId: number) => {
-        try {
-            const container = document.createElement("div");
-            container.style.display = "none";
-            document.body.appendChild(container);
+    const handleUploadPDF = (invoiceId: number): Promise<void> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const container = document.createElement("div");
+                container.style.display = "none";
+                document.body.appendChild(container);
 
-            const root = createRoot(container);
+                const root = createRoot(container);
 
-            const handlePDFCompleted = () => {
-                root.unmount();
-                container.remove();
-            };
+                const handlePDFCompleted = () => {
+                    root.unmount();
+                    container.remove();
+                    resolve();
+                };
 
-            const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
-            root.render(<RoomBookingInvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
-        } catch (error) {
-            console.error("🚨 Error creating invoice:", error);
-        }
-    }
-
+                const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
+                root.render(<RoomBookingInvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+            } catch (error) {
+                console.error("🚨 Error creating invoice:", error);
+                reject(error);
+            }
+        });
+    };
 
     // const doReject = async (note?: string) => {
     //     if (!selectedRow) return;
@@ -753,7 +812,7 @@ function AllBookingRoom() {
         <Box className="all-maintenance-request-page">
             <Button
                 variant="contained"
-                onClick={() => handleUploadPDF(2)}
+                onClick={() => handleUploadPDF(3)}
             >
                 Click
             </Button>
