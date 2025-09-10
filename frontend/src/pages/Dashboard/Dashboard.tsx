@@ -1288,7 +1288,7 @@ function Dashboard() {
                                                             );
                                                         }}
                                                     >
-                                                        {timeFrameOptions.map((item, index) => {
+                                                        {timeFrameOptionsRoom.map((item, index) => {
                                                             return (
                                                                 <MenuItem
                                                                     key={index}
