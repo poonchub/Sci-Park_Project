@@ -1333,8 +1333,8 @@ function RoomRentalSpace() {
                     renderCell: (item) => {
                         const data = item.row;
                         const statusName = data.RoomStatus?.status_name
-                        const invoice = data.Invoices ?? [];
 
+                        const invoice = data.RentalRoomInvoices ?? [];
                         const hasNotification = invoice.some(
                             (inv: RentalRoomInvoiceInterface) => inv.Notifications?.some((noti: NotificationsInterface) => noti.UserID === Number(userID) && !noti.IsRead)
                         );
@@ -1787,7 +1787,7 @@ function RoomRentalSpace() {
                                             {
                                                 statusName === "Pending Payment" &&
                                                 <>
-                                                    <Grid size={{ xs: 6 }}>
+                                                    <Grid size={{ xs: 3 }}>
                                                         <Tooltip title="Edit Invoice">
                                                             <Button
                                                                 variant="outlinedGray"
@@ -1809,7 +1809,7 @@ function RoomRentalSpace() {
                                                             </Button>
                                                         </Tooltip>
                                                     </Grid>
-                                                    <Grid size={{ xs: 6 }}>
+                                                    <Grid size={{ xs: 3 }}>
                                                         <Tooltip title="Delete Invoice">
                                                             <Button
                                                                 variant="outlinedCancel"
