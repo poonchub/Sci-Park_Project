@@ -406,6 +406,24 @@ func UpdateServiceAreaDocumentForCancellation(c *gin.Context) {
 		return
 	}
 
+	// อัปเดตสถานะ Room ให้กลับเป็น "Available" (ID: 1) เมื่อยกเลิก Service Area
+	if serviceAreaDocument.RoomID > 0 {
+		var room entity.Room
+		if err := tx.First(&room, serviceAreaDocument.RoomID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find room"})
+			return
+		}
+
+		// อัปเดต RoomStatusID เป็น 1 (Available)
+		room.RoomStatusID = 1
+		if err := tx.Save(&room).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update room status to available"})
+			return
+		}
+	}
+
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
