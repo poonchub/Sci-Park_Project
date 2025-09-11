@@ -282,6 +282,7 @@ async function UpdateUserbyID(data: any) {
         formData.append("request_type_id", (data.RequestTypeID || 1).toString());
         formData.append("prefix_id", (data.PrefixID || 1).toString());
         formData.append("job_position_id", (data.JobPositionID || "").toString());
+        formData.append("is_business_owner", (data.IsBusinessOwner || false).toString());
 
         if (data.Profile_Image) {
             formData.append("profile_image", data.Profile_Image);

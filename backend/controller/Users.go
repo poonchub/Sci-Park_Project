@@ -629,22 +629,23 @@ func ListUsers(c *gin.Context) {
 // รับข้อมูลจาก form-data
 func UpdateUserByID(c *gin.Context) {
 	var updateUserData struct {
-		CompanyName    string `form:"company_name"`
-		BusinessDetail string `form:"business_detail"`
-		FirstName      string `form:"first_name"`
-		LastName       string `form:"last_name"`
-		Password       string `form:"password"`
-		Email          string `form:"email"`
-		Phone          string `form:"phone"`
-		EmployeeID     string `form:"employee_id"`
-		RoleID         uint   `form:"role_id"`
-		GenderID       uint   `form:"gender_id"`
-		PrefixID       uint   `form:"prefix_id"`
-		JobPositionID  uint   `form:"job_position_id"`
-		PackageID      uint   `form:"package_id"`
-		ProfileCheck   string `form:"profile_check"` // สำหรับรับโปรไฟล์ภาพจาก form-data
-		RequestTypeID  uint   `form:"request_type_id"`
-		SignatureCheck string `form:"signature_check"`
+		CompanyName     string `form:"company_name"`
+		BusinessDetail  string `form:"business_detail"`
+		FirstName       string `form:"first_name"`
+		LastName        string `form:"last_name"`
+		Password        string `form:"password"`
+		Email           string `form:"email"`
+		Phone           string `form:"phone"`
+		EmployeeID      string `form:"employee_id"`
+		RoleID          uint   `form:"role_id"`
+		GenderID        uint   `form:"gender_id"`
+		PrefixID        uint   `form:"prefix_id"`
+		JobPositionID   uint   `form:"job_position_id"`
+		PackageID       uint   `form:"package_id"`
+		ProfileCheck    string `form:"profile_check"` // สำหรับรับโปรไฟล์ภาพจาก form-data
+		RequestTypeID   uint   `form:"request_type_id"`
+		SignatureCheck  string `form:"signature_check"`
+		IsBusinessOwner bool   `form:"is_business_owner"`
 	}
 
 	// Bind form-data ที่รับมา
@@ -725,6 +726,8 @@ func UpdateUserByID(c *gin.Context) {
 	if updateUserData.JobPositionID != 0 {
 		user.JobPositionID = updateUserData.JobPositionID
 	}
+	// อัปเดต IsBusinessOwner
+	user.IsBusinessOwner = updateUserData.IsBusinessOwner
 	// หากมีการเปลี่ยนแปลงรหัสผ่าน
 	if updateUserData.Password != "" {
 		// แฮชรหัสผ่านใหม่
