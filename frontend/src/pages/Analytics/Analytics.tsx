@@ -15,11 +15,6 @@ import {
     Avatar,
 } from '@mui/material';
 import {
-
-    CalendarDays ,
-
-} from 'lucide-react';
-import {
     LineChart,
     Line,
     XAxis,
@@ -34,11 +29,7 @@ import {
     Pie,
     Cell,
 } from 'recharts';
-import {
 
-    ChartPie,
-
-} from "lucide-react";
 import ApexLineChart from '../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart';
 import PopularPagesDonutChart from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import {
@@ -48,8 +39,13 @@ import {
     Eye,
     Clock,
     HelpCircle,
-
+    BrushCleaning,
+    ChartArea,
+    Navigation,
+    BarChart3,
+    ChartPie ,
 } from 'lucide-react';
+import { CalendarMonth } from '@mui/icons-material';
 import CustomTabPanel from '../../components/CustomTabPanel/CustomTabPanel';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -71,6 +67,7 @@ import { useTheme } from '@mui/material/styles';
 
 
 const Analytics: React.FC = () => {
+    const theme = useTheme();
     const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
     const [systemAnalyticsData, setSystemAnalyticsData] = useState<SystemAnalyticsData | null>(null);
     const [pageData, setPageData] = useState<PageAnalyticsData[]>([]);
@@ -298,8 +295,8 @@ const Analytics: React.FC = () => {
                 type: "gradient",
                 gradient: {
                     shadeIntensity: 1,
-                    opacityFrom: 0.3,
-                    opacityTo: 0.1,
+                    opacityFrom: 0.8,
+                    opacityTo: 0.2,
                     stops: [0, 90, 100],
                 },
             },
@@ -517,9 +514,23 @@ const Analytics: React.FC = () => {
                                         spacing={1}
                                     >
                                         <Grid size={{ xs: 12, mobileS: 7.5, md: 5 }}>
-                                            <Typography variant="subtitle1" color="text.main" fontWeight={600}>
-                                                Daily Visits Analytics
-                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 1
+                                                }}
+                                            >
+                                                <ChartArea size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    color="text.main"
+                                                    fontWeight={600}
+                                                    fontSize={18}
+                                                >
+                                                    Daily Visits Analytics
+                                                </Typography>
+                                            </Box>
                                             <Typography variant="h4" fontWeight={800} color="primary">
                                                 <Box component="span">
                                                     {visitsRangeData.length}
@@ -550,7 +561,7 @@ const Analytics: React.FC = () => {
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarDays ,
+                                                        openPickerIcon: CalendarMonth,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{
@@ -569,7 +580,7 @@ const Analytics: React.FC = () => {
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarDays ,
+                                                        openPickerIcon: CalendarMonth,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{
@@ -596,7 +607,7 @@ const Analytics: React.FC = () => {
                                                     },
                                                 }}
                                             >
-                                                <Sparkles size={20} style={{ color: "gray" }} />
+                                                <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                             </Button>
                                         </Grid>
                                         
@@ -647,9 +658,23 @@ const Analytics: React.FC = () => {
                             <Grid size={{ xs: 12 }}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant="h6" gutterBottom>
-                                            Performance Analytics
-                                        </Typography>
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 1,
+                                                mb: 2
+                                            }}
+                                        >
+                                            <Clock size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                            <Typography
+                                                variant="h6"
+                                                fontWeight={600}
+                                                fontSize={18}
+                                            >
+                                                Performance Analytics
+                                            </Typography>
+                                        </Box>
                                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                 <DatePicker
@@ -663,7 +688,7 @@ const Analytics: React.FC = () => {
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarDays ,
+                                                        openPickerIcon: CalendarMonth,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{ minWidth: "150px" }}
@@ -679,7 +704,7 @@ const Analytics: React.FC = () => {
                                                         }
                                                     }}
                                                     slots={{
-                                                        openPickerIcon: CalendarDays ,
+                                                        openPickerIcon: CalendarMonth,
                                                     }}
                                                     format="DD/MM/YYYY"
                                                     sx={{ minWidth: "150px" }}
@@ -701,7 +726,7 @@ const Analytics: React.FC = () => {
                                                     },
                                                 }}
                                             >
-                                                <Sparkles size={20} />
+                                                <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                             </IconButton>
 
                                         </Box>
@@ -765,15 +790,29 @@ const Analytics: React.FC = () => {
                             <Grid size={{ xs: 12 }}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant="h6" gutterBottom>
-                                            Page Performance Details
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 1,
+                                                mb: 2
+                                            }}
+                                        >
+                                            <Navigation size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                            <Typography
+                                                variant="h6"
+                                                fontWeight={600}
+                                                fontSize={18}
+                                            >
+                                                Page Performance Details
+                                            </Typography>
                                             <Chip 
                                                 label="Tracked Pages Only" 
                                                 color="primary" 
                                                 size="small" 
                                                 sx={{ ml: 2 }}
                                             />
-                                        </Typography>
+                                        </Box>
                                         <Box sx={{ overflowX: 'auto' }}>
                                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                                 <thead>
@@ -873,9 +912,24 @@ const Analytics: React.FC = () => {
                                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
                                     <Card sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'stretch' }}>
                                         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
-                                                Visits by Time Slot
-                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 1,
+                                                    mb: 2
+                                                }}
+                                            >
+                                                <BarChart3 size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    fontWeight={600}
+                                                    fontSize={18}
+                                                    color="text.main"
+                                                >
+                                                    Visits by Time Slot
+                                                </Typography>
+                                            </Box>
                                             {performanceData?.time_slots && performanceData.time_slots.length > 0 ? (
                                                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                                     {/* Bar Chart */}
@@ -906,7 +960,7 @@ const Analytics: React.FC = () => {
                                                                 />
                                                                 <Bar 
                                                                     dataKey="visits" 
-                                                                    fill="#8884d8" 
+                                                                    fill={theme.palette.primary.main} 
                                                                     radius={[4, 4, 0, 0]}
                                                                 />
                                                             </BarChart>
@@ -933,7 +987,7 @@ const Analytics: React.FC = () => {
                                                                 {performanceData.time_slots.map((slot, idx) => {
                                                                     const totalVisits = performanceData.time_slots.reduce((sum, s) => sum + s.visits, 0);
                                                                     const percentage = totalVisits > 0 ? ((slot.visits / totalVisits) * 100).toFixed(1) : '0.0';
-                                                                    const color = slot.visits > 0 ? '#8884d8' : '#e0e0e0';
+                                                                    const color = slot.visits > 0 ? theme.palette.primary.main : '#e0e0e0';
                                                                     return (
                                                                         <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fafafa' : '#ffffff' }}>
                                                                             <td style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '13px' }}>
@@ -977,9 +1031,24 @@ const Analytics: React.FC = () => {
                                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
                                     <Card sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'stretch' }}>
                                         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <Typography variant="h6" gutterBottom color="success.main" fontWeight="bold">
-                                                Session Duration Distribution
-                                            </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 1,
+                                                    mb: 2
+                                                }}
+                                            >
+                                                <ChartPie size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    fontWeight={600}
+                                                    fontSize={18}
+                                                    color="text.main"
+                                                >
+                                                    Session Duration Distribution
+                                                </Typography>
+                                            </Box>
                                             {performanceData?.session_duration_distribution && performanceData.session_duration_distribution.length > 0 ? (
                                                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                                     {/* Donut Chart */}

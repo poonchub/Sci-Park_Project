@@ -12,7 +12,7 @@ import {
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
-import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User, Building2 } from 'lucide-react';
+import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User, Building2, ChartPie } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { analyticsService, PopularPagesByPeriodData } from '../../services/analyticsService';
 
@@ -268,9 +268,22 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>
             <CardContent sx={{ py: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                        {title}
-                    </Typography>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1
+                        }}
+                    >
+                        <ChartPie size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                        <Typography
+                            variant="subtitle1"
+                            fontWeight={600}
+                            fontSize={18}
+                        >
+                            {title}
+                        </Typography>
+                    </Box>
                     {usePeriodSelector && (
                         <ToggleButtonGroup
                             value={period}
