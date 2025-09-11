@@ -136,7 +136,7 @@ const ApproveServiceAreaPopup: React.FC<ApproveServiceAreaPopupProps> = ({
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant='outlinedGray'
+                <Button variant='outlinedCancel'
                     onClick={onClose}
                 >
                     Cancel

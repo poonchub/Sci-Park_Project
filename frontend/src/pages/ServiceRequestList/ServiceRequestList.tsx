@@ -1080,7 +1080,7 @@ const ServiceRequestList: React.FC = () => {
                         sx={{ gap: 1 }}
                     >
                         <ClipboardList size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
+                        <Typography variant="titlePage" className="title">
                             Service Area Request List
                         </Typography>
                     </Grid>

@@ -34,6 +34,9 @@ declare module "@mui/material/styles" {
 declare module "@mui/material/Typography" {
     interface TypographyPropsVariantOverrides {
         textButtonClassic: true;
+        titlePopup: true;
+        titleConfirmPopup: true;
+        titlePage: true;
     }
   }
   

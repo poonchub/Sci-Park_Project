@@ -391,7 +391,8 @@ const WindowsLayout: React.FC = (props: any) => {
             "requests",
             "maintenance/all-maintenance-request",
             "rental-space",
-            "service-area/service-request-list",
+            // เพิ่มเงื่อนไขสำหรับ Service Area
+            ...(localStorage.getItem('requestType') === 'External' || localStorage.getItem('requestType') === 'Both' ? ["service-area/service-request-list"] : []),
         ],
         'Maintenance Operator': [
             "home",

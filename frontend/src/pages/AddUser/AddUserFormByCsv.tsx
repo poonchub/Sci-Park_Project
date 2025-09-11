@@ -741,7 +741,7 @@ const AddUserFormByCsv: React.FC = () => {
           <Grid className='title-box' size={{ xs: 10, md: 12 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <UserRoundPlus size={26} />
-              <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+              <Typography variant="titlePage" className="title">Add Users</Typography>
             </Box>
 
           </Grid>

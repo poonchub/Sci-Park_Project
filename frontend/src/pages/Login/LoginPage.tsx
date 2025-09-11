@@ -38,12 +38,15 @@ const LoginPage: React.FC = () => {
     try {
       const responseData: any = await UserLogin(data);
       const response = responseData?.data;
+      
+      console.log(response);
       if (response && response.Token && response.Role) {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("role", response.Role || "Outsider");
         localStorage.setItem("token", response.Token);
         localStorage.setItem("userId", response.ID);
         localStorage.setItem("email", response.Email);
+        localStorage.setItem("requestType", response.RequestTypeName);
 
         setAlerts([...alerts, { type: 'success', message: "Login successful!" }]);  // Add success alert
 

@@ -187,10 +187,10 @@ const AddUserForm: React.FC = () => {
         );
       })}
       <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <UserRoundPlus size={26} />
-            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+            <Typography variant="titlePage" className="title">Add Users</Typography>
           </Box>
 
         </div>

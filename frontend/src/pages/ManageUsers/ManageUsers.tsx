@@ -32,7 +32,7 @@ function ManageUsers() {
     const [roles, setRoles] = useState<RolesInterface[]>([]);
     const [selectrole, setSelectRole] = useState(0);
     const [isEmployee, setIsEmployee] = useState<boolean | undefined>(undefined);
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
     const [openPopup, setOpenPopup] = useState(false);
@@ -112,14 +112,14 @@ function ManageUsers() {
         setSelectRole(0);
         setSelectPackage(0);
         setIsEmployee(undefined);
-        setPage(1);
+        setPage(0);
         setLimit(10);
     }
 
     // Search function - now triggers API call with search parameter
     const handleSearch = () => {
         // Reset to page 1 when searching
-        setPage(1);
+        setPage(0);
         // The actual search will be handled by the useEffect that watches debouncedSearchText
     };
 
@@ -232,7 +232,7 @@ function ManageUsers() {
                 <Grid className='title-box' size={{ xs: 10, md: 12 }} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <UserCog size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Users</Typography>
+                        <Typography variant="titlePage" className="title">Manage Users</Typography>
                     </Box>
 
 

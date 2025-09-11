@@ -26,8 +26,8 @@ func UserLogin(c *gin.Context) {
 	db := config.DB()
 	var user entity.User
 
-	// ค้นหา User จาก Email และโหลด Role
-	if err := db.Preload("Role").Where("email = ?", loginData.Email).First(&user).Error; err != nil {
+	// ค้นหา User จาก Email และโหลด Role และ RequestType
+	if err := db.Preload("Role").Preload("RequestType").Where("email = ?", loginData.Email).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"Error": "Incorrect email or password"})
 		return
 	}
@@ -65,20 +65,22 @@ func UserLogin(c *gin.Context) {
 
 	// ส่งข้อมูล User กลับ โดยใช้ PascalCase
 	c.JSON(http.StatusOK, gin.H{
-		"ID":             user.ID,
-		"CompanyName":    user.CompanyName,
-		"BusinessDetail": user.BusinessDetail,
-		"FirstName":      user.FirstName,
-		"LastName":       user.LastName,
-		"GenderID":       user.GenderID,
-		"Gender":         user.Gender.Name,
-		"Email":          user.Email,
-		"Phone":          user.Phone,
-		"ProfilePath":    user.ProfilePath,
-		"UserPackageID":  user.UserPackageID,
-		"RoleID":         user.RoleID,
-		"Role":           user.Role.Name,
-		"EmployeeID":     user.EmployeeID,
-		"Token":          tokenString,
+		"ID":              user.ID,
+		"CompanyName":     user.CompanyName,
+		"BusinessDetail":  user.BusinessDetail,
+		"FirstName":       user.FirstName,
+		"LastName":        user.LastName,
+		"GenderID":        user.GenderID,
+		"Gender":          user.Gender.Name,
+		"Email":           user.Email,
+		"Phone":           user.Phone,
+		"ProfilePath":     user.ProfilePath,
+		"UserPackageID":   user.UserPackageID,
+		"RoleID":          user.RoleID,
+		"Role":            user.Role.Name,
+		"EmployeeID":      user.EmployeeID,
+		"RequestTypeID":   user.RequestTypeID,
+		"RequestTypeName": user.RequestType.TypeName,
+		"Token":           tokenString,
 	})
 }

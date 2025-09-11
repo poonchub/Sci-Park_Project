@@ -231,7 +231,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <ManageAccountsOutlinedIcon style={{ fontSize: '32px', color: '#ff6f00' }} />
-            <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            <Typography variant="titlePopup" component="div">
               Edit User Information
             </Typography>
           </div>

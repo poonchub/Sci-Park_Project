@@ -1509,7 +1509,7 @@ const EditProfile: React.FC = () => {
                                         * {userType === "external" ? "Personal and company information will be updated" : "Only personal information will be updated"}
                                     </Typography>
                                     <Button
-                                        variant="outlined"
+                                        variant="outlinedCancel"
                                         onClick={() => {
                                             setIsEditMode(false);
                                             reset(); // Reset form to original values

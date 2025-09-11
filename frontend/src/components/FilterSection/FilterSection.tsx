@@ -51,7 +51,7 @@ const FilterSection = ({
         .filter(status => inProcessNames.includes(status.Name || ''))
         .map(status => status.ID!)
 
-    const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => <Calendar size={20} style={{ minWidth: '20px', minHeight: '20px' }} {...props} />;
+    const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => <CalendarMonth size={20} style={{ minWidth: '20px', minHeight: '20px' }} {...props} />;
 
     return (
         <Grid
@@ -92,7 +92,7 @@ const FilterSection = ({
                                 value={selectedDate}
                                 onChange={(newValue) => setSelectedDate(newValue)}
                                 slots={{
-                                    // openPickerIcon: CalendarIcon,
+                                    openPickerIcon: CalendarIcon,
                                 }}
                                 sx={{ width: '100%'}}
                             />

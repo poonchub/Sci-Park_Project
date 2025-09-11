@@ -184,6 +184,34 @@ const theme = createTheme({
                         lineHeight: 1.5
                     },
                 },
+                {
+                    props: { variant: 'titlePopup' },
+                    style: {
+                        fontSize: '1.25rem', // h6 size
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        fontFamily: '"Noto Sans Thai", sans-serif'
+                    },
+                },
+                {
+                    props: { variant: 'titleConfirmPopup' },
+                    style: {
+                        fontSize: '1.25rem', // h6 size
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        fontFamily: '"Noto Sans Thai", sans-serif',
+                        textAlign: 'center'
+                    },
+                },
+                {
+                    props: { variant: 'titlePage' },
+                    style: {
+                        fontSize: '1.5rem', // h5 size
+                        fontWeight: 700,
+                        lineHeight: 1.2,
+                        fontFamily: '"Noto Sans Thai", sans-serif'
+                    },
+                },
             ],
         },
         MuiCard: {
