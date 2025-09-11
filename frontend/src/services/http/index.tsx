@@ -182,6 +182,9 @@ async function ListUsers(data: QuarryInterface) {
 }
 
 async function CreateUser(data: any) {
+    // Debug: Print received data
+    console.log('🔍 CreateUser received data:', data);
+    
     const formData = new FormData();
     formData.append("company_name", data.company_name || "");
     formData.append("business_detail", data.business_detail || "");
@@ -197,6 +200,7 @@ async function CreateUser(data: any) {
     formData.append("request_type_id", data.request_type_id || "1");
     formData.append("prefix_id", data.prefix_id || "1");
     formData.append("job_position_id", data.job_position_id || "");
+    formData.append("is_business_owner", data.is_business_owner || "false");
 
     if (data.profile_image) {
         formData.append("profile_image", data.profile_image);
@@ -204,8 +208,15 @@ async function CreateUser(data: any) {
 
     formData.append("package_id", data.package_id || "1");
 
+    // Debug: Print FormData contents
+    console.log('🔍 FormData contents:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
+
     try {
         // Send FormData with axiosInstance
+        console.log('🔍 Sending request to:', `/create-user`);
         const response = await axiosInstance.post(`/create-user`, formData);
 
         // Handle the response and return a custom object
@@ -223,6 +234,13 @@ async function CreateUser(data: any) {
             };
         }
     } catch (error) {
+        // Debug: Print error details
+        console.error('🔍 CreateUser error:', error);
+        if (axios.isAxiosError(error)) {
+            console.error('🔍 Error response:', error.response?.data);
+            console.error('🔍 Error status:', error.response?.status);
+        }
+        
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message

@@ -41,6 +41,8 @@ import {
   ListGenders,
   ListPackages,
   ListRequestTypes,
+  ListJobPositions,
+  ListTitlePrefixes,
   CreateUser
 } from '../../services/http';
 import './AddUserForm.css';
@@ -51,19 +53,25 @@ interface CsvUserData {
   LastName: string;
   Email: string;
   Phone: string;
+  Password: string;
   EmployeeID?: string;
   CompanyName?: string;
   BusinessDetail?: string;
   Gender: string;
   Role: string;
+  JobPosition: string;
+  TitlePrefix: string;
   UserPackage?: string;
   RequestType?: string;
   IsEmployee: boolean;
+  IsBusinessOwner: boolean;
   isValid: boolean;
   errors: string[];
   // Converted IDs for API
   GenderID: number;
   RoleID: number;
+  JobPositionID: number;
+  PrefixID: number;
   UserPackageID?: number;
   RequestTypeID?: number;
 }
@@ -73,13 +81,17 @@ interface ConfirmUserFormData {
   LastName: string;
   Email: string;
   Phone: string;
+  Password: string;
   EmployeeID?: string;
   CompanyName?: string;
   BusinessDetail?: string;
   GenderID: number | string;
   RoleID: number | string;
+  JobPositionID: number | string;
+  PrefixID: number | string;
   UserPackageID?: number;
   RequestTypeID?: number;
+  IsBusinessOwner: boolean;
 }
 
 const AddUserFormByCsv: React.FC = () => {
@@ -95,6 +107,8 @@ const AddUserFormByCsv: React.FC = () => {
   const [genders, setGenders] = useState<GendersInterface[]>([]);
   const [packages, setPackages] = useState<PackagesInterface[]>([]);
   const [requiredTypes, setRequiredTypes] = useState<RequestTypeInterface[]>([]);
+  const [jobPositions, setJobPositions] = useState<any[]>([]);
+  const [titlePrefixes, setTitlePrefixes] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -102,9 +116,12 @@ const AddUserFormByCsv: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<CsvUserData | null>(null);
   const [selectedGender, setSelectedGender] = useState<number | null>(null);
   const [selectedRole, setSelectedRole] = useState<number | null>(null);
+  const [selectedJobPosition, setSelectedJobPosition] = useState<number | null>(null);
+  const [selectedPrefix, setSelectedPrefix] = useState<number | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null);
   const [selectedRequestType, setSelectedRequestType] = useState<number | null>(null);
   const [isEmployee, setIsEmployee] = useState<boolean>(true);
+  const [isBusinessOwner, setIsBusinessOwner] = useState<boolean>(false);
 
   const roleID = watch("RoleID");
 
@@ -120,16 +137,20 @@ const AddUserFormByCsv: React.FC = () => {
     const loadReferenceData = async () => {
       try {
         setIsLoadingData(true);
-        const [roleData, genderData, packageData, requiredTypeData] = await Promise.all([
+        const [roleData, genderData, packageData, requiredTypeData, jobPositionsData, titlePrefixesData] = await Promise.all([
           ListRoles(),
           ListGenders(),
           ListPackages(),
           ListRequestTypes(),
+          ListJobPositions(),
+          ListTitlePrefixes()
         ]);
         setRoles(roleData);
         setGenders(genderData);
         setPackages(packageData);
         setRequiredTypes(requiredTypeData);
+        setJobPositions(jobPositionsData?.data || jobPositionsData || []);
+        setTitlePrefixes(titlePrefixesData?.data || titlePrefixesData || []);
       } catch (error) {
         console.error('Error loading reference data:', error);
         setAlerts(prev => [...prev, { type: 'error', message: 'Failed to load reference data' }]);
@@ -156,7 +177,7 @@ const AddUserFormByCsv: React.FC = () => {
     const data: CsvUserData[] = [];
 
     // Validate required headers
-    const requiredHeaders = ['FirstName', 'LastName', 'Email', 'Phone', 'Gender', 'Role'];
+    const requiredHeaders = ['FirstName', 'LastName', 'Email', 'Phone', 'Password', 'Gender', 'Role', 'JobPosition', 'TitlePrefix'];
     const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
     if (missingHeaders.length > 0) {
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
@@ -165,6 +186,8 @@ const AddUserFormByCsv: React.FC = () => {
     // Define allowed values
     const allowedGenders = genders.map(g => g.Name);
     const allowedRoles = roles.map(r => r.Name);
+    const allowedJobPositions = jobPositions.map(j => j.Name);
+    const allowedTitlePrefixes = titlePrefixes.map(t => t.PrefixTH);
     const allowedPackages = packages.map(p => p.PackageName);
     const allowedRequestTypes = requiredTypes.map(t => t.TypeName);
 
@@ -184,8 +207,11 @@ const AddUserFormByCsv: React.FC = () => {
       if (!row.LastName) errors.push('Last name is required');
       if (!row.Email) errors.push('Email is required');
       if (!row.Phone) errors.push('Phone is required');
+      if (!row.Password) errors.push('Password is required');
       if (!row.Gender) errors.push('Gender is required');
       if (!row.Role) errors.push('Role is required');
+      if (!row.JobPosition) errors.push('Job position is required');
+      if (!row.TitlePrefix) errors.push('Title prefix is required');
 
       // Automatically determine IsEmployee based on EmployeeID presence
       const hasEmployeeID = row.EmployeeID && row.EmployeeID.trim() !== '';
@@ -231,6 +257,16 @@ const AddUserFormByCsv: React.FC = () => {
         errors.push(`Invalid role. Allowed values: ${allowedRoles.join(', ')}`);
       }
 
+      // Validate job position
+      if (row.JobPosition && !allowedJobPositions.includes(row.JobPosition)) {
+        errors.push(`Invalid job position. Allowed values: ${allowedJobPositions.join(', ')}`);
+      }
+
+      // Validate title prefix
+      if (row.TitlePrefix && !allowedTitlePrefixes.includes(row.TitlePrefix)) {
+        errors.push(`Invalid title prefix. Allowed values: ${allowedTitlePrefixes.join(', ')}`);
+      }
+
       // Validate package
       if (row.UserPackage && !allowedPackages.includes(row.UserPackage)) {
         errors.push(`Invalid package. Allowed values: ${allowedPackages.join(', ')}`);
@@ -249,6 +285,8 @@ const AddUserFormByCsv: React.FC = () => {
       // Convert human-readable values to IDs
       const gender = genders.find(g => g.Name === row.Gender);
       const role = roles.find(r => r.Name === row.Role);
+      const jobPosition = jobPositions.find(j => j.Name === row.JobPosition);
+      const titlePrefix = titlePrefixes.find(t => t.PrefixTH === row.TitlePrefix);
       const userPackage = packages.find(p => p.PackageName === row.UserPackage);
       const requestType = requiredTypes.find(t => t.TypeName === row.RequestType);
 
@@ -258,19 +296,25 @@ const AddUserFormByCsv: React.FC = () => {
         LastName: row.LastName || '',
         Email: row.Email || '',
         Phone: row.Phone || '',
+        Password: row.Password || '',
         EmployeeID: row.EmployeeID || '',
         CompanyName: row.CompanyName || '',
         BusinessDetail: row.BusinessDetail || '',
         Gender: row.Gender || '', // Keep human-readable for display
         Role: row.Role || '', // Keep human-readable for display
+        JobPosition: row.JobPosition || '', // Keep human-readable for display
+        TitlePrefix: row.TitlePrefix || '', // Keep human-readable for display
         UserPackage: row.UserPackage || '', // Keep human-readable for display
         RequestType: row.RequestType || '', // Keep human-readable for display
         IsEmployee: isEmployee, // Automatically determined based on EmployeeID
+        IsBusinessOwner: row.IsBusinessOwner === 'true' || row.IsBusinessOwner === true,
         isValid: errors.length === 0,
         errors,
         // Converted IDs for API
         GenderID: gender?.ID || 0,
         RoleID: role?.ID || 0,
+        JobPositionID: jobPosition?.ID || 0,
+        PrefixID: titlePrefix?.ID || 0,
         UserPackageID: userPackage?.ID || undefined,
         RequestTypeID: requestType?.ID || undefined,
       };
@@ -291,7 +335,7 @@ const AddUserFormByCsv: React.FC = () => {
     }
 
     // Check if reference data is loaded
-    if (genders.length === 0 || roles.length === 0 || packages.length === 0 || requiredTypes.length === 0) {
+    if (genders.length === 0 || roles.length === 0 || jobPositions.length === 0 || titlePrefixes.length === 0 || packages.length === 0 || requiredTypes.length === 0) {
       setAlerts(prev => [...prev, { type: 'error', message: 'Please wait for reference data to load before uploading CSV' }]);
       return;
     }
@@ -329,11 +373,15 @@ const AddUserFormByCsv: React.FC = () => {
     LastName: string;
     Email: string;
     Phone: string;
+    Password?: string;
     EmployeeID?: string;
     CompanyName?: string;
     BusinessDetail?: string;
     GenderID: number | null;
     RoleID: number | null;
+    JobPositionID?: number | null;
+    PrefixID?: number | null;
+    RequestTypeID?: number | null;
     IsEmployee: boolean;
   }): string[] => {
     const errors: string[] = [];
@@ -343,6 +391,7 @@ const AddUserFormByCsv: React.FC = () => {
     if (!data.LastName) errors.push('Last name is required');
     if (!data.Email) errors.push('Email is required');
     if (!data.Phone) errors.push('Phone is required');
+    if (!data.Password) errors.push('Password is required');
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -377,6 +426,13 @@ const AddUserFormByCsv: React.FC = () => {
     // Validate gender and role selections
     if (!data.GenderID) errors.push('Gender is required');
     if (!data.RoleID) errors.push('Role is required');
+    if (!data.JobPositionID) errors.push('Job position is required');
+    if (!data.PrefixID) errors.push('Title prefix is required');
+
+    // Validate management for Manager (3) and Admin (4) roles
+    if ((data.RoleID === 3 || data.RoleID === 4) && !data.RequestTypeID) {
+      errors.push('Management is required for Manager and Admin roles');
+    }
 
     return errors;
   };
@@ -385,19 +441,26 @@ const AddUserFormByCsv: React.FC = () => {
     setSelectedUser(user);
     setSelectedGender(user.GenderID);
     setSelectedRole(user.RoleID);
+    setSelectedJobPosition(user.JobPositionID);
+    setSelectedPrefix(user.PrefixID);
     setSelectedPackage(user.UserPackageID || null);
     setSelectedRequestType(user.RequestTypeID || null);
     setIsEmployee(user.IsEmployee);
+    setIsBusinessOwner(user.IsBusinessOwner);
 
     setValue('FirstName', user.FirstName);
     setValue('LastName', user.LastName);
     setValue('Email', user.Email);
     setValue('Phone', user.Phone);
+    setValue('Password', user.Password);
     setValue('EmployeeID', user.EmployeeID);
     setValue('CompanyName', user.CompanyName);
     setValue('BusinessDetail', user.BusinessDetail);
     setValue('GenderID', user.GenderID);
     setValue('RoleID', user.RoleID);
+    setValue('JobPositionID', user.JobPositionID);
+    setValue('PrefixID', user.PrefixID);
+    setValue('IsBusinessOwner', user.IsBusinessOwner);
 
     setConfirmDialogOpen(true);
 
@@ -414,19 +477,36 @@ const AddUserFormByCsv: React.FC = () => {
     setIsLoading(true);
     try {
       const userData = {
-        FirstName: data.FirstName,
-        LastName: data.LastName,
-        Email: data.Email,
-        Phone: data.Phone,
-        EmployeeID: data.EmployeeID,
-        CompanyName: data.CompanyName,
-        BusinessDetail: data.BusinessDetail,
-        GenderID: selectedGender,
-        RoleID: selectedRole,
-        UserPackageID: selectedPackage,
-        RequestTypeID: selectedRequestType,
-        IsEmployee: isEmployee
+        first_name: data.FirstName,
+        last_name: data.LastName,
+        email: data.Email,
+        phone: data.Phone,
+        password: data.Password,
+        employee_id: data.EmployeeID,
+        company_name: data.CompanyName,
+        business_detail: data.BusinessDetail,
+        gender_id: selectedGender,
+        role_id: selectedRole,
+        job_position_id: selectedJobPosition,
+        prefix_id: selectedPrefix,
+        package_id: selectedPackage,
+        request_type_id: selectedRequestType,
+        is_employee: isEmployee,
+        is_business_owner: isBusinessOwner
       };
+
+      // Debug: Print data before sending
+      console.log('🔍 Data being sent to API:', userData);
+      console.log('🔍 Selected values:', {
+        selectedGender,
+        selectedRole,
+        selectedJobPosition,
+        selectedPrefix,
+        selectedPackage,
+        selectedRequestType,
+        isEmployee,
+        isBusinessOwner
+      });
 
       const response = await CreateUser(userData);
 
@@ -467,11 +547,15 @@ const AddUserFormByCsv: React.FC = () => {
       LastName: data.LastName,
       Email: data.Email,
       Phone: data.Phone,
+      Password: data.Password,
       EmployeeID: data.EmployeeID,
       CompanyName: data.CompanyName,
       BusinessDetail: data.BusinessDetail,
       GenderID: selectedGender,
       RoleID: selectedRole,
+      JobPositionID: selectedJobPosition,
+      PrefixID: selectedPrefix,
+      RequestTypeID: selectedRequestType,
       IsEmployee: isEmployee,
     };
 
@@ -486,18 +570,24 @@ const AddUserFormByCsv: React.FC = () => {
           LastName: data.LastName,
           Email: data.Email,
           Phone: data.Phone,
+          Password: data.Password,
           EmployeeID: data.EmployeeID || '',
           CompanyName: data.CompanyName || '',
           BusinessDetail: data.BusinessDetail || '',
           Gender: genders.find(g => g.ID === selectedGender)?.Name || '',
           Role: roles.find(r => r.ID === selectedRole)?.Name || '',
+          JobPosition: jobPositions.find(j => j.ID === selectedJobPosition)?.Name || '',
+          TitlePrefix: titlePrefixes.find(t => t.ID === selectedPrefix)?.PrefixTH || '',
           UserPackage: packages.find(p => p.ID === selectedPackage)?.PackageName || '',
           RequestType: requiredTypes.find(t => t.ID === selectedRequestType)?.TypeName || '',
           IsEmployee: isEmployee,
+          IsBusinessOwner: isBusinessOwner,
           isValid: errors.length === 0, // Update validation status
           errors: errors, // Update error messages
           GenderID: selectedGender || 0,
           RoleID: selectedRole || 0,
+          JobPositionID: selectedJobPosition || 0,
+          PrefixID: selectedPrefix || 0,
           UserPackageID: selectedPackage || undefined,
           RequestTypeID: selectedRequestType || undefined,
         } as CsvUserData;
@@ -678,7 +768,7 @@ const AddUserFormByCsv: React.FC = () => {
             ) : (
               <>
                 <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  Upload a CSV file with user data. The file should include columns: FirstName, LastName, Email, Phone, EmployeeID (optional), CompanyName (optional), BusinessDetail (optional), Gender, Role, UserPackage (optional), RequestType (optional)
+                  Upload a CSV file with user data. The file should include columns: FirstName, LastName, Email, Phone, Password, EmployeeID (optional), CompanyName (optional), BusinessDetail (optional), Gender, Role, JobPosition, TitlePrefix, UserPackage (optional), RequestType (optional), IsBusinessOwner (optional)
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
                   <strong>Note:</strong> IsEmployee is automatically determined - if EmployeeID is provided, user is marked as Employee (true), otherwise as External User (false).
@@ -687,6 +777,8 @@ const AddUserFormByCsv: React.FC = () => {
                   <strong>Allowed values:</strong><br />
                   Gender: {genders.map(g => g.Name).join(', ')}<br />
                   Role: {roles.map(r => r.Name).join(', ')}<br />
+                  JobPosition: {jobPositions.map(j => j.Name).join(', ')}<br />
+                  TitlePrefix: {titlePrefixes.map(t => t.PrefixTH).join(', ')}<br />
                   UserPackage: {packages.map(p => p.PackageName).join(', ')}<br />
                   RequestType: {requiredTypes.map(t => t.TypeName).join(', ')}
                 </Typography>
@@ -800,6 +892,45 @@ const AddUserFormByCsv: React.FC = () => {
           {selectedUser && (
             <form onSubmit={handleSubmit(handleSaveChanges)}>
               <Grid container spacing={2}>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body1" className="title-field">Title Prefix</Typography>
+                  <Controller
+                    name="PrefixID"
+                    control={control}
+                    defaultValue={selectedUser?.PrefixID || 0}
+                    rules={{
+                      required: 'Title prefix is required',
+                      validate: (value) => {
+                        if (!value || value === 0) return 'Title prefix is required';
+                        return true;
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.PrefixID}>
+                        <Select
+                          {...field}
+                          value={field.value || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            field.onChange(value);
+                            setSelectedPrefix(value);
+                          }}
+                          displayEmpty
+                        >
+                          <MenuItem value={0}>
+                            <em>-- Please select title prefix --</em>
+                          </MenuItem>
+                          {titlePrefixes.map((prefix) => (
+                            <MenuItem key={prefix.ID} value={prefix.ID}>{prefix.PrefixEN}</MenuItem>
+                          ))}
+                        </Select>
+                        {errors.PrefixID && <FormHelperText>{String(errors.PrefixID.message)}</FormHelperText>}
+                      </FormControl>
+                    )}
+                  />
+                </Grid>
+                
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body1" className="title-field">First Name</Typography>
                   <Controller
@@ -884,6 +1015,35 @@ const AddUserFormByCsv: React.FC = () => {
                   />
                 </Grid>
 
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body1" className="title-field">Password</Typography>
+                  <Controller
+                    name="Password"
+                    control={control}
+                    defaultValue={selectedUser.Password}
+                    rules={{
+                      required: 'Password is required',
+                      minLength: {
+                        value: 8,
+                        message: 'Password must be at least 8 characters'
+                      },
+                      pattern: {
+                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                        message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character'
+                      }
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        type="password"
+                        fullWidth
+                        error={!!errors.Password}
+                        helperText={String(errors.Password?.message || '')}
+                      />
+                    )}
+                  />
+                </Grid>
+
                 {isEmployee && (
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="body1" className="title-field">Employee ID</Typography>
@@ -950,6 +1110,46 @@ const AddUserFormByCsv: React.FC = () => {
                   />
                 </Grid>
 
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body1" className="title-field">Job Position</Typography>
+                  <Controller
+                    name="JobPositionID"
+                    control={control}
+                    defaultValue={selectedUser?.JobPositionID || 0}
+                    rules={{
+                      required: 'Job position is required',
+                      validate: (value) => {
+                        if (!value || value === 0) return 'Job position is required';
+                        return true;
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.JobPositionID}>
+                        <Select
+                          {...field}
+                          value={field.value || 0}
+                          onChange={(e) => {
+                            const value = Number(e.target.value);
+                            field.onChange(value);
+                            setSelectedJobPosition(value);
+                          }}
+                          displayEmpty
+                        >
+                          <MenuItem value={0}>
+                            <em>-- Please select job position --</em>
+                          </MenuItem>
+                          {jobPositions.map((position) => (
+                            <MenuItem key={position.ID} value={position.ID}>{position.Name}</MenuItem>
+                          ))}
+                        </Select>
+                        {errors.JobPositionID && <FormHelperText>{String(errors.JobPositionID.message)}</FormHelperText>}
+                      </FormControl>
+                    )}
+                  />
+                </Grid>
+
+                
+
                 {isEmployee && (
                   <>
                     <Grid size={{ xs: 12, sm: 6 }}>
@@ -990,17 +1190,17 @@ const AddUserFormByCsv: React.FC = () => {
                       />
                     </Grid>
 
-                    {(roleID || selectedRole) === 3 && (
+                    {(roleID || selectedRole) === 3 || (roleID || selectedRole) === 4 ? (
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FormControl fullWidth error={!!errors.RequestTypeID}>
-                          <Typography variant="body1" className="title-field">Request Type</Typography>
+                          <Typography variant="body1" className="title-field">Management</Typography>
                           <Select
                             value={selectedRequestType ?? 0}
                             onChange={(e) => setSelectedRequestType(Number(e.target.value))}
                             displayEmpty
                           >
                             <MenuItem value={0}>
-                              <em>-- Please select request type --</em>
+                              <em>-- Please select management --</em>
                             </MenuItem>
                             {requiredTypes.map((type) => (
                               <MenuItem key={type.ID} value={type.ID}>{type.TypeName}</MenuItem>
@@ -1009,7 +1209,7 @@ const AddUserFormByCsv: React.FC = () => {
                           {errors.RequestTypeID && <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>}
                         </FormControl>
                       </Grid>
-                    )}
+                    ) : null}
                   </>
                 )}
 
@@ -1029,6 +1229,31 @@ const AddUserFormByCsv: React.FC = () => {
                       ))}
                     </Select>
                   </FormControl>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body1" className="title-field">Is Business Owner</Typography>
+                  <Controller
+                    name="IsBusinessOwner"
+                    control={control}
+                    defaultValue={selectedUser?.IsBusinessOwner || false}
+                    render={({ field }) => (
+                      <FormControl fullWidth>
+                        <Select
+                          {...field}
+                          value={field.value ? 'true' : 'false'}
+                          onChange={(e) => {
+                            const value = e.target.value === 'true';
+                            field.onChange(value);
+                            setIsBusinessOwner(value);
+                          }}
+                        >
+                          <MenuItem value="false">No</MenuItem>
+                          <MenuItem value="true">Yes</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  />
                 </Grid>
                 {!isEmployee && (
                   <>
