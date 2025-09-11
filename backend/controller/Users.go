@@ -405,18 +405,19 @@ func GetUserByID(c *gin.Context) {
 			}
 			return nil
 		}(), // เพิ่มข้อมูล Package เต็ม
-		"RoleID":        user.RoleID,
-		"Role":          user.Role,
-		"IsEmployee":    user.IsEmployee,
-		"RequestTypeID": user.RequestTypeID,
-		"RequestType":   user.RequestType,
-		"UserPackages":  user.UserPackages,
-		"PrefixID":      user.PrefixID,
-		"Prefix":        user.Prefix,
-		"JobPositionID": user.JobPositionID,
-		"JobPosition":   user.JobPosition,
-		"CreatedAt":     user.CreatedAt,
-		"UpdatedAt":     user.UpdatedAt,
+		"RoleID":          user.RoleID,
+		"Role":            user.Role,
+		"IsEmployee":      user.IsEmployee,
+		"IsBusinessOwner": user.IsBusinessOwner,
+		"RequestTypeID":   user.RequestTypeID,
+		"RequestType":     user.RequestType,
+		"UserPackages":    user.UserPackages,
+		"PrefixID":        user.PrefixID,
+		"Prefix":          user.Prefix,
+		"JobPositionID":   user.JobPositionID,
+		"JobPosition":     user.JobPosition,
+		"CreatedAt":       user.CreatedAt,
+		"UpdatedAt":       user.UpdatedAt,
 	}
 
 	// ส่งข้อมูลผู้ใช้กลับไปในรูปแบบ JSON (ไม่มี password)

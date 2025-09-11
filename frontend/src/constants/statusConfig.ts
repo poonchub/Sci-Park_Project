@@ -66,4 +66,9 @@ export const statusConfig: Record<string, StatusConfig> = {
         colorLite: "rgba(220, 53, 70, 0.19)",
         icon: Ban
     },
+    "Cancellation": {
+        color: "#e67e22",
+        colorLite: "rgba(230, 126, 34, 0.18)",
+        icon: AlertTriangle
+    },
 };

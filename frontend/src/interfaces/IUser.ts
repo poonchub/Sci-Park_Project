@@ -25,6 +25,7 @@ export interface UserInterface {
     Profile_Image?: File;
     Token?: string;
     IsEmployee?:    boolean;
+    IsBusinessOwner?: boolean;
     RequestTypeID?: number;
     RequestType?:   RequestTypeInterface;
     PrefixID?:  number;

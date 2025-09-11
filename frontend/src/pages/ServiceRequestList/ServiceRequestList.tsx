@@ -59,22 +59,9 @@ const ServiceRequestList: React.FC = () => {
         "In Progress": 0,
         "Completed": 0,
         "Unsuccessful": 0,
-        "Cancellation In Progress": 0,
-        "Cancellation Assigned": 0,
-        "Successfully Cancelled": 0
+        "Cancellation": 0
     });
 
-    // Using statusConfig from constants for Service Request List (8 statuses)
-    const serviceRequestStatusConfig = {
-        "Pending": statusConfig["Pending"],
-        "Approved": statusConfig["Approved"],
-        "In Progress": statusConfig["In Progress"],
-        "Completed": statusConfig["Completed"],
-        "Unsuccessful": statusConfig["Unsuccessful"],
-        "Cancellation In Progress": statusConfig["Cancellation In Progress"],
-        "Cancellation Assigned": statusConfig["Cancellation Assigned"],
-        "Successfully Cancelled": statusConfig["Successfully Cancelled"]
-    };
 
     // 6 statuses for Service Request List (same as All Maintenance except "Waiting For Review")
     // const displayStatuses = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful"];
@@ -111,11 +98,11 @@ const ServiceRequestList: React.FC = () => {
                             if (status && status.Name) statusName = status.Name;
                         }
 
-                        const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
+                        const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
 
-                        const statusColor = statusConfig?.color || "#000";
-                        const statusColorLite = statusConfig?.colorLite || "#000";
-                        const StatusIcon = statusConfig?.icon || HelpCircle;
+                        const statusColor = statusConfigItem?.color || "#000";
+                        const statusColorLite = statusConfigItem?.colorLite || "#000";
+                        const StatusIcon = statusConfigItem?.icon || HelpCircle;
 
                         const dateTime = `${dayjs(params.row.CreatedAt).format('DD/MM/YYYY')} ${dayjs(params.row.CreatedAt).format('hh:mm A')}`;
                         const companyName = params.row.CompanyName || '-';
@@ -545,13 +532,13 @@ const ServiceRequestList: React.FC = () => {
                         if (status && status.Name) statusName = status.Name;
                     }
 
-                    const statusConfig = serviceRequestStatusConfig[statusName as keyof typeof serviceRequestStatusConfig];
+                    const statusConfigItem = statusConfig[statusName as keyof typeof statusConfig];
 
-                    // const statusColor = statusConfig?.color || "#000";
-                    // const statusColorLite = statusConfig?.colorLite || "#000";
-                    const StatusIcon = statusConfig?.icon || HelpCircle;
+                    // const statusColor = statusConfigItem?.color || "#000";
+                    // const statusColorLite = statusConfigItem?.colorLite || "#000";
+                    const StatusIcon = statusConfigItem?.icon || HelpCircle;
 
-                    if (!statusConfig) {
+                    if (!statusConfigItem) {
                         return (
                             <Box
                                 sx={{
@@ -584,13 +571,13 @@ const ServiceRequestList: React.FC = () => {
                         >
                             <Box
                                 sx={{
-                                    bgcolor: statusConfig.colorLite,
+                                    bgcolor: statusConfigItem.colorLite,
                                     borderRadius: 10,
                                     px: 1.5,
                                     py: 0.5,
                                     display: "flex",
                                     gap: 1,
-                                    color: statusConfig.color,
+                                    color: statusConfigItem.color,
                                     alignItems: "center",
                                     justifyContent: "center",
                                     width: "100%",
@@ -892,8 +879,7 @@ const ServiceRequestList: React.FC = () => {
                     "In Progress": 0,
                     "Completed": 0,
                     "Unsuccessful": 0,
-                    "Cancellation In Progress": 0,
-                    "Successfully Cancelled": 0
+                    "Cancellation": 0
                 };
 
                 // Count by status ID based on actual database status IDs
@@ -913,8 +899,12 @@ const ServiceRequestList: React.FC = () => {
                         else if (statusID === 10) statusName = "Cancellation Assigned";
                         else if (statusID === 11) statusName = "Successfully Cancelled";
 
-                        // Only count statuses that are in our display list
-                        if (counts.hasOwnProperty(statusName)) {
+                        // Count individual statuses and combine cancellation statuses
+                        if (statusName === "Cancellation In Progress" || 
+                            statusName === "Cancellation Assigned" || 
+                            statusName === "Successfully Cancelled") {
+                            counts["Cancellation"]++;
+                        } else if (counts.hasOwnProperty(statusName)) {
                             counts[statusName]++;
                         }
                     });
@@ -1109,7 +1099,7 @@ const ServiceRequestList: React.FC = () => {
                                         lg: 4,
                                         xl: 4,
                                     }}
-                                    customDisplayStatuses={["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"]}
+                                    customDisplayStatuses={["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation"]}
                                 />
 
                                 {/* Filter Section */}
