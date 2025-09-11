@@ -430,7 +430,7 @@ const AddUserFormByCsv: React.FC = () => {
     if (!data.PrefixID) errors.push('Title prefix is required');
 
     // Validate management for Manager (3) and Admin (4) roles
-    if ((data.RoleID === 3 || data.RoleID === 4) && !data.RequestTypeID) {
+    if ((data.RoleID === 4 || data.RoleID === 5) && !data.RequestTypeID) {
       errors.push('Management is required for Manager and Admin roles');
     }
 
@@ -1185,7 +1185,7 @@ const AddUserFormByCsv: React.FC = () => {
                         />
                       </Grid>
 
-                      {(roleID || selectedRole) === 3 || (roleID || selectedRole) === 4 ? (
+                       {(roleID || selectedRole) === 4 || (roleID || selectedRole) === 5 ? (
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <FormControl fullWidth error={!!errors.RequestTypeID}>
                             <Typography variant="body1" className="title-field">Management</Typography>

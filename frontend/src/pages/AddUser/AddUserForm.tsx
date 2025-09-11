@@ -566,8 +566,8 @@ const AddUserForm: React.FC = () => {
                 </Grid>
               )}
 
-              {/* Conditional Rendering for Manager (RoleID === 3) */}
-              {userType === 'internal' && (roleID === 3 || roleID === 4) && (
+              {/* Conditional Rendering for Manager (RoleID === 4) and Admin (RoleID === 5) */}
+              {userType === 'internal' && (roleID === 4 || roleID === 5) && (
                 <Grid size={{ xs: 12, sm: 3 }}>
                   <Typography variant="body1" className="title-field">Management</Typography>
                   <Controller

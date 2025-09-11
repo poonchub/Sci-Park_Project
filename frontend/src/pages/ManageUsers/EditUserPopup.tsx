@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Typography,
   Dialog,
@@ -8,12 +8,11 @@ import {
   Button,
   MenuItem,
   FormControl,
-  SelectChangeEvent,
   FormHelperText,
   Grid,
 
 } from '@mui/material';
-import { useForm, Controller, set } from 'react-hook-form';  // Import useForm and Controller
+import { useForm, Controller } from 'react-hook-form';  // Import useForm and Controller
 
 
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
@@ -65,10 +64,10 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
   const [titlePrefixes, setTitlePrefixes] = useState<TitlePrefix[]>([]);
   const [jobPositions, setJobPositions] = useState<JobPositionInterface[]>([]);
   const [isemployee, setIsEmployee] = useState<boolean | undefined>(undefined);
+  const [isBusinessOwner, setIsBusinessOwner] = useState<boolean>(false);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]); // Alerts state
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
-  const roleID = watch("RoleID");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +91,9 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
           setValue('RequestTypeID', userData.RequestTypeID);
           setValue('PrefixID', userData.PrefixID);
           setValue('JobPositionID', userData.JobPositionID);
+          setValue('IsBusinessOwner', userData.IsBusinessOwner);
           setIsEmployee(userData.IsEmployee);
+          setIsBusinessOwner(userData.IsBusinessOwner || false);
         }
 
 
@@ -153,6 +154,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       RequestTypeID: Number(selectedRequestType) || 1,
       PrefixID: Number(selectedPrefix) || 1,
       JobPositionID: isemployee === true ? Number(selectedJobPosition) || 0 : 0,
+      IsBusinessOwner: data.IsBusinessOwner || false,
     };
 
     
@@ -172,7 +174,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
       return;
     }
 
-    if(formDataToSend.RoleID === 3 && formDataToSend.RequestTypeID === 0) {
+    if((formDataToSend.RoleID === 4 || formDataToSend.RoleID === 5) && formDataToSend.RequestTypeID === 0) {
       setAlerts(prev => [
         ...prev,
         { type: 'warning', message: 'Please select a request type.' },
@@ -222,17 +224,6 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
     }
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<unknown>) => {
-    if ('target' in e) {
-      const { name, value } = e.target;
-      if (user && name) {
-        setUser({
-          ...user,
-          [name]: value,
-        });
-      }
-    }
-  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" className="add-user">
@@ -506,7 +497,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     </Grid>
                   )}
 
-                  {(roleID || selectedRole) === 3 && (
+                   {(selectedRole === 4 || selectedRole === 5) && (
       <Grid size={{ xs: 12, sm: 6 }}>
         <FormControl fullWidth error={!!errors.RequestTypeID}>
           <Typography variant="body1" className="title-field">Management</Typography>
@@ -554,6 +545,31 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
                     </Select>
                   )}
                 </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1" className="title-field">Is Business Owner</Typography>
+                <Controller
+                  name="IsBusinessOwner"
+                  control={control}
+                  defaultValue={isBusinessOwner}
+                  render={({ field }) => (
+                    <FormControl fullWidth>
+                      <Select
+                        {...field}
+                        value={field.value ? 'true' : 'false'}
+                        onChange={(e) => {
+                          const value = e.target.value === 'true';
+                          field.onChange(value);
+                          setIsBusinessOwner(value);
+                        }}
+                      >
+                        <MenuItem value="false">No</MenuItem>
+                        <MenuItem value="true">Yes</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
+                />
               </Grid>
             </Grid>
 
