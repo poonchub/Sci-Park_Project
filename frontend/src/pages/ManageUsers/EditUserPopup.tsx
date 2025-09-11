@@ -558,7 +558,7 @@ const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) 
             </Grid>
 
             <DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <Button onClick={onClose} color="secondary">Cancel</Button>
+              <Button onClick={onClose} variant="outlinedCancel">Cancel</Button>
               <Button type="submit" variant="contained" startIcon={<SaveIcon />}>Save</Button>
             </DialogActions>
           </form>

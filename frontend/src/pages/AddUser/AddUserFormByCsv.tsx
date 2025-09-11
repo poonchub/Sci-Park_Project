@@ -688,14 +688,7 @@ const AddUserFormByCsv: React.FC = () => {
         <Button
           onClick={() => handleEditUser(params.row)}
           disabled={false}
-          sx={{
-            bgcolor: '#08aff1',
-            color: '#fff',
-            fontSize: '14px',
-            "&:hover": {
-              bgcolor: '#0698d4'
-            }
-          }}
+          variant="contained"
         >
           Edit
         </Button>
@@ -705,624 +698,625 @@ const AddUserFormByCsv: React.FC = () => {
 
   return (
     <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
-    <div className="add-user-csv-page">
-      {/* Alerts */}
-      {alerts.map((alert, index) => (
-        <React.Fragment key={index}>
-          {alert.type === 'success' && (
-            <SuccessAlert
-              message={alert.message}
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-              index={index}
-              totalAlerts={alerts.length}
-            />
-          )}
-          {alert.type === 'error' && (
-            <ErrorAlert
-              message={alert.message}
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-              index={index}
-              totalAlerts={alerts.length}
-            />
-          )}
-          {alert.type === 'warning' && (
-            <WarningAlert
-              message={alert.message}
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-              index={index}
-              totalAlerts={alerts.length}
-            />
-          )}
-          {alert.type === 'info' && (
-            <InfoAlert
-              message={alert.message}
-              onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
-              index={index}
-              totalAlerts={alerts.length}
-            />
-          )}
-        </React.Fragment>
-      ))}
-
-      <Grid container spacing={3}>
-        <Grid className='title-box' size={{ xs: 10, md: 12 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <UserRoundPlus size={26} />
-            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
-          </Box>
-
-        </Grid>
-
-        {/* Upload Section */}
-        <Grid size={{ xs: 12, md: 12 }}>
-          <Card sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>Upload CSV File</Typography>
-
-            {isLoadingData ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CircularProgress size={20} sx={{ mr: 2 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Loading reference data...
-                </Typography>
-              </Box>
-            ) : (
-              <>
-                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  Upload a CSV file with user data. The file should include columns: FirstName, LastName, Email, Phone, Password, EmployeeID (optional), CompanyName (optional), BusinessDetail (optional), Gender, Role, JobPosition, TitlePrefix, UserPackage (optional), RequestType (optional), IsBusinessOwner (optional)
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  <strong>Note:</strong> IsEmployee is automatically determined - if EmployeeID is provided, user is marked as Employee (true), otherwise as External User (false).
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                  <strong>Allowed values:</strong><br />
-                  Gender: {genders.map(g => g.Name).join(', ')}<br />
-                  Role: {roles.map(r => r.Name).join(', ')}<br />
-                  JobPosition: {jobPositions.map(j => j.Name).join(', ')}<br />
-                  TitlePrefix: {titlePrefixes.map(t => t.PrefixTH).join(', ')}<br />
-                  UserPackage: {packages.map(p => p.PackageName).join(', ')}<br />
-                  RequestType: {requiredTypes.map(t => t.TypeName).join(', ')}
-                </Typography>
-              </>
-            )}
-
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<Upload size={20} />}
-              disabled={isLoadingData}
-              sx={{ mr: 2 }}
-            >
-              Choose CSV File
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept=".csv"
-                onChange={handleFileUpload}
+      <div className="add-user-csv-page">
+        {/* Alerts */}
+        {alerts.map((alert, index) => (
+          <React.Fragment key={index}>
+            {alert.type === 'success' && (
+              <SuccessAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
               />
-            </Button>
-
-            <Button
-              variant="text"
-              startIcon={<FileText size={20} />}
-              disabled={isLoadingData}
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = '/src/pages/AddUser/user_template.csv';
-                link.download = 'user_template.csv';
-                link.click();
-              }}
-              sx={{ mr: 2 }}
-            >
-              Download Template
-            </Button>
-
-            <Button
-              variant="outlined"
-              startIcon={<BookOpen size={20} />}
-              disabled={isLoadingData}
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = '/src/pages/AddUser/CSV_User_Manual.txt';
-                link.download = 'CSV_User_Manual.txt';
-                link.click();
-              }}
-            >
-              Download Manual
-            </Button>
-
-            {csvData.length > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<RotateCcw size={20} />}
-                onClick={handleResetData}
-                sx={{ ml: 2 }}
-              >
-                Reset Data
-              </Button>
             )}
-
-            {csvData.length > 0 && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                {csvData.length} users loaded. Valid users can be edited and saved.
-              </Alert>
+            {alert.type === 'error' && (
+              <ErrorAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
             )}
-          </Card>
-        </Grid>
+            {alert.type === 'warning' && (
+              <WarningAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+            {alert.type === 'info' && (
+              <InfoAlert
+                message={alert.message}
+                onClose={() => setAlerts(alerts.filter((_, i) => i !== index))}
+                index={index}
+                totalAlerts={alerts.length}
+              />
+            )}
+          </React.Fragment>
+        ))}
 
-        {/* Data Table */}
-        {csvData.length > 0 && (
+        <Grid container spacing={3}>
+          <Grid className='title-box' size={{ xs: 10, md: 12 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <UserRoundPlus size={26} />
+              <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Add Users</Typography>
+            </Box>
+
+          </Grid>
+
+          {/* Upload Section */}
           <Grid size={{ xs: 12, md: 12 }}>
-            <Card sx={{ width: "100%", borderRadius: 2 }}>
-              <DataGrid
-                rows={csvData}
-                columns={columns}
-                getRowId={(row) => row.id}
-                pageSizeOptions={[5, 10, 20]}
-                initialState={{
-                  pagination: {
-                    paginationModel: { page: 0, pageSize: 10 },
-                  },
+            <Card sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Upload CSV File</Typography>
+
+              {isLoadingData ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <CircularProgress size={20} sx={{ mr: 2 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Loading reference data...
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                    Upload a CSV file with user data. The file should include columns: FirstName, LastName, Email, Phone, Password, EmployeeID (optional), CompanyName (optional), BusinessDetail (optional), Gender, Role, JobPosition, TitlePrefix, UserPackage (optional), RequestType (optional), IsBusinessOwner (optional)
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                    <strong>Note:</strong> IsEmployee is automatically determined - if EmployeeID is provided, user is marked as Employee (true), otherwise as External User (false).
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                    <strong>Allowed values:</strong><br />
+                    Gender: {genders.map(g => g.Name).join(', ')}<br />
+                    Role: {roles.map(r => r.Name).join(', ')}<br />
+                    JobPosition: {jobPositions.map(j => j.Name).join(', ')}<br />
+                    TitlePrefix: {titlePrefixes.map(t => t.PrefixTH).join(', ')}<br />
+                    UserPackage: {packages.map(p => p.PackageName).join(', ')}<br />
+                    RequestType: {requiredTypes.map(t => t.TypeName).join(', ')}
+                  </Typography>
+                </>
+              )}
+
+              <Button
+                variant="contained"
+                component="label"
+                startIcon={<Upload size={20} />}
+                disabled={isLoadingData}
+                sx={{ mr: 2 }}
+              >
+                Choose CSV File
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  hidden
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                />
+              </Button>
+
+              <Button
+                variant="contained"
+
+                startIcon={<FileText size={20} />}
+                disabled={isLoadingData}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = '/src/pages/AddUser/user_template.csv';
+                  link.download = 'user_template.csv';
+                  link.click();
                 }}
-                disableRowSelectionOnClick
-                loading={isLoadingData}
-                sx={{
-                  width: "100%",
-                  borderRadius: 2,
+                sx={{ mr: 2 }}
+              >
+                Download Template
+              </Button>
+
+              <Button
+                variant="contained"
+                startIcon={<BookOpen size={20} />}
+                disabled={isLoadingData}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = '/src/pages/AddUser/CSV_User_Manual.txt';
+                  link.download = 'CSV_User_Manual.txt';
+                  link.click();
                 }}
-              />
+                sx={{ mr: 2 }}
+              >
+                Download Manual
+              </Button>
+
+              {csvData.length > 0 && (
+                <Button
+                  variant="outlinedCancel"
+                  color="error"
+                  startIcon={<RotateCcw size={20} />}
+                  onClick={handleResetData}
+                  sx={{ ml: 2 }}
+                >
+                  Reset Data
+                </Button>
+              )}
+
+              {csvData.length > 0 && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  {csvData.length} users loaded. Valid users can be edited and saved.
+                </Alert>
+              )}
             </Card>
           </Grid>
-        )}
-      </Grid>
 
-      {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>
-          <Typography variant="h6">Confirm User Details</Typography>
-        </DialogTitle>
+          {/* Data Table */}
+          {csvData.length > 0 && (
+            <Grid size={{ xs: 12, md: 12 }}>
+              <Card sx={{ width: "100%", borderRadius: 2 }}>
+                <DataGrid
+                  rows={csvData}
+                  columns={columns}
+                  getRowId={(row) => row.id}
+                  pageSizeOptions={[5, 10, 20]}
+                  initialState={{
+                    pagination: {
+                      paginationModel: { page: 0, pageSize: 10 },
+                    },
+                  }}
+                  disableRowSelectionOnClick
+                  loading={isLoadingData}
+                  sx={{
+                    width: "100%",
+                    borderRadius: 2,
+                  }}
+                />
+              </Card>
+            </Grid>
+          )}
+        </Grid>
 
-        <DialogContent>
-          {selectedUser && (
-            <form onSubmit={handleSubmit(handleSaveChanges)}>
-              <Grid container spacing={2}>
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle>
+            <Typography variant="h6">Confirm User Details</Typography>
+          </DialogTitle>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Title Prefix</Typography>
-                  <Controller
-                    name="PrefixID"
-                    control={control}
-                    defaultValue={selectedUser?.PrefixID || 0}
-                    rules={{
-                      required: 'Title prefix is required',
-                      validate: (value) => {
-                        if (!value || value === 0) return 'Title prefix is required';
-                        return true;
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.PrefixID}>
-                        <Select
-                          {...field}
-                          value={field.value || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            field.onChange(value);
-                            setSelectedPrefix(value);
-                          }}
-                          displayEmpty
-                        >
-                          <MenuItem value={0}>
-                            <em>-- Please select title prefix --</em>
-                          </MenuItem>
-                          {titlePrefixes.map((prefix) => (
-                            <MenuItem key={prefix.ID} value={prefix.ID}>{prefix.PrefixEN}</MenuItem>
-                          ))}
-                        </Select>
-                        {errors.PrefixID && <FormHelperText>{String(errors.PrefixID.message)}</FormHelperText>}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-                
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">First Name</Typography>
-                  <Controller
-                    name="FirstName"
-                    control={control}
-                    defaultValue={selectedUser.FirstName}
-                    rules={{ required: 'First name is required' }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        error={!!errors.FirstName}
-                        helperText={String(errors.FirstName?.message || '')}
-                      />
-                    )}
-                  />
-                </Grid>
+          <DialogContent>
+            {selectedUser && (
+              <form onSubmit={handleSubmit(handleSaveChanges)}>
+                <Grid container spacing={2}>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Last Name</Typography>
-                  <Controller
-                    name="LastName"
-                    control={control}
-                    defaultValue={selectedUser.LastName}
-                    rules={{ required: 'Last name is required' }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        error={!!errors.LastName}
-                        helperText={String(errors.LastName?.message || '')}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Email</Typography>
-                  <Controller
-                    name="Email"
-                    control={control}
-                    defaultValue={selectedUser.Email}
-                    rules={{
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                        message: 'Please enter a valid email'
-                      }
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        error={!!errors.Email}
-                        helperText={String(errors.Email?.message || '')}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Phone</Typography>
-                  <Controller
-                    name="Phone"
-                    control={control}
-                    defaultValue={selectedUser.Phone}
-                    rules={{
-                      required: 'Phone is required',
-                      pattern: {
-                        value: /^0[0-9]{9}$/,
-                        message: 'Phone must start with 0 and have 10 digits'
-                      }
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        error={!!errors.Phone}
-                        helperText={String(errors.Phone?.message || '')}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Password</Typography>
-                  <Controller
-                    name="Password"
-                    control={control}
-                    defaultValue={selectedUser.Password}
-                    rules={{
-                      required: 'Password is required',
-                      minLength: {
-                        value: 8,
-                        message: 'Password must be at least 8 characters'
-                      },
-                      pattern: {
-                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                        message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character'
-                      }
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        type="password"
-                        fullWidth
-                        error={!!errors.Password}
-                        helperText={String(errors.Password?.message || '')}
-                      />
-                    )}
-                  />
-                </Grid>
-
-                {isEmployee && (
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="body1" className="title-field">Employee ID</Typography>
+                    <Typography variant="body1" className="title-field">Title Prefix</Typography>
                     <Controller
-                      name="EmployeeID"
+                      name="PrefixID"
                       control={control}
-                      defaultValue={selectedUser.EmployeeID}
+                      defaultValue={selectedUser?.PrefixID || 0}
                       rules={{
-                        required: 'Employee ID is required',
+                        required: 'Title prefix is required',
+                        validate: (value) => {
+                          if (!value || value === 0) return 'Title prefix is required';
+                          return true;
+                        }
+                      }}
+                      render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.PrefixID}>
+                          <Select
+                            {...field}
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(value);
+                              setSelectedPrefix(value);
+                            }}
+                            displayEmpty
+                          >
+                            <MenuItem value={0}>
+                              <em>-- Please select title prefix --</em>
+                            </MenuItem>
+                            {titlePrefixes.map((prefix) => (
+                              <MenuItem key={prefix.ID} value={prefix.ID}>{prefix.PrefixEN}</MenuItem>
+                            ))}
+                          </Select>
+                          {errors.PrefixID && <FormHelperText>{String(errors.PrefixID.message)}</FormHelperText>}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">First Name</Typography>
+                    <Controller
+                      name="FirstName"
+                      control={control}
+                      defaultValue={selectedUser.FirstName}
+                      rules={{ required: 'First name is required' }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          error={!!errors.FirstName}
+                          helperText={String(errors.FirstName?.message || '')}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Last Name</Typography>
+                    <Controller
+                      name="LastName"
+                      control={control}
+                      defaultValue={selectedUser.LastName}
+                      rules={{ required: 'Last name is required' }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          error={!!errors.LastName}
+                          helperText={String(errors.LastName?.message || '')}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Email</Typography>
+                    <Controller
+                      name="Email"
+                      control={control}
+                      defaultValue={selectedUser.Email}
+                      rules={{
+                        required: 'Email is required',
                         pattern: {
-                          value: /^[0-9]{6}$/,
-                          message: 'Employee ID must be 6 digits'
+                          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: 'Please enter a valid email'
                         }
                       }}
                       render={({ field }) => (
                         <TextField
                           {...field}
                           fullWidth
-                          error={!!errors.EmployeeID}
-                          helperText={String(errors.EmployeeID?.message || '')}
+                          error={!!errors.Email}
+                          helperText={String(errors.Email?.message || '')}
                         />
                       )}
                     />
                   </Grid>
-                )}
 
-
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Gender</Typography>
-                  <Controller
-                    name="GenderID"
-                    control={control}
-                    defaultValue={selectedUser?.GenderID || 0}
-                    rules={{
-                      required: 'Gender is required',
-                      validate: (value) => {
-                        if (!value || value === 0) return 'Gender is required';
-                        return true;
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.GenderID}>
-                        <Select
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Phone</Typography>
+                    <Controller
+                      name="Phone"
+                      control={control}
+                      defaultValue={selectedUser.Phone}
+                      rules={{
+                        required: 'Phone is required',
+                        pattern: {
+                          value: /^0[0-9]{9}$/,
+                          message: 'Phone must start with 0 and have 10 digits'
+                        }
+                      }}
+                      render={({ field }) => (
+                        <TextField
                           {...field}
-                          value={field.value || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            field.onChange(value);
-                            setSelectedGender(value);
-                          }}
-                          displayEmpty
-                        >
-                          <MenuItem value={0}>
-                            <em>-- Please select gender --</em>
-                          </MenuItem>
-                          {genders.map((gender) => (
-                            <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
-                          ))}
-                        </Select>
-                        {errors.GenderID && <FormHelperText>{String(errors.GenderID.message)}</FormHelperText>}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
+                          fullWidth
+                          error={!!errors.Phone}
+                          helperText={String(errors.Phone?.message || '')}
+                        />
+                      )}
+                    />
+                  </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Job Position</Typography>
-                  <Controller
-                    name="JobPositionID"
-                    control={control}
-                    defaultValue={selectedUser?.JobPositionID || 0}
-                    rules={{
-                      required: 'Job position is required',
-                      validate: (value) => {
-                        if (!value || value === 0) return 'Job position is required';
-                        return true;
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormControl fullWidth error={!!errors.JobPositionID}>
-                        <Select
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Password</Typography>
+                    <Controller
+                      name="Password"
+                      control={control}
+                      defaultValue={selectedUser.Password}
+                      rules={{
+                        required: 'Password is required',
+                        minLength: {
+                          value: 8,
+                          message: 'Password must be at least 8 characters'
+                        },
+                        pattern: {
+                          value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                          message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 number, and 1 special character'
+                        }
+                      }}
+                      render={({ field }) => (
+                        <TextField
                           {...field}
-                          value={field.value || 0}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            field.onChange(value);
-                            setSelectedJobPosition(value);
-                          }}
-                          displayEmpty
-                        >
-                          <MenuItem value={0}>
-                            <em>-- Please select job position --</em>
-                          </MenuItem>
-                          {jobPositions.map((position) => (
-                            <MenuItem key={position.ID} value={position.ID}>{position.Name}</MenuItem>
-                          ))}
-                        </Select>
-                        {errors.JobPositionID && <FormHelperText>{String(errors.JobPositionID.message)}</FormHelperText>}
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
+                          type="password"
+                          fullWidth
+                          error={!!errors.Password}
+                          helperText={String(errors.Password?.message || '')}
+                        />
+                      )}
+                    />
+                  </Grid>
 
-                
-
-                {isEmployee && (
-                  <>
+                  {isEmployee && (
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <Typography variant="body1" className="title-field">Role</Typography>
+                      <Typography variant="body1" className="title-field">Employee ID</Typography>
                       <Controller
-                        name="RoleID"
+                        name="EmployeeID"
                         control={control}
-                        defaultValue={selectedUser?.RoleID || 0}
+                        defaultValue={selectedUser.EmployeeID}
                         rules={{
-                          required: 'Role is required',
-                          validate: (value) => {
-                            if (!value || value === 0) return 'Role is required';
-                            return true;
+                          required: 'Employee ID is required',
+                          pattern: {
+                            value: /^[0-9]{6}$/,
+                            message: 'Employee ID must be 6 digits'
                           }
                         }}
-                        render={({ field }) => (
-                          <FormControl fullWidth error={!!errors.RoleID}>
-                            <Select
-                              {...field}
-                              value={field.value || 0}
-                              onChange={(e) => {
-                                const value = Number(e.target.value);
-                                field.onChange(value);
-                                setSelectedRole(value);
-                              }}
-                              displayEmpty
-                            >
-                              <MenuItem value={0}>
-                                <em>-- Please select role --</em>
-                              </MenuItem>
-                              {roles.map((role) => (
-                                <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
-                              ))}
-                            </Select>
-                            {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
-                          </FormControl>
-                        )}
-                      />
-                    </Grid>
-
-                    {(roleID || selectedRole) === 3 || (roleID || selectedRole) === 4 ? (
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth error={!!errors.RequestTypeID}>
-                          <Typography variant="body1" className="title-field">Management</Typography>
-                          <Select
-                            value={selectedRequestType ?? 0}
-                            onChange={(e) => setSelectedRequestType(Number(e.target.value))}
-                            displayEmpty
-                          >
-                            <MenuItem value={0}>
-                              <em>-- Please select management --</em>
-                            </MenuItem>
-                            {requiredTypes.map((type) => (
-                              <MenuItem key={type.ID} value={type.ID}>{type.TypeName}</MenuItem>
-                            ))}
-                          </Select>
-                          {errors.RequestTypeID && <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>}
-                        </FormControl>
-                      </Grid>
-                    ) : null}
-                  </>
-                )}
-
-
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <Typography variant="body1" className="title-field">Package</Typography>
-                    <Select
-                      value={selectedPackage ?? 0}
-                      onChange={(e) => setSelectedPackage(Number(e.target.value))}
-                      displayEmpty
-                    >
-                      <MenuItem value={0}><em>-- No package --</em></MenuItem>
-                      {packages.map((pkg) => (
-                        <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body1" className="title-field">Is Business Owner</Typography>
-                  <Controller
-                    name="IsBusinessOwner"
-                    control={control}
-                    defaultValue={selectedUser?.IsBusinessOwner || false}
-                    render={({ field }) => (
-                      <FormControl fullWidth>
-                        <Select
-                          {...field}
-                          value={field.value ? 'true' : 'false'}
-                          onChange={(e) => {
-                            const value = e.target.value === 'true';
-                            field.onChange(value);
-                            setIsBusinessOwner(value);
-                          }}
-                        >
-                          <MenuItem value="false">No</MenuItem>
-                          <MenuItem value="true">Yes</MenuItem>
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-                {!isEmployee && (
-                  <>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Typography variant="body1" className="title-field">Company Name</Typography>
-                      <Controller
-                        name="CompanyName"
-                        control={control}
-                        defaultValue={selectedUser.CompanyName}
-                        rules={{ required: 'Company name is required' }}
                         render={({ field }) => (
                           <TextField
                             {...field}
                             fullWidth
-                            error={!!errors.CompanyName}
-                            helperText={String(errors.CompanyName?.message || '')}
+                            error={!!errors.EmployeeID}
+                            helperText={String(errors.EmployeeID?.message || '')}
                           />
                         )}
                       />
                     </Grid>
+                  )}
 
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Typography variant="body1" className="title-field">Business Detail</Typography>
-                      <Controller
-                        name="BusinessDetail"
-                        control={control}
-                        defaultValue={selectedUser.BusinessDetail}
-                        rules={{ required: 'Business detail is required' }}
-                        render={({ field }) => (
-                          <TextArea
+
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Gender</Typography>
+                    <Controller
+                      name="GenderID"
+                      control={control}
+                      defaultValue={selectedUser?.GenderID || 0}
+                      rules={{
+                        required: 'Gender is required',
+                        validate: (value) => {
+                          if (!value || value === 0) return 'Gender is required';
+                          return true;
+                        }
+                      }}
+                      render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.GenderID}>
+                          <Select
                             {...field}
-                            fullWidth
-                            multiline
-                            rows={3}
-                            error={!!errors.BusinessDetail}
-                            helperText={String(errors.BusinessDetail?.message || '')}
-                          />
-                        )}
-                      />
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-            </form>
-          )}
-        </DialogContent>
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(value);
+                              setSelectedGender(value);
+                            }}
+                            displayEmpty
+                          >
+                            <MenuItem value={0}>
+                              <em>-- Please select gender --</em>
+                            </MenuItem>
+                            {genders.map((gender) => (
+                              <MenuItem key={gender.ID} value={gender.ID}>{gender.Name}</MenuItem>
+                            ))}
+                          </Select>
+                          {errors.GenderID && <FormHelperText>{String(errors.GenderID.message)}</FormHelperText>}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
 
-        <DialogActions>
-          <Button onClick={handleCancelEdit} color="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit(handleTemporarySave)}
-            variant="outlined"
-            color="primary"
-          >
-            Save Temporarily
-          </Button>
-          <Button
-            onClick={handleSubmit(handleSaveChanges)}
-            variant="contained"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : <Check size={20} />}
-          >
-            {isLoading ? 'Saving...' : 'Save & Create User'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Job Position</Typography>
+                    <Controller
+                      name="JobPositionID"
+                      control={control}
+                      defaultValue={selectedUser?.JobPositionID || 0}
+                      rules={{
+                        required: 'Job position is required',
+                        validate: (value) => {
+                          if (!value || value === 0) return 'Job position is required';
+                          return true;
+                        }
+                      }}
+                      render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.JobPositionID}>
+                          <Select
+                            {...field}
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+                              field.onChange(value);
+                              setSelectedJobPosition(value);
+                            }}
+                            displayEmpty
+                          >
+                            <MenuItem value={0}>
+                              <em>-- Please select job position --</em>
+                            </MenuItem>
+                            {jobPositions.map((position) => (
+                              <MenuItem key={position.ID} value={position.ID}>{position.Name}</MenuItem>
+                            ))}
+                          </Select>
+                          {errors.JobPositionID && <FormHelperText>{String(errors.JobPositionID.message)}</FormHelperText>}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+
+
+
+                  {isEmployee && (
+                    <>
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Typography variant="body1" className="title-field">Role</Typography>
+                        <Controller
+                          name="RoleID"
+                          control={control}
+                          defaultValue={selectedUser?.RoleID || 0}
+                          rules={{
+                            required: 'Role is required',
+                            validate: (value) => {
+                              if (!value || value === 0) return 'Role is required';
+                              return true;
+                            }
+                          }}
+                          render={({ field }) => (
+                            <FormControl fullWidth error={!!errors.RoleID}>
+                              <Select
+                                {...field}
+                                value={field.value || 0}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  field.onChange(value);
+                                  setSelectedRole(value);
+                                }}
+                                displayEmpty
+                              >
+                                <MenuItem value={0}>
+                                  <em>-- Please select role --</em>
+                                </MenuItem>
+                                {roles.map((role) => (
+                                  <MenuItem key={role.ID} value={role.ID}>{role.Name}</MenuItem>
+                                ))}
+                              </Select>
+                              {errors.RoleID && <FormHelperText>{String(errors.RoleID.message)}</FormHelperText>}
+                            </FormControl>
+                          )}
+                        />
+                      </Grid>
+
+                      {(roleID || selectedRole) === 3 || (roleID || selectedRole) === 4 ? (
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <FormControl fullWidth error={!!errors.RequestTypeID}>
+                            <Typography variant="body1" className="title-field">Management</Typography>
+                            <Select
+                              value={selectedRequestType ?? 0}
+                              onChange={(e) => setSelectedRequestType(Number(e.target.value))}
+                              displayEmpty
+                            >
+                              <MenuItem value={0}>
+                                <em>-- Please select management --</em>
+                              </MenuItem>
+                              {requiredTypes.map((type) => (
+                                <MenuItem key={type.ID} value={type.ID}>{type.TypeName}</MenuItem>
+                              ))}
+                            </Select>
+                            {errors.RequestTypeID && <FormHelperText>{String(errors.RequestTypeID?.message)}</FormHelperText>}
+                          </FormControl>
+                        </Grid>
+                      ) : null}
+                    </>
+                  )}
+
+
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <Typography variant="body1" className="title-field">Package</Typography>
+                      <Select
+                        value={selectedPackage ?? 0}
+                        onChange={(e) => setSelectedPackage(Number(e.target.value))}
+                        displayEmpty
+                      >
+                        <MenuItem value={0}><em>-- No package --</em></MenuItem>
+                        {packages.map((pkg) => (
+                          <MenuItem key={pkg.ID} value={pkg.ID}>{pkg.PackageName}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body1" className="title-field">Is Business Owner</Typography>
+                    <Controller
+                      name="IsBusinessOwner"
+                      control={control}
+                      defaultValue={selectedUser?.IsBusinessOwner || false}
+                      render={({ field }) => (
+                        <FormControl fullWidth>
+                          <Select
+                            {...field}
+                            value={field.value ? 'true' : 'false'}
+                            onChange={(e) => {
+                              const value = e.target.value === 'true';
+                              field.onChange(value);
+                              setIsBusinessOwner(value);
+                            }}
+                          >
+                            <MenuItem value="false">No</MenuItem>
+                            <MenuItem value="true">Yes</MenuItem>
+                          </Select>
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+                  {!isEmployee && (
+                    <>
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Typography variant="body1" className="title-field">Company Name</Typography>
+                        <Controller
+                          name="CompanyName"
+                          control={control}
+                          defaultValue={selectedUser.CompanyName}
+                          rules={{ required: 'Company name is required' }}
+                          render={({ field }) => (
+                            <TextField
+                              {...field}
+                              fullWidth
+                              error={!!errors.CompanyName}
+                              helperText={String(errors.CompanyName?.message || '')}
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Typography variant="body1" className="title-field">Business Detail</Typography>
+                        <Controller
+                          name="BusinessDetail"
+                          control={control}
+                          defaultValue={selectedUser.BusinessDetail}
+                          rules={{ required: 'Business detail is required' }}
+                          render={({ field }) => (
+                            <TextArea
+                              {...field}
+                              fullWidth
+                              multiline
+                              rows={3}
+                              error={!!errors.BusinessDetail}
+                              helperText={String(errors.BusinessDetail?.message || '')}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </>
+                  )}
+                </Grid>
+              </form>
+            )}
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={handleCancelEdit} variant="outlinedCancel">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit(handleTemporarySave)}
+              variant="outlinedGray"
+            >
+              Save Temporarily
+            </Button>
+            <Button
+              onClick={handleSubmit(handleSaveChanges)}
+              variant="contained"
+              disabled={isLoading}
+              startIcon={isLoading ? <CircularProgress size={20} /> : <Check size={20} />}
+            >
+              {isLoading ? 'Saving...' : 'Save & Create User'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
     </Container>
   );
 };
