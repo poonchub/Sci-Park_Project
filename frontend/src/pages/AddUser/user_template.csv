@@ -1,18 +1,18 @@
 FirstName,LastName,Email,Phone,Password,EmployeeID,CompanyName,BusinessDetail,Gender,Role,JobPosition,TitlePrefix,UserPackage,RequestType,IsBusinessOwner
 John,Doe,john.doe@company.com,"0812345678",Password123!,123456,,,Male,User,Head of Central Administration and Infrastructure Development Unit,นาย,None,,false
-Jane,Smith,jane.smith@company.com,"0898765432",Password123!,654321,ABC Company,Software Development,Female,Maintenance Operator,Central Administration and Infrastructure Development Unit,นาง,Silver,,false
+Jane,Smith,jane.smith@company.com,"0898765432",Password123!,654321,,,Female,Maintenance Operator,Central Administration and Infrastructure Development Unit,นาง,Silver,,false
 Mike,Johnson,mike@external.com,"0855555555",Password123!,,XYZ Corp,Consulting Services,Male,User,Head of Innovation and Key Account Services Unit (IKD),นาย,Gold,,true
 Sarah,Wilson,sarah.wilson@company.com,"0866666666",Password123!,789012,,,Female,Manager,Head of Business Development and Innovation Cluster Unit (BCD),นางสาว,Platinum,Internal,false
 David,Brown,david@external.com,"0877777777",Password123!,,Tech Solutions,IT Consulting,Male,User,Head of Future Learning and Skills Innovation Unit,นาย,Diamond,,true
-Emily,Davis,emily.davis@company.com,"0811111111",Password123!,111111,Innovation Corp,Research & Development,Female,Admin,Head of Marketing Customer Service and Public Relations Unit,นางสาว,Gold,,false
-Michael,Chen,michael.chen@company.com,"0822222222",Password123!,222222,,,Male,Maintenance Operator,Central Administration and Infrastructure Development Unit,นาย,Silver,,false
+Emily,Davis,emily.davis@company.com,"0811111111",Password123!,111111,,,Female,Admin,Head of Marketing Customer Service and Public Relations Unit,นางสาว,Gold,Both,false
+Michael,Chen,michael.chen@company.com,"0822222222",Password123!,222222,,,Male,Document Operator,Central Administration and Infrastructure Development Unit,นาย,Silver,,false
 Lisa,Anderson,lisa.anderson@external.com,"0833333333",Password123!,,Global Tech,Digital Marketing,Female,User,Head of Network Coordination Unit,นางสาว,Platinum,,true
-Robert,Taylor,robert.taylor@company.com,"0844444444",Password123!,333333,Data Systems,Data Analytics,Male,Manager,Head of Future Learning and Skills Innovation Unit,นาย,Gold,External,false
+Robert,Taylor,robert.taylor@company.com,"0844444444",Password123!,333333,,,Male,Manager,Head of Future Learning and Skills Innovation Unit,นาย,Gold,External,false
 Amanda,White,amanda.white@company.com,"0855555555",Password123!,444444,,,Female,User,Regional Operations Support Unit,นางสาว,None,,false
 James,Miller,james.miller@external.com,"0866666666",Password123!,,Creative Solutions,Graphic Design,Male,User,Head of Innovation and Key Account Services Unit (IKD),นาย,Silver,,true
-Jessica,Lee,jessica.lee@company.com,"0877777777",Password123!,555555,Health Tech,Healthcare Software,Female,Maintenance Operator,Innovation and Key Account Services Unit (IKD),นางสาว,Platinum,,false
+Jessica,Lee,jessica.lee@company.com,"0877777777",Password123!,555555,,,Female,Maintenance Operator,Innovation and Key Account Services Unit (IKD),นางสาว,Platinum,,false
 Christopher,Harris,chris.harris@company.com,"0888888888",Password123!,666666,,,Male,Manager,Head of Business Development and Innovation Cluster Unit (BCD),นาย,Gold,Both,false
 Rachel,Clark,rachel.clark@external.com,"0899999999",Password123!,,EduTech,Educational Software,Female,User,Head of Future Learning and Skills Innovation Unit,นางสาว,Diamond,,true
-Daniel,Lewis,daniel.lewis@company.com,"0800000000",Password123!,777777,,,Male,Admin,Head of Marketing Customer Service and Public Relations Unit,นาย,Silver,,false
+Daniel,Lewis,daniel.lewis@company.com,"0800000000",Password123!,777777,,,Male,Admin,Head of Marketing Customer Service and Public Relations Unit,นาย,Silver,Both,false
 Nicole,Robinson,nicole.robinson@external.com,"0812345679",Password123!,,Finance Corp,Financial Services,Female,User,Head of Network Coordination Unit,นางสาว,Gold,,true
 

@@ -303,7 +303,7 @@ const Analytics: React.FC = () => {
                     stops: [0, 90, 100],
                 },
             },
-            colors: ["#8884d8"],
+            colors: [theme.palette.primary.main],
         };
 
         const series = [{ name: "Total Visits", data: chartData.map(item => item.visits) }];
