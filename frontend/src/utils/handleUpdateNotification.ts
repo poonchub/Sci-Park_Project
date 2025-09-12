@@ -4,6 +4,7 @@ import {
     GetNotificationsByRequestAndUser,
     GetNotificationsByTaskAndUser,
     UpdateNotificationByID,
+    UpdateNotificationsByServiceAreaRequestID,
 } from "../services/http";
 
 export const handleUpdateNotification = async (
@@ -11,7 +12,8 @@ export const handleUpdateNotification = async (
     IsRead: boolean,
     request_id?: number,
     task_id?: number,
-    invoiceId?: number
+    invoiceId?: number,
+    service_area_request_id?: number
 ): Promise<void> => {
     try {
         let resNotification: any = null;
@@ -27,6 +29,14 @@ export const handleUpdateNotification = async (
         // กรณี invoice
         else if (invoiceId && invoiceId !== 0) {
             resNotification = await GetNotificationsByInvoiceAndUser(invoiceId, user_id);
+        }
+        // กรณี service area request
+        else if (service_area_request_id && service_area_request_id !== 0) {
+            // สำหรับ Service Area เราใช้ bulk update แทน
+            const notificationData: NotificationsInterface = { IsRead: IsRead };
+            await UpdateNotificationsByServiceAreaRequestID(notificationData, service_area_request_id);
+            console.log("✅ Service Area notification updated successfully.");
+            return;
         }
 
         if (!resNotification || resNotification.error) {

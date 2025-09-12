@@ -14,6 +14,7 @@ import {
     UpdateInvoiceByID,
     UpdateMaintenanceRequestByID,
     UpdateNotificationsByRequestID,
+    UpdateNotificationsByServiceAreaRequestID,
     GetRequestServiceAreasByUserID,
     ListPaymentType,
 } from "../../services/http";
@@ -165,6 +166,7 @@ const MyAccount: React.FC = () => {
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const navigate = useNavigate();
+    const { getNewUnreadNotificationCounts } = useNotificationStore();
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
@@ -231,6 +233,25 @@ const MyAccount: React.FC = () => {
             }
         } catch (error) {
             console.error("Error updating maintenance request:", error);
+        }
+    };
+
+    // Refresh function for Service Area requests
+    const getUpdateServiceAreaRequest = async (requestServiceAreaId: number) => {
+        try {
+            const userId = localStorage.getItem("userId");
+            if (!userId) return;
+            
+            // เรียก API เพื่อดึงข้อมูล Service Area Requests ของ user
+            const res = await GetRequestServiceAreasByUserID(Number(userId), serviceAreaPage + 1, serviceAreaLimit);
+            if (res && res.data) {
+                // อัพเดท state ของ Service Area requests
+                setServiceAreaRequests(res.data);
+                setServiceAreaTotal(res.total);
+                console.log("Service Area request updated:", res.data);
+            }
+        } catch (error) {
+            console.error("Error updating service area request:", error);
         }
     };
 
@@ -322,6 +343,34 @@ const MyAccount: React.FC = () => {
         } catch (error) {
             console.error("Error fetching service area requests:", error);
             setIsLoadingServiceArea(false);
+        }
+    };
+
+    // Mark Service Area notifications as read when user views the tab
+    const markServiceAreaNotificationsAsRead = async () => {
+        try {
+            const userId = Number(localStorage.getItem("userId"));
+            if (!userId) return;
+
+            // Get all unread Service Area notifications for this user
+            const unreadNotifications = serviceAreaRequests.filter(request => {
+                // Check if this request has unread notifications
+                return request.Notifications && request.Notifications.some((n: any) => 
+                    n.UserID === userId && !n.IsRead && n.ServiceAreaRequestID
+                );
+            });
+
+            // Mark each notification as read using handleUpdateNotification
+            for (const request of unreadNotifications) {
+                if (request.RequestServiceAreaID) {
+                    await handleUpdateNotification(userId, true, undefined, undefined, undefined, request.RequestServiceAreaID);
+                }
+            }
+
+            // Refresh notification counts
+            getNewUnreadNotificationCounts();
+        } catch (error) {
+            console.error("Error marking service area notifications as read:", error);
         }
     };
 
@@ -571,6 +620,8 @@ const MyAccount: React.FC = () => {
             getPayment()
         } else if (valueTab === 4) {
             getServiceAreaRequests();
+            // Mark notifications as read when user views Service Area tab
+            markServiceAreaNotificationsAsRead();
         }
     }, [valueTab]);
 
@@ -664,12 +715,57 @@ const MyAccount: React.FC = () => {
             }
         });
 
+        // Service Area Notifications for User
+        socket.on("service_area_approved_for_user", (data) => {
+            console.log("✅ Your service area request approved:", data);
+            if (data.user_id === userId) {
+                setTimeout(() => {
+                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getNewUnreadNotificationCounts();
+                }, 1500);
+            }
+        });
+
+        socket.on("service_area_completed_for_user", (data) => {
+            console.log("🎉 Your service area request completed:", data);
+            if (data.user_id === userId) {
+                setTimeout(() => {
+                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getNewUnreadNotificationCounts();
+                }, 1500);
+            }
+        });
+
+        socket.on("service_area_cancellation_assigned_for_user", (data) => {
+            console.log("📋 Your cancellation request assigned:", data);
+            if (data.user_id === userId) {
+                setTimeout(() => {
+                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getNewUnreadNotificationCounts();
+                }, 1500);
+            }
+        });
+
+        socket.on("service_area_cancellation_completed_for_user", (data) => {
+            console.log("✅ Your cancellation request completed:", data);
+            if (data.user_id === userId) {
+                setTimeout(() => {
+                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getNewUnreadNotificationCounts();
+                }, 1500);
+            }
+        });
+
         return () => {
             socket.off("maintenance_updated");
             socket.off("maintenance_deleted");
             socket.off("invoice_created");
             socket.off("invoice_updated");
             socket.off("invoice_deleted");
+            socket.off("service_area_approved_for_user");
+            socket.off("service_area_completed_for_user");
+            socket.off("service_area_cancellation_assigned_for_user");
+            socket.off("service_area_cancellation_completed_for_user");
         };
     }, []);
 
@@ -2378,18 +2474,23 @@ const MyAccount: React.FC = () => {
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, sm: 7 }}>
-                                    <Typography
-                                        sx={{
-                                            fontSize: 16,
-                                            fontWeight: 600,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            maxWidth: "100%",
-                                        }}
-                                    >
-                                        Request #{requestID}
-                                    </Typography>
+                                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                                        {data.Notifications && data.Notifications.some((n: any) => 
+                                            n.UserID === user?.ID && !n.IsRead && n.ServiceAreaRequestID
+                                        ) && <AnimatedBell />}
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            Request #{requestID}
+                                        </Typography>
+                                    </Box>
                                     <Typography
                                         sx={{
                                             fontSize: 14,
@@ -2497,7 +2598,14 @@ const MyAccount: React.FC = () => {
                                                     <Tooltip title="View Details">
                                                         <Button
                                                             variant="outlinedGray"
-                                                            onClick={() => {
+                                                            onClick={async () => {
+                                                                // Mark notification as read when user clicks to view details
+                                                                const userId = Number(localStorage.getItem("userId"));
+                                                                if (userId && requestID) {
+                                                                    await handleUpdateNotification(userId, true, undefined, undefined, undefined, requestID);
+                                                                    getNewUnreadNotificationCounts();
+                                                                }
+                                                                
                                                                 // Navigate to service area details page
                                                                 const encodedId = Base64.encode(String(requestID));
                                                                 navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
@@ -2529,10 +2637,14 @@ const MyAccount: React.FC = () => {
                     align: "center",
                     headerAlign: "center",
                     renderCell: (params) => {
+                        const requestID = params.value;
+                        const notification = params.row.Notifications ?? [];
+                        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                         return (
-                            <Typography sx={{ fontSize: 14 }}>
-                                {params.value}
-                            </Typography>
+                            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                                {hasNotificationForUser && <AnimatedBell />}
+                                <Typography sx={{ fontSize: 14 }}>{requestID}</Typography>
+                            </Box>
                         );
                     },
                 },
@@ -2672,7 +2784,14 @@ const MyAccount: React.FC = () => {
                                 <Tooltip title="View Details">
                                     <Button
                                         variant="outlinedGray"
-                                        onClick={() => {
+                                        onClick={async () => {
+                                            // Mark notification as read when user clicks to view details
+                                            const userId = Number(localStorage.getItem("userId"));
+                                            if (userId && requestID) {
+                                                await handleUpdateNotification(userId, true, undefined, undefined, undefined, requestID);
+                                                getNewUnreadNotificationCounts();
+                                            }
+                                            
                                             // Navigate to service area details page
                                             const encodedId = Base64.encode(String(requestID));
                                             navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
@@ -2971,7 +3090,11 @@ const MyAccount: React.FC = () => {
                                     
                                     {
                                         !(user?.IsEmployee) && user?.Role?.Name === "User" &&
-                                        <Tab label="Service Area Request" {...a11yProps(4)} />
+                                        <Tab label={
+                                            <Badge badgeContent={notificationCounts.UnreadServiceAreaRequests} color="primary">
+                                                Service Area Request
+                                            </Badge>
+                                        } {...a11yProps(4)} />
                                     }
                                 </Tabs>
                             </Grid>

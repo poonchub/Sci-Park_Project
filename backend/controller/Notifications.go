@@ -31,6 +31,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 	var requestCount int64
 	var taskCount int64
 	var invoiceCount int64
+	var serviceAreaRequestCount int64
 
 	db := config.DB()
 
@@ -46,10 +47,15 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 		Where("is_read = ? AND rental_room_invoice_id != 0 AND user_id = ?", false, userID).
 		Count(&invoiceCount)
 
+	db.Model(&entity.Notification{}).
+		Where("is_read = ? AND service_area_request_id != 0 AND user_id = ?", false, userID).
+		Count(&serviceAreaRequestCount)
+
 	c.JSON(http.StatusOK, gin.H{
-		"UnreadRequests": requestCount,
-		"UnreadTasks":    taskCount,
-		"UnreadInvoice":  invoiceCount,
+		"UnreadRequests":            requestCount,
+		"UnreadTasks":               taskCount,
+		"UnreadInvoice":             invoiceCount,
+		"UnreadServiceAreaRequests": serviceAreaRequestCount,
 	})
 }
 
@@ -110,8 +116,8 @@ func GetNotificationByInvoiceAndUser(c *gin.Context) {
 // POST /notification
 func CreateNotification(c *gin.Context) {
 	var notificationInput struct {
-		RequestID uint
-		TaskID    uint
+		RequestID           uint
+		TaskID              uint
 		RentalRoomInvoiceID uint
 	}
 	if err := c.ShouldBindJSON(&notificationInput); err != nil {
@@ -283,9 +289,9 @@ func CreateNotification(c *gin.Context) {
 
 		// สร้าง Notification สำหรับ customer
 		noti := entity.Notification{
-			IsRead:    false,
+			IsRead:              false,
 			RentalRoomInvoiceID: notificationInput.RentalRoomInvoiceID,
-			UserID:    customer.ID,
+			UserID:              customer.ID,
 		}
 		if err := db.Create(&noti).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for customer."})
@@ -295,9 +301,9 @@ func CreateNotification(c *gin.Context) {
 
 		if invoice.CreaterID != customer.ID {
 			notiForUser := entity.Notification{
-				IsRead:    true,
+				IsRead:              true,
 				RentalRoomInvoiceID: notificationInput.RentalRoomInvoiceID,
-				UserID:    invoice.CreaterID,
+				UserID:              invoice.CreaterID,
 			}
 			if err := db.Create(&notiForUser).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create notification for creater."})
@@ -346,6 +352,39 @@ func UpdateNotificationByID(c *gin.Context) {
 	services.NotifySocketEvent("notification_updated", notification)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}
+
+// PATCH /notifications/service-area-request/:service_area_request_id
+func UpdateNotificationsByServiceAreaRequestID(c *gin.Context) {
+	serviceAreaRequestID := c.Param("service_area_request_id")
+
+	db := config.DB()
+
+	// ดึง notifications ทั้งหมดที่มี service_area_request_id ตรงกัน
+	var notifications []entity.Notification
+	if err := db.Where("service_area_request_id = ?", serviceAreaRequestID).Find(&notifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find notifications"})
+		return
+	}
+
+	if len(notifications) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No notifications found for this service area request ID"})
+		return
+	}
+
+	var updateData map[string]interface{}
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	// อัปเดต notifications ทั้งหมดที่มี service_area_request_id ตรงกัน
+	if err := db.Model(&entity.Notification{}).Where("service_area_request_id = ?", serviceAreaRequestID).Updates(updateData).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update notifications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Service area notifications updated successfully"})
 }
 
 // PATCH /notifications/request/:request_id

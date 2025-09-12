@@ -22,6 +22,9 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
 import CancelServiceAreaPopup from "../../components/CancelServiceAreaPopup/CancelServiceAreaPopup";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
+import { io } from "socket.io-client";
+import { useNotificationStore } from "../../store/notificationStore";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -70,6 +73,7 @@ function AcceptWorkDocument() {
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
     const navigate = useNavigate();
+    const { getNewUnreadNotificationCounts } = useNotificationStore();
 
     // ฟังก์ชันสำหรับเปิด Reject Popup
     const handleOpenRejectPopup = (task: any) => {
@@ -334,7 +338,18 @@ function AcceptWorkDocument() {
                 headerName: "No.",
                 flex: 0.5,
                 align: "center",
-                headerAlign: "center"
+                headerAlign: "center",
+                renderCell: (params) => {
+                    const taskID = params.value;
+                    const notification = params.row.Notifications ?? [];
+                    const hasNotificationForUser = notification.some((n: any) => n.UserID === currentUserId && !n.IsRead);
+                    return (
+                        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                            {hasNotificationForUser && <AnimatedBell />}
+                            <Typography sx={{ fontSize: 14 }}>{taskID}</Typography>
+                        </Box>
+                    );
+                },
             },
             {
                 field: "Company",
@@ -537,6 +552,49 @@ function AcceptWorkDocument() {
     useEffect(() => {
         fetchServiceAreaTasks();
     }, [selectedDate, selectedBusinessGroup, page, limit]);
+
+    // Socket listeners for real-time updates
+    useEffect(() => {
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+        const socket = io(socketUrl);
+
+        // Listen for Service Area approval notifications
+        socket.on("service_area_approved", (data) => {
+            console.log("📦 Service area approved for operator:", data);
+            fetchServiceAreaTasks();
+            getNewUnreadNotificationCounts();
+        });
+
+        // Listen for Service Area completion notifications
+        socket.on("service_area_completed", (data) => {
+            console.log("🎉 Service area completed:", data);
+            fetchServiceAreaTasks();
+            getNewUnreadNotificationCounts();
+        });
+
+        // Listen for Service Area cancellation notifications
+        socket.on("service_area_cancellation_requested", (data) => {
+            console.log("❌ Service area cancellation requested:", data);
+            fetchServiceAreaTasks();
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_cancellation_assigned", (data) => {
+            console.log("📋 Cancellation assigned to operator:", data);
+            fetchServiceAreaTasks();
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_cancellation_completed", (data) => {
+            console.log("✅ Cancellation completed:", data);
+            fetchServiceAreaTasks();
+            getNewUnreadNotificationCounts();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     const handleClearFilter = () => {
         setSelectedDate(null);

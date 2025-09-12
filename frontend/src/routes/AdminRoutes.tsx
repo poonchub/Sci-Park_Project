@@ -49,12 +49,17 @@ const AdminRoutes = (): RouteObject => {
 				path: "/room-booking-form",
 				element: <RoomBookingForm />
 			},
+
 			{
 				path: "/requests",
 				element: <AllMaintenanceRequest/>
 			},
 			{
 				path: "/requests/maintenance/all-maintenance-request",
+				element: <AllMaintenanceRequest/>
+			},
+			{
+				path: "/maintenance/all-maintenance-request",
 				element: <AllMaintenanceRequest/>
 			},
 			{

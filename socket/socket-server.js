@@ -56,6 +56,15 @@ app.post("/notify-user", (req, res) => {
   res.sendStatus(200);
 });
 
+app.post("/notify-service-area", (req, res) => {
+  const { event, data } = req.body;
+  console.log("📨 Service Area Notify from Go:", event, data);
+
+  io.emit(event, data);
+
+  res.sendStatus(200);
+});
+
 server.listen(3001, () => {
   console.log("🚀 Socket.IO Gateway running on port 3001");
 });

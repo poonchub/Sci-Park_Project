@@ -7,6 +7,7 @@ import (
 	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	"strconv"
 	"time"
 
@@ -429,6 +430,28 @@ func UpdateServiceAreaDocumentForCancellation(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
+
+	// 🔔 ส่งแจ้งเตือน Admin/Manager เมื่อ Cancellation เสร็จสิ้น
+	completionData := gin.H{
+		"request_service_area_id": requestServiceAreaID,
+		"status":                  "cancellation_completed",
+	}
+	services.NotifySocketEventServiceArea("service_area_cancellation_completed", completionData)
+
+	// 🔔 ส่งแจ้งเตือน User ที่สร้าง Cancellation Request
+	userNotificationData := gin.H{
+		"request_service_area_id": requestServiceAreaID,
+		"status":                  "cancellation_completed",
+	}
+	services.NotifySocketEventServiceArea("service_area_cancellation_completed_for_user", userNotificationData)
+
+	// สร้าง Notification ในฐานข้อมูลสำหรับ User ที่สร้าง Cancellation Request
+	userNotification := entity.Notification{
+		UserID:               requestServiceArea.UserID,
+		ServiceAreaRequestID: uint(requestServiceAreaID),
+		IsRead:               false,
+	}
+	config.DB().Create(&userNotification)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Service area document updated successfully for cancellation and status updated to Successfully Cancelled",

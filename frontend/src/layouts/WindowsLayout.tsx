@@ -221,6 +221,13 @@ const WindowsLayout: React.FC = (props: any) => {
                     segment: "service-area/service-request-list",
                     title: "Service Area",
                     icon: <LandPlot  size={iconSize} />,
+                    action: notificationCounts?.UnreadServiceAreaRequests && notificationCounts?.UnreadServiceAreaRequests > 0 ? (
+                        <Chip
+                            label={notificationCounts.UnreadServiceAreaRequests}
+                            color="primary"
+                            size="small"
+                        />
+                    ) : null,
                 },
 
             ],
@@ -245,6 +252,13 @@ const WindowsLayout: React.FC = (props: any) => {
             segment: "service-area/accept-work-document",
             title: "My Work",
             icon: <ClipboardCheck />,
+            action: notificationCounts?.UnreadServiceAreaRequests && notificationCounts?.UnreadServiceAreaRequests > 0 ? (
+                <Chip
+                    label={notificationCounts.UnreadServiceAreaRequests}
+                    color="primary"
+                    size="small"
+                />
+            ) : null,
         },
         {
             segment: "user",
@@ -668,6 +682,38 @@ const WindowsLayout: React.FC = (props: any) => {
 
         socket.on("maintenance_deleted", (data) => {
             console.log("🔄 Maintenance request deleted:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        // Service Area Notifications
+        socket.on("service_area_created", (data) => {
+            console.log("📦 New service area request:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_approved", (data) => {
+            console.log("✅ Service area approved:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_completed", (data) => {
+            console.log("🎉 Service area completed:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        // Cancellation Notifications
+        socket.on("service_area_cancellation_requested", (data) => {
+            console.log("❌ Service area cancellation requested:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_cancellation_assigned", (data) => {
+            console.log("📋 Cancellation assigned:", data);
+            getNewUnreadNotificationCounts();
+        });
+
+        socket.on("service_area_cancellation_completed", (data) => {
+            console.log("✅ Cancellation completed:", data);
             getNewUnreadNotificationCounts();
         });
 

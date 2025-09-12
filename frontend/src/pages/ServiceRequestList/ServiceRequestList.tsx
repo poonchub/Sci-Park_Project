@@ -5,11 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
-import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, GetUserById, RejectServiceAreaRequest, AssignCancellationTask } from "../../services/http";
+import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, RejectServiceAreaRequest, AssignCancellationTask } from "../../services/http";
 import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
-import { UserInterface } from "../../interfaces/IUser";
 import FilterSection from "../../components/FilterSection/FilterSection";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
 import { GridColDef } from "@mui/x-data-grid";
@@ -20,14 +19,17 @@ import "./ServiceRequestList.css";
 import { isAdmin } from "../../routes";
 import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import { io } from "socket.io-client";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { useUserStore } from "../../store/userStore";
 
 const ServiceRequestList: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useUserStore();
     const [isLoadingData, setIsLoadingData] = useState(false);
     const [requestServiceAreas, setRequestServiceAreas] = useState<RequestServiceAreaListInterface[]>([]);
     const [requestStatuses, setRequestStatuses] = useState<RequestStatusesInterface[]>([]);
     const [businessGroups, setBusinessGroups] = useState<BusinessGroupInterface[]>([]);
-    const [user, setUser] = useState<UserInterface>();
     const [openApprovePopup, setOpenApprovePopup] = useState(false);
     const [requestIdPendingApprove, setRequestIdPendingApprove] = useState<number | null>(null);
     const [businessGroupIdPending, setBusinessGroupIdPending] = useState<number | null>(null);
@@ -387,13 +389,19 @@ const ServiceRequestList: React.FC = () => {
                 flex: 0.5,
                 align: "center",
                 headerAlign: "center",
-                renderCell: (params) => (
-                    <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
-                        <Typography sx={{ fontSize: 14 }}>
-                            {params.value}
-                        </Typography>
-                    </Box>
-                ),
+                renderCell: (params) => {
+                    const requestID = params.value;
+                    const notification = params.row.Notifications ?? [];
+                    const hasNotificationForUser = notification.some((n: any) => n.UserID === user?.ID && !n.IsRead);
+                    return (
+                        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                            {hasNotificationForUser && <AnimatedBell />}
+                            <Typography sx={{ fontSize: 14 }}>
+                                {requestID}
+                            </Typography>
+                        </Box>
+                    );
+                },
             },
             {
                 field: 'Company',
@@ -772,17 +780,7 @@ const ServiceRequestList: React.FC = () => {
         ];
     };
 
-    // Fetch user
-    const fetchUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
-            if (res) {
-                setUser(res);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
+    
 
     // Fetch request statuses
     const fetchRequestStatuses = async () => {
@@ -927,6 +925,33 @@ const ServiceRequestList: React.FC = () => {
         setPage(0);
     };
 
+    // Refresh functions for Service Area notifications
+    const getNewServiceAreaRequest = async (id: number) => {
+        try {
+            // เรียก API เพื่อดึงข้อมูล Service Area Request ใหม่
+            const response = await ListRequestServiceAreas("0", 0, 20, undefined, undefined);
+            if (response && response.data) {
+                setRequestServiceAreas(response.data);
+                setTotal(response.total);
+            }
+        } catch (error) {
+            console.error("Error fetching new service area request:", error);
+        }
+    };
+
+    const getUpdateServiceAreaRequest = async (id: number) => {
+        try {
+            // เรียก API เพื่อดึงข้อมูล Service Area Request ที่อัพเดท
+            const response = await ListRequestServiceAreas("0", 0, 20, undefined, undefined);
+            if (response && response.data) {
+                setRequestServiceAreas(response.data);
+                setTotal(response.total);
+            }
+        } catch (error) {
+            console.error("Error fetching updated service area request:", error);
+        }
+    };
+
 
 
     // Initial data fetch
@@ -934,7 +959,7 @@ const ServiceRequestList: React.FC = () => {
         const fetchInitialData = async () => {
             try {
                 await Promise.all([
-                    fetchUser(),
+                    
                     fetchRequestStatuses(),
                     fetchBusinessGroups(),
                 ]);
@@ -954,6 +979,70 @@ const ServiceRequestList: React.FC = () => {
             fetchServiceRequestAreas("0", 0, 20, undefined, undefined);
         }
     }, [user, requestStatuses]);
+
+    // Socket listeners for real-time updates
+    useEffect(() => {
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+        const socket = io(socketUrl);
+
+        socket.on("service_area_created", (data) => {
+            console.log("📦 New service area request:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getNewServiceAreaRequest(data.ID);
+            }, 1500);
+        });
+
+        socket.on("service_area_approved", (data) => {
+            console.log("✅ Service area approved:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getUpdateServiceAreaRequest(data.request_service_area_id);
+            }, 1500);
+        });
+
+        socket.on("service_area_completed", (data) => {
+            console.log("🎉 Service area completed:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getUpdateServiceAreaRequest(data.request_service_area_id);
+            }, 1500);
+        });
+
+        socket.on("service_area_cancellation_requested", (data) => {
+            console.log("❌ Service area cancellation requested:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getUpdateServiceAreaRequest(data.request_service_area_id);
+            }, 1500);
+        });
+
+        socket.on("service_area_cancellation_assigned", (data) => {
+            console.log("📋 Cancellation assigned:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getUpdateServiceAreaRequest(data.request_service_area_id);
+            }, 1500);
+        });
+
+        socket.on("service_area_cancellation_completed", (data) => {
+            console.log("✅ Cancellation completed:", data);
+            // รีเฟรชรายการ Service Area Requests
+            setTimeout(() => {
+                getUpdateServiceAreaRequest(data.request_service_area_id);
+            }, 1500);
+        });
+
+        return () => {
+            socket.off("service_area_created");
+            socket.off("service_area_approved");
+            socket.off("service_area_completed");
+            socket.off("service_area_cancellation_requested");
+            socket.off("service_area_cancellation_assigned");
+            socket.off("service_area_cancellation_completed");
+            socket.disconnect();
+        };
+    }, []);
 
     // Handle reject action
     const handleReject = async (note?: string) => {

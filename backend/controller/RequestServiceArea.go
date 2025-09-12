@@ -7,6 +7,7 @@ import (
 	"path"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	"strconv"
 	"strings"
 	"time"
@@ -256,6 +257,40 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	fmt.Printf("=== Success: Request service area created and about company %s ===\n", action)
 	fmt.Printf("RequestServiceArea ID: %d\n", requestServiceArea.ID)
 	fmt.Printf("AboutCompany action: %s\n", action)
+
+	// 🔔 ส่งแจ้งเตือน Admin/Manager เมื่อมีการสร้าง Service Area Request
+	services.NotifySocketEventServiceArea("service_area_created", requestServiceArea)
+
+	// สร้าง Notifications ในฐานข้อมูลสำหรับ Admin/Manager
+	var adminRole entity.Role
+	if err := config.DB().Where("name = ?", "Admin").First(&adminRole).Error; err == nil {
+		var admins []entity.User
+		if err := config.DB().Where("role_id = ?", adminRole.ID).Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				notification := entity.Notification{
+					UserID:               admin.ID,
+					ServiceAreaRequestID: requestServiceArea.ID,
+					IsRead:               false,
+				}
+				config.DB().Create(&notification)
+			}
+		}
+	}
+
+	var managerRole entity.Role
+	if err := config.DB().Where("name = ?", "Manager").First(&managerRole).Error; err == nil {
+		var managers []entity.User
+		if err := config.DB().Where("role_id = ? AND (request_type_id = 2 OR request_type_id = 3)", managerRole.ID).Find(&managers).Error; err == nil {
+			for _, manager := range managers {
+				notification := entity.Notification{
+					UserID:               manager.ID,
+					ServiceAreaRequestID: requestServiceArea.ID,
+					IsRead:               false,
+				}
+				config.DB().Create(&notification)
+			}
+		}
+	}
 
 	// โหลด CollaborationPlans ที่เพิ่งสร้าง
 	var loadedCollaborationPlans []entity.CollaborationPlan
@@ -698,6 +733,33 @@ func UpdateRequestServiceAreaStatus(c *gin.Context) {
 		return
 	}
 
+	// 🔔 ส่งแจ้งเตือนเมื่อสถานะเปลี่ยนเป็น Completed (ID 6)
+	if requestBody.RequestStatusID == 6 {
+		// แจ้งเตือน Admin/Manager
+		completionData := gin.H{
+			"request_service_area_id": requestServiceArea.ID,
+			"user_id":                 requestServiceArea.UserID,
+			"status":                  "completed",
+		}
+		services.NotifySocketEventServiceArea("service_area_completed", completionData)
+
+		// แจ้งเตือน User ที่สร้าง Request
+		userNotificationData := gin.H{
+			"request_service_area_id": requestServiceArea.ID,
+			"user_id":                 requestServiceArea.UserID,
+			"status":                  "completed",
+		}
+		services.NotifySocketEventServiceArea("service_area_completed_for_user", userNotificationData)
+
+		// สร้าง Notification ในฐานข้อมูลสำหรับ User ที่สร้าง Request
+		userNotification := entity.Notification{
+			UserID:               requestServiceArea.UserID,
+			ServiceAreaRequestID: requestServiceArea.ID,
+			IsRead:               false,
+		}
+		config.DB().Create(&userNotification)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Request service area status updated successfully",
 		"data": gin.H{
@@ -875,6 +937,39 @@ func CreateServiceAreaApproval(c *gin.Context) {
 		return
 	}
 
+	// 🔔 ส่งแจ้งเตือน Document Operator ที่ถูกเลือก
+	approvalData := gin.H{
+		"approval":                approval,
+		"task":                    task,
+		"operator_user_id":        body.OperatorUserID,
+		"request_service_area_id": body.RequestServiceAreaID,
+	}
+	services.NotifySocketEventServiceArea("service_area_approved", approvalData)
+
+	// 🔔 ส่งแจ้งเตือน User ที่สร้าง Request
+	userNotificationData := gin.H{
+		"request_service_area_id": body.RequestServiceAreaID,
+		"user_id":                 req.UserID,
+		"status":                  "approved",
+	}
+	services.NotifySocketEventServiceArea("service_area_approved_for_user", userNotificationData)
+
+	// สร้าง Notification ในฐานข้อมูลสำหรับ User ที่สร้าง Request
+	userNotification := entity.Notification{
+		UserID:               req.UserID,
+		ServiceAreaRequestID: body.RequestServiceAreaID,
+		IsRead:               false,
+	}
+	config.DB().Create(&userNotification)
+
+	// สร้าง Notification ในฐานข้อมูลสำหรับ Document Operator ที่ถูกเลือก
+	operatorNotification := entity.Notification{
+		UserID:               body.OperatorUserID,
+		ServiceAreaRequestID: body.RequestServiceAreaID,
+		IsRead:               false,
+	}
+	config.DB().Create(&operatorNotification)
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Service area approval created", "data": gin.H{"approval": approval, "task": task}})
 }
 
@@ -980,6 +1075,39 @@ func AssignCancellationTask(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request status"})
 			return
 		}
+
+		// 🔔 ส่งแจ้งเตือน Document Operator ที่ถูกเลือก
+		assignmentData := gin.H{
+			"task":                    task,
+			"operator_user_id":        body.OperatorUserID,
+			"request_service_area_id": body.RequestServiceAreaID,
+			"status":                  "cancellation_assigned",
+		}
+		services.NotifySocketEventServiceArea("service_area_cancellation_assigned", assignmentData)
+
+		// 🔔 ส่งแจ้งเตือน User ที่สร้าง Cancellation Request
+		userNotificationData := gin.H{
+			"request_service_area_id": body.RequestServiceAreaID,
+			"user_id":                 req.UserID,
+			"status":                  "cancellation_assigned",
+		}
+		services.NotifySocketEventServiceArea("service_area_cancellation_assigned_for_user", userNotificationData)
+
+		// สร้าง Notification ในฐานข้อมูลสำหรับ User ที่สร้าง Cancellation Request
+		userNotification := entity.Notification{
+			UserID:               req.UserID,
+			ServiceAreaRequestID: body.RequestServiceAreaID,
+			IsRead:               false,
+		}
+		config.DB().Create(&userNotification)
+
+		// สร้าง Notification ในฐานข้อมูลสำหรับ Document Operator ที่ถูกเลือกสำหรับ Cancellation
+		operatorNotification := entity.Notification{
+			UserID:               body.OperatorUserID,
+			ServiceAreaRequestID: body.RequestServiceAreaID,
+			IsRead:               false,
+		}
+		config.DB().Create(&operatorNotification)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Cancellation task assigned successfully",
@@ -1658,6 +1786,46 @@ func CancelRequestServiceArea(c *gin.Context) {
 	fmt.Printf("=== Success: Cancel request created and status updated ===\n")
 	fmt.Printf("CancelRequestServiceArea ID: %d\n", cancelRequest.ID)
 	fmt.Printf("RequestServiceArea Status updated to: %d (Cancellation In Progress)\n", requestServiceArea.RequestStatusID)
+
+	// 🔔 ส่งแจ้งเตือน Admin/Manager เมื่อมีการสร้าง Cancellation Request
+	cancellationData := gin.H{
+		"cancel_request_service_area_id": cancelRequest.ID,
+		"request_service_area_id":        requestServiceArea.ID,
+		"user_id":                        requestServiceArea.UserID,
+		"status":                         "cancellation_requested",
+	}
+	services.NotifySocketEventServiceArea("service_area_cancellation_requested", cancellationData)
+
+	// สร้าง Notifications ในฐานข้อมูลสำหรับ Admin/Manager เมื่อมีการสร้าง Cancellation Request
+	var adminRole entity.Role
+	if err := config.DB().Where("name = ?", "Admin").First(&adminRole).Error; err == nil {
+		var admins []entity.User
+		if err := config.DB().Where("role_id = ?", adminRole.ID).Find(&admins).Error; err == nil {
+			for _, admin := range admins {
+				notification := entity.Notification{
+					UserID:               admin.ID,
+					ServiceAreaRequestID: requestServiceArea.ID,
+					IsRead:               false,
+				}
+				config.DB().Create(&notification)
+			}
+		}
+	}
+
+	var managerRole entity.Role
+	if err := config.DB().Where("name = ?", "Manager").First(&managerRole).Error; err == nil {
+		var managers []entity.User
+		if err := config.DB().Where("role_id = ? AND (request_type_id = 2 OR request_type_id = 3)", managerRole.ID).Find(&managers).Error; err == nil {
+			for _, manager := range managers {
+				notification := entity.Notification{
+					UserID:               manager.ID,
+					ServiceAreaRequestID: requestServiceArea.ID,
+					IsRead:               false,
+				}
+				config.DB().Create(&notification)
+			}
+		}
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Service area cancellation request submitted successfully",
