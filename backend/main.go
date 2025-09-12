@@ -210,6 +210,7 @@ func main() {
 		protected.PATCH("/notifications/request/:request_id", controller.UpdateNotificationsByRequestID)
 		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
 		protected.PATCH("/notifications/service-area-request/:service_area_request_id", controller.UpdateNotificationsByServiceAreaRequestID)
+		protected.PATCH("/notifications/service-area-task/:service_area_task_id", controller.UpdateNotificationsByServiceAreaTaskID)
 
 		// News
 		protected.GET("/news", controller.ListNews)

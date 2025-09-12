@@ -35,7 +35,11 @@ func CreateServiceAreaDocument(c *gin.Context) {
 	// ตรวจสอบว่า ServiceAreaDocument มีอยู่แล้วหรือไม่ (1:1 relationship)
 	var existingDocument entity.ServiceAreaDocument
 	if err := config.DB().Where("request_service_area_id = ?", requestServiceAreaID).First(&existingDocument).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Service area document already exists for this request"})
+		// ถ้ามีอยู่แล้ว ให้ return document ที่มีอยู่
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Service area document already exists",
+			"data":    existingDocument,
+		})
 		return
 	}
 

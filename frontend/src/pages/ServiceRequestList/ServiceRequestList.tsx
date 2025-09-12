@@ -392,6 +392,7 @@ const ServiceRequestList: React.FC = () => {
                 renderCell: (params) => {
                     const requestID = params.value;
                     const notification = params.row.Notifications ?? [];
+                    // แสดง AnimatedBell สำหรับ Admin/Manager ที่กำลังดูหน้า (เหมือน All Maintenance)
                     const hasNotificationForUser = notification.some((n: any) => n.UserID === user?.ID && !n.IsRead);
                     return (
                         <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>

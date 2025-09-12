@@ -19,6 +19,10 @@ type Notification struct {
 	ServiceAreaRequestID uint
 	ServiceAreaRequest   RequestServiceArea `gorm:"foreignKey:ServiceAreaRequestID" valid:"-"`
 
+	// Service Area Task Notifications
+	ServiceAreaTaskID uint
+	ServiceAreaTask   ServiceAreaTask `gorm:"foreignKey:ServiceAreaTaskID" valid:"-"`
+
 	// Service Area Cancellation Notifications
 	CancelServiceAreaRequestID uint
 	CancelServiceAreaRequest   CancelRequestServiceArea `gorm:"foreignKey:CancelServiceAreaRequestID" valid:"-"`

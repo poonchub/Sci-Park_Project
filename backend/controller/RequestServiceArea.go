@@ -582,7 +582,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 	}
 
 	// ดึงข้อมูล Request Service Area จากฐานข้อมูล
-	query := db.Preload("User").Preload("User.AboutCompany").Preload("RequestStatus")
+	query := db.Preload("User").Preload("User.AboutCompany").Preload("RequestStatus").Preload("Notifications")
 
 	// แก้ไขการ ORDER โดยใช้ `request_service_areas.created_at` เพื่อระบุคอลัมน์ที่มาจากตาราง `request_service_areas`
 	if err := query.Order("request_service_areas.created_at DESC").Limit(limit).Offset(offset).Find(&requestServiceAreas).Error; err != nil {
@@ -644,6 +644,7 @@ func ListRequestServiceAreas(c *gin.Context) {
 			"UserNameCombined": requestServiceArea.User.FirstName + " " + requestServiceArea.User.LastName,
 			"CreatedAt":        requestServiceArea.CreatedAt,
 			"StatusID":         requestServiceArea.RequestStatusID,
+			"Notifications":    requestServiceArea.Notifications,
 		}
 
 		// ดึงข้อมูล BusinessGroupID จาก AboutCompany
@@ -733,8 +734,36 @@ func UpdateRequestServiceAreaStatus(c *gin.Context) {
 		return
 	}
 
+	// Mark existing notifications as read for the user who created the request when status changes to Approved (3) or Completed (6)
+	if requestBody.RequestStatusID == 3 || requestBody.RequestStatusID == 6 {
+		// Mark existing notifications as read for the user who created the request
+		config.DB().Model(&entity.Notification{}).
+			Where("service_area_request_id = ? AND user_id = ? AND service_area_task_id = 0", requestServiceArea.ID, requestServiceArea.UserID).
+			Update("is_read", true)
+
+		// Mark existing notifications as read for all admins and managers (แต่ไม่รวม service_area_task_id)
+		config.DB().Model(&entity.Notification{}).
+			Where("service_area_request_id = ? AND service_area_task_id = 0", requestServiceArea.ID).
+			Update("is_read", true)
+	}
+
+	// เมื่อ status เปลี่ยนเป็น Completed (6) ให้ mark notification ของ ServiceAreaTask เป็น read ด้วย
+	if requestBody.RequestStatusID == 6 {
+		// หา ServiceAreaTask ที่เกี่ยวข้องกับ RequestServiceArea นี้
+		var tasks []entity.ServiceAreaTask
+		config.DB().Where("request_service_area_id = ?", requestServiceArea.ID).Find(&tasks)
+
+		// Mark notification ของ ServiceAreaTask เป็น read
+		for _, task := range tasks {
+			config.DB().Model(&entity.Notification{}).
+				Where("service_area_task_id = ? AND user_id = ?", task.ID, task.UserID).
+				Update("is_read", true)
+		}
+	}
+
 	// 🔔 ส่งแจ้งเตือนเมื่อสถานะเปลี่ยนเป็น Completed (ID 6)
 	if requestBody.RequestStatusID == 6 {
+
 		// แจ้งเตือน Admin/Manager
 		completionData := gin.H{
 			"request_service_area_id": requestServiceArea.ID,
@@ -809,6 +838,27 @@ func RejectServiceAreaRequest(c *gin.Context) {
 
 	// อัปเดตสถานะเป็น Rejected (ID 8)
 	requestServiceArea.RequestStatusID = 8
+
+	// Mark existing notifications as read for the user who created the request
+	config.DB().Model(&entity.Notification{}).
+		Where("service_area_request_id = ? AND user_id = ? AND service_area_task_id = 0", requestID, requestServiceArea.UserID).
+		Update("is_read", true)
+
+	// Mark existing notifications as read for all admins and managers (แต่ไม่รวม service_area_task_id)
+	config.DB().Model(&entity.Notification{}).
+		Where("service_area_request_id = ? AND service_area_task_id = 0", requestID).
+		Update("is_read", true)
+
+	// Mark notification ของ ServiceAreaTask เป็น read เมื่อ reject
+	var tasks []entity.ServiceAreaTask
+	config.DB().Where("request_service_area_id = ?", requestID).Find(&tasks)
+
+	// Mark notification ของ ServiceAreaTask เป็น read
+	for _, task := range tasks {
+		config.DB().Model(&entity.Notification{}).
+			Where("service_area_task_id = ? AND user_id = ?", task.ID, task.UserID).
+			Update("is_read", true)
+	}
 
 	// บันทึกการเปลี่ยนแปลงใน RequestServiceArea
 	if err := config.DB().Save(&requestServiceArea).Error; err != nil {
@@ -954,6 +1004,22 @@ func CreateServiceAreaApproval(c *gin.Context) {
 	}
 	services.NotifySocketEventServiceArea("service_area_approved_for_user", userNotificationData)
 
+	// Mark existing notifications as read for the user who created the request
+	config.DB().Model(&entity.Notification{}).
+		Where("service_area_request_id = ? AND user_id = ? AND service_area_task_id = 0", body.RequestServiceAreaID, req.UserID).
+		Update("is_read", true)
+
+	// Mark existing notifications as read for the admin who approved the request
+	config.DB().Model(&entity.Notification{}).
+		Where("service_area_request_id = ? AND user_id = ? AND service_area_task_id = 0", body.RequestServiceAreaID, body.UserID).
+		Update("is_read", true)
+
+	// Mark existing notifications as read for ALL admins and managers (but NOT for Document Operator)
+	// ใช้ service_area_request_id เท่านั้น ไม่รวม service_area_task_id
+	config.DB().Model(&entity.Notification{}).
+		Where("service_area_request_id = ? AND user_id != ? AND service_area_task_id = 0", body.RequestServiceAreaID, body.OperatorUserID).
+		Update("is_read", true)
+
 	// สร้าง Notification ในฐานข้อมูลสำหรับ User ที่สร้าง Request
 	userNotification := entity.Notification{
 		UserID:               req.UserID,
@@ -966,6 +1032,7 @@ func CreateServiceAreaApproval(c *gin.Context) {
 	operatorNotification := entity.Notification{
 		UserID:               body.OperatorUserID,
 		ServiceAreaRequestID: body.RequestServiceAreaID,
+		ServiceAreaTaskID:    task.ID, // เพิ่ม ServiceAreaTaskID
 		IsRead:               false,
 	}
 	config.DB().Create(&operatorNotification)
@@ -1348,6 +1415,8 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 		Preload("RequestServiceArea.User.AboutCompany").
 		Preload("RequestServiceArea.User.AboutCompany.BusinessGroup").
 		Preload("RequestServiceArea.ServiceAreaDocument").
+		Preload("RequestServiceArea.Notifications").
+		Preload("Notifications"). // เพิ่ม preload notifications ของ ServiceAreaTask
 		Where("service_area_tasks.user_id = ?", userID)
 
 	// กรองตาม Month/Year และ Business Group ID (ถ้ามีค่า)
@@ -1441,7 +1510,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			if t.RequestServiceArea.User.AboutCompany.BusinessGroupID != nil {
 				businessGroupID = t.RequestServiceArea.User.AboutCompany.BusinessGroupID
 			}
-			if t.RequestServiceArea.User.AboutCompany.BusinessGroup.ID != 0 {
+			if t.RequestServiceArea.User.AboutCompany.BusinessGroup != nil && t.RequestServiceArea.User.AboutCompany.BusinessGroup.ID != 0 {
 				businessGroupName = t.RequestServiceArea.User.AboutCompany.BusinessGroup.Name
 			}
 		}
@@ -1465,6 +1534,7 @@ func GetServiceAreaTasksByUserID(c *gin.Context) {
 			"BusinessGroupID":   businessGroupID,                      // 8
 			"StatusID":          t.RequestServiceArea.RequestStatusID, // 9
 			"IsCancel":          t.IsCancel,                           // 10
+			"Notifications":     t.Notifications,                      // 11 - ใช้ notifications ของ ServiceAreaTask แทน
 
 		}
 
@@ -1523,6 +1593,7 @@ func GetRequestServiceAreasByUserID(c *gin.Context) {
 		Preload("User.AboutCompany.BusinessGroup").
 		Preload("RequestStatus").
 		Preload("ServiceAreaDocument").
+		Preload("Notifications").
 		Where("request_service_areas.user_id = ?", userID)
 
 	// กรองตาม Month/Year (ถ้ามีค่า)
@@ -1608,6 +1679,7 @@ func GetRequestServiceAreasByUserID(c *gin.Context) {
 			"UserNameCombined":  requesterFullName,   // 6
 			"BusinessGroupID":   businessGroupID,     // 7
 			"StatusID":          rsa.RequestStatusID, // 8
+			"Notifications":     rsa.Notifications,   // 9 - เพิ่ม Notifications array
 		}
 
 		fmt.Printf("🔍 [DEBUG] Request service area %d response: RequestServiceAreaID=%v, UserID=%v\n",
