@@ -30,4 +30,7 @@ type RequestServiceArea struct {
 
 	// 1:1 relationship with CancelRequestServiceArea
 	CancelRequest *CancelRequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
+
+	// 1:Many relationship with Notifications
+	Notifications []Notification `gorm:"foreignKey:ServiceAreaRequestID"`
 }

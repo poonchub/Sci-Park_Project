@@ -24,7 +24,9 @@ import CancelServiceAreaPopup from "../../components/CancelServiceAreaPopup/Canc
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { io } from "socket.io-client";
 import { useNotificationStore } from "../../store/notificationStore";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 // Interface สำหรับ Service Area Tasks
 interface ServiceAreaTaskInterface {
@@ -101,12 +103,25 @@ function AcceptWorkDocument() {
             setIsRejecting(true);
             const userID = Number(localStorage.getItem('userId')) || 0;
             const role = "Operator"; // ใน AcceptWorkDocument เป็น Operator เสมอ
-            
+
             await RejectServiceAreaRequest(selectedTaskForReject.RequestServiceAreaID, userID, note || "", role);
-            
+
+            // Mark notification as read for ServiceAreaTask
+            if (currentUserId && selectedTaskForReject.ServiceAreaTaskID) {
+                try {
+                    await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, selectedTaskForReject.ServiceAreaTaskID);
+                    console.log("✅ ServiceAreaTask notification marked as read");
+                } catch (error) {
+                    console.error("Error marking notification as read:", error);
+                }
+            }
+
             // Refresh data หลังจาก Reject
             fetchServiceAreaTasks();
-            
+
+            // Refresh notification counts
+            getNewUnreadNotificationCounts();
+
             // ปิด Popup
             setOpenRejectPopup(false);
             setSelectedTaskForReject(null);
@@ -123,7 +138,7 @@ function AcceptWorkDocument() {
 
         try {
             setIsSubmitting(true);
-            
+
             // อัพเดท status ID เป็น 6 (Complete) หลังจาก submit สำเร็จ
             const requestServiceAreaID = selectedTaskForSubmit.RequestServiceAreaID;
             if (requestServiceAreaID) {
@@ -135,31 +150,44 @@ function AcceptWorkDocument() {
                     throw error; // Throw error เพื่อให้ catch block จัดการ
                 }
             }
-            
+
+            // Mark notification as read for ServiceAreaTask
+            if (currentUserId && selectedTaskForSubmit.ServiceAreaTaskID) {
+                try {
+                    await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, selectedTaskForSubmit.ServiceAreaTaskID);
+                    console.log("✅ ServiceAreaTask notification marked as read");
+                } catch (error) {
+                    console.error("Error marking notification as read:", error);
+                }
+            }
+
             // Refresh data หลังจากอัพเดท status
             await fetchServiceAreaTasks();
-            
+
+            // Refresh notification counts
+            getNewUnreadNotificationCounts();
+
             // ปิด Popup
             setOpenSubmitPopup(false);
             setSelectedTaskForSubmit(null);
-            
+
             // แสดง success alert
-            setAlerts(prev => [...prev, { 
-                type: 'success', 
-                message: `Service area task completed successfully! Status updated to Complete.` 
+            setAlerts(prev => [...prev, {
+                type: 'success',
+                message: `Service area task completed successfully! Status updated to Complete.`
             }]);
-            
+
             // Return success
             return { success: true, message: "Service area submitted successfully" };
         } catch (error) {
             console.error("Error submitting service area:", error);
-            
+
             // แสดง error alert
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: `Failed to complete service area task: ${error instanceof Error ? error.message : 'Unknown error'}` 
+            setAlerts(prev => [...prev, {
+                type: 'error',
+                message: `Failed to complete service area task: ${error instanceof Error ? error.message : 'Unknown error'}`
             }]);
-            
+
             throw error; // Re-throw error เพื่อให้ caller จัดการ
         } finally {
             setIsSubmitting(false);
@@ -172,38 +200,38 @@ function AcceptWorkDocument() {
 
         try {
             setIsCancelling(true);
-            
+
             // TODO: เรียก API สำหรับส่งข้อมูลการยกเลิก
             // const result = await SubmitCancelServiceAreaRequest(selectedTaskForCancel.RequestServiceAreaID, data);
-            
+
             // จำลองการส่งข้อมูลสำเร็จ
             console.log('Cancellation data submitted');
-            
+
             // ไม่ต้องอัพเดท status ที่นี่ เพราะ Backend Controller จะอัพเดทเป็น "Successfully Cancelled" (ID: 11) แล้ว
-            
+
             // Refresh data หลังจากอัพเดท status
             await fetchServiceAreaTasks();
-            
+
             // ปิด Popup
             setOpenCancelPopup(false);
             setSelectedTaskForCancel(null);
-            
+
             // แสดง success alert
-            setAlerts(prev => [...prev, { 
-                type: 'success', 
-                message: `Service area cancellation request submitted successfully! Status updated to Successfully Cancelled.` 
+            setAlerts(prev => [...prev, {
+                type: 'success',
+                message: `Service area cancellation request submitted successfully! Status updated to Successfully Cancelled.`
             }]);
-            
+
             return { success: true, message: "Cancellation request submitted successfully" };
         } catch (error) {
             console.error("Error submitting cancellation request:", error);
-            
+
             // แสดง error alert
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: `Failed to submit cancellation request: ${error instanceof Error ? error.message : 'Unknown error'}` 
+            setAlerts(prev => [...prev, {
+                type: 'error',
+                message: `Failed to submit cancellation request: ${error instanceof Error ? error.message : 'Unknown error'}`
             }]);
-            
+
             throw error;
         } finally {
             setIsCancelling(false);
@@ -258,7 +286,7 @@ function AcceptWorkDocument() {
                                 </Button>
                             </Tooltip>
                         )}
-                        
+
                         {/* ปุ่ม Reject (ซ่อนเมื่อ IsCancel = true) */}
                         {!isCancelTask && (
                             <Tooltip title={"Reject"}>
@@ -289,6 +317,16 @@ function AcceptWorkDocument() {
                         className="btn-detail"
                         variant="outlinedGray"
                         onClick={async () => {
+                            // Mark notification as read for ServiceAreaTask
+                            if (currentUserId && data.ServiceAreaTaskID) {
+                                try {
+                                    await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, data.ServiceAreaTaskID);
+                                    console.log("✅ ServiceAreaTask notification marked as read");
+                                } catch (error) {
+                                    console.error("Error marking notification as read:", error);
+                                }
+                            }
+
                             // Navigate to ServiceAreaDetails page with RequestServiceAreaID
                             const requestServiceAreaID = data.RequestServiceAreaID;
                             if (requestServiceAreaID) {
@@ -302,7 +340,7 @@ function AcceptWorkDocument() {
                                         console.error("Error updating status:", error);
                                     }
                                 }
-                                
+
                                 // Encode the ID using Base64 (same as ServiceAreaDetails page expects)
                                 const encodedId = Base64.encode(String(requestServiceAreaID));
                                 navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
@@ -312,19 +350,19 @@ function AcceptWorkDocument() {
                         }}
                         disableRipple
                         disableFocusRipple
-                                                 sx={{
-                             minWidth: "42px",
-                             width: !showSubmit ? "100%" : "",
-                         }}
+                        sx={{
+                            minWidth: "42px",
+                            width: !showSubmit ? "100%" : "",
+                        }}
                     >
-                                                 <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                         {!showSubmit ? (
-                             <Typography variant="textButtonClassic">Details</Typography>
-                         ) : (
-                             <Typography variant="textButtonClassic" className="text-btn">
-                                 Details
-                             </Typography>
-                         )}
+                        <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                        {!showSubmit ? (
+                            <Typography variant="textButtonClassic">Details</Typography>
+                        ) : (
+                            <Typography variant="textButtonClassic" className="text-btn">
+                                Details
+                            </Typography>
+                        )}
                     </Button>
                 </Tooltip>
             </>
@@ -491,8 +529,8 @@ function AcceptWorkDocument() {
         ];
     };
 
-    // Mock user ID - ในระบบจริงควรได้จาก authentication
-    const currentUserId = 6; // ตัวอย่าง User ID
+    // ใช้ user ID จาก localStorage
+    const currentUserId = Number(localStorage.getItem('userId')) || 0;
 
     const fetchServiceAreaTasks = async () => {
         try {
@@ -636,7 +674,7 @@ function AcceptWorkDocument() {
         <Box className="accept-work-document-page">
             {/* Show Alerts */}
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
-            
+
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
                     <Grid container size={{ xs: 12 }} sx={{ gap: 1 }} className="title-box">
@@ -709,23 +747,23 @@ function AcceptWorkDocument() {
                                 </FormControl>
                             </Grid>
                             <Grid size={{ xs: 2, sm: 1 }}>
-                                                                 <Button
-                                     onClick={handleClearFilter}
-                                     disableRipple
-                                     disableFocusRipple
-                                     sx={{
-                                         minWidth: 0,
-                                         width: "100%",
-                                         height: "45px",
-                                         borderRadius: "10px",
-                                         border: "1px solid rgb(109, 110, 112, 0.4)",
-                                         "&:hover": {
-                                             boxShadow: "none",
-                                             borderColor: "primary.main",
-                                             backgroundColor: "transparent",
-                                         },
-                                     }}
-                                 >
+                                <Button
+                                    onClick={handleClearFilter}
+                                    disableRipple
+                                    disableFocusRipple
+                                    sx={{
+                                        minWidth: 0,
+                                        width: "100%",
+                                        height: "45px",
+                                        borderRadius: "10px",
+                                        border: "1px solid rgb(109, 110, 112, 0.4)",
+                                        "&:hover": {
+                                            boxShadow: "none",
+                                            borderColor: "primary.main",
+                                            backgroundColor: "transparent",
+                                        },
+                                    }}
+                                >
                                     <BrushCleaning size={20} style={{ color: "gray", minWidth: '20px', minHeight: '20px' }} />
                                 </Button>
                             </Grid>
@@ -772,44 +810,43 @@ function AcceptWorkDocument() {
                                     }}
                                 />
                             )}
-                                                 </Grid>
-                     </Grid>
-                 </Grid>
-             </Container>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Container>
 
-             {/* Reject Service Area Popup */}
-             <ConfirmDialog
-                 open={openRejectPopup}
-                 setOpenConfirm={setOpenRejectPopup}
-                 handleFunction={handleRejectServiceArea}
-                 title="Reject Service Area Request"
-                 message={`Are you sure you want to reject the service area request for ${selectedTaskForReject?.CompanyName || 'this company'}? Please provide a reason for rejection.`}
-                 buttonActive={isRejecting}
-                 showNoteField={true}
-             />
+            {/* Reject Service Area Popup */}
+            <ConfirmDialog
+                open={openRejectPopup}
+                setOpenConfirm={setOpenRejectPopup}
+                handleFunction={handleRejectServiceArea}
+                title="Reject Service Area Request"
+                message={`Are you sure you want to reject the service area request for ${selectedTaskForReject?.CompanyName || 'this company'}? Please provide a reason for rejection.`}
+                buttonActive={isRejecting}
+                showNoteField={true}
+            />
 
-                           {/* Submit Service Area Popup */}
-              <SubmitServiceAreaPopup
-                  open={openSubmitPopup}
-                  onClose={() => setOpenSubmitPopup(false)}
-                  onConfirm={handleSubmitServiceArea}
-                  companyName={selectedTaskForSubmit?.CompanyName}
-                  buttonActive={isSubmitting}
-                  requestServiceAreaID={selectedTaskForSubmit?.RequestServiceAreaID || 0}
-              />
+            {/* Submit Service Area Popup */}
+            <SubmitServiceAreaPopup
+                open={openSubmitPopup}
+                onClose={() => setOpenSubmitPopup(false)}
+                onConfirm={handleSubmitServiceArea}
+                companyName={selectedTaskForSubmit?.CompanyName}
+                buttonActive={isSubmitting}
+                requestServiceAreaID={selectedTaskForSubmit?.RequestServiceAreaID || 0}
+            />
 
-              {/* Cancel Service Area Popup */}
-              <CancelServiceAreaPopup
-                  open={openCancelPopup}
-                  onClose={() => setOpenCancelPopup(false)}
-                  onConfirm={handleCancelServiceArea}
-                  companyName={selectedTaskForCancel?.CompanyName}
-                  buttonActive={isCancelling}
-                  requestServiceAreaID={selectedTaskForCancel?.RequestServiceAreaID || 0}
-              />
-         </Box>
-     );
- }
+            {/* Cancel Service Area Popup */}
+            <CancelServiceAreaPopup
+                open={openCancelPopup}
+                onClose={() => setOpenCancelPopup(false)}
+                onConfirm={handleCancelServiceArea}
+                companyName={selectedTaskForCancel?.CompanyName}
+                buttonActive={isCancelling}
+                requestServiceAreaID={selectedTaskForCancel?.RequestServiceAreaID || 0}
+            />
+        </Box>
+    );
+}
 
 export default AcceptWorkDocument;
-

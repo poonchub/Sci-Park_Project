@@ -1544,6 +1544,21 @@ async function UpdateNotificationsByServiceAreaRequestID(data: NotificationsInte
         throw error;
     }
 }
+
+async function UpdateNotificationsByServiceAreaTaskID(data: NotificationsInterface, service_area_task_id: Number | undefined) {
+    try {
+        const response = await axiosInstance.patch(`/notifications/service-area-task/${service_area_task_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating service area task notification:", error);
+        throw error;
+    }
+}
 async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id: Number | undefined) {
     try {
         const response = await axiosInstance.patch(`/notifications/task/${task_id}`, data, {
@@ -3633,6 +3648,7 @@ export {
     UpdateNotificationsByRequestID,
     UpdateNotificationsByTaskID,
     UpdateNotificationsByServiceAreaRequestID,
+    UpdateNotificationsByServiceAreaTaskID,
 
     // BookingRooms
     ListBookingRooms,

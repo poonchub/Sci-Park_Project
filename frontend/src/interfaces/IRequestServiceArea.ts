@@ -1,5 +1,6 @@
 import { RequestStatusesInterface } from './IRequestStatuses';
 import { UserInterface } from './IUser';
+import { NotificationsInterface } from './INotifications';
 
 export interface RequestServiceAreaInterface {
   ID: number;
@@ -30,4 +31,5 @@ export interface RequestServiceAreaListInterface {
   CreatedAt: string;
   StatusID: number;
   BusinessGroupID: number | null;
+  Notifications?: NotificationsInterface[];
 } 
