@@ -29,7 +29,6 @@ import {
   InputLabel,
   IconButton,
   FormHelperText,
-  Zoom,
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -65,7 +64,6 @@ import {
   UseRoomQuota,
   GetAllRoomLayouts,
   GetOrganizationInfo,
-  CreateRoomBookingInvoice,
   ListPaymentOptions,
   UpdateUserSignature,
   CreateNotification,
@@ -81,8 +79,6 @@ import "./Calendar.css";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
-import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
-import PDFPopup from "../../components/PDFPopup/PDFPopup";
 import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 import { provincesData } from "../../constants/provinceData";
 import { useUserStore } from "../../store/userStore";
@@ -97,7 +93,7 @@ function toPublicUrl(p?: string) {
   if (!p) return "";
   let u = String(p).trim().replace(/\\/g, "/");
   if (/^https?:\/\//i.test(u)) return u;
-  if (!u.startsWith("/")) u = "/" + u; // "images/..." → "/images/..."
+  if (!u.startsWith("/")) u = "/" + u;
   return `${API_BASE}${u}`;
 }
 
@@ -117,7 +113,7 @@ const AFTERNOON_SLOTS = HOURLY_SLOTS.slice(4);
 export const MORNING_HOUR_NUMS = [8, 9, 10, 11];
 export const AFTERNOON_HOUR_NUMS = [12, 13, 14, 15];
 
-const LARGE_ROOM_MIN_SEATS = 20;
+
 
 /* ========= Small helpers ========= */
 const toRangeFromStart = (startHHMM: string): string => {
@@ -144,7 +140,8 @@ const normalizeToRanges = (arr?: any[]): string[] => {
     })
     .filter((x): x is string => !!x);
 };
-const startHourFromRange = (range: string) => parseInt(range.split("-")[0].split(":")[0], 10);
+const startHourFromRange = (range: string) =>
+  parseInt(range.split("-")[0].split(":")[0], 10);
 const endFromRange = (range: string) => range.split("-")[1];
 const groupContiguousByIndex = (ranges: string[]): string[][] => {
   const idxs = Array.from(new Set(ranges.map((r) => HOURLY_SLOTS.indexOf(r))))
@@ -163,15 +160,12 @@ const groupContiguousByIndex = (ranges: string[]): string[][] => {
   out.push(cur);
   return out.map((g) => g.map((ix) => HOURLY_SLOTS[ix]));
 };
-const coversAll = (booked: Set<string>, required: string[]) => required.every((h) => booked.has(h));
+const coversAll = (booked: Set<string>, required: string[]) =>
+  required.every((h) => booked.has(h));
 
 /* ========= Types ========= */
 interface RoomBookingFormProps {
-  room?: {
-    id: number;
-    TypeName: string;
-    image?: string;
-  };
+  room?: { id: number; TypeName: string; image?: string };
   onBack?: () => void;
 }
 interface BookingDetail {
@@ -209,39 +203,69 @@ type AddressProps = {
   Province?: string;
   PostalCode?: string;
   TaxID?: string;
+};
+
+type UserPackageLite = {
+  ID?: number;
+  package_name?: string;          // เช่น "Diamond" | "None"
+  meeting_room_limit?: number;    // โควต้าฟรีห้องประชุม/ปี
+  training_room_limit?: number;
+  multi_function_room_limit?: number;
+};
+
+type PackageBenefits = {
+  meetingFreePerYear: number;
+  meetingHalf: boolean;
+  trainingHalf: boolean;
+  hallHalf: boolean;
+};
+
+function benefitsFromPackage(pkg?: UserPackageLite | null): PackageBenefits {
+  const name = String(pkg?.package_name || "none").toLowerCase();
+  // ปรับ mapping ตามแพ็กเกจจริงในระบบคุณ
+  switch (name) {
+    case "diamond":
+      return {
+        meetingFreePerYear: pkg?.meeting_room_limit ?? 10,
+        meetingHalf: true,
+        trainingHalf: true,
+        hallHalf: true,
+      };
+    // ตัวอย่างแพ็กอื่น ๆ
+    // case "gold": return { meetingFreePerYear: 10, meetingHalf: true, trainingHalf: true, hallHalf: false };
+    // case "training-only": return { meetingFreePerYear: 0, meetingHalf: false, trainingHalf: true, hallHalf: false };
+    default: // none
+      return { meetingFreePerYear: 0, meetingHalf: false, trainingHalf: false, hallHalf: false };
+  }
 }
+
 
 /* ========= Component ========= */
 const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
+  /* --- UI & form state --- */
   const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
-  const [timeRange, setTimeRange] = React.useState<"Morning" | "Afternoon" | null>(null);
+  const [timeRange, setTimeRange] = useState<"Morning" | "Afternoon" | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
+
+  /* --- booking data --- */
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
   const [bookedDates, setBookedDates] = useState<BookedDates>({});
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [roomsOfSameType, setRoomsOfSameType] = useState<
     { RoomStatusID: number; id: number; roomnumber: string; RoomStatus?: RoomStatusInterface }[]
   >([]);
-  // const [bookingMap, setBookingMap] = useState<{ [date: string]: BookingDetail[] }>({});
-  const [selectedDateDetails, setSelectedDateDetails] = useState<{ date: string; bookings: BookingDetail[] } | null>(
-    null
-  );
+  const [selectedDateDetails, setSelectedDateDetails] = useState<{ date: string; bookings: BookingDetail[] } | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-
-  const location = useLocation();
   const [selectedRoomId, setSelectedRoomId] = useState(0);
-  const roomtype = (location.state as any)?.selectedRoomtypes || {};
-  const [roomData, setRoomData] = React.useState<RoomsInterface | null>(null);
+  const [roomData, setRoomData] = useState<RoomsInterface | null>(null);
   const [roomType, setRoomType] = useState<RoomtypesInterface>({});
   const [role, setRole] = useState<any>(null);
-
-  const [searchParams] = useSearchParams();
   const [capacity, setCapacity] = useState<number>(0);
-  const isAllowedToBookLargeRoom = capacity < LARGE_ROOM_MIN_SEATS ? true : role === 4 || role === 5;
+
 
   const [setupStyles, setSetupStyles] = useState<{ ID: number; LayoutName: string }[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>("");
@@ -252,28 +276,59 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [timeOption, setTimeOption] = useState<"hourly" | "half" | "full" | "none">("none");
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
 
+  /* --- user/org --- */
   const [isEmployee, setIsEmployee] = useState(false);
   const isHourlyAllowed = isEmployee;
   const [orgInfo, setOrgInfo] = useState<OrganizationInfoInterface | null>(null);
   const [errors, setErrors] = useState<AddressProps>({});
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { user } = useUserStore();
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOptionInterface[]>([]);
+  const [selectedOption, setSelectedOption] = useState<number>(0);
+  const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
+  const [checkedPrivacy, setCheckedPrivacy] = useState(false);
+  const [checkedCondition, setCheckedCondition] = useState(false);
 
-  /* Alerts helper */
+  /* --- signature --- */
+  const [openPopupSignature, setOpenPopupSignature] = useState(false);
+  const sigRef = useRef<SignatureCanvas>(null);
+  const [isButtonActive, setIsButtonActive] = useState(false);
+  // เคยมีอยู่แล้ว
+
+  const [userPackage, setUserPackage] = useState<UserPackageLite | null>(null);
+  const [pkgBenefits, setPkgBenefits] = useState<PackageBenefits>({
+    meetingFreePerYear: 0, meetingHalf: false, trainingHalf: false, hallHalf: false
+  });
+  const hasPackage = !!userPackage && String(userPackage.package_name || "").toLowerCase() !== "none";
+
+  /* --- address --- */
+  const [addressFormData, setAddressFormdata] = useState<AddressProps>({
+    AddressName: "มหาวิทยาลัยเทคโนโลยีสุรนารี",
+    AddressNumber: "111",
+    Street: "ถนนมหาวิทยาลัย",
+    SubDistrict: "สุรนารี",
+    District: "เมืองนครราชสีมา",
+    Province: "นครราชสีมา",
+    PostalCode: "30000",
+    TaxID: "3030101234567",
+  });
+
+  /* ========= Helpers ========= */
   const handleSetAlert = (type: "success" | "error" | "warning", message: string) => {
-    setAlerts((prevAlerts) => [...prevAlerts, { type, message }]);
+    setAlerts((prev) => [...prev, { type, message }]);
   };
 
   const getPaymentOption = async () => {
     try {
-      const resOptions = await ListPaymentOptions();
-      if (resOptions) {
-        setPaymentOptions(resOptions);
-      }
+      const res = await ListPaymentOptions();
+      if (res) setPaymentOptions(res);
     } catch (error) {
       console.error("Error fetching payment options:", error);
     }
   };
 
-  /* Load org info (contact card) */
+  /* ========= Bootstrap / Loaders ========= */
   useEffect(() => {
     (async () => {
       try {
@@ -285,7 +340,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           return;
         }
         setOrgInfo(data);
-        getPaymentOption()
+        getPaymentOption();
       } catch (err) {
         console.error("Load org info error:", err);
         handleSetAlert("error", "เกิดข้อผิดพลาดในการโหลดข้อมูลหน่วยงาน");
@@ -295,17 +350,22 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     })();
   }, []);
 
-  /* Load user profile */
   async function fetchUserData(userId: number) {
     setLoading(true);
     try {
       const res = await GetUserById(userId);
+      console.log(res);
       if (res) {
         setName(res.FirstName + " " + res.LastName);
         setPhone(res.Phone);
         setEmail(res.Email);
         setRole(res.RoleID);
-        setIsEmployee(res.IsEmployee);
+
+        setIsEmployee(!!res.IsEmployee);
+        // ✅ ใช้ package จาก API ที่คุณมีอยู่แล้ว
+        const pkg: UserPackageLite = res.Package || null;
+        setUserPackage(pkg);
+        setPkgBenefits(benefitsFromPackage(pkg));
       }
     } catch (err) {
       console.error("Failed to fetch user data", err);
@@ -314,7 +374,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   }
 
-  /* Load room type from query */
   const getRoomtype = async () => {
     try {
       const encodedId = searchParams.get("roomtype_id");
@@ -326,7 +385,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   };
 
-  /* Load basic room data, pricing, bookings */
   async function fetchRoomData(roomId: number) {
     setLoading(true);
     try {
@@ -358,28 +416,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     setLoading(true);
     try {
       const res = await GetTimeSlots(roomId);
-      if (res.BookedDates) {
+      if (res?.BookedDates) {
         const convertedData: BookedDates = convertBookedDates(res.BookedDates);
         setBookedDates(convertedData);
-        const bookingDetailMap: { [date: string]: BookingDetail[] } = {};
-        for (const date in convertedData) {
-          bookingDetailMap[date] = getBookingDetailsFromArray(convertedData[date]);
-        }
-        // setBookingMap(bookingDetailMap);
       } else {
         setBookedDates({});
-        // setBookingMap({});
       }
     } catch (error) {
       console.error("Error fetching booking map:", error);
       setBookedDates({});
-      // setBookingMap({});
     } finally {
       setLoading(false);
     }
   };
 
-  /* Bootstrap */
   useEffect(() => {
     const userId = Number(localStorage.getItem("userId") || "0");
     if (userId) fetchUserData(userId);
@@ -390,7 +440,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     if (roomType?.ID) {
       GetRoomsByRoomTypeID(roomType.ID).then((data) => {
         if (data) {
-          const formattedData = data.map((room: any) => ({
+          const formatted = data.map((room: any) => ({
             id: room.ID,
             roomnumber: room.RoomNumber,
             RoomStatusID: room.RoomStatusID,
@@ -400,7 +450,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               Code: room.RoomStatus.code,
             },
           }));
-          setRoomsOfSameType(formattedData);
+          setRoomsOfSameType(formatted);
         }
       });
     }
@@ -409,57 +459,86 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   useEffect(() => {
     if (roomType?.ID) {
       GetEquipmentByRoomType(roomType.ID).then((data) => {
-        if (data) {
-          const formatted = data.map((item: any) => item.EquipmentName);
-          setEquipmentList(formatted);
-        }
+        if (data) setEquipmentList(data.map((item: any) => item.EquipmentName));
       });
     }
   }, [roomType?.ID]);
 
   useEffect(() => {
-    GetAllRoomLayouts().then((data) => {
-      setSetupStyles(data || []);
-    });
+    GetAllRoomLayouts().then((data) => setSetupStyles(data || []));
   }, []);
+
+  /* ========= Membership & Quotas ========= */
+  const [quotas, setQuotas] = useState({
+    meeting: { total: 0, used: 0, remaining: 0 },
+    training: { total: 0, used: 0, remaining: 0 },
+    multi: { total: 0, used: 0, remaining: 0 },
+  });
+
+  const [discount, setDiscount] = useState({
+    type: "free-use" as const,
+    name: "สิทธิ์ใช้ฟรีห้องประชุม",
+    description: "สามารถใช้ห้องประชุมฟรีได้ 1 ครั้ง",
+    totalAllowed: 0,
+    usedCount: 0,
+    remaining: 0,
+    used: false,
+  });
+
+  // ✅ ปุ่มควบคุม “ลด 50% สมาชิก” (เปิด/ปิดได้)
+  const [applyMemberDiscount, setApplyMemberDiscount] = useState<boolean>(false);
 
   useEffect(() => {
     const loadQuota = async () => {
       const userId = parseInt(localStorage.getItem("userId") || "");
-      const res = await GetRoomQuota(userId);
-      if (res) {
-        setDiscount((prev) => ({
-          ...prev,
-          totalAllowed: res.meeting_room.total,
-          usedCount: res.meeting_room.used,
-          remaining: res.meeting_room.remaining,
-          used: false,
-        }));
-      }
+      const res = await GetRoomQuota(userId); // {"meeting":{...}, "training":{...}, "multi":{...}}
+      if (!res) return;
+
+      const mt = res.meeting || res.meeting_room || { total: 0, used: 0, remaining: 0 };
+      const tt = res.training || { total: 0, used: 0, remaining: 0 };
+      const ft = res.multi || { total: 0, used: 0, remaining: 0 };
+      setQuotas({ meeting: mt, training: tt, multi: ft });
+
+      setDiscount((prev) => ({
+        ...prev,
+        totalAllowed: mt.total,
+        usedCount: mt.used,
+        remaining: mt.remaining,
+        used: false,
+      }));
     };
     loadQuota();
   }, []);
 
-  /* Discounts (free-use quota) */
-  const [discount, setDiscount] = useState<{
-    type: "free-use";
-    name: string;
-    description: string;
-    totalAllowed: number;
-    usedCount: number;
-    remaining: number;
-    used: boolean;
-  }>({
-    type: "free-use",
-    name: "สิทธิ์ใช้ฟรีห้องประชุม",
-    description: "สามารถใช้ห้องประชุมฟรีได้ 1 ครั้ง",
-    totalAllowed: 1,
-    usedCount: 0,
-    remaining: 1,
-    used: false,
-  });
+  // หาหมวดจาก roomType (ถ้า backend ยังไม่มี Category ให้เดาเบา ๆ จากชื่อ)
+  const inferCategory = (name: string): "meetingroom" | "trainingroom" | "multifunctionroom" => {
+    const n = (name || "").toLowerCase();
+    if (/training|seminar/.test(n)) return "trainingroom";
+    if (/hall/.test(n)) return "multifunctionroom";
+    return "meetingroom";
+  };
+  const currentCategory = (roomType as any)?.Category
+    ? String((roomType as any).Category).toLowerCase()
+    : inferCategory(roomType?.TypeName || roomData?.TypeName || "");
+  const isMeetingCategory = currentCategory === "meetingroom";
 
-  /* Price calc */
+  // เป็นสมาชิกไหม (มีแพ็กเกจ/โควตาใด ๆ)
+
+
+
+  // ตั้งค่า default ของปุ่ม “Apply 50% Member Discount”
+  useEffect(() => {
+    let def = false;
+    if (hasPackage) {
+      if (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) def = true;
+      else if (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf) def = true;
+      else if (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) def = true;
+    }
+    setApplyMemberDiscount(def);
+  }, [currentCategory, quotas, hasPackage, pkgBenefits]);
+
+
+  /* ========= Price calc ========= */
   const slotIdByName = useMemo<Record<string, number>>(() => {
     const map: Record<string, number> = {};
     for (const p of pricing) {
@@ -503,10 +582,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     priceList: RoomPriceInterface[]
   ): number => {
     if (!dates.length || priceList.length === 0) return 0;
-    if (discount.used) return 0;
 
+    // ✅ Meeting: ใช้สิทธิ์ฟรี → 0 บาท
+    if (hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used) return 0;
+
+    // 1) base price
     let totalPrice = 0;
-
     if (timeOpt === "full") {
       const slot = priceList.find((p) => p.TimeSlot?.TimeSlotName === "Fullday");
       if (slot?.Price) totalPrice = slot.Price * dates.length;
@@ -521,6 +602,17 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       }
       totalPrice *= dates.length;
     }
+
+    // 2) membership 50% (toggle)
+    const canHalf =
+      (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) ||
+      (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
+      (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
+
+    if (hasPackage && applyMemberDiscount && canHalf) {
+      totalPrice *= 0.5;
+    }
+
     return totalPrice;
   };
 
@@ -531,7 +623,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     } else {
       setCalculatedPrice(0);
     }
-  }, [selectedDates, timeOption, timeRange, selectedHours, pricing, discount.used]);
+  }, [
+    selectedDates,
+    timeOption,
+    timeRange,
+    selectedHours,
+    pricing,
+    discount.used,
+    applyMemberDiscount,
+    quotas,
+    currentCategory,
+    hasPackage,
+  ]);
 
   useEffect(() => {
     if (!isHourlyAllowed && timeOption === "hourly") {
@@ -541,7 +644,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     }
   }, [isHourlyAllowed, timeOption]);
 
-  /* Booking detail computation */
+  /* ========= Booking detail computation ========= */
   const getBookingDetailsFromArray = (bookings: BookedDate[]): BookingDetail[] => {
     if (!bookings || bookings.length === 0) return [];
     const details: BookingDetail[] = [];
@@ -696,11 +799,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     return converted;
   };
 
-  /* Availability & selection */
+  /* ========= Availability & selection ========= */
   const isFullyBooked = (dateString: string): boolean => {
     const bookings = bookedDates[dateString];
     if (!bookings?.length) return false;
-
     if (bookings.some((b) => b.fullDay || b.type === "Fullday")) return true;
 
     const hasMorning = bookings.some((b) => b.morning || b.type === "Morning");
@@ -754,12 +856,16 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         if (booking.fullDay) return false;
         if (timeRange === "Morning") {
           if (booking.morning) return false;
-          const anyStartInMorning = normalizeToRanges(booking.hours).some((r) => MORNING_HOUR_NUMS.includes(startHourFromRange(r)));
+          const anyStartInMorning = normalizeToRanges(booking.hours).some((r) =>
+            MORNING_HOUR_NUMS.includes(startHourFromRange(r))
+          );
           if (anyStartInMorning) return false;
         }
         if (timeRange === "Afternoon") {
           if (booking.afternoon) return false;
-          const anyStartInAfternoon = normalizeToRanges(booking.hours).some((r) => AFTERNOON_HOUR_NUMS.includes(startHourFromRange(r)));
+          const anyStartInAfternoon = normalizeToRanges(booking.hours).some((r) =>
+            AFTERNOON_HOUR_NUMS.includes(startHourFromRange(r))
+          );
           if (anyStartInAfternoon) return false;
         }
       }
@@ -837,7 +943,229 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     );
   };
 
-  /* Calendar UI */
+  /* ========= Header data ========= */
+  const roomtypeState = (location.state as any)?.selectedRoomtypes || {};
+  const roomDataHeader = {
+    id: (roomtypeState as any).id,
+    TypeName: roomType.TypeName,
+    image:
+      (roomtypeState as any).image ||
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
+  };
+
+  /* ===== RoomType images for Carousel (ใช้รูปจริง) ===== */
+  const carouselSrcs = useMemo(() => {
+    type RTImage = { ID?: number; FilePath?: string; IsCover?: boolean; SortOrder?: number };
+    const imgs: RTImage[] = ((roomType as any)?.RoomTypeImages ?? []).slice();
+
+    imgs.sort((a, b) => {
+      const ca = a.IsCover ? 0 : 1;
+      const cb = b.IsCover ? 0 : 1;
+      if (ca !== cb) return ca - cb;
+      const sa = a.SortOrder ?? 9999;
+      const sb = b.SortOrder ?? 9999;
+      if (sa !== sb) return sa - sb;
+      return (a.ID ?? 0) - (b.ID ?? 0);
+    });
+
+    const mapped = imgs.map((img) => toPublicUrl(img.FilePath)).filter(Boolean);
+    return mapped.length
+      ? mapped
+      : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
+  }, [roomType]);
+
+  /* ========= Signature handlers ========= */
+  const handleSave = async () => {
+    if (sigRef.current?.isEmpty()) {
+      alert("กรุณาลงลายเซ็นก่อน");
+      return;
+    }
+    try {
+      const canvas = sigRef.current?.getCanvas();
+      if (!canvas) {
+        setAlerts([{ type: "error", message: "Failed to get signature canvas" }]);
+        return;
+      }
+      const newCanvas = document.createElement("canvas");
+      const ctx = newCanvas.getContext("2d");
+      if (!ctx) {
+        setAlerts([{ type: "error", message: "Failed to create canvas context" }]);
+        return;
+      }
+      newCanvas.width = canvas.width;
+      newCanvas.height = canvas.height;
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+
+      newCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          setAlerts([{ type: "error", message: "Failed to convert signature to image" }]);
+          return;
+        }
+        const file = new File([blob], "signature.jpg", { type: "image/jpeg" });
+        if (user?.ID) {
+          const result = await UpdateUserSignature({ UserID: user.ID, Signature_Image: file });
+          if (result.status === "success") {
+            setAlerts([{ type: "success", message: "Signature saved successfully" }]);
+            setOpenPopupSignature(false);
+          } else {
+            setAlerts([{ type: "error", message: result.message }]);
+          }
+        }
+      }, "image/jpeg", 0.9);
+    } catch (error) {
+      setAlerts([{ type: "error", message: "Failed to save signature. Please try again." }]);
+    }
+  };
+
+  const handleClear = () => {
+    sigRef.current?.clear();
+  };
+
+  /* ========= Submit booking ========= */
+  function categoryToKey(cat: string): "meeting" | "training" | "multi" {
+    switch (cat.toLowerCase()) {
+      case "meetingroom":
+      case "meeting":
+        return "meeting";
+      case "trainingroom":
+      case "training":
+        return "training";
+      case "multifunctionroom":
+      case "multi":
+        return "multi";
+      default:
+        return "meeting";
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!addressFormData?.AddressNumber?.trim()) newErrors.AddressNumber = "Please enter your house or building number";
+    if (!addressFormData?.Street?.trim()) newErrors.Street = "Please enter your street name";
+    if (!addressFormData?.SubDistrict?.trim()) newErrors.SubDistrict = "Please enter your sub-district";
+    if (!addressFormData?.District?.trim()) newErrors.District = "Please enter your district";
+    if (!addressFormData?.Province?.trim()) newErrors.Province = "Please enter your province";
+    if (!addressFormData?.PostalCode || !/^\d{5}$/.test(addressFormData.PostalCode))
+      newErrors.PostalCode = "Please enter a valid 5-digit postal code";
+    if (!addressFormData?.TaxID || !/^\d{13}$/.test(addressFormData.TaxID))
+      newErrors.TaxID = "Please enter a valid 13-digit Tax ID";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitBooking = async () => {
+    if (!user?.SignaturePath || user.SignaturePath === "") {
+      handleSetAlert("warning", "Please upload your signature before proceeding.");
+      setIsButtonActive(false);
+      return;
+    }
+    if (!isHourlyAllowed && timeOption === "hourly") {
+      alert("Your role is not allowed to book hourly.");
+      return;
+    }
+
+    const userId = parseInt(localStorage.getItem("userId") || "0");
+    if (!userId || !roomData || !purpose || !selectedDates.length || getTimeSlotIds().length === 0) {
+      alert("Please fill in all the required fields.");
+      return;
+    }
+
+    if (calculatedPrice === 0 && !(hasPackage && isMeetingCategory && discount.used)) {
+      if (
+        calculatedPrice === 0 && +   !(hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used)
+      )
+        alert("ราคาที่คำนวณได้เป็น 0 โปรดตรวจสอบส่วนลดหรือข้อมูลการจอง");
+      return;
+    }
+
+    const canHalf =
+      (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) ||
+      (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
+      (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
+
+    const bookingData = {
+      UserID: userId,
+      RoomID: selectedRoomId,
+      TimeSlotIDs: getTimeSlotIds(),
+      Purpose: purpose,
+      AdditionalInfo: JSON.stringify({
+        setupStyle: selectedStyle,
+        equipment: selectedEquipment,
+        additionalNote,
+        discounts: {
+          usedFreeCredit:
+            hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 ? discount.used : false,
+          appliedMember50:
+            hasPackage && canHalf ? applyMemberDiscount : false,
+        },
+        package: {
+          name: userPackage?.package_name || "none",
+          meeting_room_limit: userPackage?.meeting_room_limit ?? 0,
+          training_room_limit: userPackage?.training_room_limit ?? 0,
+          multi_function_room_limit: userPackage?.multi_function_room_limit ?? 0,
+        },
+      }),
+      Dates: selectedDates,
+      DepositAmount: calculatedPrice / 2,
+      DiscountAmount: 0,
+      TotalAmount: calculatedPrice,
+      Address: `${addressFormData.AddressName} - ${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
+      TaxID: addressFormData?.TaxID,
+      PaymentOptionID: selectedOption,
+    };
+
+    try {
+      const resBooking = await CreateBookingRoom(bookingData);
+      if (resBooking.status !== 200) {
+        console.error("❌ Booking failed", resBooking.status, resBooking.data?.error);
+        alert(resBooking.data?.error || "เกิดข้อผิดพลาดในการจอง");
+        return;
+      }
+
+      // Meeting: ตัดโควตาเฉพาะเมื่อกดใช้สิทธิ์ฟรีจริง ๆ
+      if (hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used) {
+        const quotaRes = await UseRoomQuota({ user_id: userId, room_type: "meeting" });
+        if (quotaRes.status === 200) {
+          const refreshed = await GetRoomQuota(userId);
+          if (refreshed?.meeting) {
+            setQuotas((q) => ({ ...q, meeting: refreshed.meeting }));
+            setDiscount((prev) => ({
+              ...prev,
+              totalAllowed: refreshed.meeting.total,
+              usedCount: refreshed.meeting.used,
+              remaining: refreshed.meeting.remaining,
+              used: false,
+            }));
+          }
+        } else {
+          console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
+        }
+      }
+
+      // refresh หน้าปฏิทิน
+      await fetchBookingMapOnly(roomData.ID as number);
+
+      // reset บางส่วน
+      setSelectedDates([]);
+      setAdditionalNote("");
+      setPurpose("");
+      const val = Number(selectedRoomId);
+      setSelectedRoomId(val);
+      fetchBookingMapOnly(val);
+      setOpenPopupInvoiceCondition(false);
+
+      handleSetAlert("success", "Booking created successfully.");
+    } catch (err) {
+      console.error("Booking Error:", err);
+      handleSetAlert("error", "An unexpected error occurred during create booking.");
+    }
+  };
+
+  /* ========= UI: Calendar ========= */
   const [currentMonthState, setCurrentMonth] = useState(new Date());
 
   const renderCalendar = () => {
@@ -953,9 +1281,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
               {dateString}
             </Typography>
-            <Typography variant="body2" sx={{ color: "#4caf50" }}>
-              Available
-            </Typography>
+            <Typography variant="body2" sx={{ color: "#4caf50" }}>Available</Typography>
           </Box>
         );
 
@@ -1082,370 +1408,69 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     );
   };
 
-  /* Summary labels */
+  /* ========= Summary labels ========= */
   const getTimeLabel = () => (timeOption === "half" ? "Half Day" : "Full Day");
   const getTimeRangeLabel = () => (timeRange === "Morning" ? "08:30 - 12:30" : "12:30 - 16:30");
-
-  /* Hour slot toggle */
   const handleHourToggle = (hourRange: string) => {
     setSelectedHours((prev) => (prev.includes(hourRange) ? prev.filter((h) => h !== hourRange) : [...prev, hourRange]));
   };
 
-  function getRoomTypeKey(roomType: string): "meeting" | "training" | "multi" {
-    switch (roomType.toLowerCase()) {
-      case "meetingroom":
-      case "meeting":
-        return "meeting";
-      case "trainingroom":
-      case "training":
-        return "training";
-      case "multifunctionroom":
-      case "multi":
-        return "multi";
-      default:
-        return "meeting";
-    }
-  }
-
-  /* Submit booking */
-  const handleSubmitBooking = async () => {
-    if (!user?.SignaturePath || user.SignaturePath === "") {
-      handleSetAlert("warning", "Please upload your signature before proceeding.");
-      setIsButtonActive(false);
-      return;
-    }
-
-    if (!isHourlyAllowed && timeOption === "hourly") {
-      alert("Your role is not allowed to book hourly.");
-      return;
-    }
-
-    const userId = parseInt(localStorage.getItem("userId") || "0");
-    if (!userId || !roomData || !purpose || !selectedDates.length || getTimeSlotIds().length === 0) {
-      alert("Please fill in all the required fields.");
-      return;
-    }
-
-    if (calculatedPrice === 0 && !discount.used) {
-      alert("ราคาที่คำนวณได้เป็น 0 โปรดตรวจสอบส่วนลดหรือข้อมูลการจอง");
-      return;
-    }
-
-    const bookingData = {
-      UserID: userId,
-      RoomID: selectedRoomId,
-      TimeSlotIDs: getTimeSlotIds(),
-      Purpose: purpose,
-      AdditionalInfo: JSON.stringify({
-        setupStyle: selectedStyle,
-        equipment: selectedEquipment,
-        additionalNote,
-      }),
-      Dates: selectedDates,
-      DepositAmount: calculatedPrice / 2,
-      DiscountAmount: 0,
-      TotalAmount: calculatedPrice,
-      Address: `${addressFormData.AddressName} - ${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
-      TaxID: addressFormData?.TaxID,
-      PaymentOptionID: selectedOption
-    };
-
-    try {
-      const resBooking = await CreateBookingRoom(bookingData);
-      if (resBooking.status !== 200) {
-        console.error("❌ Booking failed", resBooking.status, resBooking.data?.error);
-        alert(resBooking.data?.error || "เกิดข้อผิดพลาดในการจอง");
-        return;
-      }
-
-      const roomTypeKey = getRoomTypeKey(roomData.TypeName || "");
-      const quotaRes = await UseRoomQuota({ user_id: userId, room_type: roomTypeKey });
-      if (quotaRes.status === 200) {
-        setDiscount((prev) => ({
-          ...prev,
-          used: false,
-          totalAllowed: quotaRes.data?.meeting_room?.total ?? prev.totalAllowed,
-          usedCount: quotaRes.data?.meeting_room?.used ?? prev.usedCount,
-          remaining: quotaRes.data?.meeting_room?.remaining ?? Math.max(prev.remaining - 1, 0),
-        }));
-      } else {
-        console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
-      }
-
-      console.log("resBooking", resBooking)
-
-      const notificationData: NotificationsInterface = {
-        BookingRoomID: resBooking.data.booking_id,
-      };
-
-      await CreateNotification(notificationData);
-
-      await fetchBookingMapOnly(roomData.ID as number);
-
-      setSelectedDates([]);
-      setAdditionalNote("");
-      setPurpose("");
-      const val = Number(selectedRoomId);
-      setSelectedRoomId(val);
-      fetchBookingMapOnly(val);
-      setOpenPopupInvoiceCondition(false)
-
-      handleSetAlert("success", "Booking created successfully.");
-    } catch (err) {
-      console.error("Booking Error:", err);
-      handleSetAlert("error", "An unexpected error occurred during create booking.");
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!addressFormData?.AddressNumber || !addressFormData?.AddressNumber.trim()) {
-      newErrors.AddressNumber = "Please enter your house or building number";
-    }
-
-    if (!addressFormData?.Street || !addressFormData?.Street.trim()) {
-      newErrors.Street = "Please enter your street name";
-    }
-
-    if (!addressFormData?.SubDistrict || !addressFormData?.SubDistrict.trim()) {
-      newErrors.SubDistrict = "Please enter your sub-district";
-    }
-
-    if (!addressFormData?.District || !addressFormData?.District.trim()) {
-      newErrors.District = "Please enter your district";
-    }
-
-    if (!addressFormData?.Province || !addressFormData?.Province.trim()) {
-      newErrors.Province = "Please enter your province";
-    }
-
-    if (!addressFormData?.PostalCode || !/^\d{5}$/.test(addressFormData.PostalCode)) {
-      newErrors.PostalCode = "Please enter a valid 5-digit postal code";
-    }
-
-    if (!addressFormData?.TaxID || !/^\d{13}$/.test(addressFormData.TaxID)) {
-      newErrors.TaxID = "Please enter a valid 13-digit Tax ID";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-
-  /* Header data */
-  const roomDataHeader = {
-    id: (roomtype as any).id,
-    TypeName: roomType.TypeName,
-
-    image:
-      (roomtype as any).image ||
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=80",
-  };
-
-  /* ===== RoomType images for Carousel (ใช้รูปจริง) ===== */
-  const carouselSrcs = useMemo(() => {
-    type RTImage = { ID?: number; FilePath?: string; IsCover?: boolean; SortOrder?: number };
-    const imgs: RTImage[] = ((roomType as any)?.RoomTypeImages ?? []).slice();
-
-    imgs.sort((a, b) => {
-      const ca = a.IsCover ? 0 : 1;
-      const cb = b.IsCover ? 0 : 1;
-      if (ca !== cb) return ca - cb;
-      const sa = a.SortOrder ?? 9999;
-      const sb = b.SortOrder ?? 9999;
-      if (sa !== sb) return sa - sb;
-      return (a.ID ?? 0) - (b.ID ?? 0);
-    });
-
-    const mapped = imgs.map((img) => toPublicUrl(img.FilePath)).filter(Boolean);
-    return mapped.length
-      ? mapped
-      : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
-  }, [roomType]);
-
-  const [paymentOptions, setPaymentOptions] = useState<PaymentOptionInterface[]>([])
-  const [addressFormData, setAddressFormdata] = useState<AddressProps>({
-    AddressName: "มหาวิทยาลัยเทคโนโลยีสุรนารี",
-    AddressNumber: "111",
-    Street: "ถนนมหาวิทยาลัย",
-    SubDistrict: "สุรนารี",
-    District: "เมืองนครราชสีมา",
-    Province: "นครราชสีมา",
-    PostalCode: "30000",
-    TaxID: "3030101234567",
-  })
-  const [selectedOption, setSelectedOption] = useState<number>(0)
-  const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
-  const [checkedPrivacy, setCheckedPrivacy] = useState(false);
-  const [checkedCondition, setCheckedCondition] = useState(false);
-  const { user } = useUserStore()
-  const [openPopupSignature, setOpenPopupSignature] = useState(false)
-  const sigRef = useRef<SignatureCanvas>(null);
-  const [isButtonActive, setIsButtonActive] = useState(false);
-
-  const handleSave = async () => {
-    if (sigRef.current?.isEmpty()) {
-      alert("กรุณาลงลายเซ็นก่อน");
-      return;
-    }
-
-    try {
-      // Get the canvas element directly
-      const canvas = sigRef.current?.getCanvas();
-      if (!canvas) {
-        setAlerts([{ type: "error", message: "Failed to get signature canvas" }]);
-        return;
-      }
-
-      // Create a new canvas with white background
-      const newCanvas = document.createElement('canvas');
-      const ctx = newCanvas.getContext('2d');
-      if (!ctx) {
-        setAlerts([{ type: "error", message: "Failed to create canvas context" }]);
-        return;
-      }
-
-      // Set canvas size
-      newCanvas.width = canvas.width;
-      newCanvas.height = canvas.height;
-
-      // Fill with white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
-
-      // Draw the signature on top
-      ctx.drawImage(canvas, 0, 0);
-
-      // Convert to blob
-      newCanvas.toBlob(async (blob) => {
-        if (!blob) {
-          setAlerts([{ type: "error", message: "Failed to convert signature to image" }]);
-          return;
-        }
-
-        // Create file from blob
-        const file = new File([blob], "signature.jpg", { type: "image/jpeg" });
-
-        // Save signature to backend
-        if (user?.ID) {
-          const result = await UpdateUserSignature({
-            UserID: user.ID,
-            Signature_Image: file
-          });
-
-          if (result.status === "success") {
-            setAlerts([{ type: "success", message: "Signature saved successfully" }]);
-            setOpenPopupSignature(false);
-
-            // Refresh user data to show updated signature
-            try {
-              const updatedUser = await GetUserById(Number(localStorage.getItem("userId")));
-              if (updatedUser) {
-                // setUser(updatedUser);
-                // Load the new signature image
-                if (updatedUser.SignaturePath) {
-                  // await loadSignatureImage(updatedUser.SignaturePath);
-                }
-              }
-            } catch (error) {
-              // Handle error silently
-            }
-          } else {
-            setAlerts([{ type: "error", message: result.message }]);
-          }
-        }
-      }, 'image/jpeg', 0.9);
-
-    } catch (error) {
-      setAlerts([{ type: "error", message: "Failed to save signature. Please try again." }]);
-    }
-  };
-
-  const handleClear = () => {
-    sigRef.current?.clear();
-  };
-
-  const serviceConditions = {
-    title: "โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน",
-    points: [
-      "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
-      "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
-      "   • แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)",
-      "   • พื้นที่จอดรถด้านหน้าอาคาร",
-      "   • การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)",
-      "   • จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)",
-      "เงื่อนไขการชำระเงิน",
-      "   • ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด",
-      "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
-      "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
-      "หมายเหตุ",
-      "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
-      "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
-      "เกี่ยวกับความเป็นส่วนตัว",
-      "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านซึ่งเป็นผู้ติดต่อหรือตัวแทนของนิติบุคคล เพื่อใช้ในการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
-      "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบให้แน่ใจว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
-      "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
-      "เงื่อนไขเกี่ยวกับลายเซ็น (สำคัญ)",
-      "   • โปรดอัปโหลดลายเซ็นที่โปรไฟล์เพื่อใช้ในการออกเอกสาร (บังคับ)",
-      "   • ท่านสามารถลบลายเซ็นได้เมื่อได้รับใบแจ้งหนี้แล้ว",
-      "   • หากลบลายเซ็นก่อนที่จะได้รับใบแจ้งหนี้ จะไม่สามารถดำเนินการจองห้องต่อได้",
-    ],
-  };
-
-  /* ===== Render ===== */
+  /* ========= Render ========= */
   return (
     <Box className="booking-container">
-
       {/* Condition Popup */}
-      <Dialog
-        open={openPopupInvoiceCondition}
-        onClose={() => setOpenPopupInvoiceCondition(false)}
-        maxWidth="lg"
-        fullWidth
-      >
+      <Dialog open={openPopupInvoiceCondition} onClose={() => setOpenPopupInvoiceCondition(false)} maxWidth="lg" fullWidth>
         <DialogTitle
           sx={{
             fontWeight: 700,
             color: "primary.main",
             textAlign: "center",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
           }}
         >
-          <HelpCircle size={22} style={{ minWidth: '22px', minHeight: '22px', marginBottom: '2px' }} />
+          <HelpCircle size={22} style={{ minWidth: "22px", minHeight: "22px", marginBottom: "2px" }} />
           Room Booking Condition
           <IconButton
             aria-label="close"
             onClick={() => setOpenPopupInvoiceCondition(false)}
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: 8,
-            }}
+            sx={{ position: "absolute", right: 8, top: 8 }}
           >
-            <X size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+            <X size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
           </IconButton>
         </DialogTitle>
 
         <DialogContent dividers sx={{ px: 5 }}>
-          <Typography
-            sx={{
-              whiteSpace: "pre-line",
-              fontSize: 18,
-              fontWeight: 600,
-            }}
-            gutterBottom
-          >
-            {serviceConditions.title}
+          <Typography sx={{ whiteSpace: "pre-line", fontSize: 18, fontWeight: 600 }} gutterBottom>
+            โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน
           </Typography>
-          {serviceConditions.points.map((line, index) => {
+          {[
+            "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
+            "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
+            "   • แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)",
+            "   • พื้นที่จอดรถด้านหน้าอาคาร",
+            "   • การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)",
+            "   • จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)",
+            "เงื่อนไขการชำระเงิน",
+            "   • ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด",
+            "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
+            "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
+            "หมายเหตุ",
+            "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
+            "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
+            "เกี่ยวกับความเป็นส่วนตัว",
+            "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านเพื่อการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
+            "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
+            "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
+            "เงื่อนไขเกี่ยวกับลายเซ็น (สำคัญ)",
+            "   • โปรดอัปโหลดลายเซ็นที่โปรไฟล์เพื่อใช้ในการออกเอกสาร (บังคับ)",
+            "   • ท่านสามารถลบลายเซ็นได้เมื่อได้รับใบแจ้งหนี้แล้ว",
+            "   • หากลบลายเซ็นก่อนที่จะได้รับใบแจ้งหนี้ จะไม่สามารถดำเนินการจองห้องต่อได้",
+          ].map((line, index) => {
             const trimmed = line.trimStart();
             const isBullet = trimmed.startsWith("•");
-
             return (
               <Typography
                 key={index}
@@ -1454,80 +1479,57 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   pl: isBullet ? 3 : 0,
                   whiteSpace: "normal",
                   mb: 0.5,
-                  color: isBullet
-                    ? "text.primary"
-                    : "text.primary",
+                  color: "text.primary",
                   mt: isBullet ? 0 : 1.6,
-                  fontWeight: isBullet ? 400 : 500
+                  fontWeight: isBullet ? 400 : 500,
                 }}
               >
                 {line}
               </Typography>
             );
           })}
-          <Grid container size={{ xs: 12 }} direction={'column'} sx={{ my: 1.6 }}>
+
+          <Grid container direction={"column"} sx={{ my: 1.6 }}>
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={checkedCondition}
-                  onChange={(e) => {
-                    setCheckedCondition(e.target.checked);
-                  }}
-                />
-              }
+              control={<Checkbox checked={checkedCondition} onChange={(e) => setCheckedCondition(e.target.checked)} />}
               label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
             />
             <FormControlLabel
-              control={
-                <Checkbox
-                  checked={checkedPrivacy}
-                  onChange={(e) => {
-                    setCheckedPrivacy(e.target.checked);
-                  }}
-                />
-              }
+              control={<Checkbox checked={checkedPrivacy} onChange={(e) => setCheckedPrivacy(e.target.checked)} />}
               label="ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"
             />
           </Grid>
 
           {/* Payment Option */}
-          <Grid size={{ xs: 12, md: 12 }}>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 600 }}
-              gutterBottom
-            >
-              Payment Option
-            </Typography>
-            <FormControl>
-              <Select
-                displayEmpty
-                defaultValue={0}
-                value={selectedOption || 0}
-                onChange={(e) => setSelectedOption(Number(e.target.value))}
-                sx={{ width: '260px' }}
-              >
-                <MenuItem value={0}>
-                  <em>{"-- Select Payment Option --"}</em>
-                </MenuItem>
-                {paymentOptions.map((item, index) => {
-                  return (
-                    <MenuItem key={index} value={item.ID} >
+          <Grid container>
+            <Grid size={{ xs: 12 }} >
+              <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                Payment Option
+              </Typography>
+              <FormControl>
+                <Select
+                  displayEmpty
+                  value={selectedOption || 0}
+                  onChange={(e) => setSelectedOption(Number(e.target.value))}
+                  sx={{ width: "260px" }}
+                >
+                  <MenuItem value={0}>
+                    <em>-- Select Payment Option --</em>
+                  </MenuItem>
+                  {paymentOptions.map((item, index) => (
+                    <MenuItem key={index} value={item.ID}>
                       {item.OptionName}
                     </MenuItem>
-                  );
-                }
-                )}
-              </Select>
-            </FormControl>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-
         </DialogContent>
+
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
-            onClick={() => {
-              handleSubmitBooking()
-            }}
+            onClick={handleSubmitBooking}
             disabled={!checkedCondition || !checkedPrivacy || selectedOption === 0}
             variant="contained"
             startIcon={<Check size={18} />}
@@ -1558,9 +1560,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          {/* Images (ใช้รูปจริงของ RoomType) */}
-          <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12, lg: 6 }} >
+          {/* Images */}
+          <Grid size={{ xs: 12 }} >
             <Carousel
               indicators
               autoPlay
@@ -1597,7 +1599,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             <Paper
               elevation={2}
               className="booking-section paper-room-selection-paper"
-              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", padding: "16px", my: 5 }}
+              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", p: 2, my: 5 }}
             >
               <Box className="booking-section-header">
                 <Building2 className="booking-section-icon" />
@@ -1607,7 +1609,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               </Box>
 
               <FormControl fullWidth>
-                <FormLabel sx={{ mb: 1 }}>Choose Sub-room In {roomtype.TypeName} category</FormLabel>
+                <FormLabel sx={{ mb: 1 }}>Choose Sub-room In {roomtypeState.TypeName} category</FormLabel>
                 <Select
                   startAdornment={
                     <InputAdornment position="start" className="booking-input-adornment">
@@ -1649,7 +1651,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             <Paper
               elevation={2}
               className="booking-section-paper time-selection-paper"
-              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", marginTop: "24px", mt: 3 }}
+              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", mt: 3 }}
             >
               <Box className="booking-section-header">
                 <Clock className="booking-section-icon" />
@@ -1680,26 +1682,21 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       }}
                     >
                       {isHourlyAllowed && (
-                        <FormControlLabel
-                          value="hourly"
-                          control={<Radio />}
-                          label={<Typography variant="body1" fontWeight="500">Hourly</Typography>}
-                        />
+                        <FormControlLabel value="hourly" control={<Radio />} label={<Typography fontWeight={500}>Hourly</Typography>} />
                       )}
                       <FormControlLabel
                         value="half"
                         control={<Radio />}
-                        label={<Typography variant="body1" fontWeight="500">Half Day (4 hours)</Typography>}
+                        label={<Typography fontWeight={500}>Half Day (4 hours)</Typography>}
                       />
                       <FormControlLabel
                         value="full"
                         control={<Radio />}
-                        label={<Typography variant="body1" fontWeight="500">Full Day (8 hours)</Typography>}
+                        label={<Typography fontWeight={500}>Full Day (8 hours)</Typography>}
                       />
                     </RadioGroup>
                   </FormControl>
 
-                  {/* Hourly Slots */}
                   {isHourlyAllowed && timeOption === "hourly" && (
                     <>
                       <Divider className="booking-time-divider" />
@@ -1720,7 +1717,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     </>
                   )}
 
-                  {/* Half Day */}
                   {timeOption === "half" && (
                     <>
                       <Divider className="booking-time-divider" />
@@ -1742,12 +1738,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     </>
                   )}
 
-                  {/* Full Day info */}
                   {timeOption === "full" && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="body1" fontWeight="600">
-                        Full Day booking covers both Morning and Afternoon slots (08:30 - 16:30)
-                      </Typography>
+                      <Typography fontWeight={600}>Full Day booking covers both Morning and Afternoon (08:30 - 16:30)</Typography>
                     </Box>
                   )}
                 </>
@@ -1757,7 +1750,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         </Grid>
 
         {/* Right Column */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid size={{ xs: 12, lg: 6 }} >
           {/* Calendar */}
           <Grid size={{ xs: 12 }}>
             <Paper elevation={2} className="booking-section-paper calendar-paper">
@@ -1772,7 +1765,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 sx={{
                   opacity: selectedRoomId && timeOption ? 1 : 0.5,
                   pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
-                  padding: "44px",
+                  p: "44px",
                 }}
               >
                 {renderCalendar()}
@@ -1831,43 +1824,26 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
           {/* Booking Summary */}
           <Grid size={{ xs: 12 }}>
-            <Paper
-              elevation={3}
-              sx={{
-                backgroundColor: "secondary.main",
-                borderRadius: "24px",
-                padding: "24px",
-                mt: 3,
-              }}
-            >
+            <Paper elevation={3} sx={{ backgroundColor: "secondary.main", borderRadius: "24px", p: 3, mt: 3 }}>
               <Typography variant="h6" fontWeight="bold" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Calendar className="booking-section-icon" />
                 Booking Summary
               </Typography>
 
-              <Box className="booking-summary-section" mb={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Meeting Room Type
-                </Typography>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {roomData?.TypeName || "-"}
-                </Typography>
+              <Box mb={2}>
+                <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>{roomData?.TypeName || "-"}</Typography>
               </Box>
 
-              <Box className="booking-summary-section" mb={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Selected Room
-                </Typography>
+              <Box mb={2}>
+                <Typography variant="body2" color="text.secondary">Selected Room</Typography>
                 <Typography variant="subtitle1" fontWeight={600}>
                   {roomsOfSameType.find((r) => r.id === selectedRoomId)?.roomnumber || "-"}
                 </Typography>
               </Box>
 
-              <Box className="booking-summary-section" mb={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Duration & Time
-                </Typography>
-
+              <Box mb={2}>
+                <Typography variant="body2" color="text.secondary">Duration & Time</Typography>
                 <Typography fontWeight={600}>
                   {timeOption === "full"
                     ? "Full Day"
@@ -1879,37 +1855,28 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           : "-"
                         : "-"}
                 </Typography>
-
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ visibility: timeOption === "half" ? "visible" : "hidden" }}
-                >
+                <Typography variant="body2" color="text.secondary" sx={{ visibility: timeOption === "half" ? "visible" : "hidden" }}>
                   {timeOption === "half" ? getTimeRangeLabel() || "-" : "-"}
                 </Typography>
               </Box>
 
-              <Box className="booking-summary-section" mb={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Number of Days
-                </Typography>
+              <Box mb={2}>
+                <Typography variant="body2" color="text.secondary">Number of Days</Typography>
                 <Chip
                   label={
-                    selectedDates && selectedDates.length > 0
+                    selectedDates?.length
                       ? `${selectedDates.length} day${selectedDates.length > 1 ? "s" : ""}`
                       : "-"
                   }
-                  color={selectedDates && selectedDates.length > 0 ? "primary" : "default"}
+                  color={selectedDates?.length ? "primary" : "default"}
                   size="small"
                 />
               </Box>
 
-              <Box className="booking-summary-dates" mb={3}>
-                <Typography variant="body2" color="text.secondary" mb={1}>
-                  Selected Dates
-                </Typography>
-                {selectedDates && selectedDates.length > 0 ? (
-                  <Box className="booking-dates-container" display="flex" flexWrap="wrap" gap={1}>
+              <Box mb={3}>
+                <Typography variant="body2" color="text.secondary" mb={1}>Selected Dates</Typography>
+                {selectedDates?.length ? (
+                  <Box display="flex" flexWrap="wrap" gap={1}>
                     {selectedDates.slice(0, 4).map((date) => (
                       <Chip key={date} label={new Date(date).toLocaleDateString("en-US")} size="small" />
                     ))}
@@ -1924,60 +1891,91 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
               <Divider sx={{ mb: 3 }} />
 
-              <Paper
-                elevation={4}
-                sx={{
-                  p: 3,
-                  mb: 3,
-                  backgroundColor: "background.paper",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                }}
-              >
+              {/* Total */}
+              <Paper elevation={4} sx={{ p: 3, mb: 3, backgroundColor: "background.paper", borderRadius: "16px" }}>
                 {loading ? (
                   <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" gap={2} py={4}>
                     <CircularProgress size={60} />
-                    <Typography variant="subtitle1" color="text.secondary">
-                      Calculating Price...
-                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">Calculating Price...</Typography>
                   </Box>
                 ) : (
                   <>
                     <Typography variant="h4" fontWeight="bold" color="primary" mb={1}>
                       ฿{calculatedPrice?.toLocaleString() || "0"}
                     </Typography>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Total Price
-                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">Total Price</Typography>
                   </>
                 )}
               </Paper>
 
-              <Box display="flex" alignItems="center" gap={1}>
-                <IconButton size="small" color="primary" disabled={discount.remaining <= 0 && !discount.used}>
-                  <LocalOfferIcon />
-                </IconButton>
-                <Typography variant="body2" color="primary" flexGrow={1}>
-                  You have {discount?.remaining ?? 0} free booking
-                  {discount?.remaining === 1 ? "" : "s"} left
-                </Typography>
-                <Button
-                  variant={discount.used ? "contained" : "outlined"}
-                  size="small"
-                  disabled={discount.remaining <= 0 && !discount.used}
-                  onClick={() => {
-                    setDiscount((prev) => ({ ...prev, used: !prev.used }));
-                  }}
-                >
-                  {discount.used ? "Cancel Free Credit" : "Use Free Credit"}
-                </Button>
-              </Box>
+              {/* Discounts Row 1: Free credit (Meeting only) */}
+              {hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && (
+                <Box display="flex" alignItems="center" gap={1} mb={1.5}>
+                  <IconButton size="small" color="primary"
+                    disabled={discount.remaining <= 0 && !discount.used}
+                  >
+                    <LocalOfferIcon />
+                  </IconButton>
+                  <Typography variant="body2" color="primary" flexGrow={1}>
+                    You have {discount?.remaining ?? 0} free booking{(discount?.remaining ?? 0) === 1 ? "" : "s"} left for Meeting Room
+                  </Typography>
+                  <Button
+                    variant={discount.used ? "contained" : "outlined"}
+                    size="small"
+                    disabled={discount.remaining <= 0 && !discount.used}
+                    onClick={() => setDiscount(prev => ({ ...prev, used: !prev.used }))}
+                  >
+                    {discount.used ? "Cancel Free Credit" : "Use Free Credit"}
+                  </Button>
+                </Box>
+              )}
+
+
+
+              {/* Discounts Row 2: 50% Member Discount (toggle-able) */}
+              {hasPackage && (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    disabled={
+                      (isMeetingCategory && (!pkgBenefits.meetingHalf || quotas.meeting.remaining > 0 || discount.used)) ||
+                      (currentCategory === "trainingroom" && !pkgBenefits.trainingHalf) ||
+                      (currentCategory === "multifunctionroom" && !pkgBenefits.hallHalf)
+                    }
+                  >
+                    <LocalOfferIcon />
+                  </IconButton>
+
+                  <Typography variant="body2" color="primary" flexGrow={1}>
+                    50% Package Discount
+                    {isMeetingCategory && pkgBenefits.meetingHalf && (quotas.meeting.remaining > 0 || discount.used)
+                      ? " • Available after free quota is exhausted"
+                      : ""}
+                  </Typography>
+
+                  <Button
+                    size="small"
+                    variant={applyMemberDiscount ? "contained" : "outlined"}
+                    onClick={() => setApplyMemberDiscount(v => !v)}
+                    disabled={
+                      (isMeetingCategory && (!pkgBenefits.meetingHalf || quotas.meeting.remaining > 0 || discount.used)) ||
+                      (currentCategory === "trainingroom" && !pkgBenefits.trainingHalf) ||
+                      (currentCategory === "multifunctionroom" && !pkgBenefits.hallHalf)
+                    }
+                  >
+                    {applyMemberDiscount ? "Using 50% Off" : "Don't Use 50% Off"}
+                  </Button>
+                </Box>
+              )}
+
+
             </Paper>
           </Grid>
         </Grid>
 
         {/* Bottom Section: Contact & Details */}
-        <Grid size={{ xs: 12 }}>
+        <Grid size={{ xs: 12 }} >
           <Paper elevation={3} className="contact-form-paper">
             <Box className="form-header">
               <Typography variant="h5" fontWeight="700" color="primary" className="form-title">
@@ -1991,13 +1989,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
             <Grid container spacing={3}>
               {/* Left: Contact */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 6 }} >
                 <Paper elevation={1} className="info-section-paper">
                   <Box className="info-section-header">
                     <User size={24} className="info-section-icon" />
-                    <Typography variant="h6" fontWeight="600">
-                      Your Information
-                    </Typography>
+                    <Typography variant="h6" fontWeight="600">Your Information</Typography>
                   </Box>
 
                   <Box className="info-fields">
@@ -2038,25 +2034,21 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       className="readonly-field"
                     />
 
-                    <Grid container spacing={1} size={{ xs: 12 }}>
-                      {/* Address Number */}
-                      <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={1}>
+                      <Grid size={{ xs: 12 }} >
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Address Number
                         </Typography>
                         <TextField
                           fullWidth
                           value={addressFormData?.AddressNumber || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))}
                           placeholder="Enter your house/building number"
                           error={!!errors.AddressNumber}
                           helperText={errors.AddressNumber}
                         />
                       </Grid>
 
-                      {/* Street */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Street
@@ -2064,16 +2056,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <TextField
                           fullWidth
                           value={addressFormData?.Street || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))}
                           placeholder="Enter street name"
                           error={!!errors.Street}
                           helperText={errors.Street}
                         />
                       </Grid>
 
-                      {/* Sub-district */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Sub-district
@@ -2081,16 +2070,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <TextField
                           fullWidth
                           value={addressFormData?.SubDistrict || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))}
                           placeholder="Enter sub-district"
                           error={!!errors.SubDistrict}
                           helperText={errors.SubDistrict}
                         />
                       </Grid>
 
-                      {/* District */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           District
@@ -2098,52 +2084,36 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <TextField
                           fullWidth
                           value={addressFormData?.District || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))}
                           placeholder="Enter district"
                           error={!!errors.District}
                           helperText={errors.District}
                         />
                       </Grid>
 
-                      {/* Province */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Province
                         </Typography>
-                        <FormControl
-                          fullWidth
-                          error={!!errors.Province}
-                        >
+                        <FormControl fullWidth error={!!errors.Province}>
                           <Select
                             displayEmpty
-                            defaultValue={""}
                             value={addressFormData?.Province || ""}
-                            onChange={(e) =>
-                              setAddressFormdata((prev) => ({ ...prev, Province: e.target.value as string }))
-                            }
-                            sx={{ width: '100%' }}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Province: e.target.value as string }))}
                           >
-                            <MenuItem value={""}>
-                              <em>{"-- เลือกจังหวัด --"}</em>
+                            <MenuItem value="">
+                              <em>-- เลือกจังหวัด --</em>
                             </MenuItem>
-                            {provincesData.map((item, index) => {
-                              return (
-                                <MenuItem key={index} value={item}>{item}</MenuItem>
-                              );
-                            }
-                            )}
+                            {provincesData.map((item, index) => (
+                              <MenuItem key={index} value={item}>
+                                {item}
+                              </MenuItem>
+                            ))}
                           </Select>
-                          {errors.Province && (
-                            <FormHelperText>
-                              {errors.Province}
-                            </FormHelperText>
-                          )}
+                          {errors.Province && <FormHelperText>{errors.Province}</FormHelperText>}
                         </FormControl>
                       </Grid>
 
-                      {/* Postal Code */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Postal Code
@@ -2151,16 +2121,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <TextField
                           fullWidth
                           value={addressFormData?.PostalCode || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))}
                           placeholder="Enter postal code"
                           error={!!errors.PostalCode}
                           helperText={errors.PostalCode}
                         />
                       </Grid>
 
-                      {/* Tax ID */}
                       <Grid size={{ xs: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Tax ID
@@ -2168,9 +2135,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <TextField
                           fullWidth
                           value={addressFormData?.TaxID || ""}
-                          onChange={(e) =>
-                            setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))
-                          }
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))}
                           placeholder="Enter tax ID"
                           error={!!errors.TaxID}
                           helperText={errors.TaxID}
@@ -2182,13 +2147,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               </Grid>
 
               {/* Right: Booking details */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 6 }} >
                 <Paper elevation={1} className="info-section-paper">
                   <Box className="details-section-header">
                     <Calendar size={24} className="info-section-icon" />
-                    <Typography variant="h6" fontWeight="600">
-                      Booking Details
-                    </Typography>
+                    <Typography variant="h6" fontWeight="600">Booking Details</Typography>
                   </Box>
 
                   <Box className="details-fields">
@@ -2205,7 +2168,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       className="textarea-field"
                     />
 
-                    <FormControl fullWidth className="form-control">
+                    <FormControl fullWidth>
                       <InputLabel id="setup-style-label">Room Setup Style</InputLabel>
                       <Select
                         labelId="setup-style-label"
@@ -2222,20 +2185,9 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       </Select>
                     </FormControl>
 
-                    <Paper elevation={2} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+                    <Paper elevation={2} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", mt: 2 }}>
                       <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
-                        <FormLabel
-                          component="legend"
-                          sx={{
-                            mb: 2,
-                            fontWeight: 600,
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          Required Equipment
-                        </FormLabel>
+                        <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>Required Equipment</FormLabel>
 
                         {/* Select All */}
                         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -2243,13 +2195,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                             control={
                               <Checkbox
                                 checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
-                                indeterminate={
-                                  selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length
-                                }
-                                onChange={(e) => {
-                                  if (e.target.checked) setSelectedEquipment(equipmentList);
-                                  else setSelectedEquipment([]);
-                                }}
+                                indeterminate={selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length}
+                                onChange={(e) => (e.target.checked ? setSelectedEquipment(equipmentList) : setSelectedEquipment([]))}
                               />
                             }
                             label="Select All"
@@ -2261,11 +2208,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         <Box
                           sx={{
                             display: "grid",
-                            gridTemplateColumns: {
-                              xs: "repeat(1, 1fr)",
-                              sm: "repeat(2, 1fr)",
-                              md: "repeat(3, 1fr)",
-                            },
+                            gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                             gap: 2,
                             maxHeight: 200,
                             overflowY: "auto",
@@ -2278,10 +2221,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                               control={
                                 <Checkbox
                                   checked={selectedEquipment.includes(item)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) setSelectedEquipment([...selectedEquipment, item]);
-                                    else setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item));
-                                  }}
+                                  onChange={(e) =>
+                                    e.target.checked
+                                      ? setSelectedEquipment([...selectedEquipment, item])
+                                      : setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item))
+                                  }
                                 />
                               }
                               label={item}
@@ -2299,6 +2243,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       onChange={(e) => setAdditionalNote(e.target.value)}
                       placeholder="Special equipment, catering arrangements, or other requests"
                       className="textarea-field"
+                      sx={{ mt: 2 }}
                     />
                   </Box>
                 </Paper>
@@ -2320,10 +2265,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   variant="contained"
                   size="large"
                   onClick={() => {
-                    if (!validateForm()) {
-                      return;
-                    }
-                    setOpenPopupInvoiceCondition(true)
+                    if (!validateForm()) return;
+                    setOpenPopupInvoiceCondition(true);
                   }}
                   disabled={
                     loading ||
@@ -2331,99 +2274,20 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     selectedDates.length === 0 ||
                     !selectedRoomId ||
                     purpose.trim() === "" ||
-                    !isAllowedToBookLargeRoom ||
                     (timeOption === "hourly" && !isHourlyAllowed) ||
                     (timeOption === "half" && !timeRange)
                   }
                   className="confirm-button"
                   startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : <Check size={24} />}
                 >
-                  {loading
-                    ? "Processing Your Booking..."
-                    : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
+                  {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
                 </Button>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  className="confirmation-note"
-                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                >
+                <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Info size={16} /> Your booking will be confirmed immediately after payment
                 </Typography>
               </Box>
 
-              {!isAllowedToBookLargeRoom && (
-                <Box className="error-alert-container" sx={{ mt: 2 }}>
-                  <Alert severity="error">
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      This room exceeds the seat capacity allowed for online booking.
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Please contact our staff to make a reservation:
-                    </Typography>
-
-                    {orgInfo && (
-                      <Box
-                        sx={{
-                          bgcolor: "background.paper",
-                          borderRadius: 2,
-                          p: 2,
-                          border: "1px solid",
-                          borderColor: "divider",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {orgInfo.Address && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <MapPin size={16} />
-                            </span>
-                            {orgInfo.Address}
-                          </Typography>
-                        )}
-                        {orgInfo.Phone && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <Phone size={16} />
-                            </span>
-                            <a href={`tel:${orgInfo.Phone}`} style={{ textDecoration: "none", color: "inherit" }}>
-                              {orgInfo.Phone}
-                            </a>
-                          </Typography>
-                        )}
-                        {orgInfo.Email && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <Mail size={16} />
-                            </span>
-                            <a href={`mailto:${orgInfo.Email}`} style={{ textDecoration: "none", color: "inherit" }}>
-                              {orgInfo.Email}
-                            </a>
-                          </Typography>
-                        )}
-                        {orgInfo.FacebookUrl && (
-                          <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <LinkIcon size={16} />
-                            </span>
-                            <a
-                              href={orgInfo.FacebookUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ textDecoration: "none", color: "inherit" }}
-                            >
-                              Facebook Page
-                            </a>
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-                  </Alert>
-                </Box>
-              )}
             </Box>
           </Paper>
         </Grid>

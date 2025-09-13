@@ -20,22 +20,13 @@ import (
 
 // ใช้ของเดิมที่คุณมีอยู่แล้ว
 func firstBookingDate(b *entity.BookingRoom) (time.Time, bool) {
-	return minBookingDate(*b)
+    t, err := minBookingDate(*b)
+    if err != nil {
+        return time.Time{}, false
+    }
+    return t, true
 }
 
-func lastBookingDate(b *entity.BookingRoom) (time.Time, bool) {
-	if len(b.BookingDates) == 0 {
-		return time.Time{}, false
-	}
-	max := b.BookingDates[0].Date
-	for _, d := range b.BookingDates {
-		if d.Date.After(max) {
-			max = d.Date
-		}
-	}
-	// normalize ให้เป็น 00:00 ของวันนั้นเหมือน minBookingDate
-	return time.Date(max.Year(), max.Month(), max.Day(), 0, 0, 0, 0, max.Location()), true
-}
 
 // -------- helpers --------
 func invStatusID(name string) (uint, error) {

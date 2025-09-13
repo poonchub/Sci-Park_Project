@@ -8,7 +8,6 @@ type Room struct {
 	gorm.Model
 
     RoomNumber string `valid:"required~กรุณาระบุหมายเลขห้อง"`
-    RoomSize    float32
 
 	RoomStatusID uint       `valid:"required~กรุณาระบุสถานะของห้อง"`
 	RoomStatus   RoomStatus `gorm:"foreignKey:RoomStatusID" valid:"-"`
