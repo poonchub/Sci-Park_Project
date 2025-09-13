@@ -68,3 +68,12 @@ app.post("/notify-service-area", (req, res) => {
 server.listen(3001, () => {
   console.log("🚀 Socket.IO Gateway running on port 3001");
 });
+
+app.post("/notify-booking-room", (req, res) => {
+  const { event, data } = req.body;
+  console.log("📨 Notify from Go:", event, data);
+
+  io.emit(event, data);
+
+  res.sendStatus(200);
+});

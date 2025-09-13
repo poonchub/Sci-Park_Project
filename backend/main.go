@@ -211,6 +211,7 @@ func main() {
 		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
 		protected.PATCH("/notifications/service-area-request/:service_area_request_id", controller.UpdateNotificationsByServiceAreaRequestID)
 		protected.PATCH("/notifications/service-area-task/:service_area_task_id", controller.UpdateNotificationsByServiceAreaTaskID)
+		protected.PATCH("/notifications/booking-room/:booking_room_id", controller.UpdateNotificationsByBookingRoomID)
 
 		// News
 		protected.GET("/news", controller.ListNews)

@@ -187,11 +187,13 @@ const WindowsLayout: React.FC = (props: any) => {
             title: "Request List",
             icon: <ClipboardList size={iconSize} />,
             action:
-                notificationCounts?.UnreadRequests &&
-                    notificationCounts?.UnreadRequests > 0 &&
+                (
+                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0) ||
+                    (notificationCounts?.UnreadBookingRoom && notificationCounts?.UnreadBookingRoom > 0)
+                ) &&
                     (isAdmin() || isManager()) ? (
                     <Chip
-                        label={notificationCounts.UnreadRequests}
+                        label={notificationCounts.UnreadRequests + notificationCounts.UnreadBookingRoom}
                         color="primary"
                         size="small"
                     />
@@ -216,6 +218,16 @@ const WindowsLayout: React.FC = (props: any) => {
                     segment: "all-booking-room",   // 👈 segment ตรงไปตรงมา
                     title: "All Booking Room",
                     icon: < Hotel size={iconSize} />,
+                    action:
+                        notificationCounts?.UnreadBookingRoom &&
+                            notificationCounts?.UnreadBookingRoom > 0 &&
+                            (isAdmin() || isManager()) ? (
+                            <Chip
+                                label={notificationCounts.UnreadBookingRoom}
+                                color="primary"
+                                size="small"
+                            />
+                        ) : null,
                 },
                 {
                     segment: "service-area/service-request-list",

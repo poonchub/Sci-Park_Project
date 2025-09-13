@@ -27,6 +27,9 @@ type Notification struct {
 	CancelServiceAreaRequestID uint
 	CancelServiceAreaRequest   CancelRequestServiceArea `gorm:"foreignKey:CancelServiceAreaRequestID" valid:"-"`
 
+	BookingRoomID	uint
+	BookingRoom 	BookingRoom 	`gorm:"foreignKey:BookingRoomID" valid:"-"`
+
 	UserID uint `valid:"required~UserID is required"`
 	User   User `gorm:"foreignKey:UserID" valid:"-"`
 }

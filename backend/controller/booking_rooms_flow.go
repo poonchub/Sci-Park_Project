@@ -29,6 +29,7 @@ func GetBookingRoomByID(c *gin.Context) {
 		Preload("User").
 		Preload("TimeSlots").
 		Preload("Status").
+		Preload("Notifications").
 		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
 			return tx.Order("id ASC").Preload("Status")
 		}).
