@@ -37,6 +37,7 @@ type BookingRoom struct {
 	TotalAmount    float64
 	TaxID          string
 	Address        string
+	Notifications     []Notification     `gorm:"foreignKey:BookingRoomID"`
 }
 
 

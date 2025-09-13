@@ -20,7 +20,7 @@ import { isAdmin, isManager } from "../../routes";
 import { Base64 } from "js-base64";
 
 // ====== ของ Booking ======
-import { CreateRoomBookingInvoice, CreateRoomBookingInvoiceItem, GetRoomBookingInvoiceByID, ListBookingRooms, RefundedBookingRoom } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
+import { CreateRoomBookingInvoice, CreateRoomBookingInvoiceItem, GetBookingRoomById, GetRoomBookingInvoiceByID, ListBookingRooms, RefundedBookingRoom, socketUrl, UpdateNotificationsByBookingRoomID } from "../../services/http"; // ถ้ามี ApproveBooking/RejectBooking แล้ว ค่อย import
 // import { ApproveBooking, RejectBooking } from "../../services/http";
 import { TextField } from "../../components/TextField/TextField";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -58,8 +58,10 @@ import ConfirmDialogRoomBookingInvoice from "../../components/ConfirmDialog/Conf
 import { BookingDateInterface } from "../../interfaces/IBookingDate";
 import { useUserStore } from "../../store/userStore";
 import { UserInterface } from "../../interfaces/IUser";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 
-
+import { io } from "socket.io-client";
+import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 
 // ====== Type (ย่อ) ======
 interface BookingRoomsInterface {
@@ -80,6 +82,7 @@ interface BookingRoomsInterface {
         date?: string;
         slipImages?: string[]; // ✅ เพิ่มตรงนี้
     };
+    Notifications?: NotificationsInterface
 }
 
 
@@ -166,6 +169,7 @@ function AllBookingRoom() {
             const res = await GetBookingRooms();
             const rows = (res || []).map(normalizeBookingRow);
             setBookingRooms(rows);
+            console.log("res", res)
 
             const counts = rows.reduce((acc: Record<string, number>, it: { DisplayStatus: string; }) => {
                 let key = it.DisplayStatus || "unknown";
@@ -355,13 +359,18 @@ function AllBookingRoom() {
                 flex: 0.5,
                 align: "center",
                 headerAlign: "center",
-                sortable: false,
-                // วิธี A (ปลอดภัยกว่า)
-                renderCell: ({ id }) => <Typography>{id}</Typography>,
-                // หรือ วิธี B (ยังใช้ valueGetter แต่ต้องกัน)
-                // valueGetter: ({ row, id }) => row?.ID ?? id ?? "-",
-            }
-            ,
+                renderCell: (params) => {
+                    const requestID = params.row.ID;
+                    const notification = params.row.Notifications ?? [];
+                    const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                    return (
+                        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                            {hasNotificationForUser && <AnimatedBell />}
+                            <Typography>{requestID}</Typography>
+                        </Box>
+                    );
+                },
+            },
             {
                 field: "Title",
                 headerName: "Title",
@@ -645,6 +654,17 @@ function AllBookingRoom() {
                     }
 
                     await handleUploadPDF(resInvoice.data.ID);
+
+                    const notificationDataUpdate: NotificationsInterface = {
+                        IsRead: true,
+                    };
+                    const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+                        notificationDataUpdate,
+                        resApprove.data.ID
+                    );
+                    if (!resUpdateNotification || resUpdateNotification.error)
+                        throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
                     setIsButtonActive(false)
                     break;
 
@@ -807,6 +827,60 @@ function AllBookingRoom() {
 
     // จำนวนทั้งหมดหลังกรอง (ใช้กับ DataGrid client-side)
     const totalFiltered = filtered.length;
+
+    const getNewBookingRoom = async (ID: number) => {
+        try {
+            const res = await GetBookingRoomById(ID);
+            if (res) {
+                setBookingRooms((prev) => [res, ...prev]);
+                // setTotal((prev) => prev + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching maintenance request:", error);
+        }
+    };
+
+    const getUpdateBookingRoom = async (ID: number) => {
+        try {
+            const res = await GetBookingRoomById(ID);
+            if (res) {
+                setBookingRooms((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
+            }
+        } catch (error) {
+            console.error("Error fetching update maintenance:", error);
+        }
+    };
+
+    useEffect(() => {
+        const socket = io(socketUrl);
+
+        socket.on("booking_room_created", (data) => {
+            console.log("📦 New booking room request:", data);
+            setTimeout(() => {
+                getNewBookingRoom(data.ID);
+            }, 1500);
+        });
+
+        socket.on("maintenance_updated", (data) => {
+            console.log("🔄 Maintenance request updated:", data);
+            setTimeout(() => {
+                getUpdateBookingRoom(data.ID);
+            }, 1500);
+        });
+
+        socket.on("maintenance_deleted", (data) => {
+            console.log("🔄 Maintenance request deleted:", data);
+            setTimeout(() => {
+                setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
+            }, 1500);
+        });
+
+        return () => {
+            socket.off("maintenance_created");
+            socket.off("maintenance_updated");
+            socket.off("maintenance_deleted");
+        };
+    }, []);
 
     return (
         <Box className="all-maintenance-request-page">

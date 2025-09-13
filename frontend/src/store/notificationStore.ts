@@ -6,6 +6,7 @@ interface NotificationCountsInterface {
     UnreadTasks: number;
     UnreadInvoice: number;
     UnreadServiceAreaRequests: number;
+    UnreadBookingRoom: number;
 }
 
 interface NotificationStore {
@@ -17,7 +18,7 @@ interface NotificationStore {
 }
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
-    notificationCounts: { UnreadRequests: 0, UnreadTasks: 0, UnreadInvoice: 0, UnreadServiceAreaRequests: 0 },
+    notificationCounts: { UnreadRequests: 0, UnreadTasks: 0, UnreadInvoice: 0, UnreadServiceAreaRequests: 0, UnreadBookingRoom: 0 },
 
     setNotificationCounts: (notificationCounts) => set({ notificationCounts }),
 
@@ -26,7 +27,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
             notificationCounts: { ...state.notificationCounts, [key]: state.notificationCounts[key] + 1 },
         })),
 
-    clear: () => set({ notificationCounts: { UnreadRequests: 0, UnreadTasks: 0, UnreadInvoice: 0, UnreadServiceAreaRequests: 0 } }),
+    clear: () => set({ notificationCounts: { UnreadRequests: 0, UnreadTasks: 0, UnreadInvoice: 0, UnreadServiceAreaRequests: 0, UnreadBookingRoom: 0 } }),
 
     getNewUnreadNotificationCounts: async (userId?: number) => {
         try {

@@ -29,6 +29,7 @@ func GetBookingRoomByID(c *gin.Context) {
 		Preload("User").
 		Preload("TimeSlots").
 		Preload("Status").
+		Preload("Notifications").
 		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
 			return tx.Order("id ASC").Preload("Status")
 		}).
@@ -68,6 +69,7 @@ func GetBookingRoomByID(c *gin.Context) {
 			Status:     "unpaid",
 			SlipImages: []string{},
 		},
+		Notifications:   booking.Notifications,
 	}
 
 	// ถ้ามี payment → ใช้ตัวล่าสุด

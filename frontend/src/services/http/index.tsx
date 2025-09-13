@@ -1573,6 +1573,20 @@ async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id
         throw error;
     }
 }
+async function UpdateNotificationsByBookingRoomID(data: NotificationsInterface, booking_room_id: Number | undefined) {
+    try {
+        const response = await axiosInstance.patch(`/notifications/booking-room/${booking_room_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating notification:", error);
+        throw error;
+    }
+}
 
 // BookingRooms
 async function ListBookingRooms() {
@@ -3649,6 +3663,7 @@ export {
     UpdateNotificationsByTaskID,
     UpdateNotificationsByServiceAreaRequestID,
     UpdateNotificationsByServiceAreaTaskID,
+    UpdateNotificationsByBookingRoomID,
 
     // BookingRooms
     ListBookingRooms,

@@ -83,14 +83,14 @@ function ApexBookingLineChart(props: {
         // ✅ กรอง BookingDates
         const allDates =
             data?.flatMap((b) =>
-                b.BookingDates.map((d) => ({
+                b.BookingDates?.map((d) => ({
                     roomId: b.ID,
                     date: dayjs(d.Date),
                 }))
             ) ?? [];
 
         const filteredDates = allDates.filter((item) =>
-            item.date.isBetween(start, end, null, "[]")
+            item?.date.isBetween(start, end, null, "[]")
         );
 
         // ✅ ฟอร์แมตรูปแบบ key
@@ -113,7 +113,7 @@ function ApexBookingLineChart(props: {
 
         // ✅ นับจำนวน booking
         filteredDates.forEach((item) => {
-            const key = formatKey(item.date);
+            const key = item?.date ? formatKey(item.date) : "";
             countR[key] = (countR[key] || 0) + 1;
         });
 

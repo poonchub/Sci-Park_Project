@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 	"sort"
 	"strings"
 
@@ -45,6 +46,7 @@ type BookingRoomResponse struct {
 	StatusName      string               `json:"StatusName"`
 	Payment         *PaymentSummary      `json:"Payment,omitempty"`
 	DisplayStatus   string               `json:"DisplayStatus"`
+	Notifications   []entity.Notification  `json:"Notifications"`
 }
 
 type AdditionalInfo struct {
@@ -156,6 +158,7 @@ func ListBookingRooms(c *gin.Context) {
 		Preload("User").
 		Preload("TimeSlots").
 		Preload("Status").
+		Preload("Notifications").
 		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
 			return tx.Order("id ASC").Preload("Status")
 		}).
@@ -219,6 +222,7 @@ func ListBookingRooms(c *gin.Context) {
 			StatusName:      status,
 			Payment:         paySummary,
 			DisplayStatus:   computeDisplayStatus(b),
+			Notifications:   b.Notifications,
 		})
 	}
 
@@ -536,6 +540,8 @@ func CreateBookingRoom(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถบันทึก BookingDate ได้"})
 		return
 	}
+
+	services.NotifySocketEvent("booking_room_created", booking)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "จองห้องสำเร็จ",

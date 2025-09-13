@@ -68,6 +68,7 @@ import {
   CreateRoomBookingInvoice,
   ListPaymentOptions,
   UpdateUserSignature,
+  CreateNotification,
 } from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -86,6 +87,7 @@ import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 import { provincesData } from "../../constants/provinceData";
 import { useUserStore } from "../../store/userStore";
 import SignatureCanvas from "react-signature-canvas";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 
 /* ========= Config / URL helper ========= */
 const API_BASE =
@@ -1169,6 +1171,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       } else {
         console.error("ลดโควต้าไม่สำเร็จ:", quotaRes.data);
       }
+
+      console.log("resBooking", resBooking)
+
+      const notificationData: NotificationsInterface = {
+        BookingRoomID: resBooking.data.booking_id,
+      };
+
+      await CreateNotification(notificationData);
 
       await fetchBookingMapOnly(roomData.ID as number);
 
