@@ -12,7 +12,7 @@ type Payment struct {
 
 	PaymentDate time.Time `valid:"required~PaymentDate is required"`
 	Amount      float64   `valid:"required~Amount is required"`
-	SlipPath    string    `valid:"required~Slip file path is required"`
+	SlipPath    string    
 	Note        string
 	ReceiptPath string
 

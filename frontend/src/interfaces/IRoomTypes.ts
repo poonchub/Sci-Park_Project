@@ -14,6 +14,8 @@ export interface RoomtypesInterface {
   RoomSize?: number;
   ForRental?: boolean;
   HasMultipleSizes?: boolean;
+  Category?: string;
+  EmployeeDiscount?: number;
 
   Rooms?: RoomsInterface[];
   RoomTypeLayouts?: RoomTypeLayouts[];

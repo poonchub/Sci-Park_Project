@@ -343,7 +343,7 @@
 
 .booking-container .confirm-button {
     padding: 16px 48px;
-    border-radius: 24px;
+    /* border-radius: 24px; */
     font-weight: 700;
     font-size: 1.2rem;
     background: linear-gradient(45deg, #F26522 30%, #FFA347 90%);

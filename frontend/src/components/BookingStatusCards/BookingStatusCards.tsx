@@ -1,4 +1,3 @@
-// components/BookingStatusCards/BookingStatusCards.tsx
 import React from "react";
 import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
@@ -13,31 +12,21 @@ interface Props {
     lg?: number;
     xl?: number;
   };
-  /** ระบุลิสต์สถานะที่จะโชว์ (label ธรรมดา เช่น "Pending","Confirmed","Completed","Cancelled") */
+  /** ระบุลิสต์สถานะที่จะโชว์ (label ธรรมดา เช่น "Pending","Confirmed","Payment Review","Payment","Completed","Cancelled") */
   customDisplayStatuses?: string[];
 }
 
-// components/BookingStatusCards/BookingStatusCards.tsx
 const BookingStatusCards: React.FC<Props> = ({
   statusCounts,
   size,
   customDisplayStatuses,
 }) => {
-  // ✅ ครอบคลุมทุกสถานะใน flow
   const displayStatuses =
-    customDisplayStatuses || [
-      "Pending",
-      "Confirmed",
-      "Payment Review",
-      "Payment",
-      "Completed",
-      "Cancelled",
-    ];
+    customDisplayStatuses || ["Pending", "Confirmed", "Payment Review", "Payment", "Completed", "Cancelled"];
 
   const statusCards = displayStatuses.map((label) => {
     const keyLower = label.toLowerCase();
-    const count = statusCounts?.[keyLower] ?? 0;  // ✅ fix
-
+    const count = statusCounts?.[keyLower] ?? 0;
     const cfg = getBookingStatusConfig(keyLower);
     return {
       name: cfg.label || label,
@@ -47,7 +36,6 @@ const BookingStatusCards: React.FC<Props> = ({
       Icon: cfg.icon,
     };
   });
-
 
   return (
     <>
@@ -63,39 +51,20 @@ const BookingStatusCards: React.FC<Props> = ({
             xl: size?.xl,
           }}
           className="status-section"
-          sx={{
-            display: {
-              xs: "none",
-              md: "grid",
-            },
-          }}
+          sx={{ display: { xs: "none", md: "grid" } }}
         >
           <Card
             className="status-card"
-            sx={{
-              height: "100%",
-              borderRadius: 2,
-              px: 2.5,
-              py: 2,
-              borderLeft: `4px solid ${color}`,
-            }}
+            sx={{ height: "100%", borderRadius: 2, px: 2.5, py: 2, borderLeft: `4px solid ${color}` }}
           >
             <CardContent className="status-card-content" sx={{ height: "100%" }}>
               <Grid
                 size={{ xs: 10, md: 12 }}
                 container
                 direction="column"
-                sx={{
-                  height: "100%",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
+                sx={{ height: "100%", justifyContent: "space-between", alignItems: "flex-start" }}
               >
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 500, fontSize: 16, color: "text.secondary" }}
-                  gutterBottom
-                >
+                <Typography variant="body1" sx={{ fontWeight: 500, fontSize: 16, color: "text.secondary" }} gutterBottom>
                   {name}
                 </Typography>
                 <Typography variant="h5" fontWeight="bold" color="textPrimary">
@@ -106,10 +75,7 @@ const BookingStatusCards: React.FC<Props> = ({
                 </Typography>
               </Grid>
 
-              <Grid
-                size={{ xs: 10, md: 4 }}
-                sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}
-              >
+              <Grid size={{ xs: 10, md: 4 }} sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                 <Box
                   sx={{
                     borderRadius: "50%",
@@ -134,6 +100,5 @@ const BookingStatusCards: React.FC<Props> = ({
     </>
   );
 };
-
 
 export default BookingStatusCards;
