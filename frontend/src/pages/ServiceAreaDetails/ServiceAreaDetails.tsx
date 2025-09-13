@@ -47,9 +47,9 @@ function ServiceAreaDetails() {
     const [isSubmittingSubmit, setIsSubmittingSubmit] = useState(false);
     const [openCancelPopup, setOpenCancelPopup] = useState(false);
     
-    // Request Cancellation state for Request Owner
-    const [openRequestCancellationPopup, setOpenRequestCancellationPopup] = useState(false);
-    const [isSubmittingCancellationRequest, setIsSubmittingCancellationRequest] = useState(false);
+    // Request Cancellation state for Request Owner - removed as we now navigate to form
+    // const [openRequestCancellationPopup, setOpenRequestCancellationPopup] = useState(false);
+    // const [isSubmittingCancellationRequest, setIsSubmittingCancellationRequest] = useState(false);
     
     // Submit Cancellation state for DocumentOperator
     const [openSubmitCancellationPopup, setOpenSubmitCancellationPopup] = useState(false);
@@ -222,32 +222,35 @@ function ServiceAreaDetails() {
 
     // Handle request cancellation for Request Owner
     const handleRequestCancellation = () => {
-        setOpenRequestCancellationPopup(true);
-    };
-
-    // Handle request cancellation confirmation for Request Owner
-    const handleRequestCancellationConfirm = async () => {
-        if (!serviceAreaDetails?.RequestNo) return;
-        
-        try {
-            setIsSubmittingCancellationRequest(true);
-            
-            // TODO: เรียก API สำหรับสร้าง CancelRequestServiceArea
-            // await CreateCancelRequestServiceArea(serviceAreaDetails.RequestNo, data);
-            
-            // Refresh data
-            await getServiceAreaDetails();
-            setAlerts((prev) => [...prev, { type: "success", message: "Cancellation request submitted successfully" }]);
-            
-            // ปิด Popup
-            setOpenRequestCancellationPopup(false);
-        } catch (error) {
-            console.error("Error submitting cancellation request:", error);
-            setAlerts((prev) => [...prev, { type: "error", message: "Failed to submit cancellation request" }]);
-        } finally {
-            setIsSubmittingCancellationRequest(false);
+        // Navigate to cancel request form instead of showing popup
+        if (serviceAreaDetails?.RequestNo) {
+            navigate(`/service-area/cancel-request?request_id=${serviceAreaDetails.RequestNo}`);
         }
     };
+
+    // Handle request cancellation confirmation for Request Owner - removed as we now navigate to form
+    // const handleRequestCancellationConfirm = async () => {
+    //     if (!serviceAreaDetails?.RequestNo) return;
+    //     
+    //     try {
+    //         setIsSubmittingCancellationRequest(true);
+    //         
+    //         // TODO: เรียก API สำหรับสร้าง CancelRequestServiceArea
+    //         // await CreateCancelRequestServiceArea(serviceAreaDetails.RequestNo, data);
+    //         
+    //         // Refresh data
+    //         await getServiceAreaDetails();
+    //         setAlerts((prev) => [...prev, { type: "success", message: "Cancellation request submitted successfully" }]);
+    //         
+    //         // ปิด Popup
+    //         setOpenRequestCancellationPopup(false);
+    //     } catch (error) {
+    //         console.error("Error submitting cancellation request:", error);
+    //         setAlerts((prev) => [...prev, { type: "error", message: "Failed to submit cancellation request" }]);
+    //     } finally {
+    //         setIsSubmittingCancellationRequest(false);
+    //     }
+    // };
 
     // Handle submit cancellation for DocumentOperator
     const handleSubmitCancellation = () => {
@@ -1016,11 +1019,10 @@ function ServiceAreaDetails() {
                                                 <Button 
                                                     variant="contained" 
                                                     onClick={handleRequestCancellation}
-                                                    disabled={isSubmittingCancellationRequest}
                                                     sx={{ px: 4, py: 1 }}
                                                 >
                                                     <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                                    <Typography variant="textButtonClassic">Request Cancellation</Typography>
+                                                    <Typography variant="textButtonClassic">Cancel Service Area Request</Typography>
                                                 </Button>
                                             </Box>
                                         )}
@@ -1094,8 +1096,8 @@ function ServiceAreaDetails() {
                 requestServiceAreaID={serviceAreaDetails?.RequestNo || 0}
             />
 
-            {/* Request Cancellation Popup for Request Owner */}
-            <ConfirmDialog
+            {/* Request Cancellation Popup for Request Owner - removed as we now navigate to form */}
+            {/* <ConfirmDialog
                 open={openRequestCancellationPopup}
                 setOpenConfirm={setOpenRequestCancellationPopup}
                 handleFunction={handleRequestCancellationConfirm}
@@ -1103,7 +1105,7 @@ function ServiceAreaDetails() {
                 message={`Are you sure you want to request cancellation for the service area request for ${serviceAreaDetails?.CompanyName || 'this company'}? Please provide a reason for cancellation.`}
                 buttonActive={isSubmittingCancellationRequest}
                 showNoteField={true}
-            />
+            /> */}
 
             {/* Submit Cancellation Popup for DocumentOperator */}
             <ConfirmDialog
