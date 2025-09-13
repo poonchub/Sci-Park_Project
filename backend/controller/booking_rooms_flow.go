@@ -69,6 +69,7 @@ func GetBookingRoomByID(c *gin.Context) {
 			Status:     "unpaid",
 			SlipImages: []string{},
 		},
+		Notifications:   booking.Notifications,
 	}
 
 	// ถ้ามี payment → ใช้ตัวล่าสุด

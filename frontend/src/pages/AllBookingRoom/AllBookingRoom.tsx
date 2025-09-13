@@ -82,7 +82,7 @@ interface BookingRoomsInterface {
         date?: string;
         slipImages?: string[]; // ✅ เพิ่มตรงนี้
     };
-    Notifications?:  NotificationsInterface
+    Notifications?: NotificationsInterface
 }
 
 
@@ -856,42 +856,23 @@ function AllBookingRoom() {
 
         socket.on("booking_room_created", (data) => {
             console.log("📦 New booking room request:", data);
-            if (
-                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
-                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
-                (user?.RequestType?.TypeName === "Both")
-            ) {
-                setTimeout(() => {
-                    getNewBookingRoom(data.ID);
-                }, 1500);
-            }
+            setTimeout(() => {
+                getNewBookingRoom(data.ID);
+            }, 1500);
         });
 
         socket.on("maintenance_updated", (data) => {
             console.log("🔄 Maintenance request updated:", data);
-            console.log("user: ", user)
-            if (
-                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
-                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
-                (user?.RequestType?.TypeName === "Both")
-            ) {
-                setTimeout(() => {
-                    getUpdateBookingRoom(data.ID);
-                }, 1500);
-            }
+            setTimeout(() => {
+                getUpdateBookingRoom(data.ID);
+            }, 1500);
         });
 
         socket.on("maintenance_deleted", (data) => {
             console.log("🔄 Maintenance request deleted:", data);
-            if (
-                (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
-                (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
-                (user?.RequestType?.TypeName === "Both")
-            ) {
-                setTimeout(() => {
-                    setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
-                }, 1500);
-            }
+            setTimeout(() => {
+                setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
+            }, 1500);
         });
 
         return () => {
