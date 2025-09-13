@@ -643,7 +643,7 @@ function ServiceAreaDetails() {
                                                 )}
 
                                                 {/* Service Area Documents */}
-                                                {(serviceAreaDetails?.ServiceContractDocument || serviceAreaDetails?.AreaHandoverDocument || serviceAreaDetails?.QuotationDocument || serviceAreaDetails?.RefundGuaranteeDocument) && (
+                                                {(serviceAreaDetails?.ServiceContractDocument || serviceAreaDetails?.AreaHandoverDocument || serviceAreaDetails?.QuotationDocument) && (
                                                     <Box sx={{ mb: 3 }}>
                                                         <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'black' }}>
                                                             Service Area Documents
@@ -713,30 +713,6 @@ function ServiceAreaDetails() {
                                                                         <Grid size={{ xs: 12, sm: 8 }}>
                                                                             <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
                                                                                 <Button size="small" variant="outlinedGray" onClick={() => DownloadQuotationDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.QuotationDocument?.split('/').pop())}>
-                                                                                    <Download size={16} style={{ marginRight: 6 }} />
-                                                                                    Download
-                                                                                </Button>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                    </Grid>
-                                                                </Grid>
-                                                            )}
-                                                            {serviceAreaDetails?.RefundGuaranteeDocument && (
-                                                                <Grid size={{ xs: 12, sm: 12 }}>
-                                                                    <Grid container spacing={2} alignItems="center">
-                                                                        <Grid size={{ xs: 12, sm: 9 }}>
-                                                                            <Box>
-                                                                                <Typography variant="body2" color="text.secondary">
-                                                                                    Refund Guarantee Document:
-                                                                                </Typography>
-                                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                                                    {serviceAreaDetails.RefundGuaranteeDocument.split('/').pop()}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid size={{ xs: 12, sm: 3 }}>
-                                                                            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                                                                                <Button size="small" variant="outlinedGray" onClick={() => DownloadRefundGuaranteeDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.RefundGuaranteeDocument?.split('/').pop())}>
                                                                                     <Download size={16} style={{ marginRight: 6 }} />
                                                                                     Download
                                                                                 </Button>
@@ -853,12 +829,38 @@ function ServiceAreaDetails() {
                                                     )}
 
                                                     {/* Cancellation Documents */}
-                                                    {(serviceAreaDetails.CancellationDetails.CancellationDocument || serviceAreaDetails.CancellationDetails.BankAccountDocument) && (
+                                                    {(serviceAreaDetails.CancellationDetails.CancellationDocument || serviceAreaDetails.CancellationDetails.BankAccountDocument || serviceAreaDetails?.RefundGuaranteeDocument) && (
                                                         <Grid size={{ xs: 12 }}>
                                                             <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: 'black' }}>
                                                                 Cancellation Documents
                                                             </Typography>
                                                             <Grid container spacing={2}>
+                                                                {/* Refund Guarantee Document */}
+                                                                {serviceAreaDetails?.RefundGuaranteeDocument && (
+                                                                    <Grid size={{ xs: 12, sm: 12 }}>
+                                                                        <Grid container spacing={2} alignItems="center">
+                                                                            <Grid size={{ xs: 12, sm: 4 }}>
+                                                                                <Box>
+                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                        Refund Guarantee Document:
+                                                                                    </Typography>
+                                                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                                        {serviceAreaDetails.RefundGuaranteeDocument.split('/').pop()}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                            <Grid size={{ xs: 12, sm: 8 }}>
+                                                                                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                                                                                    <Button size="small" variant="outlinedGray" onClick={() => DownloadRefundGuaranteeDocument(serviceAreaDetails?.RequestNo as number, serviceAreaDetails?.RefundGuaranteeDocument?.split('/').pop())}>
+                                                                                        <Download size={16} style={{ marginRight: 6 }} />
+                                                                                        Download
+                                                                                    </Button>
+                                                                                </Box>
+                                                                            </Grid>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
+
                                                                 {/* Cancellation Document */}
                                                                 {serviceAreaDetails.CancellationDetails.CancellationDocument && (
                                                                     <Grid size={{ xs: 12, sm: 12 }}>
