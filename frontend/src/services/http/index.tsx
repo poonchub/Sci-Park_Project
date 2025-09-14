@@ -3615,6 +3615,32 @@ async function PatchCollaborationPlans(requestServiceAreaID: number, plans: any[
     }
 }
 
+// Get Service Area Document for Edit
+async function GetServiceAreaDocumentForEdit(requestServiceAreaID: number) {
+    try {
+        const response = await axiosInstance.get(`/service-area-documents/${requestServiceAreaID}/edit`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching service area document for edit:", error);
+        throw error;
+    }
+}
+
+// Update Service Area Document for Edit
+async function UpdateServiceAreaDocumentForEdit(requestServiceAreaID: number, formData: FormData) {
+    try {
+        const response = await axiosInstance.patch(`/service-area-documents/${requestServiceAreaID}/edit`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating service area document for edit:", error);
+        throw error;
+    }
+}
+
 
 export {
     // RequestStatuses
@@ -3873,4 +3899,8 @@ export {
     // Collaboration Plans
     GetCollaborationPlansByRequestID,
     PatchCollaborationPlans,
+    
+    // ServiceAreaDocument Edit
+    GetServiceAreaDocumentForEdit,
+    UpdateServiceAreaDocumentForEdit,
 };

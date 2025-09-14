@@ -245,6 +245,10 @@ func main() {
 		protected.PUT("/service-area-documents/:request_service_area_id/cancellation", controller.UpdateServiceAreaDocumentForCancellation)
 		protected.DELETE("/service-area-documents/:request_service_area_id", controller.DeleteServiceAreaDocument)
 
+		// ServiceAreaDocument Edit
+		protected.GET("/service-area-documents/:request_service_area_id/edit", controller.GetServiceAreaDocumentForEdit)
+		protected.PATCH("/service-area-documents/:request_service_area_id/edit", controller.UpdateServiceAreaDocumentForEdit)
+
 		// RequestServiceArea & AboutCompany
 		protected.POST("/request-service-area/:user_id", controller.CreateRequestServiceAreaAndAboutCompany)
 		protected.GET("/request-service-area/:user_id", controller.GetRequestServiceAreaByUserID)
