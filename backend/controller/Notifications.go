@@ -32,6 +32,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 	var invoiceCount int64
 	var serviceAreaRequestCount int64
 	var serviceAreaTaskCount int64
+	var bookingRoomCount int64
 
 	db := config.DB()
 
@@ -56,11 +57,16 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 		Where("is_read = ? AND service_area_task_id != 0 AND service_area_request_id = 0 AND user_id = ?", false, userID).
 		Count(&serviceAreaTaskCount)
 
+	db.Model(&entity.Notification{}).
+		Where("is_read = ? AND booking_room_id != 0 AND user_id = ?", false, userID).
+		Count(&bookingRoomCount)
+
 	c.JSON(http.StatusOK, gin.H{
 		"UnreadRequests":            requestCount,
 		"UnreadTasks":               taskCount,
 		"UnreadInvoice":             invoiceCount,
 		"UnreadServiceAreaRequests": serviceAreaRequestCount + serviceAreaTaskCount, // รวม service area requests และ tasks
+		"UnreadBookingRoom": 		 bookingRoomCount,
 	})
 }
 
@@ -126,6 +132,7 @@ func CreateNotification(c *gin.Context) {
 		RentalRoomInvoiceID  uint
 		ServiceAreaRequestID uint
 		ServiceAreaTaskID    uint
+		BookingRoomID        uint
 	}
 	if err := c.ShouldBindJSON(&notificationInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -135,8 +142,8 @@ func CreateNotification(c *gin.Context) {
 	// Check if at least one ID is provided
 	if notificationInput.RequestID == 0 && notificationInput.TaskID == 0 &&
 		notificationInput.RentalRoomInvoiceID == 0 && notificationInput.ServiceAreaRequestID == 0 &&
-		notificationInput.ServiceAreaTaskID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id, task_id, rental_room_invoice_id, service_area_request_id, or service_area_task_id."})
+		notificationInput.ServiceAreaTaskID == 0 && notificationInput.BookingRoomID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id, task_id, rental_room_invoice_id, booking_room_id, service_area_request_id, or service_area_task_id."})
 		return
 	}
 
@@ -391,6 +398,76 @@ func CreateNotification(c *gin.Context) {
 			"count":   1,
 			"data":    noti,
 		})
+	case notificationInput.BookingRoomID != 0:
+		var bookingRoom entity.BookingRoom
+		if err := db.First(&bookingRoom, notificationInput.BookingRoomID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The specified booking room was not found."})
+			return
+		}
+
+		// หา role admin
+		var adminRole entity.Role
+		if err := db.Where("name = ?", "Admin").First(&adminRole).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The role named Admin was not found."})
+			return
+		}
+
+		// หา role manager
+		var managerRole entity.Role
+		if err := db.Where("name = ?", "Manager").First(&managerRole).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "The role named Manager was not found."})
+			return
+		}
+
+		// ดึง admin และ manager ทุกคน
+		var recipients []entity.User
+		if err := db.Where("role_id = ? OR role_id = ?", adminRole.ID, managerRole.ID).Find(&recipients).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve admins and managers."})
+			return
+		}
+
+		var createdNotifications []entity.Notification
+
+		for _, user := range recipients {
+			noti := entity.Notification{
+				IsRead:        false,
+				BookingRoomID: notificationInput.BookingRoomID,
+				UserID:        user.ID,
+			}
+			if err := db.Create(&noti).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Notification."})
+				return
+			}
+			createdNotifications = append(createdNotifications, noti)
+		}
+
+		exists := false
+		for _, u := range recipients {
+			if u.ID == bookingRoom.UserID {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			notiForUser := entity.Notification{
+				IsRead:        true,
+				BookingRoomID: notificationInput.BookingRoomID,
+				UserID:        bookingRoom.UserID,
+			}
+			if err := db.Create(&notiForUser).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Notification."})
+				return
+			}
+			createdNotifications = append(createdNotifications, notiForUser)
+		}
+
+		services.NotifySocketEvent("notification_created", createdNotifications)
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Created success",
+			"count":   len(createdNotifications),
+			"data":    createdNotifications,
+		})
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Please specify at least one request_id, task_id, rental_room_invoice_id, service_area_request_id, or service_area_task_id."})
 		return
@@ -578,4 +655,48 @@ func UpdateNotificationsByServiceAreaTaskID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Service area task notifications updated successfully"})
+}
+
+// PATCH /notifications/booking-room/:booking_room_id
+func UpdateNotificationsByBookingRoomID(c *gin.Context) {
+	bookingID := c.Param("booking_room_id")
+
+	db := config.DB()
+
+	// ดึง notifications ทั้งหมดที่มี booking_room_id ตรงกัน
+	var notifications []entity.Notification
+	if err := db.Where("booking_room_id = ?", bookingID).Find(&notifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find notifications"})
+		return
+	}
+
+	if len(notifications) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No notifications found for this booking room ID"})
+		return
+	}
+
+	var updateData map[string]interface{}
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	// อัปเดตแบบ bulk
+	if err := db.Model(&entity.Notification{}).
+		Where("booking_room_id = ?", bookingID).
+		Updates(updateData).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update notifications"})
+		return
+	}
+
+	// Broadcast socket event (optional)
+	services.NotifySocketEvent("notification_updated_bulk", gin.H{
+		"booking_room_id": bookingID,
+		"updated":    updateData,
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Notifications updated successfully",
+		"data":    updateData,
+	})
 }

@@ -32,6 +32,7 @@ import {
   CompleteBookingRoom,
   ApprovePayment,
   RejectPayment,
+  apiUrl,
 } from "../../services/http";
 import UploadSlipButton from "../../components/UploadSlipButton/UploadSlipButton";
 
@@ -74,13 +75,123 @@ type BookingLike = {
 type PaymentObj = NonNullable<BookingLike["Payment"]>;
 type PaymentStatus = NonNullable<PaymentObj["status"]>;
 
-// ---------- Helpers ----------
-function prefixImage(url: string) {
-  return url.startsWith("http") ? url : `http://localhost:8000${url}`;
+// ---------- Small helpers ----------
+const norm = (s?: string) => (s || "").trim().toLowerCase();
+const prefixImage = (url: string) => (url.startsWith("http") ? url : `${apiUrl}/${url}`);
+
+// ✅ แปลงเป็น key สำหรับ “ตัดสินใจปุ่ม”
+type LogicKey =
+  | "unpaid"
+  | "pending_payment"
+  | "pending_verification"
+  | "rejected"
+  | "paid"
+  | "refunded";
+
+function toLogicStatus(raw?: string): LogicKey {
+  const k = norm(raw);
+  if (k === "paid" || k === "approved") return "paid";
+  if (k === "refunded") return "refunded";
+  if (k === "pending verification" || k === "submitted") return "pending_verification";
+  if (k === "rejected") return "rejected";
+  if (k === "pending payment" || k === "awaiting payment" || k === "unpaid") return "pending_payment";
+  return "unpaid";
 }
 
-function PaymentChip({ status }: { status?: string }) {
-  const st = (status || "unpaid").toLowerCase();
+// ✅ map LogicKey -> StepperPaymentStatus (ที่ Stepper รองรับ)
+function toStepperPaymentStatusFromLogic(k: LogicKey): StepperPaymentStatus {
+  switch (k) {
+    case "paid":
+      return "paid";
+    case "refunded":
+      return "refunded";
+    case "pending_verification":
+      return "pending verification";
+    case "rejected":
+    case "pending_payment":
+    case "unpaid":
+    default:
+      return "pending payment";
+  }
+}
+
+// ---------- Multi-installments ----------
+type InstallmentStep = {
+  key: string; // 'deposit' | 'final' | 'addon' | 'payment-#1' ...
+  label: string; // 'Deposit' | 'Final Payment' | 'Add-on' | 'Payment #1'
+  status: StepperPaymentStatus; // ใช้สถานะที่ stepper รองรับ
+  slipCount: number;
+  paidCount: number;
+  paymentIds: number[];
+};
+
+function labelByInvoiceType(t?: string, i?: number) {
+  const key = norm(t);
+  if (key === "deposit") return "Deposit";
+  if (key === "final" || key === "final payment") return "Final Payment";
+  if (key === "addon" || key === "add-on") return "Add-on";
+  return `Payment #${(i ?? 0) + 1}`;
+}
+
+function mapPaymentStatusFromRecord(p?: BookingLike["Payments"][number]): StepperPaymentStatus {
+  const s = norm(p?.Status?.Name);
+  if (s.includes("approve") || s === "paid") return "paid";
+  if (s.includes("pending")) return "pending verification";
+  if (s.includes("reject")) return "pending payment";
+  if (p?.SlipPath) return "submitted";
+  return "pending payment";
+}
+
+function buildInstallments(booking?: BookingLike): InstallmentStep[] {
+  if (!booking?.Payments?.length) return [];
+  const groups: Record<string, InstallmentStep> = {};
+
+  booking.Payments.forEach((p, idx) => {
+    const type = p?.Invoice?.InvoiceType;
+    const key = (type || `payment-${idx + 1}`).toLowerCase();
+    const label = labelByInvoiceType(type, idx);
+    const st = mapPaymentStatusFromRecord(p);
+
+    if (!groups[key]) {
+      groups[key] = {
+        key,
+        label,
+        status: "pending payment",
+        slipCount: 0,
+        paidCount: 0,
+        paymentIds: [],
+      };
+    }
+    const g = groups[key];
+
+    if (p?.SlipPath) g.slipCount += 1;
+    if (st === "paid") g.paidCount += 1;
+    g.paymentIds.push(p?.ID || 0);
+
+    // ความเข้มของสถานะ: paid > pending verification/submitted > pending payment
+    if (st === "paid") g.status = "paid";
+    else if (["pending verification", "submitted"].includes(st) && g.status !== "paid") {
+      g.status = st as StepperPaymentStatus;
+    }
+  });
+
+  return Object.values(groups);
+}
+
+function combineOverallPaymentStatus(installments: InstallmentStep[]): StepperPaymentStatus {
+  if (!installments.length) return "pending payment";
+  if (installments.some((i) => i.status === "pending verification" || i.status === "submitted")) {
+    return "submitted";
+  }
+  if (installments.some((i) => i.status !== "paid")) {
+    return "pending payment";
+  }
+  return "paid";
+}
+
+// ---------- Badges ----------
+function PaymentChip({ status }: { status?: StepperPaymentStatus }) {
+  const st = (status || "pending payment").toLowerCase() as StepperPaymentStatus;
   const meta =
     st === "paid"
       ? { label: "Paid", color: "#16a34a", bg: "#dcfce7" }
@@ -88,9 +199,7 @@ function PaymentChip({ status }: { status?: string }) {
       ? { label: "Refunded", color: "#0ea5e9", bg: "#e0f2fe" }
       : st === "submitted" || st === "pending verification"
       ? { label: "Submitted", color: "#b45309", bg: "#fef3c7" }
-      : st === "pending payment"
-      ? { label: "Pending Payment", color: "#6b7280", bg: "#f3f4f6" }
-      : { label: "Unpaid", color: "#ef4444", bg: "#fee2e2" };
+      : { label: "Pending Payment", color: "#6b7280", bg: "#f3f4f6" };
 
   return (
     <Chip
@@ -126,102 +235,53 @@ function StatusChip({ statusName }: { statusName?: string }) {
   );
 }
 
-// ✅ แปลงสถานะไปเป็นชนิดที่ BookingStepper รองรับ
-type PaymentSummary = NonNullable<BookingLike["Payment"]>;
-function toStepperPaymentStatus(raw?: PaymentStatus): StepperPaymentStatus {
-  const s = (raw || "").toLowerCase();
-  switch (s) {
-    case "paid":
-      return "paid";
-    case "refunded":
-      return "refunded";
-    case "submitted":
-      return "submitted";
-    case "pending verification":
-      return "pending verification";
-    case "pending payment":
-      return "pending payment";
-    case "unpaid":
-    default:
-      return "pending payment";
-  }
-}
+// ---------- Normalize booking (สำคัญมาก) ----------
+function normalizeBooking(b?: BookingLike | null): BookingLike | null {
+  if (!b) return b;
 
-// ---------- Multi-installments ----------
-type InstallmentStep = {
-  key: string; // 'deposit' | 'final' | 'addon' | 'payment-#1' ...
-  label: string; // 'Deposit' | 'Final Payment' | 'Add-on' | 'Payment #1'
-  status: StepperPaymentStatus; // ใช้สถานะที่ stepper รองรับ
-  slipCount: number;
-  paidCount: number;
-  paymentIds: number[];
-};
+  // เลือก payment ล่าสุด (ตาม index สุดท้าย)
+  const latest = b?.Payments?.length ? b.Payments[b.Payments.length - 1] : undefined;
 
-function mapPaymentStatusFromRecord(p?: BookingLike["Payments"][number]): StepperPaymentStatus {
-  const s = (p?.Status?.Name || "").toLowerCase();
-  if (s.includes("approve") || s === "paid") return "paid";
-  if (s.includes("pending")) return "pending verification";
-  if (s.includes("reject")) return "pending payment";
-  if (p?.SlipPath) return "submitted";
-  return "pending payment";
-}
+  // รวม slip images: จาก Payments[*].SlipPath ก่อน, ถ้าไม่มีค่อยใช้ Payment.slipImages/SlipPath
+  const slipFromArray =
+    b?.Payments?.filter((p) => !!p.SlipPath).map((p) => prefixImage(p.SlipPath!)) || [];
+  const slipFromSummary =
+    (Array.isArray(b?.Payment?.slipImages) && b?.Payment?.slipImages?.length
+      ? b?.Payment?.slipImages
+      : []) || [];
 
-function labelByInvoiceType(t?: string, i?: number) {
-  const key = (t || "").toLowerCase();
-  if (key === "deposit") return "Deposit";
-  if (key === "final" || key === "final payment") return "Final Payment";
-  if (key === "addon" || key === "add-on") return "Add-on";
-  return `Payment #${(i ?? 0) + 1}`;
-}
+  // ถ้า summary ไม่มีรูป ให้เอาจาก array
+  const slipImages = slipFromSummary.length ? slipFromSummary : slipFromArray;
 
-function buildInstallments(booking?: BookingLike): InstallmentStep[] {
-  if (!booking?.Payments?.length) return [];
-  const groups: Record<string, InstallmentStep> = {};
+  // raw status ที่พอหาได้
+  const raw =
+    b?.Payment?.status ||
+    (latest?.Status?.Name?.toLowerCase() as PaymentStatus | undefined) ||
+    (slipImages.length ? ("submitted" as PaymentStatus) : ("pending payment" as PaymentStatus));
 
-  booking.Payments.forEach((p, idx) => {
-    const type = p?.Invoice?.InvoiceType;
-    const key = (type || `payment-${idx + 1}`).toLowerCase();
-    const label = labelByInvoiceType(type, idx);
-    const st = mapPaymentStatusFromRecord(p);
+  // แปลงเป็น logicKey แล้วค่อยแปลงเป็น Stepper key
+  const logicKey = toLogicStatus(raw);
+  const stepperKey = toStepperPaymentStatusFromLogic(logicKey);
 
-    if (!groups[key]) {
-      groups[key] = {
-        key,
-        label,
-        status: "pending payment",
-        slipCount: 0,
-        paidCount: 0,
-        paymentIds: [],
-      };
-    }
-    const g = groups[key];
+  const note = b?.Payment?.note ?? latest?.Note ?? undefined;
+  const amount =
+    typeof b?.Payment?.amount === "number"
+      ? b.Payment!.amount
+      : typeof latest?.Amount === "number"
+      ? latest!.Amount
+      : undefined;
+  const paymentDate = b?.Payment?.paymentDate ?? latest?.PaymentDate ?? undefined;
 
-    if (p?.SlipPath) g.slipCount += 1;
-    if (st === "paid") g.paidCount += 1;
-    g.paymentIds.push(p?.ID || 0);
+  b.Payment = {
+    id: b?.Payment?.id ?? latest?.ID,
+    status: stepperKey as PaymentStatus,
+    slipImages,
+    note,
+    amount,
+    paymentDate,
+  };
 
-    // ระดับความเข้มของสถานะ: paid > pending verification/submitted > pending payment
-    if (st === "paid") g.status = "paid";
-    else if (["pending verification", "submitted"].includes(st) && g.status !== "paid") {
-      g.status = st as StepperPaymentStatus;
-    }
-  });
-
-  return Object.values(groups);
-}
-
-function combineOverallPaymentStatus(installments: InstallmentStep[]): StepperPaymentStatus {
-  if (!installments.length) return "pending payment";
-  if (installments.some((i) => i.status === "pending verification" || i.status === "submitted")) {
-    // มีงวดที่กำลังตรวจ/เพิ่งส่งสลิป
-    return "submitted";
-  }
-  if (installments.some((i) => i.status !== "paid")) {
-    // ยังมีงวดที่ยังไม่จ่ายครบ
-    return "pending payment";
-  }
-  // ทุกงวดจ่ายครบ
-  return "paid";
+  return b;
 }
 
 // ---------- Page ----------
@@ -249,48 +309,9 @@ export default function BookingReview() {
           setBooking(null);
           return;
         }
-        const b: BookingLike = await GetBookingRoomById(bookingId);
-
-        // ----- หา payment ล่าสุด ถ้ามี -----
-        const latest = b?.Payments?.length ? b.Payments[b.Payments.length - 1] : undefined;
-
-        // สร้าง slipImages
-        const slipFromArray =
-          b?.Payments?.filter((p) => !!p.SlipPath).map((p) => prefixImage(p.SlipPath!)) || [];
-        const slipFromSummary = b?.Payment?.slipImages || [];
-        const slipImages = slipFromArray.length ? slipFromArray : slipFromSummary;
-
-        // ค่าจากสถานะล่าสุด
-        const statusFromLatest = (latest?.Status?.Name?.toLowerCase() ||
-          undefined) as PaymentStatus | undefined;
-
-        // เลือกสถานะที่เหมาะสม
-        const normalizedStatus: PaymentStatus =
-          (b?.Payment?.status as PaymentStatus | undefined) ??
-          statusFromLatest ??
-          (slipImages.length ? "submitted" : "pending payment");
-
-        // note / amount / paymentDate
-        const note = b?.Payment?.note ?? latest?.Note ?? undefined;
-        const amount =
-          typeof b?.Payment?.amount === "number"
-            ? b.Payment!.amount
-            : typeof latest?.Amount === "number"
-            ? latest!.Amount
-            : undefined;
-        const paymentDate = b?.Payment?.paymentDate ?? latest?.PaymentDate ?? undefined;
-
-        // ✅ normalize ให้มี payment summary เสมอ
-        b.Payment = {
-          id: latest?.ID ?? b?.Payment?.id,
-          status: normalizedStatus,
-          slipImages,
-          note,
-          amount,
-          paymentDate,
-        };
-
-        setBooking(b);
+        const raw: BookingLike = await GetBookingRoomById(bookingId);
+        console.log("raw", raw);
+        setBooking(normalizeBooking(raw));
       } finally {
         setLoading(false);
       }
@@ -299,10 +320,10 @@ export default function BookingReview() {
 
   const statusName = booking?.StatusName || "pending";
 
-  // ✅ ผูก payment summary ตัวเดียว
-  const payment: PaymentSummary = booking?.Payment ?? {};
+  // ✅ Summary ที่ Normalize แล้ว
+  const payment = booking?.Payment ?? {};
 
-  // ✅ สร้างงวดการจ่าย + สถานะรวมของการจ่าย
+  // ✅ งวดการจ่าย + สถานะรวมของการจ่าย (รองรับ deposit/final/add-on)
   const installments = useMemo(() => buildInstallments(booking || undefined), [booking]);
   const overallPaymentStatus: StepperPaymentStatus = useMemo(
     () => combineOverallPaymentStatus(installments),
@@ -317,7 +338,7 @@ export default function BookingReview() {
   const refreshBooking = async () => {
     if (!booking) return;
     const updated = await GetBookingRoomById(booking.ID);
-    setBooking(updated);
+    setBooking(normalizeBooking(updated));
   };
 
   const handleBack = () => navigate(-1);
@@ -351,7 +372,7 @@ export default function BookingReview() {
           break;
       }
       const refreshed = await GetBookingRoomById(bookingId);
-      setBooking(refreshed);
+      setBooking(normalizeBooking(refreshed));
     } catch {
       setAlerts((p) => [...p, { type: "error", message: `Action ${key} failed` }]);
     }
@@ -380,6 +401,16 @@ export default function BookingReview() {
       </Container>
     );
   }
+
+  // เงื่อนไขแสดงปุ่ม Upload/Reupload สำหรับ Owner (จากหน้า my)
+  const logicKey = toLogicStatus(payment?.status);
+  const canOwnerUploadOrUpdate =
+    fromSource === "my" &&
+    ["unpaid", "pending_payment", "rejected", "pending_verification"].includes(logicKey);
+
+  // Admin/Manager แสดง approve/reject payment เมื่ออยู่ช่วง Payment Review
+  const isPaymentReview = getDisplayStatus(booking) === "payment review";
+  const isAdminRole = role === "Admin" || role === "Manager";
 
   return (
     <Box className="booking-review-page">
@@ -584,10 +615,9 @@ export default function BookingReview() {
                     </Grid>
                   </Grid>
 
-                  {/* Actions */}
-                  {fromSource === "my" &&
-                  payment?.status === "pending payment" &&
-                  !payment?.slipImages?.length ? (
+                  {/* ===== Actions ===== */}
+                  {/* Owner (จากหน้า My): อัป/แก้สลิปได้ในสถานะที่กำหนด */}
+                  {canOwnerUploadOrUpdate ? (
                     <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
                         <UploadSlipButton
@@ -603,30 +633,32 @@ export default function BookingReview() {
                         />
                       </Box>
                     </Grid>
-                  ) : getDisplayStatus(booking) === "payment review" ? (
-                    role === "Admin" || role === "Manager" ? (
-                      <Grid size={{ xs: 12 }}>
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                          <Button
-                            variant="contained"
-                            color="error"
-                            sx={{ minWidth: 140 }}
-                            onClick={() => handleNextAction("rejectPayment")}
-                          >
-                            Reject Payment
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ minWidth: 160 }}
-                            onClick={() => handleNextAction("approvePayment")}
-                          >
-                            Approve Payment
-                          </Button>
-                        </Box>
-                      </Grid>
-                    ) : null
+                  ) : isPaymentReview && isAdminRole ? (
+                    // Admin/Manager: ช่วง Payment Review → แสดง Approve/Reject Payment
+                    <Grid size={{ xs: 12 }}>
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          sx={{ minWidth: 140 }}
+                          onClick={() => handleNextAction("rejectPayment")}
+                          disabled={!payment?.id}
+                        >
+                          Reject Payment
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          sx={{ minWidth: 160 }}
+                          onClick={() => handleNextAction("approvePayment")}
+                          disabled={!payment?.id}
+                        >
+                          Approve Payment
+                        </Button>
+                      </Box>
+                    </Grid>
                   ) : (
+                    // ปุ่มต่อไปตาม flow (approve/reject booking, complete ฯลฯ)
                     <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 2 }}>
                       {next && (
                         <Button
@@ -634,12 +666,7 @@ export default function BookingReview() {
                           color="primary"
                           onClick={() =>
                             handleNextAction(
-                              next.key as
-                                | "approve"
-                                | "approvePayment"
-                                | "complete"
-                                | "reject"
-                                | "rejectPayment"
+                              next.key as "approve" | "approvePayment" | "complete" | "reject" | "rejectPayment"
                             )
                           }
                         >

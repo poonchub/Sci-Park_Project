@@ -1573,6 +1573,20 @@ async function UpdateNotificationsByTaskID(data: NotificationsInterface, task_id
         throw error;
     }
 }
+async function UpdateNotificationsByBookingRoomID(data: NotificationsInterface, booking_room_id: Number | undefined) {
+    try {
+        const response = await axiosInstance.patch(`/notifications/booking-room/${booking_room_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating notification:", error);
+        throw error;
+    }
+}
 
 // BookingRooms
 async function ListBookingRooms() {
@@ -3178,19 +3192,19 @@ async function GetRequestServiceAreasByUserID(userId: number, page: number = 1, 
 }) {
     try {
         const params = new URLSearchParams();
-        
+
         params.append('page', page.toString());
         params.append('limit', limit.toString());
-        
+
         if (options?.month_year) {
             params.append('month_year', options.month_year);
         }
-        
+
         const queryString = params.toString();
         const url = `/request-service-areas/user/${userId}${queryString ? `?${queryString}` : ''}`;
-        
+
         const response = await axiosInstance.get(url);
-        
+
         return response.data;
     } catch (error: any) {
         console.error("Error fetching request service areas by user id:", error);
@@ -3400,31 +3414,60 @@ export async function CompleteBookingRoom(id: number) {
 
 export async function SubmitPaymentSlip(
     bookingId: number,
-    file: File,
-    payload: { PaymentDate?: string; Amount: number; Note?: string; PayerID: number; },
-    cfg?: AxiosRequestConfig
+    fileLike: File | Blob | string,
+    extra?: Record<string, any>
 ) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("Amount", String(payload.Amount));
-    formData.append("PayerID", String(payload.PayerID));
-    if (payload.PaymentDate) formData.append("PaymentDate", payload.PaymentDate);
-    if (payload.Note) formData.append("Note", payload.Note);
+    // แปลงอะไรก็ตามให้เป็น File จริง
+    const toFile = (input: any): File | null => {
+        if (input instanceof File) return input;
+        if (input instanceof Blob) return new File([input], "slip.jpg", { type: input.type || "application/octet-stream" });
+        if (typeof input === "string" && input.startsWith("data:")) {
+            const [meta, data] = input.split(",");
+            const mime = (meta.match(/data:(.*?);/) || [])[1] || "image/png";
+            const bin = atob(data);
+            const arr = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            return new File([arr], "slip.png", { type: mime });
+        }
+        return null;
+    };
 
-    // ไม่ต้องใส่ Content-Type เอง ให้ browser ใส่ boundary ให้
-    const res = await axiosInstance.post(
-        `/booking-rooms/${bookingId}/payments`,
-        formData,
-        { ...(cfg || {}) }
-    );
-    return res.data;
+    const file = toFile(fileLike);
+    if (!file) throw new Error("Invalid file payload");
+
+    const fd = new FormData();
+    fd.append("slip", file, file.name);
+    if (extra) {
+        Object.entries(extra).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) fd.append(k, String(v));
+        });
+    }
+
+    // ✅ debug ให้เห็นจริงว่ามีอะไรอยู่ใน FormData
+    for (const [k, v] of fd.entries()) {
+        console.log("FD ->", k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
+    }
+
+    const res = await fetch(`${apiUrl}/booking-rooms/${bookingId}/payments`, {
+        method: "POST",
+        body: fd, // อย่าใส่ Content-Type เอง
+    });
+
+    if (!res.ok) {
+        const msg = await res.text().catch(() => "upload failed");
+        throw new Error(msg);
+    }
+    return res.json();
 }
+
+
 
 
 
 // ✅ อนุมัติการชำระเงิน
 export async function ApprovePayment(paymentId: number) {
     try {
+        console.log(`Approving payment ${paymentId}`);
         const res = await axiosInstance.post(`/payments/${paymentId}/approve`);
         return res.data;
     } catch (err) {
@@ -3529,6 +3572,23 @@ async function ListPaymentOptions(): Promise<PaymentOptionInterface[]> {
         throw error;
     }
 }
+// services/http.ts
+
+// services/http.ts
+export const UploadPaymentReceipt = async (paymentId: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, { method: "POST", body: form });
+    if (!res.ok) throw new Error("upload receipt failed");
+    return res.json();
+};
+
+export const DeletePaymentReceipt = async (paymentId: number) => {
+    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("delete receipt failed");
+    return res.json();
+};
+
 
 export {
     // RequestStatuses
@@ -3649,6 +3709,7 @@ export {
     UpdateNotificationsByTaskID,
     UpdateNotificationsByServiceAreaRequestID,
     UpdateNotificationsByServiceAreaTaskID,
+    UpdateNotificationsByBookingRoomID,
 
     // BookingRooms
     ListBookingRooms,
@@ -3767,7 +3828,7 @@ export {
 
     // Cancel Request Service Area
     CancelRequestServiceArea,
-    
+
     // RoomBookingInvoice
     CreateRoomBookingInvoice,
     GetRoomBookingInvoiceByID,

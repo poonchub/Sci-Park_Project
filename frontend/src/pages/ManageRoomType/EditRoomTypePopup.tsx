@@ -99,6 +99,52 @@ const SectionHeader = ({ variant, title }: { variant: SectionVariant; title: str
 };
 
 const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open, onClose }) => {
+
+  // +++
+  type RTImage = { file?: File; FilePath?: string; RelativePath?: string };
+
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const dirInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // ใส่ webkitdirectory ให้ input โฟลเดอร์ (Chrome/Edge/Safari)
+  React.useEffect(() => {
+    if (dirInputRef.current) {
+      dirInputRef.current.setAttribute("webkitdirectory", "");
+      dirInputRef.current.setAttribute("directory", "");
+    }
+  }, []);
+
+  const handleAddFiles = React.useCallback((list: FileList | File[]) => {
+    const files = Array.from(list).filter(f => f.type.startsWith("image/"));
+    if (!files.length) return;
+
+    const mapped: RTImage[] = files.map((f: File) => ({
+      file: f,
+      FilePath: "",
+      RelativePath: (f as any).webkitRelativePath || f.name, // เก็บ path ภายในโฟลเดอร์ถ้ามี
+    }));
+
+    setRoomType(prev => ({
+      ...(prev as any),
+      RoomTypeImages: [...(prev?.RoomTypeImages || []), ...mapped],
+    }));
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      handleAddFiles(e.target.files);
+      // รีเซ็ตเพื่อให้เลือกไฟล์ชื่อเดิมซ้ำได้อีก
+      e.target.value = "";
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files?.length) {
+      handleAddFiles(e.dataTransfer.files);
+    }
+  };
+
   const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm();
   const [roomType, setRoomType] = useState<RoomtypesInterface | null>(null);
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
@@ -262,11 +308,13 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
       )
     );
 
-    (roomType.RoomTypeImages ?? []).forEach(img => {
+    (roomType.RoomTypeImages ?? []).forEach((img: any) => {
       if (img.file) {
-        formDataToSend.append("images", img.file);
+        formDataToSend.append("images", img.file); // อัปไฟล์
+        formDataToSend.append("paths", img.RelativePath || img.file.name); // ส่ง path ภายในโฟลเดอร์ไปคู่กัน
       }
     });
+
 
     try {
       const response = await UpdateRoomType(roomTypeID, formDataToSend);
@@ -340,7 +388,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1,  }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
                       Room Size (sq.m.)
                     </Typography>
                     <Controller
@@ -483,7 +531,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 5 }}>
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Equipment Type
                             </Typography>
                             <Select
@@ -504,7 +552,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 5 }} >
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Quantity
                             </Typography>
                             <TextField
@@ -593,7 +641,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 6 }} >
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Time Slot
                             </Typography>
                             <Select
@@ -614,7 +662,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 1 }} >
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Price (THB)
                             </Typography>
                             <TextField
@@ -703,7 +751,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                       <CardContent sx={{ p: 2 }}>
                         <Grid container spacing={2} alignItems="center">
                           <Grid size={{ xs: 12, md: 4 }} >
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Layout Type
                             </Typography>
                             <Select
@@ -724,7 +772,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                             </Select>
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }} >
-                            <Typography variant="caption" sx={{  mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
                               Capacity
                             </Typography>
                             <TextField
@@ -809,33 +857,57 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
                     </Fade>
                   ))}
 
-                  {/* Add Image Button */}
-                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0', cursor: 'pointer', transition: 'all 0.2s', '&:hover': { borderColor: '#2196f3', backgroundColor: '#3d67a3ff' } }}>
-                    <Button
-                      component="label"
-                      sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}
-                    >
+                  {/* Drag & Drop Zone */}
+                  <Card
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                    sx={{
+                      borderRadius: 3,
+                      border: '2px dashed #e0e0e0',
+                      width: 240,
+                      height: 100,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#666',
+                    }}
+                  >
+                    <Typography variant="body2" align="center">
+                      ลากรูป/โฟลเดอร์มาวางที่นี่
+                    </Typography>
+                  </Card>
+
+                  {/* Add Images (หลายไฟล์) */}
+                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
+                    <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
                       <Camera size={24} />
-                      <Typography variant="overline" >Add Image</Typography>
+                      <Typography variant="overline">Add Images</Typography>
                       <input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
+                        multiple
                         hidden
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            const file = e.target.files[0];
-                            setRoomType({
-                              ...(roomType as any),
-                              RoomTypeImages: [
-                                ...(roomType?.RoomTypeImages || []),
-                                { file, FilePath: "" } as any,
-                              ],
-                            });
-                          }
-                        }}
+                        onChange={handleInputChange}
                       />
                     </Button>
                   </Card>
+
+                  {/* Add Folder (ทั้งโฟลเดอร์) */}
+                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
+                    <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
+                      <Typography variant="overline">Add Folder</Typography>
+                      <input
+                        ref={dirInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        hidden
+                        onChange={handleInputChange}
+                      />
+                    </Button>
+                  </Card>
+
                 </Box>
               </Paper>
             </Box>
@@ -903,7 +975,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
               handleCreateSubmit();
             }}
             startIcon={<Save size={16} />}
-           
+
           >
             Create
           </Button>

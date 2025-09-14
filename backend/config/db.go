@@ -268,47 +268,36 @@ func SeedDatabase() {
 	for _, status := range roomStatuses {
 		db.FirstOrCreate(&status, entity.RoomStatus{Code: status.Code})
 	}
-
-	// 🔹 ข้อมูล RoomType
 	roomTypes := []entity.RoomType{
-		{
-			TypeName: "Small Meeting Room", // ห้องประชุมขนาดเล็ก
-			RoomSize: 18,
-		},
-		{
-			TypeName: "Medium Meeting Room", // ห้องประชุมขนาดกลาง
-			RoomSize: 63,
-		},
-		{
-			TypeName: "Medium Seminar Room", // ห้องอบรม สัมมนา ขนาดกลาง
-			RoomSize: 135,
-		},
-		{
-			TypeName: "Large Seminar Room", // ห้องอบรม สัมมนา ขนาดใหญ่
-			RoomSize: 273,
-		},
-		{
-			TypeName: "EVENT HALL",
-			RoomSize: 1218,
-		},
-		{
-			TypeName: "NE2 HALL 1",
-			RoomSize: 1180,
-		},
-		{
-			TypeName: "NE2 HALL 2",
-			RoomSize: 487,
-		},
-		{
-			TypeName:         "Rental Space",
-			ForRental:        true,
-			HasMultipleSizes: true,
-		},
+		{TypeName: "Small Meeting Room", RoomSize: 18, Category: entity.RoomCatMeeting, EmployeeDiscount: 20},
+		{TypeName: "Medium Meeting Room", RoomSize: 63, Category: entity.RoomCatMeeting, EmployeeDiscount: 20},
+		{TypeName: "Training Room", RoomSize: 135, Category: entity.RoomCatTraining, EmployeeDiscount: 20},
+		{TypeName: "EVENT HALL", RoomSize: 1218, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
+		{TypeName: "NE2 HALL 1", RoomSize: 1180, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
+		{TypeName: "NE2 HALL 2", RoomSize: 487, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
+		{TypeName: "Rental Space", ForRental: true, HasMultipleSizes: true, Category: entity.RoomCatMultiFunction},
 	}
-	for _, roomType := range roomTypes {
-		db.FirstOrCreate(&roomType, entity.RoomType{
-			TypeName: roomType.TypeName,
-		})
+
+	for _, rt := range roomTypes {
+		var row entity.RoomType
+		// ✅ ใช้ Where แบบ struct → ค่านี้จะถูกนำไปใช้ตอน Create ด้วย
+		if err := db.Where(&entity.RoomType{TypeName: rt.TypeName}).
+			Assign(entity.RoomType{
+				RoomSize:         rt.RoomSize,
+				Category:         rt.Category,
+				EmployeeDiscount: rt.EmployeeDiscount,
+				ForRental:        rt.ForRental,
+				HasMultipleSizes: rt.HasMultipleSizes,
+			}).
+			FirstOrCreate(&row).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	var types []entity.RoomType
+	db.Select("id, type_name").Find(&types)
+	for _, t := range types {
+		fmt.Println("RoomType:", t.ID, t.TypeName)
 	}
 
 	// 🔹 ข้อมูล RoomLayout
@@ -324,113 +313,69 @@ func SeedDatabase() {
 		})
 	}
 
-	// 🔹 ข้อมูล RoomTypeLayout
-	roomTypeLayout := []entity.RoomTypeLayout{
-		// ห้องประชุมขนาดเล็ก
-		{
-			Capacity:     6,
-			RoomLayoutID: 2,
-			RoomTypeID:   1,
-		},
+	// สร้าง map ชื่อ → id
+	typeNameToID := map[string]uint{}
+	{
+		var types []entity.RoomType
+		if err := db.Find(&types).Error; err != nil {
+			panic(err)
+		}
+		for _, t := range types {
+			typeNameToID[t.TypeName] = t.ID
+		}
+	}
 
-		// ห้องประชุมขนาดกลาง
-		{
-			Capacity:     12,
-			RoomLayoutID: 2,
-			RoomTypeID:   2,
-		},
+	type layoutSeed struct {
+		Capacity     int
+		RoomLayoutID uint
+		TypeName     string
+		Note         string
+	}
 
-		// ห้องอบรม สัมมนา ขนาดกลาง
-		{
-			Capacity:     60,
-			RoomLayoutID: 1,
-			RoomTypeID:   3,
-		},
-		{
-			Capacity:     90,
-			RoomLayoutID: 3,
-			RoomTypeID:   3,
-		},
-		{
-			Capacity:     40,
-			RoomLayoutID: 4,
-			RoomTypeID:   3,
-		},
+	roomTypeLayouts := []layoutSeed{
+		// Small Meeting Room
+		{Capacity: 6, RoomLayoutID: 2, TypeName: "Small Meeting Room"},
 
-		// ห้องอบรม สัมมนา ขนาดใหญ่
-		{
-			Capacity:     120,
-			RoomLayoutID: 1,
-			RoomTypeID:   4,
-		},
-		{
-			Capacity:     120,
-			RoomLayoutID: 2,
-			RoomTypeID:   4,
-		},
-		{
-			Capacity:     180,
-			RoomLayoutID: 3,
-			RoomTypeID:   4,
-		},
-		{
-			Capacity:     80,
-			Note:         "20 Group",
-			RoomLayoutID: 4,
-			RoomTypeID:   4,
-		},
+		// Medium Meeting Room
+		{Capacity: 12, RoomLayoutID: 2, TypeName: "Medium Meeting Room"},
+
+		// Training Room
+		{Capacity: 60, RoomLayoutID: 1, TypeName: "Training Room"},
+		{Capacity: 90, RoomLayoutID: 3, TypeName: "Training Room"},
+		{Capacity: 40, RoomLayoutID: 4, TypeName: "Training Room"},
 
 		// NE2 HALL 1
-		{
-			Capacity:     300,
-			RoomLayoutID: 1,
-			RoomTypeID:   6,
-		},
-		{
-			Capacity:     250,
-			RoomLayoutID: 2,
-			RoomTypeID:   6,
-		},
-		{
-			Capacity:     500,
-			RoomLayoutID: 3,
-			RoomTypeID:   6,
-		},
-		{
-			Capacity:     400,
-			Note:         "100 Group",
-			RoomLayoutID: 4,
-			RoomTypeID:   6,
-		},
+		{Capacity: 300, RoomLayoutID: 1, TypeName: "NE2 HALL 1"},
+		{Capacity: 250, RoomLayoutID: 2, TypeName: "NE2 HALL 1"},
+		{Capacity: 500, RoomLayoutID: 3, TypeName: "NE2 HALL 1"},
+		{Capacity: 400, RoomLayoutID: 4, TypeName: "NE2 HALL 1", Note: "100 Group"},
 
 		// NE2 HALL 2
-		{
-			Capacity:     120,
-			RoomLayoutID: 1,
-			RoomTypeID:   7,
-		},
-		{
-			Capacity:     100,
-			RoomLayoutID: 2,
-			RoomTypeID:   7,
-		},
-		{
-			Capacity:     200,
-			RoomLayoutID: 3,
-			RoomTypeID:   7,
-		},
-		{
-			Capacity:     120,
-			Note:         "30 Group",
-			RoomLayoutID: 4,
-			RoomTypeID:   7,
-		},
+		{Capacity: 120, RoomLayoutID: 1, TypeName: "NE2 HALL 2"},
+		{Capacity: 100, RoomLayoutID: 2, TypeName: "NE2 HALL 2"},
+		{Capacity: 200, RoomLayoutID: 3, TypeName: "NE2 HALL 2"},
+		{Capacity: 120, RoomLayoutID: 4, TypeName: "NE2 HALL 2", Note: "30 Group"},
 	}
-	for _, typelayout := range roomTypeLayout {
-		db.FirstOrCreate(&typelayout, entity.RoomTypeLayout{
-			RoomLayoutID: typelayout.RoomLayoutID,
-			RoomTypeID:   typelayout.RoomTypeID,
-		})
+
+	for _, l := range roomTypeLayouts {
+		rtID := typeNameToID[l.TypeName]
+		if rtID == 0 {
+			panic("RoomType not found for layout: " + l.TypeName)
+		}
+
+		item := entity.RoomTypeLayout{
+			Capacity:     l.Capacity,
+			RoomLayoutID: l.RoomLayoutID,
+			RoomTypeID:   rtID,
+			Note:         l.Note,
+		}
+
+		if err := db.Where(&entity.RoomTypeLayout{
+			RoomLayoutID: item.RoomLayoutID,
+			RoomTypeID:   item.RoomTypeID,
+		}).Assign(item).FirstOrCreate(&item).Error; err != nil {
+			panic(err)
+		}
 	}
 
 	// 🔹 ข้อมูล Users
@@ -580,70 +525,68 @@ func SeedDatabase() {
 		users[i].Password, _ = HashPassword(user.Password)
 		db.FirstOrCreate(&users[i], entity.User{Email: user.Email})
 	}
-
-	// 🔹 ข้อมูล Rooms
-	const LARGE_ROOM_TYPE_ID = /* TODO: ใส่ RoomTypeID ของห้องใหญ่ */ 5
-	rooms := []entity.Room{
-		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
-		{RoomNumber: "A110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
-		{RoomNumber: "A111", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
-		{RoomNumber: "A112", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
-
-		{RoomNumber: "B101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "B107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
-		{RoomNumber: "B108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
-		{RoomNumber: "B109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
-		{RoomNumber: "B110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
-
-		{RoomNumber: "A201", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A202", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A203", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A204", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A205", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
-		{RoomNumber: "A206", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
-		{RoomNumber: "A207", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A208", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A209", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
-		{RoomNumber: "A211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 216},
-
-		{RoomNumber: "A302", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
-		{RoomNumber: "A303", FloorID: 1, RoomStatusID: 1, RoomTypeID: 1},
-		{RoomNumber: "A304", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
-		{RoomNumber: "A306", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
-		{RoomNumber: "A307", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
-		{RoomNumber: "A308", FloorID: 1, RoomStatusID: 2, RoomTypeID: 1},
-
-		{RoomNumber: "A301", FloorID: 1, RoomStatusID: 1, RoomTypeID: 2},
-		{RoomNumber: "A309", FloorID: 1, RoomStatusID: 1, RoomTypeID: 2},
-
-		{RoomNumber: "B404", FloorID: 1, RoomStatusID: 1, RoomTypeID: 3},
-		{RoomNumber: "B408", FloorID: 1, RoomStatusID: 1, RoomTypeID: 3},
-
-		{RoomNumber: "B405", FloorID: 1, RoomStatusID: 1, RoomTypeID: 4},
-		{RoomNumber: "B407", FloorID: 1, RoomStatusID: 1, RoomTypeID: 4},
-
-		{RoomNumber: "A305", FloorID: 1, RoomStatusID: 1, RoomTypeID: 6},
-
-		{RoomNumber: "A406", FloorID: 1, RoomStatusID: 1, RoomTypeID: 7},
-
-		{RoomNumber: "LARGE-01", FloorID: 1, RoomStatusID: 1, RoomTypeID: 5, RoomSize: 1000},
+	type roomSeed struct {
+		RoomNumber   string
+		FloorID      uint
+		RoomStatusID uint
+		TypeName     string
 	}
-	for _, room := range rooms {
-		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
+
+	rooms := []roomSeed{
+		// Small meeting room
+		{"A302", 1, 1, "Small Meeting Room"},
+		{"A303", 1, 1, "Small Meeting Room"},
+		{"A304", 1, 1, "Small Meeting Room"},
+		{"A306", 1, 1, "Small Meeting Room"},
+		{"A307", 1, 1, "Small Meeting Room"},
+		{"A308", 1, 1, "Small Meeting Room"},
+
+		// Medium room
+		{"A301", 1, 1, "Medium Meeting Room"},
+		{"A309", 1, 1, "Medium Meeting Room"},
+		{"A102", 1, 1, "Medium Meeting Room"},
+		{"B403", 1, 1, "Medium Meeting Room"},
+		{"B409", 1, 1, "Medium Meeting Room"},
+
+		// Training room
+		{"B405", 1, 1, "Training Room"},
+		{"B407", 1, 1, "Training Room"},
+		{"B404", 1, 1, "Training Room"},
+		{"B408", 1, 1, "Training Room"},
+
+		// NE2 Hall 1
+		{"A305", 1, 1, "NE2 HALL 1"},
+
+		// NE2 Hall 2 (✅ แก้เป็น B406)
+		{"B406", 1, 1, "NE2 HALL 2"},
+
+		// Event Hall — ตามเดิม (มีอะไรก็ใช้ชื่อที่มีอยู่ เช่น LARGE-01)
+		// {"LARGE-01", 1, 1, "EVENT HALL"},
+	}
+
+	for _, r := range rooms {
+		rtID := typeNameToID[r.TypeName]
+		if rtID == 0 {
+			panic("RoomType not found for room: " + r.TypeName)
+		}
+
+		room := entity.Room{
+			RoomNumber:   r.RoomNumber,
+			FloorID:      r.FloorID,
+			RoomStatusID: r.RoomStatusID,
+			RoomTypeID:   rtID,
+		}
+
+		if err := db.Where(&entity.Room{RoomNumber: room.RoomNumber}).
+			Assign(room).
+			FirstOrCreate(&room).Error; err != nil {
+			panic(err)
+		}
+	}
+
+	// (ออปชัน) ถ้าเคยมี A406 ผิดประเภทอยู่ ลบทิ้ง
+	if err := db.Where("room_number = ?", "A406").Delete(&entity.Room{}).Error; err != nil {
+		panic(err)
 	}
 
 	// 🔹 ข้อมูล Packages
@@ -885,42 +828,42 @@ func SeedDatabase() {
 	}
 
 	// Payment
-	now := time.Now()
-	payments := []entity.Payment{}
-	for i := 0; i < 7; i++ {
-		p := entity.Payment{
-			PaymentDate:   now.AddDate(0, 0, -i),
-			Amount:        float64(500 + i*100),
-			SlipPath:      fmt.Sprintf("/slips/booking_payment%d.jpg", i+1),
-			Note:          fmt.Sprintf("Payment for BookingRoom %d", i+1),
-			PayerID:       users[2+i%len(users)].ID,
-			StatusID:      2,
-			BookingRoomID: uint(i + 1),
-		}
-		payments = append(payments, p)
-	}
+	// now := time.Now()
+	// payments := []entity.Payment{}
+	// for i := 0; i < 7; i++ {
+	// 	p := entity.Payment{
+	// 		PaymentDate:   now.AddDate(0, 0, -i),
+	// 		Amount:        float64(500 + i*100),
+	// 		SlipPath:      fmt.Sprintf("/slips/booking_payment%d.jpg", i+1),
+	// 		Note:          fmt.Sprintf("Payment for BookingRoom %d", i+1),
+	// 		PayerID:       users[2+i%len(users)].ID,
+	// 		StatusID:      2,
+	// 		BookingRoomID: uint(i + 1),
+	// 	}
+	// 	payments = append(payments, p)
+	// }
 
-	for i := 0; i < 7; i++ {
-		p := entity.Payment{
-			PaymentDate:         now.AddDate(0, 0, -i),
-			Amount:              float64(1000 + i*200),
-			SlipPath:            fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
-			Note:                fmt.Sprintf("Payment for Invoice %d", i+3),
-			PayerID:             users[2+i%len(users)].ID,
-			StatusID:            4,
-			RentalRoomInvoiceID: uint(i + 3),
-		}
-		payments = append(payments, p)
-	}
-	for _, p := range payments {
-		db.FirstOrCreate(&p, entity.Payment{
-			BookingRoomID:       p.BookingRoomID,
-			RentalRoomInvoiceID: p.RentalRoomInvoiceID,
-			PayerID:             p.PayerID,
-			Amount:              p.Amount,
-		})
+	// for i := 0; i < 7; i++ {
+	// 	p := entity.Payment{
+	// 		PaymentDate:         now.AddDate(0, 0, -i),
+	// 		Amount:              float64(1000 + i*200),
+	// 		SlipPath:            fmt.Sprintf("/slips/invoice_payment%d.jpg", i+1),
+	// 		Note:                fmt.Sprintf("Payment for Invoice %d", i+3),
+	// 		PayerID:             users[2+i%len(users)].ID,
+	// 		StatusID:            4,
+	// 		RentalRoomInvoiceID: uint(i + 3),
+	// 	}
+	// 	payments = append(payments, p)
+	// }
+	// for _, p := range payments {
+	// 	db.FirstOrCreate(&p, entity.Payment{
+	// 		BookingRoomID:       p.BookingRoomID,
+	// 		RentalRoomInvoiceID: p.RentalRoomInvoiceID,
+	// 		PayerID:             p.PayerID,
+	// 		Amount:              p.Amount,
+	// 	})
 
-	}
+	// }
 	// 🔹 ข้อมูล News
 	news := []entity.News{
 		{
@@ -1434,42 +1377,42 @@ func SeedDatabase() {
 		})
 	}
 
-	bookingRooms := []entity.BookingRoom{
-		{
-			Purpose:        "ประชุมทีมวิจัยโครงการ A",
-			UserID:         1,
-			RoomID:         1,
-			StatusID:       1, // เช่น "จองสำเร็จ"
-			AdditionalInfo: "ต้องการโปรเจคเตอร์ และไวท์บอร์ด",
-			BookingDates: []entity.BookingDate{
-				{Date: beginningOfDayUTC(time.Now())},
-				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 1))},
-			},
-		},
-		{
-			Purpose:        "จัดอบรมการใช้งานระบบใหม่",
-			UserID:         2,
-			RoomID:         2,
-			StatusID:       2,
-			AdditionalInfo: "มีการสั่งอาหารว่างเพิ่มเติม",
-			BookingDates: []entity.BookingDate{
-				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 3))},
-			},
-		},
-	}
+	// 	bookingRooms := []entity.BookingRoom{
+	// 		{
+	// 			Purpose:        "ประชุมทีมวิจัยโครงการ A",
+	// 			UserID:         1,
+	// 			RoomID:         1,
+	// 			StatusID:       1, // เช่น "จองสำเร็จ"
+	// 			AdditionalInfo: "ต้องการโปรเจคเตอร์ และไวท์บอร์ด",
+	// 			BookingDates: []entity.BookingDate{
+	// 				{Date: beginningOfDayUTC(time.Now())},
+	// 				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 1))},
+	// 			},
+	// 		},
+	// 		{
+	// 			Purpose:        "จัดอบรมการใช้งานระบบใหม่",
+	// 			UserID:         2,
+	// 			RoomID:         2,
+	// 			StatusID:       2,
+	// 			AdditionalInfo: "มีการสั่งอาหารว่างเพิ่มเติม",
+	// 			BookingDates: []entity.BookingDate{
+	// 				{Date: beginningOfDayUTC(time.Now().AddDate(0, 0, 3))},
+	// 			},
+	// 		},
+	// 	}
 
-	for _, booking := range bookingRooms {
-		db.FirstOrCreate(&booking, entity.BookingRoom{
-			Purpose: booking.Purpose,
-			UserID:  booking.UserID,
-			RoomID:  booking.RoomID,
-		})
-	}
-}
+	// 	for _, booking := range bookingRooms {
+	// 		db.FirstOrCreate(&booking, entity.BookingRoom{
+	// 			Purpose: booking.Purpose,
+	// 			UserID:  booking.UserID,
+	// 			RoomID:  booking.RoomID,
+	// 		})
+	// 	}
+	// }
 
-func beginningOfDayUTC(t time.Time) time.Time {
-	return time.Date(
-		t.Year(), t.Month(), t.Day(),
-		0, 0, 0, 0, time.UTC,
-	)
+	// func beginningOfDayUTC(t time.Time) time.Time {
+	// 	return time.Date(
+	// 		t.Year(), t.Month(), t.Day(),
+	// 		0, 0, 0, 0, time.UTC,
+	// 	)
 }

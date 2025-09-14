@@ -83,10 +83,14 @@ func main() {
 		// r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
 
 		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
-		// r.POST("/payments/:id/approve", controller.ApprovePayment)
+		r.POST("/payments/:id/approve", controller.ApprovePayment)
 		r.POST("/payments/:id/reject", controller.RejectPayment)
 		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
 		// r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
+		// routes.go
+		// routes.go
+		r.POST("/payments/receipt/:payment_id", controller.UploadPaymentReceipt)
+		r.DELETE("/payments/receipt/:payment_id", controller.DeletePaymentReceipt)
 
 		// Invoice flow (ใหม่)
 		// r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
@@ -211,6 +215,7 @@ func main() {
 		protected.PATCH("/notifications/task/:task_id", controller.UpdateNotificationsByTaskID)
 		protected.PATCH("/notifications/service-area-request/:service_area_request_id", controller.UpdateNotificationsByServiceAreaRequestID)
 		protected.PATCH("/notifications/service-area-task/:service_area_task_id", controller.UpdateNotificationsByServiceAreaTaskID)
+		protected.PATCH("/notifications/booking-room/:booking_room_id", controller.UpdateNotificationsByBookingRoomID)
 
 		// News
 		protected.GET("/news", controller.ListNews)

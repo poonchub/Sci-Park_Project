@@ -12,41 +12,43 @@ import (
 // =============================
 // 🎯 GET /room-discount/:id
 // =============================
+// GET /room-discount/:id
 func GetRoomDiscountByID(c *gin.Context) {
-	db := config.DB()
-	id := c.Param("id")
+    db := config.DB()
+    id := c.Param("id")
 
-	var userWithPackage entity.User
-	err := db.Preload("UserPackages.Package").
-		Where("id = ?", id).
-		First(&userWithPackage).Error
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "load user package failed",
-			"detail": err.Error(),
-		})
-		return
-	}
+    var user entity.User
+    if err := db.Preload("UserPackages.Package").Where("id = ?", id).First(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "load user package failed", "detail": err.Error()})
+        return
+    }
 
-	quota := gin.H{"meeting_room": gin.H{"total": 0, "used": 0, "remaining": 0}}
+    // default = 0
+    resp := gin.H{
+        "meeting": gin.H{"total": 0, "used": 0, "remaining": 0},
+        "training": gin.H{"total": 0, "used": 0, "remaining": 0},
+        "multi": gin.H{"total": 0, "used": 0, "remaining": 0},
+    }
 
-	for _, up := range userWithPackage.UserPackages {
-		total := up.Package.MeetingRoomLimit
-		used := up.MeetingRoomUsed
-		remaining := total - used
-		if remaining < 0 {
-			remaining = 0
-		}
+    // เลือกแพ็กเกจตัวล่าสุดของ user (หรือใส่ logic เลือกตัว active ที่ต้องการ)
+    if len(user.UserPackages) > 0 {
+        up := user.UserPackages[len(user.UserPackages)-1]
+        // totals
+        mt, tt, ft := up.Package.MeetingRoomLimit, up.Package.TrainingRoomLimit, up.Package.MultiFunctionRoomLimit
+        // used
+        mu, tu, fu := up.MeetingRoomUsed, up.TrainingRoomUsed, up.MultiFunctionRoomUsed
 
-		quota["meeting_room"] = gin.H{
-			"total":     total,
-			"used":      used,
-			"remaining": remaining,
-		}
-		break
-	}
+        resp["meeting"] = gin.H{"total": mt, "used": mu, "remaining": max(mt-mu, 0)}
+        resp["training"] = gin.H{"total": tt, "used": tu, "remaining": max(tt-tu, 0)}
+        resp["multi"] = gin.H{"total": ft, "used": fu, "remaining": max(ft-fu, 0)}
+    }
 
-	c.JSON(http.StatusOK, quota)
+    c.JSON(http.StatusOK, resp)
+}
+
+func max(a, b int) int {
+    if a > b { return a }
+    return b
 }
 
 

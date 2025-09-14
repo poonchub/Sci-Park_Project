@@ -106,3 +106,23 @@ func NotifySocketEventServiceArea(event string, data interface{}) {
 	}
 	defer resp.Body.Close()
 }
+
+func NotifySocketEventBookingRooms(event string, data interface{}) {
+	payload := map[string]interface{}{
+		"event": event,
+		"data":  data,
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("marshal error:", err)
+		return
+	}
+
+	resp, err := http.Post("http://localhost:3001/notify-booking-room", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("notify error:", err)
+		return
+	}
+	defer resp.Body.Close()
+}
