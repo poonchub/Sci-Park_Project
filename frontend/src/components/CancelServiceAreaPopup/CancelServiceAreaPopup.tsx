@@ -28,7 +28,7 @@ interface CancelServiceAreaPopupProps {
 }
 
 interface CancelServiceAreaData {
-    contractNumber: string;
+    finalContractNumber: string;
     contractEndDate: Dayjs | null;
     securityDepositRefundDocument: File[];
     requestServiceAreaID?: number;
@@ -44,7 +44,7 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
     requestServiceAreaID,
 }) => {
     const [formData, setFormData] = useState<CancelServiceAreaData>({
-        contractNumber: '',
+        finalContractNumber: '',
         contractEndDate: null,
         securityDepositRefundDocument: [],
     });
@@ -74,10 +74,10 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
             setIsLoadingData(true);
             const serviceAreaDoc = await GetServiceAreaDocumentByRequestID(requestServiceAreaID);
             
-            // อัพเดท form data ด้วยข้อมูลที่มีอยู่ (เฉพาะ Contract Number)
+            // อัพเดท form data ด้วยข้อมูลที่มีอยู่ (เฉพาะ Final Contract Number)
             setFormData(prev => ({
                 ...prev,
-                contractNumber: serviceAreaDoc.ContractNumber || '',
+                finalContractNumber: serviceAreaDoc.FinalContractNumber || '',
                 // contractEndDate ไม่ auto-fill ให้ผู้ใช้กรอกเอง
             }));
         } catch (error) {
@@ -111,11 +111,11 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
         setAlerts([]);
 
         // ตรวจสอบข้อมูลที่จำเป็น
-        if (!formData.contractNumber.trim()) {
-            setAlerts(prev => [...prev, { type: 'error', message: 'Please enter contract number' }]);
-            // เลื่อนไปยัง Contract Number field
+        if (!formData.finalContractNumber.trim()) {
+            setAlerts(prev => [...prev, { type: 'error', message: 'Please enter final contract number' }]);
+            // เลื่อนไปยัง Final Contract Number field
             setTimeout(() => {
-                const contractField = document.querySelector('input[name="contractNumber"]');
+                const contractField = document.querySelector('input[name="finalContractNumber"]');
                 contractField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
             return;
@@ -148,7 +148,7 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
             
             // สร้าง FormData สำหรับส่งไฟล์และข้อมูล
             const submitFormData = new FormData();
-            submitFormData.append('contract_number', formData.contractNumber.trim());
+            submitFormData.append('final_contract_number', formData.finalContractNumber.trim());
             submitFormData.append('contract_end_date', formData.contractEndDate.format('YYYY-MM-DD'));
             
             // เพิ่มไฟล์เอกสาร
@@ -181,7 +181,7 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
     const handleClose = () => {
         // Reset form data
         setFormData({
-            contractNumber: '',
+            finalContractNumber: '',
             contractEndDate: null,
             securityDepositRefundDocument: [],
         });
@@ -231,24 +231,24 @@ const CancelServiceAreaPopup: React.FC<CancelServiceAreaPopupProps> = ({
                     )}
 
                     <Grid container spacing={3}>
-                        {/* Contract Number */}
+                        {/* Final Contract Number */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <Typography
                                 variant="body1"
                                 className="title-field"
                             >
-                                Contract Number *
+                                Final Contract Number *
                             </Typography>
                             <TextField
                                 fullWidth
                                 variant="outlined"
-                                name="contractNumber"
-                                value={formData.contractNumber}
-                                onChange={(e) => setFormData(prev => ({ ...prev, contractNumber: e.target.value }))}
-                                placeholder={isLoadingData ? "Loading..." : "Enter contract number"}
+                                name="finalContractNumber"
+                                value={formData.finalContractNumber}
+                                onChange={(e) => setFormData(prev => ({ ...prev, finalContractNumber: e.target.value }))}
+                                placeholder={isLoadingData ? "Loading..." : "Enter final contract number"}
                                 disabled={isLoadingData}
-                                error={hasSubmitted && !formData.contractNumber.trim()}
-                                helperText={hasSubmitted && !formData.contractNumber.trim() ? "Please enter contract number" : ""}
+                                error={hasSubmitted && !formData.finalContractNumber.trim()}
+                                helperText={hasSubmitted && !formData.finalContractNumber.trim() ? "Please enter final contract number" : ""}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '40px',

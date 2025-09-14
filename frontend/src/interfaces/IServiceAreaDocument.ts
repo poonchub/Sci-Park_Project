@@ -11,6 +11,7 @@ export interface ServiceAreaDocumentInterface {
   QuotationDocument?: string; // file path
   RefundGuaranteeDocument?: string; // file path
   ContractNumber?: string; // เลขที่สัญญา
+  FinalContractNumber?: string; // เลขที่สัญญาสุดท้าย
   ContractStartAt?: string; // วันเริ่มต้นสัญญา
   ContractEndAt?: string; // วันสิ้นสุดสัญญา
   RoomID?: number;
