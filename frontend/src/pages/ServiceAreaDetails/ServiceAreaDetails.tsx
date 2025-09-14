@@ -388,10 +388,25 @@ function ServiceAreaDetails() {
                                     {/* Row 1: Service Area Information and Company Information (50/50 split) */}
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Service Area Information */}
-
-                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                            Service Area Information
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                Service Area Information
+                                            </Typography>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<Edit size={16} />}
+                                                onClick={() => {/* TODO: Open Edit Service Area Info Popup */}}
+                                                sx={{ 
+                                                    minWidth: 'auto',
+                                                    px: 2,
+                                                    py: 0.5,
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                Edit
+                                            </Button>
+                                        </Box>
 
                                         <Grid container spacing={2}>
                                             <Grid size={{ xs: 12 }}>
@@ -462,10 +477,25 @@ function ServiceAreaDetails() {
 
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Company Information */}
-
-                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                            Company Information
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                Company Information
+                                            </Typography>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<Edit size={16} />}
+                                                onClick={() => {/* TODO: Open Edit Company Info Popup */}}
+                                                sx={{ 
+                                                    minWidth: 'auto',
+                                                    px: 2,
+                                                    py: 0.5,
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                Edit
+                                            </Button>
+                                        </Box>
                                         <Grid container spacing={2}>
                                             <Grid size={{ xs: 12 }}>
                                                 <Typography variant="body2" color="text.secondary">
@@ -546,9 +576,25 @@ function ServiceAreaDetails() {
                                     {sortedCollaborationPlans && sortedCollaborationPlans.length > 0 && (
                                         <Grid size={{ xs: 12, md: 12 }}>
                                             <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
-                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                                    Collaboration Plans
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                        Collaboration Plans
+                                                    </Typography>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        startIcon={<Edit size={16} />}
+                                                        onClick={() => {/* TODO: Open Edit Collaboration Plans Popup */}}
+                                                        sx={{ 
+                                                            minWidth: 'auto',
+                                                            px: 2,
+                                                            py: 0.5,
+                                                            fontSize: '0.875rem'
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </Box>
                                                 {sortedCollaborationPlans.map((plan, index) => (
                                                     <Box key={index} sx={{ mb: 2, pb: 2, borderBottom: index < sortedCollaborationPlans.length - 1 ? "1px solid #e0e0e0" : "none" }}>
                                                         <Typography variant="body2" color="text.secondary">
@@ -803,6 +849,18 @@ function ServiceAreaDetails() {
                                                             {dateFormat(serviceAreaDetails.CancellationDetails.CreatedAt)}
                                                         </Typography>
                                                     </Grid>
+
+                                                    {/* Final Contract Number */}
+                                                    {serviceAreaDetails?.FinalContractNumber && (
+                                                        <Grid size={{ xs: 12, sm: 6 }}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Final Contract Number
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                {serviceAreaDetails.FinalContractNumber}
+                                                            </Typography>
+                                                        </Grid>
+                                                    )}
 
                                                     {/* Purpose of Cancellation */}
                                                     <Grid size={{ xs: 12 }}>
