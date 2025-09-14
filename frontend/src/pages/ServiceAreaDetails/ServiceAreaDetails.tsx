@@ -21,7 +21,7 @@ import { isAdmin, isDocumentOperator } from "../../routes";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { ChevronLeft, NotebookText, Download, Check, X, Send } from "lucide-react";
+import { ChevronLeft, NotebookText, Download, Check, X, Send, Edit } from "lucide-react";
 
 // Interface for Service Area Details response
 
@@ -623,9 +623,25 @@ function ServiceAreaDetails() {
                                     {(serviceAreaDetails?.ServiceAreaDocumentId || serviceAreaDetails?.ServiceRequestDocument) && (
                                         <Grid size={{ xs: 12, md: 12 }}>
                                             <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
-                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                                                    Documents & Contract Information
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                        Documents & Contract Information
+                                                    </Typography>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        startIcon={<Edit size={16} />}
+                                                        onClick={() => {/* TODO: Open Edit Documents & Contract Popup */}}
+                                                        sx={{ 
+                                                            minWidth: 'auto',
+                                                            px: 2,
+                                                            py: 0.5,
+                                                            fontSize: '0.875rem'
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </Box>
 
                                                 {/* Contract Information */}
                                                 {(serviceAreaDetails?.ContractNumber || serviceAreaDetails?.ContractStartAt || serviceAreaDetails?.RoomNumber || serviceAreaDetails?.ServiceUserTypeName) && (
@@ -817,9 +833,25 @@ function ServiceAreaDetails() {
                                     {serviceAreaDetails?.CancellationDetails && (
                                         <Grid size={{ xs: 12, md: 12 }}>
                                             <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
-                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, }}>
-                                                    Cancellation Details
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                        Cancellation Details
+                                                    </Typography>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        startIcon={<Edit size={16} />}
+                                                        onClick={() => {/* TODO: Open Edit Cancellation Details Popup */}}
+                                                        sx={{ 
+                                                            minWidth: 'auto',
+                                                            px: 2,
+                                                            py: 0.5,
+                                                            fontSize: '0.875rem'
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </Box>
                                                 
                                                 <Grid container spacing={2}>
                                                     {/* Cancellation Requester Information */}
