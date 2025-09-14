@@ -288,6 +288,7 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
             roomID: 0,
             serviceUserTypeID: 0,
             contractNumber: '',
+            finalContractNumber: '',
             contractStartAt: null,
         });
         // Reset hasSubmitted state

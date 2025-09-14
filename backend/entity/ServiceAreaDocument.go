@@ -17,14 +17,14 @@ type ServiceAreaDocument struct {
 	QuotationDocument       string `gorm:"type:varchar(500)"` // แนบใบเสนอราคา (หลักประกัน)
 
 	// เอกสารและข้อมูลเพิ่มเติมเกี่ยวกับสัญญา
-	RefundGuaranteeDocument string    `gorm:"type:varchar(500)"` // เอกสารคืนหลักประกัน (path)
-	
-	ContractNumber          string    `gorm:"type:varchar(100)"` // เลขที่สัญญา
-	FinalContractNumber     string    `gorm:"type:varchar(100)"` // เลขที่สัญญาสุดท้าย
-	
-	ContractStartAt         time.Time // วันเริ่มต้นสัญญา
+	RefundGuaranteeDocument string `gorm:"type:varchar(500)"` // เอกสารคืนหลักประกัน (path)
 
-	ContractEndAt           time.Time // วันสิ้นสุดสัญญา
+	ContractNumber      string `gorm:"type:varchar(100)"` // เลขที่สัญญา
+	FinalContractNumber string `gorm:"type:varchar(100)"` // เลขที่สัญญาสุดท้าย
+
+	ContractStartAt time.Time // วันเริ่มต้นสัญญา
+
+	ContractEndAt time.Time // วันสิ้นสุดสัญญา
 
 	// Foreign Keys
 	RoomID uint `gorm:"index"`
