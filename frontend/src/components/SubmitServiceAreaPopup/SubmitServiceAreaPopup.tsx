@@ -38,6 +38,7 @@ interface SubmitServiceAreaData {
     roomID: number;
     serviceUserTypeID: number;
     contractNumber: string;
+    finalContractNumber: string;
     contractStartAt: Dayjs | null;
     requestServiceAreaID?: number;
     success?: boolean;
@@ -58,6 +59,7 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
         roomID: 0,
         serviceUserTypeID: 0,
         contractNumber: '',
+        finalContractNumber: '',
         contractStartAt: null,
     });
 
@@ -225,6 +227,7 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
             submitFormData.append('room_id', formData.roomID.toString());
             submitFormData.append('service_user_type_id', formData.serviceUserTypeID.toString());
             submitFormData.append('contract_number', formData.contractNumber.trim());
+            submitFormData.append('final_contract_number', formData.finalContractNumber.trim());
             submitFormData.append('contract_start_at', formData.contractStartAt.format('YYYY-MM-DD'));
             
             // เพิ่มไฟล์เอกสาร
@@ -350,6 +353,32 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
                                 placeholder="Enter contract number"
                                 error={hasSubmitted && !formData.contractNumber.trim()}
                                 helperText={hasSubmitted && !formData.contractNumber.trim() ? "Please enter contract number" : ""}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '40px', // ความสูงปกติ
+                                    },
+                                    '& .MuiInputBase-input': {
+                                        padding: '8px 14px', // padding ปกติ
+                                    }
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Final Contract Number */}
+                        <Grid size={{ xs: 12, md: 6 }}>
+                            <Typography
+                                variant="body1"
+                                className="title-field"
+                            >
+                                Final Contract Number
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                name="finalContractNumber"
+                                value={formData.finalContractNumber}
+                                onChange={(e) => setFormData(prev => ({ ...prev, finalContractNumber: e.target.value }))}
+                                placeholder="Enter final contract number"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '40px', // ความสูงปกติ

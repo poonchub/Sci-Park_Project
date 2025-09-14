@@ -1316,6 +1316,7 @@ func GetServiceAreaDetailsByID(c *gin.Context) {
 		response["QuotationDocument"] = requestServiceArea.ServiceAreaDocument.QuotationDocument
 		response["RefundGuaranteeDocument"] = requestServiceArea.ServiceAreaDocument.RefundGuaranteeDocument
 		response["ContractNumber"] = requestServiceArea.ServiceAreaDocument.ContractNumber
+		response["FinalContractNumber"] = requestServiceArea.ServiceAreaDocument.FinalContractNumber
 		response["ContractStartAt"] = requestServiceArea.ServiceAreaDocument.ContractStartAt
 		response["ContractEndAt"] = requestServiceArea.ServiceAreaDocument.ContractEndAt
 		response["RoomNumber"] = requestServiceArea.ServiceAreaDocument.Room.RoomNumber

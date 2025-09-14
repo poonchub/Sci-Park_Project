@@ -78,8 +78,9 @@ func CreateServiceAreaDocument(c *gin.Context) {
 		contractStartAt = time.Now() // ถ้าไม่ส่งมาใช้เวลาปัจจุบัน
 	}
 
-	// แปลง ContractNumber
+	// แปลง ContractNumber และ FinalContractNumber
 	contractNumber := c.PostForm("contract_number")
+	finalContractNumber := c.PostForm("final_contract_number")
 
 	// สร้าง ServiceAreaDocument
 	serviceAreaDocument := entity.ServiceAreaDocument{
@@ -88,6 +89,7 @@ func CreateServiceAreaDocument(c *gin.Context) {
 		ServiceUserTypeID:    serviceUserTypeID,
 		ContractStartAt:      contractStartAt,
 		ContractNumber:       contractNumber,
+		FinalContractNumber:  finalContractNumber,
 	}
 
 	// จัดการไฟล์เอกสารต่างๆ - สร้างโครงสร้างโฟลเดอร์แบบแยกตาม Request ID
@@ -253,6 +255,15 @@ func UpdateServiceAreaDocument(c *gin.Context) {
 		}
 	}
 
+	// อัปเดต ContractNumber และ FinalContractNumber
+	if contractNumber := c.PostForm("contract_number"); contractNumber != "" {
+		serviceAreaDocument.ContractNumber = contractNumber
+	}
+
+	if finalContractNumber := c.PostForm("final_contract_number"); finalContractNumber != "" {
+		serviceAreaDocument.FinalContractNumber = finalContractNumber
+	}
+
 	// จัดการไฟล์ใหม่ (ถ้ามี)
 	documentFolder := "./images/ServiceAreaDocuments"
 	if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
@@ -339,9 +350,13 @@ func UpdateServiceAreaDocumentForCancellation(c *gin.Context) {
 		}
 	}()
 
-	// อัปเดต Contract Number (ถ้ามี)
+	// อัปเดต Contract Number และ Final Contract Number (ถ้ามี)
 	if contractNumber := c.PostForm("contract_number"); contractNumber != "" {
 		serviceAreaDocument.ContractNumber = contractNumber
+	}
+
+	if finalContractNumber := c.PostForm("final_contract_number"); finalContractNumber != "" {
+		serviceAreaDocument.FinalContractNumber = finalContractNumber
 	}
 
 	// อัปเดต Contract End Date (ถ้ามี)

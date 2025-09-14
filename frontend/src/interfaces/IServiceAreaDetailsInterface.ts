@@ -29,6 +29,7 @@ export interface ServiceAreaDetailsInterface {
     QuotationDocument?: string;
     RefundGuaranteeDocument?: string;
     ContractNumber?: string;
+    FinalContractNumber?: string;
     ContractStartAt?: string;
     ContractEndAt?: string;
     RoomNumber?: string;
