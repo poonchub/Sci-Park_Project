@@ -388,25 +388,9 @@ function ServiceAreaDetails() {
                                     {/* Row 1: Service Area Information and Company Information (50/50 split) */}
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Service Area Information */}
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                Service Area Information
-                                            </Typography>
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                startIcon={<Edit size={16} />}
-                                                onClick={() => {/* TODO: Open Edit Service Area Info Popup */}}
-                                                sx={{ 
-                                                    minWidth: 'auto',
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    fontSize: '0.875rem'
-                                                }}
-                                            >
-                                                Edit
-                                            </Button>
-                                        </Box>
+                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                            Service Area Information
+                                        </Typography>
 
                                         <Grid container spacing={2}>
                                             <Grid size={{ xs: 12 }}>
