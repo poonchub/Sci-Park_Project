@@ -14,6 +14,7 @@ import ServiceAreaStepper from "../../components/ServiceAreaStepper/ServiceAreaS
 import ApproveServiceAreaController from "../../components/ApproveServiceAreaPopup/ApproveServiceAreaController";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
+import EditCollaborationPlansPopup from "../../components/EditCollaborationPlansPopup/EditCollaborationPlansPopup";
 import { ServiceAreaDetailsInterface } from "../../interfaces/IServiceAreaDetailsInterface";
 
 import dateFormat from "../../utils/dateFormat";
@@ -54,6 +55,10 @@ function ServiceAreaDetails() {
     // Submit Cancellation state for DocumentOperator
     const [openSubmitCancellationPopup, setOpenSubmitCancellationPopup] = useState(false);
     const [isSubmittingCancellation, setIsSubmittingCancellation] = useState(false);
+
+    // Edit Collaboration Plans state
+    const [openEditCollaborationPlansPopup, setOpenEditCollaborationPlansPopup] = useState(false);
+    const [isUpdatingCollaborationPlans, setIsUpdatingCollaborationPlans] = useState(false);
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -225,6 +230,34 @@ function ServiceAreaDetails() {
         // Navigate to cancel request form instead of showing popup
         if (serviceAreaDetails?.RequestNo) {
             navigate(`/service-area/cancel-request?request_id=${serviceAreaDetails.RequestNo}`);
+        }
+    };
+
+    // Handle edit collaboration plans
+    const handleEditCollaborationPlans = () => {
+        setOpenEditCollaborationPlansPopup(true);
+    };
+
+    // Handle collaboration plans update confirmation
+    const handleCollaborationPlansConfirm = async (updatedPlans: any[]) => {
+        try {
+            setIsUpdatingCollaborationPlans(true);
+            
+            // TODO: เรียก API สำหรับอัปเดต Collaboration Plans
+            console.log("Updated plans:", updatedPlans);
+            // await UpdateCollaborationPlans(serviceAreaDetails?.RequestNo, updatedPlans);
+            
+            // Refresh data
+            await getServiceAreaDetails();
+            setAlerts((prev) => [...prev, { type: "success", message: "Collaboration plans updated successfully" }]);
+            
+            // ปิด Popup
+            setOpenEditCollaborationPlansPopup(false);
+        } catch (error) {
+            console.error("Error updating collaboration plans:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to update collaboration plans" }]);
+        } finally {
+            setIsUpdatingCollaborationPlans(false);
         }
     };
 
@@ -461,25 +494,9 @@ function ServiceAreaDetails() {
 
                                     <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                                         {/* Company Information */}
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                Company Information
-                                            </Typography>
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                startIcon={<Edit size={16} />}
-                                                onClick={() => {/* TODO: Open Edit Company Info Popup */}}
-                                                sx={{ 
-                                                    minWidth: 'auto',
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    fontSize: '0.875rem'
-                                                }}
-                                            >
-                                                Edit
-                                            </Button>
-                                        </Box>
+                                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                            Company Information
+                                        </Typography>
                                         <Grid container spacing={2}>
                                             <Grid size={{ xs: 12 }}>
                                                 <Typography variant="body2" color="text.secondary">
@@ -568,7 +585,7 @@ function ServiceAreaDetails() {
                                                         variant="outlined"
                                                         size="small"
                                                         startIcon={<Edit size={16} />}
-                                                        onClick={() => {/* TODO: Open Edit Collaboration Plans Popup */}}
+                                                        onClick={handleEditCollaborationPlans}
                                                         sx={{ 
                                                             minWidth: 'auto',
                                                             px: 2,
@@ -1180,6 +1197,16 @@ function ServiceAreaDetails() {
                 companyName={serviceAreaDetails?.CompanyName}
                 buttonActive={isSubmittingSubmit}
                 requestServiceAreaID={serviceAreaDetails?.RequestNo || 0}
+            />
+
+            {/* Edit Collaboration Plans Popup */}
+            <EditCollaborationPlansPopup
+                open={openEditCollaborationPlansPopup}
+                onClose={() => setOpenEditCollaborationPlansPopup(false)}
+                onConfirm={handleCollaborationPlansConfirm}
+                existingPlans={sortedCollaborationPlans || []}
+                requestServiceAreaID={serviceAreaDetails?.RequestNo || 0}
+                buttonActive={isUpdatingCollaborationPlans}
             />
 
             {/* Request Cancellation Popup for Request Owner - removed as we now navigate to form */}
