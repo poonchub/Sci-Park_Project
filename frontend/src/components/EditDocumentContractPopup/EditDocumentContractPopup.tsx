@@ -8,9 +8,13 @@ import {
     Typography,
     Box,
     Grid,
-    Divider
+    Divider,
+    FormControl,
+    MenuItem,
+    FormHelperText
 } from '@mui/material';
 import { TextField } from '../TextField/TextField';
+import { Select } from '../Select/Select';
 import { DatePicker } from '../DatePicker/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -18,6 +22,7 @@ import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { Edit3, FileText, X } from 'lucide-react';
 import AlertGroup from '../AlertGroup/AlertGroup';
+import { GetAllRooms, GetAllServiceUserTypes } from '../../services/http';
 
 interface DocumentContractData {
     ContractNumber: string;
@@ -74,6 +79,56 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // State สำหรับข้อมูลจริงจาก API
+    const [rooms, setRooms] = useState<Array<{
+        roomID: number;
+        roomNumber: string;
+    }>>([]);
+
+    const [serviceUserTypes, setServiceUserTypes] = useState<Array<{
+        id: number;
+        name: string;
+        description: string;
+    }>>([]);
+
+    // Function สำหรับดึงข้อมูล Rooms จาก API
+    const fetchRooms = async () => {
+        try {
+            setIsLoading(true);
+            const data = await GetAllRooms();
+            if (data.status === 'success') {
+                setRooms(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Function สำหรับดึงข้อมูล ServiceUserTypes จาก API
+    const fetchServiceUserTypes = async () => {
+        try {
+            setIsLoading(true);
+            const data = await GetAllServiceUserTypes();
+            if (data.status === 'success') {
+                setServiceUserTypes(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching service user types:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ดึงข้อมูลเมื่อ component mount
+    useEffect(() => {
+        if (open) {
+            fetchRooms();
+            fetchServiceUserTypes();
+        }
+    }, [open]);
 
     // Initialize form data when popup opens
     useEffect(() => {
@@ -264,7 +319,7 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                         }}>
                             <FileText size={20} color="#0094DE" />
                             <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                                {pathValue.split('/').pop()}
+                                {pathValue.split(/[/\\]/).pop()}
                             </Typography>
                         </Box>
                     )}
@@ -457,34 +512,78 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
 
                         <Grid size={{ xs: 12, sm: 6 }}>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Room Number *
+                                Room *
                             </Typography>
-                            <TextField
+                            <FormControl
                                 fullWidth
-                                type="number"
-                                variant="outlined"
-                                value={formData.RoomID || ''}
-                                onChange={(e) => handleInputChange('RoomID', parseInt(e.target.value) || 0)}
-                                placeholder="Enter room number"
                                 error={hasSubmitted && formData.RoomID === 0}
-                                helperText={hasSubmitted && formData.RoomID === 0 ? "Please enter room number" : ""}
-                            />
+                            >
+                                <Select
+                                    name="roomID"
+                                    displayEmpty
+                                    defaultValue={0}
+                                    value={formData.RoomID}
+                                    onChange={(e) => handleInputChange('RoomID', Number(e.target.value))}
+                                    disabled={isLoading}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300, // ความสูงสูงสุดของ dropdown
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value={0}>
+                                        <em>{isLoading ? 'Loading rooms...' : '-- Select Room --'}</em>
+                                    </MenuItem>
+                                    {rooms.map((room) => (
+                                        <MenuItem key={room.roomID} value={room.roomID}>
+                                            {room.roomNumber}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {hasSubmitted && formData.RoomID === 0 && (
+                                    <FormHelperText>Please select a room</FormHelperText>
+                                )}
+                            </FormControl>
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 6 }}>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                 Service User Type *
                             </Typography>
-                            <TextField
+                            <FormControl
                                 fullWidth
-                                type="number"
-                                variant="outlined"
-                                value={formData.ServiceUserTypeID || ''}
-                                onChange={(e) => handleInputChange('ServiceUserTypeID', parseInt(e.target.value) || 0)}
-                                placeholder="Enter service user type ID"
                                 error={hasSubmitted && formData.ServiceUserTypeID === 0}
-                                helperText={hasSubmitted && formData.ServiceUserTypeID === 0 ? "Please enter service user type" : ""}
-                            />
+                            >
+                                <Select
+                                    name="serviceUserTypeID"
+                                    displayEmpty
+                                    defaultValue={0}
+                                    value={formData.ServiceUserTypeID}
+                                    onChange={(e) => handleInputChange('ServiceUserTypeID', Number(e.target.value))}
+                                    disabled={isLoading}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            style: {
+                                                maxHeight: 300, // ความสูงสูงสุดของ dropdown
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value={0}>
+                                        <em>{isLoading ? 'Loading types...' : '-- Select Type --'}</em>
+                                    </MenuItem>
+                                    {serviceUserTypes.map((type) => (
+                                        <MenuItem key={type.id} value={type.id}>
+                                            {type.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {hasSubmitted && formData.ServiceUserTypeID === 0 && (
+                                    <FormHelperText>Please select service user type</FormHelperText>
+                                )}
+                            </FormControl>
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>

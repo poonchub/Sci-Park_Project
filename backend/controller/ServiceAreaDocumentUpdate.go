@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // UpdateServiceAreaDocumentForEdit อัปเดต ServiceAreaDocument สำหรับการแก้ไข
@@ -59,9 +60,11 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 	}
 
 	// Room and Service Information
+	var newRoomID uint
 	if roomIDStr := c.PostForm("room_id"); roomIDStr != "" {
 		if roomID, err := strconv.ParseUint(roomIDStr, 10, 32); err == nil {
-			updateData.RoomID = uint(roomID)
+			newRoomID = uint(roomID)
+			updateData.RoomID = newRoomID
 		}
 	}
 	if serviceUserTypeIDStr := c.PostForm("service_user_type_id"); serviceUserTypeIDStr != "" {
@@ -108,6 +111,25 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 
 			// อัปเดต path ในฐานข้อมูล
 			setFieldValue(&updateData, structField, filePath)
+		}
+	}
+
+	// จัดการการเปลี่ยนสถานะห้อง (ถ้ามีการเปลี่ยนห้อง)
+	if newRoomID != 0 && newRoomID != existingDoc.RoomID {
+		// ปลดล็อคห้องเก่า (เปลี่ยนจาก unavailable เป็น available)
+		if existingDoc.RoomID != 0 {
+			if err := updateRoomStatus(tx, existingDoc.RoomID, "available"); err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unlock old room"})
+				return
+			}
+		}
+
+		// ล็อคห้องใหม่ (เปลี่ยนจาก available เป็น unavailable)
+		if err := updateRoomStatus(tx, newRoomID, "unavailable"); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to lock new room"})
+			return
 		}
 	}
 
@@ -223,4 +245,20 @@ func GetServiceAreaDocumentForEdit(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": response,
 	})
+}
+
+// updateRoomStatus อัปเดตสถานะของห้อง
+func updateRoomStatus(tx *gorm.DB, roomID uint, statusCode string) error {
+	// หา RoomStatusID จาก code ของสถานะ
+	var roomStatus entity.RoomStatus
+	if err := tx.Where("code = ?", statusCode).First(&roomStatus).Error; err != nil {
+		return fmt.Errorf("room status with code '%s' not found: %v", statusCode, err)
+	}
+
+	// อัปเดตสถานะของห้อง
+	if err := tx.Model(&entity.Room{}).Where("id = ?", roomID).Update("room_status_id", roomStatus.ID).Error; err != nil {
+		return fmt.Errorf("failed to update room status: %v", err)
+	}
+
+	return nil
 }
