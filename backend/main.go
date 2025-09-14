@@ -266,6 +266,10 @@ func main() {
 		protected.POST("/request-service-area/cancel/:request_id", controller.CancelRequestServiceArea)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
+		// CollaborationPlans
+		protected.GET("/collaboration-plans", controller.GetCollaborationPlansByRequestID)
+		protected.PATCH("/collaboration-plans", controller.UpdateCollaborationPlans)
+
 		// Payment
 		protected.GET("/payments/:userId", controller.GetPaymentByUserID)
 		protected.GET("/payments-option", controller.GetPaymentByOption)

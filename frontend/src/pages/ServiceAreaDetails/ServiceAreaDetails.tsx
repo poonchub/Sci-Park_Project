@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./ServiceAreaDetails.css";
 
-import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, DownloadServiceContractDocument, DownloadAreaHandoverDocument, DownloadQuotationDocument, DownloadRefundGuaranteeDocument, DownloadCancellationDocument, DownloadBankAccountDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest } from "../../services/http";
+import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, DownloadServiceContractDocument, DownloadAreaHandoverDocument, DownloadQuotationDocument, DownloadRefundGuaranteeDocument, DownloadCancellationDocument, DownloadBankAccountDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest, PatchCollaborationPlans } from "../../services/http";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 
@@ -243,9 +243,15 @@ function ServiceAreaDetails() {
         try {
             setIsUpdatingCollaborationPlans(true);
             
-            // TODO: เรียก API สำหรับอัปเดต Collaboration Plans
-            console.log("Updated plans:", updatedPlans);
-            // await UpdateCollaborationPlans(serviceAreaDetails?.RequestNo, updatedPlans);
+            // แปลงข้อมูล Dayjs เป็น string สำหรับ backend
+            const formattedPlans = updatedPlans.map(plan => ({
+                ...plan,
+                ProjectStartDate: plan.ProjectStartDate ? plan.ProjectStartDate.format('YYYY-MM-DD') : null
+            }));
+            
+            // เรียก API สำหรับอัปเดต Collaboration Plans
+            console.log("Updated plans:", formattedPlans);
+            await PatchCollaborationPlans(serviceAreaDetails?.RequestNo || 0, formattedPlans);
             
             // Refresh data
             await getServiceAreaDetails();
@@ -582,16 +588,11 @@ function ServiceAreaDetails() {
                                                         Collaboration Plans
                                                     </Typography>
                                                     <Button
-                                                        variant="outlined"
+                                                        variant="contained"
                                                         size="small"
                                                         startIcon={<Edit size={16} />}
                                                         onClick={handleEditCollaborationPlans}
-                                                        sx={{ 
-                                                            minWidth: 'auto',
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.875rem'
-                                                        }}
+                                                        
                                                     >
                                                         Edit
                                                     </Button>
@@ -629,16 +630,11 @@ function ServiceAreaDetails() {
                                                         Documents & Contract Information
                                                     </Typography>
                                                     <Button
-                                                        variant="outlined"
+                                                        variant="contained"
                                                         size="small"
                                                         startIcon={<Edit size={16} />}
                                                         onClick={() => {/* TODO: Open Edit Documents & Contract Popup */}}
-                                                        sx={{ 
-                                                            minWidth: 'auto',
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.875rem'
-                                                        }}
+                                                        
                                                     >
                                                         Edit
                                                     </Button>
@@ -839,16 +835,11 @@ function ServiceAreaDetails() {
                                                         Cancellation Details
                                                     </Typography>
                                                     <Button
-                                                        variant="outlined"
+                                                        variant="contained"
                                                         size="small"
                                                         startIcon={<Edit size={16} />}
                                                         onClick={() => {/* TODO: Open Edit Cancellation Details Popup */}}
-                                                        sx={{ 
-                                                            minWidth: 'auto',
-                                                            px: 2,
-                                                            py: 0.5,
-                                                            fontSize: '0.875rem'
-                                                        }}
+                                                        
                                                     >
                                                         Edit
                                                     </Button>

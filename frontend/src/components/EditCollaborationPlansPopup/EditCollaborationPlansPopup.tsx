@@ -9,14 +9,16 @@ import {
     Box,
     Grid,
     IconButton,
-    TextField,
     Divider
 } from '@mui/material';
+import { TextField } from '../TextField/TextField';
 import { DatePicker } from '../DatePicker/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
-import { Plus, Trash2 } from 'lucide-react';
+import dayjs from 'dayjs';
+import { CalendarMonth } from '@mui/icons-material';
+import { Plus, Trash2, Edit3 } from 'lucide-react';
 import AlertGroup from '../AlertGroup/AlertGroup';
 
 interface CollaborationPlan {
@@ -55,7 +57,7 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                 ID: plan.ID,
                 CollaborationPlan: plan.CollaborationPlan || '',
                 CollaborationBudget: plan.CollaborationBudget || 0,
-                ProjectStartDate: plan.ProjectStartDate || null
+                ProjectStartDate: plan.ProjectStartDate ? dayjs(plan.ProjectStartDate) : null
             }));
             setPlans(formattedPlans);
             setHasSubmitted(false);
@@ -186,8 +188,11 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                 }}
             >
                 {/* Dialog title */}
-                <DialogTitle sx={{ fontWeight: 700, color: 'primary.main', textAlign: 'center' }}>
-                    Edit Collaboration Plans
+                <DialogTitle variant="titlePopup">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Edit3 size={20} color="#FF6B35" />
+                        Edit Collaboration Plans
+                    </Box>
                 </DialogTitle>
 
                 <DialogContent>
@@ -226,8 +231,6 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        multiline
-                                        rows={3}
                                         variant="outlined"
                                         value={plan.CollaborationPlan}
                                         onChange={(e) => updatePlan(index, 'CollaborationPlan', e.target.value)}
@@ -267,7 +270,7 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                                     />
                                 </Grid>
 
-                                {/* Project Start Date */}
+                                {/* Project Start Month */}
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                                         Project Start Date *
@@ -275,8 +278,12 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                                         <DatePicker
                                             value={plan.ProjectStartDate}
-                                            onChange={(newValue) => updatePlan(index, 'ProjectStartDate', newValue)}
-                                            format="DD/MM/YYYY"
+                                            onChange={(newValue: Dayjs | null) => updatePlan(index, 'ProjectStartDate', newValue)}
+                                            minDate={dayjs()}
+                                            maxDate={dayjs().add(5, 'year')}
+                                            views={['year']}
+                                            openTo="year"
+                                            format="YYYY"
                                             sx={{
                                                 width: "100%",
                                                 '& .MuiInputBase-root': {
@@ -285,6 +292,14 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                                                 '& .MuiInputBase-input': {
                                                     padding: '8px 14px',
                                                 }
+                                            }}
+                                            slots={{
+                                                openPickerIcon: CalendarMonth
+                                            }}
+                                            slotProps={{
+                                                openPickerButton: {
+                                                    'aria-label': 'Choose month',
+                                                },
                                             }}
                                         />
                                     </LocalizationProvider>
@@ -301,19 +316,10 @@ const EditCollaborationPlansPopup: React.FC<EditCollaborationPlansPopupProps> = 
                     {/* Add New Plan Button */}
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                         <Button
-                            variant="outlined"
+                            variant="contained"
                             startIcon={<Plus size={16} />}
                             onClick={addNewPlan}
-                            sx={{
-                                borderStyle: 'dashed',
-                                borderWidth: '2px',
-                                py: 1.5,
-                                px: 3,
-                                '&:hover': {
-                                    borderStyle: 'solid',
-                                    backgroundColor: 'primary.50'
-                                }
-                            }}
+                            
                         >
                             Add New Plan
                         </Button>

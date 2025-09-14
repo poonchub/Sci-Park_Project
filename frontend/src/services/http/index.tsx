@@ -3590,6 +3590,32 @@ export const DeletePaymentReceipt = async (paymentId: number) => {
 };
 
 
+// Get Collaboration Plans by Request Service Area ID
+async function GetCollaborationPlansByRequestID(requestServiceAreaID: number) {
+    try {
+        const response = await axiosInstance.get(`/collaboration-plans?request_service_area_id=${requestServiceAreaID}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching collaboration plans:", error);
+        throw error;
+    }
+}
+
+// Patch (Update) Collaboration Plans
+async function PatchCollaborationPlans(requestServiceAreaID: number, plans: any[]) {
+    try {
+        const response = await axiosInstance.patch("/collaboration-plans", {
+            request_service_area_id: requestServiceAreaID,
+            collaboration_plans: plans
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating collaboration plans:", error);
+        throw error;
+    }
+}
+
+
 export {
     // RequestStatuses
     GetRequestStatuses,
@@ -3843,4 +3869,8 @@ export {
 
     // PaymentOptions
     ListPaymentOptions,
+
+    // Collaboration Plans
+    GetCollaborationPlansByRequestID,
+    PatchCollaborationPlans,
 };
