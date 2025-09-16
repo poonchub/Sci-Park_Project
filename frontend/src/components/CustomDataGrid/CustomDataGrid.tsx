@@ -93,7 +93,7 @@ const CustomDataGrid: React.FC<CustomDataGridProps> = ({
                 }}
                 onPaginationModelChange={(params: GridPaginationModel) => {
                     // DataGrid uses 0-based page index; propagate the same to parent
-                    onPageChange(params.page);
+                    onPageChange(params.page + 1);
                     onLimitChange(params.pageSize);
                 }}
                 sx={{

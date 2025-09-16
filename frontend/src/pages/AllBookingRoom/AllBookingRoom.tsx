@@ -64,6 +64,8 @@ import {
     DeletePaymentReceipt,
     socketUrl,
     GetBookingRoomById,
+    UpdateNotificationsByBookingRoomID,
+    ListBookingRoomsForAdmin,
 } from "../../services/http";
 
 import { TextField } from "../../components/TextField/TextField";
@@ -346,8 +348,9 @@ function AllBookingRoom() {
     const [selectedFloor, setSelectedFloor] = useState<number | "all">("all");
 
     // table
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
+    const [total, setTotal] = useState(0);
 
     // dialogs
     const [openConfirmApprove, setOpenConfirmApprove] = useState(false);
@@ -366,13 +369,30 @@ function AllBookingRoom() {
     const isAdminLike = isAdmin() || isManager();
 
     // ===== data =====
-    const getBookingRooms = async () => {
+    const getBookingRooms = async (
+        pageNum: number = 1,
+        setTotalFlag = false
+    ) => {
         try {
-            const rows = await GetBookingRooms();
-            console.log(rows);
-            setBookingRooms(rows);
+            const res = await ListBookingRoomsForAdmin(
+                "",
+                pageNum,
+                limit,
+                selectedDate ? selectedDate.format("YYYY-MM") : "",
+            );
 
-            const counts = rows.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
+            if (res) {
+                setBookingRooms(res.data);
+                if (setTotalFlag) setTotal(res.total);
+
+                // const formatted = res.statusCounts.reduce((acc: any, item: any) => {
+                //     acc[item.status_name] = item.count;
+                //     return acc;
+                // }, {});
+                // setStatusCounts(formatted);
+            }
+
+            const counts = res.data.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
                 let key = (it.DisplayStatus || "unknown").toLowerCase();
                 if (["rejected", "unconfirmed"].includes(key)) key = "pending";
                 if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
@@ -391,6 +411,17 @@ function AllBookingRoom() {
     useEffect(() => {
         getBookingRooms();
     }, []);
+
+    useEffect(() => {
+        getBookingRooms(page);
+
+    }, [page, limit]);
+
+    useEffect(() => {
+        if (user) {
+            getBookingRooms(1, true);
+        }
+    }, [user, selectedDate]);
 
     // ===== derived =====
     const filtered = useMemo(() => {
@@ -497,6 +528,18 @@ function AllBookingRoom() {
 
                     const items = invoiceItemData.map((it) => ({ ...it, RoomBookingInvoiceID: resInvoice.data.ID }));
                     await Promise.all(items.map((it) => CreateRoomBookingInvoiceItem(it).catch(() => null)));
+
+                    const notificationDataUpdate: NotificationsInterface = {
+                        IsRead: true,
+                    };
+                    const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+                        notificationDataUpdate,
+                        resApprove.data.ID
+                    );
+                    if (!resUpdateNotification || resUpdateNotification.error)
+                        throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
+                    await handleUploadPDF(resInvoice.data.ID);
 
                     await handleUploadPDF(resInvoice.data.ID);
                     break;
@@ -760,9 +803,6 @@ function AllBookingRoom() {
                 headerAlign: "center",
                 renderCell: (params) => {
                     const requestID = params.row.ID;
-
-                    console.log("data: ", params.row)
-
                     const notification = params.row.Notifications ?? [];
                     const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
                     return (
@@ -1361,13 +1401,20 @@ function AllBookingRoom() {
                             <CustomDataGrid
                                 rows={filtered}
                                 columns={getColumns()}
-                                getRowId={(row) => row.ID}
-                                rowCount={totalFiltered}
+                                rowCount={total}
                                 page={page}
                                 limit={limit}
                                 onPageChange={setPage}
                                 onLimitChange={setLimit}
                                 noDataText="Don't have any data"
+                                getRowId={(row) => {
+                                    // ใช้ ID ถ้ามีค่า
+                                    if (row.ID && row.ID > 0) {
+                                        return String(row.ID);
+                                    }
+                                    // ถ้าไม่มี ID เลย ให้ใช้ unique key
+                                    return `room_booking_${Date.now()}_${Math.random()}`;
+                                }}
                             />
                         ) : (
                             <Skeleton variant="rectangular" width="100%" height={220} sx={{ borderRadius: 2 }} />
