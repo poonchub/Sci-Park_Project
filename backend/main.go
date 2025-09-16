@@ -338,6 +338,7 @@ func main() {
 		// BookingRooms
 		protected.GET("/booking-rooms", controller.ListBookingRooms)
 		protected.GET("/booking-rooms/by-date", controller.ListBookingRoomByDateRange)
+		protected.GET("/booking-room-option-for-admin", controller.ListBookingRoomsForAdmin)
 
 		// Service_area
 		protected.POST("/service-area-approval", controller.CreateServiceAreaApproval)

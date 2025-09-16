@@ -125,6 +125,10 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
         }, 500);
     };
 
+    const amountBeforeDiscount = invoice.Items?.reduce((sum, item) => {
+        return sum + (item.Amount ?? 0)
+    }, 0)
+
     return (
         <div
             style={{
@@ -401,7 +405,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 colSpan={2}
                             >
-                                {invoice.BookingRoom?.TotalAmount?.toLocaleString("en-US", {
+                                {amountBeforeDiscount?.toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                 })}
@@ -425,7 +429,10 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 colSpan={2}
                             >
-                                0.00
+                                {invoice.BookingRoom?.DiscountAmount?.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                             </td>
                         </tr>
                         <tr>
@@ -453,7 +460,10 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 className="text-bold"
                                 colSpan={2}
                             >
-                                1,000.00
+                                {invoice.BookingRoom?.TotalAmount?.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                             </td>
                         </tr>
                     </tbody>
