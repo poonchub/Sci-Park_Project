@@ -170,107 +170,107 @@ function pickReceiptPayment(row: any) {
  * Payment popup builder
  * ========================= */
 function buildInstallmentsFromBooking(row?: BookingRoomsInterface): {
-  plan: "full" | "deposit";
-  installments: InstallmentUI[];
-  fullyPaid: boolean;
+    plan: "full" | "deposit";
+    installments: InstallmentUI[];
+    fullyPaid: boolean;
 } {
-  if (!row) return { plan: "full", installments: [], fullyPaid: false };
+    if (!row) return { plan: "full", installments: [], fullyPaid: false };
 
-  const option = lower((row as any)?.PaymentOption?.OptionName);
-  const isDepositPlan = option === "deposit";
+    const option = lower((row as any)?.PaymentOption?.OptionName);
+    const isDepositPlan = option === "deposit";
 
-  const invoice = (row as any).RoomBookingInvoice || {};
-  const finance = (row as any).Finance || {};
-  const total: number | undefined =
-    typeof finance.TotalAmount === "number" ? finance.TotalAmount : invoice.TotalAmount;
+    const invoice = (row as any).RoomBookingInvoice || {};
+    const finance = (row as any).Finance || {};
+    const total: number | undefined =
+        typeof finance.TotalAmount === "number" ? finance.TotalAmount : invoice.TotalAmount;
 
-  const depositDue = invoice.DepositDueDate || invoice.DepositeDueDate || invoice.IssueDate;
-  const dueAll = invoice.DueDate;
+    const depositDue = invoice.DepositDueDate || invoice.DepositeDueDate || invoice.IssueDate;
+    const dueAll = invoice.DueDate;
 
-  // ===== รวม payments แล้วเรียงเก่า->ใหม่ โดย "วันที่ว่าง" ไปท้ายเสมอ =====
-  const pays: any[] = Array.isArray((row as any).Payments) ? [...(row as any).Payments] : [];
-  if ((row as any).Payment && !pays.find((p) => (p.ID ?? p.id) === ((row as any).Payment.ID ?? (row as any).Payment.id))) {
-    pays.push((row as any).Payment);
-  }
-  pays.sort((a, b) => {
-    const ad = Date.parse(a?.PaymentDate ?? "");
-    const bd = Date.parse(b?.PaymentDate ?? "");
-    const aEmpty = Number.isNaN(ad);
-    const bEmpty = Number.isNaN(bd);
+    // ===== รวม payments แล้วเรียงเก่า->ใหม่ โดย "วันที่ว่าง" ไปท้ายเสมอ =====
+    const pays: any[] = Array.isArray((row as any).Payments) ? [...(row as any).Payments] : [];
+    if ((row as any).Payment && !pays.find((p) => (p.ID ?? p.id) === ((row as any).Payment.ID ?? (row as any).Payment.id))) {
+        pays.push((row as any).Payment);
+    }
+    pays.sort((a, b) => {
+        const ad = Date.parse(a?.PaymentDate ?? "");
+        const bd = Date.parse(b?.PaymentDate ?? "");
+        const aEmpty = Number.isNaN(ad);
+        const bEmpty = Number.isNaN(bd);
 
-    // ไม่มีวันที่ -> ไปอยู่หลัง
-    if (aEmpty && !bEmpty) return 1;
-    if (!aEmpty && bEmpty) return -1;
+        // ไม่มีวันที่ -> ไปอยู่หลัง
+        if (aEmpty && !bEmpty) return 1;
+        if (!aEmpty && bEmpty) return -1;
 
-    // มีวันที่ทั้งคู่ -> เก่าไปใหม่
-    if (!aEmpty && !bEmpty && ad !== bd) return ad - bd;
+        // มีวันที่ทั้งคู่ -> เก่าไปใหม่
+        if (!aEmpty && !bEmpty && ad !== bd) return ad - bd;
 
-    // สุดท้ายผูกด้วย ID (น้อยก่อน)
-    return (a?.ID ?? a?.id ?? 0) - (b?.ID ?? b?.id ?? 0);
-  });
+        // สุดท้ายผูกด้วย ID (น้อยก่อน)
+        return (a?.ID ?? a?.id ?? 0) - (b?.ID ?? b?.id ?? 0);
+    });
 
-  // ===== ชำระเต็มจำนวน =====
-  if (!isDepositPlan) {
-    const p = (row as any).Payment || pays[0] || {};
-    const inst: InstallmentUI = {
-      key: "full",
-      label: "ชำระเต็มจำนวน",
-      paymentId: p?.ID ?? p?.id,
-      amount: typeof total === "number" ? total : p?.Amount,
-      status: toPopupStatus(statusNameOf(p)),
-      slipPath: normalizePath(asSlipString(p?.SlipPath)),
-      dueDate: isValidDue(dueAll) ? dueAll : undefined,
+    // ===== ชำระเต็มจำนวน =====
+    if (!isDepositPlan) {
+        const p = (row as any).Payment || pays[0] || {};
+        const inst: InstallmentUI = {
+            key: "full",
+            label: "ชำระเต็มจำนวน",
+            paymentId: p?.ID ?? p?.id,
+            amount: typeof total === "number" ? total : p?.Amount,
+            status: toPopupStatus(statusNameOf(p)),
+            slipPath: normalizePath(asSlipString(p?.SlipPath)),
+            dueDate: isValidDue(dueAll) ? dueAll : undefined,
+        };
+        return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
+    }
+
+    // ===== แผนมัดจำ (ซ้าย=มัดจำ, ขวา=ยอดคงเหลือ) =====
+    let depPay = pays[0] || {};
+    let balPay = pays[1] || {};
+
+    // กันกรณีพิเศษ: ถ้าพบว่ายอดคงเหลือ approved แต่มัดจำยังไม่ -> สลับให้อัตโนมัติ
+    const depStatus = toPopupStatus(statusNameOf(depPay));
+    const balStatus = toPopupStatus(statusNameOf(balPay));
+    if ((depStatus === "unpaid" || depStatus === "pending_payment" || depStatus === "pending_verification" || depStatus === "submitted")
+        && balStatus === "approved") {
+        const tmp = depPay;
+        depPay = balPay;
+        balPay = tmp;
+    }
+
+    const depositAmount =
+        depPay?.Amount ??
+        finance.DepositAmount ??
+        (typeof total === "number" ? Math.min(total, total / 2) : undefined);
+
+    const depositInst: InstallmentUI = {
+        key: "deposit",
+        label: "ชำระมัดจำ",
+        paymentId: depPay?.ID ?? depPay?.id,
+        amount: depositAmount,
+        status: toPopupStatus(statusNameOf(depPay)),
+        slipPath: normalizePath(asSlipString(depPay?.SlipPath)),
+        dueDate: isValidDue(depositDue) ? depositDue : undefined,
     };
-    return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
-  }
 
-  // ===== แผนมัดจำ (ซ้าย=มัดจำ, ขวา=ยอดคงเหลือ) =====
-  let depPay = pays[0] || {};
-  let balPay = pays[1] || {};
+    const balAmount =
+        typeof total === "number" && typeof depositInst.amount === "number"
+            ? Math.max(total - depositInst.amount, 0)
+            : balPay?.Amount;
 
-  // กันกรณีพิเศษ: ถ้าพบว่ายอดคงเหลือ approved แต่มัดจำยังไม่ -> สลับให้อัตโนมัติ
-  const depStatus = toPopupStatus(statusNameOf(depPay));
-  const balStatus = toPopupStatus(statusNameOf(balPay));
-  if ((depStatus === "unpaid" || depStatus === "pending_payment" || depStatus === "pending_verification" || depStatus === "submitted")
-      && balStatus === "approved") {
-    const tmp = depPay;
-    depPay = balPay;
-    balPay = tmp;
-  }
+    const balanceInst: InstallmentUI = {
+        key: "balance",
+        label: "ชำระยอดคงเหลือ",
+        paymentId: balPay?.ID ?? balPay?.id,
+        amount: balAmount,
+        status: balPay?.ID ? toPopupStatus(statusNameOf(balPay)) : "unpaid",
+        slipPath: normalizePath(asSlipString(balPay?.SlipPath)),
+        dueDate: isValidDue(dueAll) ? dueAll : undefined,
+        locked: toPopupStatus(statusNameOf(depPay)) !== "approved",
+    };
 
-  const depositAmount =
-    depPay?.Amount ??
-    finance.DepositAmount ??
-    (typeof total === "number" ? Math.min(total, total / 2) : undefined);
-
-  const depositInst: InstallmentUI = {
-    key: "deposit",
-    label: "ชำระมัดจำ",
-    paymentId: depPay?.ID ?? depPay?.id,
-    amount: depositAmount,
-    status: toPopupStatus(statusNameOf(depPay)),
-    slipPath: normalizePath(asSlipString(depPay?.SlipPath)),
-    dueDate: isValidDue(depositDue) ? depositDue : undefined,
-  };
-
-  const balAmount =
-    typeof total === "number" && typeof depositInst.amount === "number"
-      ? Math.max(total - depositInst.amount, 0)
-      : balPay?.Amount;
-
-  const balanceInst: InstallmentUI = {
-    key: "balance",
-    label: "ชำระยอดคงเหลือ",
-    paymentId: balPay?.ID ?? balPay?.id,
-    amount: balAmount,
-    status: balPay?.ID ? toPopupStatus(statusNameOf(balPay)) : "unpaid",
-    slipPath: normalizePath(asSlipString(balPay?.SlipPath)),
-    dueDate: isValidDue(dueAll) ? dueAll : undefined,
-    locked: toPopupStatus(statusNameOf(depPay)) !== "approved",
-  };
-
-  const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
-  return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
+    const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
+    return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
 }
 
 
@@ -488,7 +488,7 @@ function AllBookingRoom() {
                     const BookingDate: BookingDateInterface[] = resApprove.data.BookingDates || [];
                     const invoiceItemData: RoomBookingInvoiceItemInterface[] = BookingDate.map((date) => ({
                         Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(
-                             date.Date ?? ''
+                            date.Date ?? ''
                         )} ห้อง ${resApprove.data.Room.RoomNumber}`,
                         Quantity: 1,
                         UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
@@ -758,8 +758,20 @@ function AllBookingRoom() {
                 flex: 0.2,
                 align: "center",
                 headerAlign: "center",
-                sortable: false,
-                renderCell: ({ id }) => <Typography>{id}</Typography>,
+                renderCell: (params) => {
+                    const requestID = params.row.ID;
+
+                    console.log("data: ", params.row)
+
+                    const notification = params.row.Notifications ?? [];
+                    const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+                    return (
+                        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+                            {hasNotificationForUser && <AnimatedBell />}
+                            <Typography>{requestID}</Typography>
+                        </Box>
+                    );
+                },
             },
             {
                 field: "Title",
@@ -1194,18 +1206,21 @@ function AllBookingRoom() {
         const socket = io(socketUrl);
 
         socket.on("booking_room_created", (data: { ID: number }) => {
+            console.log("📦 New room booking:", data);
             setTimeout(() => {
                 getNewBookingRoom(data.ID);
             }, 1500);
         });
 
-        socket.on("maintenance_updated", (data: { ID: number }) => {
+        socket.on("booking_room_updated", (data: { ID: number }) => {
+            console.log("🔄 Room booking updated:", data);
             setTimeout(() => {
                 getUpdateBookingRoom(data.ID);
             }, 1500);
         });
 
-        socket.on("maintenance_deleted", (data: { ID: number }) => {
+        socket.on("booking_room_deleted", (data: { ID: number }) => {
+            console.log("🔄 Room booking deleted:", data);
             setTimeout(() => {
                 setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
             }, 1500);
@@ -1213,8 +1228,8 @@ function AllBookingRoom() {
 
         return () => {
             socket.off("booking_room_created");
-            socket.off("maintenance_updated");
-            socket.off("maintenance_deleted");
+            socket.off("booking_room_updated");
+            socket.off("booking_room_deleted");
             socket.close();
         };
     }, []);

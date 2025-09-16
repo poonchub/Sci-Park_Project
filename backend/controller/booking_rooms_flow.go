@@ -166,6 +166,7 @@ func GetBookingRoomByID(c *gin.Context) {
 		Preload("Payments.Payer").
 		Preload("Payments.Approver").
 		Preload("Payments.PaymentType").
+		Preload("Notifications").
 		First(&b, id).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "load relations failed"})
 		return
