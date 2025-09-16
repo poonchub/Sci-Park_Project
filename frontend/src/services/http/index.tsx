@@ -184,7 +184,7 @@ async function ListUsers(data: QuarryInterface) {
 async function CreateUser(data: any) {
     // Debug: Print received data
     console.log('🔍 CreateUser received data:', data);
-    
+
     const formData = new FormData();
     formData.append("company_name", data.company_name || "");
     formData.append("business_detail", data.business_detail || "");
@@ -240,7 +240,7 @@ async function CreateUser(data: any) {
             console.error('🔍 Error response:', error.response?.data);
             console.error('🔍 Error status:', error.response?.status);
         }
-        
+
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message
@@ -3412,15 +3412,22 @@ export async function CompleteBookingRoom(id: number) {
 
 }
 
+// services/payments.ts
 export async function SubmitPaymentSlip(
     bookingId: number,
     fileLike: File | Blob | string,
-    extra?: Record<string, any>
+    extra?: {
+        PaymentID?: number;
+        PayerID?: number;
+        installment?: "full" | "deposit" | "balance";
+        amount?: number;
+        transTimestamp?: string;  // จาก CheckSlip
+    }
 ) {
-    // แปลงอะไรก็ตามให้เป็น File จริง
     const toFile = (input: any): File | null => {
         if (input instanceof File) return input;
-        if (input instanceof Blob) return new File([input], "slip.jpg", { type: input.type || "application/octet-stream" });
+        if (input instanceof Blob)
+            return new File([input], "slip.jpg", { type: input.type || "application/octet-stream" });
         if (typeof input === "string" && input.startsWith("data:")) {
             const [meta, data] = input.split(",");
             const mime = (meta.match(/data:(.*?);/) || [])[1] || "image/png";
@@ -3437,20 +3444,44 @@ export async function SubmitPaymentSlip(
 
     const fd = new FormData();
     fd.append("slip", file, file.name);
-    if (extra) {
-        Object.entries(extra).forEach(([k, v]) => {
-            if (v !== undefined && v !== null) fd.append(k, String(v));
-        });
-    }
+    fd.append("file", file, file.name);
 
-    // ✅ debug ให้เห็นจริงว่ามีอะไรอยู่ใน FormData
-    for (const [k, v] of fd.entries()) {
-        console.log("FD ->", k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
-    }
+    const toISO = (ts?: string) => {
+        const t = ts ? Date.parse(ts) : NaN;
+        return Number.isNaN(t) ? undefined : new Date(t).toISOString();
+    };
+
+    // ส่งทั้ง snake_case และ PascalCase เพื่อกันพลาดฝั่ง BE
+    const map: Record<string, any> = {
+        payment_id: extra?.PaymentID,
+        PaymentID: extra?.PaymentID,
+
+        payer_id: extra?.PayerID,
+        PayerID: extra?.PayerID,
+
+        booking_room_id: bookingId,
+        BookingRoomID: bookingId,
+
+        installment: extra?.installment,
+        InstallmentKey: extra?.installment,
+
+        // 👇 เพิ่มสองบรรทัดนี้
+        PaymentDate: extra?.transTimestamp,
+        payment_date: extra?.transTimestamp,
+
+        amount: extra?.amount,
+        Amount: extra?.amount,
+
+    };
+
+    Object.entries(map).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") fd.append(k, String(v));
+    });
 
     const res = await fetch(`${apiUrl}/booking-rooms/${bookingId}/payments`, {
-        method: "POST",
-        body: fd, // อย่าใส่ Content-Type เอง
+        method: "POST", // upsert: มี PaymentID = update, ไม่มี = create
+        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        body: fd,
     });
 
     if (!res.ok) {
@@ -3459,6 +3490,7 @@ export async function SubmitPaymentSlip(
     }
     return res.json();
 }
+
 
 
 

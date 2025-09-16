@@ -3,11 +3,51 @@ import {
   Box, Button, Card, CardMedia, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid
 } from "@mui/material";
-import { Landmark, Wallet, X } from "lucide-react";
+import {  Wallet, X } from "lucide-react";
 import { apiUrl } from "../../services/http";
 import dateFormat from "../../utils/dateFormat";
 import ImageUploader from "../ImageUploader/ImageUploader";
 import AlertGroup from "../AlertGroup/AlertGroup";
+import { CheckSlip } from "../../services/http";
+
+
+// ===== เพิ่ม util สำหรับตรวจสลิปอัตโนมัติ =====
+const ALLOWED = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"]);
+const MAX_SIZE = 5 * 1024 * 1024;
+
+const ensureFile = (file?: File) => {
+  if (!file) throw new Error("กรุณาแนบสลิป");
+  if (!ALLOWED.has(file.type)) throw new Error("ชนิดไฟล์ไม่ถูกต้อง");
+  if (file.size > MAX_SIZE) throw new Error("ไฟล์มีขนาดเกิน 5MB");
+};
+
+type SlipCheckState = {
+  loading?: boolean;
+  ok?: boolean;
+  transTs?: string;
+  error?: string;
+};
+
+// ลองส่ง "files" ก่อน แล้ว fallback เป็น "slip"
+const verifySlip = async (file: File) => {
+  const tryOnce = async (field: "files" | "slip") => {
+    const fd = new FormData();
+    fd.append(field, file, file.name);
+    const r = await CheckSlip(fd);
+    return r?.data?.transTimestamp || r?.transTimestamp || r?.data?.timestamp;
+  };
+  try {
+    return await tryOnce("files");
+  } catch (e1: any) {
+    try { return await tryOnce("slip"); }
+    catch {
+      const msg = e1?.response?.data?.error || e1?.message || "Slip check failed";
+      const status = e1?.response?.status;
+      throw new Error(status ? `${status}: ${msg}` : msg);
+    }
+  }
+};
+
 
 /* =======================
  * Types
@@ -19,14 +59,14 @@ export type InstallmentUI = {
   paymentId?: number;
   amount?: number;
   status:
-    | "unpaid"
-    | "pending_payment"
-    | "submitted"
-    | "pending_verification"
-    | "approved"
-    | "rejected"
-    | "refunded"
-    | "awaiting_receipt";
+  | "unpaid"
+  | "pending_payment"
+  | "submitted"
+  | "pending_verification"
+  | "approved"
+  | "rejected"
+  | "refunded"
+  | "awaiting_receipt";
   slipPath?: string;
   locked?: boolean;   // ใช้ล็อกการ์ดยอดคงเหลือจนกว่าจะอนุมัติมัดจำ
   dueDate?: string;
@@ -122,12 +162,30 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     { type: "warning" | "error" | "success"; message: string }[]
   >([]);
   const [files, setFiles] = useState<Record<InstallmentUI["key"], File[]>>({
-    full: [],
-    deposit: [],
-    balance: [],
+    full: [], deposit: [], balance: [],
   });
-  const setFileFor = (key: InstallmentUI["key"]) => (f: File[]) =>
-    setFiles((prev) => ({ ...prev, [key]: f }));
+  const [slipCheck, setSlipCheck] = useState<Record<InstallmentUI["key"], SlipCheckState>>({
+    full: {}, deposit: {}, balance: {},
+  });
+
+  const setFileFor = (key: InstallmentUI["key"]) => async (fList: File[]) => {
+    setFiles((prev) => ({ ...prev, [key]: fList }));
+    const file = fList?.[0];
+    if (!file) {
+      setSlipCheck((p) => ({ ...p, [key]: {} }));
+      return;
+    }
+    try {
+      ensureFile(file);
+      setSlipCheck((p) => ({ ...p, [key]: { loading: true, ok: false, error: undefined } }));
+      const ts = await verifySlip(file);                  // 🔍 ตรวจทันที
+      (file as any).transTimestamp = ts;                  // ฝังเวลาไว้ในไฟล์
+      setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: true, transTs: ts } }));
+    } catch (err: any) {
+      setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: false, error: err?.message || "ตรวจสลิปไม่สำเร็จ" } }));
+    }
+  };
+
 
   const list = useMemo(() => orderInstallments(plan, installments), [plan, installments]);
 
@@ -136,7 +194,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const renderInstallment = (inst: InstallmentUI, idx: number, total: number) => {
+  const renderInstallment = (inst: InstallmentUI, idx: number, _length: number) => {
     const hasSlip = Boolean(inst.slipPath && inst.slipPath.trim() !== "");
     const url = slipUrl(inst.slipPath);
     const statusN = norm(inst.status);
@@ -144,14 +202,19 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     const canUpload = isOwner && !hasSlip && ownerUploadableStatuses.has(statusN);
     const canUpdate = isOwner && hasSlip && (statusN === "pending_verification" || statusN === "rejected");
     const canAdminAct = canShowAdminActions(isAdmin, inst.status, hasSlip);
-    const hasNewFile = (files[inst.key]?.length ?? 0) > 0;
+    // const hasNewFile = (files[inst.key]?.length ?? 0) > 0;
+
+    const file = files[inst.key]?.[0];
+    const chk = slipCheck[inst.key] || {};
+    const verified = !!chk.ok && !!chk.transTs;
+
 
     const title =
       plan === "full"
         ? "ชำระเต็มจำนวน"
         : inst.key === "deposit"
-        ? "ชำระมัดจำ"
-        : "ชำระยอดคงเหลือ";
+          ? "ชำระมัดจำ"
+          : "ชำระยอดคงเหลือ";
 
     return (
       <Grid key={`${inst.key}-${idx}`} size={{ xs: 12, md: plan === "full" ? 12 : 6 }}>
@@ -237,17 +300,31 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 </Button>
               )
             ) : canUpload && !inst.locked ? (
-              <ImageUploader
-                value={files[inst.key]}
-                onChange={setFileFor(inst.key)}
-                setAlerts={setAlerts}
-                maxFiles={1}
-                buttonText="อัปโหลดสลิป"
-              />
+              file ? (
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {chk.loading ? "กำลังตรวจสลิป..." : verified ? `ตรวจแล้ว • เวลาโอน: ${new Date(chk.transTs!).toLocaleString()}` : (chk.error || "ตรวจสลิปไม่สำเร็จ")}
+                  </Typography>
+                  <ImageUploader
+                    value={files[inst.key]}
+                    onChange={setFileFor(inst.key)}   // เปลี่ยนไฟล์ = ตรวจใหม่
+                    setAlerts={setAlerts}
+                    maxFiles={1}
+                    buttonText="เปลี่ยนสลิป"
+                  />
+                </Box>
+              ) : (
+                <ImageUploader
+                  value={files[inst.key]}
+                  onChange={setFileFor(inst.key)}     // อัปโหลด = ตรวจทันที
+                  setAlerts={setAlerts}
+                  maxFiles={1}
+                  buttonText="อัปโหลดสลิป"
+                />
+              )
             ) : (
-              <Typography variant="body2" color="text.secondary">
-                ยังไม่มีการอัปโหลดสลิป
-              </Typography>
+              <Typography variant="body2" color="text.secondary">ยังไม่มีการอัปโหลดสลิป</Typography>
+
             )}
           </Box>
 
@@ -259,7 +336,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   <Button
                     variant="contained"
                     onClick={() => onUpdateFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                    disabled={isLoading || !hasNewFile}
+                    disabled={isLoading || !file || !verified}
                     fullWidth
                   >
                     อัปเดตสลิป
@@ -269,7 +346,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                     <Button
                       variant="contained"
                       onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                      disabled={isLoading || !hasNewFile}
+                      disabled={isLoading || !file || !verified}
                       fullWidth
                     >
                       ส่งสลิป

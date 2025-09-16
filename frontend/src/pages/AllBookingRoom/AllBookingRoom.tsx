@@ -36,10 +36,11 @@ import {
     HandCoins,
     FileText,
     Calendar,
-    Search,
+
     RotateCcw,
     Ellipsis,
     BrushCleaning,
+    Search,
 } from "lucide-react";
 
 import dateFormat from "../../utils/dateFormat";
@@ -59,11 +60,10 @@ import {
     CompleteBookingRoom,
     ApprovePayment,
     RejectPayment,
-
     UploadPaymentReceipt,
+    DeletePaymentReceipt,
     socketUrl,
     GetBookingRoomById,
-
 } from "../../services/http";
 
 import { TextField } from "../../components/TextField/TextField";
@@ -91,17 +91,37 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import BookingPaymentPopup, { type InstallmentUI } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
 import { io } from "socket.io-client";
-// ===== Helpers (status mapping) =====
+
+/* =========================
+ * Helpers
+ * ========================= */
 type PopupStatus = InstallmentUI["status"];
 
-const asSlipString = (sp?: string | string[]) =>
-    Array.isArray(sp) ? (sp[0] ?? "") : (sp ?? "");
+const lower = (s?: string) => (s || "").trim().toLowerCase();
+const normalizePath = (p?: string) => (p || "").replace(/\\/g, "/");
 
-const normalizePath = (p?: string) =>
-    (p || "").replace(/\\/g, "/");
+const asSlipString = (sp?: any): string => {
+    // รองรับ string | string[] | {Path}[] | undefined
+    if (!sp) return "";
+    if (typeof sp === "string") return sp;
+    if (Array.isArray(sp)) {
+        const f = sp[0];
+        if (!f) return "";
+        if (typeof f === "string") return f;
+        if (typeof f?.Path === "string") return f.Path;
+    }
+    return "";
+};
+
+const statusNameOf = (p?: any): string =>
+    typeof p?.Status === "string"
+        ? p.Status
+        : p?.Status?.StatusName || p?.status || p?.StatusName || "";
+
+const isValidDue = (d?: string | null) => !!d && new Date(d).getFullYear() > 1970;
 
 const toPopupStatus = (s?: string): PopupStatus => {
-    const v = (s || "").trim().toLowerCase();
+    const v = lower(s);
     if (v === "pending payment" || v === "unpaid") return "pending_payment";
     if (v === "pending verification" || v === "submitted") return "pending_verification";
     if (v === "approved" || v === "paid") return "approved";
@@ -111,105 +131,156 @@ const toPopupStatus = (s?: string): PopupStatus => {
     return "unpaid";
 };
 
-// ===== NEW: ผูก popup จากข้อมูล row จริง (Deposit = 2 ใบเสมอ ซ้าย/ขวา) =====
-function buildPopupDataAdmin(row?: any): {
-    plan: "full" | "deposit";
-    installments: InstallmentUI[];
-    fullyPaid: boolean;
-} {
-    if (!row) return { plan: "full", installments: [], fullyPaid: false };
+// ✅ เลือก payment ที่เหมาะกับ “ใบเสร็จ” ของแถวนี้
+function pickReceiptPayment(row: any) {
+    const pays: any[] = Array.isArray(row?.Payments) ? [...row.Payments] : [];
+    if (row?.Payment && !pays.find((p) => (p.ID ?? p.id) === (row.Payment.ID ?? row.Payment.id))) {
+        pays.push(row.Payment);
+    }
 
-    const invoice = row.RoomBookingInvoice || {};
-    const finance = row.Finance || {};
-    const total: number | undefined = finance.TotalAmount ?? invoice.TotalAmount;
-
-    // ใช้จาก API โดยตรง
-    const option = (row?.PaymentOption?.OptionName || "").toLowerCase();
-    const isDepositPlan = option === "deposit";
-
-    // due date
-    const depositDue =
-        invoice.DepositDueDate || invoice.DepositeDueDate || invoice.IssueDate;
-    const dueAll = invoice.DueDate;
-
-    // จัดลำดับ payments เก่า -> ใหม่ (มัดจำซ้าย, คงเหลือขวา)
-    const pays: any[] = Array.isArray(row.Payments) ? [...row.Payments] : [];
+    // ใหม่สุดอยู่หน้าสุด (โดย PaymentDate ก่อน ตกมาใช้ ID)
     pays.sort((a, b) => {
         const ad = new Date(a?.PaymentDate || 0).getTime();
         const bd = new Date(b?.PaymentDate || 0).getTime();
-        if (ad && bd) return ad - bd;
-        return (a?.ID || 0) - (b?.ID || 0);
+        if (ad && bd && ad !== bd) return bd - ad;
+        return (b?.ID ?? b?.id ?? 0) - (a?.ID ?? a?.id ?? 0);
     });
 
-    // === FULL PLAN ===
-    if (!isDepositPlan) {
-        const p = row.Payment || pays[0] || {};
-        const inst: InstallmentUI = {
-            key: "full",
-            label: "ชำระเต็มจำนวน",
-            paymentId: p.ID ?? p.id,
-            amount: typeof total === "number" ? total : p.Amount,
-            status: toPopupStatus(p.Status ?? p.status),
-            slipPath: normalizePath(asSlipString(p.SlipPath)),
-            dueDate: dueAll,
-        };
-        return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
-    }
-
-    // === DEPOSIT PLAN ===
-    // ซ้าย = มัดจำ (งวดแรก), ขวา = ยอดคงเหลือ (งวดสอง)
-    const depPay = pays[0] || row.Payment || {};
-    const balPay = pays[1] || {};
-
-    const depositAmount =
-        depPay.Amount ??
-        finance.DepositAmount ??
-        (typeof total === "number" ? Math.min(total, total / 2) : undefined);
-
-    const depositInst: InstallmentUI = {
-        key: "deposit",
-        label: "ชำระมัดจำ",
-        paymentId: depPay.ID ?? depPay.id,
-        amount: depositAmount,
-        status: toPopupStatus(depPay.Status ?? depPay.status),
-        slipPath: normalizePath(asSlipString(depPay.SlipPath)),
-        dueDate: depositDue,
+    const nameOf = (p: any) =>
+        (typeof p?.Status === "string" ? p.Status : p?.Status?.StatusName || p?.status || p?.StatusName || "").toLowerCase();
+    const isApproved = (p: any) => nameOf(p) === "approved" || nameOf(p) === "paid";
+    const hasNoReceipt = (p: any) => {
+        const rp = asSlipString(p?.ReceiptPath);
+        return !rp || rp.trim() === "";
     };
 
-    const balAmount =
-        typeof total === "number" && typeof depositInst.amount === "number"
-            ? Math.max(total - depositInst.amount, 0)
-            : balPay.Amount;
+    // 1) อนุมัติแล้วแต่ยังไม่มีใบเสร็จ → เลือกตัวนี้ก่อน
+    const awaiting = pays.find((p) => isApproved(p) && hasNoReceipt(p));
+    if (awaiting) return awaiting;
 
-    const balanceInst: InstallmentUI = {
-        key: "balance",
-        label: "ชำระยอดคงเหลือ",
-        paymentId: balPay.ID ?? balPay.id,        // อาจยังไม่มี (undefined)
-        amount: balAmount,
-        status: balPay.ID ? toPopupStatus(balPay.Status ?? balPay.status) : "unpaid",
-        slipPath: normalizePath(asSlipString(balPay.SlipPath)),
-        dueDate: dueAll,
-        locked: toPopupStatus(depositInst.status) !== "approved", // ล็อกจนกว่ามัดจำจะผ่าน
-    };
+    // 2) อนุมัติแล้ว (มี/ไม่มีใบเสร็จ) → ล่าสุด
+    const approved = pays.find((p) => isApproved(p));
+    if (approved) return approved;
 
-    const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
-    return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
+    // 3) ไม่เจอเลย → ล่าสุด
+    return pays[0];
 }
 
-// แปลง raw payment status -> ข้อความสำหรับหัวป้าย
-const toTitlePaymentStatus = (s?: string) => {
-    const v = (s || "").trim().toLowerCase();
-    if (v === "approved" || v === "paid") return "Paid";
-    if (v === "awaiting receipt") return "Awaiting Receipt";
-    if (v === "pending verification" || v === "submitted") return "Pending Verification";
-    if (v === "pending payment" || v === "unpaid") return "Pending Payment";
-    if (v === "rejected") return "Rejected";
-    if (v === "refunded") return "Refunded";
-    return "Unknown";
-};
+/* =========================
+ * Payment popup builder
+ * ========================= */
+function buildInstallmentsFromBooking(row?: BookingRoomsInterface): {
+  plan: "full" | "deposit";
+  installments: InstallmentUI[];
+  fullyPaid: boolean;
+} {
+  if (!row) return { plan: "full", installments: [], fullyPaid: false };
+
+  const option = lower((row as any)?.PaymentOption?.OptionName);
+  const isDepositPlan = option === "deposit";
+
+  const invoice = (row as any).RoomBookingInvoice || {};
+  const finance = (row as any).Finance || {};
+  const total: number | undefined =
+    typeof finance.TotalAmount === "number" ? finance.TotalAmount : invoice.TotalAmount;
+
+  const depositDue = invoice.DepositDueDate || invoice.DepositeDueDate || invoice.IssueDate;
+  const dueAll = invoice.DueDate;
+
+  // ===== รวม payments แล้วเรียงเก่า->ใหม่ โดย "วันที่ว่าง" ไปท้ายเสมอ =====
+  const pays: any[] = Array.isArray((row as any).Payments) ? [...(row as any).Payments] : [];
+  if ((row as any).Payment && !pays.find((p) => (p.ID ?? p.id) === ((row as any).Payment.ID ?? (row as any).Payment.id))) {
+    pays.push((row as any).Payment);
+  }
+  pays.sort((a, b) => {
+    const ad = Date.parse(a?.PaymentDate ?? "");
+    const bd = Date.parse(b?.PaymentDate ?? "");
+    const aEmpty = Number.isNaN(ad);
+    const bEmpty = Number.isNaN(bd);
+
+    // ไม่มีวันที่ -> ไปอยู่หลัง
+    if (aEmpty && !bEmpty) return 1;
+    if (!aEmpty && bEmpty) return -1;
+
+    // มีวันที่ทั้งคู่ -> เก่าไปใหม่
+    if (!aEmpty && !bEmpty && ad !== bd) return ad - bd;
+
+    // สุดท้ายผูกด้วย ID (น้อยก่อน)
+    return (a?.ID ?? a?.id ?? 0) - (b?.ID ?? b?.id ?? 0);
+  });
+
+  // ===== ชำระเต็มจำนวน =====
+  if (!isDepositPlan) {
+    const p = (row as any).Payment || pays[0] || {};
+    const inst: InstallmentUI = {
+      key: "full",
+      label: "ชำระเต็มจำนวน",
+      paymentId: p?.ID ?? p?.id,
+      amount: typeof total === "number" ? total : p?.Amount,
+      status: toPopupStatus(statusNameOf(p)),
+      slipPath: normalizePath(asSlipString(p?.SlipPath)),
+      dueDate: isValidDue(dueAll) ? dueAll : undefined,
+    };
+    return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
+  }
+
+  // ===== แผนมัดจำ (ซ้าย=มัดจำ, ขวา=ยอดคงเหลือ) =====
+  let depPay = pays[0] || {};
+  let balPay = pays[1] || {};
+
+  // กันกรณีพิเศษ: ถ้าพบว่ายอดคงเหลือ approved แต่มัดจำยังไม่ -> สลับให้อัตโนมัติ
+  const depStatus = toPopupStatus(statusNameOf(depPay));
+  const balStatus = toPopupStatus(statusNameOf(balPay));
+  if ((depStatus === "unpaid" || depStatus === "pending_payment" || depStatus === "pending_verification" || depStatus === "submitted")
+      && balStatus === "approved") {
+    const tmp = depPay;
+    depPay = balPay;
+    balPay = tmp;
+  }
+
+  const depositAmount =
+    depPay?.Amount ??
+    finance.DepositAmount ??
+    (typeof total === "number" ? Math.min(total, total / 2) : undefined);
+
+  const depositInst: InstallmentUI = {
+    key: "deposit",
+    label: "ชำระมัดจำ",
+    paymentId: depPay?.ID ?? depPay?.id,
+    amount: depositAmount,
+    status: toPopupStatus(statusNameOf(depPay)),
+    slipPath: normalizePath(asSlipString(depPay?.SlipPath)),
+    dueDate: isValidDue(depositDue) ? depositDue : undefined,
+  };
+
+  const balAmount =
+    typeof total === "number" && typeof depositInst.amount === "number"
+      ? Math.max(total - depositInst.amount, 0)
+      : balPay?.Amount;
+
+  const balanceInst: InstallmentUI = {
+    key: "balance",
+    label: "ชำระยอดคงเหลือ",
+    paymentId: balPay?.ID ?? balPay?.id,
+    amount: balAmount,
+    status: balPay?.ID ? toPopupStatus(statusNameOf(balPay)) : "unpaid",
+    slipPath: normalizePath(asSlipString(balPay?.SlipPath)),
+    dueDate: isValidDue(dueAll) ? dueAll : undefined,
+    locked: toPopupStatus(statusNameOf(depPay)) !== "approved",
+  };
+
+  const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
+  return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
+}
 
 
-// ===== Types (ย่อ) =====
+/* =========================
+ * Misc
+ * ========================= */
+
+/* =========================
+ * Types (สั้น)
+ * ========================= */
 interface BookingRoomsInterface {
     ID: number;
     CreatedAt?: string;
@@ -225,11 +296,13 @@ interface BookingRoomsInterface {
         id?: number;
         status?: string;
         Status?: string;
-        SlipPath?: string[];
-        ReceiptPath?: string;
+        SlipPath?: string[] | string;
+        ReceiptPath?: string | null;
         Amount?: number;
         PaymentDate?: string;
+        Note?: string;
     };
+    Payments?: any[];
     RoomBookingInvoice?: {
         InvoiceNumber?: string;
         IssueDate?: string;
@@ -237,13 +310,24 @@ interface BookingRoomsInterface {
         InvoicePDFPath?: string;
         TotalAmount?: number;
         InvoiceType?: string;
+        DepositDueDate?: string;
+        DepositeDueDate?: string;
     };
     Finance?: {
         TotalAmount?: number;
         IsFullyPaid?: boolean;
+        DepositAmount?: number;
     };
     Notifications?: NotificationsInterface[];
+    PaymentOption?: { OptionName?: string };
 }
+
+type ReceiptMenuState = {
+    anchorEl: HTMLElement | null;
+    paymentId?: number;
+    isApprovedNow?: boolean;
+    fileName?: string;
+};
 
 function AllBookingRoom() {
     const navigate = useNavigate();
@@ -274,10 +358,9 @@ function AllBookingRoom() {
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // receipt menu (global anchor)
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const openButtonMenu = Boolean(anchorEl);
-    const handleClickButtonMenu = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
+    // receipt menu (single global)
+    const [receiptMenu, setReceiptMenu] = useState<ReceiptMenuState | null>(null);
+    const openReceiptMenu = Boolean(receiptMenu?.anchorEl);
 
     const { user } = useUserStore();
     const isAdminLike = isAdmin() || isManager();
@@ -286,9 +369,8 @@ function AllBookingRoom() {
     const getBookingRooms = async () => {
         try {
             const rows = await GetBookingRooms();
-            console.log("rows", rows);
+            console.log(rows);
             setBookingRooms(rows);
-          
 
             const counts = rows.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
                 let key = (it.DisplayStatus || "unknown").toLowerCase();
@@ -300,7 +382,7 @@ function AllBookingRoom() {
             }, {});
             setStatusCounts(counts);
         } catch {
-            setAlerts(a => [...a, { type: "error", message: "โหลด bookings ไม่สำเร็จ" }]);
+            setAlerts((a) => [...a, { type: "error", message: "โหลด bookings ไม่สำเร็จ" }]);
         } finally {
             setIsLoadingData(false);
         }
@@ -323,18 +405,12 @@ function AllBookingRoom() {
                 normalize(item.User?.LastName).includes(normalize(searchText)) ||
                 normalize(item.User?.EmployeeID).includes(normalize(searchText));
 
-            const matchDate =
-                !selectedDate ||
-                item.BookingDates?.some((d) => dayjs(d.Date).isSame(selectedDate, "month"));
+            const matchDate = !selectedDate || item.BookingDates?.some((d) => dayjs(d.Date).isSame(selectedDate, "month"));
 
-            const statusKey = getDisplayStatus(item);
-            const matchStatus =
-                selectedStatus === "all" ||
-                normalize(statusKey) === normalize(selectedStatus);
+            const statusKey = getDisplayStatus(item as any);
+            const matchStatus = selectedStatus === "all" || normalize(statusKey) === normalize(selectedStatus);
 
-            const matchFloor =
-                selectedFloor === "all" ||
-                item.Room?.Floor?.Number === selectedFloor;
+            const matchFloor = selectedFloor === "all" || item.Room?.Floor?.Number === selectedFloor;
 
             return matchSearch && matchDate && matchStatus && matchFloor;
         });
@@ -348,7 +424,7 @@ function AllBookingRoom() {
     const bookingSummary = (row?: BookingRoomsInterface) => {
         if (!row) return "";
         const room = row.Room?.RoomNumber ?? "-";
-        const dates = row.BookingDates?.map(d => dateFormat(d.Date)).join(", ") || "-";
+        const dates = row.BookingDates?.map((d) => dateFormat(d.Date)).join(", ") || "-";
         return `ห้อง ${room} • วันที่ ${dates} • สถานะ: ${row.StatusName ?? "-"}`;
     };
 
@@ -372,11 +448,17 @@ function AllBookingRoom() {
                     const today = new Date();
                     let invoiceData: RoomBookingInvoiceInterface = {};
 
-                    if (resApprove.data.PaymentOption.OptionName === "Deposit") {
+                    if ((resApprove.data.PaymentOption?.OptionName || "").toLowerCase() === "deposit") {
                         const BookingDates = resApprove.data.BookingDates;
-                        const maxDate = new Date(Math.max(...BookingDates.map((d: BookingDateInterface) => new Date(d.Date ?? "").getTime())));
-                        const depositDue = new Date(); depositDue.setDate(today.getDate() + 7); depositDue.setHours(23, 59, 59, 999);
-                        const dueDate = new Date(maxDate); dueDate.setDate(maxDate.getDate() + 7); dueDate.setHours(23, 59, 59, 999);
+                        const maxDate = new Date(
+                            Math.max(...BookingDates.map((d: BookingDateInterface) => new Date(d.Date ?? "").getTime()))
+                        );
+                        const depositDue = new Date();
+                        depositDue.setDate(today.getDate() + 7);
+                        depositDue.setHours(23, 59, 59, 999);
+                        const dueDate = new Date(maxDate);
+                        dueDate.setDate(maxDate.getDate() + 7);
+                        dueDate.setHours(23, 59, 59, 999);
 
                         invoiceData = {
                             InvoiceNumber: invoiceNumber,
@@ -387,8 +469,10 @@ function AllBookingRoom() {
                             ApproverID: userId,
                             CustomerID: resApprove.data.UserID,
                         };
-                    } else { // Full
-                        const dueDate = new Date(); dueDate.setDate(today.getDate() + 7); dueDate.setHours(23, 59, 59, 999);
+                    } else {
+                        const dueDate = new Date();
+                        dueDate.setDate(today.getDate() + 7);
+                        dueDate.setHours(23, 59, 59, 999);
                         invoiceData = {
                             InvoiceNumber: invoiceNumber,
                             IssueDate: today.toISOString(),
@@ -402,15 +486,14 @@ function AllBookingRoom() {
                     const resInvoice = await CreateRoomBookingInvoice(invoiceData);
 
                     const BookingDate: BookingDateInterface[] = resApprove.data.BookingDates || [];
-                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = [];
-                    BookingDate.forEach((date) => {
-                        invoiceItemData.push({
-                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(date.Date)} ห้อง ${resApprove.data.Room.RoomNumber}`,
-                            Quantity: 1,
-                            UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
-                            Amount: resApprove.data.TotalAmount / BookingDate.length,
-                        });
-                    });
+                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = BookingDate.map((date) => ({
+                        Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(
+                             date.Date ?? ''
+                        )} ห้อง ${resApprove.data.Room.RoomNumber}`,
+                        Quantity: 1,
+                        UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
+                        Amount: resApprove.data.TotalAmount / BookingDate.length,
+                    }));
 
                     const items = invoiceItemData.map((it) => ({ ...it, RoomBookingInvoiceID: resInvoice.data.ID }));
                     await Promise.all(items.map((it) => CreateRoomBookingInvoiceItem(it).catch(() => null)));
@@ -471,18 +554,6 @@ function AllBookingRoom() {
             }
         });
 
-    const doApprove = async () => {
-        if (!selectedRow) return;
-        try {
-            await ApproveBookingRoom(selectedRow.ID);
-            handleSetAlert("success", `Approved booking #${selectedRow.ID}`);
-            await getBookingRooms();
-        } catch {
-            handleSetAlert("error", "Approve failed");
-        } finally {
-            setOpenConfirmApprove(false);
-        }
-    };
 
     const doReject = async (note?: string) => {
         if (!selectedRow) return;
@@ -497,59 +568,45 @@ function AllBookingRoom() {
         }
     };
 
-    const handleUploadReceiptForBooking = async (
+    // ✅ เจาะที่ payment เฉพาะงวด + ปิดเมนู global เสมอ
+    const handleUploadReceiptForPayment = async (
         e: React.ChangeEvent<HTMLInputElement>,
-        row: BookingRoomsInterface
+        paymentId: number,
+        isApprovedNow: boolean
     ) => {
         try {
-            setAnchorEl(null);
             const file = e.target.files?.[0];
             if (!file || file.type !== "application/pdf") {
                 handleSetAlert("warning", "Please select a valid PDF file");
                 return;
             }
 
-            // ✅ ดึงจาก row ที่คลิกเท่านั้น (อย่าดึงจาก state อื่น)
-            console.log("Uploading receipt for booking", row.Payment);
-            const paymentId = row.Payment?.ID;
-            if (!paymentId) {
-                handleSetAlert("error", "Missing payment id");
-                return;
-            }
-            console.log("Approving payment", paymentId);
             await UploadPaymentReceipt(paymentId, file);
 
-            // ถ้า payment ยังไม่ approved จะ approve ให้เลย (หรือเอาออกถ้าไม่ต้องการ)
-            const statusRaw = (row as any)?.Payment?.Status ?? (row as any)?.Payment?.status;
-            const isApproved = String(statusRaw).toLowerCase() === "approved" || String(statusRaw).toLowerCase() === "paid";
-            if (!isApproved) {
-                console.log("Approving payment", paymentId);
+            // อนุมัติงวดให้ด้วยถ้ายัง
+            if (!isApprovedNow) {
                 await ApprovePayment(paymentId);
             }
 
             handleSetAlert("success", "Receipt uploaded successfully");
             await getBookingRooms();
-        } catch (err) {
+        } catch {
             handleSetAlert("error", "Upload receipt failed");
         } finally {
             e.target.value = "";
+            setReceiptMenu(null);
         }
     };
 
-
-    const handleDeleteReceiptForBooking = async (row: BookingRoomsInterface) => {
+    const handleDeleteReceiptForPayment = async (paymentId: number) => {
         try {
-            const paymentId = Number(row?.Payment?.ID ?? row?.Payment?.id);
-            if (!paymentId) {
-                handleSetAlert("error", "Missing payment id");
-                return;
-            }
-            setAnchorEl(null);
-            await DeleteBookingReceiptPDF(paymentId);
+            await DeletePaymentReceipt(paymentId);
             handleSetAlert("success", "Receipt deleted");
             await getBookingRooms();
         } catch {
             handleSetAlert("error", "Delete receipt failed");
+        } finally {
+            setReceiptMenu(null);
         }
     };
 
@@ -568,7 +625,9 @@ function AllBookingRoom() {
 
     const totalFiltered = filtered.length;
 
-    // ===== columns =====
+    /* =========================
+     * Columns
+     * ========================= */
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
             return [
@@ -605,7 +664,16 @@ function AllBookingRoom() {
                                         <Typography sx={{ fontSize: 13 }}>{dateTime}</Typography>
                                     </Box>
 
-                                    <Typography sx={{ fontSize: 14, color: "text.secondary", my: 0.8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 14,
+                                            color: "text.secondary",
+                                            my: 0.8,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
                                         {data.Purpose || "-"}
                                     </Typography>
 
@@ -616,7 +684,20 @@ function AllBookingRoom() {
                                 </Grid>
 
                                 <Grid size={{ xs: 12, sm: 5 }} container direction="column">
-                                    <Box sx={{ bgcolor: s.cl, borderRadius: 10, px: 1.5, py: 0.5, display: "flex", gap: 1, color: s.c, alignItems: "center", justifyContent: "center", width: "100%" }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: s.cl,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "flex",
+                                            gap: 1,
+                                            color: s.c,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            width: "100%",
+                                        }}
+                                    >
                                         <s.icon size={18} />
                                         <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{s.label}</Typography>
                                     </Box>
@@ -720,7 +801,7 @@ function AllBookingRoom() {
             {
                 field: "Status",
                 headerName: "Status",
-                flex: 1,
+                flex: 0.4,
                 renderCell: (params) => {
                     const row = params.row as BookingRoomsInterface;
 
@@ -736,7 +817,7 @@ function AllBookingRoom() {
                         // เคส Fully-paid แต่ยังไม่มีใบเสร็จครบ → awaiting receipt
                         const payments = (row as any).Payments as any[] | undefined;
                         const approved = (payments || []).filter(
-                            (p) => String(p.Status || p.status).toLowerCase() === "approved" || String(p.Status || p.status).toLowerCase() === "paid"
+                            (p) => ["approved", "paid"].includes(String(p.Status || p.status).toLowerCase())
                         );
                         const approvedMissingReceipt = approved.some((p) => !p.ReceiptPath);
 
@@ -767,23 +848,6 @@ function AllBookingRoom() {
                     );
                 },
             },
-
-
-            // {
-            //     field: "Booker",
-            //     headerName: "Booker",
-            //     flex: 1.2,
-            //     renderCell: (params) => {
-            //         const u = (params.row as BookingRoomsInterface).User || {};
-            //         const name = `${u.FirstName || "-"} ${u.LastName || ""}`;
-            //         return (
-            //             <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            //                 <Typography sx={{ fontSize: 14 }}>{name}</Typography>
-            //                 <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{u.EmployeeID || "-"}</Typography>
-            //             </Box>
-            //         );
-            //     },
-            // },
             {
                 field: "All Invoice",
                 headerName: "All Invoice",
@@ -791,9 +855,12 @@ function AllBookingRoom() {
                 renderCell: (item) => {
                     const data = item.row as BookingRoomsInterface;
 
-                    // ===== 1) สถานะชำระเงิน (map → Title Case ให้ตรงกับ paymentStatusConfig) =====
-                    const paymentStatusRaw = (data as any).Payment?.Status ?? data.Payment?.status ?? "";
+                    // ✅ ใช้ payment ที่ถูกต้องสำหรับใบเสร็จ
+                    const selectedPay: any = pickReceiptPayment(data);
+                    const statusRaw = statusNameOf(selectedPay);
+                    const isApprovedNow = ["approved", "paid"].includes(lower(statusRaw));
 
+                    // map → key ของ paymentStatusConfig (หน้า All ไม่เปลี่ยนเป็น Awaiting Receipt)
                     const toConfigKey = (raw?: string): keyof typeof paymentStatusConfig => {
                         const v = (raw || "").trim().toLowerCase();
                         switch (v) {
@@ -805,7 +872,7 @@ function AllBookingRoom() {
                                 return "Pending Verification";
                             case "approved":
                             case "paid":
-                                return "Paid"; // ⛔️ หน้า All ไม่แปลงเป็น Awaiting Receipt
+                                return "Paid";
                             case "rejected":
                                 return "Rejected";
                             case "refunded":
@@ -814,8 +881,7 @@ function AllBookingRoom() {
                                 return "Pending Payment";
                         }
                     };
-
-                    const statusKey = toConfigKey(paymentStatusRaw);
+                    const statusKey = toConfigKey(statusRaw);
 
                     const cfgPay =
                         paymentStatusConfig[statusKey] || {
@@ -824,21 +890,11 @@ function AllBookingRoom() {
                             icon: HelpCircle,
                             label: "Unknown",
                         };
-                    const {
-                        color: statusColor,
-                        colorLite: statusColorLite,
-                        icon: statusIcon,
-                        label: uiStatus,
-                    } = cfgPay;
+                    const { color: statusColor, colorLite: statusColorLite, icon: statusIcon, label: uiStatus } = cfgPay;
 
                     const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
 
-                    // ===== 2) Notification (ถ้ามี) =====
-                    const user = useUserStore.getState().user as UserInterface | undefined;
-                    const notifications: NotificationsInterface[] = (data as any).Notifications ?? [];
-                    const hasNotificationForUser = !!user && notifications.some(n => n.UserID === user.ID && !n.IsRead);
-
-                    // ===== 3) ข้อมูล Invoice / Amount =====
+                    // ===== Invoice / Amount =====
                     const invoice = (data as any).RoomBookingInvoice;
                     const invoiceNumber = invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
                     const billingPeriod = invoice?.IssueDate
@@ -849,24 +905,24 @@ function AllBookingRoom() {
                     const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
 
                     const rb = (data as any).Finance;
-                    const totalAmountNum =
-                        rb?.TotalAmount ??
-                        (data as any).TotalAmount ??
-                        invoice?.TotalAmount ??
-                        undefined;
+                    const totalAmountNum = rb?.TotalAmount ?? (data as any).TotalAmount ?? invoice?.TotalAmount ?? undefined;
 
                     const totalAmount =
                         typeof totalAmountNum === "number"
                             ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
                             : "—";
 
-                    // ===== 4) Receipt/PDF + เมนูอัปโหลดใบเสร็จ (admin) =====
-                    const receiptPath = (data as any).Payment?.ReceiptPath ?? "";
+                    // ===== Receipt/PDF + เมนูอัปโหลดใบเสร็จ (admin) =====
+                    const receiptPath = asSlipString(selectedPay?.ReceiptPath);
                     const fileName = receiptPath ? receiptPath.split("/").pop() : "";
                     const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
 
+                    const currentUser = useUserStore.getState().user as UserInterface | undefined;
+                    const notifications: NotificationsInterface[] = (data as any).Notifications ?? [];
+                    const hasNotificationForUser = !!currentUser && notifications.some((n) => n.UserID === currentUser.ID && !n.IsRead);
+
                     const canManageReceipt = isAdminLike === true;
-                    const showReceiptMenu = canManageReceipt && (statusKey === "Awaiting Receipt" || statusKey === "Paid");
+                    const showReceiptMenu = canManageReceipt && isApprovedNow; // อนุญาตเฉพาะงวดที่อนุมัติแล้ว
 
                     return (
                         <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
@@ -927,48 +983,21 @@ function AllBookingRoom() {
                             {/* ===== Receipt (PDF) ===== */}
                             <Grid size={{ xs: 12 }}>
                                 {showReceiptMenu && (
-                                    <>
-                                        <Button
-                                            id={`receipt-menu-btn-${data.ID}`}
-                                            aria-controls={openButtonMenu ? `receipt-menu-${data.ID}` : undefined}
-                                            aria-haspopup="true"
-                                            aria-expanded={openButtonMenu ? "true" : undefined}
-                                            onClick={handleClickButtonMenu}
-                                            variant="outlinedGray"
-                                            sx={{ minWidth: 42, mr: 1 }}
-                                        >
-                                            <Ellipsis size={16} />
-                                        </Button>
-
-                                        <MuiMenu
-                                            id={`receipt-menu-${data.ID}`}
-                                            anchorEl={anchorEl}
-                                            open={openButtonMenu}
-                                            onClose={() => setAnchorEl(null)}
-                                            MenuListProps={{ "aria-labelledby": `receipt-menu-btn-${data.ID}` }}
-                                        >
-                                            <MenuItem disableRipple>
-                                                <input
-                                                    accept="application/pdf"
-                                                    style={{ display: "none" }}
-                                                    id={`upload-receipt-input-${data.ID}`}
-                                                    type="file"
-                                                    onChange={(e) => handleUploadReceiptForBooking(e, data)}
-                                                />
-                                                <label htmlFor={`upload-receipt-input-${data.ID}`}>
-                                                    <Typography component="span" sx={{ fontSize: 14 }}>
-                                                        {fileName ? "Replace Receipt (PDF)" : "Upload Receipt (PDF)"}
-                                                    </Typography>
-                                                </label>
-                                            </MenuItem>
-
-                                            {fileName && (
-                                                <MenuItem sx={{ fontSize: 14 }} onClick={() => handleDeleteReceiptForBooking(data)}>
-                                                    Delete File
-                                                </MenuItem>
-                                            )}
-                                        </MuiMenu>
-                                    </>
+                                    <Button
+                                        id={`receipt-menu-btn-${data.ID}`}
+                                        variant="outlinedGray"
+                                        sx={{ minWidth: 42, mr: 1 }}
+                                        onClick={(e) =>
+                                            setReceiptMenu({
+                                                anchorEl: e.currentTarget,
+                                                paymentId: selectedPay?.ID,
+                                                isApprovedNow,
+                                                fileName,
+                                            })
+                                        }
+                                    >
+                                        <Ellipsis size={16} />
+                                    </Button>
                                 )}
 
                                 {fileName ? (
@@ -1066,12 +1095,11 @@ function AllBookingRoom() {
                         </Grid>
                     );
                 },
-            }
-            ,
+            },
             {
                 field: "Actions",
                 headerName: "Actions",
-                flex: 0.6,
+                flex: 0.5,
                 renderCell: (params) => {
                     const row = params.row as BookingRoomsInterface;
                     const dStatus = (row.DisplayStatus || "unknown").toLowerCase();
@@ -1095,14 +1123,14 @@ function AllBookingRoom() {
                                 </>
                             )}
 
-                            {isAdminLike && dStatus === "payment review" && (
+                            {/* {isAdminLike && dStatus === "payment review" && (
                                 <Tooltip title="Review Payment">
                                     <Button variant="contained" color="warning" onClick={() => handlePrimaryAction("approvePayment", row)}>
                                         <Search size={18} />
                                         <Typography variant="textButtonClassic" className="text-btn">Review Payment</Typography>
                                     </Button>
                                 </Tooltip>
-                            )}
+                            )} */}
 
                             {isAdminLike && dStatus === "payment" && (
                                 <>
@@ -1138,19 +1166,13 @@ function AllBookingRoom() {
         ];
     };
 
-    // ===== popup data to avoid re-compute thrice =====
-    const popup = React.useMemo(
-        () => buildPopupDataAdmin(selectedRow || undefined),
-        [selectedRow]
-    );
-
+    const popup = React.useMemo(() => buildInstallmentsFromBooking(selectedRow || undefined), [selectedRow]);
 
     const getNewBookingRoom = async (ID: number) => {
         try {
             const res = await GetBookingRoomById(ID);
             if (res) {
                 setBookingRooms((prev) => [res, ...prev]);
-                // setTotal((prev) => prev + 1);
             }
         } catch (error) {
             console.error("Error fetching maintenance request:", error);
@@ -1171,31 +1193,29 @@ function AllBookingRoom() {
     useEffect(() => {
         const socket = io(socketUrl);
 
-        socket.on("booking_room_created", (data: { ID: number; }) => {
-            console.log("📦 New booking room request:", data);
+        socket.on("booking_room_created", (data: { ID: number }) => {
             setTimeout(() => {
                 getNewBookingRoom(data.ID);
             }, 1500);
         });
 
-        socket.on("maintenance_updated", (data: { ID: number; }) => {
-            console.log("🔄 Maintenance request updated:", data);
+        socket.on("maintenance_updated", (data: { ID: number }) => {
             setTimeout(() => {
                 getUpdateBookingRoom(data.ID);
             }, 1500);
         });
 
-        socket.on("maintenance_deleted", (data: { ID: number; }) => {
-            console.log("🔄 Maintenance request deleted:", data);
+        socket.on("maintenance_deleted", (data: { ID: number }) => {
             setTimeout(() => {
                 setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
             }, 1500);
         });
 
         return () => {
-            socket.off("maintenance_created");
+            socket.off("booking_room_created");
             socket.off("maintenance_updated");
             socket.off("maintenance_deleted");
+            socket.close();
         };
     }, []);
 
@@ -1241,7 +1261,7 @@ function AllBookingRoom() {
                             <Grid size={{ xs: 12 }}>
                                 <Card sx={{ mt: 2, p: 2 }}>
                                     <Grid container spacing={1} alignItems="center">
-                                        <Grid size={{ xs: 12, sm: 4}}>
+                                        <Grid size={{ xs: 12, sm: 4 }}>
                                             <TextField
                                                 fullWidth
                                                 placeholder="Search (purpose, room, employee)"
@@ -1251,7 +1271,7 @@ function AllBookingRoom() {
                                                     input: {
                                                         startAdornment: (
                                                             <InputAdornment position="start">
-                                                                <Clock size={16} />
+                                                                <Search size={20} />
                                                             </InputAdornment>
                                                         ),
                                                     },
@@ -1274,8 +1294,10 @@ function AllBookingRoom() {
                                             <FormControl fullWidth>
                                                 <Select value={selectedFloor} onChange={(e) => setSelectedFloor(e.target.value as any)}>
                                                     <MenuItem value="all">All Floors</MenuItem>
-                                                    {[...new Set(bookingRooms.map(b => b.Room?.Floor?.Number).filter(Boolean))].map(f => (
-                                                        <MenuItem key={String(f)} value={f as number}>Floor {String(f)}</MenuItem>
+                                                    {[...new Set(bookingRooms.map((b) => b.Room?.Floor?.Number).filter(Boolean))].map((f) => (
+                                                        <MenuItem key={String(f)} value={f as number}>
+                                                            Floor {String(f)}
+                                                        </MenuItem>
                                                     ))}
                                                 </Select>
                                             </FormControl>
@@ -1284,7 +1306,7 @@ function AllBookingRoom() {
                                             <FormControl fullWidth>
                                                 <Select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value as string)}>
                                                     <MenuItem value="all">All Status</MenuItem>
-                                                    {[...new Set(bookingRooms.map(b => getDisplayStatus(b)).filter(Boolean))].map(s => (
+                                                    {[...new Set(bookingRooms.map((b) => getDisplayStatus(b as any)).filter(Boolean))].map((s) => (
                                                         <MenuItem key={s} value={s}>
                                                             {s.charAt(0).toUpperCase() + s.slice(1)}
                                                         </MenuItem>
@@ -1308,11 +1330,7 @@ function AllBookingRoom() {
                                                     },
                                                 }}
                                             >
-                                                <BrushCleaning
-                                                    size={22}
-                                                    strokeWidth={2.2}
-                                                    style={{ color: "gray" }}
-                                                />
+                                                <BrushCleaning size={22} strokeWidth={2.2} style={{ color: "gray" }} />
                                             </Button>
                                         </Grid>
                                     </Grid>
@@ -1354,10 +1372,7 @@ function AllBookingRoom() {
                 isLoading={loading}
                 serviceConditions={{
                     title: "โปรดอ่านเงื่อนไขการชำระเงิน",
-                    points: [
-                        "ชำระตามยอดที่ระบุในใบแจ้งหนี้ภายในกำหนด",
-                        "หากชำระมัดจำแล้ว ให้ชำระยอดคงเหลือก่อนวันใช้งาน",
-                    ],
+                    points: ["ชำระตามยอดที่ระบุในใบแจ้งหนี้ภายในกำหนด", "หากชำระมัดจำแล้ว ให้ชำระยอดคงเหลือก่อนวันใช้งาน"],
                 }}
                 bookingSummary={bookingSummary(selectedRow || undefined)}
                 onApproveFor={async (_key, paymentId) => {
@@ -1383,9 +1398,41 @@ function AllBookingRoom() {
                     }
                 }}
             />
+
+            {/* ===== Global one-and-only Receipt menu ===== */}
+            <MuiMenu
+                id="receipt-menu"
+                anchorEl={receiptMenu?.anchorEl ?? null}
+                open={openReceiptMenu}
+                onClose={() => setReceiptMenu(null)}
+                MenuListProps={{ "aria-labelledby": "receipt-menu-btn" }}
+            >
+                <MenuItem disableRipple>
+                    <input
+                        accept="application/pdf"
+                        style={{ display: "none" }}
+                        id="upload-receipt-input"
+                        type="file"
+                        onChange={(e) => {
+                            if (!receiptMenu?.paymentId) return;
+                            handleUploadReceiptForPayment(e, receiptMenu.paymentId, Boolean(receiptMenu.isApprovedNow));
+                        }}
+                    />
+                    <label htmlFor="upload-receipt-input">
+                        <Typography component="span" sx={{ fontSize: 14 }}>
+                            {receiptMenu?.fileName ? "Replace Receipt (PDF)" : "Upload Receipt (PDF)"}
+                        </Typography>
+                    </label>
+                </MenuItem>
+
+                {receiptMenu?.paymentId && receiptMenu?.fileName && (
+                    <MenuItem sx={{ fontSize: 14 }} onClick={() => handleDeleteReceiptForPayment(receiptMenu.paymentId!)}>
+                        Delete File
+                    </MenuItem>
+                )}
+            </MuiMenu>
         </Box>
     );
 }
 
 export default AllBookingRoom;
-

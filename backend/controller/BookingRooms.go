@@ -3,13 +3,12 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
-	
+
 	"sort"
 	"strings"
 
@@ -444,8 +443,6 @@ func ListBookingRoomsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-
-
 /* ============================================================
    Helpers / Types
    ============================================================ */
@@ -456,10 +453,17 @@ type additionalInfoPayload struct {
 		UsedFreeCredit  bool `json:"usedFreeCredit"`
 		AppliedMember50 bool `json:"appliedMember50"`
 	} `json:"discounts"`
-	// อื่น ๆ ตามที่ FE ส่งมา (setupStyle/equipment/…)
+	// Fallback แพ็กเกจจาก FE (กรณี user ยังไม่มีแถวใน user_packages)
+	Package struct {
+		Name                   string `json:"name"`
+		MeetingRoomLimit       int    `json:"meeting_room_limit"`
+		TrainingRoomLimit      int    `json:"training_room_limit"`
+		MultiFunctionRoomLimit int    `json:"multi_function_room_limit"`
+	} `json:"package"`
+	QuotaConsumed bool `json:"quota_consumed"`
 }
 
-// โครงแพ็กเกจแบบบาง ๆ (รับผลจาก Raw SQL)
+// โครงแพ็กเกจแบบบาง ๆ (อ่านจากฐาน)
 type packageLite struct {
 	PackageName            string `json:"package_name" gorm:"column:package_name"`
 	MeetingRoomLimit       int    `json:"meeting_room_limit" gorm:"column:meeting_room_limit"`
@@ -469,42 +473,78 @@ type packageLite struct {
 
 // สิทธิ์ที่สรุปจากแพ็กเกจ
 type pkgBenefits struct {
-	meetingFreePerYear int  // โควต้าฟรีห้องประชุม/ปี
-	meetingHalf        bool // ลด 50% หมวด meeting ได้ไหม
+	meetingFreePerYear int  // โควต้าฟรีห้องประชุม/ปี (ใช้ limit จากแพ็กเกจ)
+	meetingHalf        bool // ลด 50% หมวด meeting
 	trainingHalf       bool // ลด 50% หมวด training
 	hallHalf           bool // ลด 50% หมวด hall/multifunction
 }
 
+// ปรับ mapping ให้ตรงกับแพ็กเกจจริงของระบบ
+// หมายเหตุ: meetingFreePerYear ใช้ค่าจากตาราง packages
 func benefitsFromPackage(p *packageLite) pkgBenefits {
 	if p == nil {
 		return pkgBenefits{}
 	}
-	switch strings.ToLower(strings.TrimSpace(p.PackageName)) {
+
+	name := strings.ToLower(strings.TrimSpace(p.PackageName))
+	meetLimit := p.MeetingRoomLimit
+	if meetLimit < 0 {
+		meetLimit = 0
+	}
+
+	switch name {
 	case "diamond":
+		// ฟรีตาม limit + ลด 50% ได้ทุกหมวด
 		return pkgBenefits{
-			meetingFreePerYear: p.MeetingRoomLimit,
+			meetingFreePerYear: meetLimit,
 			meetingHalf:        true,
 			trainingHalf:       true,
 			hallHalf:           true,
 		}
-	// เพิ่ม mapping อื่น ๆ ถ้ามี เช่น:
-	// case "gold":
-	// 	return pkgBenefits{meetingFreePerYear: p.MeetingRoomLimit, meetingHalf: true, trainingHalf: true, hallHalf: false}
+	case "gold":
+		// ฟรีตาม limit + ลด 50% ได้ meeting/training
+		return pkgBenefits{
+			meetingFreePerYear: meetLimit,
+			meetingHalf:        true,
+			trainingHalf:       true,
+			hallHalf:           false,
+		}
+	case "silver":
+		// ฟรีตาม limit + ลด 50% เฉพาะ meeting
+		return pkgBenefits{
+			meetingFreePerYear: meetLimit,
+			meetingHalf:        true,
+			trainingHalf:       false,
+			hallHalf:           false,
+		}
+	case "bronze":
+		// ฟรีตาม limit แต่ไม่ลด 50%
+		return pkgBenefits{
+			meetingFreePerYear: meetLimit,
+			meetingHalf:        false,
+			trainingHalf:       false,
+			hallHalf:           false,
+		}
 	default:
 		return pkgBenefits{}
 	}
 }
 
-// จัดหมวดห้อง (fallback จากชื่อ RoomType)
+// จัดหมวดห้องจากฟิลด์ Category ใน RoomType
+// คืนค่า: "meeting" | "training" | "hall"
 func classifyPolicyRoom(r *entity.Room) string {
-	name := strings.ToLower(strings.TrimSpace(r.RoomType.TypeName))
-	if strings.Contains(name, "training") || strings.Contains(name, "seminar") {
+	cat := strings.ToLower(strings.TrimSpace(string(r.RoomType.Category)))
+	switch cat {
+	case "meeting", "meetingroom", "meeting_room":
+		return "meeting"
+	case "training", "trainingroom", "training_room", "seminar":
 		return "training"
-	}
-	if strings.Contains(name, "hall") || strings.Contains(name, "multi") {
+	case "hall", "multifunction", "multifunctionroom", "multi_function_room", "multi":
 		return "hall"
+	default:
+		// fallback ถ้า Category ว่าง/ไม่เข้ากลุ่ม
+		return "meeting"
 	}
-	return "meeting"
 }
 
 /* ============================================================
@@ -530,9 +570,9 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 
 	// (optional) debug raw body
-	bodyBytes, _ := ioutil.ReadAll(c.Request.Body)
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
 	log.Println("Raw request body:", string(bodyBytes))
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	var input BookingInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -618,8 +658,7 @@ func CreateBookingRoom(c *gin.Context) {
 	// ----- สถานะตั้งต้น = Pending -----
 	var bs entity.BookingStatus
 	if err := tx.Where("LOWER(status_name) = ?", "pending").First(&bs).Error; err != nil {
-		// ถ้าไม่มี ให้ fallback เป็น 1 (แก้ให้เข้ากับ seed ของคุณ)
-		bs.ID = 1
+		bs.ID = 1 // fallback ให้ตรงกับ seed
 	}
 
 	// ----- AdditionalInfo (ส่วนลดที่ FE ติ๊ก) -----
@@ -641,30 +680,62 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 	baseTotal *= float64(len(input.Dates))
 
-	// ----- ดึงแพ็กเกจของ user แบบ Raw (เลี่ยงการอ้างฟิลด์ที่ struct ไม่มี) -----
-	// NOTE: ปรับ SQL ให้เข้ากับ schema จริงของคุณ
-	var pl packageLite
-	_ = tx.Raw(`
-		SELECT p.package_name, p.meeting_room_limit, p.training_room_limit, p.multi_function_room_limit
-		FROM users u
-		LEFT JOIN packages p ON p.id = u.package_id
-		WHERE u.id = ? LIMIT 1
-	`, user.ID).Scan(&pl).Error
+	// ----- ดึงแพ็กเกจของผู้ใช้ผ่านตารางเชื่อม user_packages -----
+	var up entity.UserPackage
+	// ถ้ามีแถวล่าสุดของ user ใน user_packages ก็ใช้สิทธิ์จาก Package นั้น
+	if err := tx.Preload("Package").
+		Where("user_id = ?", user.ID).
+		Order("created_at DESC").
+		First(&up).Error; err != nil {
+		// เงียบไว้ ใช้ fallback จาก FE ด้านล่าง
+	}
+
+	// สร้าง packageLite จากฐาน (ถ้ามี)
+	pl := packageLite{}
+	if up.Package.ID != 0 {
+		pl = packageLite{
+			PackageName:            up.Package.PackageName,
+			MeetingRoomLimit:       up.Package.MeetingRoomLimit,
+			TrainingRoomLimit:      up.Package.TrainingRoomLimit,
+			MultiFunctionRoomLimit: up.Package.MultiFunctionRoomLimit,
+		}
+	}
+	// Fallback จาก FE ถ้าในฐานไม่มีแพ็กเกจ
+	if strings.TrimSpace(pl.PackageName) == "" && strings.TrimSpace(addInfo.Package.Name) != "" {
+		pl.PackageName = addInfo.Package.Name
+		pl.MeetingRoomLimit = addInfo.Package.MeetingRoomLimit
+		pl.TrainingRoomLimit = addInfo.Package.TrainingRoomLimit
+		pl.MultiFunctionRoomLimit = addInfo.Package.MultiFunctionRoomLimit
+	}
 
 	benefit := benefitsFromPackage(&pl)
 	if benefit.meetingFreePerYear < 0 {
 		benefit.meetingFreePerYear = 0
 	}
 
+	// คำนวณโควต้าฟรี meeting ที่เหลือจาก usage ใน user_packages
+	meetingRemaining := 0
+	if benefit.meetingFreePerYear > 0 {
+		used := up.MeetingRoomUsed
+		if used < 0 {
+			used = 0
+		}
+		rem := benefit.meetingFreePerYear - used
+		if rem < 0 {
+			rem = 0
+		}
+		meetingRemaining = rem
+	}
+
 	// ----- คิดส่วนลดตามแพ็กเกจ -----
 	policy := classifyPolicyRoom(&room) // "meeting" | "training" | "hall"
-
 	appliedFree := false
 	applied50 := false
 
 	switch policy {
 	case "meeting":
-		if addInfo.Discounts.UsedFreeCredit && benefit.meetingFreePerYear > 0 {
+		// ใช้ฟรีเมื่อผู้ใช้ติ๊กและยังมีโควตาเหลือ
+		if addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
 			appliedFree = true
 		} else if addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
 			applied50 = true

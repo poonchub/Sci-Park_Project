@@ -17,3 +17,6 @@ sci-park_web-application.db
 /images/organization
 /images/ServiceDocuments
 /images/invoices
+/images/roomtypes
+/images/payments
+/images/payment
