@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
 
 	"sort"
 	"strings"
@@ -210,6 +211,7 @@ type BookingRoomResponse struct {
 	InvoicePDFPath     *string                    `json:"InvoicePDFPath,omitempty"`
 	Finance            BookingFinance             `json:"Finance"`
 	PaymentOption      *entity.PaymentOption      `json:"PaymentOption,omitempty"`
+	Notifications	   []entity.Notification	  `json:"Notifications"`
 }
 
 // ===== helper: map payments ทั้งหมด + หา active =====
@@ -291,6 +293,7 @@ func ListBookingRooms(c *gin.Context) {
 		Preload("Payments.Payer").
 		Preload("Payments.Approver").
 		Preload("Payments.PaymentType").
+		Preload("Notifications").
 		Find(&bookings).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -351,6 +354,7 @@ func ListBookingRooms(c *gin.Context) {
 			InvoicePDFPath:     invoicePDFPath,
 			Finance:            fin,
 			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
 		})
 	}
 
@@ -834,6 +838,8 @@ func CreateBookingRoom(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกข้อมูลไม่สำเร็จ"})
 		return
 	}
+
+	services.NotifySocketEvent("booking_room_created", booking)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":          "จองห้องสำเร็จ",

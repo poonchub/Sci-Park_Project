@@ -1146,6 +1146,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         }
       }
 
+      const notificationData: NotificationsInterface = {
+        BookingRoomID: resBooking.data.booking_id,
+      };
+
+      await CreateNotification(notificationData);
+
       // refresh หน้าปฏิทิน
       await fetchBookingMapOnly(roomData.ID as number);
 
