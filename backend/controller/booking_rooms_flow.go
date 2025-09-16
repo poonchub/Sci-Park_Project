@@ -2,6 +2,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -57,6 +58,75 @@ func setBookingStatus(tx *gorm.DB, bookingID uint, statusName string) error {
 		Error
 }
 
+
+// ====== ใช้ struct/ฟังก์ชันเดิมจาก ListBookingRooms ======
+// - BookingRoomResponse
+// - PaymentSummary
+// - AdditionalInfo
+// - mergeTimeSlots
+// - buildPaymentSummaries
+// - computeBookingFinance
+// - computeDisplayStatus
+//
+// ถ้ายังไม่มีฟังก์ชันกลาง ให้เพิ่มด้านล่าง แล้วให้ทั้ง List และ Get ใช้ร่วมกัน
+
+// สร้าง response ให้สอดคล้องกับหน้า All
+func buildBookingRoomResponse(b entity.BookingRoom) BookingRoomResponse {
+	// merge slot (เอาวันแรกของการจองเป็นฐานเวลา)
+	bookingDate := time.Now()
+	if len(b.BookingDates) > 0 {
+		bookingDate = b.BookingDates[0].Date
+	}
+	merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+	// booking status (ยกเลิกชนะ)
+	status := b.Status.StatusName
+	if b.CancelledAt != nil {
+		status = "cancelled"
+	}
+
+	// additional info
+	var addInfo AdditionalInfo
+	if b.AdditionalInfo != "" {
+		_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+	}
+
+	// payments summary
+	pList, pActive := buildPaymentSummaries(b.Payments)
+	if pList == nil {
+		pList = []PaymentSummary{}
+	}
+
+	// invoice pdf (normalize path)
+	var invoicePDFPath *string
+	if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+		p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+		invoicePDFPath = &p
+	}
+
+	// finance + display (คำนวณแบบเดียวกับหน้า All)
+	fin := computeBookingFinance(b)
+	disp := computeDisplayStatus(b)
+
+	return BookingRoomResponse{
+		ID:                 b.ID,
+		Room:               b.Room,
+		BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+		TimeSlotMerged:     merged,
+		User:               b.User,
+		Purpose:            b.Purpose,
+		AdditionalInfo:     addInfo,
+		StatusName:         status,
+		Payment:            pActive, // งวด active (หรือ null ถ้าไม่มี)
+		Payments:           pList,   // ทุกงวด (deposit จะ 2)
+		RoomBookingInvoice: b.RoomBookingInvoice,
+		DisplayStatus:      disp,
+		InvoicePDFPath:     invoicePDFPath,
+		Finance:            fin,
+		PaymentOption:      &b.PaymentOption,
+	}
+}
+
 // GET /booking-rooms/:id
 // controller/booking_rooms_flow.go (หรือที่ใช้โหลด BookingRoom by id)
 func GetBookingRoomByID(c *gin.Context) {
@@ -75,27 +145,97 @@ func GetBookingRoomByID(c *gin.Context) {
 		return
 	}
 
-	// 2) โหลดความสัมพันธ์ (ตัด Payments.Invoice ออก)
+	// 2) โหลดความสัมพันธ์ "ให้เหมือนหน้า All" (สำคัญ: Preload Status และเรียง Payments)
 	if err := db.
 		Model(&entity.BookingRoom{}).
 		Preload("Room.Floor").
 		Preload("User").
 		Preload("BookingDates").
 		Preload("TimeSlots").
+		Preload("Status").               // ⬅️ เพิ่มให้เหมือน List
 		Preload("PaymentOption").
-		Preload("Payments.Status").    // ✅ ได้แน่
-		Preload("RoomBookingInvoice"). // ✅ ถ้า invoice อยู่ที่ Booking
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			// เรียงเก่า→ใหม่ ให้ deposit=index 0, balance=index 1
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
 		First(&b, id).Error; err != nil {
-		// ❗อย่าคืน 404 ถ้า preload พลาด ให้เป็น 500
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "load relations failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, b)
+	// 3) สร้าง response แบบเดียวกับหน้า All
+	resp := buildBookingRoomResponse(b)
+	c.JSON(http.StatusOK, resp)
 }
 
 // POST /booking-rooms/:id/approve
-// controller/booking_approve.go
+
+
+// ตัดโควต้าฟรี meeting หากต้องตัด และกันนับซ้ำด้วย quotaConsumed
+func consumeFreeMeetingQuotaIfNeeded(tx *gorm.DB, b *entity.BookingRoom) error {
+	// ต้องมี Room.RoomType เพื่อดู Category
+	if b.Room.ID == 0 || b.Room.RoomType.ID == 0 {
+		if err := tx.Preload("Room.RoomType").First(&b, b.ID).Error; err != nil {
+			return err
+		}
+	}
+
+	// อ่าน AdditionalInfo
+	var info additionalInfoPayload
+	if s := strings.TrimSpace(b.AdditionalInfo); s != "" {
+		_ = json.Unmarshal([]byte(s), &info)
+	}
+
+	// ถ้ากินโควต้าไปแล้ว ไม่ต้องทำซ้ำ
+	if info.QuotaConsumed {
+		return nil
+	}
+
+	// ต้องเป็นหมวด meeting และผู้ใช้ติ๊ก "ใช้สิทธิ์ฟรี"
+	if classifyPolicyRoom(&b.Room) != "meeting" || !info.Discounts.UsedFreeCredit {
+		return nil
+	}
+
+	// หา user_packages แถวล่าสุด
+	var up entity.UserPackage
+	if err := tx.Preload("Package").
+		Where("user_id = ?", b.UserID).
+		Order("created_at DESC").
+		First(&up).Error; err != nil {
+		// ไม่พบแพ็กเกจ -> ไม่ตัด แต่ไม่ถือเป็น error เพื่อไม่บล็อกการอนุมัติ
+		return nil
+	}
+
+	// นับ 1 ครั้งต่อ 1 booking (ถ้าต้องการนับตามวัน: incBy := len(b.BookingDates))
+	incBy := 1
+
+	// อัปเดต usage แบบ atomic (+incBy)
+	if err := tx.Model(&entity.UserPackage{}).
+		Where("id = ?", up.ID).
+		UpdateColumn("meeting_room_used", gorm.Expr("meeting_room_used + ?", incBy)).Error; err != nil {
+		return err
+	}
+
+	// เซ็ตธงกันซ้ำลง AdditionalInfo
+	info.QuotaConsumed = true
+	newJSON, _ := json.Marshal(info)
+	if err := tx.Model(&entity.BookingRoom{}).
+		Where("id = ?", b.ID).
+		Update("additional_info", string(newJSON)).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ApproveBookingRoom(c *gin.Context) {
 	db := config.DB()
 	id := c.Param("id")
@@ -114,6 +254,7 @@ func ApproveBookingRoom(c *gin.Context) {
 		Preload("TimeSlots").
 		Preload("User").
 		Preload("PaymentOption").
+		Preload("Room.RoomType"). // ต้องมีเพื่อใช้ Category
 		First(&b, id).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found"})
@@ -125,7 +266,7 @@ func ApproveBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// set confirmed_at / event window
+	// confirmed_at + event window
 	if b.ConfirmedAt == nil {
 		now := time.Now()
 		if err := tx.Model(&entity.BookingRoom{}).
@@ -181,19 +322,16 @@ func ApproveBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ==== สร้าง/อัปเดต “งวดแรก” ตาม Full/Deposit ====
-	// สำคัญ: totalDue = TotalAmount (สุทธิแล้ว) ไม่ต้องลบ DiscountAmount อีก
+	// ==== งวดแรกตาม Full/Deposit ====
 	totalDue := b.TotalAmount
 	if totalDue < 0 {
 		totalDue = 0
 	}
-
 	firstAmount := totalDue
 	firstNote := "Waiting for payment"
 
 	plan := strings.ToLower(strings.TrimSpace(b.PaymentOption.OptionName))
 	if plan == "deposit" {
-		// จ่ายมัดจำเท่าที่ตั้งไว้ แต่อย่าเกินยอดรวม
 		if b.DepositAmount > 0 && b.DepositAmount < totalDue {
 			firstAmount = b.DepositAmount
 			firstNote = "Deposit due"
@@ -201,20 +339,16 @@ func ApproveBookingRoom(c *gin.Context) {
 			firstAmount = 0
 			firstNote = "Deposit waived (0 THB)"
 		} else {
-			// กรณีตั้งมัดจำมากกว่ายอดสุทธิ ให้ตัดเหลือยอดสุทธิ
 			firstAmount = totalDue
 			firstNote = "Deposit (capped to total)"
 		}
 	} else {
-		// full
 		firstAmount = totalDue
 		firstNote = "Full payment due"
 	}
 
-	// เลือกสถานะตามยอดงวดแรก
 	var psPending, psApproved entity.PaymentStatus
 	var err error
-
 	if firstAmount > 0 {
 		psPending, err = getOrCreatePaymentStatus(tx, "Pending Payment")
 		if err != nil {
@@ -231,7 +365,6 @@ func ApproveBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// ถ้ามี Payment อยู่แล้ว ให้อัปเดตใบล่าสุดให้เป็นงวดแรก
 	if len(b.Payments) > 0 {
 		latest := b.Payments[len(b.Payments)-1]
 		update := map[string]interface{}{
@@ -241,13 +374,14 @@ func ApproveBookingRoom(c *gin.Context) {
 		}
 		if firstAmount > 0 {
 			update["status_id"] = psPending.ID
-			// ไม่ต้อง set payment_date ตอนยังไม่จ่าย
 		} else {
 			update["status_id"] = psApproved.ID
 			update["payment_date"] = time.Now()
 			update["note"] = "No payment required"
 		}
-		if err := tx.Model(&entity.Payment{}).Where("id = ?", latest.ID).Updates(update).Error; err != nil {
+		if err := tx.Model(&entity.Payment{}).
+			Where("id = ?", latest.ID).
+			Updates(update).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update first payment"})
 			return
@@ -261,10 +395,10 @@ func ApproveBookingRoom(c *gin.Context) {
 			Note:          firstNote,
 		}
 		if firstAmount > 0 {
-			np.StatusID = psPending.ID // ← ใช้ .ID
+			np.StatusID = psPending.ID
 		} else {
-			np.StatusID = psApproved.ID // ← ใช้ .ID
-			np.PaymentDate = time.Now() // <-- ใช้ค่า ไม่ใช่ *time.Time// ถ้า field เป็น *time.Time
+			np.StatusID = psApproved.ID
+			np.PaymentDate = time.Now()
 			np.Note = "No payment required"
 		}
 		if err := tx.Create(&np).Error; err != nil {
@@ -272,6 +406,13 @@ func ApproveBookingRoom(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create first payment"})
 			return
 		}
+	}
+
+	// 🔥 จุดสำคัญ: ตัดโควต้าฟรี meeting (ถ้าต้องตัด) และกันอนุมัติซ้ำ
+	if err := consumeFreeMeetingQuotaIfNeeded(tx, &b); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to consume free meeting quota"})
+		return
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -557,6 +698,8 @@ func UploadPaymentReceipt(c *gin.Context) {
 	})
 }
 
+// DELETE /payments/receipt/:payment_id
+// DELETE /payments/receipt/:payment_id
 func DeletePaymentReceipt(c *gin.Context) {
 	db := config.DB()
 
@@ -577,16 +720,24 @@ func DeletePaymentReceipt(c *gin.Context) {
 		return
 	}
 
-	// ลบไฟล์จริง (ถ้าอยากลบ)
+	// ลบไฟล์จริง (best-effort)
 	if p.ReceiptPath != "" {
 		_ = os.Remove(p.ReceiptPath)
 	}
 
-	if err := db.Model(&p).Updates(map[string]any{
+	// เคลียร์เฉพาะใบเสร็จ! ไม่แตะ payments.status
+	updates := map[string]any{
 		"receipt_path": "",
 		"updated_at":   time.Now(),
-	}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "clear receipt failed"})
+	}
+
+	// ถ้ามีคอลัมน์ receipt_status ให้ตั้งเป็น "awaiting receipt"
+	if db.Migrator().HasColumn(&entity.Payment{}, "receipt_status") {
+		updates["receipt_status"] = "awaiting receipt"
+	}
+
+	if err := db.Model(&p).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "update payment (clear receipt) failed"})
 		return
 	}
 
