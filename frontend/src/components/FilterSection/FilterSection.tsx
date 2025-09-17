@@ -7,8 +7,6 @@ import {
     Card,
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../DatePicker/DatePicker";
@@ -16,7 +14,7 @@ import { Select } from "../Select/Select";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { CalendarMonth } from "@mui/icons-material";
 import { isAdmin, isManager } from "../../routes";
-import { Activity, BrushCleaning, Calendar, Search } from "lucide-react";
+import { Activity, BrushCleaning,  Search } from "lucide-react";
 
 
 type Props = {
@@ -51,7 +49,7 @@ const FilterSection = ({
         .filter(status => inProcessNames.includes(status.Name || ''))
         .map(status => status.ID!)
 
-    const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => <CalendarMonth size={20} style={{ minWidth: '20px', minHeight: '20px' }} {...props} />;
+    const CalendarIcon = () => <CalendarMonth  />;
 
     return (
         <Grid

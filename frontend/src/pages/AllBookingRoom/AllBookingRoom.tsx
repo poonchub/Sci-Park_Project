@@ -356,7 +356,7 @@ function AllBookingRoom() {
 
     // payment popup
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loading, _setLoading] = useState(false);
 
     // receipt menu (single global)
     const [receiptMenu, setReceiptMenu] = useState<ReceiptMenuState | null>(null);

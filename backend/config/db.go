@@ -269,30 +269,33 @@ func SeedDatabase() {
 		db.FirstOrCreate(&status, entity.RoomStatus{Code: status.Code})
 	}
 	roomTypes := []entity.RoomType{
-		{TypeName: "Small Meeting Room", RoomSize: 18, Category: entity.RoomCatMeeting, EmployeeDiscount: 20},
-		{TypeName: "Medium Meeting Room", RoomSize: 63, Category: entity.RoomCatMeeting, EmployeeDiscount: 20},
-		{TypeName: "Training Room", RoomSize: 135, Category: entity.RoomCatTraining, EmployeeDiscount: 20},
-		{TypeName: "EVENT HALL", RoomSize: 1218, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
-		{TypeName: "NE2 HALL 1", RoomSize: 1180, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
-		{TypeName: "NE2 HALL 2", RoomSize: 487, Category: entity.RoomCatMultiFunction, EmployeeDiscount: 20},
-		{TypeName: "Rental Space", ForRental: true, HasMultipleSizes: true, Category: entity.RoomCatMultiFunction},
+		{TypeName: "Small Meeting Room", RoomSize: 18, Category: "meetingroom", EmployeeDiscount: 20},
+		{TypeName: "Medium Meeting Room", RoomSize: 63, Category: "meetingroom", EmployeeDiscount: 20},
+		{TypeName: "Training Room", RoomSize: 135, Category: "trainingroom", EmployeeDiscount: 20},
+		{TypeName: "EVENT HALL", RoomSize: 1218, Category: "multifunctionroom", EmployeeDiscount: 20},
+		{TypeName: "NE2 HALL 1", RoomSize: 1180, Category: "multifunctionroom", EmployeeDiscount: 20},
+		{TypeName: "NE2 HALL 2", RoomSize: 487, Category: "multifunctionroom", EmployeeDiscount: 20},
+		{TypeName: "Rental Space", ForRental: true, HasMultipleSizes: true, Category: "multifunctionroom"},
 	}
 
+	typeNameToID := map[string]uint{}
 	for _, rt := range roomTypes {
 		var row entity.RoomType
-		// ✅ ใช้ Where แบบ struct → ค่านี้จะถูกนำไปใช้ตอน Create ด้วย
-		if err := db.Where(&entity.RoomType{TypeName: rt.TypeName}).
-			Assign(entity.RoomType{
-				RoomSize:         rt.RoomSize,
-				Category:         rt.Category,
-				EmployeeDiscount: rt.EmployeeDiscount,
-				ForRental:        rt.ForRental,
-				HasMultipleSizes: rt.HasMultipleSizes,
+		if err := db.Where("type_name = ?", rt.TypeName).
+			Assign(map[string]any{
+				"room_size":          rt.RoomSize,
+				"category":           rt.Category,
+				"employee_discount":  rt.EmployeeDiscount,
+				"for_rental":         rt.ForRental,
+				"has_multiple_sizes": rt.HasMultipleSizes,
 			}).
 			FirstOrCreate(&row).Error; err != nil {
 			panic(err)
 		}
+		typeNameToID[row.TypeName] = row.ID
 	}
+
+	// จากนั้นใช้ typeNameToID กับ seed ห้องของคุณได้ตามเดิม
 
 	var types []entity.RoomType
 	db.Select("id, type_name").Find(&types)
@@ -314,7 +317,7 @@ func SeedDatabase() {
 	}
 
 	// สร้าง map ชื่อ → id
-	typeNameToID := map[string]uint{}
+	typeNameToID = map[string]uint{}
 	{
 		var types []entity.RoomType
 		if err := db.Find(&types).Error; err != nil {

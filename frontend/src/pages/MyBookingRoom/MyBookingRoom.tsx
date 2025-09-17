@@ -829,23 +829,23 @@ function MyBookingRoom() {
         buttonActive={false}
       />
 
-      <Container maxWidth="xl">
+      <Container maxWidth="xl" sx={{ p: "0 !important" }}>
         <Grid container spacing={3}>
-          <Grid container className="title-box" direction="row" size={{ xs: 12 }} sx={{ gap: 1 }}>
+          {/* <Grid container className="title-box" direction="row" size={{ xs: 12 }} sx={{ gap: 1 }}>
             <ClipboardList size={26} />
             <Typography variant="h5" sx={{ fontWeight: 700 }}>
               My Booking Rooms
             </Typography>
-          </Grid>
+          </Grid> */}
 
           {!isLoadingData ? (
             <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
-              <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
+              {/* <Grid container size={{ md: 12, lg: 12 }} spacing={3}>
                 <BookingStatusCards statusCounts={statusCounts} />
-              </Grid>
+              </Grid> */}
 
               <Grid size={{ xs: 12 }}>
-                <Card sx={{ mt: 2, p: 2 }}>
+                <Card sx={{p: 2 }}>
                   <Grid container spacing={1} alignItems="center">
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
