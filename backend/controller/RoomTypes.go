@@ -71,6 +71,7 @@ func ListRoomTypesForBooking(c *gin.Context) {
 		Preload("RoomEquipments.Equipment"). // ✅ preload Equipment ด้วย
 		Preload("RoomTypeImages").
 		Preload("RoomPrices.TimeSlot").
+		Where("type_name != ?", "Rental Space").
 		Find(&roomTypes).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch room types"})
 		return

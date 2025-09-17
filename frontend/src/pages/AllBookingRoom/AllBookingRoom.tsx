@@ -605,6 +605,17 @@ function AllBookingRoom() {
         if (!selectedRow) return;
         try {
             await RejectBookingRoom(selectedRow.ID, note);
+
+            const notificationDataUpdate: NotificationsInterface = {
+                IsRead: true,
+            };
+            const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+                notificationDataUpdate,
+                selectedRow.ID
+            );
+            if (!resUpdateNotification || resUpdateNotification.error)
+                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
         } catch {
@@ -1164,9 +1175,9 @@ function AllBookingRoom() {
                             {isAdminLike && dStatus === "pending" && (
                                 <>
                                     <Tooltip title="Approve">
-                                        <Button variant="contained" color="primary" onClick={() => { 
-                                            setSelectedRow(row); 
-                                            setOpenConfirmApprove(true); 
+                                        <Button variant="contained" color="primary" onClick={() => {
+                                            setSelectedRow(row);
+                                            setOpenConfirmApprove(true);
                                         }}>
                                             <Check size={18} />
                                             <Typography variant="textButtonClassic" className="text-btn">Approve</Typography>

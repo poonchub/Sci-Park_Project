@@ -568,7 +568,7 @@ function CreateMaintenanceRequestPage() {
                     </Grid>
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
-                            <Button variant="outlined" onClick={handleBack}>
+                            <Button variant="outlinedGray" onClick={handleBack}>
                                 <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }}/>
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>
