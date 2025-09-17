@@ -1654,6 +1654,22 @@ async function GetMeetingRoomSummaryToday() {
         throw error;
     }
 }
+async function ListBookingRoomsForAdmin(
+    statusID: string,
+    page: number,
+    limit: number,
+    createdAt?: string | undefined,
+    userId?: number | undefined,
+    roomId?: number | undefined
+) {
+    try {
+        const response = await axiosInstance.get(`/booking-room-option-for-admin?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}&roomId=${roomId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room booking:", error);
+        throw error;
+    }
+}
 
 
 
@@ -3806,7 +3822,7 @@ export {
     GetBookingRoomSummaryThisMonth,
     GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
-
+    ListBookingRoomsForAdmin,
 
     // News
     ListNews,

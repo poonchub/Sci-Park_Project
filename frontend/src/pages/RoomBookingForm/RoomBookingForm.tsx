@@ -68,6 +68,7 @@ import {
   GetOrganizationInfo,
   ListPaymentOptions,
   UpdateUserSignature,
+  CreateNotification,
 } from "../../services/http";
 import { RoomPriceInterface } from "../../interfaces/IRoomPrices";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -84,6 +85,7 @@ import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 import { provincesData } from "../../constants/provinceData";
 import { useUserStore } from "../../store/userStore";
 import SignatureCanvas from "react-signature-canvas";
+import { NotificationsInterface } from "../../interfaces/INotifications";
 
 /* ========= Config / URL helper ========= */
 const API_BASE =
@@ -1112,8 +1114,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         }
       }
 
-      // refresh ปฏิทิน
-      if (roomData?.ID) await fetchBookingMapOnly(roomData.ID);
+      const notificationData: NotificationsInterface = {
+        BookingRoomID: resBooking.data.booking_id,
+      };
+
+      await CreateNotification(notificationData);
+
+      // refresh หน้าปฏิทิน
+      await fetchBookingMapOnly(roomData.ID as number);
 
       // reset บางส่วน
       setSelectedDates([]);

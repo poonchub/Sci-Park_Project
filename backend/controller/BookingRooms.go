@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
+	"sci-park_web-application/services"
+	"strconv"
 
 	"sort"
 	"strings"
@@ -211,6 +213,7 @@ type BookingRoomResponse struct {
 	InvoicePDFPath     *string                    `json:"InvoicePDFPath,omitempty"`
 	Finance            BookingFinance             `json:"Finance"`
 	PaymentOption      *entity.PaymentOption      `json:"PaymentOption,omitempty"`
+	Notifications	   []entity.Notification	  `json:"Notifications"`
 }
 
 // ===== helper: map payments ทั้งหมด + หา active =====
@@ -292,6 +295,7 @@ func ListBookingRooms(c *gin.Context) {
 		Preload("Payments.Payer").
 		Preload("Payments.Approver").
 		Preload("Payments.PaymentType").
+		Preload("Notifications").
 		Find(&bookings).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -352,6 +356,7 @@ func ListBookingRooms(c *gin.Context) {
 			InvoicePDFPath:     invoicePDFPath,
 			Finance:            fin,
 			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
 		})
 	}
 
@@ -796,6 +801,8 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
+	services.NotifySocketEvent("booking_room_created", booking)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":          "จองห้องสำเร็จ",
 		"booking_id":       booking.ID,
@@ -1072,4 +1079,238 @@ func GetBookingRoomSummary(c *gin.Context) {
 		"status_summary": statusCounts,
 		"total_bookings": totalBookings,
 	})
+}
+
+// GET /booking-room-option-for-admin
+func ListBookingRoomsForAdmin(c *gin.Context) {
+	db, start, end, err := buildBookingBaseQuery(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	page, limit, offset := getPagination(c)
+
+	var bookings []entity.BookingRoom
+	if err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("PaymentOption").
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
+		Preload("Notifications").
+		Order("booking_rooms.created_at DESC").
+		Limit(limit).Offset(offset).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
+
+	total := countBookingRooms(db)
+
+	// สร้าง response
+	result := make([]BookingRoomResponse, 0, len(bookings))
+	for _, b := range bookings {
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+		}
+
+		pList, pActive := buildPaymentSummaries(b.Payments)
+		if pList == nil {
+			pList = []PaymentSummary{}
+		}
+
+		var invoicePDFPath *string
+		if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+			p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+			invoicePDFPath = &p
+		}
+
+		fin := computeBookingFinance(b)
+		disp := computeDisplayStatus(b)
+
+		result = append(result, BookingRoomResponse{
+			ID:                 b.ID,
+			Room:               b.Room,
+			BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+			TimeSlotMerged:     merged,
+			User:               b.User,
+			Purpose:            b.Purpose,
+			AdditionalInfo:     addInfo,
+			StatusName:         status,
+			Payment:            pActive,
+			Payments:           pList,
+			RoomBookingInvoice: b.RoomBookingInvoice,
+			DisplayStatus:      disp,
+			InvoicePDFPath:     invoicePDFPath,
+			Finance:            fin,
+			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":         result,
+		"page":         page,
+		"limit":        limit,
+		"total":        total,
+		"totalPages":   (total + int64(limit) - 1) / int64(limit),
+		"statusCounts": fetchBookingStatusCounts(start, end),
+		"counts":       fetchBookingCounts(start, end),
+	})
+}
+
+func buildBookingBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
+	db := config.DB()
+	createdAt := c.DefaultQuery("createdAt", "")
+	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
+	statusStr := c.DefaultQuery("status", "")
+	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
+
+	var statusIDs []int
+	if statusStr != "" && statusStr != "0" {
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+	}
+
+	var start, end time.Time
+	var err error
+	if createdAt != "" {
+		start, end, err = parseDateRange(createdAt)
+		if err != nil {
+			return nil, start, end, err
+		}
+		db = db.Where("booking_rooms.created_at BETWEEN ? AND ?", start, end)
+	}
+
+	if len(statusIDs) > 0 {
+		db = db.Where("status_id IN ?", statusIDs)
+	}
+	if userID > 0 {
+		db = db.Where("user_id = ?", userID)
+	}
+	if roomID > 0 {
+		db = db.Where("room_id = ?", roomID)
+	}
+
+	return db, start, end, nil
+}
+
+func countBookingRooms(db *gorm.DB) int64 {
+	var total int64
+	db.Model(&entity.BookingRoom{}).Count(&total)
+	return total
+}
+
+func fetchBookingStatusCounts(start, end time.Time) []struct {
+	StatusID   uint   `json:"status_id"`
+	StatusName string `json:"status_name"`
+	Count      int    `json:"count"`
+} {
+	var statusCounts []struct {
+		StatusID   uint   `json:"status_id"`
+		StatusName string `json:"status_name"`
+		Count      int    `json:"count"`
+	}
+
+	joinClause := "LEFT JOIN booking_rooms ON booking_rooms.status_id = statuses.id"
+	if !start.IsZero() && !end.IsZero() {
+		joinClause += fmt.Sprintf(" AND booking_rooms.created_at BETWEEN '%s' AND '%s'",
+			start.Format("2006-01-02 15:04:05"),
+			end.Format("2006-01-02 15:04:05"))
+	}
+
+	config.DB().Table("statuses").
+		Select("statuses.id as status_id, statuses.status_name, COALESCE(COUNT(booking_rooms.id),0) as count").
+		Joins(joinClause).
+		Group("statuses.id, statuses.status_name").
+		Scan(&statusCounts)
+
+	return statusCounts
+}
+
+func fetchBookingCounts(start, end time.Time) interface{} {
+	if len(start.Format("2006-01")) == 7 {
+		return fetchBookingDailyCounts(start, end)
+	}
+	return fetchBookingMonthlyCounts(start, end)
+}
+
+func fetchBookingDailyCounts(start, end time.Time) []struct {
+	Day   string `json:"day"`
+	Count int    `json:"count"`
+} {
+	var dailyCounts []struct {
+		Day   string `json:"day"`
+		Count int    `json:"count"`
+	}
+
+	db := config.DB().Model(&entity.BookingRoom{})
+
+	if !start.IsZero() && !end.IsZero() {
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
+	}
+
+	db.Select(`
+		STRFTIME('%Y-%m-%d', created_at, 'localtime') AS day,
+		COUNT(id) AS count
+	`).
+		Group("day").
+		Order("day ASC").
+		Scan(&dailyCounts)
+
+	return dailyCounts
+}
+
+func fetchBookingMonthlyCounts(start, end time.Time) []struct {
+	Month string `json:"month"`
+	Count int    `json:"count"`
+} {
+	var monthlyCounts []struct {
+		Month string `json:"month"`
+		Count int    `json:"count"`
+	}
+
+	db := config.DB().Model(&entity.BookingRoom{})
+
+	if !start.IsZero() && !end.IsZero() {
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
+	}
+
+	db.Select(`
+		STRFTIME('%Y-%m', created_at) AS month,
+		COUNT(id) AS count
+	`).
+		Group("month").
+		Order("month ASC").
+		Scan(&monthlyCounts)
+
+	return monthlyCounts
 }
