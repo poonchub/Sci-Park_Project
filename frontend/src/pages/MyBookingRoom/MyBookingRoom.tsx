@@ -358,8 +358,26 @@ function MyBookingRoom() {
   // load data
   const getBookingRooms = async (pageNum: number = 1, setTotalFlag = false) => {
     try {
+      const res = await ListBookingRoomsForUser(
+        "",
+        pageNum,
+        limit,
+        selectedDate ? selectedDate.format("YYYY-MM") : "",
+        userId
+      );
 
-      // const counts = rows.reduce((acc: Record<string, number>, it) => {
+      if (res) {
+        setBookingRooms(res.data);
+        if (setTotalFlag) setTotal(res.total);
+
+        const formatted = res.statusCounts.reduce((acc: any, item: any) => {
+            acc[item.status_name] = item.count;
+            return acc;
+        }, {});
+        // setStatusCounts(formatted);
+      }
+
+      // const counts = res.reduce((acc: Record<string, number>, it: { DisplayStatus: any; }) => {
       //   let key = (it.DisplayStatus || "unknown").toLowerCase();
       //   if (["rejected", "unconfirmed"].includes(key)) key = "pending";
       //   if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
@@ -1672,5 +1690,6 @@ function MyBookingRoom() {
 }
 
 export default MyBookingRoom;
+
 
 
