@@ -1,21 +1,13 @@
 // pages/BookingReview/BookingReview.tsx
 import { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Grid,
-  Skeleton,
-  Typography,
-  Chip,
-  ImageList,
-  ImageListItem,
+  Box, Button, Card, Container, Grid, Skeleton, Typography, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField   // << เพิ่ม
 } from "@mui/material";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { Check, ChevronLeft, NotebookText } from "lucide-react";
+import { Calendar, Check, CheckCircle, ChevronLeft, Clock, FileText, MapPin, NotebookText, Settings, User } from "lucide-react";
 
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import dateFormat from "../../utils/dateFormat";
@@ -272,6 +264,7 @@ export default function BookingReview() {
   const bookingId = Number.isNaN(Number(encoded)) ? Number(Base64.decode(encoded)) : Number(encoded);
 
   const [booking, setBooking] = useState<BookingLike | null>(null);
+  console.log("booking", booking);
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<
     { type: "warning" | "error" | "success"; message: string }[]
@@ -285,6 +278,11 @@ export default function BookingReview() {
     console.log("raw", raw);
     setBooking(raw || null);
   };
+
+  const [openReject, setOpenReject] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -378,8 +376,8 @@ export default function BookingReview() {
           setAlerts((p) => [...p, { type: "success", message: "Approved booking" }]);
           break;
         case "reject":
-          await RejectBookingRoom(bookingId, undefined);
-          setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
+          setOpenReject(true);   // เปิด dialog ให้กรอกเหตุผล
+          return;                // จบที่นี่ก่อน ยังไม่ยิง API
           break;
         case "approvePayment":
           if (!paymentSummary?.id) throw new Error("No payment id");
@@ -401,6 +399,27 @@ export default function BookingReview() {
       setAlerts((p) => [...p, { type: "error", message: `Action ${key} failed` }]);
     }
   };
+
+  const confirmReject = async () => {
+    const n = rejectNote.trim();
+    if (!n) {
+      setAlerts((p) => [...p, { type: "warning", message: "กรุณาระบุเหตุผลการปฏิเสธ" }]);
+      return;
+    }
+    try {
+      setRejecting(true);
+      await RejectBookingRoom(bookingId, n);   // ส่ง note จริง
+      setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
+      await refreshBooking();
+    } catch {
+      setAlerts((p) => [...p, { type: "error", message: "Reject failed" }]);
+    } finally {
+      setRejecting(false);
+      setOpenReject(false);
+      setRejectNote("");
+    }
+  };
+
 
   // ---------- UI ----------
   if (loading) {
@@ -505,236 +524,444 @@ export default function BookingReview() {
             </Card>
           </Grid>
 
-          {/* Main */}
-          <Grid size={{ xs: 12 }}>
-            <Card className="data-card" sx={{ width: "100%", borderRadius: 2 }}>
-              <CardContent>
-                <Grid container spacing={{ xs: 3 }} sx={{ px: { xs: 2, md: 6 }, py: { xs: 1, md: 4 } }}>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
-                      Information
+
+
+          {/* LEFT: Booking Details */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            {/* Header */}
+
+
+            {/* Room Location */}
+            <Box sx={{
+              px: 4,
+              py: 2.5,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <MapPin size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Room Location
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                Room {booking.Room?.RoomNumber ?? "—"} • Floor {booking.Room?.Floor?.Number ?? "—"}
+              </Typography>
+            </Box>
+
+            {/* Date(s) */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <Calendar size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Date(s)
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.BookingDates?.length
+                  ? booking.BookingDates.map((d, i) => (
+                    <span key={`d-${i}`}>
+                      {dateFormat(d.Date)}
+                      {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
+                    </span>
+                  ))
+                  : "—"}
+              </Typography>
+            </Box>
+
+            {/* Time */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <Clock size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Time
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.Merged_time_slots?.length
+                  ? `${timeFormat(booking.Merged_time_slots[0].start_time)} - ${timeFormat(
+                    booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
+                  )} (${booking.Merged_time_slots.length} slot${booking.Merged_time_slots.length > 1 ? "s" : ""})`
+                  : "—"}
+              </Typography>
+            </Box>
+
+            {/* Booker */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <User size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Booker
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
+              </Typography>
+            </Box>
+
+            {/* Purpose */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <FileText size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Purpose
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.Purpose ?? booking.purpose ?? '—'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* RIGHT: Payment Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            {/* Header */}
+
+
+            {/* Payment Slip */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              textAlign: 'center',
+              mb: 3,
+              backgroundColor: 'grey.50',
+              minHeight: 300
+            }}>
+              <Typography fontWeight={600} sx={{
+                color: 'text.primary',
+                fontSize: 16,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}>
+                <FileText size={18} color="secondary.main" />
+                Payment Slip
+              </Typography>
+
+              {slipImagesInline.length ? (
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: 250
+                }}>
+                  <img
+                    src={slipImagesInline[0]}
+                    alt="payment-slip"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 250,
+                  backgroundColor: 'grey.100',
+                  borderRadius: 2,
+                  border: '2px dashed',
+                  borderColor: 'grey.300'
+                }}>
+                  <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                    ยังไม่มีสลิป
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Payment Details */}
+            <Grid container spacing={2}>
+              {/* Approver */}
+              <Grid size={6}>
+                <Box sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'grey.200',
+                  backgroundColor: 'grey.50',
+                  height: '100%'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                    <Box sx={{ color: 'secondary.main', mr: 1.5, display: 'flex' }}>
+                      <CheckCircle size={16} />
+                    </Box>
+                    <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 14 }}>
+                      Approver
                     </Typography>
-                  </Grid>
+                  </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 13, ml: 3.5 }}>
+                    {booking.Approver
+                      ? `${booking.Approver.FirstName ?? ''} ${booking.Approver.LastName ?? ''}`
+                      : '—'}
+                  </Typography>
+                </Box>
+              </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Room</Typography>
-                      <Typography>
-                        Room {booking.Room?.RoomNumber ?? "-"} • Floor {booking.Room?.Floor?.Number ?? "-"}
-                      </Typography>
+              {/* Approved At */}
+              <Grid size={6}>
+                <Box sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'grey.200',
+                  backgroundColor: 'grey.50',
+                  height: '100%'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                    <Box sx={{ color: 'secondary.main', mr: 1.5, display: 'flex' }}>
+                      <Calendar size={16} />
                     </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Date(s)</Typography>
-                      <Typography>
-                        {booking.BookingDates?.length
-                          ? booking.BookingDates.map((d, i) => (
-                            <span key={`d-${i}`}>
-                              {dateFormat(d.Date)}
-                              {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
-                            </span>
-                          ))
-                          : "-"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Time</Typography>
-                      <Typography>
-                        {booking.Merged_time_slots?.length
-                          ? `${timeFormat(booking.Merged_time_slots[0].start_time)} - ${timeFormat(
-                            booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
-                          )} (${booking.Merged_time_slots.length} slot${booking.Merged_time_slots.length > 1 ? "s" : ""
-                          })`
-                          : "-"}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Booker</Typography>
-                      <Typography>
-                        {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Purpose</Typography>
-                      <Typography>{booking.Purpose ?? booking.purpose ?? "-"}</Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Additional Information</Typography>
-                      <Box component="ul" sx={{ pl: 3, mt: 0.5 }}>
-                        <li>Style layout: {booking.AdditionalInfo?.SetupStyle || "-"}</li>
-                        <li>
-                          Equipment:{" "}
-                          {booking.AdditionalInfo?.Equipment?.length
-                            ? booking.AdditionalInfo.Equipment.join(", ")
-                            : "-"}
-                        </li>
-                        <li>Note: {booking.AdditionalInfo?.AdditionalNote || "-"}</li>
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  {/* ===== Payment Section ===== */}
-                  <Grid size={{ xs: 12 }} sx={{ mt: { xs: 2, md: 3 } }}>
-                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600, mb: { xs: 1, md: 2 } }}>
-                      Payment
+                    <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 14 }}>
+                      Approved At
                     </Typography>
+                  </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 13, ml: 3.5 }}>
+                    {booking.ConfirmedAt
+                      ? `${dateFormat(booking.ConfirmedAt)} ${timeFormat(booking.ConfirmedAt)}`
+                      : '—'}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
 
-                    <Grid container spacing={{ xs: 3 }} alignItems="flex-start">
-                      {/* Left: Slip */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography fontWeight={600} sx={{ mb: 1 }}>
-                          Payment Slip
-                        </Typography>
+            {/* Additional Information */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mt: 2,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'secondary.main', mr: 2, display: 'flex' }}>
+                  <Settings size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Additional Information
+                </Typography>
+              </Box>
 
-                        {slipImagesInline.length ? (
-                          <ImageList cols={1} gap={12} rowHeight={420} sx={{ m: 0 }}>
-                            {slipImagesInline.map((src: string, i: number) => (
-                              <ImageListItem key={`inline-slip-${i}`} sx={{ borderRadius: 2, overflow: "hidden" }}>
-                                <img
-                                  src={src}
-                                  alt={`slip-${i}`}
-                                  loading="lazy"
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    borderRadius: "8px",
-                                  }}
-                                />
-                              </ImageListItem>
-                            ))}
-                          </ImageList>
-                        ) : (
-                          <Typography color="text.secondary">ยังไม่มีสลิป</Typography>
-                        )}
-                      </Grid>
+              <Box sx={{ ml: 5 }}>
+                <Box sx={{ display: 'flex', mb: 1.5, alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Style layout:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.SetupStyle || '—'}
+                  </Typography>
+                </Box>
 
-                      {/* Right: Payment details */}
-                      {/* right column */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Box sx={{ mb: 1 }}>
-                          <Typography fontWeight={600}>Booker</Typography>
-                          <Typography>
-                            {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
-                          </Typography>
-                        </Box>
+                <Box sx={{ display: 'flex', mb: 1.5, alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Equipment:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.Equipment?.length
+                      ? booking.AdditionalInfo.Equipment.join(', ')
+                      : '—'}
+                  </Typography>
+                </Box>
 
-                        <Box sx={{ mb: 1 }}>
-                          <Typography fontWeight={600}>Purpose</Typography>
-                          <Typography>{booking.Purpose ?? booking.purpose ?? "-"}</Typography>
-                        </Box>
-
-                        {/* ✅ เพิ่มบล็อคผู้อนุมัติ */}
-                        <Box sx={{ mb: 1 }}>
-                          <Typography fontWeight={600}>Approver</Typography>
-                          <Typography>
-                            {booking.Approver
-                              ? `${booking.Approver.FirstName ?? ""} ${booking.Approver.LastName ?? ""}${booking.Approver.EmployeeID ? ` (${booking.Approver.EmployeeID})` : ""
-                              }`
-                              : "—"}
-                          </Typography>
-                        </Box>
-
-                        {/* ✅ เพิ่มบล็อคเวลาอนุมัติ */}
-                        <Box sx={{ mb: 1 }}>
-                          <Typography fontWeight={600}>Approved At</Typography>
-                          <Typography>
-                            {booking.ConfirmedAt
-                              ? `${dateFormat(booking.ConfirmedAt)} ${timeFormat(booking.ConfirmedAt)}`
-                              : "—"}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ mb: 1 }}>
-                          <Typography fontWeight={600}>Additional Information</Typography>
-                          <Box component="ul" sx={{ pl: 3, mt: 0.5 }}>
-                            <li>Style layout: {booking.AdditionalInfo?.SetupStyle || "-"}</li>
-                            <li>
-                              Equipment:{" "}
-                              {booking.AdditionalInfo?.Equipment?.length
-                                ? booking.AdditionalInfo.Equipment.join(", ")
-                                : "-"}
-                            </li>
-                            <li>Note: {booking.AdditionalInfo?.AdditionalNote || "-"}</li>
-                          </Box>
-                        </Box>
-                      </Grid>
-
-                    </Grid>
-                  </Grid>
-
-                  {/* ===== Actions ===== */}
-                  {/* Owner (จากหน้า My): อัป/แก้สลิปได้ในสถานะที่กำหนด */}
-                  {canOwnerUploadOrUpdate ? (
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                        <UploadSlipButton
-                          bookingId={booking.ID}
-                          payerId={Number(localStorage.getItem("userId"))}
-                          onSuccess={() => {
-                            setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
-                            refreshBooking();
-                          }}
-                          onError={() => {
-                            setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
-                          }}
-                        />
-                      </Box>
-                    </Grid>
-                  ) : isPaymentReview && isAdminRole ? (
-                    // Admin/Manager: ช่วง Payment Review → แสดง Approve/Reject Payment
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          sx={{ minWidth: 140 }}
-                          onClick={() => handleNextAction("rejectPayment")}
-                          disabled={!paymentSummary?.id}
-                        >
-                          Reject Payment
-                        </Button>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          sx={{ minWidth: 160 }}
-                          onClick={() => handleNextAction("approvePayment")}
-                          disabled={!paymentSummary?.id}
-                        >
-                          Approve Payment
-                        </Button>
-                      </Box>
-                    </Grid>
-                  ) : (
-                    // ปุ่มต่อไปตาม flow
-                    <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 2 }}>
-                      {nextActionLabel && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => {
-                            if (displayStatus === "pending") return handleNextAction("approve");
-                            if (displayStatus === "payment review") return handleNextAction("approvePayment");
-                            if (displayStatus === "payment") return handleNextAction("complete");
-                          }}
-                        >
-                          <Check size={16} />
-                          <Typography sx={{ ml: 0.5 }}>{nextActionLabel}</Typography>
-                        </Button>
-                      )}
-                    </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-            </Card>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Note:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.AdditionalNote || '—'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           </Grid>
         </Grid>
+
+        {/* ===== Actions Section ===== */}
+        {canOwnerUploadOrUpdate ? (
+          /* ... ของเดิม (UploadSlipButton) ... */
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <UploadSlipButton
+                bookingId={booking.ID}
+                payerId={Number(localStorage.getItem("userId"))}
+                onSuccess={() => {
+                  setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
+                  refreshBooking();
+                }}
+                onError={() => {
+                  setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
+                }}
+              />
+            </Box>
+          </Grid>
+        ) : isPaymentReview && isAdminRole ? (
+          /* ... ของเดิม (Approve/Reject Payment) ... */
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button
+                variant="contained"
+                color="error"
+                sx={{ minWidth: 140, borderRadius: 2, textTransform: "none", fontWeight: 600, py: 1.2 }}
+                onClick={() => handleNextAction("rejectPayment")}
+                disabled={!paymentSummary?.id}
+              >
+                Reject Payment
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ minWidth: 160, borderRadius: 2, textTransform: "none", fontWeight: 600, py: 1.2 }}
+                onClick={() => handleNextAction("approvePayment")}
+                disabled={!paymentSummary?.id}
+              >
+                Approve Payment
+              </Button>
+            </Box>
+          </Grid>
+        ) : (
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              {displayStatus === "pending" && isAdminRole ? (
+                <>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => setOpenReject(true)}    // << เปิด dialog กรอกเหตุผล
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => handleNextAction("approve")}
+                  >
+                    <Check size={16} />
+                    <Typography sx={{ ml: 0.5 }}>Approve</Typography>
+                  </Button>
+                </>
+              ) : (
+                nextActionLabel && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => {
+                      if (displayStatus === "payment") return handleNextAction("complete");
+                      if (displayStatus === "payment review") return handleNextAction("approvePayment");
+                    }}
+                  >
+                    <Check size={16} />
+                    <Typography sx={{ ml: 0.5 }}>{nextActionLabel}</Typography>
+                  </Button>
+                )
+              )}
+            </Box>
+          </Grid>
+        )}
+
+
+        <Dialog open={openReject} onClose={() => !rejecting && setOpenReject(false)} fullWidth maxWidth="sm">
+          <DialogTitle>Confirm Booking Rejection</DialogTitle>
+          <DialogContent dividers>
+            <Typography sx={{ mb: 2 }}>
+              Reject this booking? This action cannot be undone.
+            </Typography>
+            <Typography sx={{ mb: 1, fontWeight: 600 }}>Reason</Typography>
+            <TextField
+              fullWidth
+              multiline
+              minRows={3}
+              placeholder="โปรดระบุเหตุผลการปฏิเสธ..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              disabled={rejecting}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenReject(false)} disabled={rejecting}>Cancel</Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmReject}
+              disabled={rejecting || !rejectNote.trim()}
+            >
+              {rejecting ? "Processing..." : "Reject"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+
+
       </Container>
     </Box>
   );

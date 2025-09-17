@@ -13,6 +13,7 @@ import {
   Skeleton,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import dayjs, { Dayjs } from "dayjs";
@@ -23,7 +24,6 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 
 import {
-  ClipboardList,
   Eye,
   X,
   Clock,
@@ -33,6 +33,7 @@ import {
   HandCoins,
   BrushCleaning,
   Search,
+  UserRound,
 } from "lucide-react";
 
 import dateFormat from "../../utils/dateFormat";
@@ -57,7 +58,7 @@ import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { CalendarMonth } from "@mui/icons-material";
 import { Select } from "../../components/Select/Select";
 
-import BookingStatusCards from "../../components/BookingStatusCards/BookingStatusCards";
+
 import { getDisplayStatus } from "../../utils/bookingFlow";
 import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
@@ -73,6 +74,7 @@ import { useUserStore } from "../../store/userStore";
 import BookingPaymentPopup, {
   type InstallmentUI,
 } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
+import theme from "../../styles/Theme";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 /* ========= Types ========= */
@@ -305,7 +307,7 @@ function MyBookingRoom() {
 
   // state
   const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([]);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  // const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [alerts, setAlerts] = useState<
     { type: "warning" | "error" | "success"; message: string }[]
   >([]);
@@ -328,6 +330,10 @@ function MyBookingRoom() {
   const [selectedRow, setSelectedRow] = useState<BookingRoomsInterface | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // และใช้ useMediaQuery + theme ให้เรียบร้อย:
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isWindowScreen = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+
   const { user } = useUserStore();
   const currentUserId = user?.ID;
   const isOwnerPopup =
@@ -347,49 +353,32 @@ function MyBookingRoom() {
     ],
   };
 
+
+
   // load data
   const getBookingRooms = async (pageNum: number = 1, setTotalFlag = false) => {
     try {
 
-      const res = await ListBookingRoomsForUser(
-        "",
-        pageNum,
-        limit,
-        selectedDate ? selectedDate.format("YYYY-MM") : "",
-        userId
-      );
-
-      if (res) {
-        setBookingRooms(res.data);
-        if (setTotalFlag) setTotal(res.total);
-
-        // const formatted = res.statusCounts.reduce((acc: any, item: any) => {
-        //     acc[item.status_name] = item.count;
-        //     return acc;
-        // }, {});
-        // setStatusCounts(formatted);
-      }
-
-      const counts = res.data.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
-        let key = (it.DisplayStatus || "unknown").toLowerCase();
-        if (["rejected", "unconfirmed"].includes(key)) key = "pending";
-        if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
-        if (
-          ![
-            "pending",
-            "confirmed",
-            "payment review",
-            "payment",
-            "completed",
-            "cancelled",
-          ].includes(key)
-        ) {
-          key = "unknown";
-        }
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      setStatusCounts(counts);
+      // const counts = rows.reduce((acc: Record<string, number>, it) => {
+      //   let key = (it.DisplayStatus || "unknown").toLowerCase();
+      //   if (["rejected", "unconfirmed"].includes(key)) key = "pending";
+      //   if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
+      //   if (
+      //     ![
+      //       "pending",
+      //       "confirmed",
+      //       "payment review",
+      //       "payment",
+      //       "completed",
+      //       "cancelled",
+      //     ].includes(key)
+      //   ) {
+      //     key = "unknown";
+      //   }
+      //   acc[key] = (acc[key] || 0) + 1;
+      //   return acc;
+      // }, {});
+      // setStatusCounts(counts);
     } catch {
       setAlerts((a) => [...a, { type: "error", message: "โหลด bookings ไม่สำเร็จ" }]);
     } finally {
@@ -509,370 +498,1017 @@ function MyBookingRoom() {
     }
   };
   const haldel = handleSlip; // alias
+  // เลือก “งวดชำระ” ที่เหมาะสมสำหรับแสดง Invoice/Receipt บนแถวหนึ่ง ๆ
+  // รองรับทั้ง data.Payment (object เดี่ยว) และ data.Payments (array)
+  function pickReceiptPayment(row: any): any | undefined {
+    if (!row) return undefined;
+
+    const toArray = (r: any): any[] => {
+      const arr: any[] = [];
+      if (Array.isArray(r?.Payments)) arr.push(...r.Payments.filter(Boolean));
+      if (r?.Payment) arr.push(r.Payment);
+      return arr;
+    };
+
+    const norm = (v: any) => String(v ?? "").trim().toLowerCase();
+    const statusOf = (p: any) => norm(p?.Status ?? p?.status);
+    const hasReceipt = (p: any) => !!(p?.ReceiptPath);
+    const safeTime = (p: any) => {
+      const t = Date.parse(p?.PaymentDate || p?.CreatedAt || p?.createdAt || "");
+      return Number.isNaN(t) ? (typeof p?.ID === "number" ? p.ID : 0) : t;
+    };
+
+    const payments = toArray(row);
+    if (payments.length === 0) return undefined;
+
+    // เรียงจากใหม่ → เก่า
+    const byNewest = (a: any, b: any) => safeTime(b) - safeTime(a);
+
+    const isApproved = (p: any) => {
+      const s = statusOf(p);
+      return s === "approved" || s === "paid";
+    };
+    const isPending = (p: any) => {
+      const s = statusOf(p);
+      return s === "submitted" || s === "pending verification";
+    };
+    const isRefunded = (p: any) => statusOf(p) === "refunded";
+    const isRejected = (p: any) => statusOf(p) === "rejected";
+
+    // 1) อนุมัติ/จ่ายแล้ว + มีใบเสร็จ → โชว์ก่อน
+    const approvedWithReceipt = payments.filter((p) => isApproved(p) && hasReceipt(p)).sort(byNewest);
+    if (approvedWithReceipt.length) return approvedWithReceipt[0];
+
+    // 2) อนุมัติ/จ่ายแล้ว (ยังไม่มีใบเสร็จ) → ไว้แสดง Awaiting Receipt
+    const approved = payments.filter(isApproved).sort(byNewest);
+    if (approved.length) return approved[0];
+
+    // 3) รอตรวจสอบ
+    const pending = payments.filter(isPending).sort(byNewest);
+    if (pending.length) return pending[0];
+
+    // 4) คืนเงิน
+    const refunded = payments.filter(isRefunded).sort(byNewest);
+    if (refunded.length) return refunded[0];
+
+    // 5) ถูกปฏิเสธ
+    const rejected = payments.filter(isRejected).sort(byNewest);
+    if (rejected.length) return rejected[0];
+
+    // 6) อื่น ๆ → เอารายการล่าสุด
+    return payments.sort(byNewest)[0];
+  }
+
+  // ---- Lite type ที่ pickPaymentPrimaryButton ต้องการ ----
+  type BookingRowLite = {
+    ID?: number;
+    StatusName?: string;
+    DisplayStatus?: string;
+    User?: { ID?: number };
+    Finance?: { TotalAmount?: number; IsFullyPaid?: boolean };
+    RoomBookingInvoice?: {
+      InvoicePDFPath?: string;
+      InvoiceNumber?: string;
+      IssueDate?: string;
+      DueDate?: string;
+      TotalAmount?: number;
+    };
+    BookingDates?: { Date?: string }[];
+    InvoicePDFPath?: string;
+    InvoiceNumber?: string;
+    TotalAmount?: number;
+
+    Payment?: {
+      Status?: string;
+      status?: string;
+      SlipPath?: string | string[];
+      slipImages?: string[];
+      ReceiptPath?: string | null;
+      PaymentDate?: string;
+      CreatedAt?: string;
+      ID?: number;
+    };
+    Payments?: BookingRowLite["Payment"][];
+    Notifications?: NotificationsInterface[];
+  };
+
+  // ---- Helper: normalize SlipPath ให้เหลือแค่ string | string[] ----
+  type MaybeSlipPath = string | string[] | { Path?: string }[] | undefined;
+
+  function normalizeSlipPath(sp: MaybeSlipPath): { SlipPath?: string | string[]; slipImages?: string[] } {
+    if (!sp) return {};
+    if (typeof sp === "string") return { SlipPath: sp, slipImages: [sp] };
+    if (Array.isArray(sp)) {
+      if (sp.length === 0) return { SlipPath: [], slipImages: [] };
+      if (typeof sp[0] === "string") return { SlipPath: sp as string[], slipImages: sp as string[] };
+      const arr = (sp as Array<{ Path?: string }>).map(x => x?.Path).filter((x): x is string => !!x);
+      return { SlipPath: arr, slipImages: arr };
+    }
+    return {};
+  }
+
+  // ---- Map Payment -> BookingRowLite.Payment ----
+  function mapPaymentLite(p: any): BookingRowLite["Payment"] {
+    const { SlipPath, slipImages } = normalizeSlipPath(p?.SlipPath);
+    return {
+      Status: p?.Status ?? p?.status,
+      status: p?.status ?? p?.Status,
+      SlipPath,
+      slipImages,
+      ReceiptPath: p?.ReceiptPath ?? null,
+      PaymentDate: p?.PaymentDate,
+      CreatedAt: p?.CreatedAt,
+      ID: p?.ID,
+    };
+  }
+
+  // ---- แปลงทั้งแถว BookingRoomsInterface -> BookingRowLite ----
+  function toBookingRowLite(row: BookingRoomsInterface): BookingRowLite {
+    const paymentLite = row?.Payment ? mapPaymentLite(row.Payment as any) : undefined;
+    const paymentsLite = Array.isArray((row as any)?.Payments)
+      ? ((row as any).Payments as any[]).map(mapPaymentLite)
+      : undefined;
+
+    return {
+      ID: row.ID,
+      StatusName: row.StatusName,
+      DisplayStatus: row.DisplayStatus,
+      User: row.User ? { ID: row.User.ID } : undefined,
+      Finance: row.Finance
+        ? { TotalAmount: row.Finance.TotalAmount, IsFullyPaid: row.Finance.IsFullyPaid }
+        : undefined,
+      RoomBookingInvoice: row.RoomBookingInvoice
+        ? {
+          InvoicePDFPath: row.RoomBookingInvoice.InvoicePDFPath,
+          InvoiceNumber: row.RoomBookingInvoice.InvoiceNumber,
+          IssueDate: row.RoomBookingInvoice.IssueDate,
+          DueDate: row.RoomBookingInvoice.DueDate,
+          TotalAmount: row.RoomBookingInvoice.TotalAmount,
+        }
+        : undefined,
+      BookingDates: row.BookingDates?.map(d => ({ Date: d.Date })),
+      InvoicePDFPath: row.RoomBookingInvoice?.InvoicePDFPath ?? (row as any).InvoicePDFPath,
+      InvoiceNumber: row.RoomBookingInvoice?.InvoiceNumber ?? (row as any).InvoiceNumber,
+      TotalAmount: row.Finance?.TotalAmount ?? (row as any).TotalAmount,
+
+      Payment: paymentLite,
+      Payments: paymentsLite,
+      Notifications: (row as any).Notifications,
+    };
+  }
+
 
 
   // columns
-  const getColumns = (): GridColDef[] => [
-    {
-      field: "ID",
-      headerName: "No.",
-      flex: 0.3,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => {
-        const requestID = params.row.ID;
-        console.log("Daata: ", params.row)
-        const notification = params.row.Notifications ?? [];
-        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
-        console.log("hasNotificationForUser: ", hasNotificationForUser)
-        return (
-          <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
-            {hasNotificationForUser && <AnimatedBell />}
-            <Typography>{requestID}</Typography>
-          </Box>
-        );
-      },
-    },
-    {
-      field: "Title",
-      headerName: "Title",
-      flex: 0.6,
-      renderCell: (params) => {
-        const d = params.row as BookingRoomsInterface;
-        const room = `Room ${d.Room?.RoomNumber ?? "-"}`;
-        const floor = `Floor ${d.Room?.Floor?.Number ?? "-"}`;
-        return (
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            <Typography sx={{ fontSize: 14 }}>
-              {room} • {floor}
-            </Typography>
-            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-              {d.Purpose || "-"}
-            </Typography>
-          </Box>
-        );
-      },
-    },
-    {
-      field: "Date",
-      headerName: "Booking Date",
-      flex: 0.4,
-      renderCell: (params) => {
-        const d = params.row as BookingRoomsInterface;
-        const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
-        const date = dateFormat(bookingDate || "");
-        const time = timeFormat(bookingDate || "");
-        return (
-          <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
-            <Typography sx={{ fontSize: 14 }}>{date}</Typography>
-            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{time}</Typography>
-          </Box>
-        );
-      },
-    },
-    {
-      field: "Status",
-      headerName: "Status",
-      flex: 1,
-      renderCell: (params) => {
-        const row = params.row as BookingRoomsInterface;
+  const getColumns = (): GridColDef[] => {
+    /* =========================
+     * Small (mobile) – การ์ดรวม Booking + Invoice + Actions
+     * ========================= */
+    if (isSmallScreen) {
+      return [
+        {
+          field: "My Booking",
+          headerName: "My Booking",
+          flex: 1,
+          sortable: false,
+          filterable: false,
+          renderCell: (params) => {
+            const data = params.row as BookingRoomsInterface;
 
-        let display = (row.DisplayStatus || "unknown").toLowerCase();
-        const sn = (row.StatusName || "").toLowerCase();
+            // ---- Booking basics
+            const room = `Room ${data.Room?.RoomNumber ?? "-"}`;
+            const floor = `Floor ${data.Room?.Floor?.Number ?? "-"}`;
+            const dateTime = `${dateFormat(data.CreatedAt || "")} ${timeFormat(data.CreatedAt || "")}`;
+            const who = `${data.User?.FirstName || ""} ${data.User?.LastName || ""} (${data.User?.EmployeeID || "-"})`;
 
-        if (sn === "cancelled" || display === "cancelled") {
-          display = "cancelled";
-        } else if (sn === "completed") {
-          display = "completed";
-        } else {
-          const payments = (row as any).Payments as any[] | undefined;
-          const approved = (payments || []).filter((p) =>
-            ["approved", "paid"].includes(String(p.Status || p.status).toLowerCase())
+            // ---- Booking status chip
+            let display = (data.DisplayStatus || "unknown").toLowerCase();
+            const sn = (data.StatusName || "").toLowerCase();
+            if (sn === "cancelled" || display === "cancelled") display = "cancelled";
+            else if (sn === "completed") display = "completed";
+            else {
+              const payments = (data as any).Payments as any[] | undefined;
+              const approved = (payments || []).filter((p) =>
+                ["approved", "paid"].includes(String(p.Status || p.status).toLowerCase())
+              );
+              const approvedMissingReceipt = approved.some((p) => !p.ReceiptPath);
+              if (data.Finance?.IsFullyPaid && approved.length > 0) {
+                display = approvedMissingReceipt ? "awaiting receipt" : "completed";
+              }
+            }
+            const bcfg = getBookingStatusConfig(display);
+
+            // ---- Invoice/Payment (เลือกงวดที่ใช้แสดงใบเสร็จ)
+            const selectedPay: any = pickReceiptPayment(data);
+            const statusRaw = statusNameOf(selectedPay);
+            const toConfigKey = (raw?: string): keyof typeof paymentStatusConfig => {
+              const v = (raw || "").trim().toLowerCase();
+              if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+              if (v === "submitted" || v === "pending verification") return "Pending Verification";
+              if (v === "approved" || v === "paid") return "Paid";
+              if (v === "rejected") return "Rejected";
+              if (v === "refunded") return "Refunded";
+              return "Pending Payment";
+            };
+            let statusKey = toConfigKey(statusRaw);
+
+            const receiptPath = asSlipString(selectedPay?.ReceiptPath);
+            const fileName = receiptPath ? receiptPath.split("/").pop() : "";
+            // MyBooking: แสดง Awaiting Receipt ถ้าจ่ายแล้วแต่ยังไม่มีใบเสร็จ
+            if (statusKey === "Paid" && !fileName) statusKey = "Awaiting Receipt";
+
+            const pcfg =
+              paymentStatusConfig[statusKey] || {
+                color: "#000",
+                colorLite: "rgba(0,0,0,0.08)",
+                icon: HelpCircle,
+                label: "Unknown",
+              };
+
+            // ---- Invoice info
+            const invoice = (data as any).RoomBookingInvoice;
+            const invoiceNumber = invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
+            const billingPeriod = invoice?.IssueDate
+              ? formatToMonthYear(invoice.IssueDate)
+              : data.BookingDates?.[0]?.Date
+                ? formatToMonthYear(data.BookingDates[0].Date)
+                : "-";
+            const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
+
+            const rb = (data as any).Finance;
+            const totalAmountNum = rb?.TotalAmount ?? (data as any).TotalAmount ?? invoice?.TotalAmount ?? undefined;
+            const totalAmount =
+              typeof totalAmountNum === "number"
+                ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
+                : "—";
+
+            const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
+
+            // ---- Primary Action (เจ้าของรายการเท่านั้น)
+            const storeUser = useUserStore.getState().user as UserInterface | null;
+            const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
+            const primary = pickPaymentPrimaryButton(toBookingRowLite(data), isRowOwner);
+
+            // ---- Cancel availability
+            const owner = isRowOwner;
+            const allowCancel = owner && canCancel(data);
+
+            return (
+              <Grid container size={{ xs: 12 }} sx={{ px: 1 }} rowSpacing={1.5} className="card-item-container">
+                {/* Header: ห้อง / เวลา / ผู้จอง */}
+                <Grid size={{ xs: 12 }}>
+                  <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {room} • {floor}
+                  </Typography>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 0.6 }}>
+                    <Clock size={16} />
+                    <Typography sx={{ fontSize: 13 }}>{dateTime}</Typography>
+                  </Box>
+
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      color: "text.secondary",
+                      my: 0.6,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {data.Purpose || "-"}
+                  </Typography>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 0.6 }}>
+                    <UserRound size={16} />
+                    <Typography sx={{ fontSize: 13 }}>{who}</Typography>
+                  </Box>
+                </Grid>
+
+                {/* Booking status chip */}
+                <Grid size={{ xs: 12 }}>
+                  <Box
+                    sx={{
+                      bgcolor: bcfg.colorLite,
+                      borderRadius: 10,
+                      px: 1.5,
+                      py: 0.5,
+                      display: "inline-flex",
+                      gap: 1,
+                      color: bcfg.color,
+                      alignItems: "center",
+                    }}
+                  >
+                    <bcfg.icon size={18} />
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{bcfg.label}</Typography>
+                  </Box>
+                </Grid>
+
+                <Divider sx={{ width: "100%", my: 1 }} />
+
+                {/* Invoice section */}
+                <Grid size={{ xs: 12 }}>
+                  <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {invoiceNumber}
+                  </Typography>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
+                    <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {`Billing Period: ${billingPeriod}`}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
+                    <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {`Due Date: ${dueDate}`}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 1.2 }}>
+                    <Typography sx={{ fontSize: 14, color: "text.secondary" }}>Total Amount</Typography>
+                    <Typography sx={{ fontSize: 16, fontWeight: 500, color: "text.main" }}>{totalAmount}</Typography>
+                  </Box>
+
+                  {/* Payment status chip */}
+                  <Box
+                    sx={{
+                      mt: 1.2,
+                      bgcolor: pcfg.colorLite,
+                      borderRadius: 10,
+                      px: 1.5,
+                      py: 0.5,
+                      display: "inline-flex",
+                      gap: 1,
+                      color: pcfg.color,
+                      alignItems: "center",
+                    }}
+                  >
+                    {React.createElement(pcfg.icon, { size: 16 })}
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{pcfg.label}</Typography>
+                  </Box>
+
+                  {/* Receipt file (ถ้ามี) */}
+                  <Box sx={{ mt: 1.2 }}>
+                    {fileName ? (
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          gap: 1,
+                          border: "1px solid rgba(109,110,112,0.4)",
+                          borderRadius: 1,
+                          px: 1,
+                          py: 0.5,
+                          bgcolor: "#FFF",
+                          cursor: "pointer",
+                          transition: "all .3s",
+                          alignItems: "center",
+                          "&:hover": { color: "primary.main", borderColor: "primary.main" },
+                        }}
+                        onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                      >
+                        <FileText size={16} />
+                        <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {fileName}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          gap: 1,
+                          border: "1px solid rgba(109,110,112,0.4)",
+                          borderRadius: 1,
+                          px: 1,
+                          py: 0.5,
+                          bgcolor: "#FFF",
+                          color: "text.secondary",
+                          alignItems: "center",
+                        }}
+                      >
+                        <FileText size={16} />
+                        <Typography variant="body1" sx={{ fontSize: 14 }}>No receipt file uploaded</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+
+                <Divider sx={{ width: "100%", my: 1 }} />
+
+                {/* Actions */}
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={0.8}>
+                    {/* Primary (Pay Now / View Slip / …) */}
+                    {primary.show && (
+                      <Grid size={{ xs: allowCancel ? 6 : 8 }}>
+                        <Tooltip title={primary.tooltip || ""}>
+                          <Button
+                            variant="contained"
+                            onClick={() => {
+                              setSelectedRow(data);
+                              setOpenPaymentDialog(true);
+                            }}
+                            sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                          >
+                            {React.createElement(primary.icon || HandCoins, { size: 18 })}
+                            <Typography variant="textButtonClassic" className="text-btn">
+                              {primary.label}
+                            </Typography>
+                          </Button>
+                        </Tooltip>
+                      </Grid>
+                    )}
+
+                    {/* Download PDF */}
+                    <Grid size={{ xs: allowCancel ? (primary.show ? 6 : 8) : 4 }}>
+                      <Tooltip title="Download PDF">
+                        <Button
+                          variant="outlinedGray"
+                          onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
+                          disabled={!invoicePDFPath}
+                          sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                        >
+                          <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                          <Typography variant="textButtonClassic" className="text-btn">Download PDF</Typography>
+                        </Button>
+                      </Tooltip>
+                    </Grid>
+
+                    {/* Details */}
+                    <Grid size={{ xs: 4 }}>
+                      <Tooltip title="Details">
+                        <Button variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ minWidth: 42, width: "100%", height: "100%" }}>
+                          <Eye size={18} />
+                          <Typography variant="textButtonClassic" className="text-btn">Details</Typography>
+                        </Button>
+                      </Tooltip>
+                    </Grid>
+
+                    {/* Cancel (ถ้าเจ้าของและยกเลิกได้) */}
+                    {allowCancel && (
+                      <Grid size={{ xs: 4 }}>
+                        <Tooltip title="Cancel Booking">
+                          <Button
+                            className="btn-reject"
+                            variant="outlinedCancel"
+                            onClick={() => {
+                              setTargetBooking(data);
+                              setOpenConfirmCancel(true);
+                            }}
+                            sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                          >
+                            <X size={18} />
+                            <Typography variant="textButtonClassic" className="text-btn">Cancel</Typography>
+                          </Button>
+                        </Tooltip>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Grid>
+              </Grid>
+            );
+          },
+        },
+      ];
+    }
+
+    /* =========================
+     * Window (tablet) – คอลัมน์ย่อส่วน
+     * ========================= */
+    if (isWindowScreen) {
+      return [
+        {
+          field: "Title",
+          headerName: "Booking",
+          flex: 0.9,
+          renderCell: (params) => {
+            const d = params.row as BookingRoomsInterface;
+            const room = `Room ${d.Room?.RoomNumber ?? "-"}`;
+            const floor = `Floor ${d.Room?.Floor?.Number ?? "-"}`;
+            return (
+              <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+                <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {room} • {floor}
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {d.Purpose || "-"}
+                </Typography>
+              </Box>
+            );
+          },
+        },
+        {
+          field: "Invoice",
+          headerName: "Invoice",
+          flex: 1.2,
+          sortable: false,
+          filterable: false,
+          renderCell: (item) => {
+            const data = item.row as any;
+
+            // status → config
+            const selectedPay = pickReceiptPayment(data);
+            const statusRaw = statusNameOf(selectedPay);
+            const mapKey = (raw?: string): keyof typeof paymentStatusConfig => {
+              const v = (raw || "").trim().toLowerCase();
+              if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+              if (v === "submitted" || v === "pending verification") return "Pending Verification";
+              if (v === "approved" || v === "paid") return "Paid";
+              if (v === "rejected") return "Rejected";
+              if (v === "refunded") return "Refunded";
+              return "Pending Payment";
+            };
+            let statusKey = mapKey(statusRaw);
+            const receiptPath = asSlipString(selectedPay?.ReceiptPath);
+            const fileName = receiptPath ? String(receiptPath).split("/").pop() : "";
+            if (statusKey === "Paid" && !fileName) statusKey = "Awaiting Receipt";
+
+            const cfg = paymentStatusConfig[statusKey] || {
+              color: "#000",
+              colorLite: "rgba(0,0,0,0.08)",
+              icon: HelpCircle,
+              label: "Unknown",
+            };
+
+            // amount
+            const invoice = data.RoomBookingInvoice || {};
+            const invoiceNumber = invoice.InvoiceNumber ?? data.InvoiceNumber ?? "-";
+            const rb = data.Finance || {};
+            const totalAmountNum = rb.TotalAmount ?? data.TotalAmount ?? invoice.TotalAmount ?? undefined;
+            const totalAmount =
+              typeof totalAmountNum === "number"
+                ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
+                : "—";
+            const invoicePDFPath = invoice.InvoicePDFPath ?? data.InvoicePDFPath ?? "";
+
+            // primary button
+            const storeUser = useUserStore.getState().user as UserInterface | null;
+            const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
+            const primary = pickPaymentPrimaryButton(data, isRowOwner);
+
+            return (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, width: "100%", overflow: "hidden" }}>
+                <Box
+                  sx={{
+                    bgcolor: cfg.colorLite,
+                    px: 1.2,
+                    py: 0.4,
+                    borderRadius: 2,
+                    color: cfg.color,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.6,
+                    minWidth: 150,
+                  }}
+                >
+                  {React.createElement(cfg.icon, { size: 16 })}
+                  <Typography sx={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>{cfg.label}</Typography>
+                </Box>
+
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {invoiceNumber}
+                  </Typography>
+                  <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{totalAmount}</Typography>
+                </Box>
+
+                {primary.show && (
+                  <Tooltip title={primary.tooltip || ""}>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        setSelectedRow(data);
+                        setOpenPaymentDialog(true);
+                      }}
+                      sx={{ minWidth: 42 }}
+                    >
+                      {React.createElement(primary.icon || HandCoins, { size: 16 })}
+                    </Button>
+                  </Tooltip>
+                )}
+
+                <Tooltip title="Download PDF">
+                  <span>
+                    <Button
+                      variant="outlinedGray"
+                      onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
+                      disabled={!invoicePDFPath}
+                      sx={{ minWidth: 42 }}
+                    >
+                      <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                    </Button>
+                  </span>
+                </Tooltip>
+              </Box>
+            );
+          },
+        },
+        {
+          field: "Actions",
+          headerName: "Actions",
+          flex: 0.6,
+          renderCell: (params) => {
+            const row = params.row as BookingRoomsInterface;
+            const storeUser = useUserStore.getState().user as UserInterface | null;
+            const owner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
+
+            return (
+              <Box sx={{ display: "flex", gap: 0.8, alignItems: "center", flexWrap: "wrap" }}>
+                <Tooltip title="Details">
+                  <Button variant="outlinedGray" onClick={() => handleClickCheck(row)} sx={{ minWidth: 42 }}>
+                    <Eye size={18} />
+                  </Button>
+                </Tooltip>
+                {owner && canCancel(row) && (
+                  <Tooltip title="Cancel Booking">
+                    <Button
+                      className="btn-reject"
+                      variant="outlinedCancel"
+                      onClick={() => {
+                        setTargetBooking(row);
+                        setOpenConfirmCancel(true);
+                      }}
+                      sx={{ minWidth: 42 }}
+                    >
+                      <X size={18} />
+                    </Button>
+                  </Tooltip>
+                )}
+              </Box>
+            );
+          },
+        },
+      ];
+    }
+
+    /* =========================
+     * Desktop – ใช้โค้ดเดิมของคุณ (ปรับเล็กน้อย)
+     * ========================= */
+    return [
+      {
+        field: "ID",
+        headerName: "No.",
+        flex: 0.2,
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => {
+          const requestID = params.row.ID;
+          const notification = params.row.Notifications ?? [];
+          const hasNotificationForUser = notification.some(
+            (n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead
           );
-          const approvedMissingReceipt = approved.some((p) => !p.ReceiptPath);
-
-          if (row.Finance?.IsFullyPaid && approved.length > 0) {
-            display = approvedMissingReceipt ? "awaiting receipt" : "completed";
-          }
-        }
-
-        const cfg = getBookingStatusConfig(display);
-        return (
-          <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
-            <Box
-              sx={{
-                bgcolor: cfg.colorLite,
-                borderRadius: 10,
-                px: 1.5,
-                py: 0.5,
-                display: "flex",
-                gap: 1,
-                color: cfg.color,
-                alignItems: "center",
-              }}
-            >
-              <cfg.icon size={18} />
-              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{cfg.label}</Typography>
+          return (
+            <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+              {hasNotificationForUser && <AnimatedBell />}
+              <Typography>{requestID}</Typography>
             </Box>
-          </Box>
-        );
+          );
+        },
       },
-    },
-    {
-      field: "All Invoice",
-      headerName: "All Invoice",
-      flex: 1,
-      renderCell: (item) => {
-        const data = item.row as any;
+      {
+        field: "Title",
+        headerName: "Title",
+        flex: 0.6,
+        renderCell: (params) => {
+          const d = params.row as BookingRoomsInterface;
+          const room = `Room ${d.Room?.RoomNumber ?? "-"}`;
+          const floor = `Floor ${d.Room?.Floor?.Number ?? "-"}`;
+          return (
+            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+              <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {room} • {floor}
+              </Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {d.Purpose || "-"}
+              </Typography>
+            </Box>
+          );
+        },
+      },
+      {
+        field: "Date",
+        headerName: "Booking Date",
+        flex: 0.4,
+        renderCell: (params) => {
+          const d = params.row as BookingRoomsInterface;
+          const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
+          const date = dateFormat(bookingDate || "");
+          const time = timeFormat(bookingDate || "");
+          return (
+            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+              <Typography sx={{ fontSize: 14 }}>{date}</Typography>
+              <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{time}</Typography>
+            </Box>
+          );
+        },
+      },
+      {
+        field: "Status",
+        headerName: "Status",
+        flex: 0.4,
+        renderCell: (params) => {
+          const row = params.row as BookingRoomsInterface;
 
-        const pay = data.Payment || {};
-        const receiptPath: string = pay.ReceiptPath || "";
+          let display = (row.DisplayStatus || "unknown").toLowerCase();
+          const sn = (row.StatusName || "").toLowerCase();
 
-        // raw status → key ของ paymentStatusConfig (Title Case)
-        let statusKey: keyof typeof paymentStatusConfig;
-        switch ((data?.Payment?.Status ?? data?.Payment?.status ?? "").trim().toLowerCase()) {
-          case "unpaid":
-          case "pending payment":
-            statusKey = "Pending Payment";
-            break;
-          case "submitted":
-          case "pending verification":
-            statusKey = "Pending Verification";
-            break;
-          case "rejected":
-            statusKey = "Rejected";
-            break;
-          case "refunded":
-            statusKey = "Refunded";
-            break;
-          case "approved":
-          case "paid":
-            statusKey = "Paid";
-            break;
-          default:
-            statusKey = "Pending Payment";
-        }
-        // ถ้าอนุมัติแล้วแต่ยังไม่แนบใบเสร็จ → แสดง Awaiting Receipt
-        if (statusKey === "Paid" && !receiptPath) statusKey = "Awaiting Receipt";
+          if (sn === "cancelled" || display === "cancelled") {
+            display = "cancelled";
+          } else if (sn === "completed") {
+            display = "completed";
+          } else {
+            const payments = (row as any).Payments as any[] | undefined;
+            const approved = (payments || []).filter((p) =>
+              ["approved", "paid"].includes(String(p.Status || p.status).toLowerCase())
+            );
+            const approvedMissingReceipt = approved.some((p) => !p.ReceiptPath);
 
-        const cfgPay =
-          paymentStatusConfig[statusKey] || {
-            color: "#000",
-            colorLite: "rgba(0,0,0,0.08)",
-            icon: HelpCircle,
-            label: "Unknown",
-          };
-        const { color: statusColor, colorLite: statusColorLite, icon: statusIcon, label: uiStatus } = cfgPay;
+            if (row.Finance?.IsFullyPaid && approved.length > 0) {
+              display = approvedMissingReceipt ? "awaiting receipt" : "completed";
+            }
+          }
 
-        // invoice & amount
-        const invoice = data.RoomBookingInvoice || {};
-        const invoiceNumber = invoice.InvoiceNumber ?? data.InvoiceNumber ?? "-";
-        const billingPeriod = invoice.IssueDate
-          ? formatToMonthYear(invoice.IssueDate)
-          : data.BookingDates?.[0]?.Date
-            ? formatToMonthYear(data.BookingDates[0].Date)
-            : "-";
-        const dueDate = invoice.DueDate ? dateFormat(invoice.DueDate) : "-";
-
-        const rb = data.Finance || {};
-        const totalAmountNum = rb.TotalAmount ?? data.TotalAmount ?? invoice.TotalAmount ?? undefined;
-        const totalAmount =
-          typeof totalAmountNum === "number"
-            ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
-            : "—";
-
-        const invoicePDFPath = invoice.InvoicePDFPath ?? data.InvoicePDFPath ?? "";
-
-        const storeUser = useUserStore.getState().user as UserInterface | null;
-        const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
-        const primary = pickPaymentPrimaryButton(data, isRowOwner);
-        const StatusName = data.StatusName;
-
-        const fileName = receiptPath ? String(receiptPath).split("/").pop() : "";
-        const user = useUserStore.getState().user as UserInterface | undefined;
-        const notifications: NotificationsInterface[] = (data.Notifications || []) as any[];
-        const hasNotificationForUser = !!user && notifications.some((n) => n.UserID === user.ID && !n.IsRead);
-
-        return (
-          <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
-            <Grid size={{ xs: 12, mobileS: 7 }}>
-              <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
-                {hasNotificationForUser && <AnimatedBell />}
-                <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                  {invoiceNumber}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {`Billing Period: ${billingPeriod}`}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {`Due Date: ${dueDate}`}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mt: 1.4, mb: 1 }}>
-                <Typography sx={{ fontSize: 14, color: "text.secondary" }}>Total Amount</Typography>
-                <Typography sx={{ fontSize: 16, fontWeight: 500, color: "text.main" }}>{totalAmount}</Typography>
-              </Box>
-            </Grid>
-
-            <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
+          const cfg = getBookingStatusConfig(display);
+          return (
+            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
               <Box
                 sx={{
-                  bgcolor: statusColorLite,
+                  bgcolor: cfg.colorLite,
                   borderRadius: 10,
                   px: 1.5,
                   py: 0.5,
                   display: "flex",
                   gap: 1,
-                  color: statusColor,
+                  color: cfg.color,
                   alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
                 }}
               >
-                {React.createElement(statusIcon, { size: 16 })}
-                <Typography sx={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                  {uiStatus}
-                </Typography>
+                <cfg.icon size={18} />
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{cfg.label}</Typography>
               </Box>
-            </Grid>
+            </Box>
+          );
+        },
+      },
+      {
+        field: "All Invoice",
+        headerName: "All Invoice",
+        flex: 1.2,
+        renderCell: (item) => {
+          const data = item.row as any;
 
-            <Grid size={{ xs: 12 }}>
-              {fileName ? (
-                <Box
-                  sx={{
-                    display: "inline-flex",
-                    gap: 1,
-                    border: "1px solid rgb(109, 110, 112, 0.4)",
-                    borderRadius: 1,
-                    px: 1,
-                    py: 0.5,
-                    bgcolor: "#FFF",
-                    cursor: "pointer",
-                    transition: "all ease 0.3s",
-                    alignItems: "center",
-                    width: { xs: "100%", mobileS: "auto" },
-                    "&:hover": { color: "primary.main", borderColor: "primary.main" },
-                  }}
-                  onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
-                >
-                  <FileText size={16} style={{ minWidth: 16, minHeight: 16 }} />
-                  <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {fileName}
+          const pay = data.Payment || {};
+          const receiptPath: string = pay.ReceiptPath || "";
+
+          // raw status → key
+          let statusKey: keyof typeof paymentStatusConfig;
+          switch ((data?.Payment?.Status ?? data?.Payment?.status ?? "").trim().toLowerCase()) {
+            case "unpaid":
+            case "pending payment":
+              statusKey = "Pending Payment";
+              break;
+            case "submitted":
+            case "pending verification":
+              statusKey = "Pending Verification";
+              break;
+            case "rejected":
+              statusKey = "Rejected";
+              break;
+            case "refunded":
+              statusKey = "Refunded";
+              break;
+            case "approved":
+            case "paid":
+              statusKey = "Paid";
+              break;
+            default:
+              statusKey = "Pending Payment";
+          }
+          if (statusKey === "Paid" && !receiptPath) statusKey = "Awaiting Receipt";
+
+          const cfgPay =
+            paymentStatusConfig[statusKey] || {
+              color: "#000",
+              colorLite: "rgba(0,0,0,0.08)",
+              icon: HelpCircle,
+              label: "Unknown",
+            };
+          const { color: statusColor, colorLite: statusColorLite, icon: statusIcon, label: uiStatus } = cfgPay;
+
+          // invoice & amount
+          const invoice = data.RoomBookingInvoice || {};
+          const invoiceNumber = invoice.InvoiceNumber ?? data.InvoiceNumber ?? "-";
+          const billingPeriod = invoice.IssueDate
+            ? formatToMonthYear(invoice.IssueDate)
+            : data.BookingDates?.[0]?.Date
+              ? formatToMonthYear(data.BookingDates[0].Date)
+              : "-";
+          const dueDate = invoice.DueDate ? dateFormat(invoice.DueDate) : "-";
+
+          const rb = data.Finance || {};
+          const totalAmountNum = rb.TotalAmount ?? data.TotalAmount ?? invoice.TotalAmount ?? undefined;
+          const totalAmount =
+            typeof totalAmountNum === "number"
+              ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
+              : "—";
+
+          const invoicePDFPath = invoice.InvoicePDFPath ?? data.InvoicePDFPath ?? "";
+
+          const storeUser = useUserStore.getState().user as UserInterface | null;
+          const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
+          const primary = pickPaymentPrimaryButton(data, isRowOwner);
+          const StatusName = data.StatusName;
+
+          const fileName = receiptPath ? String(receiptPath).split("/").pop() : "";
+          const user = useUserStore.getState().user as UserInterface | undefined;
+          const notifications: NotificationsInterface[] = (data.Notifications || []) as any[];
+          const hasNotificationForUser = !!user && notifications.some((n) => n.UserID === user.ID && !n.IsRead);
+
+          return (
+            <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="container-btn" rowSpacing={1}>
+              <Grid size={{ xs: 12, mobileS: 7 }}>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
+                  {hasNotificationForUser && <AnimatedBell />}
+                  <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                    {invoiceNumber}
                   </Typography>
                 </Box>
-              ) : (
+
+                <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                  <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                  <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {`Billing Period: ${billingPeriod}`}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                  <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                  <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {`Due Date: ${dueDate}`}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mt: 1.4, mb: 1 }}>
+                  <Typography sx={{ fontSize: 14, color: "text.secondary" }}>Total Amount</Typography>
+                  <Typography sx={{ fontSize: 16, fontWeight: 500, color: "text.main" }}>{totalAmount}</Typography>
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
                 <Box
                   sx={{
-                    display: "inline-flex",
-                    gap: 1,
-                    border: "1px solid rgb(109, 110, 112, 0.4)",
-                    borderRadius: 1,
-                    px: 1,
+                    bgcolor: statusColorLite,
+                    borderRadius: 10,
+                    px: 1.5,
                     py: 0.5,
-                    bgcolor: "#FFF",
+                    display: "flex",
+                    gap: 1,
+                    color: statusColor,
                     alignItems: "center",
-                    color: "text.secondary",
-                    width: { xs: "100%", mobileS: "auto" },
+                    justifyContent: "center",
+                    width: "100%",
                   }}
                 >
-                  <FileText size={16} style={{ minWidth: 16, minHeight: 16 }} />
-                  <Typography variant="body1" sx={{ fontSize: 14 }}>No receipt file uploaded</Typography>
+                  {React.createElement(statusIcon, { size: 16 })}
+                  <Typography sx={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                    {uiStatus}
+                  </Typography>
                 </Box>
-              )}
-            </Grid>
+              </Grid>
 
-            <Divider sx={{ width: "100%", my: 1 }} />
+              <Grid size={{ xs: 12 }}>
+                {fileName ? (
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      gap: 1,
+                      border: "1px solid rgb(109, 110, 112, 0.4)",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      bgcolor: "#FFF",
+                      cursor: "pointer",
+                      transition: "all ease 0.3s",
+                      alignItems: "center",
+                      width: { xs: "100%", mobileS: "auto" },
+                      "&:hover": { color: "primary.main", borderColor: "primary.main" },
+                    }}
+                    onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                  >
+                    <FileText size={16} style={{ minWidth: 16, minHeight: 16 }} />
+                    <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {fileName}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      gap: 1,
+                      border: "1px solid rgb(109, 110, 112, 0.4)",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      bgcolor: "#FFF",
+                      alignItems: "center",
+                      color: "text.secondary",
+                      width: { xs: "100%", mobileS: "auto" },
+                    }}
+                  >
+                    <FileText size={16} style={{ minWidth: 16, minHeight: 16 }} />
+                    <Typography variant="body1" sx={{ fontSize: 14 }}>No receipt file uploaded</Typography>
+                  </Box>
+                )}
+              </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap" }}>
-                <Grid container spacing={0.8} size={{ xs: 12 }}>
-                  {primary.show && (
+              <Divider sx={{ width: "100%", my: 1 }} />
+
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap" }}>
+                  <Grid container spacing={0.8} size={{ xs: 12 }}>
+                    {primary.show && (
+                      <Grid size={{ xs: 6 }}>
+                        <Tooltip title={primary.tooltip || ""}>
+                          <Button
+                            variant="contained"
+                            disabled={StatusName === "Pending"}
+                            onClick={() => {
+                              setSelectedRow(data);
+                              setOpenPaymentDialog(true);
+                            }}
+                            sx={{ minWidth: "42px", width: "100%", height: "100%" }}
+                          >
+                            {React.createElement(primary.icon || HandCoins, { size: 18 })}
+                            <Typography variant="textButtonClassic" className="text-btn">
+                              {primary.label}
+                            </Typography>
+                          </Button>
+                        </Tooltip>
+                      </Grid>
+                    )}
+
                     <Grid size={{ xs: 6 }}>
-                      <Tooltip title={primary.tooltip || ""}>
+                      <Tooltip title="Download PDF">
                         <Button
-                          variant="contained"
-                          disabled={StatusName === "Pending"}
-                          onClick={() => {
-                            setSelectedRow(data);
-                            setOpenPaymentDialog(true);
-                          }}
+                          variant="outlinedGray"
+                          onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
+                          disabled={!invoicePDFPath}
                           sx={{ minWidth: "42px", width: "100%", height: "100%" }}
                         >
-                          {React.createElement(primary.icon || HandCoins, { size: 18 })}
+                          <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
                           <Typography variant="textButtonClassic" className="text-btn">
-                            {primary.label}
+                            Download PDF
                           </Typography>
                         </Button>
                       </Tooltip>
                     </Grid>
-                  )}
-
-                  <Grid size={{ xs: 6 }}>
-                    <Tooltip title="Download PDF">
-                      <Button
-                        variant="outlinedGray"
-                        onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
-                        disabled={!invoicePDFPath}
-                        sx={{ minWidth: "42px", width: "100%", height: "100%" }}
-                      >
-                        <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
-                        <Typography variant="textButtonClassic" className="text-btn">
-                          Download PDF
-                        </Typography>
-                      </Button>
-                    </Tooltip>
                   </Grid>
-                </Grid>
-              </Box>
+                </Box>
+              </Grid>
             </Grid>
-          </Grid>
-        );
+          );
+        },
       },
-    },
-    {
-      field: "Actions",
-      headerName: "Actions",
-      flex: 0.6,
-      renderCell: (params) => {
-        const row = params.row as BookingRoomsInterface;
-        const owner = !!currentUserId && !!row.User?.ID && currentUserId === row.User.ID;
+      {
+        field: "Actions",
+        headerName: "Actions",
+        flex: 0.5,
+        renderCell: (params) => {
+          const row = params.row as BookingRoomsInterface;
+          const storeUser = useUserStore.getState().user as UserInterface | null;
+          const owner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
 
-        return (
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Tooltip title="Details">
-              <Button variant="outlinedGray" onClick={() => handleClickCheck(row)}>
-                <Eye size={18} />
-                <Typography variant="textButtonClassic">Details</Typography>
-              </Button>
-            </Tooltip>
+          return (
+            <Box className="container-btn" sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", alignItems: "center", height: "100%" }}>
+              <Tooltip title="Details">
+                <Button className="btn-detail" variant="outlinedGray" onClick={() => handleClickCheck(row)} sx={{ minWidth: "42px" }}>
+                  <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                  <Typography variant="textButtonClassic" className="text-btn">Details</Typography>
+                </Button>
+              </Tooltip>
 
-            {owner && canCancel(row) && (
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                onClick={() => {
-                  setTargetBooking(row);
-                  setOpenConfirmCancel(true);
-                }}
-              >
-                <X size={18} /> Cancel
-              </Button>
-            )}
-          </Box>
-        );
+              {owner && canCancel(row) && (
+                <Button
+                  className="btn-reject"
+                  variant="outlinedCancel"
+                  onClick={() => {
+                    setTargetBooking(row);
+                    setOpenConfirmCancel(true);
+                  }}
+                  sx={{ minWidth: "42px" }}
+                >
+                  <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                  <Typography variant="textButtonClassic" className="text-btn">Cancel</Typography>
+                </Button>
+              )}
+            </Box>
+          );
+        },
       },
-    },
-  ];
+    ];
+  };
+
 
   // popup data
   const popupData = useMemo(
@@ -911,7 +1547,7 @@ function MyBookingRoom() {
               </Grid> */}
 
               <Grid size={{ xs: 12 }}>
-                <Card sx={{p: 2 }}>
+                <Card sx={{ p: 2 }}>
                   <Grid container spacing={1} alignItems="center">
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <TextField
@@ -1036,3 +1672,5 @@ function MyBookingRoom() {
 }
 
 export default MyBookingRoom;
+
+

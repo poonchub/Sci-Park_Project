@@ -1,14 +1,14 @@
 import { InspectionsInterface } from "../interfaces/IInspections";
 import { MaintenanceRequestsInterface } from "../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../interfaces/IMaintenanceTasks";
-import { NotificationsInterface } from "../interfaces/INotifications";
+
 import {
     CreateInspection,
     DeleteHandoverImagesByTaskID,
     UpdateMaintenanceImages,
     UpdateMaintenanceRequestByID,
     UpdateMaintenanceTaskByID,
-    UpdateNotificationsByTaskID,
+ 
 } from "../services/http";
 import { handleUpdateNotification } from "./handleUpdateNotification";
 

@@ -196,6 +196,13 @@ type PaymentSummary struct {
 	ApproverID    *uint      `json:"ApproverID"`
 }
 
+type userLite struct {
+    ID         uint   `json:"ID"`
+    FirstName  string `json:"FirstName"`
+    LastName   string `json:"LastName"`
+    EmployeeID string `json:"EmployeeID"`
+}
+
 type BookingRoomResponse struct {
 	ID             uint                 `json:"ID"`
 	Room           entity.Room          `json:"Room"`
@@ -213,7 +220,10 @@ type BookingRoomResponse struct {
 	InvoicePDFPath     *string                    `json:"InvoicePDFPath,omitempty"`
 	Finance            BookingFinance             `json:"Finance"`
 	PaymentOption      *entity.PaymentOption      `json:"PaymentOption,omitempty"`
-	Notifications	   []entity.Notification	  `json:"Notifications"`
+	Notifications      []entity.Notification      `json:"Notifications"`
+
+	Approver    *userLite  `json:"Approver,omitempty"` // ✅ FE ใช้ booking.Approver
+	ConfirmedAt *time.Time `json:"ConfirmedAt,omitempty"`
 }
 
 // ===== helper: map payments ทั้งหมด + หา active =====
@@ -262,7 +272,7 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
 		switch list[i].Status {
 		case "pending payment", "pending verification", "awaiting receipt":
 			active = &list[i]
-			
+
 		}
 	}
 	// ถ้าไม่มีก็ใช้อันล่าสุด (ปลายสุดของ list ที่เรียงเก่า→ใหม่)
@@ -448,6 +458,7 @@ func ListBookingRoomsByUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, result)
 }
+
 /* ============================================================
    Helpers / Types
    ============================================================ */
@@ -685,7 +696,12 @@ func CreateBookingRoom(c *gin.Context) {
 	// ----- ส่วนลด/โควตา -----
 	benefit := benefitsFromPackage(&pl)
 
-	nz := func(x int) int { if x < 0 { return 0 }; return x }
+	nz := func(x int) int {
+		if x < 0 {
+			return 0
+		}
+		return x
+	}
 	meetingRemaining := nz(pl.MeetingRoomLimit - nz(up.MeetingRoomUsed))
 	// training/hall ไม่จำกัดครั้งสำหรับส่วนลด 50% -> ไม่ต้องคิด remaining
 
