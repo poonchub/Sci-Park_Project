@@ -197,10 +197,10 @@ type PaymentSummary struct {
 }
 
 type userLite struct {
-    ID         uint   `json:"ID"`
-    FirstName  string `json:"FirstName"`
-    LastName   string `json:"LastName"`
-    EmployeeID string `json:"EmployeeID"`
+	ID         uint   `json:"ID"`
+	FirstName  string `json:"FirstName"`
+	LastName   string `json:"LastName"`
+	EmployeeID string `json:"EmployeeID"`
 }
 
 type BookingRoomResponse struct {
@@ -1359,17 +1359,25 @@ func fetchBookingStatusCounts(start, end time.Time) []struct {
 		Count      int    `json:"count"`
 	}
 
-	joinClause := "LEFT JOIN booking_rooms ON booking_rooms.status_id = statuses.id"
+	tblStatus := "booking_statuses"
+	tblBooking := "booking_rooms"
+
+	// ใส่เงื่อนไขช่วงเวลาใน ON ของ LEFT JOIN เพื่อไม่ตัดแถวสถานะทิ้ง
+	join := "LEFT JOIN " + tblBooking + " ON " +
+		tblBooking + ".status_id = " + tblStatus + ".id" +
+		" AND " + tblBooking + ".deleted_at IS NULL" // กัน soft-delete ถ้าใช้ gorm.Model
+
+	var args []any
 	if !start.IsZero() && !end.IsZero() {
-		joinClause += fmt.Sprintf(" AND booking_rooms.created_at BETWEEN '%s' AND '%s'",
-			start.Format("2006-01-02 15:04:05"),
-			end.Format("2006-01-02 15:04:05"))
+		join += " AND " + tblBooking + ".created_at BETWEEN ? AND ?"
+		args = append(args, start, end)
 	}
 
-	config.DB().Table("statuses").
-		Select("statuses.id as status_id, statuses.status_name, COALESCE(COUNT(booking_rooms.id),0) as count").
-		Joins(joinClause).
-		Group("statuses.id, statuses.status_name").
+	config.DB().
+		Table(tblStatus).
+		Select(tblStatus+".id AS status_id, "+tblStatus+".status_name, COALESCE(COUNT("+tblBooking+".id),0) AS count").
+		Joins(join, args...).
+		Group(tblStatus + ".id, " + tblStatus + ".status_name").
 		Scan(&statusCounts)
 
 	return statusCounts
