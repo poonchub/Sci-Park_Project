@@ -50,7 +50,13 @@ type BookingLike = {
   StatusName?: string;
   Purpose?: string;
   purpose?: string;
+
   User?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+
+  // ✅ เพิ่มสองบรรทัดนี้
+  Approver?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+  ConfirmedAt?: string | null;
+
   Payments?: Array<{
     ID?: number;
     SlipPath?: string;
@@ -79,6 +85,7 @@ type BookingLike = {
   };
   AdditionalInfo?: { SetupStyle?: string; Equipment?: string[]; AdditionalNote?: string };
 };
+
 
 type PaymentObj = NonNullable<BookingLike["Payment"]>;
 
@@ -609,36 +616,56 @@ export default function BookingReview() {
                       </Grid>
 
                       {/* Right: Payment details */}
+                      {/* right column */}
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography fontWeight={600} sx={{ mb: 1 }}>
-                          Payment Details
-                        </Typography>
+                        <Box sx={{ mb: 1 }}>
+                          <Typography fontWeight={600}>Booker</Typography>
+                          <Typography>
+                            {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
+                          </Typography>
+                        </Box>
 
-                        <Grid container spacing={{ xs: 2 }}>
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography color="text.secondary">Amount</Typography>
-                            <Typography>
-                              {typeof paymentSummary?.amount === "number"
-                                ? `฿ ${paymentSummary.amount.toFixed(2)}`
+                        <Box sx={{ mb: 1 }}>
+                          <Typography fontWeight={600}>Purpose</Typography>
+                          <Typography>{booking.Purpose ?? booking.purpose ?? "-"}</Typography>
+                        </Box>
+
+                        {/* ✅ เพิ่มบล็อคผู้อนุมัติ */}
+                        <Box sx={{ mb: 1 }}>
+                          <Typography fontWeight={600}>Approver</Typography>
+                          <Typography>
+                            {booking.Approver
+                              ? `${booking.Approver.FirstName ?? ""} ${booking.Approver.LastName ?? ""}${booking.Approver.EmployeeID ? ` (${booking.Approver.EmployeeID})` : ""
+                              }`
+                              : "—"}
+                          </Typography>
+                        </Box>
+
+                        {/* ✅ เพิ่มบล็อคเวลาอนุมัติ */}
+                        <Box sx={{ mb: 1 }}>
+                          <Typography fontWeight={600}>Approved At</Typography>
+                          <Typography>
+                            {booking.ConfirmedAt
+                              ? `${dateFormat(booking.ConfirmedAt)} ${timeFormat(booking.ConfirmedAt)}`
+                              : "—"}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ mb: 1 }}>
+                          <Typography fontWeight={600}>Additional Information</Typography>
+                          <Box component="ul" sx={{ pl: 3, mt: 0.5 }}>
+                            <li>Style layout: {booking.AdditionalInfo?.SetupStyle || "-"}</li>
+                            <li>
+                              Equipment:{" "}
+                              {booking.AdditionalInfo?.Equipment?.length
+                                ? booking.AdditionalInfo.Equipment.join(", ")
                                 : "-"}
-                            </Typography>
-                          </Grid>
-
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography color="text.secondary">Transfer Date</Typography>
-                            <Typography>
-                              {paymentSummary?.paymentDate ? dateFormat(paymentSummary.paymentDate) : "-"}
-                            </Typography>
-                          </Grid>
-
-                          <Grid size={{ xs: 12 }}>
-                            <Typography color="text.secondary">Note</Typography>
-                            <Typography sx={{ whiteSpace: "pre-wrap" }}>
-                              {paymentSummary?.note || "-"}
-                            </Typography>
-                          </Grid>
-                        </Grid>
+                            </li>
+                            <li>Note: {booking.AdditionalInfo?.AdditionalNote || "-"}</li>
+                          </Box>
+                        </Box>
                       </Grid>
+
                     </Grid>
                   </Grid>
 

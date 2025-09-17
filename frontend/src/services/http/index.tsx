@@ -3385,14 +3385,19 @@ export async function GetBookingRoomById(id: number) {
 
 // ✅ อนุมัติการจอง
 export async function ApproveBookingRoom(id: number) {
-    try {
-        const res = await axiosInstance.post(`/booking-rooms/${id}/approve`);
-        return res.data;
-    } catch (err) {
-        console.error(`Error approving booking room ${id}:`, err);
-        return false;
-    }
+  try {
+    const userId = localStorage.getItem("userId") || "";
+    const res = await axiosInstance.post(
+      `/booking-rooms/${id}/approve?approver_id=${encodeURIComponent(userId)}`
+    );
+    return res.data;
+  } catch (err) {
+    console.error(`Error approving booking room ${id}:`, err);
+    return false;
+  }
 }
+
+
 
 // ✅ ปฏิเสธการจอง
 export async function RejectBookingRoom(id: number, note: string | undefined) {
@@ -3947,7 +3952,7 @@ export {
     // Collaboration Plans
     GetCollaborationPlansByRequestID,
     PatchCollaborationPlans,
-    
+
     // ServiceAreaDocument Edit
     GetServiceAreaDocumentForEdit,
     UpdateServiceAreaDocumentForEdit,
