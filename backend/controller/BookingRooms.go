@@ -1200,6 +1200,109 @@ func ListBookingRoomsForAdmin(c *gin.Context) {
 	})
 }
 
+// GET /booking-room-option-for-user
+func ListBookingRoomsForUser(c *gin.Context) {
+	db, start, end, err := buildBookingBaseQuery(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	page, limit, offset := getPagination(c)
+
+	var bookings []entity.BookingRoom
+	if err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("PaymentOption").
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
+		Preload("Notifications").
+		Order("booking_rooms.created_at DESC").
+		Limit(limit).Offset(offset).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
+
+	total := countBookingRooms(db)
+
+	// สร้าง response
+	result := make([]BookingRoomResponse, 0, len(bookings))
+	for _, b := range bookings {
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+		}
+
+		pList, pActive := buildPaymentSummaries(b.Payments)
+		if pList == nil {
+			pList = []PaymentSummary{}
+		}
+
+		var invoicePDFPath *string
+		if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+			p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+			invoicePDFPath = &p
+		}
+
+		fin := computeBookingFinance(b)
+		disp := computeDisplayStatus(b)
+
+		result = append(result, BookingRoomResponse{
+			ID:                 b.ID,
+			Room:               b.Room,
+			BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+			TimeSlotMerged:     merged,
+			User:               b.User,
+			Purpose:            b.Purpose,
+			AdditionalInfo:     addInfo,
+			StatusName:         status,
+			Payment:            pActive,
+			Payments:           pList,
+			RoomBookingInvoice: b.RoomBookingInvoice,
+			DisplayStatus:      disp,
+			InvoicePDFPath:     invoicePDFPath,
+			Finance:            fin,
+			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":         result,
+		"page":         page,
+		"limit":        limit,
+		"total":        total,
+		"totalPages":   (total + int64(limit) - 1) / int64(limit),
+		"statusCounts": fetchBookingStatusCounts(start, end),
+		"counts":       fetchBookingCounts(start, end),
+	})
+}
+
 func buildBookingBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
 	db := config.DB()
 	createdAt := c.DefaultQuery("createdAt", "")

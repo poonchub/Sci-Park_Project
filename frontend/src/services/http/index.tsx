@@ -1486,6 +1486,15 @@ async function GetNotificationsByInvoiceAndUser(invoice_id: number, user_id: num
         throw error;
     }
 }
+async function GetNotificationByRoomBookingAndUser(booking_id: number, user_id: number) {
+    try {
+        const response = await axiosInstance.get(`/notification/by-room-booking/${booking_id}/${user_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification:", error);
+        throw error;
+    }
+}
 async function CreateNotification(data: NotificationsInterface) {
     try {
         const response = await axiosInstance.post(`/notification`, data, {
@@ -1670,7 +1679,22 @@ async function ListBookingRoomsForAdmin(
         throw error;
     }
 }
-
+async function ListBookingRoomsForUser(
+    statusID: string,
+    page: number,
+    limit: number,
+    createdAt?: string | undefined,
+    userId?: number | undefined,
+    roomId?: number | undefined
+) {
+    try {
+        const response = await axiosInstance.get(`/booking-room-option-for-user?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}&roomId=${roomId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room booking:", error);
+        throw error;
+    }
+}
 
 
 // ---------------- ROOM TYPES ----------------
@@ -3808,6 +3832,7 @@ export {
     GetNotificationsByRequestAndUser,
     GetNotificationsByTaskAndUser,
     GetNotificationsByInvoiceAndUser,
+    GetNotificationByRoomBookingAndUser,
     CreateNotification,
     UpdateNotificationByID,
     UpdateNotificationsByRequestID,
@@ -3823,6 +3848,7 @@ export {
     GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
     ListBookingRoomsForAdmin,
+    ListBookingRoomsForUser,
 
     // News
     ListNews,

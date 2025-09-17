@@ -46,6 +46,9 @@ import {
   CancelBookingRoom,
   SubmitPaymentSlip,
   apiUrl,
+  ListBookingRoomsForAdmin,
+  ListBookingRoomsForUser,
+  UpdateNotificationsByBookingRoomID,
 } from "../../services/http";
 
 import { TextField } from "../../components/TextField/TextField";
@@ -72,6 +75,7 @@ import BookingPaymentPopup, {
   type InstallmentUI,
 } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
 import theme from "../../styles/Theme";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 /* ========= Types ========= */
 interface BookingRoomsInterface {
@@ -316,6 +320,7 @@ function MyBookingRoom() {
 
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
 
   const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
   const [targetBooking, setTargetBooking] = useState<BookingRoomsInterface | null>(null);
@@ -351,11 +356,8 @@ function MyBookingRoom() {
 
 
   // load data
-  const getBookingRooms = async () => {
+  const getBookingRooms = async (pageNum: number = 1, setTotalFlag = false) => {
     try {
-      const res = await ListBookingRoomsByUser(userId);
-      const rows: BookingRoomsInterface[] = res || [];
-      setBookingRooms(rows);
 
       // const counts = rows.reduce((acc: Record<string, number>, it) => {
       //   let key = (it.DisplayStatus || "unknown").toLowerCase();
@@ -386,8 +388,18 @@ function MyBookingRoom() {
 
   useEffect(() => {
     getBookingRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    getBookingRooms(page);
+
+  }, [page, limit]);
+
+  useEffect(() => {
+    if (user) {
+      getBookingRooms(1, true);
+    }
+  }, [user, selectedDate]);
 
   // filter
   const filtered = useMemo(() => {
@@ -452,13 +464,29 @@ function MyBookingRoom() {
 
       const amt = popupData.installments.find(i => i.key === key)?.amount;
 
+      const userID = Number(localStorage.getItem("userId"))
+
       await SubmitPaymentSlip(selectedRow.ID, file, {
-        PayerID: Number(localStorage.getItem("userId")) || undefined,
+        PayerID: userID || undefined,
         PaymentID: paymentId || undefined,
         installment: key,
         amount: amt,
         transTimestamp: ts, // ✅ ปล่อยให้ฟังก์ชัน map เป็น PaymentDate เอง
       });
+
+      const notificationDataUpdate: NotificationsInterface = {
+        IsRead: false,
+      };
+      const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+        notificationDataUpdate,
+        selectedRow.ID
+      );
+      if (!resUpdateNotification || resUpdateNotification.error)
+        throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
+      if (key == "balance" || key == "full") {
+        await handleUpdateNotification(userID ?? 0, true, undefined, undefined, undefined, undefined, undefined, selectedRow.ID);
+      }
 
       setAlerts(a => [...a, { type: "success", message: paymentId ? "อัปเดตสลิปสำเร็จ" : "อัปโหลดสลิปสำเร็จ" }]);
       await getBookingRooms();
@@ -1605,7 +1633,7 @@ function MyBookingRoom() {
                 rows={filtered}
                 columns={getColumns()}
                 getRowId={(row) => row.ID}
-                rowCount={totalFiltered}
+                rowCount={total}
                 page={page}
                 limit={limit}
                 onPageChange={setPage}

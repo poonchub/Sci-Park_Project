@@ -90,6 +90,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import BookingPaymentPopup, { type InstallmentUI } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
 import { io } from "socket.io-client";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 /* =========================
  * Helpers
@@ -535,6 +536,8 @@ function AllBookingRoom() {
                     );
                     if (!resUpdateNotification || resUpdateNotification.error)
                         throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
+                    await handleUpdateNotification(resApprove.data.UserID ?? 0, false, undefined, undefined, undefined, undefined, undefined, resApprove.data.ID);
 
                     await handleUploadPDF(resInvoice.data.ID);
 
@@ -1659,6 +1662,7 @@ function AllBookingRoom() {
     const getNewBookingRoom = async (ID: number) => {
         try {
             const res = await GetBookingRoomById(ID);
+            console.log("res new: ", res)
             if (res) {
                 setBookingRooms((prev) => [res, ...prev]);
             }
