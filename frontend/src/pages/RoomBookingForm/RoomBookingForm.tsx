@@ -2462,8 +2462,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   className="confirm-button"
                   startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : <Check size={24} />}
                   sx={{
-                    width: { xs: "100%", sm: 280 },  // ให้เท่ากันกับปุ่มซ้าย
-                    height: 48,
+                    width: { xs: "100%", sm: 320 },  // ให้เท่ากันกับปุ่มซ้าย
+                    height: 60,
                   }}
                 >
                   {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}

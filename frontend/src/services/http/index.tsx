@@ -7,7 +7,7 @@ import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import axios, { AxiosRequestConfig } from "axios";
+import axios from "axios";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
@@ -3400,15 +3400,19 @@ export async function ApproveBookingRoom(id: number) {
 
 
 // ✅ ปฏิเสธการจอง
-export async function RejectBookingRoom(id: number, note: string | undefined) {
-    try {
-        const res = await axiosInstance.post(`/booking-rooms/${id}/reject`);
-        return res.data;
-    } catch (err) {
-        console.error(`Error rejecting booking room ${id}:`, err);
-        return false;
-    }
+export async function RejectBookingRoom(id: number, note: string) {
+  try {
+    const res = await axiosInstance.post(
+      `/booking-rooms/${id}/reject`,
+      { note: note?.trim() || "" } // ← ใช้ note จริง ส่งเป็น JSON body
+    );
+    return res.data;
+  } catch (err) {
+    console.error(`Error rejecting booking room ${id}:`, err);
+    return false;
+  }
 }
+
 
 export async function MarkPaymentAsCompleted(id: number) {
     try {
@@ -3467,10 +3471,6 @@ export async function SubmitPaymentSlip(
     fd.append("slip", file, file.name);
     fd.append("file", file, file.name);
 
-    const toISO = (ts?: string) => {
-        const t = ts ? Date.parse(ts) : NaN;
-        return Number.isNaN(t) ? undefined : new Date(t).toISOString();
-    };
 
     // ส่งทั้ง snake_case และ PascalCase เพื่อกันพลาดฝั่ง BE
     const map: Record<string, any> = {

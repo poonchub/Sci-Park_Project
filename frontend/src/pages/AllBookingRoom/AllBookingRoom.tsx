@@ -36,8 +36,6 @@ import {
     HandCoins,
     FileText,
     Calendar,
-
-    RotateCcw,
     Ellipsis,
     BrushCleaning,
     Search,
@@ -54,7 +52,6 @@ import {
     CreateRoomBookingInvoiceItem,
     GetRoomBookingInvoiceByID,
     RefundedBookingRoom,
-    GetBookingRooms,
     ApproveBookingRoom,
     RejectBookingRoom,
     CompleteBookingRoom,
@@ -600,16 +597,26 @@ function AllBookingRoom() {
 
     const doReject = async (note?: string) => {
         if (!selectedRow) return;
+
+        const n = (note ?? "").trim();
+        if (!n) {
+            handleSetAlert("warning", "กรุณาระบุเหตุผลการปฏิเสธ");
+            return; // ⬅️ บังคับต้องใส่
+        }
+
         try {
-            await RejectBookingRoom(selectedRow.ID, note);
+           
+            await RejectBookingRoom(selectedRow.ID, n);
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
         } catch {
             handleSetAlert("error", "Reject failed");
         } finally {
+            
             setOpenConfirmReject(false);
         }
     };
+
 
     // ✅ เจาะที่ payment เฉพาะงวด + ปิดเมนู global เสมอ
     const handleUploadReceiptForPayment = async (
@@ -666,22 +673,30 @@ function AllBookingRoom() {
         setSelectedFloor("all");
     };
 
-    const totalFiltered = filtered.length;
+
 
     /* =========================
      * Columns
      * ========================= */
     const getColumns = (): GridColDef[] => {
+        // === Small / Mobile cards ===
         if (isSmallScreen) {
             return [
                 {
                     field: "All Booking Rooms",
                     headerName: "All Booking Rooms",
                     flex: 1,
+                    sortable: false,
+                    filterable: false,
                     renderCell: (params) => {
                         const data = params.row as BookingRoomsInterface;
+
+                        // ===== Booking basic / status chip (เดิม) =====
                         const status = (data.StatusName || "pending").toLowerCase();
-                        const colorMap: Record<string, { c: string; cl: string; icon: any; label: string }> = {
+                        const colorMap: Record<
+                            string,
+                            { c: string; cl: string; icon: any; label: string }
+                        > = {
                             pending: { c: "#F1A007", cl: "#FFF3DB", icon: Clock, label: "Pending" },
                             confirmed: { c: "#2563EB", cl: "#DBEAFE", icon: Check, label: "Confirmed" },
                             completed: { c: "#16A34A", cl: "#DCFCE7", icon: Check, label: "Completed" },
@@ -689,20 +704,118 @@ function AllBookingRoom() {
                             unknown: { c: "#6B6F76", cl: "#EFF0F1", icon: HelpCircle, label: "Unknown" },
                         };
                         const s = colorMap[status] || colorMap.unknown;
-                        const dateTime = `${dateFormat(data.CreatedAt || "")} ${timeFormat(data.CreatedAt || "")}`;
+                        const dateTime = `${dateFormat(data.CreatedAt || "")} ${timeFormat(
+                            data.CreatedAt || ""
+                        )}`;
                         const room = `Room ${data.Room?.RoomNumber ?? "-"}`;
                         const floor = `Floor ${data.Room?.Floor?.Number ?? "-"}`;
-                        const who = `${data.User?.FirstName || ""} ${data.User?.LastName || ""} (${data.User?.EmployeeID || "-"})`;
+                        const who = `${data.User?.FirstName || ""} ${data.User?.LastName || ""} (${data.User?.EmployeeID || "-"
+                            })`;
                         const showButtonApprove = status === "pending" && (isManager() || isAdmin());
+
+                        // ====== Invoice / Payment summary (ใหม่) ======
+                        // เลือก Payment งวดที่ใช้แสดงใบเสร็จ/ใบกำกับ
+                        const selectedPay: any = pickReceiptPayment(data);
+                        const statusRaw = statusNameOf(selectedPay);
+                        const isApprovedNow = ["approved", "paid"].includes(lower(statusRaw));
+
+                        // map key ของ paymentStatusConfig → label UI
+                        const toConfigKey = (raw?: string): keyof typeof paymentStatusConfig => {
+                            const v = (raw || "").trim().toLowerCase();
+                            switch (v) {
+                                case "unpaid":
+                                case "pending payment":
+                                    return "Pending Payment";
+                                case "submitted":
+                                case "pending verification":
+                                    return "Pending Verification";
+                                case "approved":
+                                case "paid":
+                                    return "Paid";
+                                case "rejected":
+                                    return "Rejected";
+                                case "refunded":
+                                    return "Refunded";
+                                default:
+                                    return "Pending Payment";
+                            }
+                        };
+                        const statusKey = toConfigKey(statusRaw);
+                        const cfgPay =
+                            paymentStatusConfig[statusKey] || {
+                                color: "#000",
+                                colorLite: "rgba(0,0,0,0.08)",
+                                icon: HelpCircle,
+                                label: "Unknown",
+                            };
+                        const {
+                            color: statusColor,
+                            colorLite: statusColorLite,
+                            icon: statusIcon,
+                            label: uiStatus,
+                        } = cfgPay;
+
+                        const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
+
+                        // ===== Invoice data =====
+                        const invoice = (data as any).RoomBookingInvoice;
+                        const invoiceNumber =
+                            invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
+                        const billingPeriod = invoice?.IssueDate
+                            ? formatToMonthYear(invoice.IssueDate)
+                            : data.BookingDates?.[0]?.Date
+                                ? formatToMonthYear(data.BookingDates[0].Date)
+                                : "-";
+                        const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
+
+                        const rb = (data as any).Finance;
+                        const totalAmountNum =
+                            rb?.TotalAmount ??
+                            (data as any).TotalAmount ??
+                            invoice?.TotalAmount ??
+                            undefined;
+                        const totalAmount =
+                            typeof totalAmountNum === "number"
+                                ? totalAmountNum.toLocaleString("th-TH", {
+                                    style: "currency",
+                                    currency: "THB",
+                                })
+                                : "—";
+
+                        // ===== Receipt / PDF =====
+                        const receiptPath = asSlipString(selectedPay?.ReceiptPath);
+                        const fileName = receiptPath ? receiptPath.split("/").pop() : "";
+                        const invoicePDFPath =
+                            invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
+
+                        const canManageReceipt = isAdminLike === true;
+                        const showReceiptMenu = canManageReceipt && isApprovedNow;
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} rowSpacing={1.5} className="card-item-container">
+
+                                {/* Header: ห้อง/เวลา/ผู้จอง */}
                                 <Grid size={{ xs: 12, sm: 7 }}>
-                                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                    <Typography
+                                        sx={{
+                                            fontSize: 16,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
                                         {room} • {floor}
                                     </Typography>
 
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 0.8 }}>
+                                    <Box
+                                        sx={{
+                                            color: "text.secondary",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.5,
+                                            my: 0.8,
+                                        }}
+                                    >
                                         <Clock size={16} />
                                         <Typography sx={{ fontSize: 13 }}>{dateTime}</Typography>
                                     </Box>
@@ -720,12 +833,21 @@ function AllBookingRoom() {
                                         {data.Purpose || "-"}
                                     </Typography>
 
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 1 }}>
+                                    <Box
+                                        sx={{
+                                            color: "text.secondary",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.5,
+                                            my: 1,
+                                        }}
+                                    >
                                         <UserRound size={16} />
                                         <Typography sx={{ fontSize: 13 }}>{who}</Typography>
                                     </Box>
                                 </Grid>
 
+                                {/* Booking status chip */}
                                 <Grid size={{ xs: 12, sm: 5 }} container direction="column">
                                     <Box
                                         sx={{
@@ -742,49 +864,324 @@ function AllBookingRoom() {
                                         }}
                                     >
                                         <s.icon size={18} />
-                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{s.label}</Typography>
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                                            {s.label}
+                                        </Typography>
                                     </Box>
                                 </Grid>
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
 
+                                {/* ===== New: Invoice & Payment section ===== */}
                                 <Grid size={{ xs: 12 }}>
-                                    <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap" }}>
+                                    {/* Invoice number */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: 16,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {invoiceNumber}
+                                    </Typography>
+
+                                    {/* Billing Period */}
+                                    <Box
+                                        sx={{
+                                            color: "text.secondary",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.6,
+                                            my: 0.6,
+                                        }}
+                                    >
+                                        <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Billing Period: ${billingPeriod}`}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Due date */}
+                                    <Box
+                                        sx={{
+                                            color: "text.secondary",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 0.6,
+                                            my: 0.6,
+                                        }}
+                                    >
+                                        <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {`Due Date: ${dueDate}`}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Amount */}
+                                    <Box sx={{ mt: 1.2 }}>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            Total Amount
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: 16,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                fontWeight: 500,
+                                                color: "text.main",
+                                            }}
+                                        >
+                                            {totalAmount}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Payment status chip */}
+                                    <Box
+                                        sx={{
+                                            mt: 1.2,
+                                            bgcolor: statusColorLite,
+                                            borderRadius: 10,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            display: "inline-flex",
+                                            gap: 1,
+                                            color: statusColor,
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        {React.createElement(statusIcon, { size: 16 })}
+                                        <Typography
+                                            sx={{
+                                                fontSize: 14,
+                                                fontWeight: 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                maxWidth: "100%",
+                                            }}
+                                        >
+                                            {uiStatus}
+                                        </Typography>
+                                    </Box>
+
+                                    {/* Receipt (file) & menu */}
+                                    <Box sx={{ mt: 1.2, display: "flex", alignItems: "center", gap: 0.6, flexWrap: "wrap" }}>
+                                        {showReceiptMenu && (
+                                            <Button
+                                                id={`receipt-menu-btn-${data.ID}`}
+                                                variant="outlinedGray"
+                                                sx={{ minWidth: 42 }}
+                                                onClick={(e) =>
+                                                    setReceiptMenu({
+                                                        anchorEl: e.currentTarget,
+                                                        paymentId: selectedPay?.ID,
+                                                        isApprovedNow,
+                                                        fileName,
+                                                    })
+                                                }
+                                            >
+                                                <Ellipsis size={16} />
+                                            </Button>
+                                        )}
+
+                                        {fileName ? (
+                                            <Box
+                                                sx={{
+                                                    display: "inline-flex",
+                                                    gap: 1,
+                                                    border: "1px solid rgba(109,110,112,0.4)",
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: "#FFF",
+                                                    cursor: "pointer",
+                                                    transition: "all .3s",
+                                                    alignItems: "center",
+                                                    width: { xs: "100%", mobileS: "auto" },
+                                                    "&:hover": { color: "primary.main", borderColor: "primary.main" },
+                                                }}
+                                                onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
+                                            >
+                                                <FileText size={16} />
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        fontSize: 14,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                    }}
+                                                >
+                                                    {fileName}
+                                                </Typography>
+                                            </Box>
+                                        ) : (
+                                            <Box
+                                                sx={{
+                                                    display: "inline-flex",
+                                                    gap: 1,
+                                                    border: "1px solid rgba(109,110,112,0.4)",
+                                                    borderRadius: 1,
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    bgcolor: "#FFF",
+                                                    alignItems: "center",
+                                                    color: "text.secondary",
+                                                    width: { xs: "100%", mobileS: "auto" },
+                                                }}
+                                            >
+                                                <FileText size={16} />
+                                                <Typography variant="body1" sx={{ fontSize: 14 }}>
+                                                    No file uploaded
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </Grid>
+
+                                <Divider sx={{ width: "100%", my: 1 }} />
+
+                                {/* ปุ่มการทำงาน (ชำระ/ดาวน์โหลด/อนุมัติ/ปฏิเสธ/รายละเอียด) */}
+                                <Grid size={{ xs: 12 }}>
+                                    <Grid container spacing={0.8}>
+                                        <Grid size={{ xs: 6 }}>
+                                            <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={() => {
+                                                        setSelectedRow(data);
+                                                        setOpenPaymentDialog(true);
+                                                    }}
+                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                                                >
+                                                    {canPayNow ? (
+                                                        <>
+                                                            <HandCoins size={18} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Pay Now
+                                                            </Typography>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Wallet size={18} />
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                View Slip
+                                                            </Typography>
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </Tooltip>
+                                        </Grid>
+
+                                        <Grid size={{ xs: 6 }}>
+                                            <Tooltip title="Download PDF">
+                                                <Button
+                                                    variant="outlinedGray"
+                                                    onClick={() =>
+                                                        invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")
+                                                    }
+                                                    disabled={!invoicePDFPath}
+                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                                                >
+                                                    <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
+                                                    <Typography variant="textButtonClassic" className="text-btn">
+                                                        Download PDF
+                                                    </Typography>
+                                                </Button>
+                                            </Tooltip>
+                                        </Grid>
+
                                         {showButtonApprove ? (
-                                            <Grid container spacing={0.8} size={{ xs: 12 }}>
+                                            <>
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title="Approve">
-                                                        <Button variant="contained" onClick={() => { setSelectedRow(data); setOpenConfirmApprove(true); }} fullWidth>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={() => {
+                                                                setSelectedRow(data);
+                                                                setOpenConfirmApprove(true);
+                                                            }}
+                                                            fullWidth
+                                                        >
                                                             <Check size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">Approve</Typography>
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Approve
+                                                            </Typography>
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title="Reject">
-                                                        <Button variant="outlinedCancel" onClick={() => { setSelectedRow(data); setOpenConfirmReject(true); }} fullWidth>
+                                                        <Button
+                                                            variant="outlinedCancel"
+                                                            onClick={() => {
+                                                                setSelectedRow(data);
+                                                                setOpenConfirmReject(true);
+                                                            }}
+                                                            fullWidth
+                                                        >
                                                             <X size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">Reject</Typography>
+                                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                                Reject
+                                                            </Typography>
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 2 }}>
                                                     <Tooltip title="Details">
-                                                        <Button variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ minWidth: 42 }} fullWidth>
+                                                        <Button
+                                                            variant="outlinedGray"
+                                                            onClick={() => handleClickCheck(data)}
+                                                            sx={{ minWidth: 42 }}
+                                                            fullWidth
+                                                        >
                                                             <Eye size={18} />
                                                         </Button>
                                                     </Tooltip>
                                                 </Grid>
-                                            </Grid>
+                                            </>
                                         ) : (
-                                            <Tooltip title="Details">
-                                                <Button className="btn-detail" variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ width: "100%" }}>
-                                                    <Eye size={18} />
-                                                    <Typography variant="textButtonClassic" className="text-btn">Details</Typography>
-                                                </Button>
-                                            </Tooltip>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Tooltip title="Details">
+                                                    <Button
+                                                        className="btn-detail"
+                                                        variant="outlinedGray"
+                                                        onClick={() => handleClickCheck(data)}
+                                                        sx={{ width: "100%" }}
+                                                    >
+                                                        <Eye size={18} />
+                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                            Details
+                                                        </Typography>
+                                                    </Button>
+                                                </Tooltip>
+                                            </Grid>
                                         )}
-                                    </Box>
+                                    </Grid>
                                 </Grid>
                             </Grid>
                         );
@@ -792,6 +1189,7 @@ function AllBookingRoom() {
                 },
             ];
         }
+
 
         // Desktop
         return [
@@ -880,7 +1278,7 @@ function AllBookingRoom() {
 
                     const cfg = getBookingStatusConfig(display);
                     return (
-                        <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
                             <Box
                                 sx={{
                                     bgcolor: cfg.colorLite,
@@ -901,9 +1299,12 @@ function AllBookingRoom() {
                 },
             },
             {
-                field: "All Invoice",
+                field: "invoice",                // ← เดิม "All Invoice"
                 headerName: "All Invoice",
-                flex: 1,
+                flex: 1.2,
+                minWidth: 320,                   // ให้มีพื้นที่ขั้นต่ำ
+                sortable: false,
+                filterable: false,
                 renderCell: (item) => {
                     const data = item.row as BookingRoomsInterface;
 
@@ -977,8 +1378,8 @@ function AllBookingRoom() {
                     const showReceiptMenu = canManageReceipt && isApprovedNow; // อนุญาตเฉพาะงวดที่อนุมัติแล้ว
 
                     return (
-                        <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
-                            <Grid size={{ xs: 12, mobileS: 7 }}>
+                        <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="container-btn" rowSpacing={1}>
+                            <Grid size={{ xs: 12, sm: 7 }}>
                                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
                                     {hasNotificationForUser && <AnimatedBell />}
                                     <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
@@ -1000,7 +1401,7 @@ function AllBookingRoom() {
                                     </Typography>
                                 </Box>
 
-                                <Box sx={{ mt: 1.4, mb: 1 }}>
+                                <Box sx={{ mt: 1.4, sm: 5 }}>
                                     <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "text.secondary" }}>
                                         Total Amount
                                     </Typography>
@@ -1010,7 +1411,7 @@ function AllBookingRoom() {
                                 </Box>
                             </Grid>
 
-                            <Grid size={{ xs: 12, mobileS: 5 }} container direction="column">
+                            <Grid size={{ xs: 12, sm: 5 }} container direction="column">
                                 <Box
                                     sx={{
                                         bgcolor: statusColorLite,
@@ -1157,19 +1558,45 @@ function AllBookingRoom() {
                     const dStatus = (row.DisplayStatus || "unknown").toLowerCase();
 
                     return (
-                        <Box sx={{ display: "flex", gap: 0.8 }}>
+                        <Box className="container-btn"
+                            sx={{
+                                display: "flex",
+                                gap: 0.8,
+                                flexWrap: "wrap",
+                                alignItems: "center",
+                                height: '100%'
+                            }}>
                             {isAdminLike && dStatus === "pending" && (
                                 <>
                                     <Tooltip title="Approve">
-                                        <Button variant="contained" color="primary" onClick={() => { setSelectedRow(row); setOpenConfirmApprove(true); }}>
-                                            <Check size={18} />
-                                            <Typography variant="textButtonClassic" className="text-btn">Approve</Typography>
+                                        <Button className="btn-approve"
+                                            variant="contained"
+                                            onClick={() => { setSelectedRow(row); setOpenConfirmApprove(true); }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}>
+                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">Approve
+
+                                            </Typography>
                                         </Button>
                                     </Tooltip>
                                     <Tooltip title="Reject">
-                                        <Button variant="outlinedCancel" onClick={() => { setSelectedRow(row); setOpenConfirmReject(true); }}>
-                                            <X size={18} />
-                                            <Typography variant="textButtonClassic" className="text-btn">Reject</Typography>
+                                        <Button
+                                            className="btn-reject"
+                                            variant="outlinedCancel"
+                                            onClick={() => {
+                                                setSelectedRow(row); setOpenConfirmReject(true);
+
+                                            }}
+                                            sx={{
+                                                minWidth: "42px",
+                                            }}
+                                        >
+                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Reject
+                                            </Typography>
                                         </Button>
                                     </Tooltip>
                                 </>
@@ -1184,7 +1611,7 @@ function AllBookingRoom() {
                                 </Tooltip>
                             )} */}
 
-                            {isAdminLike && dStatus === "payment" && (
+                            {/* {isAdminLike && dStatus === "payment" && (
                                 <>
                                     {row.Payment?.id && (
                                         <Tooltip title="Complete Booking">
@@ -1203,12 +1630,21 @@ function AllBookingRoom() {
                                         </Tooltip>
                                     )}
                                 </>
-                            )}
+                            )} */}
 
                             <Tooltip title="Details">
-                                <Button variant="outlinedGray" onClick={() => handleClickCheck(row)}>
-                                    <Eye size={18} />
-                                    <Typography variant="textButtonClassic">Details</Typography>
+                                <Button
+                                    className="btn-detail"
+                                    variant="outlinedGray"
+                                    onClick={() => handleClickCheck(row)}
+                                    sx={{
+                                        minWidth: "42px",
+                                    }}
+                                >
+                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                    <Typography variant="textButtonClassic" className="text-btn" >
+                                        Details
+                                    </Typography>
                                 </Button>
                             </Tooltip>
                         </Box>
@@ -1297,6 +1733,7 @@ function AllBookingRoom() {
                 showNoteField
                 buttonActive={false}
             />
+
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
@@ -1422,6 +1859,8 @@ function AllBookingRoom() {
                     </Grid>
                 </Grid>
             </Container>
+
+
 
             <BookingPaymentPopup
                 open={openPaymentDialog}

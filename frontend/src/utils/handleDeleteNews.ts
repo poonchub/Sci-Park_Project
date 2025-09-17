@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { DeleteNewsByID, DeleteNewsImagesByNewsID } from "../services/http";
 import { NewsInterface } from "../interfaces/News";
 
