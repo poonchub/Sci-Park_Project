@@ -45,6 +45,9 @@ import {
   CancelBookingRoom,
   SubmitPaymentSlip,
   apiUrl,
+  ListBookingRoomsForAdmin,
+  ListBookingRoomsForUser,
+  UpdateNotificationsByBookingRoomID,
 } from "../../services/http";
 
 import { TextField } from "../../components/TextField/TextField";
@@ -70,6 +73,7 @@ import { useUserStore } from "../../store/userStore";
 import BookingPaymentPopup, {
   type InstallmentUI,
 } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
+import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 /* ========= Types ========= */
 interface BookingRoomsInterface {
@@ -314,6 +318,7 @@ function MyBookingRoom() {
 
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
 
   const [openConfirmCancel, setOpenConfirmCancel] = useState(false);
   const [targetBooking, setTargetBooking] = useState<BookingRoomsInterface | null>(null);
@@ -343,13 +348,29 @@ function MyBookingRoom() {
   };
 
   // load data
-  const getBookingRooms = async () => {
+  const getBookingRooms = async (pageNum: number = 1, setTotalFlag = false) => {
     try {
-      const res = await ListBookingRoomsByUser(userId);
-      const rows: BookingRoomsInterface[] = res || [];
-      setBookingRooms(rows);
 
-      const counts = rows.reduce((acc: Record<string, number>, it) => {
+      const res = await ListBookingRoomsForUser(
+        "",
+        pageNum,
+        limit,
+        selectedDate ? selectedDate.format("YYYY-MM") : "",
+        userId
+      );
+
+      if (res) {
+        setBookingRooms(res.data);
+        if (setTotalFlag) setTotal(res.total);
+
+        // const formatted = res.statusCounts.reduce((acc: any, item: any) => {
+        //     acc[item.status_name] = item.count;
+        //     return acc;
+        // }, {});
+        // setStatusCounts(formatted);
+      }
+
+      const counts = res.data.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
         let key = (it.DisplayStatus || "unknown").toLowerCase();
         if (["rejected", "unconfirmed"].includes(key)) key = "pending";
         if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
@@ -378,8 +399,18 @@ function MyBookingRoom() {
 
   useEffect(() => {
     getBookingRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    getBookingRooms(page);
+
+  }, [page, limit]);
+
+  useEffect(() => {
+    if (user) {
+      getBookingRooms(1, true);
+    }
+  }, [user, selectedDate]);
 
   // filter
   const filtered = useMemo(() => {
@@ -444,13 +475,29 @@ function MyBookingRoom() {
 
       const amt = popupData.installments.find(i => i.key === key)?.amount;
 
+      const userID = Number(localStorage.getItem("userId"))
+
       await SubmitPaymentSlip(selectedRow.ID, file, {
-        PayerID: Number(localStorage.getItem("userId")) || undefined,
+        PayerID: userID || undefined,
         PaymentID: paymentId || undefined,
         installment: key,
         amount: amt,
         transTimestamp: ts, // ✅ ปล่อยให้ฟังก์ชัน map เป็น PaymentDate เอง
       });
+
+      const notificationDataUpdate: NotificationsInterface = {
+        IsRead: false,
+      };
+      const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+        notificationDataUpdate,
+        selectedRow.ID
+      );
+      if (!resUpdateNotification || resUpdateNotification.error)
+        throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
+      if (key == "balance" || key == "full") {
+        await handleUpdateNotification(userID ?? 0, true, undefined, undefined, undefined, undefined, undefined, selectedRow.ID);
+      }
 
       setAlerts(a => [...a, { type: "success", message: paymentId ? "อัปเดตสลิปสำเร็จ" : "อัปโหลดสลิปสำเร็จ" }]);
       await getBookingRooms();
@@ -466,7 +513,26 @@ function MyBookingRoom() {
 
   // columns
   const getColumns = (): GridColDef[] => [
-    { field: "ID", headerName: "No.", flex: 0.2, align: "center", headerAlign: "center" },
+    {
+      field: "ID",
+      headerName: "No.",
+      flex: 0.3,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const requestID = params.row.ID;
+        console.log("Daata: ", params.row)
+        const notification = params.row.Notifications ?? [];
+        const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === user?.ID && !n.IsRead);
+        console.log("hasNotificationForUser: ", hasNotificationForUser)
+        return (
+          <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", height: "100%", gap: "5px" }}>
+            {hasNotificationForUser && <AnimatedBell />}
+            <Typography>{requestID}</Typography>
+          </Box>
+        );
+      },
+    },
     {
       field: "Title",
       headerName: "Title",
@@ -931,7 +997,7 @@ function MyBookingRoom() {
                 rows={filtered}
                 columns={getColumns()}
                 getRowId={(row) => row.ID}
-                rowCount={totalFiltered}
+                rowCount={total}
                 page={page}
                 limit={limit}
                 onPageChange={setPage}

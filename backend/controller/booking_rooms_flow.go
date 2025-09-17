@@ -124,6 +124,7 @@ func buildBookingRoomResponse(b entity.BookingRoom) BookingRoomResponse {
 		InvoicePDFPath:     invoicePDFPath,
 		Finance:            fin,
 		PaymentOption:      &b.PaymentOption,
+		Notifications:      b.Notifications,
 	}
 }
 
