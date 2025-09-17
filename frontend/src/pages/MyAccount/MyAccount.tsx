@@ -595,6 +595,12 @@ const MyAccount: React.FC = () => {
     }, [page, limit]);
 
     useEffect(() => {
+            if (user && requestStatuses) {
+                getMaintenanceRequests(1, true);
+            }
+        }, [user, selectedStatuses, selectedDate]);
+
+    useEffect(() => {
         getInvoice();
     }, [invoicePage, invoiceLimit]);
 
@@ -3076,7 +3082,11 @@ const MyAccount: React.FC = () => {
                                             Maintenance Request
                                         </Badge>
                                     } {...a11yProps(0)} />
-                                    <Tab label="Room Booking" {...a11yProps(1)} />
+                                    <Tab label={
+                                        <Badge invisible={isAdmin() || isManager()} badgeContent={notificationCounts.UnreadBookingRoom} color="primary">
+                                            Room Booking
+                                        </Badge>
+                                    } {...a11yProps(1)} />
                                     {
                                         !(user?.IsEmployee) && user?.Role?.Name === "User" &&
                                         <Tab label={

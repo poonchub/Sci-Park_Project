@@ -1,5 +1,6 @@
 import { NotificationsInterface } from "../interfaces/INotifications";
 import {
+    GetNotificationByRoomBookingAndUser,
     GetNotificationsByInvoiceAndUser,
     GetNotificationsByRequestAndUser,
     GetNotificationsByTaskAndUser,
@@ -13,9 +14,10 @@ export const handleUpdateNotification = async (
     IsRead: boolean,
     request_id?: number,
     task_id?: number,
-    invoiceId?: number,
+    invoice_id?: number,
     service_area_request_id?: number,
-    service_area_task_id?: number
+    service_area_task_id?: number,
+    booking_id?: number
 ): Promise<void> => {
     try {
         let resNotification: any = null;
@@ -29,8 +31,8 @@ export const handleUpdateNotification = async (
             resNotification = await GetNotificationsByTaskAndUser(task_id, user_id);
         }
         // กรณี invoice
-        else if (invoiceId && invoiceId !== 0) {
-            resNotification = await GetNotificationsByInvoiceAndUser(invoiceId, user_id);
+        else if (invoice_id && invoice_id !== 0) {
+            resNotification = await GetNotificationsByInvoiceAndUser(invoice_id, user_id);
         }
         // กรณี service area request
         else if (service_area_request_id && service_area_request_id !== 0) {
@@ -47,6 +49,9 @@ export const handleUpdateNotification = async (
             await UpdateNotificationsByServiceAreaTaskID(notificationData, service_area_task_id);
             console.log("✅ Service Area Task notification updated successfully.");
             return;
+        }
+        else if (booking_id && booking_id !== 0) {
+            resNotification = await GetNotificationByRoomBookingAndUser(booking_id, user_id);
         }
 
         if (!resNotification || resNotification.error) {

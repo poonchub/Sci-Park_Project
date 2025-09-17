@@ -159,6 +159,24 @@ func GetNotificationByInvoiceAndUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notifications})
 }
 
+// GET /notification/by-room-booking/:booking_id/:user_id
+func GetNotificationByRoomBookingAndUser(c *gin.Context) {
+	bookingID := c.Param("booking_id")
+	userID := c.Param("user_id")
+
+	db := config.DB()
+
+	var notifications entity.Notification
+	err := db.Where("booking_room_id = ? AND user_id = ?", bookingID, userID).First(&notifications).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": notifications})
+}
+
 // POST /notification
 func CreateNotification(c *gin.Context) {
 	var notificationInput struct {

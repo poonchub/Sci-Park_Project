@@ -209,6 +209,7 @@ func main() {
 		protected.GET("/notification/by-request/:request_id/:user_id", controller.GetNotificationByRequestAndUser)
 		protected.GET("/notification/by-task/:task_id/:user_id", controller.GetNotificationByTaskAndUser)
 		protected.GET("/notification/by-invoice/:invoice_id/:user_id", controller.GetNotificationByInvoiceAndUser)
+		protected.GET("/notification/by-room-booking/:booking_id/:user_id", controller.GetNotificationByRoomBookingAndUser)
 		protected.POST("/notification", controller.CreateNotification)
 		protected.PATCH("/notification/:id", controller.UpdateNotificationByID)
 		protected.PATCH("/notifications/request/:request_id", controller.UpdateNotificationsByRequestID)
@@ -295,6 +296,7 @@ func main() {
 
 		// BookingRooms
 		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
+		protected.GET("/booking-room-option-for-user", controller.ListBookingRoomsForUser)
 
 		// RoomBookingInvoices (moved to main section below)
 
