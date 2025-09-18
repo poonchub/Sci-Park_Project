@@ -6,6 +6,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/controller"
 	"sci-park_web-application/middlewares"
+	"sci-park_web-application/services"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -365,6 +366,12 @@ func main() {
 		// OrganizationInfo
 		protected.PATCH("/organization-info/:id", controller.UpdateOrganizationInfoByID)
 
+		// UserPackage Reset (Manager only)
+		protected.POST("/reset-user-packages", controller.ResetUserPackages)
+		protected.POST("/reset-user-packages/:year", controller.ResetUserPackagesForYear)
+		protected.GET("/user-package-usage-stats", controller.GetUserPackageUsageStats)
+		protected.POST("/test-reset-user-packages", controller.TestResetUserPackages)
+
 		// Payments
 		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
 		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
@@ -435,6 +442,11 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "API RUNNING... PORT: %s", PORT)
 	})
+
+	// 🕐 Start UserPackage Reset Scheduler
+	scheduler := services.NewScheduler()
+	scheduler.StartDailyCheck()
+	log.Println("UserPackage Reset Scheduler started")
 
 	go func() {
 		for {
