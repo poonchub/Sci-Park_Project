@@ -9,6 +9,41 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type TaskNotificationDTO struct {
+	ID     uint
+	IsRead bool
+	TaskID uint
+	UserID uint
+}
+
+type RentalRoomInvoiceNotificationDTO struct {
+	ID                  uint
+	IsRead              bool
+	RentalRoomInvoiceID uint
+	UserID              uint
+}
+
+type ServiceAreaRequestNotificationDTO struct {
+	ID                   uint
+	IsRead               bool
+	ServiceAreaRequestID uint
+	UserID               uint
+}
+
+type ServiceAreaTaskNotificationDTO struct {
+	ID                uint
+	IsRead            bool
+	ServiceAreaTaskID uint
+	UserID            uint
+}
+
+type BookingRoomNotificationDTO struct {
+	ID            uint
+	IsRead        bool
+	BookingRoomID uint
+	UserID        uint
+}
+
 // GET /notifications
 func ListNotifications(c *gin.Context) {
 	var notifications []entity.Notification
@@ -66,7 +101,7 @@ func GetUnreadNotificationCountsByUserID(c *gin.Context) {
 		"UnreadTasks":               taskCount,
 		"UnreadInvoice":             invoiceCount,
 		"UnreadServiceAreaRequests": serviceAreaRequestCount + serviceAreaTaskCount, // รวม service area requests และ tasks
-		"UnreadBookingRoom": 		 bookingRoomCount,
+		"UnreadBookingRoom":         bookingRoomCount,
 	})
 }
 
@@ -115,6 +150,24 @@ func GetNotificationByInvoiceAndUser(c *gin.Context) {
 
 	var notifications entity.Notification
 	err := db.Where("rental_room_invoice_id = ? AND user_id = ?", taskID, userID).First(&notifications).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": notifications})
+}
+
+// GET /notification/by-room-booking/:booking_id/:user_id
+func GetNotificationByRoomBookingAndUser(c *gin.Context) {
+	bookingID := c.Param("booking_id")
+	userID := c.Param("user_id")
+
+	db := config.DB()
+
+	var notifications entity.Notification
+	err := db.Where("booking_room_id = ? AND user_id = ?", bookingID, userID).First(&notifications).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notifications"})
@@ -249,7 +302,16 @@ func CreateNotification(c *gin.Context) {
 			createdNotifications = append(createdNotifications, notiForUser)
 		}
 
-		services.NotifySocketEvent("notification_created", createdNotifications)
+		var dtoList []TaskNotificationDTO
+		for _, noti := range createdNotifications {
+			dtoList = append(dtoList, TaskNotificationDTO{
+				ID:     noti.ID,
+				IsRead: noti.IsRead,
+				TaskID: noti.TaskID,
+				UserID: noti.UserID,
+			})
+		}
+		services.NotifySocketEvent("notification_created", dtoList)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -282,7 +344,14 @@ func CreateNotification(c *gin.Context) {
 		}
 
 		// ส่ง socket event และตอบกลับ
-		services.NotifySocketEvent("notification_created", []entity.Notification{noti})
+		dto := TaskNotificationDTO{
+			ID:     noti.ID,
+			IsRead: noti.IsRead,
+			TaskID: noti.TaskID,
+			UserID: noti.UserID,
+		}
+
+		services.NotifySocketEvent("notification_created", []TaskNotificationDTO{dto})
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -329,7 +398,17 @@ func CreateNotification(c *gin.Context) {
 			createdNotifications = append(createdNotifications, notiForUser)
 		}
 
-		services.NotifySocketEvent("notification_created", createdNotifications)
+		var dtoList []RentalRoomInvoiceNotificationDTO
+		for _, noti := range createdNotifications {
+			dtoList = append(dtoList, RentalRoomInvoiceNotificationDTO{
+				ID:                  noti.ID,
+				IsRead:              noti.IsRead,
+				RentalRoomInvoiceID: noti.RentalRoomInvoiceID,
+				UserID:              noti.UserID,
+			})
+		}
+
+		services.NotifySocketEvent("notification_created", dtoList)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -365,7 +444,14 @@ func CreateNotification(c *gin.Context) {
 			return
 		}
 
-		services.NotifySocketEvent("notification_created", []entity.Notification{noti})
+		dto := ServiceAreaRequestNotificationDTO{
+			ID:                   noti.ID,
+			IsRead:               noti.IsRead,
+			ServiceAreaRequestID: noti.ServiceAreaRequestID,
+			UserID:               noti.UserID,
+		}
+
+		services.NotifySocketEvent("notification_created", []ServiceAreaRequestNotificationDTO{dto})
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -391,7 +477,14 @@ func CreateNotification(c *gin.Context) {
 			return
 		}
 
-		services.NotifySocketEvent("notification_created", []entity.Notification{noti})
+		dto := ServiceAreaTaskNotificationDTO{
+			ID:                noti.ID,
+			IsRead:            noti.IsRead,
+			ServiceAreaTaskID: noti.ServiceAreaTaskID,
+			UserID:            noti.UserID,
+		}
+
+		services.NotifySocketEvent("notification_created", []ServiceAreaTaskNotificationDTO{dto})
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -461,7 +554,17 @@ func CreateNotification(c *gin.Context) {
 			createdNotifications = append(createdNotifications, notiForUser)
 		}
 
-		services.NotifySocketEvent("notification_created", createdNotifications)
+		var dtoList []BookingRoomNotificationDTO
+		for _, noti := range createdNotifications {
+			dtoList = append(dtoList, BookingRoomNotificationDTO{
+				ID:            noti.ID,
+				IsRead:        noti.IsRead,
+				BookingRoomID: noti.BookingRoomID,
+				UserID:        noti.UserID,
+			})
+		}
+
+		services.NotifySocketEvent("notification_created", dtoList)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Created success",
@@ -692,7 +795,7 @@ func UpdateNotificationsByBookingRoomID(c *gin.Context) {
 	// Broadcast socket event (optional)
 	services.NotifySocketEvent("notification_updated_bulk", gin.H{
 		"booking_room_id": bookingID,
-		"updated":    updateData,
+		"updated":         updateData,
 	})
 
 	c.JSON(http.StatusOK, gin.H{

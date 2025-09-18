@@ -35,12 +35,12 @@ interface DocumentContractData {
     ServiceContractDocument?: File | null;
     AreaHandoverDocument?: File | null;
     QuotationDocument?: File | null;
-    RefundGuaranteeDocument?: File | null;
+    RequestDocument?: File | null;
     // Existing file paths
     ServiceContractDocumentPath?: string;
     AreaHandoverDocumentPath?: string;
     QuotationDocumentPath?: string;
-    RefundGuaranteeDocumentPath?: string;
+    RequestDocumentPath?: string;
 }
 
 interface EditDocumentContractPopupProps {
@@ -69,11 +69,11 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
         ServiceContractDocument: null,
         AreaHandoverDocument: null,
         QuotationDocument: null,
-        RefundGuaranteeDocument: null,
+        RequestDocument: null,
         ServiceContractDocumentPath: '',
         AreaHandoverDocumentPath: '',
         QuotationDocumentPath: '',
-        RefundGuaranteeDocumentPath: '',
+        RequestDocumentPath: '',
     });
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
@@ -143,11 +143,11 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                 ServiceContractDocument: null,
                 AreaHandoverDocument: null,
                 QuotationDocument: null,
-                RefundGuaranteeDocument: null,
+                RequestDocument: null,
                 ServiceContractDocumentPath: existingData.ServiceContractDocumentPath || '',
                 AreaHandoverDocumentPath: existingData.AreaHandoverDocumentPath || '',
                 QuotationDocumentPath: existingData.QuotationDocumentPath || '',
-                RefundGuaranteeDocumentPath: existingData.RefundGuaranteeDocumentPath || '',
+                RequestDocumentPath: existingData.RequestDocumentPath || '',
             });
             setHasSubmitted(false);
             setAlerts([]);
@@ -268,11 +268,11 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
             ServiceContractDocument: null,
             AreaHandoverDocument: null,
             QuotationDocument: null,
-            RefundGuaranteeDocument: null,
+            RequestDocument: null,
             ServiceContractDocumentPath: '',
             AreaHandoverDocumentPath: '',
             QuotationDocumentPath: '',
-            RefundGuaranteeDocumentPath: '',
+            RequestDocumentPath: '',
         });
         setHasSubmitted(false);
         setAlerts([]);
@@ -610,7 +610,7 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 6 }}>
-                            {renderFileUpload('RefundGuaranteeDocument', 'Refund Guarantee Document')}
+                            {renderFileUpload('RequestDocument', 'Request Document')}
                         </Grid>
                     </Grid>
                 </DialogContent>

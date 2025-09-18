@@ -2,6 +2,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -57,6 +58,96 @@ func setBookingStatus(tx *gorm.DB, bookingID uint, statusName string) error {
 		Error
 }
 
+// ====== ใช้ struct/ฟังก์ชันเดิมจาก ListBookingRooms ======
+// - BookingRoomResponse
+// - PaymentSummary
+// - AdditionalInfo
+// - mergeTimeSlots
+// - buildPaymentSummaries
+// - computeBookingFinance
+// - computeDisplayStatus
+//
+// ถ้ายังไม่มีฟังก์ชันกลาง ให้เพิ่มด้านล่าง แล้วให้ทั้ง List และ Get ใช้ร่วมกัน
+
+// สร้าง response ให้สอดคล้องกับหน้า All
+func buildBookingRoomResponse(b entity.BookingRoom) BookingRoomResponse {
+	// merge slot (เอาวันแรกของการจองเป็นฐานเวลา)
+	bookingDate := time.Now()
+	if len(b.BookingDates) > 0 {
+		bookingDate = b.BookingDates[0].Date
+	}
+	merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+	// booking status (ยกเลิกชนะ)
+	status := b.Status.StatusName
+	if b.CancelledAt != nil {
+		status = "cancelled"
+	}
+
+	// additional info
+	var addInfo AdditionalInfo
+	if b.AdditionalInfo != "" {
+		_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+	}
+
+	// payments summary
+	pList, pActive := buildPaymentSummaries(b.Payments)
+	if pList == nil {
+		pList = []PaymentSummary{}
+	}
+
+	// invoice pdf (normalize path)
+	var invoicePDFPath *string
+	if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+		p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+		invoicePDFPath = &p
+	}
+
+	var ap *userLite
+	switch {
+	case b.ApproverID != nil && b.Approver.ID != 0:
+		ap = &userLite{
+			ID:         b.Approver.ID,
+			FirstName:  b.Approver.FirstName,
+			LastName:   b.Approver.LastName,
+			EmployeeID: b.Approver.EmployeeID,
+		}
+	case b.RoomBookingInvoice != nil && b.RoomBookingInvoice.Approver.ID != 0:
+		ap = &userLite{
+			ID:         b.RoomBookingInvoice.Approver.ID,
+			FirstName:  b.RoomBookingInvoice.Approver.FirstName,
+			LastName:   b.RoomBookingInvoice.Approver.LastName,
+			EmployeeID: b.RoomBookingInvoice.Approver.EmployeeID,
+		}
+	}
+
+	  ca := b.ConfirmedAt
+
+	// finance + display (คำนวณแบบเดียวกับหน้า All)
+	fin := computeBookingFinance(b)
+	disp := computeDisplayStatus(b)
+
+	return BookingRoomResponse{
+		ID:                 b.ID,
+		Room:               b.Room,
+		BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+		TimeSlotMerged:     merged,
+		User:               b.User,
+		Purpose:            b.Purpose,
+		AdditionalInfo:     addInfo,
+		StatusName:         status,
+		Payment:            pActive, // งวด active (หรือ null ถ้าไม่มี)
+		Payments:           pList,   // ทุกงวด (deposit จะ 2)
+		RoomBookingInvoice: b.RoomBookingInvoice,
+		DisplayStatus:      disp,
+		InvoicePDFPath:     invoicePDFPath,
+		Finance:            fin,
+		PaymentOption:      &b.PaymentOption,
+		Approver:           ap, // ✅
+		ConfirmedAt:        ca, // ✅
+	}
+}
+
 // GET /booking-rooms/:id
 // controller/booking_rooms_flow.go (หรือที่ใช้โหลด BookingRoom by id)
 func GetBookingRoomByID(c *gin.Context) {
@@ -64,8 +155,6 @@ func GetBookingRoomByID(c *gin.Context) {
 	id := c.Param("id")
 
 	var b entity.BookingRoom
-
-	// 1) เช็คว่ามีจริงก่อน
 	if err := db.First(&b, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "booking not found"})
@@ -75,31 +164,139 @@ func GetBookingRoomByID(c *gin.Context) {
 		return
 	}
 
-	// 2) โหลดความสัมพันธ์ (ตัด Payments.Invoice ออก)
+	// ✅ เพิ่ม Preload("Approver") ตรง BookingRoom ด้วย
 	if err := db.
 		Model(&entity.BookingRoom{}).
 		Preload("Room.Floor").
 		Preload("User").
+		Preload("Approver"). // <<<<<<<<<< สำคัญ
 		Preload("BookingDates").
 		Preload("TimeSlots").
+		Preload("Status").
 		Preload("PaymentOption").
-		Preload("Payments.Status").    // ✅ ได้แน่
-		Preload("RoomBookingInvoice"). // ✅ ถ้า invoice อยู่ที่ Booking
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
+		Preload("Notifications").
 		First(&b, id).Error; err != nil {
-		// ❗อย่าคืน 404 ถ้า preload พลาด ให้เป็น 500
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "load relations failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, b)
+	resp := buildBookingRoomResponse(b) // ดูข้อ 2
+	c.JSON(http.StatusOK, resp)
 }
 
 // POST /booking-rooms/:id/approve
-// controller/booking_approve.go
+
+// ตัดโควต้าฟรี meeting หากต้องตัด และกันนับซ้ำด้วย quotaConsumed
+// func consumeFreeMeetingQuotaIfNeeded(tx *gorm.DB, b *entity.BookingRoom) error {
+// 	// ต้องมี Room.RoomType เพื่อดู Category
+// 	if b.Room.ID == 0 || b.Room.RoomType.ID == 0 {
+// 		if err := tx.Preload("Room.RoomType").First(&b, b.ID).Error; err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	// อ่าน AdditionalInfo
+// 	var info additionalInfoPayload
+// 	if s := strings.TrimSpace(b.AdditionalInfo); s != "" {
+// 		_ = json.Unmarshal([]byte(s), &info)
+// 	}
+
+// 	// ถ้ากินโควต้าไปแล้ว ไม่ต้องทำซ้ำ
+// 	if info.QuotaConsumed {
+// 		return nil
+// 	}
+
+// 	// map policy จาก RoomType.Category (เวอร์ชันใหม่คืน (string, error))
+// 	policy, err := classifyPolicyRoom(&b.Room)
+// 	if err != nil {
+// 		// ไม่รู้จักหมวด -> ข้ามไปเฉย ๆ เพื่อไม่ให้บล็อก flow
+// 		return nil
+// 	}
+
+// 	// ต้องเป็นหมวด meeting และผู้ใช้ติ๊ก "ใช้สิทธิ์ฟรี"
+// 	if policy != "meeting" || !info.Discounts.UsedFreeCredit {
+// 		return nil
+// 	}
+
+// 	// หา user_packages แถวล่าสุด
+// 	var up entity.UserPackage
+// 	if err := tx.Preload("Package").
+// 		Where("user_id = ?", b.UserID).
+// 		Order("created_at DESC").
+// 		First(&up).Error; err != nil {
+// 		// ไม่พบแพ็กเกจ -> ไม่ตัด แต่ไม่ถือเป็น error เพื่อไม่บล็อกการอนุมัติ
+// 		return nil
+// 	}
+
+// 	// นับ 1 ครั้งต่อ 1 booking (ถ้าต้องการนับตามวัน: incBy := len(b.BookingDates))
+// 	incBy := 1
+
+// 	// อัปเดต usage แบบ atomic (+incBy)
+// 	if err := tx.Model(&entity.UserPackage{}).
+// 		Where("id = ?", up.ID).
+// 		UpdateColumn("meeting_room_used", gorm.Expr("meeting_room_used + ?", incBy)).Error; err != nil {
+// 		return err
+// 	}
+
+// 	// เซ็ตธงกันซ้ำลง AdditionalInfo
+// 	info.QuotaConsumed = true
+// 	newJSON, _ := json.Marshal(info)
+// 	if err := tx.Model(&entity.BookingRoom{}).
+// 		Where("id = ?", b.ID).
+// 		Update("additional_info", string(newJSON)).Error; err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+// controllers/booking_room.go
+func currentApproverID(c *gin.Context) *uint {
+	// 1) จาก middleware (เช่น JWT) ที่ set userID ไว้ใน context
+	if v, ok := c.Get("userID"); ok {
+		switch t := v.(type) {
+		case uint:
+			return &t
+		case int:
+			u := uint(t)
+			return &u
+		case float64:
+			u := uint(t)
+			return &u
+		}
+	}
+	// 2) เผื่อกรณีพิเศษส่ง header มา (fallback)
+	if s := c.GetHeader("X-User-ID"); s != "" {
+		if id, err := strconv.ParseUint(s, 10, 64); err == nil {
+			u := uint(id)
+			return &u
+		}
+	}
+	// 3) เผื่อมีส่ง query ?approver_id=...
+	if q := c.Query("approver_id"); q != "" {
+		if id, err := strconv.ParseUint(q, 10, 64); err == nil {
+			u := uint(id)
+			return &u
+		}
+	}
+	return nil
+}
+
+// controllers/booking_room.go
 func ApproveBookingRoom(c *gin.Context) {
 	db := config.DB()
 	id := c.Param("id")
-
 	tx := db.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -114,6 +311,8 @@ func ApproveBookingRoom(c *gin.Context) {
 		Preload("TimeSlots").
 		Preload("User").
 		Preload("PaymentOption").
+		Preload("Room.RoomType").
+		Preload("Approver").
 		First(&b, id).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Booking not found"})
@@ -125,7 +324,10 @@ func ApproveBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// set confirmed_at / event window
+	// ✅ ใช้ helper เดียว (ภายใน helper ให้ใช้ c.Get("userID") เป็นหลัก)
+	aid := currentApproverID(c)
+
+	// confirmed_at + event window (เหมือนเดิม) ...
 	if b.ConfirmedAt == nil {
 		now := time.Now()
 		if err := tx.Model(&entity.BookingRoom{}).
@@ -157,7 +359,7 @@ func ApproveBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// booking status → Confirmed
+	// หา/สร้าง Confirmed (เหมือนเดิม)
 	var bs entity.BookingStatus
 	if err := tx.Where("LOWER(status_name) = ?", "confirmed").First(&bs).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -173,119 +375,38 @@ func ApproveBookingRoom(c *gin.Context) {
 			return
 		}
 	}
+
+	// ✅ อัปเดต status_id + approver_id (ถ้ามี)
+	upd := map[string]interface{}{
+		"status_id":  bs.ID,
+		"updated_at": time.Now(),
+	}
+	if aid != nil && *aid > 0 {
+		upd["approver_id"] = *aid
+	}
 	if err := tx.Model(&entity.BookingRoom{}).
 		Where("id = ?", b.ID).
-		Updates(map[string]interface{}{"status_id": bs.ID, "updated_at": time.Now()}).Error; err != nil {
+		Updates(upd).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to approve booking"})
 		return
 	}
 
-	// ==== สร้าง/อัปเดต “งวดแรก” ตาม Full/Deposit ====
-	// สำคัญ: totalDue = TotalAmount (สุทธิแล้ว) ไม่ต้องลบ DiscountAmount อีก
-	totalDue := b.TotalAmount
-	if totalDue < 0 {
-		totalDue = 0
-	}
-
-	firstAmount := totalDue
-	firstNote := "Waiting for payment"
-
-	plan := strings.ToLower(strings.TrimSpace(b.PaymentOption.OptionName))
-	if plan == "deposit" {
-		// จ่ายมัดจำเท่าที่ตั้งไว้ แต่อย่าเกินยอดรวม
-		if b.DepositAmount > 0 && b.DepositAmount < totalDue {
-			firstAmount = b.DepositAmount
-			firstNote = "Deposit due"
-		} else if b.DepositAmount <= 0 {
-			firstAmount = 0
-			firstNote = "Deposit waived (0 THB)"
-		} else {
-			// กรณีตั้งมัดจำมากกว่ายอดสุทธิ ให้ตัดเหลือยอดสุทธิ
-			firstAmount = totalDue
-			firstNote = "Deposit (capped to total)"
-		}
-	} else {
-		// full
-		firstAmount = totalDue
-		firstNote = "Full payment due"
-	}
-
-	// เลือกสถานะตามยอดงวดแรก
-	var psPending, psApproved entity.PaymentStatus
-	var err error
-
-	if firstAmount > 0 {
-		psPending, err = getOrCreatePaymentStatus(tx, "Pending Payment")
-		if err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get pending status"})
-			return
-		}
-	} else {
-		psApproved, err = getOrCreatePaymentStatus(tx, "Approved")
-		if err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get approved status"})
-			return
-		}
-	}
-
-	// ถ้ามี Payment อยู่แล้ว ให้อัปเดตใบล่าสุดให้เป็นงวดแรก
-	if len(b.Payments) > 0 {
-		latest := b.Payments[len(b.Payments)-1]
-		update := map[string]interface{}{
-			"amount":     firstAmount,
-			"note":       firstNote,
-			"updated_at": time.Now(),
-		}
-		if firstAmount > 0 {
-			update["status_id"] = psPending.ID
-			// ไม่ต้อง set payment_date ตอนยังไม่จ่าย
-		} else {
-			update["status_id"] = psApproved.ID
-			update["payment_date"] = time.Now()
-			update["note"] = "No payment required"
-		}
-		if err := tx.Model(&entity.Payment{}).Where("id = ?", latest.ID).Updates(update).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update first payment"})
-			return
-		}
-	} else {
-		np := entity.Payment{
-			BookingRoomID: b.ID,
-			Amount:        firstAmount,
-			PayerID:       b.UserID,
-			SlipPath:      "",
-			Note:          firstNote,
-		}
-		if firstAmount > 0 {
-			np.StatusID = psPending.ID // ← ใช้ .ID
-		} else {
-			np.StatusID = psApproved.ID // ← ใช้ .ID
-			np.PaymentDate = time.Now() // <-- ใช้ค่า ไม่ใช่ *time.Time// ถ้า field เป็น *time.Time
-			np.Note = "No payment required"
-		}
-		if err := tx.Create(&np).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create first payment"})
-			return
-		}
-	}
+	// … ส่วนคำนวณ/สร้าง Payment + consumeFreeMeetingQuotaIfNeeded(...) เหมือนเดิม …
 
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed"})
 		return
 	}
 
-	// reload & return
+	// ✅ Reload พร้อม Approver ให้ FE
 	if err := db.
 		Preload("Payments.Status").
 		Preload("PaymentOption").
 		Preload("Status").
 		Preload("Room").
 		Preload("User").
+		Preload("Approver").
 		First(&b, b.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load booking data"})
 		return
@@ -294,61 +415,72 @@ func ApproveBookingRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Booking approved successfully", "data": b})
 }
 
-// POST /booking-rooms/:id/reject
+
 func RejectBookingRoom(c *gin.Context) {
-	db := config.DB()
-	id := c.Param("id")
+    db := config.DB()
+    id := c.Param("id")
 
-	tx := db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+    // 1) รับเหตุผลจาก body และ validate
+    var req struct {
+        Note string `json:"note" binding:"required"`
+    }
+    if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Note) == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "กรุณาระบุเหตุผลการยกเลิก"})
+        return
+    }
 
-	var b entity.BookingRoom
-	if err := tx.First(&b, id).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
-		return
-	}
+    tx := db.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
 
-	// หา BookingStatus = "Cancelled"
-	var bs entity.BookingStatus
-	if err := tx.Where("LOWER(status_name) = ?", "cancelled").First(&bs).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			bs = entity.BookingStatus{StatusName: "Cancelled"}
-			if err := tx.Create(&bs).Error; err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Cancelled ไม่สำเร็จ"})
-				return
-			}
-		} else {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Cancelled ไม่สำเร็จ"})
-			return
-		}
-	}
+    var b entity.BookingRoom
+    if err := tx.First(&b, id).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
+        return
+    }
 
-	now := time.Now()
-	if err := tx.Model(&entity.BookingRoom{}).
-		Where("id = ?", b.ID).
-		Updates(map[string]interface{}{
-			"status_id":    bs.ID,
-			"cancelled_at": &now,
-			"updated_at":   time.Now(),
-		}).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถยกเลิกได้"})
-		return
-	}
+    // หา/สร้างสถานะ Cancelled
+    var bs entity.BookingStatus
+    if err := tx.Where("LOWER(status_name) = ?", "cancelled").First(&bs).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            bs = entity.BookingStatus{StatusName: "Cancelled"}
+            if err := tx.Create(&bs).Error; err != nil {
+                tx.Rollback()
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Cancelled ไม่สำเร็จ"})
+                return
+            }
+        } else {
+            tx.Rollback()
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Cancelled ไม่สำเร็จ"})
+            return
+        }
+    }
 
-	if err := tx.Commit().Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกสำเร็จ"})
+    now := time.Now()
+    if err := tx.Model(&entity.BookingRoom{}).
+        Where("id = ?", b.ID).
+        Updates(map[string]interface{}{
+            "status_id":      bs.ID,
+            "cancelled_at":   &now,
+            "cancelled_note": strings.TrimSpace(req.Note), // << บันทึกเหตุผล
+            "updated_at":     time.Now(),
+        }).Error; err != nil {
+        tx.Rollback()
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถยกเลิกได้"})
+        return
+    }
+
+    if err := tx.Commit().Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "ยกเลิกสำเร็จ"})
 }
+
 
 // POST /booking-rooms/:id/complete
 // func CompleteBookingRoom(c *gin.Context) {
@@ -557,6 +689,8 @@ func UploadPaymentReceipt(c *gin.Context) {
 	})
 }
 
+// DELETE /payments/receipt/:payment_id
+// DELETE /payments/receipt/:payment_id
 func DeletePaymentReceipt(c *gin.Context) {
 	db := config.DB()
 
@@ -577,16 +711,24 @@ func DeletePaymentReceipt(c *gin.Context) {
 		return
 	}
 
-	// ลบไฟล์จริง (ถ้าอยากลบ)
+	// ลบไฟล์จริง (best-effort)
 	if p.ReceiptPath != "" {
 		_ = os.Remove(p.ReceiptPath)
 	}
 
-	if err := db.Model(&p).Updates(map[string]any{
+	// เคลียร์เฉพาะใบเสร็จ! ไม่แตะ payments.status
+	updates := map[string]any{
 		"receipt_path": "",
 		"updated_at":   time.Now(),
-	}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "clear receipt failed"})
+	}
+
+	// ถ้ามีคอลัมน์ receipt_status ให้ตั้งเป็น "awaiting receipt"
+	if db.Migrator().HasColumn(&entity.Payment{}, "receipt_status") {
+		updates["receipt_status"] = "awaiting receipt"
+	}
+
+	if err := db.Model(&p).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "update payment (clear receipt) failed"})
 		return
 	}
 

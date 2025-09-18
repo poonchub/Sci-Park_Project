@@ -3,15 +3,24 @@ import {
   Box, Button, Card, CardMedia, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid
 } from "@mui/material";
-import { Landmark, Wallet, X } from "lucide-react";
-import { apiUrl } from "../../services/http";
+import { Wallet, X } from "lucide-react";
+import { apiUrl, CheckSlip, GetQuota } from "../../services/http";
 import dateFormat from "../../utils/dateFormat";
 import ImageUploader from "../ImageUploader/ImageUploader";
 import AlertGroup from "../AlertGroup/AlertGroup";
 
-/* =======================
- * Types
- * ======================= */
+// ===== Configs =====
+const ALLOWED = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"]);
+const MAX_SIZE = 5 * 1024 * 1024;
+
+// ===== Types =====
+type SlipCheckState = {
+  loading?: boolean;
+  ok?: boolean;
+  transTs?: string;
+  error?: string;
+  fallbackNow?: boolean; // ✅ ใช้บอกว่าใช้เวลาปัจจุบันแทนผลตรวจ
+};
 
 export type InstallmentUI = {
   key: "full" | "deposit" | "balance";
@@ -28,7 +37,7 @@ export type InstallmentUI = {
     | "refunded"
     | "awaiting_receipt";
   slipPath?: string;
-  locked?: boolean;   // ใช้ล็อกการ์ดยอดคงเหลือจนกว่าจะอนุมัติมัดจำ
+  locked?: boolean;
   dueDate?: string;
 };
 
@@ -53,11 +62,36 @@ interface BookingPaymentPopupProps {
   onRejectFor?: (key: InstallmentUI["key"], paymentId?: number) => Promise<void>;
 }
 
-/* =======================
- * Helpers
- * ======================= */
+// ===== Helpers =====
 const steps = ["รอชำระเงิน", "รอตรวจสอบสลิป", "ชำระสำเร็จ"] as const;
 const norm = (s?: string) => (s || "").trim().toLowerCase();
+
+const ensureFile = (file?: File) => {
+  if (!file) throw new Error("กรุณาแนบสลิป");
+  if (!ALLOWED.has(file.type)) throw new Error("ชนิดไฟล์ไม่ถูกต้อง");
+  if (file.size > MAX_SIZE) throw new Error("ไฟล์มีขนาดเกิน 5MB");
+};
+
+// เรียกตรวจสลิป (ลอง field "files" ก่อน ค่อย fallback เป็น "slip")
+const verifySlip = async (file: File) => {
+  const tryOnce = async (field: "files" | "slip") => {
+    const fd = new FormData();
+    fd.append(field, file, file.name);
+    const r = await CheckSlip(fd);
+    return r?.data?.transTimestamp || r?.transTimestamp || r?.data?.timestamp;
+  };
+  try {
+    return await tryOnce("files");
+  } catch (e1: any) {
+    try {
+      return await tryOnce("slip");
+    } catch {
+      const msg = e1?.response?.data?.error || e1?.message || "Slip check failed";
+      const status = e1?.response?.status;
+      throw new Error(status ? `${status}: ${msg}` : msg);
+    }
+  }
+};
 
 const isImage = (url?: string) => {
   if (!url) return false;
@@ -76,17 +110,12 @@ const getStepIndex = (status?: InstallmentUI["status"]) => {
 const slipUrl = (path?: string) =>
   !path ? "" : /^https?:\/\//i.test(path) ? path : `${apiUrl}/${path}`;
 
-const ownerUploadableStatuses = new Set([
-  "unpaid",
-  "pending_payment",
-  "pending_verification",
-  "rejected",
-]);
+const ownerUploadableStatuses = new Set(["unpaid", "pending_payment", "pending_verification", "rejected"]);
 
 const canShowAdminActions = (isAdmin?: boolean, status?: InstallmentUI["status"], hasSlip?: boolean) =>
   Boolean(isAdmin && hasSlip && norm(status) === "pending_verification");
 
-// จัดลำดับสำหรับเลย์เอาต์: full = การ์ดเดียว, deposit = ซ้าย(มัดจำ), ขวา(ยอดคงเหลือ)
+// ลำดับการ์ด: full = เดี่ยว, deposit = ซ้าย(มัดจำ), ขวา(คงเหลือ)
 const orderInstallments = (plan: "full" | "deposit", items?: InstallmentUI[]) => {
   const arr = Array.isArray(items) ? items : [];
   if (plan === "full") return arr.filter((i) => i?.key === "full");
@@ -118,16 +147,13 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   onApproveFor,
   onRejectFor,
 }) => {
-  const [alerts, setAlerts] = useState<
-    { type: "warning" | "error" | "success"; message: string }[]
-  >([]);
-  const [files, setFiles] = useState<Record<InstallmentUI["key"], File[]>>({
-    full: [],
-    deposit: [],
-    balance: [],
+  const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
+  const [files, setFiles] = useState<Record<InstallmentUI["key"], File[]>>({ full: [], deposit: [], balance: [] });
+  const [slipCheck, setSlipCheck] = useState<Record<InstallmentUI["key"], SlipCheckState>>({
+    full: {},
+    deposit: {},
+    balance: {},
   });
-  const setFileFor = (key: InstallmentUI["key"]) => (f: File[]) =>
-    setFiles((prev) => ({ ...prev, [key]: f }));
 
   const list = useMemo(() => orderInstallments(plan, installments), [plan, installments]);
 
@@ -136,7 +162,73 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const renderInstallment = (inst: InstallmentUI, idx: number, total: number) => {
+  // ✅ แนบไฟล์ -> เช็คโควต้าของ SlipOK -> ถ้า quota/age ok ค่อยตรวจสลิป, ไม่งั้น fallback เป็นเวลาปัจจุบัน
+  const setFileFor = (key: InstallmentUI["key"]) => async (fList: File[]) => {
+    setFiles((prev) => ({ ...prev, [key]: fList }));
+    const file = fList?.[0];
+    if (!file) {
+      setSlipCheck((p) => ({ ...p, [key]: {} }));
+      return;
+    }
+
+    try {
+      ensureFile(file);
+      setSlipCheck((p) => ({ ...p, [key]: { loading: true, ok: false, error: undefined, fallbackNow: false } }));
+
+      // 1) เช็คโควต้าจาก BE (ซึ่งไปตรวจ SlipOK จริง)
+      let useFallbackNow = false;
+      try {
+        const quota = await GetQuota();
+        const remaining =
+          Number(quota?.data?.remaining ?? quota?.remaining ?? quota?.quota ?? -1);
+          console.log(remaining);
+        const expired =
+          Boolean(quota?.data?.expired ?? quota?.expired ?? false);
+        // กรณีโควต้าหมด หรือแพ็กเกจหมดอายุ -> fallback
+        if (remaining <= 0 || expired) {
+          useFallbackNow = true;
+          setAlerts((a) => [
+            ...a,
+            {
+              type: "warning",
+              message:
+                remaining <= 0
+                  ? "ระบบตรวจสลิปรายเดือน/เครดิตหมด — จะใช้เวลาปัจจุบันแทน"
+                  : "แพ็กเกจตรวจสลิปหมดอายุ — จะใช้เวลาปัจจุบันแทน",
+            },
+          ]);
+        }
+      } catch (qErr: any) {
+        // ถ้าเรียก quota ไม่ได้ (เช่น API ล่ม) -> fallback ตามสเปก
+        useFallbackNow = true;
+        setAlerts((a) => [
+          ...a,
+          { type: "warning", message: "ไม่สามารถตรวจสอบโควต้าตรวจสลิปได้ — จะใช้เวลาปัจจุบันแทน" },
+        ]);
+      }
+
+      // 2) ตรวจสลิป/หรือ fallback
+      let ts: string;
+      if (!useFallbackNow) {
+        // ตรวจสลิปจริง
+        ts = await verifySlip(file);
+        (file as any).transTimestamp = ts;
+        setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: true, transTs: ts, fallbackNow: false } }));
+      } else {
+        // ใช้เวลาปัจจุบันแทน
+        ts = new Date().toISOString();
+        (file as any).transTimestamp = ts;
+        setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: true, transTs: ts, fallbackNow: true } }));
+      }
+    } catch (err: any) {
+      setSlipCheck((p) => ({
+        ...p,
+        [key]: { loading: false, ok: false, error: err?.message || "ตรวจสลิปไม่สำเร็จ", fallbackNow: false },
+      }));
+    }
+  };
+
+  const renderInstallment = (inst: InstallmentUI, idx: number, _length: number) => {
     const hasSlip = Boolean(inst.slipPath && inst.slipPath.trim() !== "");
     const url = slipUrl(inst.slipPath);
     const statusN = norm(inst.status);
@@ -144,14 +236,22 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     const canUpload = isOwner && !hasSlip && ownerUploadableStatuses.has(statusN);
     const canUpdate = isOwner && hasSlip && (statusN === "pending_verification" || statusN === "rejected");
     const canAdminAct = canShowAdminActions(isAdmin, inst.status, hasSlip);
-    const hasNewFile = (files[inst.key]?.length ?? 0) > 0;
+
+    const file = files[inst.key]?.[0];
+    const chk = slipCheck[inst.key] || {};
+    const verified = !!chk.ok && !!chk.transTs;
 
     const title =
-      plan === "full"
-        ? "ชำระเต็มจำนวน"
-        : inst.key === "deposit"
-        ? "ชำระมัดจำ"
-        : "ชำระยอดคงเหลือ";
+      plan === "full" ? "ชำระเต็มจำนวน" : inst.key === "deposit" ? "ชำระมัดจำ" : "ชำระยอดคงเหลือ";
+
+    // helper label
+    const checkedLabel = chk.loading
+      ? "กำลังตรวจสลิป..."
+      : verified
+      ? chk.fallbackNow
+        ? `ใช้เวลาปัจจุบันแทน • ${new Date(chk.transTs!).toLocaleString()}`
+        : `ตรวจแล้ว • เวลาโอน: ${new Date(chk.transTs!).toLocaleString()}`
+      : chk.error || "ตรวจสลิปไม่สำเร็จ";
 
     return (
       <Grid key={`${inst.key}-${idx}`} size={{ xs: 12, md: plan === "full" ? 12 : 6 }}>
@@ -209,7 +309,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             ))}
           </Stepper>
 
-          {/* กล่อง Slip ใหญ่ตามไวร์เฟรม */}
+          {/* พื้นที่สลิป */}
           <Box
             sx={{
               mt: 1,
@@ -237,13 +337,28 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 </Button>
               )
             ) : canUpload && !inst.locked ? (
-              <ImageUploader
-                value={files[inst.key]}
-                onChange={setFileFor(inst.key)}
-                setAlerts={setAlerts}
-                maxFiles={1}
-                buttonText="อัปโหลดสลิป"
-              />
+              file ? (
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {checkedLabel}
+                  </Typography>
+                  <ImageUploader
+                    value={files[inst.key]}
+                    onChange={setFileFor(inst.key)} // เปลี่ยนไฟล์ = ตรวจ/เช็คโควต้าใหม่
+                    setAlerts={setAlerts}
+                    maxFiles={1}
+                    buttonText="เปลี่ยนสลิป"
+                  />
+                </Box>
+              ) : (
+                <ImageUploader
+                  value={files[inst.key]}
+                  onChange={setFileFor(inst.key)} // อัปโหลด = เช็คโควต้า + ตรวจสลิป
+                  setAlerts={setAlerts}
+                  maxFiles={1}
+                  buttonText="อัปโหลดสลิป"
+                />
+              )
             ) : (
               <Typography variant="body2" color="text.secondary">
                 ยังไม่มีการอัปโหลดสลิป
@@ -251,7 +366,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             )}
           </Box>
 
-          {/* ปุ่มการทำงานต่อใบ */}
+          {/* ปุ่ม */}
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
             {isOwner && !inst.locked && (
               <>
@@ -259,7 +374,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   <Button
                     variant="contained"
                     onClick={() => onUpdateFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                    disabled={isLoading || !hasNewFile}
+                    disabled={isLoading || !file || !verified}
                     fullWidth
                   >
                     อัปเดตสลิป
@@ -269,7 +384,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                     <Button
                       variant="contained"
                       onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                      disabled={isLoading || !hasNewFile}
+                      disabled={isLoading || !file || !verified}
                       fullWidth
                     >
                       ส่งสลิป
@@ -311,7 +426,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"           // กว้างขึ้นเพื่อวาง 2 การ์ดข้างกัน
+      maxWidth="lg"
       fullWidth
       slotProps={{ paper: { sx: { borderRadius: 3, overflow: "hidden" } } }}
     >
@@ -320,7 +435,9 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Wallet size={22} />
-          <Typography variant="h6" fontWeight={700}>Payment</Typography>
+          <Typography variant="h6" fontWeight={700}>
+            Payment
+          </Typography>
         </Box>
         <IconButton onClick={onClose} aria-label="close payment dialog">
           <X size={20} />
@@ -331,8 +448,12 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <Card sx={{ p: 2 }}>
-              <Typography variant="h6" fontWeight={700}>รายละเอียดการจอง</Typography>
-              <Typography variant="body2" color="text.secondary">{bookingSummary || "—"}</Typography>
+              <Typography variant="h6" fontWeight={700}>
+                รายละเอียดการจอง
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {bookingSummary || "—"}
+              </Typography>
             </Card>
           </Grid>
 
@@ -351,7 +472,6 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             </Grid>
           )}
 
-          {/* แบนเนอร์ fully paid */}
           {fullyPaid && (
             <Grid size={{ xs: 12 }}>
               <Card sx={{ p: 2, bgcolor: "rgba(111,66,193,.10)", border: "1px solid rgba(111,66,193,.35)" }}>
@@ -362,7 +482,6 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             </Grid>
           )}
 
-          {/* การ์ดชำระเงิน: มัดจำซ้าย / คงเหลือขวา (หรือ full การ์ดเดียว) */}
           {list.length === 0 ? (
             <Grid size={{ xs: 12 }}>
               <Card sx={{ p: 2 }}>

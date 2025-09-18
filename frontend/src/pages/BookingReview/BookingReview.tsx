@@ -1,29 +1,22 @@
 // pages/BookingReview/BookingReview.tsx
 import { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Grid,
-  Skeleton,
-  Typography,
-  Chip,
-  ImageList,
-  ImageListItem,
+  Box, Button, Card, Container, Grid, Skeleton, Typography, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField   // << เพิ่ม
 } from "@mui/material";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { Base64 } from "js-base64";
-import { Check, ChevronLeft, NotebookText } from "lucide-react";
+import { Calendar, Check, CheckCircle, ChevronLeft, Clock, FileText, MapPin, NotebookText, Settings, User } from "lucide-react";
 
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import dateFormat from "../../utils/dateFormat";
 import timeFormat from "../../utils/timeFormat";
-import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import BookingStepper from "../../components/BookingStepper/BookingStepper";
-import { getDisplayStatus, getNextAction } from "../../utils/bookingFlow";
-import type { PaymentStatus as StepperPaymentStatus } from "../../components/BookingStepper/BookingStepper";
+import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
+import { getDisplayStatus } from "../../utils/bookingFlow";
+import type { BookingAny } from "../../utils/bookingFlow";
+
 
 import {
   GetBookingRoomById,
@@ -36,7 +29,10 @@ import {
 } from "../../services/http";
 import UploadSlipButton from "../../components/UploadSlipButton/UploadSlipButton";
 
-// ---------- Types ----------
+
+type StepperPaymentStatus = "pending payment" | "pending verification" | "paid" | "refunded";
+
+/* ---------- Types ---------- */
 type BookingLike = {
   ID: number;
   CreatedAt?: string;
@@ -46,10 +42,17 @@ type BookingLike = {
   StatusName?: string;
   Purpose?: string;
   purpose?: string;
+
   User?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+
+  // ✅ เพิ่มสองบรรทัดนี้
+  Approver?: { FirstName?: string; LastName?: string; EmployeeID?: string };
+  ConfirmedAt?: string | null;
+
   Payments?: Array<{
     ID?: number;
     SlipPath?: string;
+    ReceiptPath?: string | null;
     Note?: string;
     Amount?: number;
     PaymentDate?: string;
@@ -59,12 +62,14 @@ type BookingLike = {
   Payment?: {
     id?: number;
     status?:
-      | "paid"
-      | "unpaid"
-      | "refunded"
-      | "submitted"
-      | "pending verification"
-      | "pending payment";
+    | "paid"
+    | "unpaid"
+    | "refunded"
+    | "submitted"
+    | "pending verification"
+    | "pending payment"
+    | "approved"
+    | "rejected";
     slipImages?: string[];
     note?: string;
     amount?: number;
@@ -72,54 +77,63 @@ type BookingLike = {
   };
   AdditionalInfo?: { SetupStyle?: string; Equipment?: string[]; AdditionalNote?: string };
 };
+
+
 type PaymentObj = NonNullable<BookingLike["Payment"]>;
-type PaymentStatus = NonNullable<PaymentObj["status"]>;
 
-// ---------- Small helpers ----------
+/* ---------- Small helpers ---------- */
 const norm = (s?: string) => (s || "").trim().toLowerCase();
-const prefixImage = (url: string) => (url.startsWith("http") ? url : `${apiUrl}/${url}`);
-
-// ✅ แปลงเป็น key สำหรับ “ตัดสินใจปุ่ม”
-type LogicKey =
-  | "unpaid"
-  | "pending_payment"
-  | "pending_verification"
-  | "rejected"
-  | "paid"
-  | "refunded";
-
-function toLogicStatus(raw?: string): LogicKey {
-  const k = norm(raw);
-  if (k === "paid" || k === "approved") return "paid";
-  if (k === "refunded") return "refunded";
-  if (k === "pending verification" || k === "submitted") return "pending_verification";
-  if (k === "rejected") return "rejected";
-  if (k === "pending payment" || k === "awaiting payment" || k === "unpaid") return "pending_payment";
-  return "unpaid";
-}
-
-// ✅ map LogicKey -> StepperPaymentStatus (ที่ Stepper รองรับ)
-function toStepperPaymentStatusFromLogic(k: LogicKey): StepperPaymentStatus {
-  switch (k) {
-    case "paid":
-      return "paid";
-    case "refunded":
-      return "refunded";
-    case "pending_verification":
-      return "pending verification";
-    case "rejected":
-    case "pending_payment":
-    case "unpaid":
-    default:
-      return "pending payment";
+// รองรับ string | string[] | { Path?: string }[] | { Path?: string } | undefined
+const asSlipString = (sp: any): string => {
+  if (!sp) return "";
+  if (typeof sp === "string") return sp;
+  if (Array.isArray(sp)) {
+    const f = sp[0];
+    if (!f) return "";
+    if (typeof f === "string") return f;
+    if (f && typeof f.Path === "string") return f.Path;
+    if (f && typeof f.path === "string") return f.path;
   }
-}
+  if (typeof sp === "object") {
+    if (typeof (sp as any).Path === "string") return (sp as any).Path;
+    if (typeof (sp as any).path === "string") return (sp as any).path;
+    if (typeof (sp as any).url === "string") return (sp as any).url;
+  }
+  return "";
+};
 
-// ---------- Multi-installments ----------
+const normalizePath = (p: string) => p.replace(/\\/g, "/").replace(/^\/+/, "");
+
+// ปลอดภัย: รับ unknown → คืน URL พร้อมโดเมน (หรือ "" ถ้าไม่มี)
+const prefixImage = (v: unknown): string => {
+  const raw = asSlipString(v);
+  if (!raw) return "";
+  const clean = normalizePath(String(raw));
+  return /^https?:\/\//i.test(clean) ? clean : `${apiUrl}/${clean}`;
+};
+
+
+const statusNameOf = (p?: any): string =>
+  typeof p?.Status === "string"
+    ? p.Status
+    : p?.Status?.StatusName || p?.Status?.Name || p?.status || p?.StatusName || "";
+
+
+
+// function toStepperPaymentStatusFromRaw(raw?: string): StepperPaymentStatus {
+//   const k = (raw || "").trim().toLowerCase();
+//   if (k === "paid" || k === "approved") return "paid";
+//   if (k === "refunded") return "refunded";
+//   if (k === "pending verification" || k === "submitted") return "pending verification";
+//   return "pending payment";
+// }
+
+
+/* ---------- Multi-installments (สำหรับแสดงชิปย่อย) ---------- */
 type InstallmentStep = {
-  key: string; // 'deposit' | 'final' | 'addon' | 'payment-#1' ...
-  label: string; // 'Deposit' | 'Final Payment' | 'Add-on' | 'Payment #1'
-  status: StepperPaymentStatus; // ใช้สถานะที่ stepper รองรับ
+  key: string;
+  label: string;
+  status: StepperPaymentStatus;
   slipCount: number;
   paidCount: number;
   paymentIds: number[];
@@ -133,14 +147,26 @@ function labelByInvoiceType(t?: string, i?: number) {
   return `Payment #${(i ?? 0) + 1}`;
 }
 
-function mapPaymentStatusFromRecord(p?: BookingLike["Payments"][number]): StepperPaymentStatus {
-  const s = norm(p?.Status?.Name);
-  if (s.includes("approve") || s === "paid") return "paid";
-  if (s.includes("pending")) return "pending verification";
-  if (s.includes("reject")) return "pending payment";
-  if (p?.SlipPath) return "submitted";
+
+// 👇 ใช้ชนิด element ของอาร์เรย์ที่ไม่เป็น undefined
+type PaymentItem = NonNullable<BookingLike["Payments"]>[number];
+
+
+// ✅ แก้ signature ให้ใช้ PaymentItem แทน
+function mapPaymentStatusFromRecord(p?: PaymentItem): StepperPaymentStatus {
+  const s = (statusNameOf(p) || "").trim().toLowerCase();
+
+  if (s === "approved" || s === "paid") return "paid";
+  if (s === "refunded") return "refunded";
+  if (s.includes("pending") || s === "submitted") return "pending verification";
+
+  // กันเคสอัปสลิปแล้วแต่สถานะยังไม่อัปเดต
+  const hasSlip = typeof p?.SlipPath === "string" && p.SlipPath.trim() !== "";
+  if (hasSlip) return "pending verification";
+
   return "pending payment";
 }
+
 
 function buildInstallments(booking?: BookingLike): InstallmentStep[] {
   if (!booking?.Payments?.length) return [];
@@ -168,11 +194,9 @@ function buildInstallments(booking?: BookingLike): InstallmentStep[] {
     if (st === "paid") g.paidCount += 1;
     g.paymentIds.push(p?.ID || 0);
 
-    // ความเข้มของสถานะ: paid > pending verification/submitted > pending payment
+    // ความเข้มของสถานะ: paid > pending verification > pending payment
     if (st === "paid") g.status = "paid";
-    else if (["pending verification", "submitted"].includes(st) && g.status !== "paid") {
-      g.status = st as StepperPaymentStatus;
-    }
+    else if (st === "pending verification" && g.status !== "paid") g.status = "pending verification";
   });
 
   return Object.values(groups);
@@ -180,26 +204,22 @@ function buildInstallments(booking?: BookingLike): InstallmentStep[] {
 
 function combineOverallPaymentStatus(installments: InstallmentStep[]): StepperPaymentStatus {
   if (!installments.length) return "pending payment";
-  if (installments.some((i) => i.status === "pending verification" || i.status === "submitted")) {
-    return "submitted";
-  }
-  if (installments.some((i) => i.status !== "paid")) {
-    return "pending payment";
-  }
+  if (installments.some((i) => i.status === "pending verification")) return "pending verification";
+  if (installments.some((i) => i.status !== "paid")) return "pending payment";
   return "paid";
 }
 
-// ---------- Badges ----------
+/* ---------- Badges ---------- */
 function PaymentChip({ status }: { status?: StepperPaymentStatus }) {
   const st = (status || "pending payment").toLowerCase() as StepperPaymentStatus;
   const meta =
     st === "paid"
       ? { label: "Paid", color: "#16a34a", bg: "#dcfce7" }
       : st === "refunded"
-      ? { label: "Refunded", color: "#0ea5e9", bg: "#e0f2fe" }
-      : st === "submitted" || st === "pending verification"
-      ? { label: "Submitted", color: "#b45309", bg: "#fef3c7" }
-      : { label: "Pending Payment", color: "#6b7280", bg: "#f3f4f6" };
+        ? { label: "Refunded", color: "#0ea5e9", bg: "#e0f2fe" }
+        : st === "pending verification"
+          ? { label: "Submitted", color: "#b45309", bg: "#fef3c7" }
+          : { label: "Pending Payment", color: "#6b7280", bg: "#f3f4f6" };
 
   return (
     <Chip
@@ -209,9 +229,8 @@ function PaymentChip({ status }: { status?: StepperPaymentStatus }) {
   );
 }
 
-function StatusChip({ statusName }: { statusName?: string }) {
-  const key = (statusName || "unknown").toLowerCase();
-  const cfg = getBookingStatusConfig(key);
+function StatusChip({ displayStatus }: { displayStatus: string }) {
+  const cfg = getBookingStatusConfig(displayStatus);
   const Icon = cfg.icon;
   return (
     <Box
@@ -235,56 +254,7 @@ function StatusChip({ statusName }: { statusName?: string }) {
   );
 }
 
-// ---------- Normalize booking (สำคัญมาก) ----------
-function normalizeBooking(b?: BookingLike | null): BookingLike | null {
-  if (!b) return b;
-
-  // เลือก payment ล่าสุด (ตาม index สุดท้าย)
-  const latest = b?.Payments?.length ? b.Payments[b.Payments.length - 1] : undefined;
-
-  // รวม slip images: จาก Payments[*].SlipPath ก่อน, ถ้าไม่มีค่อยใช้ Payment.slipImages/SlipPath
-  const slipFromArray =
-    b?.Payments?.filter((p) => !!p.SlipPath).map((p) => prefixImage(p.SlipPath!)) || [];
-  const slipFromSummary =
-    (Array.isArray(b?.Payment?.slipImages) && b?.Payment?.slipImages?.length
-      ? b?.Payment?.slipImages
-      : []) || [];
-
-  // ถ้า summary ไม่มีรูป ให้เอาจาก array
-  const slipImages = slipFromSummary.length ? slipFromSummary : slipFromArray;
-
-  // raw status ที่พอหาได้
-  const raw =
-    b?.Payment?.status ||
-    (latest?.Status?.Name?.toLowerCase() as PaymentStatus | undefined) ||
-    (slipImages.length ? ("submitted" as PaymentStatus) : ("pending payment" as PaymentStatus));
-
-  // แปลงเป็น logicKey แล้วค่อยแปลงเป็น Stepper key
-  const logicKey = toLogicStatus(raw);
-  const stepperKey = toStepperPaymentStatusFromLogic(logicKey);
-
-  const note = b?.Payment?.note ?? latest?.Note ?? undefined;
-  const amount =
-    typeof b?.Payment?.amount === "number"
-      ? b.Payment!.amount
-      : typeof latest?.Amount === "number"
-      ? latest!.Amount
-      : undefined;
-  const paymentDate = b?.Payment?.paymentDate ?? latest?.PaymentDate ?? undefined;
-
-  b.Payment = {
-    id: b?.Payment?.id ?? latest?.ID,
-    status: stepperKey as PaymentStatus,
-    slipImages,
-    note,
-    amount,
-    paymentDate,
-  };
-
-  return b;
-}
-
-// ---------- Page ----------
+/* ---------- Page ---------- */
 export default function BookingReview() {
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -294,6 +264,7 @@ export default function BookingReview() {
   const bookingId = Number.isNaN(Number(encoded)) ? Number(Base64.decode(encoded)) : Number(encoded);
 
   const [booking, setBooking] = useState<BookingLike | null>(null);
+  console.log("booking", booking);
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<
     { type: "warning" | "error" | "success"; message: string }[]
@@ -301,45 +272,97 @@ export default function BookingReview() {
 
   const role = localStorage.getItem("role"); // "Admin" | "Manager" | "User"
 
+  const refreshBooking = async () => {
+    if (!Number.isFinite(bookingId)) return;
+    const raw: BookingLike = await GetBookingRoomById(bookingId);
+    console.log("raw", raw);
+    setBooking(raw || null);
+  };
+
+  const [openReject, setOpenReject] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+
+
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        if (!Number.isFinite(bookingId)) {
-          setBooking(null);
-          return;
-        }
-        const raw: BookingLike = await GetBookingRoomById(bookingId);
-        console.log("raw", raw);
-        setBooking(normalizeBooking(raw));
+        await refreshBooking();
       } finally {
         setLoading(false);
       }
     })();
-  }, [bookingId, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingId]);
 
-  const statusName = booking?.StatusName || "pending";
+  /* ---------- สถานะหลักของ Booking & Payment (ใช้แบบเดียวกับหน้า All) ---------- */
+  const displayStatus = useMemo(
+    () => getDisplayStatus((booking as unknown as BookingAny) || ({} as BookingAny)),
+    [booking]
+  );
 
-  // ✅ Summary ที่ Normalize แล้ว
-  const payment = booking?.Payment ?? {};
-
-  // ✅ งวดการจ่าย + สถานะรวมของการจ่าย (รองรับ deposit/final/add-on)
+  // รวมสถานะงวดการจ่ายให้เป็นคีย์เดียวสำหรับ stepper
   const installments = useMemo(() => buildInstallments(booking || undefined), [booking]);
-  const overallPaymentStatus: StepperPaymentStatus = useMemo(
+  const paymentStatusForStepper: StepperPaymentStatus = useMemo(
     () => combineOverallPaymentStatus(installments),
     [installments]
   );
 
-  // ใช้สถานะรวมไปแสดงใน Stepper
-  const paymentStatusForStepper: StepperPaymentStatus = overallPaymentStatus;
+  // สถานะใบเสร็จ (Awaiting Receipt): อนุมัติแล้ว แต่ยังไม่มี ReceiptPath ในงวดใดงวดหนึ่ง
+  const awaitingReceipt = useMemo(() => {
+    const pays = booking?.Payments || [];
+    const approved = pays.filter((p) => {
+      const v = norm(statusNameOf(p));
+      return v === "approved" || v === "paid";
+    });
+    return approved.length > 0 && approved.some((p) => !p.ReceiptPath);
+  }, [booking]);
 
-  const next = useMemo(() => (booking ? getNextAction(booking) : null), [booking]);
 
-  const refreshBooking = async () => {
-    if (!booking) return;
-    const updated = await GetBookingRoomById(booking.ID);
-    setBooking(normalizeBooking(updated));
-  };
+  // Summary ของ payment ล่าสุด (เพื่อแสดงรายละเอียด)
+  const paymentSummary: PaymentObj = useMemo(() => {
+    const pays = booking?.Payments || [];
+    if (!pays.length) return {};
+    const latest = [...pays].sort((a, b) => {
+      const ad = new Date(a?.PaymentDate || 0).getTime();
+      const bd = new Date(b?.PaymentDate || 0).getTime();
+      if (ad && bd && ad !== bd) return bd - ad;
+      return (b?.ID || 0) - (a?.ID || 0);
+    })[0];
+
+
+    return {
+      id: latest?.ID,
+      status: (statusNameOf(latest).toLowerCase() as PaymentObj["status"]) || "pending payment",
+      slipImages: latest?.SlipPath ? [latest.SlipPath] : [],
+      note: latest?.Note,
+      amount: latest?.Amount,
+      paymentDate: latest?.PaymentDate,
+    };
+
+  }, [booking]);
+
+
+  // สลิปที่จะโชว์ (รวมจากทั้งหมด ถ้าอยากโชว์หลายรูป)
+  const slipImagesInline: string[] = useMemo(() => {
+    const pays = booking?.Payments || [];
+    return pays
+      .map((p) => prefixImage(p?.SlipPath))
+      .filter((u): u is string => !!u);
+  }, [booking]);
+
+
+  const nextActionLabel = useMemo(() => {
+    // ใช้ displayStatus เพื่อบอกปุ่มหลัก
+    if (displayStatus === "pending") return "Approve";
+    if (displayStatus === "payment review") return "Review Payment";
+    if (displayStatus === "payment") return "Finish Booking";
+    return null;
+  }, [displayStatus]);
+
+  const isPaymentReview = displayStatus === "payment review";
+  const isAdminRole = role === "Admin" || role === "Manager";
 
   const handleBack = () => navigate(-1);
 
@@ -353,17 +376,17 @@ export default function BookingReview() {
           setAlerts((p) => [...p, { type: "success", message: "Approved booking" }]);
           break;
         case "reject":
-          await RejectBookingRoom(bookingId, undefined);
-          setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
+          setOpenReject(true);   // เปิด dialog ให้กรอกเหตุผล
+          return;                // จบที่นี่ก่อน ยังไม่ยิง API
           break;
         case "approvePayment":
-          if (!payment?.id) throw new Error("No payment id");
-          await ApprovePayment(payment.id);
+          if (!paymentSummary?.id) throw new Error("No payment id");
+          await ApprovePayment(paymentSummary.id);
           setAlerts((p) => [...p, { type: "success", message: "Payment approved" }]);
           break;
         case "rejectPayment":
-          if (!payment?.id) throw new Error("No payment id");
-          await RejectPayment(payment.id);
+          if (!paymentSummary?.id) throw new Error("No payment id");
+          await RejectPayment(paymentSummary.id);
           setAlerts((p) => [...p, { type: "warning", message: "Payment rejected" }]);
           break;
         case "complete":
@@ -371,12 +394,32 @@ export default function BookingReview() {
           setAlerts((p) => [...p, { type: "success", message: "Booking marked completed" }]);
           break;
       }
-      const refreshed = await GetBookingRoomById(bookingId);
-      setBooking(normalizeBooking(refreshed));
+      await refreshBooking();
     } catch {
       setAlerts((p) => [...p, { type: "error", message: `Action ${key} failed` }]);
     }
   };
+
+  const confirmReject = async () => {
+    const n = rejectNote.trim();
+    if (!n) {
+      setAlerts((p) => [...p, { type: "warning", message: "กรุณาระบุเหตุผลการปฏิเสธ" }]);
+      return;
+    }
+    try {
+      setRejecting(true);
+      await RejectBookingRoom(bookingId, n);   // ส่ง note จริง
+      setAlerts((p) => [...p, { type: "warning", message: "Booking rejected" }]);
+      await refreshBooking();
+    } catch {
+      setAlerts((p) => [...p, { type: "error", message: "Reject failed" }]);
+    } finally {
+      setRejecting(false);
+      setOpenReject(false);
+      setRejectNote("");
+    }
+  };
+
 
   // ---------- UI ----------
   if (loading) {
@@ -403,14 +446,11 @@ export default function BookingReview() {
   }
 
   // เงื่อนไขแสดงปุ่ม Upload/Reupload สำหรับ Owner (จากหน้า my)
-  const logicKey = toLogicStatus(payment?.status);
   const canOwnerUploadOrUpdate =
     fromSource === "my" &&
-    ["unpaid", "pending_payment", "rejected", "pending_verification"].includes(logicKey);
-
-  // Admin/Manager แสดง approve/reject payment เมื่ออยู่ช่วง Payment Review
-  const isPaymentReview = getDisplayStatus(booking) === "payment review";
-  const isAdminRole = role === "Admin" || role === "Manager";
+    ["pending payment", "unpaid", "rejected", "pending verification"].includes(
+      (paymentSummary?.status || "").toLowerCase()
+    );
 
   return (
     <Box className="booking-review-page">
@@ -439,11 +479,19 @@ export default function BookingReview() {
             <Card sx={{ p: 2, borderRadius: 2 }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid size={{ xs: 12, md: "auto" }} display="flex" gap={1} alignItems="center">
-                  <StatusChip statusName={statusName} />
+                  <StatusChip displayStatus={displayStatus} />
                   <PaymentChip status={paymentStatusForStepper} />
+                  {awaitingReceipt && (
+                    <Chip
+                      label="Awaiting Receipt"
+                      sx={{ bgcolor: "#f0f9ff", color: "#0369a1", fontWeight: 700, borderRadius: 2 }}
+                    />
+                  )}
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <BookingStepper statusName={statusName} paymentStatus={paymentStatusForStepper} />
+                  {/* ใช้ displayStatus เป็นแกน + สถานะจ่ายรวมสำหรับเลื่อนขั้น */}
+                  <BookingStepper statusName={displayStatus} paymentStatus={paymentStatusForStepper} />
+
                   {/* แสดงสถานะของแต่ละงวด */}
                   {installments.length > 0 && (
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -452,10 +500,10 @@ export default function BookingReview() {
                           it.status === "paid"
                             ? { fg: "#16a34a", bg: "#dcfce7" }
                             : it.status === "refunded"
-                            ? { fg: "#0ea5e9", bg: "#e0f2fe" }
-                            : it.status === "submitted" || it.status === "pending verification"
-                            ? { fg: "#b45309", bg: "#fef3c7" }
-                            : { fg: "#6b7280", bg: "#f3f4f6" };
+                              ? { fg: "#0ea5e9", bg: "#e0f2fe" }
+                              : it.status === "pending verification"
+                                ? { fg: "#b45309", bg: "#fef3c7" }
+                                : { fg: "#6b7280", bg: "#f3f4f6" };
                         return (
                           <Chip
                             key={it.key}
@@ -476,211 +524,444 @@ export default function BookingReview() {
             </Card>
           </Grid>
 
-          {/* Main */}
-          <Grid size={{ xs: 12 }}>
-            <Card className="data-card" sx={{ width: "100%", borderRadius: 2 }}>
-              <CardContent>
-                <Grid container spacing={{ xs: 3 }} sx={{ px: { xs: 2, md: 6 }, py: { xs: 1, md: 4 } }}>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600 }}>
-                      Information
+
+
+          {/* LEFT: Booking Details */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            {/* Header */}
+
+
+            {/* Room Location */}
+            <Box sx={{
+              px: 4,
+              py: 2.5,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <MapPin size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Room Location
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                Room {booking.Room?.RoomNumber ?? "—"} • Floor {booking.Room?.Floor?.Number ?? "—"}
+              </Typography>
+            </Box>
+
+            {/* Date(s) */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <Calendar size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Date(s)
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.BookingDates?.length
+                  ? booking.BookingDates.map((d, i) => (
+                    <span key={`d-${i}`}>
+                      {dateFormat(d.Date)}
+                      {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
+                    </span>
+                  ))
+                  : "—"}
+              </Typography>
+            </Box>
+
+            {/* Time */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <Clock size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Time
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.Merged_time_slots?.length
+                  ? `${timeFormat(booking.Merged_time_slots[0].start_time)} - ${timeFormat(
+                    booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
+                  )} (${booking.Merged_time_slots.length} slot${booking.Merged_time_slots.length > 1 ? "s" : ""})`
+                  : "—"}
+              </Typography>
+            </Box>
+
+            {/* Booker */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mb: 3,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <User size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Booker
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
+              </Typography>
+            </Box>
+
+            {/* Purpose */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'primary.main', mr: 2, display: 'flex' }}>
+                  <FileText size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Purpose
+                </Typography>
+              </Box>
+              <Typography sx={{ color: 'text.secondary', fontSize: 15, ml: 5 }}>
+                {booking.Purpose ?? booking.purpose ?? '—'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* RIGHT: Payment Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            {/* Header */}
+
+
+            {/* Payment Slip */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              textAlign: 'center',
+              mb: 3,
+              backgroundColor: 'grey.50',
+              minHeight: 300
+            }}>
+              <Typography fontWeight={600} sx={{
+                color: 'text.primary',
+                fontSize: 16,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1
+              }}>
+                <FileText size={18} color="secondary.main" />
+                Payment Slip
+              </Typography>
+
+              {slipImagesInline.length ? (
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: 250
+                }}>
+                  <img
+                    src={slipImagesInline[0]}
+                    alt="payment-slip"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 250,
+                  backgroundColor: 'grey.100',
+                  borderRadius: 2,
+                  border: '2px dashed',
+                  borderColor: 'grey.300'
+                }}>
+                  <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                    ยังไม่มีสลิป
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Payment Details */}
+            <Grid container spacing={2}>
+              {/* Approver */}
+              <Grid size={6}>
+                <Box sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'grey.200',
+                  backgroundColor: 'grey.50',
+                  height: '100%'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                    <Box sx={{ color: 'secondary.main', mr: 1.5, display: 'flex' }}>
+                      <CheckCircle size={16} />
+                    </Box>
+                    <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 14 }}>
+                      Approver
                     </Typography>
-                  </Grid>
+                  </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 13, ml: 3.5 }}>
+                    {booking.Approver
+                      ? `${booking.Approver.FirstName ?? ''} ${booking.Approver.LastName ?? ''}`
+                      : '—'}
+                  </Typography>
+                </Box>
+              </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Room</Typography>
-                      <Typography>
-                        Room {booking.Room?.RoomNumber ?? "-"} • Floor {booking.Room?.Floor?.Number ?? "-"}
-                      </Typography>
+              {/* Approved At */}
+              <Grid size={6}>
+                <Box sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'grey.200',
+                  backgroundColor: 'grey.50',
+                  height: '100%'
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                    <Box sx={{ color: 'secondary.main', mr: 1.5, display: 'flex' }}>
+                      <Calendar size={16} />
                     </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Date(s)</Typography>
-                      <Typography>
-                        {booking.BookingDates?.length
-                          ? booking.BookingDates.map((d, i) => (
-                              <span key={`d-${i}`}>
-                                {dateFormat(d.Date)}
-                                {i < (booking.BookingDates?.length || 1) - 1 ? ", " : ""}
-                              </span>
-                            ))
-                          : "-"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Time</Typography>
-                      <Typography>
-                        {booking.Merged_time_slots?.length
-                          ? `${timeFormat(booking.Merged_time_slots[0].start_time)} - ${timeFormat(
-                              booking.Merged_time_slots[booking.Merged_time_slots.length - 1].end_time
-                            )} (${booking.Merged_time_slots.length} slot${
-                              booking.Merged_time_slots.length > 1 ? "s" : ""
-                            })`
-                          : "-"}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Booker</Typography>
-                      <Typography>
-                        {booking.User?.FirstName} {booking.User?.LastName} ({booking.User?.EmployeeID})
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Purpose</Typography>
-                      <Typography>{booking.Purpose ?? booking.purpose ?? "-"}</Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 1 }}>
-                      <Typography fontWeight={600}>Additional Information</Typography>
-                      <Box component="ul" sx={{ pl: 3, mt: 0.5 }}>
-                        <li>Style layout: {booking.AdditionalInfo?.SetupStyle || "-"}</li>
-                        <li>
-                          Equipment:{" "}
-                          {booking.AdditionalInfo?.Equipment?.length
-                            ? booking.AdditionalInfo.Equipment.join(", ")
-                            : "-"}
-                        </li>
-                        <li>Note: {booking.AdditionalInfo?.AdditionalNote || "-"}</li>
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  {/* ===== Payment Section ===== */}
-                  <Grid size={{ xs: 12 }} sx={{ mt: { xs: 2, md: 3 } }}>
-                    <Typography variant="body1" sx={{ fontSize: 18, fontWeight: 600, mb: { xs: 1, md: 2 } }}>
-                      Payment
+                    <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 14 }}>
+                      Approved At
                     </Typography>
+                  </Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 13, ml: 3.5 }}>
+                    {booking.ConfirmedAt
+                      ? `${dateFormat(booking.ConfirmedAt)} ${timeFormat(booking.ConfirmedAt)}`
+                      : '—'}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
 
-                    <Grid container spacing={{ xs: 3 }} alignItems="flex-start">
-                      {/* Left: Slip */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography fontWeight={600} sx={{ mb: 1 }}>
-                          Payment Slip
-                        </Typography>
+            {/* Additional Information */}
+            <Box sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'grey.200',
+              mt: 2,
+              backgroundColor: 'grey.50'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ color: 'secondary.main', mr: 2, display: 'flex' }}>
+                  <Settings size={18} />
+                </Box>
+                <Typography fontWeight={600} sx={{ color: 'text.primary', fontSize: 16 }}>
+                  Additional Information
+                </Typography>
+              </Box>
 
-                        {payment?.slipImages?.length ? (
-                          <ImageList cols={1} gap={12} rowHeight={420} sx={{ m: 0 }}>
-                            {payment.slipImages.map((src: string, i: number) => (
-                              <ImageListItem key={`inline-slip-${i}`} sx={{ borderRadius: 2, overflow: "hidden" }}>
-                                <img
-                                  src={prefixImage(src)}
-                                  alt={`slip-${i}`}
-                                  loading="lazy"
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    borderRadius: "8px",
-                                  }}
-                                />
-                              </ImageListItem>
-                            ))}
-                          </ImageList>
-                        ) : (
-                          <Typography color="text.secondary">ยังไม่มีสลิป</Typography>
-                        )}
-                      </Grid>
+              <Box sx={{ ml: 5 }}>
+                <Box sx={{ display: 'flex', mb: 1.5, alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Style layout:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.SetupStyle || '—'}
+                  </Typography>
+                </Box>
 
-                      {/* Right: Payment details */}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography fontWeight={600} sx={{ mb: 1 }}>
-                          Payment Details
-                        </Typography>
+                <Box sx={{ display: 'flex', mb: 1.5, alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Equipment:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.Equipment?.length
+                      ? booking.AdditionalInfo.Equipment.join(', ')
+                      : '—'}
+                  </Typography>
+                </Box>
 
-                        <Grid container spacing={{ xs: 2 }}>
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography color="text.secondary">Amount</Typography>
-                            <Typography>
-                              {typeof payment?.amount === "number" ? `฿ ${payment.amount.toFixed(2)}` : "-"}
-                            </Typography>
-                          </Grid>
-
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography color="text.secondary">Transfer Date</Typography>
-                            <Typography>{payment?.paymentDate ? dateFormat(payment.paymentDate) : "-"}</Typography>
-                          </Grid>
-
-                          <Grid size={{ xs: 12 }}>
-                            <Typography color="text.secondary">Note</Typography>
-                            <Typography sx={{ whiteSpace: "pre-wrap" }}>{payment?.note || "-"}</Typography>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-
-                  {/* ===== Actions ===== */}
-                  {/* Owner (จากหน้า My): อัป/แก้สลิปได้ในสถานะที่กำหนด */}
-                  {canOwnerUploadOrUpdate ? (
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                        <UploadSlipButton
-                          bookingId={booking.ID}
-                          payerId={Number(localStorage.getItem("userId"))}
-                          onSuccess={() => {
-                            setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
-                            refreshBooking();
-                          }}
-                          onError={() => {
-                            setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
-                          }}
-                        />
-                      </Box>
-                    </Grid>
-                  ) : isPaymentReview && isAdminRole ? (
-                    // Admin/Manager: ช่วง Payment Review → แสดง Approve/Reject Payment
-                    <Grid size={{ xs: 12 }}>
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}>
-                        <Button
-                          variant="contained"
-                          color="error"
-                          sx={{ minWidth: 140 }}
-                          onClick={() => handleNextAction("rejectPayment")}
-                          disabled={!payment?.id}
-                        >
-                          Reject Payment
-                        </Button>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          sx={{ minWidth: 160 }}
-                          onClick={() => handleNextAction("approvePayment")}
-                          disabled={!payment?.id}
-                        >
-                          Approve Payment
-                        </Button>
-                      </Box>
-                    </Grid>
-                  ) : (
-                    // ปุ่มต่อไปตาม flow (approve/reject booking, complete ฯลฯ)
-                    <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 2 }}>
-                      {next && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() =>
-                            handleNextAction(
-                              next.key as "approve" | "approvePayment" | "complete" | "reject" | "rejectPayment"
-                            )
-                          }
-                        >
-                          <Check size={16} />
-                          <Typography sx={{ ml: 0.5 }}>{next.label}</Typography>
-                        </Button>
-                      )}
-                    </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-            </Card>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <Typography sx={{
+                    color: 'text.secondary',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    minWidth: 100,
+                    flexShrink: 0
+                  }}>
+                    Note:
+                  </Typography>
+                  <Typography sx={{ color: 'text.primary', fontSize: 14, ml: 1 }}>
+                    {booking.AdditionalInfo?.AdditionalNote || '—'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           </Grid>
         </Grid>
+
+        {/* ===== Actions Section ===== */}
+        {canOwnerUploadOrUpdate ? (
+          /* ... ของเดิม (UploadSlipButton) ... */
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <UploadSlipButton
+                bookingId={booking.ID}
+                payerId={Number(localStorage.getItem("userId"))}
+                onSuccess={() => {
+                  setAlerts((prev) => [...prev, { type: "success", message: "อัปโหลดสลิปสำเร็จ" }]);
+                  refreshBooking();
+                }}
+                onError={() => {
+                  setAlerts((prev) => [...prev, { type: "error", message: "อัปโหลดสลิปล้มเหลว" }]);
+                }}
+              />
+            </Box>
+          </Grid>
+        ) : isPaymentReview && isAdminRole ? (
+          /* ... ของเดิม (Approve/Reject Payment) ... */
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button
+                variant="contained"
+                color="error"
+                sx={{ minWidth: 140, borderRadius: 2, textTransform: "none", fontWeight: 600, py: 1.2 }}
+                onClick={() => handleNextAction("rejectPayment")}
+                disabled={!paymentSummary?.id}
+              >
+                Reject Payment
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ minWidth: 160, borderRadius: 2, textTransform: "none", fontWeight: 600, py: 1.2 }}
+                onClick={() => handleNextAction("approvePayment")}
+                disabled={!paymentSummary?.id}
+              >
+                Approve Payment
+              </Button>
+            </Box>
+          </Grid>
+        ) : (
+          <Grid size={{ xs: 12 }} sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'grey.200' }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              {displayStatus === "pending" && isAdminRole ? (
+                <>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => setOpenReject(true)}    // << เปิด dialog กรอกเหตุผล
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => handleNextAction("approve")}
+                  >
+                    <Check size={16} />
+                    <Typography sx={{ ml: 0.5 }}>Approve</Typography>
+                  </Button>
+                </>
+              ) : (
+                nextActionLabel && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
+                    onClick={() => {
+                      if (displayStatus === "payment") return handleNextAction("complete");
+                      if (displayStatus === "payment review") return handleNextAction("approvePayment");
+                    }}
+                  >
+                    <Check size={16} />
+                    <Typography sx={{ ml: 0.5 }}>{nextActionLabel}</Typography>
+                  </Button>
+                )
+              )}
+            </Box>
+          </Grid>
+        )}
+
+
+        <Dialog open={openReject} onClose={() => !rejecting && setOpenReject(false)} fullWidth maxWidth="sm">
+          <DialogTitle>Confirm Booking Rejection</DialogTitle>
+          <DialogContent dividers>
+            <Typography sx={{ mb: 2 }}>
+              Reject this booking? This action cannot be undone.
+            </Typography>
+            <Typography sx={{ mb: 1, fontWeight: 600 }}>Reason</Typography>
+            <TextField
+              fullWidth
+              multiline
+              minRows={3}
+              placeholder="โปรดระบุเหตุผลการปฏิเสธ..."
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              disabled={rejecting}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenReject(false)} disabled={rejecting}>Cancel</Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmReject}
+              disabled={rejecting || !rejectNote.trim()}
+            >
+              {rejecting ? "Processing..." : "Reject"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+
+
       </Container>
     </Box>
   );

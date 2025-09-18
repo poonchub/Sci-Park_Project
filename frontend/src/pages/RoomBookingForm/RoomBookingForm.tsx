@@ -14,7 +14,6 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Alert,
   CardMedia,
   Tooltip,
   Card,
@@ -29,9 +28,12 @@ import {
   InputLabel,
   IconButton,
   FormHelperText,
+  Container,
+  Alert,
 } from "@mui/material";
+import MuiSelect from "@mui/material/Select"; // ⬅️ ใช้ MUI Select ตรงที่ต้องการ label/aria
 import { TextField } from "../../components/TextField/TextField";
-import { Select } from "../../components/Select/Select";
+import { Select } from "../../components/Select/Select"; // ⬅️ select ของโปรเจกต์ (ใช้ในส่วนทั่วไป)
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
@@ -44,13 +46,16 @@ import {
   Check,
   Building2,
   AlertTriangle,
-  LinkIcon,
-  MapPin,
   Info,
   CheckCircle2,
   Timer,
   HelpCircle,
   X,
+  PenLine,
+  CreditCard,
+  ClipboardList,
+  Shield,
+  ChevronLeft,
 } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
 import {
@@ -112,8 +117,6 @@ const MORNING_SLOTS = HOURLY_SLOTS.slice(0, 4);
 const AFTERNOON_SLOTS = HOURLY_SLOTS.slice(4);
 export const MORNING_HOUR_NUMS = [8, 9, 10, 11];
 export const AFTERNOON_HOUR_NUMS = [12, 13, 14, 15];
-
-
 
 /* ========= Small helpers ========= */
 const toRangeFromStart = (startHHMM: string): string => {
@@ -207,8 +210,8 @@ type AddressProps = {
 
 type UserPackageLite = {
   ID?: number;
-  package_name?: string;          // เช่น "Diamond" | "None"
-  meeting_room_limit?: number;    // โควต้าฟรีห้องประชุม/ปี
+  package_name?: string; // เช่น "Diamond" | "None"
+  meeting_room_limit?: number;
   training_room_limit?: number;
   multi_function_room_limit?: number;
 };
@@ -222,7 +225,6 @@ type PackageBenefits = {
 
 function benefitsFromPackage(pkg?: UserPackageLite | null): PackageBenefits {
   const name = String(pkg?.package_name || "none").toLowerCase();
-  // ปรับ mapping ตามแพ็กเกจจริงในระบบคุณ
   switch (name) {
     case "diamond":
       return {
@@ -231,14 +233,10 @@ function benefitsFromPackage(pkg?: UserPackageLite | null): PackageBenefits {
         trainingHalf: true,
         hallHalf: true,
       };
-    // ตัวอย่างแพ็กอื่น ๆ
-    // case "gold": return { meetingFreePerYear: 10, meetingHalf: true, trainingHalf: true, hallHalf: false };
-    // case "training-only": return { meetingFreePerYear: 0, meetingHalf: false, trainingHalf: true, hallHalf: false };
-    default: // none
+    default:
       return { meetingFreePerYear: 0, meetingHalf: false, trainingHalf: false, hallHalf: false };
   }
 }
-
 
 /* ========= Component ========= */
 const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
@@ -263,9 +261,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [selectedRoomId, setSelectedRoomId] = useState(0);
   const [roomData, setRoomData] = useState<RoomsInterface | null>(null);
   const [roomType, setRoomType] = useState<RoomtypesInterface>({});
-  const [role, setRole] = useState<any>(null);
-  const [capacity, setCapacity] = useState<number>(0);
-
 
   const [setupStyles, setSetupStyles] = useState<{ ID: number; LayoutName: string }[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<string>("");
@@ -279,7 +274,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   /* --- user/org --- */
   const [isEmployee, setIsEmployee] = useState(false);
   const isHourlyAllowed = isEmployee;
-  const [orgInfo, setOrgInfo] = useState<OrganizationInfoInterface | null>(null);
+  const [, setOrgInfo] = useState<OrganizationInfoInterface | null>(null); // ไม่ใช้ค่าอ่านตรง ๆ เพื่อกัน warning
   const [errors, setErrors] = useState<AddressProps>({});
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -290,11 +285,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
   const [checkedCondition, setCheckedCondition] = useState(false);
 
-  /* --- signature --- */
-  const [openPopupSignature, setOpenPopupSignature] = useState(false);
-  const sigRef = useRef<SignatureCanvas>(null);
   const [isButtonActive, setIsButtonActive] = useState(false);
-  // เคยมีอยู่แล้ว
+  const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('en')
 
   const [userPackage, setUserPackage] = useState<UserPackageLite | null>(null);
   const [pkgBenefits, setPkgBenefits] = useState<PackageBenefits>({
@@ -327,6 +319,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       console.error("Error fetching payment options:", error);
     }
   };
+  const hasSignature = useMemo(
+    () => Boolean(user?.SignaturePath && String(user.SignaturePath).trim() !== ""),
+    [user?.SignaturePath]
+  );
 
   /* ========= Bootstrap / Loaders ========= */
   useEffect(() => {
@@ -354,15 +350,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     setLoading(true);
     try {
       const res = await GetUserById(userId);
-      console.log(res);
       if (res) {
         setName(res.FirstName + " " + res.LastName);
         setPhone(res.Phone);
         setEmail(res.Email);
-        setRole(res.RoleID);
-
         setIsEmployee(!!res.IsEmployee);
-        // ✅ ใช้ package จาก API ที่คุณมีอยู่แล้ว
         const pkg: UserPackageLite = res.Package || null;
         setUserPackage(pkg);
         setPkgBenefits(benefitsFromPackage(pkg));
@@ -391,7 +383,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       const res = await GetTimeSlots(roomId);
       if (res) {
         setRoomData(res.Room);
-        setCapacity(res.Capacity);
       }
     } catch (err) {
       console.error("Failed to fetch room data", err);
@@ -485,13 +476,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     used: false,
   });
 
-  // ✅ ปุ่มควบคุม “ลด 50% สมาชิก” (เปิด/ปิดได้)
   const [applyMemberDiscount, setApplyMemberDiscount] = useState<boolean>(false);
 
   useEffect(() => {
     const loadQuota = async () => {
       const userId = parseInt(localStorage.getItem("userId") || "");
-      const res = await GetRoomQuota(userId); // {"meeting":{...}, "training":{...}, "multi":{...}}
+      const res = await GetRoomQuota(userId);
       if (!res) return;
 
       const mt = res.meeting || res.meeting_room || { total: 0, used: 0, remaining: 0 };
@@ -522,10 +512,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     : inferCategory(roomType?.TypeName || roomData?.TypeName || "");
   const isMeetingCategory = currentCategory === "meetingroom";
 
-  // เป็นสมาชิกไหม (มีแพ็กเกจ/โควตาใด ๆ)
-
-
-
   // ตั้งค่า default ของปุ่ม “Apply 50% Member Discount”
   useEffect(() => {
     let def = false;
@@ -535,8 +521,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       else if (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) def = true;
     }
     setApplyMemberDiscount(def);
-  }, [currentCategory, quotas, hasPackage, pkgBenefits]);
-
+  }, [currentCategory, quotas, hasPackage, pkgBenefits, isMeetingCategory]);
 
   /* ========= Price calc ========= */
   const slotIdByName = useMemo<Record<string, number>>(() => {
@@ -583,7 +568,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   ): number => {
     if (!dates.length || priceList.length === 0) return 0;
 
-    // ✅ Meeting: ใช้สิทธิ์ฟรี → 0 บาท
+    // Meeting: ใช้สิทธิ์ฟรี → 0 บาท
     if (hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used) return 0;
 
     // 1) base price
@@ -634,6 +619,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     quotas,
     currentCategory,
     hasPackage,
+    isMeetingCategory,
   ]);
 
   useEffect(() => {
@@ -974,82 +960,42 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       : ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop"];
   }, [roomType]);
 
-  /* ========= Signature handlers ========= */
-  const handleSave = async () => {
-    if (sigRef.current?.isEmpty()) {
-      alert("กรุณาลงลายเซ็นก่อน");
-      return;
-    }
-    try {
-      const canvas = sigRef.current?.getCanvas();
-      if (!canvas) {
-        setAlerts([{ type: "error", message: "Failed to get signature canvas" }]);
-        return;
-      }
-      const newCanvas = document.createElement("canvas");
-      const ctx = newCanvas.getContext("2d");
-      if (!ctx) {
-        setAlerts([{ type: "error", message: "Failed to create canvas context" }]);
-        return;
-      }
-      newCanvas.width = canvas.width;
-      newCanvas.height = canvas.height;
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
-      ctx.drawImage(canvas, 0, 0);
-
-      newCanvas.toBlob(async (blob) => {
-        if (!blob) {
-          setAlerts([{ type: "error", message: "Failed to convert signature to image" }]);
-          return;
-        }
-        const file = new File([blob], "signature.jpg", { type: "image/jpeg" });
-        if (user?.ID) {
-          const result = await UpdateUserSignature({ UserID: user.ID, Signature_Image: file });
-          if (result.status === "success") {
-            setAlerts([{ type: "success", message: "Signature saved successfully" }]);
-            setOpenPopupSignature(false);
-          } else {
-            setAlerts([{ type: "error", message: result.message }]);
-          }
-        }
-      }, "image/jpeg", 0.9);
-    } catch (error) {
-      setAlerts([{ type: "error", message: "Failed to save signature. Please try again." }]);
-    }
-  };
-
-  const handleClear = () => {
-    sigRef.current?.clear();
-  };
-
   /* ========= Submit booking ========= */
-  function categoryToKey(cat: string): "meeting" | "training" | "multi" {
-    switch (cat.toLowerCase()) {
-      case "meetingroom":
-      case "meeting":
-        return "meeting";
-      case "trainingroom":
-      case "training":
-        return "training";
-      case "multifunctionroom":
-      case "multi":
-        return "multi";
-      default:
-        return "meeting";
-    }
-  }
-
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!addressFormData?.AddressNumber?.trim()) newErrors.AddressNumber = "Please enter your house or building number";
-    if (!addressFormData?.Street?.trim()) newErrors.Street = "Please enter your street name";
-    if (!addressFormData?.SubDistrict?.trim()) newErrors.SubDistrict = "Please enter your sub-district";
-    if (!addressFormData?.District?.trim()) newErrors.District = "Please enter your district";
-    if (!addressFormData?.Province?.trim()) newErrors.Province = "Please enter your province";
+    const thaiRegex = /^[\u0E00-\u0E7F\s]+$/; // อนุญาตเฉพาะอักษรไทย + ช่องว่าง
+
+    if (!addressFormData?.AddressNumber?.trim())
+      newErrors.AddressNumber = "Please enter your house or building number";
+
+    if (!addressFormData?.Street?.trim()) {
+      newErrors.Street = "Please enter your street name (in Thai)";
+    } else if (!thaiRegex.test(addressFormData.Street)) {
+      newErrors.Street = "Street name must be in Thai";
+    }
+
+    if (!addressFormData?.SubDistrict?.trim()) {
+      newErrors.SubDistrict = "Please enter your sub-district (in Thai)";
+    } else if (!thaiRegex.test(addressFormData.SubDistrict)) {
+      newErrors.SubDistrict = "Sub-district must be in Thai";
+    }
+
+    if (!addressFormData?.District?.trim()) {
+      newErrors.District = "Please enter your district (in Thai)";
+    } else if (!thaiRegex.test(addressFormData.District)) {
+      newErrors.District = "District must be in Thai";
+    }
+
+    if (!addressFormData?.Province?.trim()) {
+      newErrors.Province = "Please enter your province (in Thai)";
+    } else if (!thaiRegex.test(addressFormData.Province)) {
+      newErrors.Province = "Province must be in Thai";
+    }
+
     if (!addressFormData?.PostalCode || !/^\d{5}$/.test(addressFormData.PostalCode))
       newErrors.PostalCode = "Please enter a valid 5-digit postal code";
+
     if (!addressFormData?.TaxID || !/^\d{13}$/.test(addressFormData.TaxID))
       newErrors.TaxID = "Please enter a valid 13-digit Tax ID";
 
@@ -1060,7 +1006,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const handleSubmitBooking = async () => {
     if (!user?.SignaturePath || user.SignaturePath === "") {
       handleSetAlert("warning", "Please upload your signature before proceeding.");
-      setIsButtonActive(false);
       return;
     }
     if (!isHourlyAllowed && timeOption === "hourly") {
@@ -1074,11 +1019,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       return;
     }
 
-    if (calculatedPrice === 0 && !(hasPackage && isMeetingCategory && discount.used)) {
-      if (
-        calculatedPrice === 0 && +   !(hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used)
-      )
-        alert("ราคาที่คำนวณได้เป็น 0 โปรดตรวจสอบส่วนลดหรือข้อมูลการจอง");
+    // 🚫 ราคาเป็น 0 ต้องเป็นกรณีใช้สิทธิ์ฟรี meeting เท่านั้น
+    if (
+      calculatedPrice === 0 &&
+      !(hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used)
+    ) {
+      alert("ราคาที่คำนวณได้เป็น 0 โปรดตรวจสอบส่วนลดหรือข้อมูลการจอง");
       return;
     }
 
@@ -1146,6 +1092,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         }
       }
 
+      const notificationData: NotificationsInterface = {
+        BookingRoomID: resBooking.data.booking_id,
+      };
+
+      await CreateNotification(notificationData);
+
       // refresh หน้าปฏิทิน
       await fetchBookingMapOnly(roomData.ID as number);
 
@@ -1153,9 +1105,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       setSelectedDates([]);
       setAdditionalNote("");
       setPurpose("");
-      const val = Number(selectedRoomId);
-      setSelectedRoomId(val);
-      fetchBookingMapOnly(val);
+      if (selectedRoomId) {
+        const val = Number(selectedRoomId);
+        setSelectedRoomId(val);
+        await fetchBookingMapOnly(val);
+      }
       setOpenPopupInvoiceCondition(false);
 
       handleSetAlert("success", "Booking created successfully.");
@@ -1181,18 +1135,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
     const futureYears = Array.from({ length: 6 }, (_, i) => today.getFullYear() + i);
 
@@ -1310,7 +1254,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     };
 
     return (
-      <Paper className="calendar-container" sx={{ bgcolor: "secondary.main" }}>
+      <Box className="calendar-container">
         <Box className="month-year-selector">
           <Button
             variant="outlined"
@@ -1404,7 +1348,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             return renderCalendarCell(d, dateString);
           })}
         </Box>
-      </Paper>
+      </Box>
     );
   };
 
@@ -1415,11 +1359,64 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     setSelectedHours((prev) => (prev.includes(hourRange) ? prev.filter((h) => h !== hourRange) : [...prev, hourRange]));
   };
 
+  const thaiTerms = [
+    "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
+    "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
+    "   • แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)",
+    "   • พื้นที่จอดรถด้านหน้าอาคาร",
+    "   • การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)",
+    "   • จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)",
+    "เงื่อนไขการชำระเงิน",
+    "   • ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด",
+    "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
+    "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
+    "หมายเหตุ",
+    "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
+    "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
+    "เกี่ยวกับความเป็นส่วนตัว",
+    "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านเพื่อการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
+    "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
+    "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
+    "เงื่อนไขเกี่ยวกับลายเซ็น (สำคัญ)",
+    "   • โปรดอัปโหลดลายเซ็นที่โปรไฟล์เพื่อใช้ในการออกเอกสาร (บังคับ)",
+    "   • ท่านสามารถลบลายเซ็นได้เมื่อได้รับใบแจ้งหนี้แล้ว",
+    "   • หากลบลายเซ็นก่อนที่จะได้รับใบแจ้งหนี้ จะไม่สามารถดำเนินการจองห้องต่อได้",
+  ]
+
+  const englishTerms = [
+    "Scope of Standard Services (without additional charges)",
+    "   • Air conditioning (turned on 30 minutes before the event) with staff on duty",
+    "   • Housekeeping for indoor cleaning (on business days and during business hours)",
+    "   • Parking spaces in front of the building",
+    "   • Traffic management (in case of more than 200 attendees)",
+    "   • Venue setup, tables, chairs, and audiovisual equipment (sound system/LED screen)",
+    "Payment Terms",
+    "   • Pay a deposit of 50% (of total expenses) within 7 days after signing acknowledgment and confirmation, or pay in full",
+    "   • Pay the remaining balance within 7 days after the completion of the event",
+    "   • In case of advance payment before the event date, the Northeastern Science Park 2 will not provide any refund. However, the organizer may reschedule the event date.",
+    "Remarks",
+    "   • Any additional expenses beyond the initial agreement must be borne and paid in full by the organizer.",
+    "   • If the organizer wishes to cancel the venue or event without prior notice at least 7 days before the event, the Northeastern Science Park 2 will retain the entire deposit.",
+    "Privacy",
+    "   • We will collect and use your personal information for business operations with you, such as contract preparation, accounting documentation, and service-related communications.",
+    "   • If you provide personal information of others, please ensure you have obtained their consent.",
+    "   • Proceeding further shall be deemed as acknowledgment and agreement to our privacy policy.",
+    "Signature Conditions (Important)",
+    "   • Please upload your signature to your profile for document issuance (mandatory).",
+    "   • You may delete your signature after receiving the invoice.",
+    "   • If you delete your signature before receiving the invoice, the room reservation cannot proceed.",
+  ]
+
   /* ========= Render ========= */
   return (
     <Box className="booking-container">
       {/* Condition Popup */}
-      <Dialog open={openPopupInvoiceCondition} onClose={() => setOpenPopupInvoiceCondition(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={openPopupInvoiceCondition}
+        onClose={() => setOpenPopupInvoiceCondition(false)}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle
           sx={{
             fontWeight: 700,
@@ -1427,48 +1424,38 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             textAlign: "center",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
             gap: 1,
           }}
         >
-          <HelpCircle size={22} style={{ minWidth: "22px", minHeight: "22px", marginBottom: "2px" }} />
-          Room Booking Condition
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenPopupInvoiceCondition(false)}
-            sx={{ position: "absolute", right: 8, top: 8 }}
-          >
-            <X size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <HelpCircle size={22} style={{ minWidth: "22px", minHeight: "22px", marginBottom: "2px" }} />
+            Room Booking Condition
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button
+              variant="outlinedGray"
+              size="small"
+              onClick={() => setCurrentLanguage(currentLanguage === 'th' ? 'en' : 'th')}
+              sx={{ minWidth: 80, fontSize: '0.75rem' }}
+            >
+              {currentLanguage === 'th' ? 'EN' : 'TH'}
+            </Button>
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenPopupInvoiceCondition(false)}
+            >
+              <X size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
+            </IconButton>
+          </Box>
+
         </DialogTitle>
 
         <DialogContent dividers sx={{ px: 5 }}>
           <Typography sx={{ whiteSpace: "pre-line", fontSize: 18, fontWeight: 600 }} gutterBottom>
-            โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน
+            {currentLanguage === "en" ? "Please read the Terms of Service and Payment Terms" : "โปรดอ่านเงื่อนการให้บริการและเงื่อนไขการชำระเงิน"}
           </Typography>
-          {[
-            "ขอบข่ายการให้บริการปกติ (โดยไม่เก็บเงินค่าใช้จ่ายเพิ่ม)",
-            "   • เครื่องปรับอากาศ (เปิดก่อนการเริ่มงาน 30 นาที) พร้อมเจ้าหน้าที่ดูแล",
-            "   • แม่บ้านทำความสะอาดภายในอาคาร (ในวันและเวลาทำการ)",
-            "   • พื้นที่จอดรถด้านหน้าอาคาร",
-            "   • การจัดระบบจราจร (กรณีมีผู้เข้าร่วมงานจำนวน 200 คนขึ้นไป)",
-            "   • จัดสถานที่ โต๊ะ-เก้าอี้ และระบบสื่อโสตทัศนูปกรณ์ (เครื่องเสียง/จอ LED)",
-            "เงื่อนไขการชำระเงิน",
-            "   • ชำระค่ามัดจำ ร้อยละ 50 (ของค่าใช้จ่าย) ภายใน 7 วัน หลังลงนามรับทราบและยืนยัน หรือชำระทั้งหมด",
-            "   • ชำระค่าใช้จ่ายส่วนที่เหลือ ภายใน 7 วัน หลังจากเสร็จสิ้นการจัดกิจกรรม",
-            "   • กรณีชำระค่าบริการก่อนวันจัดกิจกรรม ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะไม่สามารถคืนค่าบริการได้ทุกกรณี แต่ทางผู้จัดสามารถเลื่อนวันจัดกิจกรรมได้",
-            "หมายเหตุ",
-            "   • กรณีมีค่าใช้จ่ายอื่นๆ เพิ่มเติมนอกเหนือจากที่ตกลงกันไว้ตั้งแต่ต้น ท่านจะต้องรับผิดชอบและชำระค่าใช้จ่ายเพิ่มเติมเองทั้งหมด",
-            "   • กรณีที่ท่านมีความประสงค์ยกเลิกการใช้พื้นที่หรือยกเลิกการจัดกิจกรรม โดยไม่แจ้งให้ทราบล่วงหน้าก่อนจัดกิจกรรม 7 วัน ทางอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 จะยึดเงินค่ามัดจำทั้งหมด",
-            "เกี่ยวกับความเป็นส่วนตัว",
-            "   • เราจะเก็บรวบรวมและใช้ข้อมูลส่วนบุคคลของท่านเพื่อการดำเนินการทางธุรกิจกับท่าน เช่น การจัดทำสัญญา การออกเอกสารทางบัญชี และการสื่อสารที่เกี่ยวข้องกับการให้บริการ",
-            "   • หากท่านให้ข้อมูลส่วนบุคคลของผู้อื่น โปรดตรวจสอบว่าท่านได้รับความยินยอมจากบุคคลเหล่านั้นแล้ว",
-            "   • การดำเนินการต่อไปถือว่าท่านรับทราบและตกลงตามนโยบายความเป็นส่วนตัวของเรา",
-            "เงื่อนไขเกี่ยวกับลายเซ็น (สำคัญ)",
-            "   • โปรดอัปโหลดลายเซ็นที่โปรไฟล์เพื่อใช้ในการออกเอกสาร (บังคับ)",
-            "   • ท่านสามารถลบลายเซ็นได้เมื่อได้รับใบแจ้งหนี้แล้ว",
-            "   • หากลบลายเซ็นก่อนที่จะได้รับใบแจ้งหนี้ จะไม่สามารถดำเนินการจองห้องต่อได้",
-          ].map((line, index) => {
+          {(currentLanguage === "en" ? englishTerms : thaiTerms).map((line, index) => {
             const trimmed = line.trimStart();
             const isBullet = trimmed.startsWith("•");
             return (
@@ -1492,11 +1479,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           <Grid container direction={"column"} sx={{ my: 1.6 }}>
             <FormControlLabel
               control={<Checkbox checked={checkedCondition} onChange={(e) => setCheckedCondition(e.target.checked)} />}
-              label="ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"
+              label={currentLanguage === "en" ? "I have read and acknowledged the Terms of Service and Payment Terms." : "ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการให้บริการและการชำระเงิน"}
             />
             <FormControlLabel
               control={<Checkbox checked={checkedPrivacy} onChange={(e) => setCheckedPrivacy(e.target.checked)} />}
-              label="ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"
+              label={currentLanguage === "en" ? "I have read and accepted the Privacy Policy." : "ข้าพเจ้าได้อ่านและยอมรับตามนโยบายความเป็นส่วนตัว"}
             />
           </Grid>
 
@@ -1527,42 +1514,54 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 4, py: 2.5, gap: 1 }}>
+          <Button variant="outlinedGray" onClick={() => setOpenPopupInvoiceCondition(false)}>
+            ยกเลิก
+          </Button>
           <Button
             onClick={handleSubmitBooking}
             disabled={!checkedCondition || !checkedPrivacy || selectedOption === 0}
             variant="contained"
             startIcon={<Check size={18} />}
+            sx={{ px: 3, marginLeft: "0px !important" }}
           >
-            Confirm Booking
+            ยืนยันการจอง
           </Button>
         </DialogActions>
       </Dialog>
 
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
-      {/* Header */}
-      <Paper elevation={2} className="booking-header-paper">
-        <Box className="booking-header-content">
-          <Box>
-            <Typography variant="h4" fontWeight="bold" mb={1}>
-              {roomDataHeader.TypeName}
-            </Typography>
-            <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-              Book meeting rooms online - convenient and fast
-            </Typography>
-          </Box>
-          <Button startIcon={<ArrowLeft />} onClick={onBack || (() => window.history.back())} variant="text">
-            Back
-          </Button>
-        </Box>
-      </Paper>
+      <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12 }} container sx={{ justifyContent: 'end' }}>
+            <Button
+              onClick={onBack || (() => window.history.back())}
+              variant="outlinedGray"
+            >
+              <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
+              <Typography variant="textButtonClassic">Back</Typography>
+            </Button>
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Left Column */}
-        <Grid size={{ xs: 12, lg: 6 }} >
-          {/* Images */}
+          {/* Header */}
           <Grid size={{ xs: 12 }} >
+            <Card className="booking-header-paper">
+              <Box className="booking-header-content">
+                <Box>
+                  <Typography variant="h4" fontWeight="bold" mb={1}>
+                    {roomDataHeader.TypeName}
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+                    Book meeting rooms online - convenient and fast
+                  </Typography>
+                </Box>
+              </Box>
+            </Card>
+          </Grid>
+
+          {/* Images */}
+          <Grid size={{ xs: 12 }}>
             <Carousel
               indicators
               autoPlay
@@ -1594,305 +1593,313 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
             </Carousel>
           </Grid>
 
-          {/* Room Selection */}
-          <Grid size={{ xs: 12 }}>
-            <Paper
-              elevation={2}
-              className="booking-section paper-room-selection-paper"
-              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", p: 2, my: 5 }}
-            >
-              <Box className="booking-section-header">
-                <Building2 className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Room
-                </Typography>
-              </Box>
-
-              <FormControl fullWidth>
-                <FormLabel sx={{ mb: 1 }}>Choose Sub-room In {roomtypeState.TypeName} category</FormLabel>
-                <Select
-                  startAdornment={
-                    <InputAdornment position="start" className="booking-input-adornment">
-                      <Building2 size={18} strokeWidth={3} />
-                    </InputAdornment>
-                  }
-                  value={selectedRoomId}
-                  onChange={(e: any) => {
-                    const val = Number(e.target.value);
-                    setSelectedRoomId(val);
-                    if (!val) return;
-                    fetchBookingMapOnly(val);
-                    setSelectedDates([]);
-                    fetchRoomPricing(val);
-                    fetchRoomData(val);
-                  }}
-                  displayEmpty
+          <Grid
+            container
+            size={{ xs: 12 }}
+            spacing={3}
+            sx={{ justifyContent: 'flex-start', alignItems: 'start' }}
+          >
+            {/* Left Column */}
+            <Grid size={{ md: 12, lg: 6 }} sx={{ height: { md: "auto", lg: "100%" } }}>
+              <Card className="booking-section-paper calendar-paper" sx={{ borderRadius: 3, minHeight: { md: "auto", lg: '100%' } }}>
+                {/* Room Selection */}
+                <Box
+                  className="booking-section paper-room-selection-paper"
+                  sx={{ backgroundColor: "secondary.main", borderRadius: 2, marginBottom: 4 }}
                 >
-                  <MenuItem value={0} disabled>
-                    Select a Room
-                  </MenuItem>
-                  {roomsOfSameType.map((r) => (
-                    <MenuItem
-                      key={r.id}
-                      value={r.id}
-                      disabled={r.RoomStatusID !== 1}
-                      title={r.RoomStatusID === 1 ? "Available" : "Not Available"}
-                    >
-                      {r.roomnumber} {r.RoomStatusID !== 1 ? `(${r.RoomStatus?.StatusName || "Unknown Status"})` : ""}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Paper>
-          </Grid>
+                  <Box className="booking-section-header">
+                    <Building2 className="booking-section-icon" />
+                    <Typography variant="h6" fontWeight="600">
+                      Select Room
+                    </Typography>
+                  </Box>
 
-          {/* Time Selection */}
-          <Grid size={{ xs: 12 }}>
-            <Paper
-              elevation={2}
-              className="booking-section-paper time-selection-paper"
-              sx={{ backgroundColor: "secondary.main", borderRadius: "24px", mt: 3 }}
-            >
-              <Box className="booking-section-header">
-                <Clock className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Duration & Time
-                </Typography>
-              </Box>
-
-              {loading && !pricing.length ? (
-                <Box className="booking-loading-container">
-                  <CircularProgress size={24} />
-                  <Typography className="booking-loading-text">Loading Prices...</Typography>
-                </Box>
-              ) : (
-                <>
-                  <FormControl component="fieldset" className="booking-duration-options">
-                    <FormLabel component="legend" className="booking-duration-legend">
-                      Duration Options
-                    </FormLabel>
-                    <RadioGroup
-                      value={timeOption}
-                      onChange={(e) => {
-                        const val = e.target.value as "hourly" | "half" | "full";
-                        setTimeOption(val);
-                        setTimeRange(null);
-                        setSelectedHours([]);
+                  <FormControl fullWidth>
+                    <Select
+                      startAdornment={
+                        <InputAdornment position="start" className="booking-input-adornment">
+                          <Building2 size={18} strokeWidth={3} />
+                        </InputAdornment>
+                      }
+                      value={selectedRoomId}
+                      onChange={(e: any) => {
+                        const val = Number(e.target.value);
+                        setSelectedRoomId(val);
+                        if (!val) return;
+                        fetchBookingMapOnly(val);
                         setSelectedDates([]);
+                        fetchRoomPricing(val);
+                        fetchRoomData(val);
                       }}
+                      displayEmpty
                     >
-                      {isHourlyAllowed && (
-                        <FormControlLabel value="hourly" control={<Radio />} label={<Typography fontWeight={500}>Hourly</Typography>} />
-                      )}
-                      <FormControlLabel
-                        value="half"
-                        control={<Radio />}
-                        label={<Typography fontWeight={500}>Half Day (4 hours)</Typography>}
-                      />
-                      <FormControlLabel
-                        value="full"
-                        control={<Radio />}
-                        label={<Typography fontWeight={500}>Full Day (8 hours)</Typography>}
-                      />
-                    </RadioGroup>
+                      <MenuItem value={0} disabled>
+                        Select a Room
+                      </MenuItem>
+                      {roomsOfSameType.map((r) => (
+                        <MenuItem
+                          key={r.id}
+                          value={r.id}
+                          disabled={r.RoomStatusID !== 1}
+                          title={r.RoomStatusID === 1 ? "Available" : "Not Available"}
+                        >
+                          {r.roomnumber} {r.RoomStatusID !== 1 ? `(${r.RoomStatus?.StatusName || "Unknown Status"})` : ""}
+                        </MenuItem>
+                      ))}
+                    </Select>
                   </FormControl>
+                </Box>
 
-                  {isHourlyAllowed && timeOption === "hourly" && (
-                    <>
-                      <Divider className="booking-time-divider" />
-                      <FormControl component="fieldset">
-                        <FormLabel component="legend" className="booking-time-legend">
-                          Select Hourly Slots
-                        </FormLabel>
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
-                          {HOURLY_SLOTS.map((hour) => (
-                            <FormControlLabel
-                              key={hour}
-                              control={<Checkbox checked={selectedHours.includes(hour)} onChange={() => handleHourToggle(hour)} />}
-                              label={hour}
-                            />
-                          ))}
-                        </Box>
-                      </FormControl>
-                    </>
-                  )}
+                {/* Time Selection */}
+                <Box
+                  sx={{ borderRadius: 2 }}
+                >
+                  <Box className="booking-section-header">
+                    <Clock className="booking-section-icon" />
+                    <Typography variant="h6" fontWeight="600">
+                      Select Duration & Time
+                    </Typography>
+                  </Box>
 
-                  {timeOption === "half" && (
+                  {loading && !pricing.length ? (
+                    <Box className="booking-loading-container">
+                      <CircularProgress size={24} />
+                      <Typography className="booking-loading-text">Loading Prices...</Typography>
+                    </Box>
+                  ) : (
                     <>
-                      <Divider className="booking-time-divider" />
-                      <FormControl component="fieldset">
-                        <FormLabel component="legend" className="booking-time-legend">
-                          Time Slot (Half Day)
-                        </FormLabel>
+                      <FormControl component="fieldset" className="booking-duration-options">
                         <RadioGroup
-                          value={timeRange}
+                          value={timeOption}
                           onChange={(e) => {
-                            setTimeRange(e.target.value as "Morning" | "Afternoon");
+                            const val = e.target.value as "hourly" | "half" | "full";
+                            setTimeOption(val);
+                            setTimeRange(null);
+                            setSelectedHours([]);
                             setSelectedDates([]);
                           }}
                         >
-                          <FormControlLabel value="Morning" control={<Radio />} label="Morning (08:30 - 12:30)" />
-                          <FormControlLabel value="Afternoon" control={<Radio />} label="Afternoon (12:30 - 16:30)" />
+                          {isHourlyAllowed && (
+                            <FormControlLabel value="hourly" control={<Radio />} label={<Typography fontWeight={500}>Hourly</Typography>} />
+                          )}
+                          <FormControlLabel
+                            value="half"
+                            control={<Radio />}
+                            label={<Typography fontWeight={500}>Half Day (4 hours)</Typography>}
+                          />
+                          <FormControlLabel
+                            value="full"
+                            control={<Radio />}
+                            label={<Typography fontWeight={500}>Full Day (8 hours)</Typography>}
+                          />
                         </RadioGroup>
                       </FormControl>
+
+                      {isHourlyAllowed && timeOption === "hourly" && (
+                        <>
+                          <Divider className="booking-time-divider" />
+                          <FormControl component="fieldset">
+                            <FormLabel component="legend" className="booking-time-legend">
+                              Select Hourly Slots
+                            </FormLabel>
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                              {HOURLY_SLOTS.map((hour) => (
+                                <FormControlLabel
+                                  key={hour}
+                                  control={<Checkbox checked={selectedHours.includes(hour)} onChange={() => handleHourToggle(hour)} />}
+                                  label={hour}
+                                />
+                              ))}
+                            </Box>
+                          </FormControl>
+                        </>
+                      )}
+
+                      {timeOption === "half" && (
+                        <>
+                          <Divider className="booking-time-divider" />
+                          <FormControl component="fieldset">
+                            <FormLabel component="legend" className="booking-time-legend">
+                              Time Slot (Half Day)
+                            </FormLabel>
+                            <RadioGroup
+                              value={timeRange}
+                              onChange={(e) => {
+                                setTimeRange(e.target.value as "Morning" | "Afternoon");
+                                setSelectedDates([]);
+                              }}
+                            >
+                              <FormControlLabel value="Morning" control={<Radio />} label="Morning (08:30 - 12:30)" />
+                              <FormControlLabel value="Afternoon" control={<Radio />} label="Afternoon (12:30 - 16:30)" />
+                            </RadioGroup>
+                          </FormControl>
+                        </>
+                      )}
+
+                      {timeOption === "full" && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography fontWeight={600}>Full Day booking covers both Morning and Afternoon (08:30 - 16:30)</Typography>
+                        </Box>
+                      )}
                     </>
                   )}
-
-                  {timeOption === "full" && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography fontWeight={600}>Full Day booking covers both Morning and Afternoon (08:30 - 16:30)</Typography>
-                    </Box>
-                  )}
-                </>
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Right Column */}
-        <Grid size={{ xs: 12, lg: 6 }} >
-          {/* Calendar */}
-          <Grid size={{ xs: 12 }}>
-            <Paper elevation={2} className="booking-section-paper calendar-paper">
-              <Box className="booking-section-header">
-                <Calendar className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Dates
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  opacity: selectedRoomId && timeOption ? 1 : 0.5,
-                  pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
-                  p: "44px",
-                }}
-              >
-                {renderCalendar()}
-              </Box>
-
-              {(!selectedRoomId || !timeOption) && (
-                <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
-                  <AlertTriangle size={16} /> กรุณาเลือกห้องและช่วงเวลาก่อน
-                </Typography>
-              )}
-            </Paper>
-
-            {/* Details Modal */}
-            <Dialog open={showDetailsModal} onClose={() => setShowDetailsModal(false)} maxWidth="sm" fullWidth>
-              <DialogTitle className="booking-dialog-title">
-                <Box className="booking-dialog-header">
-                  <Calendar size={20} />
-                  <Typography variant="h6">Booking Details</Typography>
                 </Box>
-              </DialogTitle>
-              <DialogContent>
-                {selectedDateDetails ? (
-                  <>
-                    <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                      Date: {selectedDateDetails.date}
-                    </Typography>
-                    {selectedDateDetails.bookings.length > 0 ? (
-                      selectedDateDetails.bookings.map((booking, index) => (
-                        <Card key={index} className="booking-card">
-                          <CardContent>
-                            <Typography variant="subtitle2" fontWeight="bold">
-                              {booking.time}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Booked by: {booking.bookedBy}
-                            </Typography>
-                            <Chip
-                              label={booking.status === "confirmed" ? "Confirmed" : "Pending"}
-                              color={booking.status === "confirmed" ? "success" : "warning"}
-                              size="small"
-                            />
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <Typography color="text.secondary">No bookings for this date</Typography>
-                    )}
-                  </>
-                ) : null}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setShowDetailsModal(false)}>Close</Button>
-              </DialogActions>
-            </Dialog>
-          </Grid>
+              </Card>
+            </Grid>
+
+            {/* Right Column */}
+            <Grid size={{ md: 12, lg: 6 }} >
+              {/* Calendar */}
+              <Card className="booking-section-paper calendar-paper" sx={{ borderRadius: 2 }}>
+                <Box className="booking-section-header">
+                  <Calendar className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600">
+                    Select Dates
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    opacity: selectedRoomId && timeOption ? 1 : 0.5,
+                    pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
+                  }}
+                >
+                  {renderCalendar()}
+                </Box>
+
+                {(!selectedRoomId || !timeOption) && (
+                  <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
+                    <AlertTriangle size={16} /> กรุณาเลือกห้องและช่วงเวลาก่อน
+                  </Typography>
+                )}
+              </Card>
+
+              {/* <Grid size={{ xs: 12 }}> */}
+
+
+              {/* Details Modal */}
+              {/* <Dialog open={showDetailsModal} onClose={() => setShowDetailsModal(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="booking-dialog-title">
+                  <Box className="booking-dialog-header">
+                    <Calendar size={20} />
+                    <Typography variant="h6">Booking Details</Typography>
+                  </Box>
+                </DialogTitle>
+                <DialogContent>
+                  {selectedDateDetails ? (
+                    <>
+                      <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                        Date: {selectedDateDetails.date}
+                      </Typography>
+                      {selectedDateDetails.bookings.length > 0 ? (
+                        selectedDateDetails.bookings.map((booking, index) => (
+                          <Card key={index} className="booking-card">
+                            <CardContent>
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {booking.time}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Booked by: {booking.bookedBy}
+                              </Typography>
+                              <Chip
+                                label={booking.status === "confirmed" ? "Confirmed" : "Pending"}
+                                color={booking.status === "confirmed" ? "success" : "warning"}
+                                size="small"
+                              />
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <Typography color="text.secondary">No bookings for this date</Typography>
+                      )}
+                    </>
+                  ) : null}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setShowDetailsModal(false)}>Close</Button>
+                </DialogActions>
+              </Dialog> */}
+              {/* </Grid> */}
+            </Grid>
+          </Grid >
 
           {/* Booking Summary */}
-          <Grid size={{ xs: 12 }}>
-            <Paper elevation={3} sx={{ backgroundColor: "secondary.main", borderRadius: "24px", p: 3, mt: 3 }}>
+          < Grid size={{ xs: 12 }}>
+            <Card sx={{ backgroundColor: "secondary.main", borderRadius: 2, p: 3 }}>
               <Typography variant="h6" fontWeight="bold" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Calendar className="booking-section-icon" />
                 Booking Summary
               </Typography>
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
-                <Typography variant="subtitle1" fontWeight={600}>{roomData?.TypeName || "-"}</Typography>
-              </Box>
+              <Grid size={{ xs: 12 }} container spacing={2} sx={{ paddingX: 2 }}>
+                <Grid size={{ xs: 6 }}>
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
+                    <Typography variant="subtitle1" fontWeight={600}>{roomData?.TypeName || "-"}</Typography>
+                  </Box>
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary">Selected Room</Typography>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  {roomsOfSameType.find((r) => r.id === selectedRoomId)?.roomnumber || "-"}
-                </Typography>
-              </Box>
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary">Selected Room</Typography>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {roomsOfSameType.find((r) => r.id === selectedRoomId)?.roomnumber || "-"}
+                    </Typography>
+                  </Box>
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary">Duration & Time</Typography>
-                <Typography fontWeight={600}>
-                  {timeOption === "full"
-                    ? "Full Day"
-                    : timeOption === "half"
-                      ? getTimeLabel() || "-"
-                      : timeOption === "hourly" && isHourlyAllowed
-                        ? selectedHours?.length > 0
-                          ? selectedHours.join(", ")
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary">Duration & Time</Typography>
+                    <Typography fontWeight={600}>
+                      {timeOption === "full"
+                        ? "Full Day"
+                        : timeOption === "half"
+                          ? getTimeLabel() || "-"
+                          : timeOption === "hourly" && isHourlyAllowed
+                            ? selectedHours?.length > 0
+                              ? selectedHours.join(", ")
+                              : "-"
+                            : "-"}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ visibility: timeOption === "half" ? "visible" : "hidden" }}>
+                      {timeOption === "half" ? getTimeRangeLabel() || "-" : "-"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 6 }}>
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary">Number of Days</Typography>
+                    <Chip
+                      label={
+                        selectedDates?.length
+                          ? `${selectedDates.length} day${selectedDates.length > 1 ? "s" : ""}`
                           : "-"
-                        : "-"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ visibility: timeOption === "half" ? "visible" : "hidden" }}>
-                  {timeOption === "half" ? getTimeRangeLabel() || "-" : "-"}
-                </Typography>
-              </Box>
+                      }
+                      color={selectedDates?.length ? "primary" : "default"}
+                      size="small"
+                    />
+                  </Box>
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary">Number of Days</Typography>
-                <Chip
-                  label={
-                    selectedDates?.length
-                      ? `${selectedDates.length} day${selectedDates.length > 1 ? "s" : ""}`
-                      : "-"
-                  }
-                  color={selectedDates?.length ? "primary" : "default"}
-                  size="small"
-                />
-              </Box>
-
-              <Box mb={3}>
-                <Typography variant="body2" color="text.secondary" mb={1}>Selected Dates</Typography>
-                {selectedDates?.length ? (
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    {selectedDates.slice(0, 4).map((date) => (
-                      <Chip key={date} label={new Date(date).toLocaleDateString("en-US")} size="small" />
-                    ))}
-                    {selectedDates.length > 4 && (
-                      <Chip label={`+${selectedDates.length - 4} more`} size="small" variant="outlined" />
+                  <Box mb={3}>
+                    <Typography variant="body2" color="text.secondary" mb={1}>Selected Dates</Typography>
+                    {selectedDates?.length ? (
+                      <Box display="flex" flexWrap="wrap" gap={1}>
+                        {selectedDates.slice(0, 4).map((date) => (
+                          <Chip key={date} label={new Date(date).toLocaleDateString("en-US")} size="small" />
+                        ))}
+                        {selectedDates.length > 4 && (
+                          <Chip label={`+${selectedDates.length - 4} more`} size="small" variant="outlined" />
+                        )}
+                      </Box>
+                    ) : (
+                      <Typography>-</Typography>
                     )}
                   </Box>
-                ) : (
-                  <Typography>-</Typography>
-                )}
-              </Box>
+                </Grid>
+              </Grid>
 
-              <Divider sx={{ mb: 3 }} />
+              <Divider sx={{ mb: 2 }} />
 
               {/* Total */}
-              <Paper elevation={4} sx={{ p: 3, mb: 3, backgroundColor: "background.paper", borderRadius: "16px" }}>
+              <Box sx={{ px: 2, py: 1.2, backgroundColor: "background.paper", borderRadius: 2 }}>
                 {loading ? (
                   <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" gap={2} py={4}>
                     <CircularProgress size={60} />
@@ -1900,13 +1907,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   </Box>
                 ) : (
                   <>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>Total Price</Typography>
                     <Typography variant="h4" fontWeight="bold" color="primary" mb={1}>
                       ฿{calculatedPrice?.toLocaleString() || "0"}
                     </Typography>
-                    <Typography variant="subtitle2" color="text.secondary">Total Price</Typography>
                   </>
                 )}
-              </Paper>
+              </Box>
 
               {/* Discounts Row 1: Free credit (Meeting only) */}
               {hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && (
@@ -1929,8 +1936,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   </Button>
                 </Box>
               )}
-
-
 
               {/* Discounts Row 2: 50% Member Discount (toggle-able) */}
               {hasPackage && (
@@ -1968,331 +1973,320 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   </Button>
                 </Box>
               )}
+            </Card>
+          </Grid >
 
-
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Bottom Section: Contact & Details */}
-        <Grid size={{ xs: 12 }} >
-          <Paper elevation={3} className="contact-form-paper">
-            <Box className="form-header">
-              <Typography variant="h5" fontWeight="700" color="primary" className="form-title">
-                Complete Your Booking
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Fill in the details below to confirm your room reservation
-              </Typography>
-              <Divider className="form-divider" sx={{ backgroundColor: "primary.main" }} />
-            </Box>
-
-            <Grid container spacing={3}>
-              {/* Left: Contact */}
-              <Grid size={{ xs: 12, md: 6 }} >
-                <Paper elevation={1} className="info-section-paper">
-                  <Box className="info-section-header">
-                    <User size={24} className="info-section-icon" />
-                    <Typography variant="h6" fontWeight="600">Your Information</Typography>
-                  </Box>
-
-                  <Box className="info-fields">
-                    <TextField
-                      label="Full Name"
-                      fullWidth
-                      value={name}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <User size={20} style={{ marginRight: 8, color: "#666" }} />,
-                        readOnly: true,
-                        inputProps: { className: "readonly-input" },
-                      }}
-                      className="readonly-field"
-                    />
-                    <TextField
-                      label="Phone Number"
-                      fullWidth
-                      value={phone}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <Phone size={20} style={{ marginRight: 8, color: "#666" }} />,
-                        readOnly: true,
-                        inputProps: { className: "readonly-input" },
-                      }}
-                      className="readonly-field"
-                    />
-                    <TextField
-                      label="Email Address"
-                      fullWidth
-                      value={email}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <Mail size={20} style={{ marginRight: 8, color: "#666" }} />,
-                        readOnly: true,
-                        inputProps: { className: "readonly-input" },
-                      }}
-                      className="readonly-field"
-                    />
-
-                    <Grid container spacing={1}>
-                      <Grid size={{ xs: 12 }} >
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Address Number
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.AddressNumber || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))}
-                          placeholder="Enter your house/building number"
-                          error={!!errors.AddressNumber}
-                          helperText={errors.AddressNumber}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Street
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.Street || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))}
-                          placeholder="Enter street name"
-                          error={!!errors.Street}
-                          helperText={errors.Street}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Sub-district
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.SubDistrict || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))}
-                          placeholder="Enter sub-district"
-                          error={!!errors.SubDistrict}
-                          helperText={errors.SubDistrict}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          District
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.District || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))}
-                          placeholder="Enter district"
-                          error={!!errors.District}
-                          helperText={errors.District}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Province
-                        </Typography>
-                        <FormControl fullWidth error={!!errors.Province}>
-                          <Select
-                            displayEmpty
-                            value={addressFormData?.Province || ""}
-                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Province: e.target.value as string }))}
-                          >
-                            <MenuItem value="">
-                              <em>-- เลือกจังหวัด --</em>
-                            </MenuItem>
-                            {provincesData.map((item, index) => (
-                              <MenuItem key={index} value={item}>
-                                {item}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          {errors.Province && <FormHelperText>{errors.Province}</FormHelperText>}
-                        </FormControl>
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Postal Code
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.PostalCode || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))}
-                          placeholder="Enter postal code"
-                          error={!!errors.PostalCode}
-                          helperText={errors.PostalCode}
-                        />
-                      </Grid>
-
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                          Tax ID
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          value={addressFormData?.TaxID || ""}
-                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))}
-                          placeholder="Enter tax ID"
-                          error={!!errors.TaxID}
-                          helperText={errors.TaxID}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Paper>
-              </Grid>
-
-              {/* Right: Booking details */}
-              <Grid size={{ xs: 12, md: 6 }} >
-                <Paper elevation={1} className="info-section-paper">
-                  <Box className="details-section-header">
-                    <Calendar size={24} className="info-section-icon" />
-                    <Typography variant="h6" fontWeight="600">Booking Details</Typography>
-                  </Box>
-
-                  <Box className="details-fields">
-                    <TextField
-                      label="Purpose of Booking"
-                      fullWidth
-                      required
-                      rows={2}
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
-                      placeholder="e.g. team planning meeting, client presentation, training session, etc."
-                      error={!purpose}
-                      helperText={!purpose ? "Please describe the purpose of your booking." : ""}
-                      className="textarea-field"
-                    />
-
-                    <FormControl fullWidth>
-                      <InputLabel id="setup-style-label">Room Setup Style</InputLabel>
-                      <Select
-                        labelId="setup-style-label"
-                        id="setup-style-select"
-                        value={selectedStyle}
-                        label="Room Setup Style"
-                        onChange={(e) => setSelectedStyle(e.target.value as string)}
-                      >
-                        {setupStyles?.map((item) => (
-                          <MenuItem key={item.ID} value={item.LayoutName}>
-                            {item.LayoutName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    <Paper elevation={2} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", mt: 2 }}>
-                      <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
-                        <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>Required Equipment</FormLabel>
-
-                        {/* Select All */}
-                        <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
-                                indeterminate={selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length}
-                                onChange={(e) => (e.target.checked ? setSelectedEquipment(equipmentList) : setSelectedEquipment([]))}
-                              />
-                            }
-                            label="Select All"
-                            sx={{ fontWeight: 600 }}
-                          />
-                        </Box>
-
-                        {/* Equipment Grid */}
-                        <Box
-                          sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
-                            gap: 2,
-                            maxHeight: 200,
-                            overflowY: "auto",
-                            pr: 1,
-                          }}
-                        >
-                          {equipmentList.map((item: string) => (
-                            <FormControlLabel
-                              key={item}
-                              control={
-                                <Checkbox
-                                  checked={selectedEquipment.includes(item)}
-                                  onChange={(e) =>
-                                    e.target.checked
-                                      ? setSelectedEquipment([...selectedEquipment, item])
-                                      : setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item))
-                                  }
-                                />
-                              }
-                              label={item}
-                            />
-                          ))}
-                        </Box>
-                      </FormControl>
-                    </Paper>
-
-                    <TextField
-                      label="Additional Special Requests (Optional)"
-                      fullWidth
-                      rows={2}
-                      value={additionalNote}
-                      onChange={(e) => setAdditionalNote(e.target.value)}
-                      placeholder="Special equipment, catering arrangements, or other requests"
-                      className="textarea-field"
-                      sx={{ mt: 2 }}
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-            </Grid>
-
-            {/* Action Section */}
-            <Box className="action-section">
-              <Divider className="action-divider" />
-
-              {selectedDates.length === 0 && (
-                <Alert severity="info" className="date-alert" icon={<Calendar size={16} />}>
-                  Please select your booking dates from the calendar above to proceed
-                </Alert>
-              )}
-
-              <Box className="confirmation-section">
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => {
-                    if (!validateForm()) return;
-                    setOpenPopupInvoiceCondition(true);
-                  }}
-                  disabled={
-                    loading ||
-                    calculatedPrice == null ||
-                    selectedDates.length === 0 ||
-                    !selectedRoomId ||
-                    purpose.trim() === "" ||
-                    (timeOption === "hourly" && !isHourlyAllowed) ||
-                    (timeOption === "half" && !timeRange)
-                  }
-                  className="confirm-button"
-                  startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : <Check size={24} />}
-                >
-                  {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
-                </Button>
-
-                <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Info size={16} /> Your booking will be confirmed immediately after payment
+          {/* Bottom Section: Contact & Details */}
+          <Grid size={{ xs: 12 }} >
+            <Card elevation={3} className="contact-form-paper">
+              <Box className="form-header">
+                <Typography variant="h5" fontWeight="700" color="primary" className="form-title">
+                  Complete Your Booking
                 </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Fill in the details below to confirm your room reservation
+                </Typography>
+                <Divider className="form-divider" sx={{ backgroundColor: "primary.main" }} />
               </Box>
 
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+              <Grid container spacing={3}>
+                {/* Left: Contact */}
+                <Grid size={{ xs: 12, md: 12, lg: 6 }} >
+                  <Box className="info-section-paper">
+                    <Box className="info-section-header">
+                      <User size={24} className="info-section-icon" />
+                      <Typography variant="h6" fontWeight="600">Your Information</Typography>
+                    </Box>
+
+                    <Box className="info-fields">
+                      <TextField
+                        label="Full Name"
+                        fullWidth
+                        value={name}
+                        variant="outlined"
+                        InputProps={{
+                          startAdornment: <User size={20} style={{ marginRight: 8, color: "#666" }} />,
+                          readOnly: true,
+                          inputProps: { className: "readonly-input" },
+                        }}
+                        className="readonly-field"
+                      />
+                      <TextField
+                        label="Phone Number"
+                        fullWidth
+                        value={phone}
+                        variant="outlined"
+                        InputProps={{
+                          startAdornment: <Phone size={20} style={{ marginRight: 8, color: "#666" }} />,
+                          readOnly: true,
+                          inputProps: { className: "readonly-input" },
+                        }}
+                        className="readonly-field"
+                      />
+                      <TextField
+                        label="Email Address"
+                        fullWidth
+                        value={email}
+                        variant="outlined"
+                        InputProps={{
+                          startAdornment: <Mail size={20} style={{ marginRight: 8, color: "#666" }} />,
+                          readOnly: true,
+                          inputProps: { className: "readonly-input" },
+                        }}
+                        className="readonly-field"
+                      />
+
+                      <Grid container spacing={1}>
+                        <Grid size={{ xs: 12 }} >
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Address Number
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.AddressNumber || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))}
+                            placeholder="Enter your house/building number"
+                            error={!!errors.AddressNumber}
+                            helperText={errors.AddressNumber}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Street
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.Street || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))}
+                            placeholder="Enter street name (in Thai)"
+                            error={!!errors.Street}
+                            helperText={errors.Street}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Sub-district
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.SubDistrict || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))}
+                            placeholder="Enter sub-district (in Thai)"
+                            error={!!errors.SubDistrict}
+                            helperText={errors.SubDistrict}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            District
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.District || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))}
+                            placeholder="Enter district (in Thai)"
+                            error={!!errors.District}
+                            helperText={errors.District}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Province
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.Province || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Province: e.target.value }))}
+                            placeholder="Enter province name (in Thai)"
+                            error={!!errors.Province}
+                            helperText={errors.Province}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Postal Code
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.PostalCode || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))}
+                            placeholder="Enter postal code"
+                            error={!!errors.PostalCode}
+                            helperText={errors.PostalCode}
+                          />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                            Tax ID
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            value={addressFormData?.TaxID || ""}
+                            onChange={(e) => setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))}
+                            placeholder="Enter tax ID"
+                            error={!!errors.TaxID}
+                            helperText={errors.TaxID}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Right: Booking details */}
+                <Grid size={{ xs: 12, md: 12, lg: 6 }} >
+                  <Box className="info-section-paper">
+                    <Box className="details-section-header">
+                      <Calendar size={24} className="info-section-icon" />
+                      <Typography variant="h6" fontWeight="600">Booking Details</Typography>
+                    </Box>
+
+                    <Box className="details-fields">
+                      <TextField
+                        label="Purpose of Booking"
+                        fullWidth
+                        required
+                        rows={2}
+                        value={purpose}
+                        onChange={(e) => setPurpose(e.target.value)}
+                        placeholder="e.g. team planning meeting, client presentation, training session, etc."
+                        error={!purpose}
+                        helperText={!purpose ? "Please describe the purpose of your booking." : ""}
+                        className="textarea-field"
+                      />
+
+                      <FormControl fullWidth>
+                        <InputLabel id="setup-style-label">Room Setup Style</InputLabel>
+                        <Select
+                          labelId="setup-style-label"
+                          id="setup-style-select"
+                          value={selectedStyle}
+                          label="Room Setup Style"
+                          onChange={(e) => setSelectedStyle(e.target.value as string)}
+                        >
+                          {setupStyles?.map((item) => (
+                            <MenuItem key={item.ID} value={item.LayoutName}>
+                              {item.LayoutName}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <Paper elevation={2} sx={{ p: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", mt: 2 }}>
+                        <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+                          <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>Required Equipment</FormLabel>
+
+                          {/* Select All */}
+                          <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
+                                  indeterminate={selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length}
+                                  onChange={(e) => (e.target.checked ? setSelectedEquipment(equipmentList) : setSelectedEquipment([]))}
+                                />
+                              }
+                              label="Select All"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          </Box>
+
+                          {/* Equipment Grid */}
+                          <Box
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                              gap: 2,
+                              maxHeight: 200,
+                              overflowY: "auto",
+                              pr: 1,
+                            }}
+                          >
+                            {equipmentList.map((item: string) => (
+                              <FormControlLabel
+                                key={item}
+                                control={
+                                  <Checkbox
+                                    checked={selectedEquipment.includes(item)}
+                                    onChange={(e) =>
+                                      e.target.checked
+                                        ? setSelectedEquipment([...selectedEquipment, item])
+                                        : setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item))
+                                    }
+                                  />
+                                }
+                                label={item}
+                              />
+                            ))}
+                          </Box>
+                        </FormControl>
+                      </Paper>
+
+                      <TextField
+                        label="Additional Special Requests (Optional)"
+                        fullWidth
+                        rows={2}
+                        value={additionalNote}
+                        onChange={(e) => setAdditionalNote(e.target.value)}
+                        placeholder="Special equipment, catering arrangements, or other requests"
+                        className="textarea-field"
+                        sx={{ mt: 2 }}
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+
+              {/* Action Section */}
+              <Box className="action-section">
+                <Divider className="action-divider" />
+
+                {selectedDates.length === 0 && (
+                  <Alert severity="info" className="date-alert" icon={<Calendar size={16} />}>
+                    Please select your booking dates from the calendar above to proceed
+                  </Alert>
+                )}
+
+                <Box className="confirmation-section">
+                  <Button
+                    variant="contained"
+                    // size="large"
+                    onClick={() => {
+                      if (!validateForm()) return;
+                      setOpenPopupInvoiceCondition(true);
+                    }}
+                    disabled={
+                      loading ||
+                      calculatedPrice == null ||
+                      selectedDates.length === 0 ||
+                      !selectedRoomId ||
+                      purpose.trim() === "" ||
+                      (timeOption === "hourly" && !isHourlyAllowed) ||
+                      (timeOption === "half" && !timeRange)
+                    }
+                    className="confirm-button"
+                    startIcon={loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : <Check size={24} />}
+                  >
+                    {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
+                  </Button>
+
+                  <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Info size={16} /> Your booking will be confirmed immediately after payment
+                  </Typography>
+                </Box>
+
+              </Box>
+            </Card>
+          </Grid>
+        </Grid >
+      </Container >
+    </Box >
   );
 };
 

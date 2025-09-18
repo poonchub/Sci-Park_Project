@@ -314,8 +314,8 @@ function ServiceAreaDetails() {
             if (data.QuotationDocument) {
                 formData.append('quotation_document', data.QuotationDocument);
             }
-            if (data.RefundGuaranteeDocument) {
-                formData.append('refund_guarantee_document', data.RefundGuaranteeDocument);
+            if (data.RequestDocument) {
+                formData.append('request_document', data.RequestDocument);
             }
 
             // เรียก API สำหรับอัปเดต Document Contract

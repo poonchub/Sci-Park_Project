@@ -73,12 +73,11 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 		}
 	}
 
-	// จัดการไฟล์เอกสาร
+	// จัดการไฟล์เอกสารสำหรับ ServiceAreaDocument
 	documentFields := map[string]string{
 		"service_contract_document": "ServiceContractDocument",
 		"area_handover_document":    "AreaHandoverDocument",
 		"quotation_document":        "QuotationDocument",
-		"refund_guarantee_document": "RefundGuaranteeDocument",
 	}
 
 	for formField, structField := range documentFields {
@@ -89,17 +88,22 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 				deleteOldFile(oldPath)
 			}
 
-			// สร้างโฟลเดอร์ใหม่
-			uploadDir := fmt.Sprintf("./images/ServiceAreaDocuments/%d", uint(requestServiceAreaID))
+			// สร้างโฟลเดอร์ใหม่ (ใช้รูปแบบเดียวกับตอนสร้าง)
+			uploadDir := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", uint(requestServiceAreaID))
 			if err := os.MkdirAll(uploadDir, 0755); err != nil {
 				tx.Rollback()
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
 				return
 			}
 
-			// สร้างชื่อไฟล์ใหม่
+			// สร้างชื่อไฟล์ใหม่ โดยใช้ชื่อไฟล์เดิมที่อัพโหลดมา
+			// ใช้ timestamp เพื่อป้องกันการชนกันของชื่อไฟล์
 			fileExt := filepath.Ext(file.Filename)
-			newFileName := fmt.Sprintf("%s_%d%s", formField, time.Now().Unix(), fileExt)
+			baseName := filepath.Base(file.Filename)
+			// ลบ extension ออกจาก base name
+			baseNameWithoutExt := baseName[:len(baseName)-len(fileExt)]
+			// สร้างชื่อไฟล์ใหม่: originalname_timestamp.extension
+			newFileName := fmt.Sprintf("%s_%d%s", baseNameWithoutExt, time.Now().Unix(), fileExt)
 			filePath := filepath.Join(uploadDir, newFileName)
 
 			// บันทึกไฟล์ใหม่
@@ -109,8 +113,59 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 				return
 			}
 
+			// แปลง path separator เป็น forward slash สำหรับ cross-platform compatibility
+			normalizedPath := filepath.ToSlash(filePath)
+
 			// อัปเดต path ในฐานข้อมูล
-			setFieldValue(&updateData, structField, filePath)
+			setFieldValue(&updateData, structField, normalizedPath)
+		}
+	}
+
+	// จัดการไฟล์ RequestDocument (มาจาก RequestServiceArea)
+	if file, err := c.FormFile("request_document"); err == nil && file != nil {
+		// ดึงข้อมูล RequestServiceArea
+		var requestServiceArea entity.RequestServiceArea
+		if err := tx.Where("id = ?", uint(requestServiceAreaID)).First(&requestServiceArea).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service area"})
+			return
+		}
+
+		// ลบไฟล์เก่า (ถ้ามี)
+		if requestServiceArea.ServiceRequestDocument != "" {
+			deleteOldFile(requestServiceArea.ServiceRequestDocument)
+		}
+
+		// สร้างโฟลเดอร์ใหม่ (ใช้รูปแบบเดียวกับตอนสร้าง)
+		uploadDir := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", uint(requestServiceAreaID))
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
+			return
+		}
+
+		// สร้างชื่อไฟล์ใหม่
+		fileExt := filepath.Ext(file.Filename)
+		baseName := filepath.Base(file.Filename)
+		baseNameWithoutExt := baseName[:len(baseName)-len(fileExt)]
+		newFileName := fmt.Sprintf("%s_%d%s", baseNameWithoutExt, time.Now().Unix(), fileExt)
+		filePath := filepath.Join(uploadDir, newFileName)
+
+		// บันทึกไฟล์ใหม่
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save uploaded file"})
+			return
+		}
+
+		// แปลง path separator เป็น forward slash
+		normalizedPath := filepath.ToSlash(filePath)
+
+		// อัปเดต ServiceRequestDocument ใน RequestServiceArea
+		if err := tx.Model(&requestServiceArea).Update("service_request_document", normalizedPath).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update request service area document"})
+			return
 		}
 	}
 
@@ -161,8 +216,6 @@ func getFieldValue(doc *entity.ServiceAreaDocument, fieldName string) string {
 		return doc.AreaHandoverDocument
 	case "QuotationDocument":
 		return doc.QuotationDocument
-	case "RefundGuaranteeDocument":
-		return doc.RefundGuaranteeDocument
 	default:
 		return ""
 	}
@@ -177,8 +230,6 @@ func setFieldValue(doc *entity.ServiceAreaDocument, fieldName, value string) {
 		doc.AreaHandoverDocument = value
 	case "QuotationDocument":
 		doc.QuotationDocument = value
-	case "RefundGuaranteeDocument":
-		doc.RefundGuaranteeDocument = value
 	}
 }
 
@@ -217,12 +268,18 @@ func GetServiceAreaDocumentForEdit(c *gin.Context) {
 	// ดึงข้อมูล Room และ ServiceUserType
 	var room entity.Room
 	var serviceUserType entity.ServiceUserType
+	var requestServiceArea entity.RequestServiceArea
 
 	if doc.RoomID != 0 {
 		config.DB().First(&room, doc.RoomID)
 	}
 	if doc.ServiceUserTypeID != 0 {
 		config.DB().First(&serviceUserType, doc.ServiceUserTypeID)
+	}
+	// ดึงข้อมูล RequestServiceArea เพื่อเอา ServiceRequestDocument
+	if err := config.DB().First(&requestServiceArea, doc.RequestServiceAreaID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch request service area"})
+		return
 	}
 
 	response := gin.H{
@@ -237,7 +294,7 @@ func GetServiceAreaDocumentForEdit(c *gin.Context) {
 		"ServiceContractDocument": doc.ServiceContractDocument,
 		"AreaHandoverDocument":    doc.AreaHandoverDocument,
 		"QuotationDocument":       doc.QuotationDocument,
-		"RefundGuaranteeDocument": doc.RefundGuaranteeDocument,
+		"RequestDocument":         requestServiceArea.ServiceRequestDocument,
 		"Room":                    room,
 		"ServiceUserType":         serviceUserType,
 	}

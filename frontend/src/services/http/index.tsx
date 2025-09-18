@@ -7,7 +7,7 @@ import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import axios, { AxiosRequestConfig } from "axios";
+import axios from "axios";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
@@ -184,7 +184,7 @@ async function ListUsers(data: QuarryInterface) {
 async function CreateUser(data: any) {
     // Debug: Print received data
     console.log('🔍 CreateUser received data:', data);
-    
+
     const formData = new FormData();
     formData.append("company_name", data.company_name || "");
     formData.append("business_detail", data.business_detail || "");
@@ -240,7 +240,7 @@ async function CreateUser(data: any) {
             console.error('🔍 Error response:', error.response?.data);
             console.error('🔍 Error status:', error.response?.status);
         }
-        
+
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message
@@ -1486,6 +1486,15 @@ async function GetNotificationsByInvoiceAndUser(invoice_id: number, user_id: num
         throw error;
     }
 }
+async function GetNotificationByRoomBookingAndUser(booking_id: number, user_id: number) {
+    try {
+        const response = await axiosInstance.get(`/notification/by-room-booking/${booking_id}/${user_id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching notification:", error);
+        throw error;
+    }
+}
 async function CreateNotification(data: NotificationsInterface) {
     try {
         const response = await axiosInstance.post(`/notification`, data, {
@@ -1654,7 +1663,38 @@ async function GetMeetingRoomSummaryToday() {
         throw error;
     }
 }
-
+async function ListBookingRoomsForAdmin(
+    statusID: string,
+    page: number,
+    limit: number,
+    createdAt?: string | undefined,
+    userId?: number | undefined,
+    roomId?: number | undefined
+) {
+    try {
+        const response = await axiosInstance.get(`/booking-room-option-for-admin?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}&roomId=${roomId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room booking:", error);
+        throw error;
+    }
+}
+async function ListBookingRoomsForUser(
+    statusID: string,
+    page: number,
+    limit: number,
+    createdAt?: string | undefined,
+    userId?: number | undefined,
+    roomId?: number | undefined
+) {
+    try {
+        const response = await axiosInstance.get(`/booking-room-option-for-user?status=${statusID}&page=${page}&limit=${limit}&createdAt=${createdAt}&userId=${userId}&roomId=${roomId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching room booking:", error);
+        throw error;
+    }
+}
 
 
 // ---------------- ROOM TYPES ----------------
@@ -3369,25 +3409,34 @@ export async function GetBookingRoomById(id: number) {
 
 // ✅ อนุมัติการจอง
 export async function ApproveBookingRoom(id: number) {
-    try {
-        const res = await axiosInstance.post(`/booking-rooms/${id}/approve`);
-        return res.data;
-    } catch (err) {
-        console.error(`Error approving booking room ${id}:`, err);
-        return false;
-    }
+  try {
+    const userId = localStorage.getItem("userId") || "";
+    const res = await axiosInstance.post(
+      `/booking-rooms/${id}/approve?approver_id=${encodeURIComponent(userId)}`
+    );
+    return res.data;
+  } catch (err) {
+    console.error(`Error approving booking room ${id}:`, err);
+    return false;
+  }
 }
 
+
+
 // ✅ ปฏิเสธการจอง
-export async function RejectBookingRoom(id: number, note: string | undefined) {
-    try {
-        const res = await axiosInstance.post(`/booking-rooms/${id}/reject`);
-        return res.data;
-    } catch (err) {
-        console.error(`Error rejecting booking room ${id}:`, err);
-        return false;
-    }
+export async function RejectBookingRoom(id: number, note: string) {
+  try {
+    const res = await axiosInstance.post(
+      `/booking-rooms/${id}/reject`,
+      { note: note?.trim() || "" } // ← ใช้ note จริง ส่งเป็น JSON body
+    );
+    return res.data;
+  } catch (err) {
+    console.error(`Error rejecting booking room ${id}:`, err);
+    return false;
+  }
 }
+
 
 export async function MarkPaymentAsCompleted(id: number) {
     try {
@@ -3412,15 +3461,22 @@ export async function CompleteBookingRoom(id: number) {
 
 }
 
+// services/payments.ts
 export async function SubmitPaymentSlip(
     bookingId: number,
     fileLike: File | Blob | string,
-    extra?: Record<string, any>
+    extra?: {
+        PaymentID?: number;
+        PayerID?: number;
+        installment?: "full" | "deposit" | "balance";
+        amount?: number;
+        transTimestamp?: string;  // จาก CheckSlip
+    }
 ) {
-    // แปลงอะไรก็ตามให้เป็น File จริง
     const toFile = (input: any): File | null => {
         if (input instanceof File) return input;
-        if (input instanceof Blob) return new File([input], "slip.jpg", { type: input.type || "application/octet-stream" });
+        if (input instanceof Blob)
+            return new File([input], "slip.jpg", { type: input.type || "application/octet-stream" });
         if (typeof input === "string" && input.startsWith("data:")) {
             const [meta, data] = input.split(",");
             const mime = (meta.match(/data:(.*?);/) || [])[1] || "image/png";
@@ -3437,20 +3493,40 @@ export async function SubmitPaymentSlip(
 
     const fd = new FormData();
     fd.append("slip", file, file.name);
-    if (extra) {
-        Object.entries(extra).forEach(([k, v]) => {
-            if (v !== undefined && v !== null) fd.append(k, String(v));
-        });
-    }
+    fd.append("file", file, file.name);
 
-    // ✅ debug ให้เห็นจริงว่ามีอะไรอยู่ใน FormData
-    for (const [k, v] of fd.entries()) {
-        console.log("FD ->", k, v instanceof File ? `${v.name} (${v.type}, ${v.size}B)` : v);
-    }
+
+    // ส่งทั้ง snake_case และ PascalCase เพื่อกันพลาดฝั่ง BE
+    const map: Record<string, any> = {
+        payment_id: extra?.PaymentID,
+        PaymentID: extra?.PaymentID,
+
+        payer_id: extra?.PayerID,
+        PayerID: extra?.PayerID,
+
+        booking_room_id: bookingId,
+        BookingRoomID: bookingId,
+
+        installment: extra?.installment,
+        InstallmentKey: extra?.installment,
+
+        // 👇 เพิ่มสองบรรทัดนี้
+        PaymentDate: extra?.transTimestamp,
+        payment_date: extra?.transTimestamp,
+
+        amount: extra?.amount,
+        Amount: extra?.amount,
+
+    };
+
+    Object.entries(map).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") fd.append(k, String(v));
+    });
 
     const res = await fetch(`${apiUrl}/booking-rooms/${bookingId}/payments`, {
-        method: "POST",
-        body: fd, // อย่าใส่ Content-Type เอง
+        method: "POST", // upsert: มี PaymentID = update, ไม่มี = create
+        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        body: fd,
     });
 
     if (!res.ok) {
@@ -3459,6 +3535,7 @@ export async function SubmitPaymentSlip(
     }
     return res.json();
 }
+
 
 
 
@@ -3755,6 +3832,7 @@ export {
     GetNotificationsByRequestAndUser,
     GetNotificationsByTaskAndUser,
     GetNotificationsByInvoiceAndUser,
+    GetNotificationByRoomBookingAndUser,
     CreateNotification,
     UpdateNotificationByID,
     UpdateNotificationsByRequestID,
@@ -3769,7 +3847,8 @@ export {
     GetBookingRoomSummaryThisMonth,
     GetMeetingRoomSummaryToday,
     ListBookingRoomsByUser,
-
+    ListBookingRoomsForAdmin,
+    ListBookingRoomsForUser,
 
     // News
     ListNews,
@@ -3899,7 +3978,7 @@ export {
     // Collaboration Plans
     GetCollaborationPlansByRequestID,
     PatchCollaborationPlans,
-    
+
     // ServiceAreaDocument Edit
     GetServiceAreaDocumentForEdit,
     UpdateServiceAreaDocumentForEdit,

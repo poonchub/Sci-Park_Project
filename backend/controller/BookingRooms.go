@@ -3,13 +3,15 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
-	
+	"sci-park_web-application/services"
+	"strconv"
+
 	"sort"
 	"strings"
 
@@ -194,6 +196,13 @@ type PaymentSummary struct {
 	ApproverID    *uint      `json:"ApproverID"`
 }
 
+type userLite struct {
+	ID         uint   `json:"ID"`
+	FirstName  string `json:"FirstName"`
+	LastName   string `json:"LastName"`
+	EmployeeID string `json:"EmployeeID"`
+}
+
 type BookingRoomResponse struct {
 	ID             uint                 `json:"ID"`
 	Room           entity.Room          `json:"Room"`
@@ -211,6 +220,10 @@ type BookingRoomResponse struct {
 	InvoicePDFPath     *string                    `json:"InvoicePDFPath,omitempty"`
 	Finance            BookingFinance             `json:"Finance"`
 	PaymentOption      *entity.PaymentOption      `json:"PaymentOption,omitempty"`
+	Notifications      []entity.Notification      `json:"Notifications"`
+
+	Approver    *userLite  `json:"Approver,omitempty"` // ✅ FE ใช้ booking.Approver
+	ConfirmedAt *time.Time `json:"ConfirmedAt,omitempty"`
 }
 
 // ===== helper: map payments ทั้งหมด + หา active =====
@@ -259,7 +272,7 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
 		switch list[i].Status {
 		case "pending payment", "pending verification", "awaiting receipt":
 			active = &list[i]
-			break
+
 		}
 	}
 	// ถ้าไม่มีก็ใช้อันล่าสุด (ปลายสุดของ list ที่เรียงเก่า→ใหม่)
@@ -292,6 +305,7 @@ func ListBookingRooms(c *gin.Context) {
 		Preload("Payments.Payer").
 		Preload("Payments.Approver").
 		Preload("Payments.PaymentType").
+		Preload("Notifications").
 		Find(&bookings).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -352,6 +366,7 @@ func ListBookingRooms(c *gin.Context) {
 			InvoicePDFPath:     invoicePDFPath,
 			Finance:            fin,
 			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
 		})
 	}
 
@@ -444,8 +459,6 @@ func ListBookingRoomsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-
-
 /* ============================================================
    Helpers / Types
    ============================================================ */
@@ -456,10 +469,17 @@ type additionalInfoPayload struct {
 		UsedFreeCredit  bool `json:"usedFreeCredit"`
 		AppliedMember50 bool `json:"appliedMember50"`
 	} `json:"discounts"`
-	// อื่น ๆ ตามที่ FE ส่งมา (setupStyle/equipment/…)
+	// Fallback แพ็กเกจจาก FE (กรณี user ยังไม่มีแถวใน user_packages)
+	Package struct {
+		Name                   string `json:"name"`
+		MeetingRoomLimit       int    `json:"meeting_room_limit"`
+		TrainingRoomLimit      int    `json:"training_room_limit"`
+		MultiFunctionRoomLimit int    `json:"multi_function_room_limit"`
+	} `json:"package"`
+	QuotaConsumed bool `json:"quota_consumed"`
 }
 
-// โครงแพ็กเกจแบบบาง ๆ (รับผลจาก Raw SQL)
+// โครงแพ็กเกจแบบบาง ๆ (อ่านจากฐาน)
 type packageLite struct {
 	PackageName            string `json:"package_name" gorm:"column:package_name"`
 	MeetingRoomLimit       int    `json:"meeting_room_limit" gorm:"column:meeting_room_limit"`
@@ -467,44 +487,45 @@ type packageLite struct {
 	MultiFunctionRoomLimit int    `json:"multi_function_room_limit" gorm:"column:multi_function_room_limit"`
 }
 
-// สิทธิ์ที่สรุปจากแพ็กเกจ
+// ===== สิทธิ์ที่สรุปจากแพ็กเกจ (สมาชิก) =====
 type pkgBenefits struct {
-	meetingFreePerYear int  // โควต้าฟรีห้องประชุม/ปี
-	meetingHalf        bool // ลด 50% หมวด meeting ได้ไหม
-	trainingHalf       bool // ลด 50% หมวด training
-	hallHalf           bool // ลด 50% หมวด hall/multifunction
+	meetingFreePerYear int
+	meetingHalf        bool
+	trainingHalf       bool
+	hallHalf           bool
 }
 
+// สมาชิกทุกแพ็กเกจ: training/hall ลด 50% ไม่จำกัดครั้ง,
+// meeting ลด 50% ได้ (โดยเฉพาะหลังหมดโควต้าฟรี)
 func benefitsFromPackage(p *packageLite) pkgBenefits {
 	if p == nil {
 		return pkgBenefits{}
 	}
-	switch strings.ToLower(strings.TrimSpace(p.PackageName)) {
-	case "diamond":
-		return pkgBenefits{
-			meetingFreePerYear: p.MeetingRoomLimit,
-			meetingHalf:        true,
-			trainingHalf:       true,
-			hallHalf:           true,
-		}
-	// เพิ่ม mapping อื่น ๆ ถ้ามี เช่น:
-	// case "gold":
-	// 	return pkgBenefits{meetingFreePerYear: p.MeetingRoomLimit, meetingHalf: true, trainingHalf: true, hallHalf: false}
-	default:
-		return pkgBenefits{}
+	meetLimit := p.MeetingRoomLimit
+	if meetLimit < 0 {
+		meetLimit = 0
+	}
+	return pkgBenefits{
+		meetingFreePerYear: meetLimit,
+		meetingHalf:        true,
+		trainingHalf:       true,
+		hallHalf:           true,
 	}
 }
 
-// จัดหมวดห้อง (fallback จากชื่อ RoomType)
-func classifyPolicyRoom(r *entity.Room) string {
-	name := strings.ToLower(strings.TrimSpace(r.RoomType.TypeName))
-	if strings.Contains(name, "training") || strings.Contains(name, "seminar") {
-		return "training"
+// จัดหมวดห้องจาก RoomType.Category (เข้ม: ไม่ fallback)
+func classifyPolicyRoom(r *entity.Room) (string, error) {
+	c := strings.ToLower(strings.TrimSpace(r.RoomType.Category))
+	switch c {
+	case "meetingroom":
+		return "meeting", nil
+	case "trainingroom":
+		return "training", nil
+	case "multifunctionroom":
+		return "hall", nil
+	default:
+		return "", fmt.Errorf("unknown RoomType.Category: %s", r.RoomType.Category)
 	}
-	if strings.Contains(name, "hall") || strings.Contains(name, "multi") {
-		return "hall"
-	}
-	return "meeting"
 }
 
 /* ============================================================
@@ -530,9 +551,9 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 
 	// (optional) debug raw body
-	bodyBytes, _ := ioutil.ReadAll(c.Request.Body)
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
 	log.Println("Raw request body:", string(bodyBytes))
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	var input BookingInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -559,7 +580,7 @@ func CreateBookingRoom(c *gin.Context) {
 		Preload("RoomType.RoomPrices").
 		First(&room, input.RoomID).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลห้องประชุม"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลห้อง"})
 		return
 	}
 	if strings.ToLower(room.RoomStatus.Code) != "available" {
@@ -618,8 +639,7 @@ func CreateBookingRoom(c *gin.Context) {
 	// ----- สถานะตั้งต้น = Pending -----
 	var bs entity.BookingStatus
 	if err := tx.Where("LOWER(status_name) = ?", "pending").First(&bs).Error; err != nil {
-		// ถ้าไม่มี ให้ fallback เป็น 1 (แก้ให้เข้ากับ seed ของคุณ)
-		bs.ID = 1
+		bs.ID = 1 // fallback ให้ตรงกับ seed
 	}
 
 	// ----- AdditionalInfo (ส่วนลดที่ FE ติ๊ก) -----
@@ -641,40 +661,73 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 	baseTotal *= float64(len(input.Dates))
 
-	// ----- ดึงแพ็กเกจของ user แบบ Raw (เลี่ยงการอ้างฟิลด์ที่ struct ไม่มี) -----
-	// NOTE: ปรับ SQL ให้เข้ากับ schema จริงของคุณ
-	var pl packageLite
-	_ = tx.Raw(`
-		SELECT p.package_name, p.meeting_room_limit, p.training_room_limit, p.multi_function_room_limit
-		FROM users u
-		LEFT JOIN packages p ON p.id = u.package_id
-		WHERE u.id = ? LIMIT 1
-	`, user.ID).Scan(&pl).Error
+	// ----- ดึงแพ็กเกจของผู้ใช้ผ่าน user_packages -----
+	var up entity.UserPackage
+	_ = tx.Preload("Package").
+		Where("user_id = ?", user.ID).
+		Order("created_at DESC").
+		First(&up).Error // เงียบไว้ ใช้ fallback จาก FE ด้านล่างได้
 
-	benefit := benefitsFromPackage(&pl)
-	if benefit.meetingFreePerYear < 0 {
-		benefit.meetingFreePerYear = 0
+	// สร้าง packageLite จากฐาน (ถ้ามี) หรือ fallback จาก FE
+	pl := packageLite{}
+	if up.Package.ID != 0 {
+		pl = packageLite{
+			PackageName:            up.Package.PackageName,
+			MeetingRoomLimit:       up.Package.MeetingRoomLimit,
+			TrainingRoomLimit:      up.Package.TrainingRoomLimit,
+			MultiFunctionRoomLimit: up.Package.MultiFunctionRoomLimit,
+		}
+	}
+	if strings.TrimSpace(pl.PackageName) == "" && strings.TrimSpace(addInfo.Package.Name) != "" {
+		pl.PackageName = addInfo.Package.Name
+		pl.MeetingRoomLimit = addInfo.Package.MeetingRoomLimit
+		pl.TrainingRoomLimit = addInfo.Package.TrainingRoomLimit
+		pl.MultiFunctionRoomLimit = addInfo.Package.MultiFunctionRoomLimit
 	}
 
-	// ----- คิดส่วนลดตามแพ็กเกจ -----
-	policy := classifyPolicyRoom(&room) // "meeting" | "training" | "hall"
+	// ----- policy/หมวดจาก RoomType.Category (ห้าม fallback) -----
+	policy, err := classifyPolicyRoom(&room)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ประเภทห้องไม่ถูกต้อง"})
+		return
+	}
+
+	// ----- ส่วนลด/โควตา -----
+	benefit := benefitsFromPackage(&pl)
+
+	nz := func(x int) int {
+		if x < 0 {
+			return 0
+		}
+		return x
+	}
+	meetingRemaining := nz(pl.MeetingRoomLimit - nz(up.MeetingRoomUsed))
+	// training/hall ไม่จำกัดครั้งสำหรับส่วนลด 50% -> ไม่ต้องคิด remaining
 
 	appliedFree := false
 	applied50 := false
 
 	switch policy {
 	case "meeting":
-		if addInfo.Discounts.UsedFreeCredit && benefit.meetingFreePerYear > 0 {
+		// ฟรีถ้าเลือกใช้และยังมีโควตา
+		if addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
 			appliedFree = true
+		} else if meetingRemaining <= 0 && benefit.meetingHalf {
+			// โควต้าหมด -> ลด 50% อัตโนมัติ
+			applied50 = true
 		} else if addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
+			// เผื่อกรณีอยากบังคับติ๊กเอง
 			applied50 = true
 		}
 	case "training":
-		if addInfo.Discounts.AppliedMember50 && benefit.trainingHalf {
+		// สมาชิก: ลด 50% ไม่จำกัดครั้ง
+		if benefit.trainingHalf {
 			applied50 = true
 		}
 	case "hall":
-		if addInfo.Discounts.AppliedMember50 && benefit.hallHalf {
+		// สมาชิก: ลด 50% ไม่จำกัดครั้ง
+		if benefit.hallHalf {
 			applied50 = true
 		}
 	}
@@ -722,7 +775,7 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// ----- บันทึก Booking (ไม่สร้าง Payment ที่นี่) -----
+	// ----- บันทึก Booking -----
 	booking := entity.BookingRoom{
 		Purpose:         input.Purpose,
 		UserID:          input.UserID,
@@ -758,15 +811,18 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ❌ ไม่สร้าง Payment ที่นี่ — ไปสร้างตอน ApproveBookingRoom
+	// ไม่สร้าง Payment ที่นี่ — ไปสร้างตอน ApproveBookingRoom
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกข้อมูลไม่สำเร็จ"})
 		return
 	}
 
+	services.NotifySocketEvent("booking_room_created", booking)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":          "จองห้องสำเร็จ",
 		"booking_id":       booking.ID,
+		"category":         policy,
 		"base_total":       baseTotal,
 		"final_total":      finalTotal,
 		"discount":         discountAmount,
@@ -1039,4 +1095,349 @@ func GetBookingRoomSummary(c *gin.Context) {
 		"status_summary": statusCounts,
 		"total_bookings": totalBookings,
 	})
+}
+
+// GET /booking-room-option-for-admin
+func ListBookingRoomsForAdmin(c *gin.Context) {
+	db, start, end, err := buildBookingBaseQuery(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	page, limit, offset := getPagination(c)
+
+	var bookings []entity.BookingRoom
+	if err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("PaymentOption").
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
+		Preload("Notifications").
+		Order("booking_rooms.created_at DESC").
+		Limit(limit).Offset(offset).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
+
+	total := countBookingRooms(db)
+
+	// สร้าง response
+	result := make([]BookingRoomResponse, 0, len(bookings))
+	for _, b := range bookings {
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+		}
+
+		pList, pActive := buildPaymentSummaries(b.Payments)
+		if pList == nil {
+			pList = []PaymentSummary{}
+		}
+
+		var invoicePDFPath *string
+		if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+			p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+			invoicePDFPath = &p
+		}
+
+		fin := computeBookingFinance(b)
+		disp := computeDisplayStatus(b)
+
+		result = append(result, BookingRoomResponse{
+			ID:                 b.ID,
+			Room:               b.Room,
+			BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+			TimeSlotMerged:     merged,
+			User:               b.User,
+			Purpose:            b.Purpose,
+			AdditionalInfo:     addInfo,
+			StatusName:         status,
+			Payment:            pActive,
+			Payments:           pList,
+			RoomBookingInvoice: b.RoomBookingInvoice,
+			DisplayStatus:      disp,
+			InvoicePDFPath:     invoicePDFPath,
+			Finance:            fin,
+			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":         result,
+		"page":         page,
+		"limit":        limit,
+		"total":        total,
+		"totalPages":   (total + int64(limit) - 1) / int64(limit),
+		"statusCounts": fetchBookingStatusCounts(start, end),
+		"counts":       fetchBookingCounts(start, end),
+	})
+}
+
+// GET /booking-room-option-for-user
+func ListBookingRoomsForUser(c *gin.Context) {
+	db, start, end, err := buildBookingBaseQuery(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	page, limit, offset := getPagination(c)
+
+	var bookings []entity.BookingRoom
+	if err := db.
+		Preload("Room.Floor").
+		Preload("BookingDates").
+		Preload("User").
+		Preload("TimeSlots").
+		Preload("Status").
+		Preload("PaymentOption").
+		Preload("RoomBookingInvoice").
+		Preload("RoomBookingInvoice.Approver").
+		Preload("RoomBookingInvoice.Customer").
+		Preload("RoomBookingInvoice.Items").
+		Preload("Payments", func(tx *gorm.DB) *gorm.DB {
+			return tx.Order("payments.created_at ASC").Order("payments.id ASC")
+		}).
+		Preload("Payments.Status").
+		Preload("Payments.Payer").
+		Preload("Payments.Approver").
+		Preload("Payments.PaymentType").
+		Preload("Notifications").
+		Order("booking_rooms.created_at DESC").
+		Limit(limit).Offset(offset).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลได้"})
+		return
+	}
+
+	total := countBookingRooms(db)
+
+	// สร้าง response
+	result := make([]BookingRoomResponse, 0, len(bookings))
+	for _, b := range bookings {
+		bookingDate := time.Now()
+		if len(b.BookingDates) > 0 {
+			bookingDate = b.BookingDates[0].Date
+		}
+		merged := mergeTimeSlots(b.TimeSlots, bookingDate)
+
+		status := b.Status.StatusName
+		if b.CancelledAt != nil {
+			status = "cancelled"
+		}
+
+		var addInfo AdditionalInfo
+		if b.AdditionalInfo != "" {
+			_ = json.Unmarshal([]byte(b.AdditionalInfo), &addInfo)
+		}
+
+		pList, pActive := buildPaymentSummaries(b.Payments)
+		if pList == nil {
+			pList = []PaymentSummary{}
+		}
+
+		var invoicePDFPath *string
+		if b.RoomBookingInvoice != nil && b.RoomBookingInvoice.InvoicePDFPath != "" {
+			p := strings.ReplaceAll(b.RoomBookingInvoice.InvoicePDFPath, "\\", "/")
+			invoicePDFPath = &p
+		}
+
+		fin := computeBookingFinance(b)
+		disp := computeDisplayStatus(b)
+
+		result = append(result, BookingRoomResponse{
+			ID:                 b.ID,
+			Room:               b.Room,
+			BookingDates:       append([]entity.BookingDate{}, b.BookingDates...),
+			TimeSlotMerged:     merged,
+			User:               b.User,
+			Purpose:            b.Purpose,
+			AdditionalInfo:     addInfo,
+			StatusName:         status,
+			Payment:            pActive,
+			Payments:           pList,
+			RoomBookingInvoice: b.RoomBookingInvoice,
+			DisplayStatus:      disp,
+			InvoicePDFPath:     invoicePDFPath,
+			Finance:            fin,
+			PaymentOption:      &b.PaymentOption,
+			Notifications:      b.Notifications,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":         result,
+		"page":         page,
+		"limit":        limit,
+		"total":        total,
+		"totalPages":   (total + int64(limit) - 1) / int64(limit),
+		"statusCounts": fetchBookingStatusCounts(start, end),
+		"counts":       fetchBookingCounts(start, end),
+	})
+}
+
+func buildBookingBaseQuery(c *gin.Context) (*gorm.DB, time.Time, time.Time, error) {
+	db := config.DB()
+	createdAt := c.DefaultQuery("createdAt", "")
+	userID, _ := strconv.Atoi(c.DefaultQuery("userId", "0"))
+	statusStr := c.DefaultQuery("status", "")
+	roomID, _ := strconv.Atoi(c.DefaultQuery("roomId", "0"))
+
+	var statusIDs []int
+	if statusStr != "" && statusStr != "0" {
+		for _, s := range strings.Split(statusStr, ",") {
+			if id, err := strconv.Atoi(strings.TrimSpace(s)); err == nil && id != 0 {
+				statusIDs = append(statusIDs, id)
+			}
+		}
+	}
+
+	var start, end time.Time
+	var err error
+	if createdAt != "" {
+		start, end, err = parseDateRange(createdAt)
+		if err != nil {
+			return nil, start, end, err
+		}
+		db = db.Where("booking_rooms.created_at BETWEEN ? AND ?", start, end)
+	}
+
+	if len(statusIDs) > 0 {
+		db = db.Where("status_id IN ?", statusIDs)
+	}
+	if userID > 0 {
+		db = db.Where("user_id = ?", userID)
+	}
+	if roomID > 0 {
+		db = db.Where("room_id = ?", roomID)
+	}
+
+	return db, start, end, nil
+}
+
+func countBookingRooms(db *gorm.DB) int64 {
+	var total int64
+	db.Model(&entity.BookingRoom{}).Count(&total)
+	return total
+}
+
+func fetchBookingStatusCounts(start, end time.Time) []struct {
+	StatusID   uint   `json:"status_id"`
+	StatusName string `json:"status_name"`
+	Count      int    `json:"count"`
+} {
+	var statusCounts []struct {
+		StatusID   uint   `json:"status_id"`
+		StatusName string `json:"status_name"`
+		Count      int    `json:"count"`
+	}
+
+	tblStatus := "booking_statuses"
+	tblBooking := "booking_rooms"
+
+	// ใส่เงื่อนไขช่วงเวลาใน ON ของ LEFT JOIN เพื่อไม่ตัดแถวสถานะทิ้ง
+	join := "LEFT JOIN " + tblBooking + " ON " +
+		tblBooking + ".status_id = " + tblStatus + ".id" +
+		" AND " + tblBooking + ".deleted_at IS NULL" // กัน soft-delete ถ้าใช้ gorm.Model
+
+	var args []any
+	if !start.IsZero() && !end.IsZero() {
+		join += " AND " + tblBooking + ".created_at BETWEEN ? AND ?"
+		args = append(args, start, end)
+	}
+
+	config.DB().
+		Table(tblStatus).
+		Select(tblStatus+".id AS status_id, "+tblStatus+".status_name, COALESCE(COUNT("+tblBooking+".id),0) AS count").
+		Joins(join, args...).
+		Group(tblStatus + ".id, " + tblStatus + ".status_name").
+		Scan(&statusCounts)
+
+	return statusCounts
+}
+
+func fetchBookingCounts(start, end time.Time) interface{} {
+	if len(start.Format("2006-01")) == 7 {
+		return fetchBookingDailyCounts(start, end)
+	}
+	return fetchBookingMonthlyCounts(start, end)
+}
+
+func fetchBookingDailyCounts(start, end time.Time) []struct {
+	Day   string `json:"day"`
+	Count int    `json:"count"`
+} {
+	var dailyCounts []struct {
+		Day   string `json:"day"`
+		Count int    `json:"count"`
+	}
+
+	db := config.DB().Model(&entity.BookingRoom{})
+
+	if !start.IsZero() && !end.IsZero() {
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
+	}
+
+	db.Select(`
+		STRFTIME('%Y-%m-%d', created_at, 'localtime') AS day,
+		COUNT(id) AS count
+	`).
+		Group("day").
+		Order("day ASC").
+		Scan(&dailyCounts)
+
+	return dailyCounts
+}
+
+func fetchBookingMonthlyCounts(start, end time.Time) []struct {
+	Month string `json:"month"`
+	Count int    `json:"count"`
+} {
+	var monthlyCounts []struct {
+		Month string `json:"month"`
+		Count int    `json:"count"`
+	}
+
+	db := config.DB().Model(&entity.BookingRoom{})
+
+	if !start.IsZero() && !end.IsZero() {
+		db = db.Where("created_at BETWEEN ? AND ?", start, end)
+	}
+
+	db.Select(`
+		STRFTIME('%Y-%m', created_at) AS month,
+		COUNT(id) AS count
+	`).
+		Group("month").
+		Order("month ASC").
+		Scan(&monthlyCounts)
+
+	return monthlyCounts
 }

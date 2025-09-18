@@ -1,7 +1,7 @@
 /* Booking Component Styles */
 
 .booking-container {
-    padding: 32px 0;
+    /* padding: 32px 0; */
     width: 100%;
 }
 
@@ -21,7 +21,7 @@
 
 .booking-container .booking-header-paper {
     padding: 24px;
-    margin-bottom: 32px;
+    /* margin-bottom: 32px; */
     background-color: #f26522;
     color: white;
     border-radius: 24px;
@@ -79,8 +79,7 @@
 
 .booking-container .booking-section-paper {
     padding: 24px;
-    border-radius: 24px;
-
+    border-radius: 8px;
 }
 
 
@@ -93,7 +92,7 @@
 .booking-container .booking-section-header {
     display: flex;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
    
 }
 
@@ -216,8 +215,7 @@
 
 .booking-container .contact-form-paper {
     padding: 32px;
-    border-radius: 24px;
-    margin-top: 32px;
+    border-radius: 8px;
 }
 
 .booking-container .form-header {
@@ -343,7 +341,7 @@
 
 .booking-container .confirm-button {
     padding: 16px 48px;
-    /* border-radius: 24px; */
+    border-radius: 12px;
     font-weight: 700;
     font-size: 1.2rem;
     background: linear-gradient(45deg, #F26522 30%, #FFA347 90%);
@@ -363,7 +361,7 @@
         width: 100%;
         /* กำหนดให้เต็มความกว้าง container */
         font-size: 1rem;
-        padding: 14px 32px;
+        /* padding: 14px 32px; */
     }
 }
 
@@ -378,7 +376,7 @@
     background: linear-gradient(45deg, #797472ff 30%, #55504eff 90%);
     box-shadow: none;
     transform: none;
-    padding: 24px;
+    /* padding: 24px; */
 }
 
 .booking-container .confirmation-note {
@@ -427,7 +425,5 @@
         gap: 20px;
     }
 
-    .details-fields {
-        /* gap: 16px; */
-    }
+   
 }

@@ -124,7 +124,7 @@ const WindowsLayout: React.FC = (props: any) => {
         },
         {
             segment: "booking-room",
-            title: t("bookingRoom"),
+            title: "Room Booking",
             icon: <DoorOpen size={iconSize} />,
         },
         {
@@ -354,7 +354,8 @@ const WindowsLayout: React.FC = (props: any) => {
             icon: <ShieldUser />,
             action:
                 (notificationCounts?.UnreadInvoice && notificationCounts?.UnreadInvoice > 0 && (!(user?.IsEmployee) && user?.Role?.Name === "User")) ||
-                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && !(isAdmin() || isManager()))
+                    (notificationCounts?.UnreadRequests && notificationCounts?.UnreadRequests > 0 && !(isAdmin() || isManager())) || 
+                        (notificationCounts.UnreadBookingRoom && notificationCounts.UnreadBookingRoom > 0 && !(isAdmin() || isManager()))
                     ? (
                         <Chip
                             label={"New"}
