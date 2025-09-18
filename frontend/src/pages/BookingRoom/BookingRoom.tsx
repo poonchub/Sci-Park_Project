@@ -177,6 +177,8 @@ const BookingRoom = () => {
         navigate(`/room-booking-form?roomtype_id=${encodeURIComponent(encodedId)}`);
     };
 
+    console.log("filteredRoomTypes: ", filteredRoomTypes)
+
     /* ------------------ UI ------------------ */
     return (
         <Box className="booking-room-page">
@@ -535,6 +537,7 @@ const BookingRoom = () => {
                                                                 const name = re.Equipment?.EquipmentName;
                                                                 if (!name || !equipmentConfig[name]) return null;
                                                                 const Icon = equipmentConfig[name].icon;
+
                                                                 return (
                                                                     <Box
                                                                         key={`eq-badge-${i}`}
@@ -604,7 +607,7 @@ const BookingRoom = () => {
                                         </CardActionArea>
 
                                         <CardActions sx={{ mb: 0.8, px: 2.6 }}>
-                                            <Button onClick={() => goToBookingForm(item)} variant="contained">
+                                            <Button onClick={() => goToBookingForm(item)} variant="contained" fullWidth>
                                                 Booking Room
                                             </Button>
                                         </CardActions>

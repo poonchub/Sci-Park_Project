@@ -124,7 +124,7 @@ const WindowsLayout: React.FC = (props: any) => {
         },
         {
             segment: "booking-room",
-            title: t("bookingRoom"),
+            title: "Room Booking",
             icon: <DoorOpen size={iconSize} />,
         },
         {

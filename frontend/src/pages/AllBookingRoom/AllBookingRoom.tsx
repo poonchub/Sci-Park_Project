@@ -610,6 +610,17 @@ function AllBookingRoom() {
         try {
            
             await RejectBookingRoom(selectedRow.ID, n);
+
+            const notificationDataUpdate: NotificationsInterface = {
+                IsRead: true,
+            };
+            const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
+                notificationDataUpdate,
+                selectedRow.ID
+            );
+            if (!resUpdateNotification || resUpdateNotification.error)
+                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
         } catch {
@@ -1579,8 +1590,8 @@ function AllBookingRoom() {
                                                 minWidth: "42px",
                                             }}>
                                             <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                            <Typography variant="textButtonClassic" className="text-btn">Approve
-
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Approve
                                             </Typography>
                                         </Button>
                                     </Tooltip>
