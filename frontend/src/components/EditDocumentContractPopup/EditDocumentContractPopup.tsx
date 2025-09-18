@@ -282,21 +282,39 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
     const renderFileUpload = (field: keyof DocumentContractData, label: string) => {
         const fileValue = formData[field] as File | null;
         const pathValue = formData[`${field}Path` as keyof DocumentContractData] as string;
+        const hasExistingFile = pathValue && pathValue.trim() !== '';
 
         return (
             <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {label}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        {label}
+                    </Typography>
+                    {/* Visual indicator for existing file */}
+                    {hasExistingFile && (
+                        <Box sx={{
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            px: 1,
+                            py: 0.3,
+                            borderRadius: 1,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            textTransform: 'uppercase'
+                        }}>
+                            File Exists
+                        </Box>
+                    )}
+                </Box>
                 
                 {/* File display area */}
                 <Box sx={{ 
-                    border: "2px dashed #0094DE",
+                    border: hasExistingFile ? "2px dashed #4CAF50" : "2px dashed #0094DE",
                     borderRadius: 2,
                     px: 1.8,
                     py: 2,
                     textAlign: "center",
-                    backgroundColor: "rgba(0, 162, 255, 0.1)",
+                    backgroundColor: hasExistingFile ? "rgba(76, 175, 80, 0.1)" : "rgba(0, 162, 255, 0.1)",
                     minHeight: 80,
                     display: 'flex',
                     flexDirection: 'column',
@@ -309,18 +327,23 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                             display: 'flex', 
                             alignItems: 'center', 
                             gap: 1, 
-                            p: 1, 
-                            border: '1px solid #e0e0e0', 
+                            p: 1.5, 
+                            border: '2px solid #4CAF50', 
                             borderRadius: 1,
-                            backgroundColor: '#fafafa',
+                            backgroundColor: '#f1f8e9',
                             mb: 1,
                             width: '100%',
                             maxWidth: '300px'
                         }}>
-                            <FileText size={20} color="#0094DE" />
-                            <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                                {pathValue.split(/[/\\]/).pop()}
-                            </Typography>
+                            <FileText size={20} color="#4CAF50" />
+                            <Box sx={{ flex: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#2E7D32' }}>
+                                    Current File:
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 500, color: '#2E7D32' }}>
+                                    {pathValue.split(/[/\\]/).pop()}
+                                </Typography>
+                            </Box>
                         </Box>
                     )}
 
@@ -330,22 +353,27 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                             display: 'flex', 
                             alignItems: 'center', 
                             gap: 1, 
-                            p: 1, 
-                            border: '1px solid #e0e0e0', 
+                            p: 1.5, 
+                            border: '2px solid #FF9800', 
                             borderRadius: 1,
-                            backgroundColor: '#fafafa',
+                            backgroundColor: '#fff3e0',
                             mb: 1,
                             width: '100%',
                             maxWidth: '300px'
                         }}>
-                            <FileText size={20} color="#0094DE" />
-                            <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
-                                {fileValue.name}
-                            </Typography>
+                            <FileText size={20} color="#FF9800" />
+                            <Box sx={{ flex: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#E65100' }}>
+                                    New File:
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 500, color: '#E65100' }}>
+                                    {fileValue.name}
+                                </Typography>
+                            </Box>
                             <Button
                                 size="small"
                                 onClick={() => handleFileChange(field, null)}
-                                sx={{ minWidth: 'auto', p: 0.5 }}
+                                sx={{ minWidth: 'auto', p: 0.5, color: '#E65100' }}
                             >
                                 <X size={16} />
                             </Button>
@@ -367,6 +395,12 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                                 component="span"
                                 startIcon={<FileText size={20} />}
                                 size="small"
+                                sx={{
+                                    backgroundColor: hasExistingFile ? '#4CAF50' : '#0094DE',
+                                    '&:hover': {
+                                        backgroundColor: hasExistingFile ? '#45a049' : '#007bb5'
+                                    }
+                                }}
                             >
                                 {fileValue ? 'Change File' : pathValue ? 'Replace File' : 'Select File'}
                             </Button>

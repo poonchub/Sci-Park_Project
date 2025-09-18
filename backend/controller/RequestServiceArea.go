@@ -140,19 +140,20 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 	file, err := c.FormFile("service_request_document")
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
-		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
-		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(documentFolder, os.ModePerm)
+		baseFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
+		requestDocumentFolder := path.Join(baseFolder, "request_documents")
+		if _, err := os.Stat(requestDocumentFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(requestDocumentFolder, os.ModePerm)
 			if err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request document directory"})
 				return
 			}
 		}
 
 		fileExtension := path.Ext(file.Filename)
 		// ใช้ UserID + RequestID เพื่อป้องกันไฟล์ซ้ำ
-		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d_%d%s", userID, requestServiceArea.ID, fileExtension))
+		filePath := path.Join(requestDocumentFolder, fmt.Sprintf("service_doc_%d_%d%s", userID, requestServiceArea.ID, fileExtension))
 		requestServiceArea.ServiceRequestDocument = filePath
 
 		// บันทึกไฟล์
@@ -399,17 +400,18 @@ func UpdateRequestServiceArea(c *gin.Context) {
 	file, err := c.FormFile("service_request_document")
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
-		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
-		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(documentFolder, os.ModePerm)
+		baseFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestServiceArea.ID)
+		requestDocumentFolder := path.Join(baseFolder, "request_documents")
+		if _, err := os.Stat(requestDocumentFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(requestDocumentFolder, os.ModePerm)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request document directory"})
 				return
 			}
 		}
 
 		fileExtension := path.Ext(file.Filename)
-		filePath := path.Join(documentFolder, fmt.Sprintf("service_doc_%d_%d%s", requestServiceArea.UserID, requestServiceArea.ID, fileExtension))
+		filePath := path.Join(requestDocumentFolder, fmt.Sprintf("service_doc_%d_%d%s", requestServiceArea.UserID, requestServiceArea.ID, fileExtension))
 		requestServiceArea.ServiceRequestDocument = filePath
 
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -1783,19 +1785,20 @@ func CancelRequestServiceArea(c *gin.Context) {
 	cancellationFile, err := c.FormFile("cancellation_document")
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
-		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
-		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(documentFolder, os.ModePerm)
+		baseFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
+		cancellationFolder := path.Join(baseFolder, "cancellations")
+		if _, err := os.Stat(cancellationFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(cancellationFolder, os.ModePerm)
 			if err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cancellation directory"})
 				return
 			}
 		}
 
 		fileExtension := path.Ext(cancellationFile.Filename)
 		// ใช้ RequestID + CancelID เพื่อป้องกันไฟล์ซ้ำ
-		filePath := path.Join(documentFolder, fmt.Sprintf("cancellation_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
+		filePath := path.Join(cancellationFolder, fmt.Sprintf("cancellation_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
 		cancelRequest.CancellationDocument = filePath
 
 		// บันทึกไฟล์
@@ -1810,19 +1813,20 @@ func CancelRequestServiceArea(c *gin.Context) {
 	bankAccountFile, err := c.FormFile("bank_account_document")
 	if err == nil {
 		// สร้างโฟลเดอร์สำหรับเก็บไฟล์ใน ServiceAreaDocuments
-		documentFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
-		if _, err := os.Stat(documentFolder); os.IsNotExist(err) {
-			err := os.MkdirAll(documentFolder, os.ModePerm)
+		baseFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", requestID)
+		bankAccountFolder := path.Join(baseFolder, "bank_accounts")
+		if _, err := os.Stat(bankAccountFolder); os.IsNotExist(err) {
+			err := os.MkdirAll(bankAccountFolder, os.ModePerm)
 			if err != nil {
 				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create directory"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create bank account directory"})
 				return
 			}
 		}
 
 		fileExtension := path.Ext(bankAccountFile.Filename)
 		// ใช้ RequestID + CancelID เพื่อป้องกันไฟล์ซ้ำ
-		filePath := path.Join(documentFolder, fmt.Sprintf("bank_account_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
+		filePath := path.Join(bankAccountFolder, fmt.Sprintf("bank_account_doc_%d_%d%s", requestID, cancelRequest.ID, fileExtension))
 		cancelRequest.BankAccountDocument = filePath
 
 		// บันทึกไฟล์

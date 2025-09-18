@@ -78,6 +78,54 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 		"service_contract_document": "ServiceContractDocument",
 		"area_handover_document":    "AreaHandoverDocument",
 		"quotation_document":        "QuotationDocument",
+		"refund_guarantee_document": "RefundGuaranteeDocument",
+	}
+
+	// สร้างโฟลเดอร์ย่อยตามประเภทเอกสาร (เหมือนตอนสร้าง)
+	baseFolder := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", uint(requestServiceAreaID))
+	contractFolder := fmt.Sprintf("%s/contracts", baseFolder)
+	handoverFolder := fmt.Sprintf("%s/handovers", baseFolder)
+	quotationFolder := fmt.Sprintf("%s/quotations", baseFolder)
+	refundGuaranteeFolder := fmt.Sprintf("%s/refund_guarantees", baseFolder)
+	requestDocumentFolder := fmt.Sprintf("%s/request_documents", baseFolder)
+	cancellationFolder := fmt.Sprintf("%s/cancellations", baseFolder)
+	bankAccountFolder := fmt.Sprintf("%s/bank_accounts", baseFolder)
+
+	// สร้างโฟลเดอร์ทั้งหมด
+	if err := os.MkdirAll(contractFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create contract folder"})
+		return
+	}
+	if err := os.MkdirAll(handoverFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create handover folder"})
+		return
+	}
+	if err := os.MkdirAll(quotationFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create quotation folder"})
+		return
+	}
+	if err := os.MkdirAll(refundGuaranteeFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create refund guarantee folder"})
+		return
+	}
+	if err := os.MkdirAll(requestDocumentFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request document folder"})
+		return
+	}
+	if err := os.MkdirAll(cancellationFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create cancellation folder"})
+		return
+	}
+	if err := os.MkdirAll(bankAccountFolder, 0755); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create bank account folder"})
+		return
 	}
 
 	for formField, structField := range documentFields {
@@ -88,12 +136,19 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 				deleteOldFile(oldPath)
 			}
 
-			// สร้างโฟลเดอร์ใหม่ (ใช้รูปแบบเดียวกับตอนสร้าง)
-			uploadDir := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", uint(requestServiceAreaID))
-			if err := os.MkdirAll(uploadDir, 0755); err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
-				return
+			// เลือกโฟลเดอร์ตามประเภทเอกสาร
+			var uploadDir string
+			switch formField {
+			case "service_contract_document":
+				uploadDir = contractFolder
+			case "area_handover_document":
+				uploadDir = handoverFolder
+			case "quotation_document":
+				uploadDir = quotationFolder
+			case "refund_guarantee_document":
+				uploadDir = refundGuaranteeFolder
+			default:
+				uploadDir = baseFolder
 			}
 
 			// สร้างชื่อไฟล์ใหม่ โดยใช้ชื่อไฟล์เดิมที่อัพโหลดมา
@@ -136,8 +191,8 @@ func UpdateServiceAreaDocumentForEdit(c *gin.Context) {
 			deleteOldFile(requestServiceArea.ServiceRequestDocument)
 		}
 
-		// สร้างโฟลเดอร์ใหม่ (ใช้รูปแบบเดียวกับตอนสร้าง)
-		uploadDir := fmt.Sprintf("./images/ServiceAreaDocuments/request_%d", uint(requestServiceAreaID))
+		// ใช้โฟลเดอร์ request_documents (จัดระเบียบเหมือนเอกสารอื่นๆ)
+		uploadDir := requestDocumentFolder
 		if err := os.MkdirAll(uploadDir, 0755); err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
@@ -216,6 +271,8 @@ func getFieldValue(doc *entity.ServiceAreaDocument, fieldName string) string {
 		return doc.AreaHandoverDocument
 	case "QuotationDocument":
 		return doc.QuotationDocument
+	case "RefundGuaranteeDocument":
+		return doc.RefundGuaranteeDocument
 	default:
 		return ""
 	}
@@ -230,6 +287,8 @@ func setFieldValue(doc *entity.ServiceAreaDocument, fieldName, value string) {
 		doc.AreaHandoverDocument = value
 	case "QuotationDocument":
 		doc.QuotationDocument = value
+	case "RefundGuaranteeDocument":
+		doc.RefundGuaranteeDocument = value
 	}
 }
 
