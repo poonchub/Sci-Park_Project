@@ -3718,6 +3718,32 @@ async function UpdateServiceAreaDocumentForEdit(requestServiceAreaID: number, fo
     }
 }
 
+// Get Cancel Request Service Area for Edit
+async function GetCancelRequestServiceAreaForEdit(requestServiceAreaID: number) {
+    try {
+        const response = await axiosInstance.get(`/cancel-request-service-area/${requestServiceAreaID}/edit`);
+        return response.data;
+    } catch (error) {
+        handleSessionExpiration();
+        throw error;
+    }
+}
+
+// Update Cancel Request Service Area for Edit
+async function UpdateCancelRequestServiceAreaForEdit(requestServiceAreaID: number, formData: FormData) {
+    try {
+        const response = await axiosInstance.patch(`/cancel-request-service-area/${requestServiceAreaID}/edit`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        handleSessionExpiration();
+        throw error;
+    }
+}
+
 
 export {
     // RequestStatuses
@@ -3982,4 +4008,8 @@ export {
     // ServiceAreaDocument Edit
     GetServiceAreaDocumentForEdit,
     UpdateServiceAreaDocumentForEdit,
+
+    // CancelRequestServiceArea Edit
+    GetCancelRequestServiceAreaForEdit,
+    UpdateCancelRequestServiceAreaForEdit,
 };

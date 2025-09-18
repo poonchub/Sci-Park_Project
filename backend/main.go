@@ -269,6 +269,8 @@ func main() {
 
 		protected.GET("/request-service-area/details/:id", controller.GetServiceAreaDetailsByID)
 		protected.POST("/request-service-area/cancel/:request_id", controller.CancelRequestServiceArea)
+		protected.GET("/cancel-request-service-area/:request_service_area_id/edit", controller.GetCancelRequestServiceAreaForEdit)
+		protected.PATCH("/cancel-request-service-area/:request_service_area_id/edit", controller.UpdateCancelRequestServiceArea)
 		protected.PATCH("/about-company/:user_id", controller.UpdateAboutCompany)
 
 		// CollaborationPlans

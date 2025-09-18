@@ -245,19 +245,21 @@ func GetVisitsRange(c *gin.Context) {
 		return
 	}
 
-	start, err := time.Parse("2006-01-02", startStr)
+	// Parse dates in Local timezone เพื่อให้สอดคล้องกับ time.Now()
+	start, err := time.ParseInLocation("2006-01-02", startStr, time.Local)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format. Use YYYY-MM-DD"})
 		return
 	}
-	end, err := time.Parse("2006-01-02", endStr)
+	end, err := time.ParseInLocation("2006-01-02", endStr, time.Local)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format. Use YYYY-MM-DD"})
 		return
 	}
 
 	today := time.Now().Truncate(24 * time.Hour)
-	if end.After(today) {
+	// อนุญาตให้ end date เป็นวันปัจจุบันได้ (ไม่ใช่ในอนาคต)
+	if end.After(today.Add(24 * time.Hour)) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "End date cannot be in the future"})
 		return
 	}
@@ -423,19 +425,21 @@ func GetPerformanceAnalytics(c *gin.Context) {
 		return
 	}
 
-	start, err := time.Parse("2006-01-02", startStr)
+	// Parse dates in Local timezone เพื่อให้สอดคล้องกับ time.Now()
+	start, err := time.ParseInLocation("2006-01-02", startStr, time.Local)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date format. Use YYYY-MM-DD"})
 		return
 	}
-	end, err := time.Parse("2006-01-02", endStr)
+	end, err := time.ParseInLocation("2006-01-02", endStr, time.Local)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date format. Use YYYY-MM-DD"})
 		return
 	}
 
 	today := time.Now().Truncate(24 * time.Hour)
-	if end.After(today) {
+	// อนุญาตให้ end date เป็นวันปัจจุบันได้ (ไม่ใช่ในอนาคต)
+	if end.After(today.Add(24 * time.Hour)) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "End date cannot be in the future"})
 		return
 	}

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./ServiceAreaDetails.css";
 
-import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, DownloadServiceContractDocument, DownloadAreaHandoverDocument, DownloadQuotationDocument, DownloadRefundGuaranteeDocument, DownloadCancellationDocument, DownloadBankAccountDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest, PatchCollaborationPlans, GetServiceAreaDocumentForEdit, UpdateServiceAreaDocumentForEdit } from "../../services/http";
+import { GetServiceAreaDetailsByID, GetRequestStatuses, DownloadServiceRequestDocument, DownloadServiceContractDocument, DownloadAreaHandoverDocument, DownloadQuotationDocument, DownloadRefundGuaranteeDocument, DownloadCancellationDocument, DownloadBankAccountDocument, UpdateRequestServiceAreaStatus, ListBusinessGroups, RejectServiceAreaRequest, PatchCollaborationPlans, GetServiceAreaDocumentForEdit, UpdateServiceAreaDocumentForEdit, GetCancelRequestServiceAreaForEdit, UpdateCancelRequestServiceAreaForEdit } from "../../services/http";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 
@@ -16,6 +16,7 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import SubmitServiceAreaPopup from "../../components/SubmitServiceAreaPopup/SubmitServiceAreaPopup";
 import EditCollaborationPlansPopup from "../../components/EditCollaborationPlansPopup/EditCollaborationPlansPopup";
 import EditDocumentContractPopup from "../../components/EditDocumentContractPopup/EditDocumentContractPopup";
+import EditCancellationDetailsPopup from "../../components/EditCancellationDetailsPopup/EditCancellationDetailsPopup";
 import { ServiceAreaDetailsInterface } from "../../interfaces/IServiceAreaDetailsInterface";
 
 import dateFormat from "../../utils/dateFormat";
@@ -66,6 +67,11 @@ function ServiceAreaDetails() {
     const [isUpdatingDocumentContract, setIsUpdatingDocumentContract] = useState(false);
     const [documentContractData, setDocumentContractData] = useState<any>(null);
 
+    // Edit Cancellation Details state
+    const [openEditCancellationDetailsPopup, setOpenEditCancellationDetailsPopup] = useState(false);
+    const [isUpdatingCancellationDetails, setIsUpdatingCancellationDetails] = useState(false);
+    const [cancellationDetailsData, setCancellationDetailsData] = useState<any>(null);
+
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -96,6 +102,25 @@ function ServiceAreaDetails() {
 
     // ตรวจสอบว่าเป็น DocumentOperator และสถานะเป็น Cancellation In Progress หรือ Cancellation Assigned
     const canShowCancellationSubmitButton = isDocumentOperator() && (isCancellationInProgress || isCancellationAssigned);
+
+    // เงื่อนไขการแก้ไข Edit buttons
+    const isDocumentOperatorRole = userRole === 'Document Operator';
+    const isAdminRole = userRole === 'Admin';
+    const isManagerRole = userRole === 'Manager';
+    const isExternalUser = userRole === 'User'; // External User คือ role "User"
+    
+    // Document Operator, Admin, Manager สามารถแก้ไขได้เสมอ
+    const canEditAlways = isDocumentOperatorRole || isAdminRole || isManagerRole;
+    
+    // External User (User role) สามารถแก้ไขได้เฉพาะเมื่อสถานะเป็น Pending หรือ Cancellation In Progress
+    const canEditForExternalUser = isExternalUser && (isPending || isCancellationInProgress);
+    
+    // สรุปเงื่อนไขการแก้ไข
+    // Documents & Contract Information และ Collaboration Plans: Admin, Manager, DocumentOperator เท่านั้น
+    const canEditDocuments = canEditAlways;
+    
+    // Cancellation Details: Admin, Manager, DocumentOperator + User (เมื่อสถานะ Pending หรือ Cancellation In Progress)
+    const canEditCancellation = canEditAlways || canEditForExternalUser;
 
     // Fetch service area details by ID
     const getServiceAreaDetails = async () => {
@@ -332,6 +357,62 @@ function ServiceAreaDetails() {
             setAlerts((prev) => [...prev, { type: "error", message: "Failed to update document and contract information" }]);
         } finally {
             setIsUpdatingDocumentContract(false);
+        }
+    };
+
+    // Handle edit cancellation details
+    const handleEditCancellationDetails = async () => {
+        try {
+            setIsUpdatingCancellationDetails(true);
+
+            // ดึงข้อมูล Cancellation Details สำหรับการแก้ไข
+            const response = await GetCancelRequestServiceAreaForEdit(serviceAreaDetails?.RequestNo || 0);
+            setCancellationDetailsData(response.data);
+            setOpenEditCancellationDetailsPopup(true);
+        } catch (error) {
+            console.error("Error fetching cancellation details data:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to load cancellation details data" }]);
+        } finally {
+            setIsUpdatingCancellationDetails(false);
+        }
+    };
+
+    // Handle cancellation details update confirmation
+    const handleCancellationDetailsConfirm = async (data: any) => {
+        try {
+            setIsUpdatingCancellationDetails(true);
+
+            // สร้าง FormData สำหรับส่งไฟล์
+            const formData = new FormData();
+            formData.append('purpose_of_cancellation', data.PurposeOfCancellation);
+            formData.append('project_activities', data.ProjectActivities);
+            formData.append('annual_income', data.AnnualIncome.toString());
+
+            // เพิ่มไฟล์เอกสาร (ถ้ามี)
+            if (data.CancellationDocument) {
+                formData.append('cancellation_document', data.CancellationDocument);
+            }
+            if (data.BankAccountDocument) {
+                formData.append('bank_account_document', data.BankAccountDocument);
+            }
+            if (data.RefundGuaranteeDocument) {
+                formData.append('refund_guarantee_document', data.RefundGuaranteeDocument);
+            }
+
+            // เรียก API สำหรับอัปเดต Cancellation Details
+            await UpdateCancelRequestServiceAreaForEdit(serviceAreaDetails?.RequestNo || 0, formData);
+
+            // Refresh data
+            await getServiceAreaDetails();
+            setAlerts((prev) => [...prev, { type: "success", message: "Cancellation details updated successfully" }]);
+
+            // ปิด Popup
+            setOpenEditCancellationDetailsPopup(false);
+        } catch (error) {
+            console.error("Error updating cancellation details:", error);
+            setAlerts((prev) => [...prev, { type: "error", message: "Failed to update cancellation details" }]);
+        } finally {
+            setIsUpdatingCancellationDetails(false);
         }
     };
 
@@ -655,15 +736,16 @@ function ServiceAreaDetails() {
                                                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                                         Collaboration Plans
                                                     </Typography>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="small"
-                                                        startIcon={<Edit size={16} />}
-                                                        onClick={handleEditCollaborationPlans}
-
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                    {canEditDocuments && (
+                                                        <Button
+                                                            variant="contained"
+                                                            size="small"
+                                                            startIcon={<Edit size={16} />}
+                                                            onClick={handleEditCollaborationPlans}
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
                                                 </Box>
                                                 {sortedCollaborationPlans.map((plan, index) => (
                                                     <Box key={index} sx={{ mb: 2, pb: 2, borderBottom: index < sortedCollaborationPlans.length - 1 ? "1px solid #e0e0e0" : "none" }}>
@@ -697,15 +779,17 @@ function ServiceAreaDetails() {
                                                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                                         Documents & Contract Information
                                                     </Typography>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="small"
-                                                        startIcon={<Edit size={16} />}
-                                                        onClick={handleEditDocumentContract}
-                                                        disabled={isUpdatingDocumentContract}
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                    {canEditDocuments && (
+                                                        <Button
+                                                            variant="contained"
+                                                            size="small"
+                                                            startIcon={<Edit size={16} />}
+                                                            onClick={handleEditDocumentContract}
+                                                            disabled={isUpdatingDocumentContract}
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
                                                 </Box>
 
                                                 {/* Contract Information */}
@@ -902,15 +986,17 @@ function ServiceAreaDetails() {
                                                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                                         Cancellation Details
                                                     </Typography>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="small"
-                                                        startIcon={<Edit size={16} />}
-                                                        onClick={() => {/* TODO: Open Edit Cancellation Details Popup */ }}
-
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                    {canEditCancellation && (
+                                                        <Button
+                                                            variant="contained"
+                                                            size="small"
+                                                            startIcon={<Edit size={16} />}
+                                                            onClick={handleEditCancellationDetails}
+                                                            disabled={isUpdatingCancellationDetails}
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
                                                 </Box>
 
                                                 <Grid container spacing={2}>
@@ -1308,6 +1394,16 @@ function ServiceAreaDetails() {
                 existingData={documentContractData}
                 requestServiceAreaID={serviceAreaDetails?.RequestNo}
                 buttonActive={isUpdatingDocumentContract}
+            />
+
+            {/* Edit Cancellation Details Popup */}
+            <EditCancellationDetailsPopup
+                open={openEditCancellationDetailsPopup}
+                onClose={() => setOpenEditCancellationDetailsPopup(false)}
+                onConfirm={handleCancellationDetailsConfirm}
+                existingData={cancellationDetailsData}
+                buttonActive={isUpdatingCancellationDetails}
+                userRole={userRole}
             />
         </Box>
     );

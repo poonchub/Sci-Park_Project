@@ -406,7 +406,7 @@ const CancelRequestServiceArea: React.FC = () => {
 
                             {/* Field 6: Cancellation Document Upload */}
                             <Grid size={{ xs: 12, sm: 12 }}>
-                                <Typography variant="body1" className="title-field">Attach Documents Showing Intention to Cancel Service Area Usage</Typography>
+                                <Typography variant="body1" className="title-field">Documents Cancel Service Area</Typography>
                                 <Button
                                     variant="outlinedGray"
                                     component="label"
@@ -434,7 +434,7 @@ const CancelRequestServiceArea: React.FC = () => {
 
                             {/* Field 7: Bank Account Document Upload */}
                             <Grid size={{ xs: 12, sm: 12 }}>
-                                <Typography variant="body1" className="title-field">Attach Copy of Bank Account for Receiving Security Deposit Refund</Typography>
+                                <Typography variant="body1" className="title-field">Bank Account for Refund</Typography>
                                 <Button
                                     variant="outlinedGray"
                                     component="label"

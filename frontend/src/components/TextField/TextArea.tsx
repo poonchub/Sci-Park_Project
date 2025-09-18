@@ -15,7 +15,7 @@ export const TextArea = styled(MuiTextField)(() => ({
     "& .MuiOutlinedInput-root": {
         borderRadius: "10px",
         border: "none",
-        minHeight: '45px',
+        minHeight: 'auto',
 
         // Default border styling
         "& fieldset": {
