@@ -1879,13 +1879,13 @@ Booking Details
 
             {/* Right: Your Information */}
             <Grid size={{ sm: 12}} sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
-                    <Card elevation={3} className="contact-form-paper" sx={{ mt: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Card elevation={3} sx={{ mt: 2, height: '100%', display: 'flex', flexDirection: 'column', p: 3 }}>
                       <Box className="booking-section-header" sx={{ flex: '0 0 auto' }}>
                         <User size={24} className="booking-section-icon" />
                         <Typography variant="h6" fontWeight="600">Your Information</Typography>
                       </Box>
                     
-                      <Box className="info-section-paper" sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
 
                       
 

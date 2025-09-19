@@ -72,24 +72,9 @@
 
 .booking-container .booking-section-icon {
     margin-right: 8px;
-    color: #1976d2;
+    color: var(--color-secondary);
 }
 
-.booking-container .booking-input-adornment {
-    padding-left: 4px;
-}
-
-
-.booking-container .booking-loading-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 0;
-}
-
-.booking-container .booking-loading-text {
-    margin-left: 16px;
-}
 
 .booking-container .booking-duration-options {
     margin-bottom: 24px;
@@ -111,16 +96,6 @@
     }
 }
 
-/* New layout adjustments */
-@media (min-width: 1280px) {
-    .booking-summary-paper {
-        min-height: 650px;
-    }
-    
-    .contact-form-paper {
-        min-height: 800px;
-    }
-}
 
 
 /* Contact Form Section Styles */
@@ -130,22 +105,6 @@
     border-radius: 8px;
 }
 
-.booking-container .form-header {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
-.booking-container .form-title {
-    margin-bottom: 8px;
-}
-
-.booking-container .form-divider {
-    margin-top: 16px;
-    margin-left: auto;
-    margin-right: auto;
-    width: 60px;
-    height: 3px;
-}
 
 .booking-container .info-section-paper {
     padding: 24px;
@@ -155,16 +114,6 @@
     flex-direction: column;
 }
 
-.booking-container .info-section-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.booking-container .info-section-icon {
-    margin-right: 12px;
-    color: #1976d2;
-}
 
 .booking-container .info-fields {
     display: flex;
@@ -185,22 +134,6 @@
     border-color: #e0e0e0;
 }
 
-.booking-container .readonly-input {
-    color: #999;
-}
-
-.booking-container .details-section-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.booking-container .details-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    flex: 1;
-}
 
 .booking-container .textarea-field .MuiOutlinedInput-root textarea {
     resize: vertical;
@@ -265,29 +198,3 @@
     margin-top: 16px;
 }
 
-
-/* Responsive adjustments */
-@media (max-width: 960px) {
-    .contact-form-paper {
-        padding: 24px;
-    }
-
-    .info-section-paper {
-        padding: 20px;
-    }
-
-}
-
-@media (max-width: 600px) {
-    .contact-form-paper {
-        padding: 16px;
-    }
-
-    .form-header {
-        margin-bottom: 24px;
-    }
-
-    .info-fields {
-        gap: 20px;
-    }
-}
