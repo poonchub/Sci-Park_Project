@@ -298,7 +298,7 @@ func main() {
 		protected.GET("/payment-statuses", controller.ListPaymentStatuses)
 
 		// BookingRooms
-		protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
+		// protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
 		protected.GET("/booking-room-option-for-user", controller.ListBookingRoomsForUser)
 
 		// RoomBookingInvoices (moved to main section below)
@@ -341,7 +341,7 @@ func main() {
 		protected.GET("/maintenance-requests/by-date", controller.ListMaintenanceRequestsByDateRange)
 
 		// BookingRooms
-		protected.GET("/booking-rooms", controller.ListBookingRooms)
+		// protected.GET("/booking-rooms", controller.ListBookingRooms)
 		protected.GET("/booking-rooms/by-date", controller.ListBookingRoomByDateRange)
 		protected.GET("/booking-room-option-for-admin", controller.ListBookingRoomsForAdmin)
 

@@ -1,9 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Box, Button, Card, CardMedia, Dialog, DialogActions, DialogContent,
-  DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid
+  DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid, Divider, Tooltip
 } from "@mui/material";
-import { Wallet, X } from "lucide-react";
+import {
+  Calendar, Clock, FileText, HelpCircle, Wallet, X,
+  CheckCircle2, AlertCircle, Upload, Trash2, Download
+} from "lucide-react";
 import { apiUrl, CheckSlip, GetQuota } from "../../services/http";
 import dateFormat from "../../utils/dateFormat";
 import ImageUploader from "../ImageUploader/ImageUploader";
@@ -13,13 +16,16 @@ import AlertGroup from "../AlertGroup/AlertGroup";
 const ALLOWED = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
+const RECEIPT_ALLOWED = new Set(["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"]);
+const RECEIPT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
 // ===== Types =====
 type SlipCheckState = {
   loading?: boolean;
   ok?: boolean;
   transTs?: string;
   error?: string;
-  fallbackNow?: boolean; // ✅ ใช้บอกว่าใช้เวลาปัจจุบันแทนผลตรวจ
+  fallbackNow?: boolean; // used current time instead of verified timestamp
 };
 
 export type InstallmentUI = {
@@ -28,14 +34,14 @@ export type InstallmentUI = {
   paymentId?: number;
   amount?: number;
   status:
-    | "unpaid"
-    | "pending_payment"
-    | "submitted"
-    | "pending_verification"
-    | "approved"
-    | "rejected"
-    | "refunded"
-    | "awaiting_receipt";
+  | "unpaid"
+  | "pending_payment"
+  | "submitted"
+  | "pending_verification"
+  | "approved"
+  | "rejected"
+  | "refunded"
+  | "awaiting_receipt";
   slipPath?: string;
   locked?: boolean;
   dueDate?: string;
@@ -53,6 +59,9 @@ interface BookingPaymentPopupProps {
   isAdmin: boolean;
   isLoading: boolean;
 
+  booking?: any; // ✅ row ของ booking สำหรับดึง All Invoice มาแสดงใน popup
+  refreshBooking?: () => Promise<any>; // ✅ ฟังก์ชันรีโหลด booking แบบสด หลังอัปโหลด/ลบเสร็จ
+
   bookingSummary?: string;
   serviceConditions?: { title: string; points: string[] };
 
@@ -60,19 +69,23 @@ interface BookingPaymentPopupProps {
   onUpdateFor?: (key: InstallmentUI["key"], file: File, paymentId?: number) => Promise<void>;
   onApproveFor?: (key: InstallmentUI["key"], paymentId?: number) => Promise<void>;
   onRejectFor?: (key: InstallmentUI["key"], paymentId?: number) => Promise<void>;
+
+  // ใหม่: จัดการไฟล์ใบเสร็จ (เฉพาะส่วน Invoice Overview)
+  onUploadReceipt?: (file: File, paymentId?: number) => Promise<void>;
+  onRemoveReceipt?: (paymentId?: number) => Promise<void>;
 }
 
 // ===== Helpers =====
-const steps = ["รอชำระเงิน", "รอตรวจสอบสลิป", "ชำระสำเร็จ"] as const;
+const steps = ["Awaiting Payment", "Pending Verification", "Paid"] as const;
 const norm = (s?: string) => (s || "").trim().toLowerCase();
 
 const ensureFile = (file?: File) => {
-  if (!file) throw new Error("กรุณาแนบสลิป");
-  if (!ALLOWED.has(file.type)) throw new Error("ชนิดไฟล์ไม่ถูกต้อง");
-  if (file.size > MAX_SIZE) throw new Error("ไฟล์มีขนาดเกิน 5MB");
+  if (!file) throw new Error("Please attach the slip.");
+  if (!ALLOWED.has(file.type)) throw new Error("Invalid file type.");
+  if (file.size > MAX_SIZE) throw new Error("File size exceeds 5MB.");
 };
 
-// เรียกตรวจสลิป (ลอง field "files" ก่อน ค่อย fallback เป็น "slip")
+// Call slip verification (try field "files" first, then fallback to "slip")
 const verifySlip = async (file: File) => {
   const tryOnce = async (field: "files" | "slip") => {
     const fd = new FormData();
@@ -111,11 +124,10 @@ const slipUrl = (path?: string) =>
   !path ? "" : /^https?:\/\//i.test(path) ? path : `${apiUrl}/${path}`;
 
 const ownerUploadableStatuses = new Set(["unpaid", "pending_payment", "pending_verification", "rejected"]);
-
 const canShowAdminActions = (isAdmin?: boolean, status?: InstallmentUI["status"], hasSlip?: boolean) =>
   Boolean(isAdmin && hasSlip && norm(status) === "pending_verification");
 
-// ลำดับการ์ด: full = เดี่ยว, deposit = ซ้าย(มัดจำ), ขวา(คงเหลือ)
+// Card order: full = single; deposit plan = left (deposit), right (balance)
 const orderInstallments = (plan: "full" | "deposit", items?: InstallmentUI[]) => {
   const arr = Array.isArray(items) ? items : [];
   if (plan === "full") return arr.filter((i) => i?.key === "full");
@@ -124,9 +136,47 @@ const orderInstallments = (plan: "full" | "deposit", items?: InstallmentUI[]) =>
   return [dep, bal].filter(Boolean) as InstallmentUI[];
 };
 
-/* =======================
- * Component
- * ======================= */
+// ===== Helpers for "Invoice Overview" (ย้ายมาจาก All Invoice) =====
+const lower = (s?: string) => (s || "").trim().toLowerCase();
+const paymentStatusKey = (raw?: string) => {
+  const v = lower(raw);
+  if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+  if (v === "submitted" || v === "pending verification") return "Pending Verification";
+  if (v === "approved" || v === "paid") return "Paid";
+  if (v === "rejected") return "Rejected";
+  if (v === "refunded") return "Refunded";
+  return "Pending Payment";
+};
+const pickReceiptPaymentFromBooking = (data: any) => {
+  const pays = Array.isArray(data?.Payments)
+    ? data.Payments
+    : Array.isArray((data as any)?.Payment)
+      ? (data as any).Payment
+      : [];
+  if (!pays.length) return undefined;
+  const approved = pays.find((p: any) =>
+    ["approved", "paid"].includes(lower(p?.Status?.Name ?? p?.status))
+  );
+  return approved || pays[pays.length - 1];
+};
+const statusNameOf = (p?: any) => (p?.Status?.Name ?? p?.status ?? "").toString();
+const asSlipString = (s?: string) => (s || "").replace(/^\/+/, "");
+const formatToMonthYear = (d?: string) => {
+  if (!d) return "-";
+  const dt = new Date(d);
+  if (isNaN(+dt)) return "-";
+  return dt.toLocaleString("en-US", { month: "long", year: "numeric" });
+};
+
+// สี/ไอคอนแบบ self-contained (เลียนแบบ config เดิม ไม่ต้อง import อะไรเพิ่ม)
+const statusVisuals = {
+  "Pending Payment": { color: "#5f6368", lite: "rgba(95,99,104,0.12)", icon: Wallet, label: "Pending Payment" },
+  "Pending Verification": { color: "#f57c00", lite: "rgba(245,124,0,0.12)", icon: HelpCircle, label: "Pending Verification" },
+  Paid: { color: "#2e7d32", lite: "rgba(46,125,50,0.12)", icon: Wallet, label: "Paid" },
+  Rejected: { color: "#d32f2f", lite: "rgba(211,47,47,0.12)", icon: HelpCircle, label: "Rejected" },
+  Refunded: { color: "#6a1b9a", lite: "rgba(106,27,154,0.12)", icon: HelpCircle, label: "Refunded" },
+} as const;
+
 const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   open,
   onClose,
@@ -139,6 +189,9 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   isAdmin = false,
   isLoading = false,
 
+  booking, // ✅ row ที่ส่งเข้ามาตอนกด Pay Now / View Slip
+  refreshBooking, // ⬅️ เพิ่มบรรทัดนี้
+
   bookingSummary,
   serviceConditions,
 
@@ -146,6 +199,9 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   onUpdateFor,
   onApproveFor,
   onRejectFor,
+
+  onUploadReceipt,
+  onRemoveReceipt,
 }) => {
   const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
   const [files, setFiles] = useState<Record<InstallmentUI["key"], File[]>>({ full: [], deposit: [], balance: [] });
@@ -155,14 +211,17 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     balance: {},
   });
 
-  const list = useMemo(() => orderInstallments(plan, installments), [plan, installments]);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
+  const [receiptUploading, setReceiptUploading] = useState(false);
 
+  const list = useMemo(() => orderInstallments(plan, installments), [plan, installments]);
+  const [replaceMode, setReplaceMode] = useState(false);
   const openSlip = (path?: string) => {
     const url = slipUrl(path || "");
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  // ✅ แนบไฟล์ -> เช็คโควต้าของ SlipOK -> ถ้า quota/age ok ค่อยตรวจสลิป, ไม่งั้น fallback เป็นเวลาปัจจุบัน
+  // ===== ใส่ไฟล์สลิป + ตรวจสิทธิ์โควต้า + verify SlipOK (เหมือนเดิม) =====
   const setFileFor = (key: InstallmentUI["key"]) => async (fList: File[]) => {
     setFiles((prev) => ({ ...prev, [key]: fList }));
     const file = fList?.[0];
@@ -175,16 +234,11 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
       ensureFile(file);
       setSlipCheck((p) => ({ ...p, [key]: { loading: true, ok: false, error: undefined, fallbackNow: false } }));
 
-      // 1) เช็คโควต้าจาก BE (ซึ่งไปตรวจ SlipOK จริง)
       let useFallbackNow = false;
       try {
         const quota = await GetQuota();
-        const remaining =
-          Number(quota?.data?.remaining ?? quota?.remaining ?? quota?.quota ?? -1);
-          console.log(remaining);
-        const expired =
-          Boolean(quota?.data?.expired ?? quota?.expired ?? false);
-        // กรณีโควต้าหมด หรือแพ็กเกจหมดอายุ -> fallback
+        const remaining = Number(quota?.data?.remaining ?? quota?.remaining ?? quota?.quota ?? -1);
+        const expired = Boolean(quota?.data?.expired ?? quota?.expired ?? false);
         if (remaining <= 0 || expired) {
           useFallbackNow = true;
           setAlerts((a) => [
@@ -193,29 +247,22 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
               type: "warning",
               message:
                 remaining <= 0
-                  ? "ระบบตรวจสลิปรายเดือน/เครดิตหมด — จะใช้เวลาปัจจุบันแทน"
-                  : "แพ็กเกจตรวจสลิปหมดอายุ — จะใช้เวลาปัจจุบันแทน",
+                  ? "Slip-check quota/credits exhausted — using current time instead."
+                  : "Slip-check package expired — using current time instead.",
             },
           ]);
         }
-      } catch (qErr: any) {
-        // ถ้าเรียก quota ไม่ได้ (เช่น API ล่ม) -> fallback ตามสเปก
+      } catch {
         useFallbackNow = true;
-        setAlerts((a) => [
-          ...a,
-          { type: "warning", message: "ไม่สามารถตรวจสอบโควต้าตรวจสลิปได้ — จะใช้เวลาปัจจุบันแทน" },
-        ]);
+        setAlerts((a) => [...a, { type: "warning", message: "Unable to verify slip-check quota — using current time instead." }]);
       }
 
-      // 2) ตรวจสลิป/หรือ fallback
       let ts: string;
       if (!useFallbackNow) {
-        // ตรวจสลิปจริง
         ts = await verifySlip(file);
         (file as any).transTimestamp = ts;
         setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: true, transTs: ts, fallbackNow: false } }));
       } else {
-        // ใช้เวลาปัจจุบันแทน
         ts = new Date().toISOString();
         (file as any).transTimestamp = ts;
         setSlipCheck((p) => ({ ...p, [key]: { loading: false, ok: true, transTs: ts, fallbackNow: true } }));
@@ -223,8 +270,108 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     } catch (err: any) {
       setSlipCheck((p) => ({
         ...p,
-        [key]: { loading: false, ok: false, error: err?.message || "ตรวจสลิปไม่สำเร็จ", fallbackNow: false },
+        [key]: { loading: false, ok: false, error: err?.message || "Slip verification failed.", fallbackNow: false },
       }));
+    }
+  };
+
+  // ====== ดึงข้อมูล All Invoice จาก booking ที่ส่งเข้ามา ======
+  const invoiceUI = useMemo(() => {
+    const data: any = booking || {};
+    const selectedPay = pickReceiptPaymentFromBooking(data);
+    const statusRaw = statusNameOf(selectedPay);
+    const statusKey = paymentStatusKey(statusRaw);
+    const vis = statusVisuals[statusKey as keyof typeof statusVisuals] ?? statusVisuals["Pending Payment"];
+
+    const invoice = (data as any).RoomBookingInvoice;
+    const invoiceNumber = invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
+    const billingPeriod = invoice?.IssueDate
+      ? formatToMonthYear(invoice.IssueDate)
+      : data.BookingDates?.[0]?.Date
+        ? formatToMonthYear(data.BookingDates[0].Date)
+        : "-";
+    const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
+
+    const rb = (data as any).Finance;
+    const totalAmountNum = rb?.TotalAmount ?? (data as any).TotalAmount ?? invoice?.TotalAmount ?? undefined;
+    const totalAmount =
+      typeof totalAmountNum === "number"
+        ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
+        : "—";
+
+    const receiptPath = asSlipString(selectedPay?.ReceiptPath);
+    const fileName = receiptPath ? receiptPath.split("/").pop() : "";
+    const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
+
+    const isApprovedNow = ["approved", "paid"].includes(lower(statusRaw));
+
+    return {
+      statusKey,
+      vis,
+      invoiceNumber,
+      billingPeriod,
+      dueDate,
+      totalAmount,
+      fileName,
+      receiptPath,
+      invoicePDFPath,
+      isApprovedNow,
+      paymentId: selectedPay?.ID as number | undefined, // ✅ ใช้กับ upload/remove receipt
+    };
+  }, [booking]);
+
+
+
+  // ====== จัดการ Receipt (Upload/Replace/Remove) ======
+  const handleSelectReceipt: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const f = e.target.files?.[0];
+    e.currentTarget.value = ""; // reset ให้เลือกไฟล์ซ้ำได้
+    if (!f) return;
+
+    if (!RECEIPT_ALLOWED.has(f.type)) {
+      setAlerts((a) => [...a, { type: "error", message: "รองรับเฉพาะ PDF/PNG/JPG/WEBP" }]);
+      return;
+    }
+    if (f.size > RECEIPT_MAX_SIZE) {
+      setAlerts((a) => [...a, { type: "error", message: "ไฟล์ใหญ่เกิน 10MB" }]);
+      return;
+    }
+    if (!invoiceUI.paymentId) {
+      setAlerts((a) => [...a, { type: "error", message: "ไม่พบเลขอ้างอิงการชำระเงิน (paymentId)" }]);
+      return;
+    }
+    if (!onUploadReceipt) {
+      setAlerts((a) => [...a, { type: "error", message: "ยังไม่ได้เชื่อมต่อการอัปโหลดใบเสร็จ" }]);
+      return;
+    }
+
+    try {
+      setReceiptUploading(true);
+      await onUploadReceipt(f, invoiceUI.paymentId);
+      refreshBooking?.();
+      setAlerts((a) => [...a, { type: "success", message: invoiceUI.fileName ? "เปลี่ยนใบเสร็จสำเร็จ" : "อัปโหลดใบเสร็จสำเร็จ" }]);
+    } catch (err: any) {
+      setAlerts((a) => [...a, { type: "error", message: err?.message || "อัปโหลดใบเสร็จล้มเหลว" }]);
+    } finally {
+      setReceiptUploading(false);
+    }
+  };
+
+  const handleRemoveReceipt = async () => {
+    if (!invoiceUI.paymentId) return;
+    if (!onRemoveReceipt) {
+      setAlerts((a) => [...a, { type: "error", message: "ยังไม่ได้เชื่อมต่อการลบใบเสร็จ" }]);
+      return;
+    }
+    try {
+      setReceiptUploading(true);
+      await onRemoveReceipt(invoiceUI.paymentId);
+      refreshBooking?.();
+      setAlerts((a) => [...a, { type: "success", message: "ลบใบเสร็จแล้ว" }]);
+    } catch (err: any) {
+      setAlerts((a) => [...a, { type: "error", message: err?.message || "ลบใบเสร็จล้มเหลว" }]);
+    } finally {
+      setReceiptUploading(false);
     }
   };
 
@@ -233,25 +380,28 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     const url = slipUrl(inst.slipPath);
     const statusN = norm(inst.status);
 
-    const canUpload = isOwner && !hasSlip && ownerUploadableStatuses.has(statusN);
-    const canUpdate = isOwner && hasSlip && (statusN === "pending_verification" || statusN === "rejected");
+    // ❗ ไม่อนุญาตอัปโหลดใน pending_verification อีกต่อไป
+    const ownerUploadableStatuses = new Set(["unpaid", "pending_payment", "rejected"]);
+    const canUpload = isOwner && !inst.locked && !hasSlip && ownerUploadableStatuses.has(statusN);
+
+    // ❗ อนุญาต Replace/Update เฉพาะตอนถูกปัดตกเท่านั้น
+    const canUpdate = isOwner && hasSlip && statusN === "rejected";
+
     const canAdminAct = canShowAdminActions(isAdmin, inst.status, hasSlip);
 
     const file = files[inst.key]?.[0];
-    const chk = slipCheck[inst.key] || {};
+    const chk = (slipCheck[inst.key] || {}) as SlipCheckState;
     const verified = !!chk.ok && !!chk.transTs;
 
-    const title =
-      plan === "full" ? "ชำระเต็มจำนวน" : inst.key === "deposit" ? "ชำระมัดจำ" : "ชำระยอดคงเหลือ";
+    const title = plan === "full" ? "Full Payment" : inst.key === "deposit" ? "Deposit Payment" : "Balance Payment";
 
-    // helper label
     const checkedLabel = chk.loading
-      ? "กำลังตรวจสลิป..."
+      ? "Verifying slip..."
       : verified
-      ? chk.fallbackNow
-        ? `ใช้เวลาปัจจุบันแทน • ${new Date(chk.transTs!).toLocaleString()}`
-        : `ตรวจแล้ว • เวลาโอน: ${new Date(chk.transTs!).toLocaleString()}`
-      : chk.error || "ตรวจสลิปไม่สำเร็จ";
+        ? chk.fallbackNow
+          ? `Using current time instead • ${new Date(chk.transTs!).toLocaleString()}`
+          : `Verified • Transfer time: ${new Date(chk.transTs!).toLocaleString()}`
+        : chk.error || "Slip verification failed.";
 
     return (
       <Grid key={`${inst.key}-${idx}`} size={{ xs: 12, md: plan === "full" ? 12 : 6 }}>
@@ -266,7 +416,6 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             opacity: inst.locked ? 0.6 : 1,
           }}
         >
-          {/* ล็อกการ์ดยอดคงเหลือจนกว่าจะอนุมัติมัดจำ */}
           {inst.locked && (
             <Box
               sx={{
@@ -280,7 +429,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 zIndex: 1,
               }}
             >
-              <Typography color="text.secondary">โปรดชำระมัดจำให้สำเร็จก่อน</Typography>
+              <Typography color="text.secondary">Please complete the deposit payment first.</Typography>
             </Box>
           )}
 
@@ -288,7 +437,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography color="text.secondary">จำนวนเงิน</Typography>
+              <Typography color="text.secondary">Amount</Typography>
               <Typography>
                 {typeof inst.amount === "number"
                   ? inst.amount.toLocaleString("th-TH", { style: "currency", currency: "THB" })
@@ -296,7 +445,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography color="text.secondary">วันครบกำหนด</Typography>
+              <Typography color="text.secondary">Due Date</Typography>
               <Typography>{inst.dueDate ? dateFormat(inst.dueDate) : "—"}</Typography>
             </Box>
           </Box>
@@ -309,7 +458,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             ))}
           </Stepper>
 
-          {/* พื้นที่สลิป */}
+          {/* Slip area */}
           <Box
             sx={{
               mt: 1,
@@ -324,77 +473,145 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             }}
           >
             {hasSlip ? (
-              isImage(url) ? (
-                <CardMedia
-                  component="img"
-                  image={url}
-                  onClick={() => openSlip(url)}
-                  sx={{ borderRadius: 2, maxHeight: 240, objectFit: "contain", cursor: "zoom-in" }}
-                />
-              ) : (
-                <Button variant="outlined" onClick={() => openSlip(url)}>
-                  เปิดสลิปที่แนบไว้
-                </Button>
-              )
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: "100%" }}>
+                {/* Current slip display */}
+                {!replaceMode ? (
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    {isImage(url) ? (
+                      <CardMedia
+                        component="img"
+                        image={url}
+                        onClick={() => openSlip(url)}
+                        sx={{ borderRadius: 2, maxHeight: 200, objectFit: "contain", cursor: "zoom-in" }}
+                      />
+                    ) : (
+                      <Button variant="outlined" onClick={() => openSlip(url)}>
+                        Open attached slip
+                      </Button>
+                    )}
+
+                    {/* Replace ได้เฉพาะตอนถูก Reject เท่านั้น */}
+                    {canUpdate && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setReplaceMode(true)}
+                        sx={{ mt: 1 }}
+                        disabled={inst.locked}
+                      >
+                        Replace Slip
+                      </Button>
+                    )}
+                  </Box>
+                ) : (
+                  /* Replace mode */
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, width: "100%" }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Upload new slip
+                    </Typography>
+
+                    {files[inst.key]?.[0] && (
+                      <Typography variant="body2" color="text.secondary">
+                        {checkedLabel}
+                      </Typography>
+                    )}
+
+                    <ImageUploader
+                      value={files[inst.key]}
+                      onChange={setFileFor(inst.key)}
+                      setAlerts={setAlerts}
+                      maxFiles={1}
+                      buttonText={files[inst.key]?.[0] ? "Change Selected File" : "Select New Slip"}
+                    />
+
+                    <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          setReplaceMode(false);
+                          setFileFor(inst.key)([]); // clear selected file
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
             ) : canUpload && !inst.locked ? (
-              file ? (
+              /* No slip - show upload interface */
+              files[inst.key]?.[0] ? (
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                   <Typography variant="body2" color="text.secondary">
                     {checkedLabel}
                   </Typography>
                   <ImageUploader
                     value={files[inst.key]}
-                    onChange={setFileFor(inst.key)} // เปลี่ยนไฟล์ = ตรวจ/เช็คโควต้าใหม่
+                    onChange={setFileFor(inst.key)}
                     setAlerts={setAlerts}
                     maxFiles={1}
-                    buttonText="เปลี่ยนสลิป"
+                    buttonText="Change Slip"
                   />
                 </Box>
               ) : (
                 <ImageUploader
                   value={files[inst.key]}
-                  onChange={setFileFor(inst.key)} // อัปโหลด = เช็คโควต้า + ตรวจสลิป
+                  onChange={setFileFor(inst.key)}
                   setAlerts={setAlerts}
                   maxFiles={1}
-                  buttonText="อัปโหลดสลิป"
+                  buttonText="Upload Slip"
                 />
               )
             ) : (
               <Typography variant="body2" color="text.secondary">
-                ยังไม่มีการอัปโหลดสลิป
+                No slip uploaded yet.
               </Typography>
             )}
           </Box>
 
-          {/* ปุ่ม */}
+          {/* Actions */}
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
             {isOwner && !inst.locked && (
               <>
-                {canUpdate ? (
+                {/* ✅ อนุญาต Update เฉพาะตอน rejected เท่านั้น */}
+                {(
+                  (replaceMode && files[inst.key]?.[0]) ||
+                  (files[inst.key]?.[0] && norm(inst.status) === "rejected")
+                ) ? (
                   <Button
                     variant="contained"
-                    onClick={() => onUpdateFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                    disabled={isLoading || !file || !verified}
+                    onClick={() => {
+                      onUpdateFor?.(inst.key, files[inst.key]?.[0], inst.paymentId);
+                      setReplaceMode(false);
+                    }}
+                    disabled={
+                      isLoading ||
+                      !files[inst.key]?.[0] ||
+                      !slipCheck[inst.key]?.ok ||
+                      norm(inst.status) !== "rejected" // กันเผื่อสถานะยังไม่ refresh
+                    }
                     fullWidth
                   >
-                    อัปเดตสลิป
+                    Update Slip
                   </Button>
                 ) : (
-                  canUpload && (
+                  /* First-time upload: allowed only when unpaid/pending_payment/rejected & no slip */
+                  ownerUploadableStatuses.has(norm(inst.status)) && !hasSlip && (
                     <Button
                       variant="contained"
                       onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                      disabled={isLoading || !file || !verified}
+                      disabled={isLoading || !files[inst.key]?.[0] || !slipCheck[inst.key]?.ok}
                       fullWidth
                     >
-                      ส่งสลิป
+                      Submit Slip
                     </Button>
                   )
                 )}
               </>
             )}
 
-            {canAdminAct && (
+            {canShowAdminActions(isAdmin, inst.status, !!inst.slipPath) && (
               <>
                 <Button
                   variant="contained"
@@ -403,20 +620,26 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   disabled={isLoading}
                   fullWidth
                 >
-                  อนุมัติ
+                  Approve
                 </Button>
                 <Button
                   variant="outlined"
                   color="error"
-                  onClick={() => onRejectFor?.(inst.key, inst.paymentId)}
+                  onClick={async () => {
+                    await onRejectFor?.(inst.key, inst.paymentId);
+                    setReplaceMode(false);
+                    setFiles((prev) => ({ ...prev, [inst.key]: [] })); // เคลียร์ไฟล์ค้าง
+                    await refreshBooking?.(); // ✅ ให้สถานะ/สลิปย้อนกลับเป็นรอสลิปจากเซิร์ฟเวอร์
+                  }}
                   disabled={isLoading}
                   fullWidth
                 >
-                  ปฏิเสธ
+                  Reject
                 </Button>
               </>
             )}
           </Box>
+
         </Card>
       </Grid>
     );
@@ -446,10 +669,232 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
       <DialogContent sx={{ minWidth: 500 }}>
         <Grid container spacing={2}>
+          {/* ===== Invoice Overview (ย้ายของจาก All Invoice มาโชว์ที่นี่) ===== */}
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ p: 2 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Grid size={{ xs: 12, md: 7 }}>
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, width: "100%" }}>
+                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                      {invoiceUI.invoiceNumber}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
+                    <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {`Billing Period: ${invoiceUI.billingPeriod}`}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
+                    <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
+                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {`Due Date: ${invoiceUI.dueDate}`}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 1.2 }}>
+                    <Typography sx={{ fontSize: 14, color: "text.secondary" }}>Total Amount</Typography>
+                    <Typography sx={{ fontSize: 16, fontWeight: 600 }}>{invoiceUI.totalAmount}</Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <Box
+                    sx={{
+                      bgcolor: invoiceUI.vis.lite,
+                      borderRadius: 10,
+                      px: 1.5,
+                      py: 0.8,
+                      display: "flex",
+                      gap: 1,
+                      color: invoiceUI.vis.color,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                    }}
+                  >
+                    {React.createElement(invoiceUI.vis.icon, { size: 16 })}
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+                      {invoiceUI.vis.label}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 1.2 }} />
+
+                  {/* ===== Receipt & PDF rows: ทำให้เห็นชัดเจนว่ามี/ไม่มี ===== */}
+                  <Grid container spacing={1.2}>
+                    {/* Receipt */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          p: 1.2,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                          borderColor: invoiceUI.fileName ? "rgba(46,125,50,.5)" : "rgba(211,47,47,.4)",
+                          bgcolor: invoiceUI.fileName ? "rgba(46,125,50,.05)" : "rgba(211,47,47,.04)",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                          {invoiceUI.fileName ? (
+                            <CheckCircle2 size={18} color="#2e7d32" />
+                          ) : (
+                            <AlertCircle size={18} color="#d32f2f" />
+                          )}
+                          <Typography sx={{ fontWeight: 700 }}>
+                            Receipt {invoiceUI.fileName ? "(Attached)" : "(Not attached)"}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
+                          {invoiceUI.fileName ? (
+                            <>
+                              <Box
+                                sx={{
+                                  display: "inline-flex",
+                                  gap: 1,
+                                  border: "1px solid rgba(109,110,112,0.4)",
+                                  borderRadius: 1,
+                                  px: 1,
+                                  py: 0.5,
+                                  bgcolor: "#FFF",
+                                  cursor: "pointer",
+                                  transition: "all .3s",
+                                  alignItems: "center",
+                                  "&:hover": { color: "primary.main", borderColor: "primary.main" },
+                                  minWidth: 0,
+                                  maxWidth: "100%",
+                                }}
+                                onClick={() => invoiceUI.receiptPath && window.open(`${apiUrl}/${invoiceUI.receiptPath}`, "_blank")}
+                              >
+                                <FileText size={16} />
+                                <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 220 }}>
+                                  {invoiceUI.fileName}
+                                </Typography>
+                              </Box>
+
+                              {/* <Tooltip title="Open receipt">
+                                <span>
+                                  <Button
+                                    variant="outlined"
+                                    onClick={() => invoiceUI.receiptPath && window.open(`${apiUrl}/${invoiceUI.receiptPath}`, "_blank")}
+                                  >
+                                    Open
+                                  </Button>
+                                </span>
+                              </Tooltip> */}
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              No file uploaded
+                            </Typography>
+                          )}
+
+                          {/* Hidden input สำหรับอัปโหลดใบเสร็จ */}
+                          <input
+                            ref={receiptInputRef}
+                            type="file"
+                            accept=".pdf,image/*"
+                            hidden
+                            onChange={handleSelectReceipt}
+                          />
+
+                          {/* ปุ่ม Upload/Replace/Remove (เฉพาะแอดมิน + อนุมัติแล้ว) */}
+                          {isAdmin && (
+                            <>
+                              <Button
+                                variant="contained"
+                                startIcon={<Upload size={16} />}
+                                onClick={() => receiptInputRef.current?.click()}
+                                disabled={receiptUploading}
+
+                              >
+                                {invoiceUI.fileName ? "Replace Receipt" : "Upload Receipt"}
+                              </Button>
+                              {invoiceUI.fileName && onRemoveReceipt && (
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  startIcon={<Trash2 size={16} />}
+                                  onClick={handleRemoveReceipt}
+                                  disabled={receiptUploading}
+
+                                >
+                                  Remove
+
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </Box>
+                      </Card>
+                    </Grid>
+
+                    {/* Invoice PDF */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          p: 1.2,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                          borderColor: invoiceUI.invoicePDFPath ? "rgba(46,125,50,.5)" : "rgba(95,99,104,.4)",
+                          bgcolor: invoiceUI.invoicePDFPath ? "rgba(46,125,50,.05)" : "rgba(95,99,104,.05)",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                          {invoiceUI.invoicePDFPath ? (
+                            <CheckCircle2 size={18} color="#2e7d32" />
+                          ) : (
+                            <AlertCircle size={18} color="#5f6368" />
+                          )}
+                          <Typography sx={{ fontWeight: 700 }}>
+                            Invoice PDF {invoiceUI.invoicePDFPath ? "(Available)" : "(Not available)"}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
+                          {invoiceUI.invoicePDFPath ? (
+                            <>
+                              <Tooltip title="Download PDF">
+                                <span>
+                                  <Button
+                                    variant="outlinedGray"
+                                    onClick={() => window.open(`${apiUrl}/${invoiceUI.invoicePDFPath}`, "_blank")}
+                                  >
+                                    <Download size={16} />
+                                    <Typography variant="textButtonClassic" className="text-btn" sx={{ ml: 0.5 }}>
+                                      Download PDF
+                                    </Typography>
+                                  </Button>
+                                </span>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              No PDF generated yet
+                            </Typography>
+                          )}
+                        </Box>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Card>
+          </Grid>
+
+          {/* ===== Booking Summary เดิม ===== */}
           <Grid size={{ xs: 12 }}>
             <Card sx={{ p: 2 }}>
               <Typography variant="h6" fontWeight={700}>
-                รายละเอียดการจอง
+                Booking Details
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {bookingSummary || "—"}
@@ -457,6 +902,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             </Card>
           </Grid>
 
+          {/* ===== เงื่อนไขการใช้บริการ (มีเดิม) ===== */}
           {serviceConditions && (
             <Grid size={{ xs: 12 }}>
               <Card sx={{ p: 2 }}>
@@ -476,17 +922,18 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             <Grid size={{ xs: 12 }}>
               <Card sx={{ p: 2, bgcolor: "rgba(111,66,193,.10)", border: "1px solid rgba(111,66,193,.35)" }}>
                 <Typography sx={{ fontWeight: 600, color: "#6F42C1" }}>
-                  ชำระครบแล้ว — รอตรวจสอบออกใบเสร็จ/ใบกำกับภาษี
+                  Fully paid — awaiting receipt/tax invoice issuance.
                 </Typography>
               </Card>
             </Grid>
           )}
 
+          {/* ===== การแบ่งงวด/อัปสลิป เดิม ===== */}
           {list.length === 0 ? (
             <Grid size={{ xs: 12 }}>
               <Card sx={{ p: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  ยังไม่มีข้อมูลการชำระเงินสำหรับการจองนี้
+                  No payment information for this booking yet.
                 </Typography>
               </Card>
             </Grid>
@@ -498,7 +945,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
       <DialogActions sx={{ p: 2 }}>
         <Button variant="outlined" onClick={onClose} disabled={isLoading}>
-          ปิด
+          Close
         </Button>
       </DialogActions>
     </Dialog>
@@ -506,3 +953,4 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 };
 
 export default BookingPaymentPopup;
+

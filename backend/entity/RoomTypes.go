@@ -1,14 +1,15 @@
 package entity
 
 import (
-	"errors"
-	"strings"
+	
 	"gorm.io/gorm"
+	
 )
 
 type RoomType struct {
 	gorm.Model
-	TypeName         string  `gorm:"not null;uniqueIndex"`
+	TypeName string `json:"type_name" gorm:"not null;uniqueIndex"`
+
 	RoomSize         float32
 	ForRental        bool
 	HasMultipleSizes bool
@@ -25,14 +26,3 @@ type RoomType struct {
 	RoomEquipments  []RoomEquipment  `gorm:"foreignKey:RoomTypeID"`
 }
 
-// บังคับให้ค่าหมวดถูกต้องเสมอ
-func (rt *RoomType) BeforeSave(tx *gorm.DB) error {
-	rt.Category = strings.ToLower(strings.TrimSpace(rt.Category))
-	switch rt.Category {
-	case "meetingroom", "trainingroom", "multifunctionroom":
-		return nil
-	default:
-		return errors.New("invalid RoomType.Category (meetingroom|trainingroom|multifunctionroom)")
-	}
-}
-func (rt *RoomType) BeforeCreate(tx *gorm.DB) error { return rt.BeforeSave(tx) }

@@ -12,7 +12,7 @@ interface Props {
     lg?: number;
     xl?: number;
   };
-  /** ระบุลิสต์สถานะที่จะโชว์ (label ธรรมดา เช่น "Pending","Confirmed","Payment Review","Payment","Completed","Cancelled") */
+  /** ระบุลิสต์สถานะที่จะโชว์ (เช่น "Pending Approved","Pending Payment","Partially Paid","Awaiting Receipt","Complete","Cancelled") */
   customDisplayStatuses?: string[];
 }
 
@@ -22,12 +22,12 @@ const BookingStatusCards: React.FC<Props> = ({
   customDisplayStatuses,
 }) => {
   const displayStatuses =
-    customDisplayStatuses || ["Pending", "Confirmed", "Payment Review", "Payment", "Completed", "Cancelled"];
+    customDisplayStatuses || ["Pending Approved", "Pending Payment", "Partially Paid", "Awaiting Receipt", "Complete", "Cancelled"];
 
   const statusCards = displayStatuses.map((label) => {
     const keyLower = label.toLowerCase();
     const count = statusCounts?.[keyLower] ?? 0;
-    const cfg = getBookingStatusConfig(keyLower);
+    const cfg = getBookingStatusConfig(keyLower); // ให้ config รองรับ mapping key ใหม่ทั้งหมด
     return {
       name: cfg.label || label,
       count,

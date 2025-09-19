@@ -57,78 +57,120 @@ func GetNextRoomBookingInvoiceNumber(c *gin.Context) {
 
 // POST /room-booking-invoice
 func CreateRoomBookingInvoice(c *gin.Context) {
-	var invoice entity.RoomBookingInvoice
+	db := config.DB()
 
-	if err := c.ShouldBindJSON(&invoice); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var in entity.RoomBookingInvoice
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload: " + err.Error()})
 		return
 	}
 
-	db := config.DB()
+	// -------- Resolve CustomerID (fallback จาก BookingRoom.UserID) --------
+	if in.CustomerID == 0 {
+		if in.BookingRoomID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "CustomerID or BookingRoomID is required"})
+			return
+		}
+		var b entity.BookingRoom
+		if err := db.Select("id, user_id").First(&b, in.BookingRoomID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Booking not found"})
+			return
+		}
+		if b.UserID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found from booking"})
+			return
+		}
+		in.CustomerID = b.UserID
+	}
 
-	// var invoiceCheck entity.RoomBookingInvoice
-	// if err := db.Where("invoice_number = ?", invoice.InvoiceNumber).First(&invoiceCheck).Error; err == nil {
-	// 	c.JSON(http.StatusConflict, gin.H{"error": "Invoice number already exists"})
-	// 	return
-	// }
-
-	if invoice.ApproverID != 0 {
+	// -------- Validate Approver (optional) --------
+	if in.ApproverID != 0 {
 		var approver entity.User
-		if err := db.First(&approver, invoice.ApproverID).Error; err != nil {
+		if err := db.First(&approver, in.ApproverID).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Approver not found"})
 			return
 		}
 	}
 
-	var customer entity.User
-	if err := db.First(&customer, invoice.CustomerID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
-		return
+	// -------- Validate Customer --------
+	{
+		var customer entity.User
+		if err := db.First(&customer, in.CustomerID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer not found"})
+			return
+		}
 	}
 
-	var booking entity.BookingRoom
-	if err := db.First(&booking, invoice.BookingRoomID).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking not found"})
+	// -------- Validate Booking --------
+	{
+		var booking entity.BookingRoom
+		if err := db.Select("id").First(&booking, in.BookingRoomID).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Booking not found"})
+			return
+		}
 	}
 
+	// -------- Normalize times & timezone --------
 	loc, _ := time.LoadLocation("Asia/Bangkok")
-
-	invoiceData := entity.RoomBookingInvoice{
-		InvoiceNumber:  invoice.InvoiceNumber,
-		IssueDate:      invoice.IssueDate.In(loc),
-		DueDate:        invoice.DueDate.In(loc),
-		DepositDueDate: invoice.DepositDueDate.In(loc),
-		BookingRoomID:  invoice.BookingRoomID,
-		ApproverID:     invoice.ApproverID,
-		CustomerID:     invoice.CustomerID,
+	issue := in.IssueDate
+	if issue.IsZero() {
+		issue = time.Now().In(loc)
+	} else {
+		issue = issue.In(loc)
 	}
 
-	// if ok, err := govalidator.ValidateStruct(&invoiceData); !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"validation_error": err.Error()})
-	// 	return
-	// }
+	var due *time.Time
+	if !in.DueDate.IsZero() {
+		d := in.DueDate.In(loc)
+		due = &d
+	}
 
-	var exiting entity.RoomBookingInvoice
-	if err := db.Where("booking_room_id = ?", invoiceData.BookingRoomID).First(&exiting).Error; err == nil {
+	var depDue *time.Time
+	if !in.DepositDueDate.IsZero() {
+		d := in.DepositDueDate.In(loc)
+		depDue = &d
+	}
+
+	// -------- Unique invoice per booking (ตามที่ตั้งใจ) --------
+	var existing entity.RoomBookingInvoice
+	if err := db.Where("booking_room_id = ?", in.BookingRoomID).First(&existing).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "An invoice for this room booking already exists."})
 		return
 	}
 
-	if err := db.Create(&invoiceData).Error; err != nil {
+	// ---- Persist ----
+	toCreate := entity.RoomBookingInvoice{
+		InvoiceNumber: strings.TrimSpace(in.InvoiceNumber),
+		IssueDate:     issue,
+		BookingRoomID: in.BookingRoomID,
+		ApproverID:    in.ApproverID, // 0 = null-able ก็ได้ถ้า model เป็น pointer
+		CustomerID:    in.CustomerID,
+	}
+	if due != nil {
+		toCreate.DueDate = *due
+	}
+	if depDue != nil {
+		toCreate.DepositDueDate = *depDue
+	}
+
+	if err := db.Create(&toCreate).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := db.Preload("Customer").Preload("Items").First(&invoiceData, invoiceData.ID).Error; err != nil {
+	// preload ความสัมพันธ์ที่ FE ใช้บ่อย
+	if err := db.
+		Preload("Customer").
+		Preload("Approver").
+		Preload("Items").
+		First(&toCreate, toCreate.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load invoice relations"})
 		return
 	}
 
-	// services.NotifySocketEvent("invoice_created", invoiceData)
-
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Create success",
-		"data":    invoiceData,
+		"data":    toCreate,
 	})
 }
 

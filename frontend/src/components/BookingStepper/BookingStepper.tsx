@@ -1,67 +1,71 @@
 import { Card, CardContent } from "@mui/material";
 import StepperComponent from "../Stepper/Stepper";
 import {
-  BOOKING_STEPS,          // ["Requested","Approved","Payment Review","Payment","Completed"]
-  getBookingActiveStep,   // (statusName) => { active, cancelled }
+  BOOKING_STEPS,          // อัปเดตแล้วตามไฟล์ util ใหม่
+  getBookingActiveStep,   // อัปเดตแล้ว
 } from "../../utils/getBookingStep";
 
-// สถานะชำระเงินที่ UI ใช้งาน (ตรงกับ backend normalize แล้ว)
+// สถานะชำระเงินที่ UI ใช้แบบ canonical (Title Case)
 export type UIPaymentStatus =
-  | "unpaid"
-  | "pending payment"
-  | "pending verification"
-  | "approved"
-  | "rejected"
-  | "refunded";
+  | "Awaiting payment"
+  | "Pending verification"
+  | "Paid"
+  | "Rejected"
+  | "Refunded";
 
 type Props = {
-  statusName: string | undefined;  // สถานะ booking (Requested/Approved/Completed/Cancelled...)
-  paymentStatus?: string;          // รับเป็น string แล้วค่อย normalize ภายใน
+  statusName?: string;                 // สถานะ booking
+  paymentStatus?: string;              // สถานะจ่ายล่าสุด (optional)
+  plan?: "deposit" | "full";           // แผนการจ่าย (optional; ถ้า "full" จะข้าม Partially Paid)
 };
 
-// helper: normalize payment status ให้เข้าชุดเดียวกัน
-const normalizePaymentStatus = (s?: string): UIPaymentStatus | undefined => {
-  const v = (s || "").trim().toLowerCase();
+// normalize payment status จากค่าที่มาหลากหลาย -> Title Case เดียว
+const normalizePaymentStatus = (raw?: string): UIPaymentStatus | undefined => {
+  const v = (raw || "").trim().toLowerCase();
   if (!v) return undefined;
-  if (v === "paid") return "approved";           // backward-compat
-  if (v === "submitted") return "pending verification"; // backward-compat
-  if (["unpaid","pending payment","pending verification","approved","rejected","refunded"].includes(v)) {
-    return v as UIPaymentStatus;
-  }
+  if (["awaiting payment", "pending payment", "unpaid", "overdue"].includes(v)) return "Awaiting payment";
+  if (["pending verification", "submitted", "verifying", "waiting for verify"].includes(v)) return "Pending verification";
+  if (["paid", "approved", "success", "completed", "deposit paid"].includes(v)) return "Paid";
+  if (["rejected", "failed"].includes(v)) return "Rejected";
+  if (v === "refunded") return "Refunded";
   return undefined;
 };
 
-export default function BookingStepper({ statusName, paymentStatus }: Props) {
+export default function BookingStepper({ statusName, paymentStatus, plan }: Props) {
   const { active: baseActive, cancelled } = getBookingActiveStep(statusName);
-  const steps = cancelled ? ["Cancelled"] : [...BOOKING_STEPS];
 
-  const idxOf = (needle: string) =>
-    steps.findIndex((s) => s.trim().toLowerCase() === needle.trim().toLowerCase());
-  const idxIncludes = (needle: string) =>
-    steps.findIndex((s) => s.trim().toLowerCase().includes(needle.trim().toLowerCase()));
+  // steps: ยกเลิก = แสดง “Cancelled” อย่างเดียว, ปกติ = ใช้ BOOKING_STEPS
+  const stepsAll = cancelled
+    ? ["Cancelled"]
+    : [...BOOKING_STEPS];
 
-  const idxApproved       = idxOf("approved");
-  const idxPaymentReview  = idxOf("payment review") !== -1 ? idxOf("payment review") : idxIncludes("payment review");
-  const idxPayment        = idxOf("payment");
-  const idxCompleted      = idxOf("completed");
+  // ถ้าเป็น full → ข้าม "Partially Paid"
+  const steps =
+    !cancelled && plan === "full"
+      ? stepsAll.filter((s) => s !== "Partially Paid")
+      : stepsAll;
 
-  let activeStep = cancelled ? 0 : Math.max(0, baseActive);
+  // map active เดิมให้เข้ากับ steps ที่ถูกกรอง (กรณี full)
+  const indexOfStep = (label: string) =>
+    steps.findIndex((s) => s.trim().toLowerCase() === label.trim().toLowerCase());
 
+  let activeStep = cancelled ? 0 : Math.max(0, indexOfStep(BOOKING_STEPS[Math.min(baseActive, BOOKING_STEPS.length - 1)]));
+
+  // ใช้ paymentStatus เป็นตัว "ดัน" ขั้นตอนขึ้นเล็กน้อย (ขณะ backend ยังไม่อัปเดตสถานะ Booking)
   if (!cancelled) {
     const ps = normalizePaymentStatus(paymentStatus);
-    const isCompletedStage = statusName?.toLowerCase() === "completed" || activeStep === idxCompleted;
-
-    if (!isCompletedStage && ps) {
-      if ((ps === "pending verification" || ps === "rejected") && idxPaymentReview !== -1) {
-        // ส่งสลิป/แก้สลิปรอรีวิว
-        activeStep = Math.max(activeStep, idxPaymentReview);
-      } else if ((ps === "approved" || ps === "refunded") && idxPayment !== -1) {
-        // อนุมัติเงินแล้ว/คืนเงินแล้ว
-        activeStep = Math.max(activeStep, idxPayment);
-      } else if ((ps === "unpaid" || ps === "pending payment") && idxApproved !== -1) {
-        // อนุมัติจองแล้วแต่ยังไม่จ่าย
-        activeStep = Math.max(activeStep, idxApproved);
-      }
+    // ถ้าเพิ่งอัปสลิป → ยังถือว่าอยู่ "Pending Payment" (ไม่มี Payment Review แล้ว)
+    if (ps === "Pending verification") {
+      const idx = indexOfStep("Pending Payment");
+      activeStep = Math.max(activeStep, idx === -1 ? activeStep : idx);
+    }
+    // ถ้าอนุมัติจ่ายแล้ว
+    if (ps === "Paid") {
+      // deposit: อาจไป "Partially Paid" หรือ "Awaiting Receipt" → ให้ดันไปจนถึงสถานะ booking ปัจจุบันอยู่แล้ว
+      // full: ไม่มี "Partially Paid" → ดันได้อย่างน้อยถึง "Awaiting Receipt"
+      const target = plan === "full" ? "Awaiting Receipt" : (statusName || "");
+      const idx = indexOfStep(target) >= 0 ? indexOfStep(target) : indexOfStep("Awaiting Receipt");
+      activeStep = Math.max(activeStep, idx === -1 ? activeStep : idx);
     }
   }
 
