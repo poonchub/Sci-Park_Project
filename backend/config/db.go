@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sci-park_web-application/entity"
+	"strings"
 	"time"
 
 	"gorm.io/driver/sqlite"
@@ -193,7 +194,7 @@ func SeedDatabase() {
 	}
 
 	// 🔹 ข้อมูล Floor
-	floors := []entity.Floor{{Number: 1}, {Number: 2}}
+	floors := []entity.Floor{{Number: 1}, {Number: 2}, {Number: 3}, {Number: 4}}
 	for _, floor := range floors {
 		db.FirstOrCreate(&floor, entity.Floor{Number: floor.Number})
 	}
@@ -267,7 +268,11 @@ func SeedDatabase() {
 
 	for _, status := range roomStatuses {
 		db.FirstOrCreate(&status, entity.RoomStatus{Code: status.Code})
+
 	}
+
+	db.Exec("DELETE FROM room_types")
+	db.Exec("DELETE FROM sqlite_sequence WHERE name = 'room_types'")
 	roomTypes := []entity.RoomType{
 		{TypeName: "Small Meeting Room", RoomSize: 18, Category: "meetingroom", EmployeeDiscount: 20},
 		{TypeName: "Medium Meeting Room", RoomSize: 63, Category: "meetingroom", EmployeeDiscount: 20},
@@ -280,18 +285,26 @@ func SeedDatabase() {
 
 	typeNameToID := map[string]uint{}
 	for _, rt := range roomTypes {
-		var row entity.RoomType
+		if strings.TrimSpace(rt.TypeName) == "" {
+			fmt.Println("⚠️ Skip RoomType with empty name")
+			continue
+		}
+
+		row := entity.RoomType{
+			TypeName:         rt.TypeName,
+			RoomSize:         rt.RoomSize,
+			Category:         rt.Category,
+			EmployeeDiscount: rt.EmployeeDiscount,
+			ForRental:        rt.ForRental,
+			HasMultipleSizes: rt.HasMultipleSizes,
+		}
+
 		if err := db.Where("type_name = ?", rt.TypeName).
-			Assign(map[string]any{
-				"room_size":          rt.RoomSize,
-				"category":           rt.Category,
-				"employee_discount":  rt.EmployeeDiscount,
-				"for_rental":         rt.ForRental,
-				"has_multiple_sizes": rt.HasMultipleSizes,
-			}).
 			FirstOrCreate(&row).Error; err != nil {
 			panic(err)
 		}
+
+		fmt.Printf("✅ Seeded RoomType: %s\n", row.TypeName)
 		typeNameToID[row.TypeName] = row.ID
 	}
 
@@ -528,6 +541,92 @@ func SeedDatabase() {
 		users[i].Password, _ = HashPassword(user.Password)
 		db.FirstOrCreate(&users[i], entity.User{Email: user.Email})
 	}
+
+	rentalRooms := []entity.Room{
+		{RoomNumber: "A101", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A102", FloorID: 1, RoomStatusID: 3, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+		{RoomNumber: "A110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A111", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 176},
+		{RoomNumber: "A112", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 212},
+
+		{RoomNumber: "B101", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B102", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B103", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B104", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B105", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B106", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B107", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B108", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B109", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 252},
+		{RoomNumber: "B110", FloorID: 1, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+
+		{RoomNumber: "A201", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A202", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A203", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A204", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A205", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 56},
+		{RoomNumber: "A206", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 36},
+		{RoomNumber: "A207", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A208", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A209", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "A211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 216},
+
+		{RoomNumber: "B201", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B202", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B203", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B204", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B205", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B206", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 57},
+		{RoomNumber: "B207", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 76},
+		{RoomNumber: "B208", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 76},
+		{RoomNumber: "B209", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 58},
+		{RoomNumber: "B210", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 58},
+		{RoomNumber: "B211", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 76},
+		{RoomNumber: "B212", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 76},
+		{RoomNumber: "B213", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B214", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B215", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B216", FloorID: 2, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+
+		{RoomNumber: "B301", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 15},
+		{RoomNumber: "B302", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 15},
+		{RoomNumber: "B303", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 30},
+		{RoomNumber: "B304", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 30},
+		{RoomNumber: "B306", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 30},
+		{RoomNumber: "B307", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 30},
+		{RoomNumber: "B308", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 15},
+		{RoomNumber: "B309", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 15},
+		{RoomNumber: "B310", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B311", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B312", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B313", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B314", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B315", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B316", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B317", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B318", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B319", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B320", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B321", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B322", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B323", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+		{RoomNumber: "B324", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+		{RoomNumber: "B325", FloorID: 3, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 100},
+
+		{RoomNumber: "B402", FloorID: 4, RoomStatusID: 1, RoomTypeID: 8, RoomSize: 50},
+	}
+	for _, room := range rentalRooms {
+		db.FirstOrCreate(&room, entity.Room{RoomNumber: room.RoomNumber})
+	}
+
 	type roomSeed struct {
 		RoomNumber   string
 		FloorID      uint
@@ -793,10 +892,12 @@ func SeedDatabase() {
 	}
 
 	bookingStatus := []entity.BookingStatus{
-		{StatusName: "Pending"},
-		{StatusName: "Confirmed"},
+		{StatusName: "Pending Approved"},
+		{StatusName: "Pending Payment"},
+		{StatusName: "Partially Paid"},
+		{StatusName: "Awaiting Receipt"},
+		{StatusName: "Complete"},
 		{StatusName: "Cancelled"},
-		{StatusName: "Completed"},
 	}
 	for _, bs := range bookingStatus {
 		db.FirstOrCreate(&bs, entity.BookingStatus{StatusName: bs.StatusName})

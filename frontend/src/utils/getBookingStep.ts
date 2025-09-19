@@ -1,15 +1,31 @@
 // utils/getBookingStep.ts
-export const BOOKING_STEPS = ["Requested","Approved","Payment Review","Payment","Completed"] as const;
+export const BOOKING_STEPS = [
+  "Pending Approved",
+  "Pending Payment",
+  "Partially Paid",
+  "Awaiting Receipt",
+  "Complete",
+] as const;
+
+export type BookingStep = typeof BOOKING_STEPS[number];
 
 export function getBookingActiveStep(statusName?: string) {
   const s = (statusName || "").trim().toLowerCase();
-  const cancelled = s.includes("cancel");
-  if (cancelled) return { active: 0, cancelled: true };
 
-  if (s.includes("complete")) return { active: 4, cancelled: false };           // Completed
-  if (s.includes("payment review") || s.includes("review")) return { active: 2, cancelled: false };
-  if (s.includes("payment") || s.includes("awaiting receipt")) return { active: 3, cancelled: false }; // Payment
-  if (s.includes("approve") || s === "confirmed") return { active: 1, cancelled: false };
+  // ยกเลิก = สเตปพิเศษ
+  if (s === "cancelled") {
+    return { active: 0, cancelled: true };
+  }
 
-  return { active: 0, cancelled: false }; // Requested
+  // รองรับคำเก่า/ผิดสะกดเล็กน้อย
+  const map: Record<string, number> = {
+    "pending approved": 0,
+    "pending payment": 1,
+    "partially paid": 2,
+    "awaiting receipt": 3,
+    "complete": 4,
+    "completed": 4, // backward-compat
+  };
+
+  return { active: map[s] ?? 0, cancelled: false };
 }

@@ -203,33 +203,41 @@ type AddressProps = {
 };
 
 type UserPackageLite = {
-  ID?: number;
-  package_name?: string; // เช่น "Diamond" | "None"
-  meeting_room_limit?: number;
-  training_room_limit?: number;
-  multi_function_room_limit?: number;
+  package_name?: string;
+  meeting_room_limit?: number;            // ฟรีห้องประชุม/ปี
+  training_room_limit?: number;           // โควตา 50% สำหรับ training
+  multi_function_room_limit?: number;     // โควตา 50% สำหรับ hall
 };
 
 type PackageBenefits = {
   meetingFreePerYear: number;
-  meetingHalf: boolean;
-  trainingHalf: boolean;
-  hallHalf: boolean;
+  meetingHalf: boolean;       // เปิดสิทธิ์ 50% สำหรับ meeting (จะยังถูกปิดถ้ามีสิทธิ์ฟรีเหลือ)
+  trainingHalf: boolean;      // เปิดสิทธิ์ 50% สำหรับ training
+  hallHalf: boolean;          // เปิดสิทธิ์ 50% สำหรับ hall
+  trainingHalfQuota: number;
+  hallHalfQuota: number;
 };
 
 function benefitsFromPackage(pkg?: UserPackageLite | null): PackageBenefits {
-  const name = String(pkg?.package_name || "none").toLowerCase();
-  switch (name) {
-    case "diamond":
-      return {
-        meetingFreePerYear: pkg?.meeting_room_limit ?? 10,
-        meetingHalf: true,
-        trainingHalf: true,
-        hallHalf: true,
-      };
-    default:
-      return { meetingFreePerYear: 0, meetingHalf: false, trainingHalf: false, hallHalf: false };
-  }
+  const tier = String(pkg?.package_name ?? "none").trim().toLowerCase();
+
+  const meetingFreePerYear = Number(pkg?.meeting_room_limit) || 0;
+  const trainingHalfQuota = Number(pkg?.training_room_limit) || 0;
+  const hallHalfQuota = Number(pkg?.multi_function_room_limit) || 0;
+
+  return {
+    meetingFreePerYear,
+    // อนุญาต 50% สำหรับ meeting ตั้งแต่ Silver ขึ้นไป (tier !== 'none')
+    // การ "บังคับใช้สิทธิ์ฟรีก่อน" ยังควบคุมด้วย disabled เงื่อนไข quotas.meeting.remaining > 0
+    meetingHalf: tier !== "none",
+
+    // เปิดตามโควตา
+    trainingHalf: trainingHalfQuota > 0,
+    hallHalf: hallHalfQuota > 0,
+
+    trainingHalfQuota,
+    hallHalfQuota,
+  };
 }
 
 /* ========= Component ========= */
@@ -282,7 +290,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
   const [userPackage, setUserPackage] = useState<UserPackageLite | null>(null);
   const [pkgBenefits, setPkgBenefits] = useState<PackageBenefits>({
-    meetingFreePerYear: 0, meetingHalf: false, trainingHalf: false, hallHalf: false
+    meetingFreePerYear: 0,
+    meetingHalf: false,
+    trainingHalf: false,
+    hallHalf: false,
+    trainingHalfQuota: 0,
+    hallHalfQuota: 0
   });
   const hasPackage = !!userPackage && String(userPackage.package_name || "").toLowerCase() !== "none";
 

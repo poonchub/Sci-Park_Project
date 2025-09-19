@@ -1,3 +1,4 @@
+// pages/AllBookingRoom/AllBookingRoom.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -71,7 +72,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { CalendarMonth } from "@mui/icons-material";
 import { Select } from "../../components/Select/Select";
-import { getDisplayStatus, type ActionKey } from "../../utils/bookingFlow";
+import { flowFromBackend, type ActionKey } from "../../utils/bookingFlow";
+
 import BookingStatusCards from "../../components/BookingStatusCards/BookingStatusCards";
 import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
@@ -93,15 +95,14 @@ import { io } from "socket.io-client";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 /* =========================
- * Helpers
+ * Helpers (reusable)
  * ========================= */
 type PopupStatus = InstallmentUI["status"];
-
 const lower = (s?: string) => (s || "").trim().toLowerCase();
 const normalizePath = (p?: string) => (p || "").replace(/\\/g, "/");
 
+// รองรับ string | string[] | {Path}[] | undefined
 const asSlipString = (sp?: any): string => {
-    // รองรับ string | string[] | {Path}[] | undefined
     if (!sp) return "";
     if (typeof sp === "string") return sp;
     if (Array.isArray(sp)) {
@@ -114,9 +115,7 @@ const asSlipString = (sp?: any): string => {
 };
 
 const statusNameOf = (p?: any): string =>
-    typeof p?.Status === "string"
-        ? p.Status
-        : p?.Status?.StatusName || p?.status || p?.StatusName || "";
+    typeof p?.Status === "string" ? p.Status : p?.Status?.StatusName || p?.status || p?.StatusName || "";
 
 const isValidDue = (d?: string | null) => !!d && new Date(d).getFullYear() > 1970;
 
@@ -131,13 +130,12 @@ const toPopupStatus = (s?: string): PopupStatus => {
     return "unpaid";
 };
 
-// ✅ เลือก payment ที่เหมาะกับ “ใบเสร็จ” ของแถวนี้
+// เลือก payment ที่เหมาะกับ “ใบเสร็จ” ของแถวนี้
 function pickReceiptPayment(row: any) {
     const pays: any[] = Array.isArray(row?.Payments) ? [...row.Payments] : [];
     if (row?.Payment && !pays.find((p) => (p.ID ?? p.id) === (row.Payment.ID ?? row.Payment.id))) {
         pays.push(row.Payment);
     }
-
     // ใหม่สุดอยู่หน้าสุด (โดย PaymentDate ก่อน ตกมาใช้ ID)
     pays.sort((a, b) => {
         const ad = new Date(a?.PaymentDate || 0).getTime();
@@ -146,13 +144,9 @@ function pickReceiptPayment(row: any) {
         return (b?.ID ?? b?.id ?? 0) - (a?.ID ?? a?.id ?? 0);
     });
 
-    const nameOf = (p: any) =>
-        (typeof p?.Status === "string" ? p.Status : p?.Status?.StatusName || p?.status || p?.StatusName || "").toLowerCase();
+    const nameOf = (p: any) => lower(typeof p?.Status === "string" ? p.Status : p?.Status?.StatusName || p?.status || p?.StatusName);
     const isApproved = (p: any) => nameOf(p) === "approved" || nameOf(p) === "paid";
-    const hasNoReceipt = (p: any) => {
-        const rp = asSlipString(p?.ReceiptPath);
-        return !rp || rp.trim() === "";
-    };
+    const hasNoReceipt = (p: any) => !asSlipString(p?.ReceiptPath);
 
     // 1) อนุมัติแล้วแต่ยังไม่มีใบเสร็จ → เลือกตัวนี้ก่อน
     const awaiting = pays.find((p) => isApproved(p) && hasNoReceipt(p));
@@ -165,121 +159,153 @@ function pickReceiptPayment(row: any) {
     // 3) ไม่เจอเลย → ล่าสุด
     return pays[0];
 }
-
-/* =========================
- * Payment popup builder
- * ========================= */
-function buildInstallmentsFromBooking(row?: BookingRoomsInterface): {
-    plan: "full" | "deposit";
-    installments: InstallmentUI[];
-    fullyPaid: boolean;
+function buildInstallmentsFromBooking(row?: any): {
+  plan: "full" | "deposit";
+  installments: InstallmentUI[];
+  fullyPaid: boolean;
 } {
-    if (!row) return { plan: "full", installments: [], fullyPaid: false };
+  if (!row) return { plan: "full", installments: [], fullyPaid: false };
 
-    const option = lower((row as any)?.PaymentOption?.OptionName);
-    const isDepositPlan = option === "deposit";
-
-    const invoice = (row as any).RoomBookingInvoice || {};
-    const finance = (row as any).Finance || {};
-    const total: number | undefined =
-        typeof finance.TotalAmount === "number" ? finance.TotalAmount : invoice.TotalAmount;
-
-    const depositDue = invoice.DepositDueDate || invoice.DepositeDueDate || invoice.IssueDate;
-    const dueAll = invoice.DueDate;
-
-    // ===== รวม payments แล้วเรียงเก่า->ใหม่ โดย "วันที่ว่าง" ไปท้ายเสมอ =====
-    const pays: any[] = Array.isArray((row as any).Payments) ? [...(row as any).Payments] : [];
-    if ((row as any).Payment && !pays.find((p) => (p.ID ?? p.id) === ((row as any).Payment.ID ?? (row as any).Payment.id))) {
-        pays.push((row as any).Payment);
+  const lower = (s?: string) => (s || "").trim().toLowerCase();
+  const normalizePath = (p?: string) => (p || "").replace(/\\/g, "/");
+  const asSlipString = (sp?: any): string => {
+    if (!sp) return "";
+    if (typeof sp === "string") return sp;
+    if (Array.isArray(sp)) {
+      const f = sp[0];
+      if (!f) return "";
+      if (typeof f === "string") return f;
+      if (typeof f?.Path === "string") return f.Path;
     }
-    pays.sort((a, b) => {
-        const ad = Date.parse(a?.PaymentDate ?? "");
-        const bd = Date.parse(b?.PaymentDate ?? "");
-        const aEmpty = Number.isNaN(ad);
-        const bEmpty = Number.isNaN(bd);
+    return "";
+  };
+  const statusNameOf = (p?: any): string =>
+    typeof p?.Status === "string" ? p.Status : p?.Status?.StatusName || p?.status || p?.StatusName || "";
 
-        // ไม่มีวันที่ -> ไปอยู่หลัง
-        if (aEmpty && !bEmpty) return 1;
-        if (!aEmpty && bEmpty) return -1;
+  const toPopupStatus = (s?: string): InstallmentUI["status"] => {
+    const v = lower(s);
+    if (["pending payment","unpaid","awaiting payment"].includes(v)) return "pending_payment";
+    if (["pending verification","submitted","slip under review"].includes(v)) return "pending_verification";
+    if (["approved","paid","payment completed"].includes(v)) return "approved";
+    if (["rejected","failed"].includes(v)) return "rejected";
+    if (v === "refunded") return "refunded";
+    if (v === "awaiting receipt") return "awaiting_receipt";
+    return "unpaid";
+  };
 
-        // มีวันที่ทั้งคู่ -> เก่าไปใหม่
-        if (!aEmpty && !bEmpty && ad !== bd) return ad - bd;
+  const isValidDue = (d?: string | null) => !!d && new Date(d).getFullYear() > 1970;
+  const firstValidDate = (...ds: (string | undefined)[]) => ds.find((d) => isValidDue(d)) || undefined;
 
-        // สุดท้ายผูกด้วย ID (น้อยก่อน)
-        return (a?.ID ?? a?.id ?? 0) - (b?.ID ?? b?.id ?? 0);
-    });
+  const option = lower(row?.PaymentOption?.OptionName);
+  const isDepositPlan = option === "deposit";
 
-    // ===== ชำระเต็มจำนวน =====
-    if (!isDepositPlan) {
-        const p = (row as any).Payment || pays[0] || {};
-        const inst: InstallmentUI = {
-            key: "full",
-            label: "ชำระเต็มจำนวน",
-            paymentId: p?.ID ?? p?.id,
-            amount: typeof total === "number" ? total : p?.Amount,
-            status: toPopupStatus(statusNameOf(p)),
-            slipPath: normalizePath(asSlipString(p?.SlipPath)),
-            dueDate: isValidDue(dueAll) ? dueAll : undefined,
-        };
-        return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
-    }
+  const invoice = row?.RoomBookingInvoice || {};
+  const finance = row?.Finance || {};
+  const total = typeof finance.TotalAmount === "number" ? finance.TotalAmount : invoice.TotalAmount;
+  const depositCfg = typeof finance.DepositAmount === "number" ? finance.DepositAmount : undefined;
 
-    // ===== แผนมัดจำ (ซ้าย=มัดจำ, ขวา=ยอดคงเหลือ) =====
-    let depPay = pays[0] || {};
-    let balPay = pays[1] || {};
+  const depositDue = firstValidDate(invoice.DepositDueDate, (invoice as any).DepositeDueDate, invoice.IssueDate);
+  const dueAll     = firstValidDate(invoice.DueDate);
 
-    // กันกรณีพิเศษ: ถ้าพบว่ายอดคงเหลือ approved แต่มัดจำยังไม่ -> สลับให้อัตโนมัติ
-    const depStatus = toPopupStatus(statusNameOf(depPay));
-    const balStatus = toPopupStatus(statusNameOf(balPay));
-    if ((depStatus === "unpaid" || depStatus === "pending_payment" || depStatus === "pending_verification" || depStatus === "submitted")
-        && balStatus === "approved") {
-        const tmp = depPay;
-        depPay = balPay;
-        balPay = tmp;
-    }
+  // รวม payments แล้วเรียงเก่า→ใหม่
+  const pays: any[] = Array.isArray(row?.Payments) ? [...row.Payments] : [];
+  if (row?.Payment && !pays.find((p) => (p.ID ?? p.id) === (row.Payment.ID ?? row.Payment.id))) {
+    pays.push(row.Payment);
+  }
+  pays.sort((a, b) => {
+    const ad = Date.parse(a?.PaymentDate ?? "");
+    const bd = Date.parse(b?.PaymentDate ?? "");
+    const aEmpty = Number.isNaN(ad);
+    const bEmpty = Number.isNaN(bd);
+    if (aEmpty && !bEmpty) return 1;
+    if (!aEmpty && bEmpty) return -1;
+    if (!aEmpty && !bEmpty && ad !== bd) return ad - bd;
+    return (a?.ID ?? a?.id ?? 0) - (b?.ID ?? b?.id ?? 0);
+  });
 
-    const depositAmount =
-        depPay?.Amount ??
-        finance.DepositAmount ??
-        (typeof total === "number" ? Math.min(total, total / 2) : undefined);
+  // ===== แผนชำระเต็มจำนวน =====
+  if (!isDepositPlan) {
+    const p = row?.Payment || pays[0] || {};
+    const amount =
+      (typeof p?.Amount === "number" && p.Amount > 0) ? p.Amount :
+      (typeof total === "number" ? total : undefined);
 
-    const depositInst: InstallmentUI = {
-        key: "deposit",
-        label: "ชำระมัดจำ",
-        paymentId: depPay?.ID ?? depPay?.id,
-        amount: depositAmount,
-        status: toPopupStatus(statusNameOf(depPay)),
-        slipPath: normalizePath(asSlipString(depPay?.SlipPath)),
-        dueDate: isValidDue(depositDue) ? depositDue : undefined,
+    const inst: InstallmentUI = {
+      key: "full",
+      label: "ชำระเต็มจำนวน",
+      paymentId: p?.ID ?? p?.id,
+      amount,
+      status: toPopupStatus(statusNameOf(p)),
+      slipPath: normalizePath(asSlipString(p?.SlipPath)),
+      dueDate: dueAll,
     };
+    return { plan: "full", installments: [inst], fullyPaid: inst.status === "approved" };
+  }
 
-    const balAmount =
-        typeof total === "number" && typeof depositInst.amount === "number"
-            ? Math.max(total - depositInst.amount, 0)
-            : balPay?.Amount;
+  // ===== แผนมัดจำ + ยอดคงเหลือ =====
+  const approxEq = (a?: number, b?: number, tol = 1e-6) =>
+    typeof a === "number" && typeof b === "number" && Math.abs(a - b) <= tol;
 
-    const balanceInst: InstallmentUI = {
-        key: "balance",
-        label: "ชำระยอดคงเหลือ",
-        paymentId: balPay?.ID ?? balPay?.id,
-        amount: balAmount,
-        status: balPay?.ID ? toPopupStatus(statusNameOf(balPay)) : "unpaid",
-        slipPath: normalizePath(asSlipString(balPay?.SlipPath)),
-        dueDate: isValidDue(dueAll) ? dueAll : undefined,
-        locked: toPopupStatus(statusNameOf(depPay)) !== "approved",
-    };
+  const isDeposit = (p: any) => {
+    const note = lower(p?.Note);
+    const type = p?.PaymentTypeID;
+    if (type === 1) return true;         // 1 = deposit
+    if (type === 2) return false;        // 2 = balance
+    if (note === "deposit" || note === "มัดจำ") return true;
+    if (note === "balance" || note === "ยอดคงเหลือ") return false;
+    if (depositCfg && approxEq(p?.Amount, depositCfg)) return true;
+    if (depositCfg && total && approxEq(p?.Amount, total - depositCfg)) return false;
+    return false;
+  };
 
-    const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
-    return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
+  let depPay = pays.find(isDeposit);
+  let balPay = pays.find((p) => !isDeposit(p));
+
+  if (!depPay && pays.length) depPay = pays[0];
+  if (!balPay && pays.length > 1) balPay = pays.find((p) => (p?.ID ?? 0) !== (depPay?.ID ?? 0));
+
+  // ===== Amounts: หลีกเลี่ยงใช้ 0 เป็นค่าจริง =====
+  let depositAmount =
+    (typeof depPay?.Amount === "number" && depPay.Amount > 0) ? depPay.Amount :
+    (typeof depositCfg === "number" ? depositCfg :
+     (typeof total === "number" && typeof balPay?.Amount === "number" && balPay.Amount > 0
+        ? Math.max(total - balPay.Amount, 0)
+        : undefined));
+
+  let balanceAmount =
+    (typeof balPay?.Amount === "number" && balPay.Amount > 0) ? balPay.Amount :
+    (typeof total === "number" && typeof depositAmount === "number"
+        ? Math.max(total - depositAmount, 0)
+        : undefined);
+
+  const depositInst: InstallmentUI = {
+    key: "deposit",
+    label: "ชำระมัดจำ",
+    paymentId: depPay?.ID ?? depPay?.id,
+    amount: depositAmount,
+    status: toPopupStatus(statusNameOf(depPay)),
+    slipPath: normalizePath(asSlipString(depPay?.SlipPath)),
+    dueDate: depositDue,
+  };
+
+  const balanceInst: InstallmentUI = {
+    key: "balance",
+    label: "ชำระยอดคงเหลือ",
+    paymentId: balPay?.ID ?? balPay?.id,
+    amount: balanceAmount,
+    status: balPay?.ID ? toPopupStatus(statusNameOf(balPay)) : "unpaid",
+    slipPath: normalizePath(asSlipString(balPay?.SlipPath)),
+    dueDate: dueAll,
+    locked: toPopupStatus(statusNameOf(depPay)) !== "approved",
+  };
+
+  const fullyPaid = depositInst.status === "approved" && balanceInst.status === "approved";
+  return { plan: "deposit", installments: [depositInst, balanceInst], fullyPaid };
 }
 
 
 /* =========================
- * Misc
- * ========================= */
-
-/* =========================
- * Types (สั้น)
+ * Types
  * ========================= */
 interface BookingRoomsInterface {
     ID: number;
@@ -359,7 +385,7 @@ function AllBookingRoom() {
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
     const [loading, _setLoading] = useState(false);
 
-    // receipt menu (single global)
+    // receipt menu
     const [receiptMenu, setReceiptMenu] = useState<ReceiptMenuState | null>(null);
     const openReceiptMenu = Boolean(receiptMenu?.anchorEl);
 
@@ -367,38 +393,21 @@ function AllBookingRoom() {
     const isAdminLike = isAdmin() || isManager();
 
     // ===== data =====
-    const getBookingRooms = async (
-        pageNum: number = 1,
-        setTotalFlag = false
-    ) => {
+    const getBookingRooms = async (pageNum: number = 1, setTotalFlag = false) => {
         try {
-            const res = await ListBookingRoomsForAdmin(
-                "",
-                pageNum,
-                limit,
-                selectedDate ? selectedDate.format("YYYY-MM") : "",
-            );
-
+            const res = await ListBookingRoomsForAdmin("", pageNum, limit, selectedDate ? selectedDate.format("YYYY-MM") : "");
             if (res) {
                 setBookingRooms(res.data);
+                console.log(res);
                 if (setTotalFlag) setTotal(res.total);
-
-                // const formatted = res.statusCounts.reduce((acc: any, item: any) => {
-                //     acc[item.status_name] = item.count;
-                //     return acc;
-                // }, {});
-                // setStatusCounts(formatted);
             }
-
-            const counts = res.data.reduce((acc: Record<string, number>, it: { DisplayStatus?: string }) => {
-                let key = (it.DisplayStatus || "unknown").toLowerCase();
-                if (["rejected", "unconfirmed"].includes(key)) key = "pending";
-                if (["awaiting receipt", "refunded"].includes(key)) key = "payment";
-                if (!["pending", "confirmed", "payment review", "payment", "completed", "cancelled"].includes(key)) key = "unknown";
+            const counts = (res?.data ?? []).reduce((acc: Record<string, number>, it: any) => {
+                const key = flowFromBackend(it); // "pending approved" | "pending payment" | "partially paid" | "awaiting receipt" | "complete" | "cancelled" | "unknown"
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
             }, {});
             setStatusCounts(counts);
+
         } catch {
             setAlerts((a) => [...a, { type: "error", message: "โหลด bookings ไม่สำเร็จ" }]);
         } finally {
@@ -412,7 +421,6 @@ function AllBookingRoom() {
 
     useEffect(() => {
         getBookingRooms(page);
-
     }, [page, limit]);
 
     useEffect(() => {
@@ -436,7 +444,8 @@ function AllBookingRoom() {
 
             const matchDate = !selectedDate || item.BookingDates?.some((d) => dayjs(d.Date).isSame(selectedDate, "month"));
 
-            const statusKey = getDisplayStatus(item as any);
+            const statusKey = flowFromBackend(item as any);
+
             const matchStatus = selectedStatus === "all" || normalize(statusKey) === normalize(selectedStatus);
 
             const matchFloor = selectedFloor === "all" || item.Room?.Floor?.Number === selectedFloor;
@@ -479,9 +488,7 @@ function AllBookingRoom() {
 
                     if ((resApprove.data.PaymentOption?.OptionName || "").toLowerCase() === "deposit") {
                         const BookingDates = resApprove.data.BookingDates;
-                        const maxDate = new Date(
-                            Math.max(...BookingDates.map((d: BookingDateInterface) => new Date(d.Date ?? "").getTime()))
-                        );
+                        const maxDate = new Date(Math.max(...BookingDates.map((d: BookingDateInterface) => new Date(d.Date ?? "").getTime())));
                         const depositDue = new Date();
                         depositDue.setDate(today.getDate() + 7);
                         depositDue.setHours(23, 59, 59, 999);
@@ -517,7 +524,7 @@ function AllBookingRoom() {
                     const BookingDate: BookingDateInterface[] = resApprove.data.BookingDates || [];
                     const invoiceItemData: RoomBookingInvoiceItemInterface[] = BookingDate.map((date) => ({
                         Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(
-                            date.Date ?? ''
+                            date.Date ?? ""
                         )} ห้อง ${resApprove.data.Room.RoomNumber}`,
                         Quantity: 1,
                         UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
@@ -530,17 +537,13 @@ function AllBookingRoom() {
                     const notificationDataUpdate: NotificationsInterface = {
                         IsRead: true,
                     };
-                    const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
-                        notificationDataUpdate,
-                        resApprove.data.ID
-                    );
+                    const resUpdateNotification = await UpdateNotificationsByBookingRoomID(notificationDataUpdate, resApprove.data.ID);
                     if (!resUpdateNotification || resUpdateNotification.error)
                         throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
                     await handleUpdateNotification(resApprove.data.UserID ?? 0, false, undefined, undefined, undefined, undefined, undefined, resApprove.data.ID);
 
                     await handleUploadPDF(resInvoice.data.ID);
-
                     await handleUploadPDF(resInvoice.data.ID);
                     break;
                 }
@@ -597,61 +600,45 @@ function AllBookingRoom() {
             }
         });
 
-
     const doReject = async (note?: string) => {
         if (!selectedRow) return;
 
         const n = (note ?? "").trim();
         if (!n) {
             handleSetAlert("warning", "กรุณาระบุเหตุผลการปฏิเสธ");
-            return; // ⬅️ บังคับต้องใส่
+            return;
         }
 
         try {
-           
             await RejectBookingRoom(selectedRow.ID, n);
 
             const notificationDataUpdate: NotificationsInterface = {
                 IsRead: true,
             };
-            const resUpdateNotification = await UpdateNotificationsByBookingRoomID(
-                notificationDataUpdate,
-                selectedRow.ID
-            );
-            if (!resUpdateNotification || resUpdateNotification.error)
-                throw new Error(resUpdateNotification?.error || "Failed to update notification.");
+            const resUpdateNotification = await UpdateNotificationsByBookingRoomID(notificationDataUpdate, selectedRow.ID);
+            if (!resUpdateNotification || resUpdateNotification.error) throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
         } catch {
             handleSetAlert("error", "Reject failed");
         } finally {
-            
             setOpenConfirmReject(false);
         }
     };
 
-
-    // ✅ เจาะที่ payment เฉพาะงวด + ปิดเมนู global เสมอ
-    const handleUploadReceiptForPayment = async (
-        e: React.ChangeEvent<HTMLInputElement>,
-        paymentId: number,
-        isApprovedNow: boolean
-    ) => {
+    // Upload/Delete receipt (global menu)
+    const handleUploadReceiptForPayment = async (e: React.ChangeEvent<HTMLInputElement>, paymentId: number, isApprovedNow: boolean) => {
         try {
             const file = e.target.files?.[0];
             if (!file || file.type !== "application/pdf") {
                 handleSetAlert("warning", "Please select a valid PDF file");
                 return;
             }
-
             await UploadPaymentReceipt(paymentId, file);
-
-            // อนุมัติงวดให้ด้วยถ้ายัง
             if (!isApprovedNow) {
                 await ApprovePayment(paymentId);
             }
-
             handleSetAlert("success", "Receipt uploaded successfully");
             await getBookingRooms();
         } catch {
@@ -687,13 +674,11 @@ function AllBookingRoom() {
         setSelectedFloor("all");
     };
 
-
-
     /* =========================
      * Columns
      * ========================= */
     const getColumns = (): GridColDef[] => {
-        // === Small / Mobile cards ===
+        // ===== Mobile / Small =====
         if (isSmallScreen) {
             return [
                 {
@@ -705,76 +690,38 @@ function AllBookingRoom() {
                     renderCell: (params) => {
                         const data = params.row as BookingRoomsInterface;
 
-                        // ===== Booking basic / status chip (เดิม) =====
-                        const status = (data.StatusName || "pending").toLowerCase();
-                        const colorMap: Record<
-                            string,
-                            { c: string; cl: string; icon: any; label: string }
-                        > = {
-                            pending: { c: "#F1A007", cl: "#FFF3DB", icon: Clock, label: "Pending" },
-                            confirmed: { c: "#2563EB", cl: "#DBEAFE", icon: Check, label: "Confirmed" },
-                            completed: { c: "#16A34A", cl: "#DCFCE7", icon: Check, label: "Completed" },
-                            cancelled: { c: "#D64545", cl: "#FBE9E9", icon: X, label: "Cancelled" },
-                            unknown: { c: "#6B6F76", cl: "#EFF0F1", icon: HelpCircle, label: "Unknown" },
-                        };
-                        const s = colorMap[status] || colorMap.unknown;
-                        const dateTime = `${dateFormat(data.CreatedAt || "")} ${timeFormat(
-                            data.CreatedAt || ""
-                        )}`;
+                        const display = flowFromBackend(data);
+                        const cfg = getBookingStatusConfig(display);
+
+                        const dateTime = `${dateFormat(data.CreatedAt || "")} ${timeFormat(data.CreatedAt || "")}`;
                         const room = `Room ${data.Room?.RoomNumber ?? "-"}`;
                         const floor = `Floor ${data.Room?.Floor?.Number ?? "-"}`;
-                        const who = `${data.User?.FirstName || ""} ${data.User?.LastName || ""} (${data.User?.EmployeeID || "-"
-                            })`;
-                        const showButtonApprove = status === "pending" && (isManager() || isAdmin());
+                        const who = `${data.User?.FirstName || ""} ${data.User?.LastName || ""} (${data.User?.EmployeeID || "-"})`;
+                        const showButtonApprove = display === "pending approved" && (isManager() || isAdmin());
 
-                        // ====== Invoice / Payment summary (ใหม่) ======
-                        // เลือก Payment งวดที่ใช้แสดงใบเสร็จ/ใบกำกับ
+                        // เลือก payment แสดงไฟล์ใบเสร็จ
                         const selectedPay: any = pickReceiptPayment(data);
                         const statusRaw = statusNameOf(selectedPay);
                         const isApprovedNow = ["approved", "paid"].includes(lower(statusRaw));
 
-                        // map key ของ paymentStatusConfig → label UI
                         const toConfigKey = (raw?: string): keyof typeof paymentStatusConfig => {
-                            const v = (raw || "").trim().toLowerCase();
-                            switch (v) {
-                                case "unpaid":
-                                case "pending payment":
-                                    return "Pending Payment";
-                                case "submitted":
-                                case "pending verification":
-                                    return "Pending Verification";
-                                case "approved":
-                                case "paid":
-                                    return "Paid";
-                                case "rejected":
-                                    return "Rejected";
-                                case "refunded":
-                                    return "Refunded";
-                                default:
-                                    return "Pending Payment";
-                            }
+                            const v = lower(raw);
+                            if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+                            if (v === "submitted" || v === "pending verification") return "Pending Verification";
+                            if (v === "approved" || v === "paid") return "Paid";
+                            if (v === "rejected") return "Rejected";
+                            if (v === "refunded") return "Refunded";
+                            return "Pending Payment";
                         };
                         const statusKey = toConfigKey(statusRaw);
                         const cfgPay =
-                            paymentStatusConfig[statusKey] || {
-                                color: "#000",
-                                colorLite: "rgba(0,0,0,0.08)",
-                                icon: HelpCircle,
-                                label: "Unknown",
-                            };
-                        const {
-                            color: statusColor,
-                            colorLite: statusColorLite,
-                            icon: statusIcon,
-                            label: uiStatus,
-                        } = cfgPay;
+                            paymentStatusConfig[statusKey] || { color: "#000", colorLite: "rgba(0,0,0,0.08)", icon: HelpCircle, label: "Unknown" };
+                        const { color: statusColor, colorLite: statusColorLite, icon: statusIcon, label: uiStatus } = cfgPay;
 
                         const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
 
-                        // ===== Invoice data =====
                         const invoice = (data as any).RoomBookingInvoice;
-                        const invoiceNumber =
-                            invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
+                        const invoiceNumber = invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
                         const billingPeriod = invoice?.IssueDate
                             ? formatToMonthYear(invoice.IssueDate)
                             : data.BookingDates?.[0]?.Date
@@ -783,53 +730,25 @@ function AllBookingRoom() {
                         const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
 
                         const rb = (data as any).Finance;
-                        const totalAmountNum =
-                            rb?.TotalAmount ??
-                            (data as any).TotalAmount ??
-                            invoice?.TotalAmount ??
-                            undefined;
+                        const totalAmountNum = rb?.TotalAmount ?? (data as any).TotalAmount ?? invoice?.TotalAmount ?? undefined;
                         const totalAmount =
-                            typeof totalAmountNum === "number"
-                                ? totalAmountNum.toLocaleString("th-TH", {
-                                    style: "currency",
-                                    currency: "THB",
-                                })
-                                : "—";
+                            typeof totalAmountNum === "number" ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" }) : "—";
 
-                        // ===== Receipt / PDF =====
                         const receiptPath = asSlipString(selectedPay?.ReceiptPath);
                         const fileName = receiptPath ? receiptPath.split("/").pop() : "";
-                        const invoicePDFPath =
-                            invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
-
+                        const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
                         const canManageReceipt = isAdminLike === true;
                         const showReceiptMenu = canManageReceipt && isApprovedNow;
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} rowSpacing={1.5} className="card-item-container">
-
-                                {/* Header: ห้อง/เวลา/ผู้จอง */}
+                                {/* Header */}
                                 <Grid size={{ xs: 12, sm: 7 }}>
-                                    <Typography
-                                        sx={{
-                                            fontSize: 16,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                        }}
-                                    >
+                                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                         {room} • {floor}
                                     </Typography>
 
-                                    <Box
-                                        sx={{
-                                            color: "text.secondary",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.5,
-                                            my: 0.8,
-                                        }}
-                                    >
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 0.8 }}>
                                         <Clock size={16} />
                                         <Typography sx={{ fontSize: 13 }}>{dateTime}</Typography>
                                     </Box>
@@ -847,133 +766,60 @@ function AllBookingRoom() {
                                         {data.Purpose || "-"}
                                     </Typography>
 
-                                    <Box
-                                        sx={{
-                                            color: "text.secondary",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.5,
-                                            my: 1,
-                                        }}
-                                    >
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.5, my: 1 }}>
                                         <UserRound size={16} />
                                         <Typography sx={{ fontSize: 13 }}>{who}</Typography>
                                     </Box>
                                 </Grid>
 
-                                {/* Booking status chip */}
+                                {/* booking chip */}
                                 <Grid size={{ xs: 12, sm: 5 }} container direction="column">
                                     <Box
                                         sx={{
-                                            bgcolor: s.cl,
+                                            bgcolor: cfg.colorLite,
                                             borderRadius: 10,
                                             px: 1.5,
                                             py: 0.5,
                                             display: "flex",
                                             gap: 1,
-                                            color: s.c,
+                                            color: cfg.color,
                                             alignItems: "center",
                                             justifyContent: "center",
                                             width: "100%",
                                         }}
                                     >
-                                        <s.icon size={18} />
-                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                            {s.label}
-                                        </Typography>
+                                        <cfg.icon size={18} />
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{cfg.label}</Typography>
                                     </Box>
                                 </Grid>
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
 
-                                {/* ===== New: Invoice & Payment section ===== */}
+                                {/* Invoice & Payment */}
                                 <Grid size={{ xs: 12 }}>
-                                    {/* Invoice number */}
-                                    <Typography
-                                        sx={{
-                                            fontSize: 16,
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                        }}
-                                    >
+                                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                         {invoiceNumber}
                                     </Typography>
 
-                                    {/* Billing Period */}
-                                    <Box
-                                        sx={{
-                                            color: "text.secondary",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.6,
-                                            my: 0.6,
-                                        }}
-                                    >
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
                                         <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                                        <Typography
-                                            sx={{
-                                                fontSize: 14,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                            }}
-                                        >
+                                        <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                             {`Billing Period: ${billingPeriod}`}
                                         </Typography>
                                     </Box>
 
-                                    {/* Due date */}
-                                    <Box
-                                        sx={{
-                                            color: "text.secondary",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 0.6,
-                                            my: 0.6,
-                                        }}
-                                    >
+                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
                                         <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                                        <Typography
-                                            sx={{
-                                                fontSize: 14,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                            }}
-                                        >
+                                        <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                             {`Due Date: ${dueDate}`}
                                         </Typography>
                                     </Box>
 
-                                    {/* Amount */}
                                     <Box sx={{ mt: 1.2 }}>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 14,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                color: "text.secondary",
-                                            }}
-                                        >
-                                            Total Amount
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 16,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                fontWeight: 500,
-                                                color: "text.main",
-                                            }}
-                                        >
-                                            {totalAmount}
-                                        </Typography>
+                                        <Typography sx={{ fontSize: 14, color: "text.secondary" }}>Total Amount</Typography>
+                                        <Typography sx={{ fontSize: 16, fontWeight: 500, color: "text.main" }}>{totalAmount}</Typography>
                                     </Box>
 
-                                    {/* Payment status chip */}
                                     <Box
                                         sx={{
                                             mt: 1.2,
@@ -988,21 +834,12 @@ function AllBookingRoom() {
                                         }}
                                     >
                                         {React.createElement(statusIcon, { size: 16 })}
-                                        <Typography
-                                            sx={{
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                maxWidth: "100%",
-                                            }}
-                                        >
+                                        <Typography sx={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
                                             {uiStatus}
                                         </Typography>
                                     </Box>
 
-                                    {/* Receipt (file) & menu */}
+                                    {/* Receipt */}
                                     <Box sx={{ mt: 1.2, display: "flex", alignItems: "center", gap: 0.6, flexWrap: "wrap" }}>
                                         {showReceiptMenu && (
                                             <Button
@@ -1041,15 +878,7 @@ function AllBookingRoom() {
                                                 onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
                                             >
                                                 <FileText size={16} />
-                                                <Typography
-                                                    variant="body1"
-                                                    sx={{
-                                                        fontSize: 14,
-                                                        whiteSpace: "nowrap",
-                                                        overflow: "hidden",
-                                                        textOverflow: "ellipsis",
-                                                    }}
-                                                >
+                                                <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                                     {fileName}
                                                 </Typography>
                                             </Box>
@@ -1079,57 +908,10 @@ function AllBookingRoom() {
 
                                 <Divider sx={{ width: "100%", my: 1 }} />
 
-                                {/* ปุ่มการทำงาน (ชำระ/ดาวน์โหลด/อนุมัติ/ปฏิเสธ/รายละเอียด) */}
+                                {/* Action buttons */}
                                 <Grid size={{ xs: 12 }}>
                                     <Grid container spacing={0.8}>
-                                        <Grid size={{ xs: 6 }}>
-                                            <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
-                                                <Button
-                                                    variant="contained"
-                                                    onClick={() => {
-                                                        setSelectedRow(data);
-                                                        setOpenPaymentDialog(true);
-                                                    }}
-                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                                                >
-                                                    {canPayNow ? (
-                                                        <>
-                                                            <HandCoins size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
-                                                                Pay Now
-                                                            </Typography>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Wallet size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">
-                                                                View Slip
-                                                            </Typography>
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </Tooltip>
-                                        </Grid>
-
-                                        <Grid size={{ xs: 6 }}>
-                                            <Tooltip title="Download PDF">
-                                                <Button
-                                                    variant="outlinedGray"
-                                                    onClick={() =>
-                                                        invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")
-                                                    }
-                                                    disabled={!invoicePDFPath}
-                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                                                >
-                                                    <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
-                                                    <Typography variant="textButtonClassic" className="text-btn">
-                                                        Download PDF
-                                                    </Typography>
-                                                </Button>
-                                            </Tooltip>
-                                        </Grid>
-
-                                        {showButtonApprove ? (
+                                        {display === "pending approved" && (isManager() || isAdmin()) ? (
                                             <>
                                                 <Grid size={{ xs: 5 }}>
                                                     <Tooltip title="Approve">
@@ -1167,12 +949,7 @@ function AllBookingRoom() {
                                                 </Grid>
                                                 <Grid size={{ xs: 2 }}>
                                                     <Tooltip title="Details">
-                                                        <Button
-                                                            variant="outlinedGray"
-                                                            onClick={() => handleClickCheck(data)}
-                                                            sx={{ minWidth: 42 }}
-                                                            fullWidth
-                                                        >
+                                                        <Button variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ minWidth: 42 }} fullWidth>
                                                             <Eye size={18} />
                                                         </Button>
                                                     </Tooltip>
@@ -1180,19 +957,47 @@ function AllBookingRoom() {
                                             </>
                                         ) : (
                                             <Grid size={{ xs: 12 }}>
-                                                <Tooltip title="Details">
-                                                    <Button
-                                                        className="btn-detail"
-                                                        variant="outlinedGray"
-                                                        onClick={() => handleClickCheck(data)}
-                                                        sx={{ width: "100%" }}
-                                                    >
-                                                        <Eye size={18} />
-                                                        <Typography variant="textButtonClassic" className="text-btn">
-                                                            Details
-                                                        </Typography>
-                                                    </Button>
-                                                </Tooltip>
+                                                <Grid container spacing={0.8}>
+                                                    <Grid size={{ xs: 6 }}>
+                                                        <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
+                                                            <Button
+                                                                variant="contained"
+                                                                onClick={() => {
+                                                                    setSelectedRow(data);
+                                                                    setOpenPaymentDialog(true);
+                                                                }}
+                                                                sx={{ minWidth: 42, width: "100%", height: "100%" }}
+                                                            >
+                                                                {canPayNow ? (
+                                                                    <>
+                                                                        <HandCoins size={18} />
+                                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                                            Pay Now
+                                                                        </Typography>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Wallet size={18} />
+                                                                        <Typography variant="textButtonClassic" className="text-btn">
+                                                                            View Slip
+                                                                        </Typography>
+                                                                    </>
+                                                                )}
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </Grid>
+
+                                                    <Grid size={{ xs: 6 }}>
+                                                        <Tooltip title="Details">
+                                                            <Button className="btn-detail" variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ width: "100%" }}>
+                                                                <Eye size={18} />
+                                                                <Typography variant="textButtonClassic" className="text-btn">
+                                                                    Details
+                                                                </Typography>
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </Grid>
+                                                </Grid>
                                             </Grid>
                                         )}
                                     </Grid>
@@ -1204,8 +1009,7 @@ function AllBookingRoom() {
             ];
         }
 
-
-        // Desktop
+        // ===== Desktop =====
         return [
             {
                 field: "ID",
@@ -1228,7 +1032,7 @@ function AllBookingRoom() {
             {
                 field: "Title",
                 headerName: "Title",
-                flex: 0.6,
+                flex: 0.4,
                 renderCell: (params) => {
                     const d = params.row as BookingRoomsInterface;
                     const room = `Room ${d.Room?.RoomNumber ?? "-"}`;
@@ -1238,7 +1042,9 @@ function AllBookingRoom() {
                             <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {room} • {floor}
                             </Typography>
-                            <Typography sx={{ fontSize: 14, color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            <Typography
+                                sx={{ fontSize: 14, color: "text.secondary", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                            >
                                 {d.Purpose || "-"}
                             </Typography>
                         </Box>
@@ -1268,29 +1074,9 @@ function AllBookingRoom() {
                 flex: 0.4,
                 renderCell: (params) => {
                     const row = params.row as BookingRoomsInterface;
-
-                    let display = (row.DisplayStatus || "unknown").toLowerCase();
-                    const sn = (row.StatusName || "").toLowerCase();
-
-                    // Cancelled ชนะทุกกรณี
-                    if (sn === "cancelled" || display === "cancelled") {
-                        display = "cancelled";
-                    } else if (sn === "completed") {
-                        display = "completed";
-                    } else {
-                        // เคส Fully-paid แต่ยังไม่มีใบเสร็จครบ → awaiting receipt
-                        const payments = (row as any).Payments as any[] | undefined;
-                        const approved = (payments || []).filter(
-                            (p) => ["approved", "paid"].includes(String(p.Status || p.status).toLowerCase())
-                        );
-                        const approvedMissingReceipt = approved.some((p) => !p.ReceiptPath);
-
-                        if (row.Finance?.IsFullyPaid && approved.length > 0) {
-                            display = approvedMissingReceipt ? "awaiting receipt" : "completed";
-                        }
-                    }
-
+                    const display = flowFromBackend(row);
                     const cfg = getBookingStatusConfig(display);
+
                     return (
                         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
                             <Box
@@ -1312,284 +1098,47 @@ function AllBookingRoom() {
                     );
                 },
             },
-            {
-                field: "invoice",                // ← เดิม "All Invoice"
-                headerName: "All Invoice",
-                flex: 1.2,
-                minWidth: 320,                   // ให้มีพื้นที่ขั้นต่ำ
-                sortable: false,
-                filterable: false,
-                renderCell: (item) => {
-                    const data = item.row as BookingRoomsInterface;
 
-                    // ✅ ใช้ payment ที่ถูกต้องสำหรับใบเสร็จ
-                    const selectedPay: any = pickReceiptPayment(data);
-                    const statusRaw = statusNameOf(selectedPay);
-                    const isApprovedNow = ["approved", "paid"].includes(lower(statusRaw));
-
-                    // map → key ของ paymentStatusConfig (หน้า All ไม่เปลี่ยนเป็น Awaiting Receipt)
-                    const toConfigKey = (raw?: string): keyof typeof paymentStatusConfig => {
-                        const v = (raw || "").trim().toLowerCase();
-                        switch (v) {
-                            case "unpaid":
-                            case "pending payment":
-                                return "Pending Payment";
-                            case "submitted":
-                            case "pending verification":
-                                return "Pending Verification";
-                            case "approved":
-                            case "paid":
-                                return "Paid";
-                            case "rejected":
-                                return "Rejected";
-                            case "refunded":
-                                return "Refunded";
-                            default:
-                                return "Pending Payment";
-                        }
-                    };
-                    const statusKey = toConfigKey(statusRaw);
-
-                    const cfgPay =
-                        paymentStatusConfig[statusKey] || {
-                            color: "#000",
-                            colorLite: "rgba(0,0,0,0.08)",
-                            icon: HelpCircle,
-                            label: "Unknown",
-                        };
-                    const { color: statusColor, colorLite: statusColorLite, icon: statusIcon, label: uiStatus } = cfgPay;
-
-                    const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
-
-                    // ===== Invoice / Amount =====
-                    const invoice = (data as any).RoomBookingInvoice;
-                    const invoiceNumber = invoice?.InvoiceNumber ?? (data as any).InvoiceNumber ?? "-";
-                    const billingPeriod = invoice?.IssueDate
-                        ? formatToMonthYear(invoice.IssueDate)
-                        : data.BookingDates?.[0]?.Date
-                            ? formatToMonthYear(data.BookingDates[0].Date)
-                            : "-";
-                    const dueDate = invoice?.DueDate ? dateFormat(invoice.DueDate) : "-";
-
-                    const rb = (data as any).Finance;
-                    const totalAmountNum = rb?.TotalAmount ?? (data as any).TotalAmount ?? invoice?.TotalAmount ?? undefined;
-
-                    const totalAmount =
-                        typeof totalAmountNum === "number"
-                            ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
-                            : "—";
-
-                    // ===== Receipt/PDF + เมนูอัปโหลดใบเสร็จ (admin) =====
-                    const receiptPath = asSlipString(selectedPay?.ReceiptPath);
-                    const fileName = receiptPath ? receiptPath.split("/").pop() : "";
-                    const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
-
-                    const currentUser = useUserStore.getState().user as UserInterface | undefined;
-                    const notifications: NotificationsInterface[] = (data as any).Notifications ?? [];
-                    const hasNotificationForUser = !!currentUser && notifications.some((n) => n.UserID === currentUser.ID && !n.IsRead);
-
-                    const canManageReceipt = isAdminLike === true;
-                    const showReceiptMenu = canManageReceipt && isApprovedNow; // อนุญาตเฉพาะงวดที่อนุมัติแล้ว
-
-                    return (
-                        <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="container-btn" rowSpacing={1}>
-                            <Grid size={{ xs: 12, sm: 7 }}>
-                                <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
-                                    {hasNotificationForUser && <AnimatedBell />}
-                                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                                        {invoiceNumber}
-                                    </Typography>
-                                </Box>
-
-                                <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                    <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                        {`Billing Period: ${billingPeriod}`}
-                                    </Typography>
-                                </Box>
-
-                                <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
-                                    <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
-                                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                        {`Due Date: ${dueDate}`}
-                                    </Typography>
-                                </Box>
-
-                                <Box sx={{ mt: 1.4, sm: 5 }}>
-                                    <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "text.secondary" }}>
-                                        Total Amount
-                                    </Typography>
-                                    <Typography sx={{ fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 500, color: "text.main" }}>
-                                        {totalAmount}
-                                    </Typography>
-                                </Box>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 5 }} container direction="column">
-                                <Box
-                                    sx={{
-                                        bgcolor: statusColorLite,
-                                        borderRadius: 10,
-                                        px: 1.5,
-                                        py: 0.5,
-                                        display: "flex",
-                                        gap: 1,
-                                        color: statusColor,
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        width: "100%",
-                                    }}
-                                >
-                                    {React.createElement(statusIcon, { size: 16 })}
-                                    <Typography sx={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                                        {uiStatus}
-                                    </Typography>
-                                </Box>
-                            </Grid>
-
-                            {/* ===== Receipt (PDF) ===== */}
-                            <Grid size={{ xs: 12 }}>
-                                {showReceiptMenu && (
-                                    <Button
-                                        id={`receipt-menu-btn-${data.ID}`}
-                                        variant="outlinedGray"
-                                        sx={{ minWidth: 42, mr: 1 }}
-                                        onClick={(e) =>
-                                            setReceiptMenu({
-                                                anchorEl: e.currentTarget,
-                                                paymentId: selectedPay?.ID,
-                                                isApprovedNow,
-                                                fileName,
-                                            })
-                                        }
-                                    >
-                                        <Ellipsis size={16} />
-                                    </Button>
-                                )}
-
-                                {fileName ? (
-                                    <Box
-                                        sx={{
-                                            display: "inline-flex",
-                                            gap: 1,
-                                            border: "1px solid rgba(109,110,112,0.4)",
-                                            borderRadius: 1,
-                                            px: 1,
-                                            py: 0.5,
-                                            bgcolor: "#FFF",
-                                            cursor: "pointer",
-                                            transition: "all .3s",
-                                            alignItems: "center",
-                                            width: { xs: "100%", mobileS: "auto" },
-                                            "&:hover": { color: "primary.main", borderColor: "primary.main" },
-                                        }}
-                                        onClick={() => window.open(`${apiUrl}/${receiptPath}`, "_blank")}
-                                    >
-                                        <FileText size={16} />
-                                        <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                            {fileName}
-                                        </Typography>
-                                    </Box>
-                                ) : (
-                                    <Box
-                                        sx={{
-                                            display: "inline-flex",
-                                            gap: 1,
-                                            border: "1px solid rgba(109,110,112,0.4)",
-                                            borderRadius: 1,
-                                            px: 1,
-                                            py: 0.5,
-                                            bgcolor: "#FFF",
-                                            alignItems: "center",
-                                            color: "text.secondary",
-                                            width: { xs: "100%", mobileS: "auto" },
-                                        }}
-                                    >
-                                        <FileText size={16} />
-                                        <Typography variant="body1" sx={{ fontSize: 14 }}>
-                                            No file uploaded
-                                        </Typography>
-                                    </Box>
-                                )}
-                            </Grid>
-
-                            <Divider sx={{ width: "100%", my: 1 }} />
-
-                            <Grid size={{ xs: 12 }}>
-                                <Box sx={{ display: "flex", gap: 0.8, flexWrap: "wrap" }}>
-                                    <Grid container spacing={0.8} size={{ xs: 12 }}>
-                                        <Grid size={{ xs: 6 }}>
-                                            <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
-                                                <Button
-                                                    variant="contained"
-                                                    onClick={() => {
-                                                        setSelectedRow(data);
-                                                        setOpenPaymentDialog(true);
-                                                    }}
-                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                                                >
-                                                    {canPayNow ? (
-                                                        <>
-                                                            <HandCoins size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">Pay Now</Typography>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Wallet size={18} />
-                                                            <Typography variant="textButtonClassic" className="text-btn">View Slip</Typography>
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </Tooltip>
-                                        </Grid>
-
-                                        <Grid size={{ xs: 6 }}>
-                                            <Tooltip title="Download PDF">
-                                                <Button
-                                                    variant="outlinedGray"
-                                                    onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
-                                                    disabled={!invoicePDFPath}
-                                                    sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                                                >
-                                                    <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
-                                                    <Typography variant="textButtonClassic" className="text-btn">Download PDF</Typography>
-                                                </Button>
-                                            </Tooltip>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    );
-                },
-            },
             {
                 field: "Actions",
                 headerName: "Actions",
-                flex: 0.5,
+                flex: 0.7,
                 renderCell: (params) => {
                     const row = params.row as BookingRoomsInterface;
-                    const dStatus = (row.DisplayStatus || "unknown").toLowerCase();
+                  const dStatus = flowFromBackend(row as any);
+
+
+
+                    // เลือก payment ที่เหมาะสำหรับปุ่มชำระ/ดูสลิป
+                    const selectedPay: any = pickReceiptPayment(row);
+                    const statusRaw = statusNameOf(selectedPay);
+                    const toConfigKey = (raw?: string) => {
+                        const v = lower(raw);
+                        if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+                        if (v === "submitted" || v === "pending verification") return "Pending Verification";
+                        if (v === "approved" || v === "paid") return "Paid";
+                        if (v === "rejected") return "Rejected";
+                        if (v === "refunded") return "Refunded";
+                        return "Pending Payment";
+                    };
+                    const statusKey = toConfigKey(statusRaw);
+                    const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
 
                     return (
-                        <Box className="container-btn"
-                            sx={{
-                                display: "flex",
-                                gap: 0.8,
-                                flexWrap: "wrap",
-                                alignItems: "center",
-                                height: '100%'
-                            }}>
-                            {isAdminLike && dStatus === "pending" && (
+                        <Box className="container-btn" sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", alignItems: "center", height: "100%" }}>
+                            {isAdminLike && dStatus === "pending approved" && (
                                 <>
                                     <Tooltip title="Approve">
-                                        <Button className="btn-approve"
+                                        <Button
+                                            className="btn-approve"
                                             variant="contained"
-                                            onClick={() => { setSelectedRow(row); setOpenConfirmApprove(true); }}
-                                            sx={{
-                                                minWidth: "42px",
-                                            }}>
-                                            <Check size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            onClick={() => {
+                                                setSelectedRow(row);
+                                                setOpenConfirmApprove(true);
+                                            }}
+                                            sx={{ minWidth: "42px" }}
+                                        >
+                                            <Check size={18} style={{ minWidth: 18, minHeight: 18 }} />
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Approve
                                             </Typography>
@@ -1600,14 +1149,12 @@ function AllBookingRoom() {
                                             className="btn-reject"
                                             variant="outlinedCancel"
                                             onClick={() => {
-                                                setSelectedRow(row); setOpenConfirmReject(true);
-
+                                                setSelectedRow(row);
+                                                setOpenConfirmReject(true);
                                             }}
-                                            sx={{
-                                                minWidth: "42px",
-                                            }}
+                                            sx={{ minWidth: "42px" }}
                                         >
-                                            <X size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
+                                            <X size={18} style={{ minWidth: 18, minHeight: 18 }} />
                                             <Typography variant="textButtonClassic" className="text-btn">
                                                 Reject
                                             </Typography>
@@ -1616,47 +1163,37 @@ function AllBookingRoom() {
                                 </>
                             )}
 
-                            {/* {isAdminLike && dStatus === "payment review" && (
-                                <Tooltip title="Review Payment">
-                                    <Button variant="contained" color="warning" onClick={() => handlePrimaryAction("approvePayment", row)}>
-                                        <Search size={18} />
-                                        <Typography variant="textButtonClassic" className="text-btn">Review Payment</Typography>
-                                    </Button>
-                                </Tooltip>
-                            )} */}
-
-                            {/* {isAdminLike && dStatus === "payment" && (
-                                <>
-                                    {row.Payment?.id && (
-                                        <Tooltip title="Complete Booking">
-                                            <Button variant="contained" color="success" onClick={() => handlePrimaryAction("complete", row)}>
-                                                <Check size={18} />
-                                                <Typography variant="textButtonClassic" className="text-btn">Complete</Typography>
-                                            </Button>
-                                        </Tooltip>
+                            <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => {
+                                        setSelectedRow(row);
+                                        setOpenPaymentDialog(true);
+                                    }}
+                                    sx={{ minWidth: 42 }}
+                                >
+                                    {canPayNow ? (
+                                        <>
+                                            <HandCoins size={18} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                Pay Now
+                                            </Typography>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Wallet size={18} />
+                                            <Typography variant="textButtonClassic" className="text-btn">
+                                                View Slip
+                                            </Typography>
+                                        </>
                                     )}
-                                    {row.Payment?.id && (
-                                        <Tooltip title="Refund">
-                                            <Button variant="outlined" color="warning" onClick={() => handlePrimaryAction("refund", row)}>
-                                                <RotateCcw size={18} />
-                                                <Typography variant="textButtonClassic" className="text-btn">Refund</Typography>
-                                            </Button>
-                                        </Tooltip>
-                                    )}
-                                </>
-                            )} */}
+                                </Button>
+                            </Tooltip>
 
                             <Tooltip title="Details">
-                                <Button
-                                    className="btn-detail"
-                                    variant="outlinedGray"
-                                    onClick={() => handleClickCheck(row)}
-                                    sx={{
-                                        minWidth: "42px",
-                                    }}
-                                >
-                                    <Eye size={18} style={{ minWidth: "18px", minHeight: "18px" }} />
-                                    <Typography variant="textButtonClassic" className="text-btn" >
+                                <Button className="btn-detail" variant="outlinedGray" onClick={() => handleClickCheck(row)} sx={{ minWidth: "42px" }}>
+                                    <Eye size={18} style={{ minWidth: 18, minHeight: 18 }} />
+                                    <Typography variant="textButtonClassic" className="text-btn">
                                         Details
                                     </Typography>
                                 </Button>
@@ -1673,10 +1210,7 @@ function AllBookingRoom() {
     const getNewBookingRoom = async (ID: number) => {
         try {
             const res = await GetBookingRoomById(ID);
-            console.log("res new: ", res)
-            if (res) {
-                setBookingRooms((prev) => [res, ...prev]);
-            }
+            if (res) setBookingRooms((prev) => [res, ...prev]);
         } catch (error) {
             console.error("Error fetching maintenance request:", error);
         }
@@ -1685,9 +1219,7 @@ function AllBookingRoom() {
     const getUpdateBookingRoom = async (ID: number) => {
         try {
             const res = await GetBookingRoomById(ID);
-            if (res) {
-                setBookingRooms((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
-            }
+            if (res) setBookingRooms((prev) => prev.map((item) => (item.ID === res.ID ? res : item)));
         } catch (error) {
             console.error("Error fetching update maintenance:", error);
         }
@@ -1697,21 +1229,18 @@ function AllBookingRoom() {
         const socket = io(socketUrl);
 
         socket.on("booking_room_created", (data: { ID: number }) => {
-            console.log("📦 New room booking:", data);
             setTimeout(() => {
                 getNewBookingRoom(data.ID);
             }, 1500);
         });
 
         socket.on("booking_room_updated", (data: { ID: number }) => {
-            console.log("🔄 Room booking updated:", data);
             setTimeout(() => {
                 getUpdateBookingRoom(data.ID);
             }, 1500);
         });
 
         socket.on("booking_room_deleted", (data: { ID: number }) => {
-            console.log("🔄 Room booking deleted:", data);
             setTimeout(() => {
                 setBookingRooms((prev) => prev.filter((item) => item.ID !== data.ID));
             }, 1500);
@@ -1748,7 +1277,6 @@ function AllBookingRoom() {
                 showNoteField
                 buttonActive={false}
             />
-
 
             <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
                 <Grid container spacing={3}>
@@ -1813,7 +1341,7 @@ function AllBookingRoom() {
                                             <FormControl fullWidth>
                                                 <Select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value as string)}>
                                                     <MenuItem value="all">All Status</MenuItem>
-                                                    {[...new Set(bookingRooms.map((b) => getDisplayStatus(b as any)).filter(Boolean))].map((s) => (
+                                                    {[...new Set(bookingRooms.map((b) => flowFromBackend(b as any)).filter(Boolean))].map((s) => (
                                                         <MenuItem key={s} value={s}>
                                                             {s.charAt(0).toUpperCase() + s.slice(1)}
                                                         </MenuItem>
@@ -1860,11 +1388,7 @@ function AllBookingRoom() {
                                 onLimitChange={setLimit}
                                 noDataText="Don't have any data"
                                 getRowId={(row) => {
-                                    // ใช้ ID ถ้ามีค่า
-                                    if (row.ID && row.ID > 0) {
-                                        return String(row.ID);
-                                    }
-                                    // ถ้าไม่มี ID เลย ให้ใช้ unique key
+                                    if (row.ID && row.ID > 0) return String(row.ID);
                                     return `room_booking_${Date.now()}_${Math.random()}`;
                                 }}
                             />
@@ -1875,8 +1399,6 @@ function AllBookingRoom() {
                 </Grid>
             </Container>
 
-
-
             <BookingPaymentPopup
                 open={openPaymentDialog}
                 onClose={() => setOpenPaymentDialog(false)}
@@ -1886,6 +1408,7 @@ function AllBookingRoom() {
                 isOwner={false}
                 isAdmin={isAdminLike}
                 isLoading={loading}
+                booking={selectedRow}
                 serviceConditions={{
                     title: "โปรดอ่านเงื่อนไขการชำระเงิน",
                     points: ["ชำระตามยอดที่ระบุในใบแจ้งหนี้ภายในกำหนด", "หากชำระมัดจำแล้ว ให้ชำระยอดคงเหลือก่อนวันใช้งาน"],
@@ -1913,16 +1436,18 @@ function AllBookingRoom() {
                         handleSetAlert("error", "Reject payment failed");
                     }
                 }}
+                onUploadReceipt={async (file, paymentId) => {
+                    await UploadPaymentReceipt(paymentId!, file);
+                    await getBookingRooms();
+                }}
+                onRemoveReceipt={async (paymentId) => {
+                    await DeletePaymentReceipt(paymentId!);
+                    await getBookingRooms();
+                }}
             />
 
-            {/* ===== Global one-and-only Receipt menu ===== */}
-            <MuiMenu
-                id="receipt-menu"
-                anchorEl={receiptMenu?.anchorEl ?? null}
-                open={openReceiptMenu}
-                onClose={() => setReceiptMenu(null)}
-                MenuListProps={{ "aria-labelledby": "receipt-menu-btn" }}
-            >
+            {/* Global Receipt menu */}
+            <MuiMenu id="receipt-menu" anchorEl={receiptMenu?.anchorEl ?? null} open={openReceiptMenu} onClose={() => setReceiptMenu(null)} MenuListProps={{ "aria-labelledby": "receipt-menu-btn" }}>
                 <MenuItem disableRipple>
                     <input
                         accept="application/pdf"
