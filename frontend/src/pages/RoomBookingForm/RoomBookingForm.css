@@ -67,7 +67,9 @@
 .booking-container .booking-section-header {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     margin-bottom: 12px;
+    min-height: 32px;
 }
 
 .booking-container .booking-section-icon {
@@ -78,6 +80,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
+
+.booking-container .booking-section-header .MuiTypography-root {
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
 }
 
 
@@ -97,18 +106,10 @@
 
 @media (min-width: 1280px) {
     .calendar-paper {
-        min-height: 450px;
+        /* min-height: 450px; */
     }
 }
 
-
-
-/* Contact Form Section Styles */
-
-.booking-container .contact-form-paper {
-    padding: 32px;
-    border-radius: 8px;
-}
 
 
 .booking-container .info-section-paper {
@@ -149,20 +150,13 @@
     margin-top: 40px;
 }
 
-.booking-container .action-divider {
-    margin-bottom: 32px;
-}
-
 .booking-container .date-alert {
     margin-bottom: 24px;
     border-radius: 16px;
-    background-color: #F26522;
-    color: #fff;
-    border: 1px solid #e04e1a;
-}
-
-.booking-container .confirmation-section {
-    text-align: center;
+    background-color: #FFB366;
+    color: #FFFFFF;
+    border: 1px solid #FF9933;
+    box-shadow: 0 2px 8px rgba(255, 179, 102, 0.3);
 }
 
 .booking-container .confirm-button {
