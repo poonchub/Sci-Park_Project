@@ -268,7 +268,7 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
 		switch list[i].Status {
 		case "Awaiting payment", "Pending verification":
 			active = &list[i]
-			break
+		
 		}
 		if active != nil {
 			break
@@ -465,12 +465,18 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
    ============================================================ */
 
 // FE ใส่มาใน AdditionalInfo
+
+
+/* =========================
+ * Payload/Helpers/Policies
+ * ========================= */
+
 type additionalInfoPayload struct {
 	Discounts struct {
 		UsedFreeCredit  bool `json:"usedFreeCredit"`
 		AppliedMember50 bool `json:"appliedMember50"`
 	} `json:"discounts"`
-	// Fallback แพ็กเกจจาก FE (กรณี user ยังไม่มีแถวใน user_packages)
+	// (ยังคงรับค่าจาก FE ได้ แต่จะไม่ใช้ fallback เพื่อคำนวณสิทธิ์)
 	Package struct {
 		Name                   string `json:"name"`
 		MeetingRoomLimit       int    `json:"meeting_room_limit"`
@@ -480,7 +486,7 @@ type additionalInfoPayload struct {
 	QuotaConsumed bool `json:"quota_consumed"`
 }
 
-// โครงแพ็กเกจแบบบาง ๆ (อ่านจากฐาน)
+// โครงแพ็กเกจแบบบาง ๆ (อ่านจากฐานเท่านั้น)
 type packageLite struct {
 	PackageName            string `json:"package_name" gorm:"column:package_name"`
 	MeetingRoomLimit       int    `json:"meeting_room_limit" gorm:"column:meeting_room_limit"`
@@ -488,7 +494,7 @@ type packageLite struct {
 	MultiFunctionRoomLimit int    `json:"multi_function_room_limit" gorm:"column:multi_function_room_limit"`
 }
 
-// ===== สิทธิ์ที่สรุปจากแพ็กเกจ (สมาชิก) =====
+// สิทธิ์สรุปจากแพ็กเกจ (สมาชิกเท่านั้น)
 type pkgBenefits struct {
 	meetingFreePerYear int
 	meetingHalf        bool
@@ -496,10 +502,10 @@ type pkgBenefits struct {
 	hallHalf           bool
 }
 
-// สมาชิกทุกแพ็กเกจ: training/hall ลด 50% ไม่จำกัดครั้ง,
-// meeting ลด 50% ได้ (โดยเฉพาะหลังหมดโควต้าฟรี)
+// ให้สิทธิ์เฉพาะเมื่อเป็น “สมาชิกจริง” เท่านั้น
 func benefitsFromPackage(p *packageLite) pkgBenefits {
-	if p == nil {
+	if p == nil || strings.TrimSpace(p.PackageName) == "" {
+		// ไม่ใช่สมาชิก => ไม่มีส่วนลด
 		return pkgBenefits{}
 	}
 	meetLimit := p.MeetingRoomLimit
@@ -529,9 +535,9 @@ func classifyPolicyRoom(r *entity.Room) (string, error) {
 	}
 }
 
-/* ============================================================
-   Handler
-   ============================================================ */
+/* ================
+ * Handler
+ * ================ */
 
 func CreateBookingRoom(c *gin.Context) {
 	db := config.DB()
@@ -667,31 +673,28 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 	baseTotal *= float64(len(input.Dates))
 
-	// ----- ดึงแพ็กเกจของผู้ใช้ผ่าน user_packages -----
+	// ----- ดึงแพ็กเกจของผู้ใช้ผ่าน user_packages (ฐานเท่านั้น) -----
 	var up entity.UserPackage
 	_ = tx.Preload("Package").
 		Where("user_id = ?", user.ID).
 		Order("created_at DESC").
-		First(&up).Error // เงียบไว้ ใช้ fallback จาก FE ด้านล่างได้
+		First(&up).Error // ถ้าไม่เจอ => ไม่ใช่สมาชิก
 
-	// สร้าง packageLite จากฐาน (ถ้ามี) หรือ fallback จาก FE
-	pl := packageLite{}
+	// pl = nil ถ้าไม่ใช่สมาชิก (ไม่มี user_packages)
+	var pl *packageLite
 	if up.Package.ID != 0 {
-		pl = packageLite{
+		pl = &packageLite{
 			PackageName:            up.Package.PackageName,
 			MeetingRoomLimit:       up.Package.MeetingRoomLimit,
 			TrainingRoomLimit:      up.Package.TrainingRoomLimit,
 			MultiFunctionRoomLimit: up.Package.MultiFunctionRoomLimit,
 		}
 	}
-	if strings.TrimSpace(pl.PackageName) == "" && strings.TrimSpace(addInfo.Package.Name) != "" {
-		pl.PackageName = addInfo.Package.Name
-		pl.MeetingRoomLimit = addInfo.Package.MeetingRoomLimit
-		pl.TrainingRoomLimit = addInfo.Package.TrainingRoomLimit
-		pl.MultiFunctionRoomLimit = addInfo.Package.MultiFunctionRoomLimit
-	}
 
-	// ----- policy/หมวดจาก RoomType.Category (ห้าม fallback) -----
+	// **สำคัญ**: ไม่ fallback จาก FE เพื่อกันการสวมสิทธิ์
+	// (จงอย่ากลับไปเติม pl จาก addInfo.Package)
+
+	// ----- policy/หมวดจาก RoomType.Category -----
 	policy, err := classifyPolicyRoom(&room)
 	if err != nil {
 		tx.Rollback()
@@ -700,7 +703,7 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 
 	// ----- ส่วนลด/โควตา -----
-	benefit := benefitsFromPackage(&pl)
+	benefit := benefitsFromPackage(pl)
 
 	nz := func(x int) int {
 		if x < 0 {
@@ -708,32 +711,36 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 		return x
 	}
-	meetingRemaining := nz(pl.MeetingRoomLimit - nz(up.MeetingRoomUsed))
-	// training/hall ไม่จำกัดครั้งสำหรับส่วนลด 50% -> ไม่ต้องคิด remaining
+
+	meetingRemaining := 0
+	if pl != nil && up.ID != 0 {
+		// นับเฉพาะสมาชิกจริง
+		meetingRemaining = nz(pl.MeetingRoomLimit - nz(up.MeetingRoomUsed))
+	}
 
 	appliedFree := false
 	applied50 := false
 
 	switch policy {
 	case "meeting":
-		// ฟรีถ้าเลือกใช้และยังมีโควตา
-		if addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
+		// ใช้สิทธิ์ฟรีเฉพาะ “สมาชิก” ที่ยังมีโควตา และ FE ต้องติ๊กขอใช้
+		if pl != nil && addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
 			appliedFree = true
-		} else if meetingRemaining <= 0 && benefit.meetingHalf {
-			// โควต้าหมด -> ลด 50% อัตโนมัติ
+		} else if pl != nil && meetingRemaining <= 0 && benefit.meetingHalf {
+			// โควต้าหมดแล้ว แต่ยังลด 50% สำหรับ “สมาชิก”
 			applied50 = true
-		} else if addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
-			// เผื่อกรณีอยากบังคับติ๊กเอง
+		} else if pl != nil && addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
+			// “สมาชิก” เท่านั้นที่จะติ๊กใช้ลด 50% เองได้
 			applied50 = true
 		}
 	case "training":
-		// สมาชิก: ลด 50% ไม่จำกัดครั้ง
-		if benefit.trainingHalf {
+		// ลด 50% เฉพาะสมาชิก
+		if pl != nil && benefit.trainingHalf {
 			applied50 = true
 		}
 	case "hall":
-		// สมาชิก: ลด 50% ไม่จำกัดครั้ง
-		if benefit.hallHalf {
+		// ลด 50% เฉพาะสมาชิก
+		if pl != nil && benefit.hallHalf {
 			applied50 = true
 		}
 	}
@@ -834,9 +841,11 @@ func CreateBookingRoom(c *gin.Context) {
 		"discount":         discountAmount,
 		"appliedFree":      appliedFree,
 		"applied50pct":     applied50,
+		"is_member":        pl != nil, // ให้ FE รู้สถานะเพื่อแสดง UI ให้ถูก
 		"payment_creation": "deferred_to_approval",
 	})
 }
+
 
 // นับวันทำการ (จันทร์–ศุกร์) ระหว่าง now → start (ไม่รวมวันหยุดนักขัตฤกษ์)
 func businessDaysUntil(start time.Time, loc *time.Location) int {

@@ -765,9 +765,9 @@ func RefundPaymentByAdmin(c *gin.Context) {
 	if cancel {
 		var booking entity.BookingRoom
 		if err := tx.Preload("Status").First(&booking, pay.BookingRoomID).Error; err == nil {
-			// ข้ามถ้า Complete/Cancelled ไปแล้ว
+			// ยกเลิกได้ทุกสถานะ ยกเว้น "Cancelled" (ให้ idempotent)
 			cur := strings.ToLower(strings.TrimSpace(booking.Status.StatusName))
-			if cur != "complete" && cur != "cancelled" {
+			if cur != "cancelled" {
 				if err2 := setBookingStatus(tx, booking.ID, "Cancelled"); err2 != nil {
 					tx.Rollback()
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "ตั้งค่าสถานะ Cancelled ไม่สำเร็จ"})

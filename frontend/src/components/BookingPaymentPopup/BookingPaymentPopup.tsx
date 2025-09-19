@@ -19,6 +19,123 @@ const MAX_SIZE = 5 * 1024 * 1024;
 const RECEIPT_ALLOWED = new Set(["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"]);
 const RECEIPT_MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+// ⬇️ เพิ่ม
+type BookingLike = {
+  TotalAmount?: number;
+  DepositAmount?: number;
+  Finance?: { TotalAmount?: number; DepositAmount?: number };
+  PaymentOption?: { OptionName?: string };
+  Payments?: any[];
+  RoomBookingInvoice?: { DueDate?: string; IssueDate?: string; InvoicePDFPath?: string; InvoiceNumber?: string; TotalAmount?: number };
+};
+
+const inferPlanFromBooking = (planProp?: "full" | "deposit", booking?: BookingLike): "full" | "deposit" => {
+  if (planProp) return planProp;
+  const opt = lower((booking as any)?.PaymentOption?.OptionName);
+  return opt === "deposit" ? "deposit" : "full";
+};
+
+const toNum = (v: any, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const mapUIStatus = (raw?: string): InstallmentUI["status"] => {
+  const s = norm(raw);
+  if (s === "approved" || s === "paid") return "approved";
+  if (s === "rejected") return "rejected";
+  if (s === "refunded") return "refunded";
+  if (s === "submitted" || s === "pending_verification") return "pending_verification";
+  if (s === "pending_payment" || s === "unpaid" || s === "overdue") return "pending_payment";
+  return "pending_payment";
+};
+
+// ✅ ถูก: required มาก่อน แล้วค่อย optional
+const pickDepositAndBalancePayment = (total: number, booking?: BookingLike) => {
+  const pays: any[] = Array.isArray(booking?.Payments) ? booking!.Payments : [];
+  if (!pays.length) return { dep: undefined, bal: undefined };
+
+  if (pays.length >= 2) {
+    const withAmount = pays.map(p => ({ ...p, _amt: toNum(p?.Amount ?? p?.amount, 0) }));
+    const dep = withAmount.find(p => p._amt > 0 && p._amt <= total / 2) ?? withAmount[0];
+    const bal = withAmount.find(p => p !== dep) ?? undefined;
+    return { dep, bal };
+  }
+
+  const only = pays[0];
+  const amt = toNum(only?.Amount ?? only?.amount, 0);
+  if (amt > 0 && amt < total) return { dep: only, bal: undefined };
+  return { dep: undefined, bal: only };
+};
+
+
+// สร้างรายการงวดจาก booking โดยไม่พึ่งพา props installments (เพื่อกันข้อมูลไม่ครบ)
+const deriveInstallments = (
+  planResolved: "full" | "deposit",
+  booking?: BookingLike
+): InstallmentUI[] => {
+  const total =
+    toNum(booking?.Finance?.TotalAmount, NaN) ?? NaN; // ใช้ ?? NaN เพื่อคุมลำดับ fallback
+  const totalAmount = Number.isFinite(total)
+    ? total
+    : toNum(booking?.TotalAmount, toNum((booking as any)?.RoomBookingInvoice?.TotalAmount, 0));
+
+  const depositAmountRaw =
+    toNum(booking?.Finance?.DepositAmount, NaN) ?? NaN;
+  const depositAmount = Number.isFinite(depositAmountRaw)
+    ? depositAmountRaw
+    : toNum(booking?.DepositAmount, Math.round(totalAmount * 0.3)); // fallback 30% ถ้าไม่มีข้อมูล
+
+  const balanceAmount = Math.max(0, totalAmount - (planResolved === "deposit" ? depositAmount : totalAmount));
+  // เดิม: const { dep, bal } = pickDepositAndBalancePayment(booking, totalAmount);
+  const { dep, bal } = pickDepositAndBalancePayment(totalAmount, booking);
+
+  if (planResolved === "full") {
+    const p = bal || dep; // เผื่อข้อมูลเก่าเก็บไว้ที่ dep
+    return [
+      {
+        key: "full",
+        label: "Full Payment",
+        amount: totalAmount,
+        paymentId: p?.ID,
+        status: mapUIStatus(statusNameOf(p)),
+        slipPath: p?.SlipPath ?? p?.slip_path,
+        locked: false,
+        dueDate: booking?.RoomBookingInvoice?.DueDate,
+      },
+    ];
+  }
+
+  // deposit plan
+  const depStatus = mapUIStatus(statusNameOf(dep));
+  const isDepositApproved = depStatus === "approved";
+  const balStatus = mapUIStatus(statusNameOf(bal));
+
+  const depositUI: InstallmentUI = {
+    key: "deposit",
+    label: "Deposit",
+    amount: depositAmount,
+    paymentId: dep?.ID,
+    status: dep ? depStatus : "pending_payment",
+    slipPath: dep?.SlipPath ?? dep?.slip_path,
+    locked: false,
+    dueDate: booking?.RoomBookingInvoice?.DueDate, // หรืออาจจะมี due แยกตามงวด
+  };
+
+  const balanceUI: InstallmentUI = {
+    key: "balance",
+    label: "Balance",
+    amount: balanceAmount,
+    paymentId: bal?.ID,
+    status: bal ? balStatus : "pending_payment",
+    slipPath: bal?.SlipPath ?? bal?.slip_path,
+    locked: !isDepositApproved, // ⬅️ lock จนกว่ามัดจำอนุมัติ
+    dueDate: booking?.RoomBookingInvoice?.DueDate,
+  };
+
+  return [depositUI, balanceUI];
+};
+
 // ===== Types =====
 type SlipCheckState = {
   loading?: boolean;
@@ -61,7 +178,7 @@ interface BookingPaymentPopupProps {
 
   booking?: any; // ✅ row ของ booking สำหรับดึง All Invoice มาแสดงใน popup
   refreshBooking?: () => Promise<any>; // ✅ ฟังก์ชันรีโหลด booking แบบสด หลังอัปโหลด/ลบเสร็จ
-
+  isFromMy?: boolean;
   bookingSummary?: string;
   serviceConditions?: { title: string; points: string[] };
 
@@ -189,6 +306,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   isOwner = false,
   isAdmin = false,
   isLoading = false,
+  isFromMy = false,
 
   booking, // ✅ row ที่ส่งเข้ามาตอนกด Pay Now / View Slip
   refreshBooking, // ⬅️ เพิ่มบรรทัดนี้
@@ -213,8 +331,29 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
   const receiptInputRef = useRef<HTMLInputElement>(null);
   const [receiptUploading, setReceiptUploading] = useState(false);
+  const allowOwnerUpload = isOwner && isFromMy;
+  // ⬇️ แทนที่บรรทัดเดิม
+  const planResolved = useMemo(() => inferPlanFromBooking(plan, booking), [plan, booking]);
 
-  const list = useMemo(() => orderInstallments(plan, installments), [plan, installments]);
+  // ถ้า props.installments ส่งมาถูกต้องครบอยู่แล้วก็ใช้ได้เลย
+  // แต่เพื่อกันกรณีไม่ครบ/ผิด ให้ derive จาก booking เป็นหลัก
+  const computedInstallments = useMemo<InstallmentUI[]>(() => {
+    const derived = deriveInstallments(planResolved, booking);
+    // ถ้า caller ส่ง installments มาและค่าตรง ให้ merge โดยให้ derived เป็นค่า default
+    if (Array.isArray(installments) && installments.length) {
+      const mapByKey = new Map(derived.map(i => [i.key, i]));
+      const merged = installments.map(i => ({ ...mapByKey.get(i.key), ...i }));
+      // เติมตัวที่อาจหายไปจาก props
+      derived.forEach(i => {
+        if (!merged.find(m => m.key === i.key)) merged.push(i);
+      });
+      return merged;
+    }
+    return derived;
+  }, [planResolved, booking, installments]);
+
+  const list = useMemo(() => orderInstallments(planResolved, computedInstallments), [planResolved, computedInstallments]);
+
   const [replaceMode, setReplaceMode] = useState(false);
   const openSlip = (path?: string) => {
     const url = slipUrl(path || "");
@@ -225,7 +364,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   const setFileFor = (key: InstallmentUI["key"]) => async (fList: File[]) => {
     setFiles((prev) => ({ ...prev, [key]: fList }));
     const file = fList?.[0];
-    if (!file) {
+    if (!allowOwnerUpload || !file) {
       setSlipCheck((p) => ({ ...p, [key]: {} }));
       return;
     }
@@ -392,8 +531,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
     const chk = (slipCheck[inst.key] || {}) as SlipCheckState;
     const verified = !!chk.ok && !!chk.transTs;
-
-    const title = plan === "full" ? "Full Payment" : inst.key === "deposit" ? "Deposit Payment" : "Balance Payment";
+    const title = planResolved === "full" ? "Full Payment" : inst.key === "deposit" ? "Deposit Payment" : "Balance Payment";
 
     const checkedLabel = chk.loading
       ? "Verifying slip..."
@@ -540,40 +678,48 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 )}
               </Box>
             ) : !inst.locked ? (
-              /* No slip - show upload interface */
-              files[inst.key]?.[0] ? (
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {checkedLabel}
-                  </Typography>
+              allowOwnerUpload ? (
+                /* No slip - show upload interface (เฉพาะ Owner + จากหน้า My) */
+                files[inst.key]?.[0] ? (
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {checkedLabel}
+                    </Typography>
+                    <ImageUploader
+                      value={files[inst.key]}
+                      onChange={setFileFor(inst.key)}
+                      setAlerts={setAlerts}
+                      maxFiles={1}
+                      buttonText="Change Slip"
+                    />
+                  </Box>
+                ) : (
                   <ImageUploader
                     value={files[inst.key]}
                     onChange={setFileFor(inst.key)}
                     setAlerts={setAlerts}
                     maxFiles={1}
-                    buttonText="Change Slip"
+                    buttonText="Upload Slip"
                   />
-                </Box>
+                )
               ) : (
-                <ImageUploader
-                  value={files[inst.key]}
-                  onChange={setFileFor(inst.key)}
-                  setAlerts={setAlerts}
-                  maxFiles={1}
-                  buttonText="Upload Slip"
-                />
+                // ไม่ใช่เจ้าของ หรือเปิดมาจากหน้า All: แสดงแบบอ่านอย่างเดียว
+                <Typography variant="body2" color="text.secondary">
+                  Only the booking owner can upload a slip, and only from the “My bookings” page.
+                </Typography>
               )
             ) : (
               <Typography variant="body2" color="text.secondary">
                 No slip uploaded yet.
               </Typography>
-            )}
+            )
+            }
           </Box>
 
 
           {/* Actions */}
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-            {isOwner && !inst.locked && (
+            {allowOwnerUpload && !inst.locked && (
               ownerUploadableStatuses.has(norm(inst.status)) && !hasSlip ? (
                 <Button
                   variant="contained"
@@ -585,6 +731,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 </Button>
               ) : null
             )}
+
 
             {canShowAdminActions(isAdmin, inst.status, !!inst.slipPath) && (
               <>
@@ -767,7 +914,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                       return (
                         <>
                           {/* ===== Receipt ===== */}
-                          <Grid size={{ xs: 12, md: 6}}>
+                          <Grid size={{ xs: 12, md: 6 }}>
                             <Card variant="outlined" sx={{ p: 1.2, display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
                               <StatusHeader
                                 ok={!!receiptFileName}

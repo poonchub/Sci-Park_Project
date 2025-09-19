@@ -19,6 +19,7 @@ import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
 import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
+import BookingReview from "../pages/BookingReview/BookingReview";
 const ManagerRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -39,6 +40,10 @@ const ManagerRoutes = (): RouteObject => {
             {
                 path: "/my-booking-room",
                 element: <MyBookingRoom />
+            },
+            {
+                path: "/booking/review",
+                element: <BookingReview />
             },
             {
                 path: "/maintenance/all-maintenance-request",

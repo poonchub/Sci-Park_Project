@@ -17,6 +17,7 @@ import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
 import AcceptWorkDocument from "../pages/AcceptWorkDocument/AcceptWorkDocument";
 import ServiceAreaDetails from "../pages/ServiceAreaDetails/ServiceAreaDetails";
+import BookingReview from "../pages/BookingReview/BookingReview";
 
 const DocumentOperatorRoutes = (): RouteObject => {
     return {
@@ -37,16 +38,20 @@ const DocumentOperatorRoutes = (): RouteObject => {
             },
             {
                 path: "/booking-room",
-                element: <BookingRoom />,
+                element: <BookingRoom />
             },
-             {
+            {
                 path: "/room-booking-form",
                 element: <RoomBookingForm />
             },
             {
-				path: "/my-booking-room",
-				element: <MyBookingRoom/>
-			},
+                path: "/my-booking-room",
+                element: <MyBookingRoom />
+            },
+            {
+                path: "/booking/review",
+                element: <BookingReview />
+            },
             {
                 path: "/maintenance/accept-work",
                 element: <AcceptWork />,

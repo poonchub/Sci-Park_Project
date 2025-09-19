@@ -13,6 +13,9 @@ import News from "../pages/News/News";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import DocumentManagement from "../pages/DocumentManagement/DocumentManagement";
+import BookingReview from "../pages/BookingReview/BookingReview";
+import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
+import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 const MaintenanceOperatorRoutes = (): RouteObject => {
     return {
         path: "/",
@@ -22,9 +25,21 @@ const MaintenanceOperatorRoutes = (): RouteObject => {
                 path: "/home",
                 element: <Home />,
             },
-            {
+             {
                 path: "/booking-room",
-                element: <BookingRoom />,
+                element: <BookingRoom />
+            },
+            {
+                path: "/room-booking-form",
+                element: <RoomBookingForm />
+            },
+            {
+                path: "/my-booking-room",
+                element: <MyBookingRoom />
+            },
+            {
+                path: "/booking/review",
+                element: <BookingReview />
             },
             {
                 path: "/maintenance/accept-work",
