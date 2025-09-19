@@ -2088,25 +2088,23 @@ async function CreateNews(data: NewsImagesInterface) {
     }
 }
 
-async function GetTimeSlots(id?: number) {
-    const requestOptions = {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            // "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        },
-    };
-
-    let res = await fetch(`${apiUrl}/get-timeslots-roomprices/${id}`, requestOptions).then((res) => {
-        if (res.status == 200) {
-            return res.json();
-        } else {
-            return false;
-        }
-    });
-
+async function apiGet(path: string, withAuth = true) {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (withAuth) {
+        const t = localStorage.getItem("token");
+        if (t) headers.Authorization = `Bearer ${t}`;
+    }
+    const res = await fetch(`${apiUrl}${path}`, { headers });
     return res;
 }
+
+// ใช้:
+async function GetTimeSlots(id: number) {
+    const res = await apiGet(`/get-timeslots-roomprices/${id}`, true); // หรือ false ถ้าเปิด public
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
 
 async function GetRoomQuota(userId?: number) {
     const requestOptions = {
@@ -3649,19 +3647,41 @@ async function ListPaymentOptions(): Promise<PaymentOptionInterface[]> {
 // services/http.ts
 
 // services/http.ts
+function makeAuthHeaders(includeAccept = true): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (includeAccept) headers.Accept = "application/json";
+  const token = localStorage.getItem("token");
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
 export const UploadPaymentReceipt = async (paymentId: number, file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, { method: "POST", body: form });
-    if (!res.ok) throw new Error("upload receipt failed");
-    return res.json();
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
+    method: "POST",
+    // อย่าตั้ง Content-Type เองเมื่อใช้ FormData
+    headers: makeAuthHeaders(/* includeAccept */ true),
+    body: form,
+  });
+
+  if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
+  if (!res.ok) throw new Error(`upload receipt failed: ${res.status} ${res.statusText}`);
+  return res.json();
 };
 
 export const DeletePaymentReceipt = async (paymentId: number) => {
-    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, { method: "DELETE" });
-    if (!res.ok) throw new Error("delete receipt failed");
-    return res.json();
+  const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
+    method: "DELETE",
+    headers: makeAuthHeaders(true),
+  });
+
+  if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
+  if (!res.ok) throw new Error(`delete receipt failed: ${res.status} ${res.statusText}`);
+  return res.json();
 };
+
 
 
 // Get Collaboration Plans by Request Service Area ID

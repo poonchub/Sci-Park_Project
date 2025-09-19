@@ -43,11 +43,11 @@ import { Base64 } from "js-base64";
 
 // API
 import {
- 
+
   CancelBookingRoom,
   SubmitPaymentSlip,
   apiUrl,
- 
+
   ListBookingRoomsForUser,
   UpdateNotificationsByBookingRoomID,
 } from "../../services/http";
@@ -142,6 +142,17 @@ interface BookingRoomsInterface {
 /* ========= Helpers ========= */
 const lower = (s?: string) => (s || "").trim().toLowerCase();
 
+// บนสุดของไฟล์ (ข้างๆ helpers อื่น)
+// const toPaymentStatusKey = (raw?: string) => {
+//   const v = (raw || "").trim().toLowerCase();
+//   if (v === "unpaid" || v === "pending payment") return "Pending Payment";
+//   if (v === "submitted" || v === "pending verification") return "Pending Verification";
+//   if (v === "approved" || v === "paid") return "Paid";
+//   if (v === "rejected") return "Rejected";
+//   if (v === "refunded") return "Refunded";
+//   return "Pending Payment";
+// };
+
 // รองรับ string | string[] | { Path: string }[]
 const asSlipString = (sp?: any): string => {
   if (!sp) return "";
@@ -187,6 +198,8 @@ const collectPays = (row: BookingRoomsInterface): any[] => {
   if (row.Payment) arr.push(row.Payment as any);
   return arr;
 };
+
+
 
 
 
@@ -400,18 +413,19 @@ function MyBookingRoom() {
   const isWindowScreen = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const { user } = useUserStore();
- 
+
   const bookingSummary = (row?: BookingRoomsInterface) => {
     if (!row) return "";
     const room = row.Room?.RoomNumber ?? "-";
     const dates = row.BookingDates?.map((d) => dateFormat(d.Date)).join(", ") || "-";
-    return `ห้อง ${room} • วันที่ ${dates} • สถานะ: ${row.StatusName ?? "-"}`;
+    return `Room ${room} • Date(s): ${dates} • Status: ${row.StatusName ?? "-"}`;
   };
+
   const serviceConditions = {
-    title: "โปรดอ่านเงื่อนไขการชำระเงิน",
+    title: "Please read the payment terms",
     points: [
-      "ชำระตามยอดที่ระบุในใบแจ้งหนี้ภายในกำหนด",
-      "หากชำระมัดจำแล้ว ให้ชำระยอดคงเหลือก่อนวันใช้งาน",
+      "Pay the invoiced amount by the due date.",
+      "If a deposit has been paid, please settle the remaining balance before the booking date.",
     ],
   };
 
@@ -433,7 +447,7 @@ function MyBookingRoom() {
         console.log(res)
         if (setTotalFlag) setTotal(res.total);
 
-     
+
         // setStatusCounts(formatted);
       }
 
@@ -501,7 +515,7 @@ function MyBookingRoom() {
     });
   }, [bookingRooms, searchText, selectedDate, selectedStatus, selectedFloor]);
 
- 
+
   // actions
   const handleCancelBooking = async (id: number) => {
     try {
@@ -779,6 +793,12 @@ function MyBookingRoom() {
             };
             let statusKey = toConfigKey(statusRaw);
 
+            // สถานะ booking โดยรวม (ไว้เช็คว่าได้รับการอนุมัติหรือยัง)
+            const dStatus = flowFromBackend(data);
+            const awaitingApproval = lower(dStatus) === "pending approved";
+
+
+
             const receiptPath = asSlipString(selectedPay?.ReceiptPath);
             const fileName = receiptPath ? receiptPath.split("/").pop() : "";
             if (statusKey === "Paid" && !fileName) statusKey = "Awaiting Receipt";
@@ -808,12 +828,23 @@ function MyBookingRoom() {
                 ? totalAmountNum.toLocaleString("th-TH", { style: "currency", currency: "THB" })
                 : "—";
 
-            const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
+            // const invoicePDFPath = invoice?.InvoicePDFPath ?? (data as any).InvoicePDFPath ?? "";
 
             // ---- Primary Action (เฉพาะเจ้าของ)
             const storeUser = useUserStore.getState().user as UserInterface | null;
             const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
             const primary = pickPaymentPrimaryButton(toBookingRowLite(data), isRowOwner);
+
+            // อนุญาตคลิกเฉพาะ: ได้รับอนุมัติแล้ว และอยู่สถานะ Pending Payment
+            const isViewSlip = (primary.label || "").toLowerCase().includes("view slip");
+            const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
+
+            // tooltip สื่อเหตุผล
+            const primaryTooltip = awaitingApproval
+              ? "Awaiting approval. You can pay after the booking is approved."
+              : (!isViewSlip && statusKey !== "Pending Payment")
+                ? "Payment is not open for this booking."
+                : (primary.tooltip || "");
 
             // ---- Cancel availability
             const owner = isRowOwner;
@@ -973,73 +1004,28 @@ function MyBookingRoom() {
 
                 {/* Actions */}
                 <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={0.8}>
-                    {/* Primary (Pay Now / View Slip / …) — ซ่อนเมื่อ locked */}
-                    {primary.show && !locked && (
-                      <Grid size={{ xs: allowCancel ? 6 : 8 }}>
-                        <Tooltip title={primary.tooltip || ""}>
-                          <Button
-                            variant="contained"
-                            onClick={() => {
-                              setSelectedRow(data);
-                              setOpenPaymentDialog(true);
-                            }}
-                            sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                          >
-                            {React.createElement(primary.icon || HandCoins, { size: 18 })}
-                            <Typography variant="textButtonClassic" className="text-btn">
-                              {primary.label}
-                            </Typography>
-                          </Button>
+                  {primary.show && !locked && (
+                    <Grid size={{ xs: allowCancel ? 6 : 8 }}>
+                      {primary.show && !locked && (
+                        <Tooltip title={primaryTooltip}>
+                          <span>
+                            <Button
+                              variant="contained"
+                              onClick={() => {
+                                if (!canTriggerPayment) return;   // กันคลิก
+                                setSelectedRow(data);
+                                setOpenPaymentDialog(true);
+                              }}
+                              disabled={!canTriggerPayment}       // ปิดปุ่ม
+                              sx={{ minWidth: 42 }}
+                            >
+                              {React.createElement(primary.icon || HandCoins, { size: 16 })}
+                            </Button>
+                          </span>
                         </Tooltip>
-                      </Grid>
-                    )}
-
-                    {/* Download PDF (ยังเปิดได้) */}
-                    <Grid size={{ xs: allowCancel ? (primary.show && !locked ? 6 : 8) : 4 }}>
-                      <Tooltip title="Download PDF">
-                        <Button
-                          variant="outlinedGray"
-                          onClick={() => invoicePDFPath && window.open(`${apiUrl}/${invoicePDFPath}`, "_blank")}
-                          disabled={!invoicePDFPath}
-                          sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                        >
-                          <FontAwesomeIcon icon={faFilePdf} style={{ fontSize: 16 }} />
-                          <Typography variant="textButtonClassic" className="text-btn">Download PDF</Typography>
-                        </Button>
-                      </Tooltip>
+                      )}
                     </Grid>
-
-                    {/* Details (ยังดูได้) */}
-                    <Grid size={{ xs: 4 }}>
-                      <Tooltip title="Details">
-                        <Button variant="outlinedGray" onClick={() => handleClickCheck(data)} sx={{ minWidth: 42, width: "100%", height: "100%" }}>
-                          <Eye size={18} />
-                          <Typography variant="textButtonClassic" className="text-btn">Details</Typography>
-                        </Button>
-                      </Tooltip>
-                    </Grid>
-
-                    {/* Cancel — ซ่อนเมื่อ locked */}
-                    {allowCancel && (
-                      <Grid size={{ xs: 4 }}>
-                        <Tooltip title="Cancel Booking">
-                          <Button
-                            className="btn-reject"
-                            variant="outlinedCancel"
-                            onClick={() => {
-                              setTargetBooking(data);
-                              setOpenConfirmCancel(true);
-                            }}
-                            sx={{ minWidth: 42, width: "100%", height: "100%" }}
-                          >
-                            <X size={18} />
-                            <Typography variant="textButtonClassic" className="text-btn">Cancel</Typography>
-                          </Button>
-                        </Tooltip>
-                      </Grid>
-                    )}
-                  </Grid>
+                  )}
                 </Grid>
               </Grid>
             );
@@ -1124,6 +1110,17 @@ function MyBookingRoom() {
             const isRowOwner = !!storeUser?.ID && !!data.User?.ID && storeUser.ID === data.User.ID;
             const primary = pickPaymentPrimaryButton(data, isRowOwner);
 
+            // เพิ่มหลังจากคำนวณ statusKey และ before return
+            // const dStatus = flowFromBackend(data);
+            // const awaitingApproval = lower(dStatus) === "pending approved";
+            // const isViewSlip = ((primary?.label ?? "") as string).toLowerCase().includes("view slip");
+            // const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
+            // const primaryTooltip = awaitingApproval
+            //   ? "Awaiting approval. You can pay after the booking is approved."
+            //   : (!isViewSlip && statusKey !== "Pending Payment")
+            //     ? "Payment is not open for this booking."
+            //     : (primary.tooltip || "");
+
             return (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, width: "100%", overflow: "hidden" }}>
                 <Box
@@ -1193,6 +1190,7 @@ function MyBookingRoom() {
             const storeUser = useUserStore.getState().user as UserInterface | null;
             const owner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
             const locked = isRowReadOnly(row); // <<< ล็อกเมื่อ refunded/cancelled
+
 
             return (
               <Box sx={{ display: "flex", gap: 0.8, alignItems: "center", flexWrap: "wrap" }}>
@@ -1316,7 +1314,7 @@ function MyBookingRoom() {
               >
                 <cfg.icon size={18} />
                 <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                  {cfg.label}{locked }
+                  {cfg.label}{locked}
                 </Typography>
               </Box>
             </Box>
@@ -1359,37 +1357,50 @@ function MyBookingRoom() {
 
           const locked = isRowReadOnly(row); // <<< ล็อกเมื่อ refunded/cancelled
 
+          const dStatus = flowFromBackend(row);
+          const awaitingApproval = lower(dStatus) === "pending approved";
+          const isViewSlip = (canPayNow ? "" : "view slip").toLowerCase().includes("view slip");
+          // ถ้า upstream ตั้ง primary.label ได้ จะดีกว่า: const isViewSlip = (primary.label||"").toLowerCase().includes("view slip")
+          const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
+          const primaryTooltip = awaitingApproval
+            ? "Awaiting approval. You can pay after the booking is approved."
+            : (!isViewSlip && statusKey !== "Pending Payment")
+              ? "Payment is not open for this booking."
+              : "";
+
+
           return (
             <Box sx={{ display: "flex", gap: 0.8, alignItems: "center", flexWrap: "wrap" }} className="container-btn">
               {/* Pay/View — ซ่อนเมื่อ locked */}
               {(!locked) && (
-                <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      setSelectedRow(row);       // ส่ง booking ทั้งแถวให้ popup ใช้ทำ Invoice Overview
-                      setOpenPaymentDialog(true);
-                    }}
-                    sx={{ minWidth: 42 }}
-                  >
-                    {canPayNow ? (
-                      <>
-                        <HandCoins size={18} />
-                        <Typography variant="textButtonClassic" className="text-btn">
-                          Pay Now
-                        </Typography>
-                      </>
-                    ) : (
-                      <>
-                        <Wallet size={18} />
-                        <Typography variant="textButtonClassic" className="text-btn">
-                          View Slip
-                        </Typography>
-                      </>
-                    )}
-                  </Button>
+                <Tooltip title={primaryTooltip || (canPayNow ? "Pay Now" : "View Slip")}>
+                  <span>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        if (!canTriggerPayment) return;  // กันคลิก
+                        setSelectedRow(row);
+                        setOpenPaymentDialog(true);
+                      }}
+                      disabled={!canTriggerPayment}      // ปิดปุ่ม
+                      sx={{ minWidth: 42 }}
+                    >
+                      {canPayNow ? (
+                        <>
+                          <HandCoins size={18} />
+                          <Typography variant="textButtonClassic" className="text-btn">Pay Now</Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Wallet size={18} />
+                          <Typography variant="textButtonClassic" className="text-btn">View Slip</Typography>
+                        </>
+                      )}
+                    </Button>
+                  </span>
                 </Tooltip>
               )}
+
 
               {/* Details — ยังดูได้เสมอ */}
               <Tooltip title="Details">
@@ -1574,6 +1585,7 @@ function MyBookingRoom() {
         isOwner={true}
         isAdmin={false}
         isLoading={loading}
+        isFromMy={true}        // ✅ เปิดสิทธิ์อัปโหลด
         booking={selectedRow}                              // ✅ ส่งข้อมูล All Invoice เข้าป๊อปอัพ
         serviceConditions={serviceConditions}
         bookingSummary={bookingSummary(selectedRow || undefined)}

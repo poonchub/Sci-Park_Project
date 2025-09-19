@@ -48,57 +48,17 @@ func main() {
 		public.GET("/organization-info", controller.GetOrganizationInfo)
 
 		// DeveloperInfo
+
 		public.GET("/contributors", controller.ListContributors)
 
-		public.GET("/get-timeslots-roomprices/:id", controller.GetRoomByIDwithBookings)
+		//BookingRoom
 
-		public.POST("/booking-rooms", controller.CreateBookingRoom)
+		// public.PUT("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
 
-		public.GET("/pending-payments", controller.GetPendingPayments)
-		public.PUT("/update-payment", controller.UpdatePaymentStatus)
-		public.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
-		public.GET("/roomtypes/:id/equipment", controller.GetEquipmentByRoomType)
-		public.PATCH("/user-packages/use-quota", controller.UseRoomQuota)
-		public.GET("/roomlayouts", controller.GetAllRoomLayouts)
-		public.DELETE("/room-types/:id", controller.DeleteRoomType)
-		public.PUT("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
-		// delete
+		// Payments
 
-		r.GET("/equipments", controller.GetEquipments)
-		r.GET("/equipments/:id", controller.GetEquipment)
-		r.POST("/equipments", controller.CreateEquipment)
-		r.PATCH("/equipments/:id", controller.UpdateEquipment)
-		r.DELETE("/equipments/:id", controller.DeleteEquipment)
-
-		r.GET("/timeslots", controller.GetTimeSlots)
-		r.POST("/timeslots", controller.CreateTimeSlot)
-
-		r.GET("/layouts", controller.GetAllRoomLayouts)
-		r.POST("/layouts", controller.CreateLayout)
-
-		// router.go (ตัวอย่าง)
-
-		r.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
-		r.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
-		r.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
-		// r.POST("/booking-rooms/:id/complete", controller.CompleteBookingRoom)
-
-		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
-		r.POST("/payments/:id/approve", controller.ApprovePayment)
-		r.POST("/payments/:id/reject", controller.RejectPayment)
-		r.PUT("/payments/:id/refund", controller.RefundPaymentByAdmin)
-		// r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
-		// routes.go
-		// routes.go
-		r.POST("/payments/receipt/:payment_id", controller.UploadPaymentReceipt)
-		r.DELETE("/payments/receipt/:payment_id", controller.DeletePaymentReceipt)
-
-		// Invoice flow (ใหม่)
-		// r.POST("/booking-rooms/:id/invoices/deposit", controller.CreateDepositInvoiceHandler)
-		// r.POST("/booking-rooms/:id/invoices/full", controller.CreateFullInvoiceHandler)
-		// r.POST("/booking-rooms/:id/invoices/final", controller.CreateFinalInvoiceHandler)
-		// r.POST("/invoices/mark-overdue", controller.MarkOverdueInvoicesHandler)
-		// r.POST("/invoices/:invoiceId/upload-slip", controller.UploadInvoiceSlip)
+		// public.GET("/pending-payments", controller.GetPendingPayments)
+		// public.PUT("/update-payment", controller.UpdatePaymentStatus)
 
 	}
 
@@ -301,6 +261,22 @@ func main() {
 		// protected.GET("/booking-rooms/user/:id", controller.ListBookingRoomsByUser)
 		protected.GET("/booking-room-option-for-user", controller.ListBookingRoomsForUser)
 
+		//-----------------------------------------------------------------------
+		protected.GET("/timeslots", controller.GetTimeSlots)
+		protected.POST("/timeslots", controller.CreateTimeSlot)
+		protected.GET("/get-timeslots-roomprices/:id", controller.GetRoomByIDwithBookings)
+		protected.POST("/booking-rooms", controller.CreateBookingRoom)
+		protected.PATCH("/user-packages/use-quota", controller.UseRoomQuota)
+		protected.GET("/roomlayouts", controller.GetAllRoomLayouts)
+		protected.GET("/roomtypes/:id/equipment", controller.GetEquipmentByRoomType)
+		protected.GET("/layouts", controller.GetAllRoomLayouts)
+		protected.POST("/payments/receipt/:payment_id", controller.UploadPaymentReceipt)
+		protected.DELETE("/payments/receipt/:payment_id", controller.DeletePaymentReceipt)
+		protected.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
+		protected.PATCH("/booking-rooms/:id/cancel", controller.CancelBookingRoom)
+		protected.GET("/booking-rooms/:id", controller.GetBookingRoomByID)
+		//---------------------------------------------
+
 		// RoomBookingInvoices (moved to main section below)
 
 		// PaymentType
@@ -344,6 +320,16 @@ func main() {
 		// protected.GET("/booking-rooms", controller.ListBookingRooms)
 		protected.GET("/booking-rooms/by-date", controller.ListBookingRoomByDateRange)
 		protected.GET("/booking-room-option-for-admin", controller.ListBookingRoomsForAdmin)
+
+		//-------------------------------------------------------------------
+		
+		protected.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
+		protected.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
+		protected.POST("/payments/:id/approve", controller.ApprovePayment)
+		protected.POST("/payments/:id/reject", controller.RejectPayment)
+		protected.PUT("/payments/:id/refund", controller.RefundPaymentByAdmin)
+
+		//-----------------------------------------------------------------------
 
 		// Service_area
 		protected.POST("/service-area-approval", controller.CreateServiceAreaApproval)
@@ -435,6 +421,16 @@ func main() {
 		// RoomTypes
 		protected.POST("/create-room-type", controller.CreateRoomType)
 		protected.PATCH("/update-room-type/:id", controller.UpdateRoomType)
+
+		//---------------------------------------------------------------
+		protected.DELETE("/room-types/:id", controller.DeleteRoomType)
+		protected.POST("/layouts", controller.CreateLayout)
+		protected.GET("/equipments", controller.GetEquipments)
+		protected.GET("/equipments/:id", controller.GetEquipment)
+		protected.POST("/equipments", controller.CreateEquipment)
+		protected.PATCH("/equipments/:id", controller.UpdateEquipment)
+		protected.DELETE("/equipments/:id", controller.DeleteEquipment)
+		//--------------------------------------------------------------
 
 	}
 

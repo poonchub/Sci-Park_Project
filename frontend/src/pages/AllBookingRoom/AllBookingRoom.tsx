@@ -991,7 +991,10 @@ function AllBookingRoom() {
                     const storeUser = useUserStore.getState().user as UserInterface | null;
                     const isRowOwner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
                     const statusKey = toConfigKey(statusRaw);
-                    const canPayNow = isRowOwner && (statusKey === "Pending Payment" || statusKey === "Rejected");
+                    const canPayNow =
+                        !isAdminLike &&
+                        isRowOwner &&
+                        (statusKey === "Pending Payment" || statusKey === "Rejected");
                     const canRefund = isAdminLike && statusKey === "Paid"; // paid / awaiting receipt
 
                     return (
@@ -1039,12 +1042,9 @@ function AllBookingRoom() {
                                 <span>
                                     <Button
                                         variant="contained"
-                                        onClick={() => {
-                                            setSelectedRow(row);
-                                            setOpenPaymentDialog(true);
-                                        }}
+                                        onClick={() => { setSelectedRow(row); setOpenPaymentDialog(true); }}
                                         sx={{ minWidth: 42 }}
-                                        disabled={locked} // <<< ล็อค
+                                        disabled={locked}
                                     >
                                         {canPayNow ? (
                                             <>
@@ -1058,6 +1058,7 @@ function AllBookingRoom() {
                                             </>
                                         )}
                                     </Button>
+
                                 </span>
                             </Tooltip>
 

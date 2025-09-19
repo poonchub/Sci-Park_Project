@@ -2357,7 +2357,10 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     !selectedRoomId ||
                     purpose.trim() === "" ||
                     (timeOption === "hourly" && !isHourlyAllowed) ||
-                    (timeOption === "half" && !timeRange)
+                    (timeOption === "half" && !timeRange)  ||
+                    additionalNote.trim() === "" ||
+                    selectedStyle.length === 0 
+                
                   }
                   startIcon={loading ? <CircularProgress size={20} sx={{ color: "white" }} /> : <CheckCircle2 size={20} />}
                 >
