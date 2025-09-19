@@ -1,15 +1,16 @@
+// constants/bookingStatusConfig.ts
 import type { LucideIcon } from "lucide-react";
 import {
-  Clock,          // Pending
-  BadgeCheck,     // Confirmed
-  XCircle,        // Cancelled
-  CreditCard,     // Paid/Unpaid
-  RotateCcw,      // Refunded
+  Clock,
+  BadgeCheck,
+  XCircle,
+  CreditCard,
+  RotateCcw,
   HelpCircle,
   CircleDollarSign,
   Search,
-  CheckCircle,    // Completed
-  FileText,       // Awaiting Receipt
+  CheckCircle,
+  FileText,
 } from "lucide-react";
 
 export interface BookingStatusConfig {
@@ -19,86 +20,53 @@ export interface BookingStatusConfig {
   label?: string;
 }
 
-/** key เป็นตัวพิมพ์เล็กทั้งหมด */
 export const bookingStatusConfig: Record<string, BookingStatusConfig> = {
-  // ── สถานะการจอง ─────────────────────────────
-  pending: {
-    color: "#FFA500",
-    colorLite: "rgba(255, 166, 0, 0.21)",
-    icon: Clock,
-    label: "Pending",
-  },
-  confirmed: {
-    color: "#007BFF",
-    colorLite: "rgba(0, 123, 255, 0.18)",
-    icon: BadgeCheck,
-    label: "Confirmed",
-  },
-  "payment review": {
-    color: "#884af7",
-    colorLite: "rgba(110, 66, 193, 0.18)",
-    icon: Search,
-    label: "Payment Review",
-  },
-  payment: {
-    color: "#FFA500",
-    colorLite: "rgba(255, 166, 0, 0.21)",
-    icon: CircleDollarSign,
-    label: "Payment",
-  },
+  // ── Booking flow (ตาม BF) ──
+  "pending approved": { color: "#6B7280", colorLite: "#F3F4F6", icon: Clock, label: "Pending Approved" },
+  "pending payment":  { color: "#2563EB", colorLite: "#EFF6FF", icon: CircleDollarSign, label: "Pending Payment" },
+  "partially paid":   { color: "#A16207", colorLite: "#FEF3C7", icon: CreditCard, label: "Partially Paid" },
+  "awaiting receipt": { color: "#0EA5E9", colorLite: "#E0F2FE", icon: FileText, label: "Awaiting Receipt" },
+  "complete":         { color: "#10B981", colorLite: "#ECFDF5", icon: CheckCircle, label: "Complete" },
+  "cancelled":        { color: "#EF4444", colorLite: "#FEE2E2", icon: XCircle, label: "Cancelled" },
 
-  /** ✅ ใหม่: รอออกใบเสร็จ หลังอนุมัติการชำระเงินแล้ว */
-  "awaiting receipt": {
-    color: "#F59E0B",
-    colorLite: "rgba(245, 158, 11, 0.15)",
-    icon: FileText,
-    label: "Awaiting Receipt",
-  },
+  // ── Payment tags ──
+  "unpaid":                { color: "#6B7280", colorLite: "#E5E7EB", icon: CreditCard, label: "Unpaid" },
+  "pending verification":  { color: "#7C3AED", colorLite: "#F3E8FF", icon: Search, label: "Pending Verification" },
+  "approved":              { color: "#16A34A", colorLite: "#DCFCE7", icon: BadgeCheck, label: "Approved" },
+  "rejected":              { color: "#DC2626", colorLite: "#FEE2E2", icon: XCircle, label: "Rejected" },
+  "refunded":              { color: "#F97316", colorLite: "#FFEDD5", icon: RotateCcw, label: "Refunded" },
 
-  completed: {
-    color: "#10a605",
-    colorLite: "rgba(0, 255, 60, 0.18)",
-    icon: CheckCircle,
-    label: "Completed",
-  },
-  cancelled: {
-    color: "#EF4444",
-    colorLite: "#FEE2E2",
-    icon: XCircle,
-    label: "Cancelled",
-  },
+  // alias ของ paid → approved
+  "paid":                  { color: "#16A34A", colorLite: "#DCFCE7", icon: BadgeCheck, label: "Paid" },
 
-  // ── สถานะการชำระเงิน (มักใช้เป็นแท็กประกอบ) ──
-  unpaid: {
-    color: "#6B7280",
-    colorLite: "#E5E7EB",
-    icon: CreditCard,
-    label: "Unpaid",
-  },
-  paid: {
-    color: "#16A34A",
-    colorLite: "#DCFCE7",
-    icon: CreditCard,
-    label: "Paid",
-  },
-  refunded: {
-    color: "#F97316",
-    colorLite: "#FFEDD5",
-    icon: RotateCcw,
-    label: "Refunded",
-  },
+  // fallback
+  "unknown":               { color: "#6B7280", colorLite: "#F3F4F6", icon: HelpCircle, label: "Unknown" },
+};
 
-  // ── fallback ─────────────────────────────────
-  unknown: {
-    color: "#6B7280",
-    colorLite: "#F3F4F6",
-    icon: HelpCircle,
-    label: "Unknown",
-  },
+const ALIAS: Record<string, string> = {
+  // booking (เก่า → ใหม่ ตาม BF)
+  "pending": "pending approved",
+  "confirmed": "pending payment",
+  "payment review": "pending payment",
+  "payment": "pending payment",
+  "completed": "complete",
+
+  // ขีด/ขีดล่าง
+  "awaiting_receipt": "awaiting receipt",
+  "awaiting-receipt": "awaiting receipt",
+
+  // payment status
+  "awaiting payment": "unpaid",
+  "overdue": "unpaid",
+  "submitted": "pending verification",
+  "verifying": "pending verification",
+  "waiting for verify": "pending verification",
+  "success": "approved",
+  "deposit paid": "approved",
 };
 
 export function getBookingStatusConfig(key?: string): BookingStatusConfig {
-  // normalize ให้รองรับ awaiting_receipt / awaiting-receipt
-  const k = (key || "unknown").toLowerCase().replace(/[_-]+/g, " ");
+  const raw = (key || "unknown").toLowerCase().replace(/[_-]+/g, " ").trim();
+  const k = ALIAS[raw] || raw;
   return bookingStatusConfig[k] ?? bookingStatusConfig.unknown;
 }

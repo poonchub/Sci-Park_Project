@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sci-park_web-application/entity"
+	"strings"
 	"time"
 
 	"gorm.io/driver/sqlite"
@@ -267,7 +268,11 @@ func SeedDatabase() {
 
 	for _, status := range roomStatuses {
 		db.FirstOrCreate(&status, entity.RoomStatus{Code: status.Code})
+
 	}
+
+	db.Exec("DELETE FROM room_types")
+	db.Exec("DELETE FROM sqlite_sequence WHERE name = 'room_types'")
 	roomTypes := []entity.RoomType{
 		{TypeName: "Small Meeting Room", RoomSize: 18, Category: "meetingroom", EmployeeDiscount: 20},
 		{TypeName: "Medium Meeting Room", RoomSize: 63, Category: "meetingroom", EmployeeDiscount: 20},
@@ -280,18 +285,26 @@ func SeedDatabase() {
 
 	typeNameToID := map[string]uint{}
 	for _, rt := range roomTypes {
-		var row entity.RoomType
+		if strings.TrimSpace(rt.TypeName) == "" {
+			fmt.Println("⚠️ Skip RoomType with empty name")
+			continue
+		}
+
+		row := entity.RoomType{
+			TypeName:         rt.TypeName,
+			RoomSize:         rt.RoomSize,
+			Category:         rt.Category,
+			EmployeeDiscount: rt.EmployeeDiscount,
+			ForRental:        rt.ForRental,
+			HasMultipleSizes: rt.HasMultipleSizes,
+		}
+
 		if err := db.Where("type_name = ?", rt.TypeName).
-			Assign(map[string]any{
-				"room_size":          rt.RoomSize,
-				"category":           rt.Category,
-				"employee_discount":  rt.EmployeeDiscount,
-				"for_rental":         rt.ForRental,
-				"has_multiple_sizes": rt.HasMultipleSizes,
-			}).
 			FirstOrCreate(&row).Error; err != nil {
 			panic(err)
 		}
+
+		fmt.Printf("✅ Seeded RoomType: %s\n", row.TypeName)
 		typeNameToID[row.TypeName] = row.ID
 	}
 
@@ -793,10 +806,12 @@ func SeedDatabase() {
 	}
 
 	bookingStatus := []entity.BookingStatus{
-		{StatusName: "Pending"},
-		{StatusName: "Confirmed"},
+		{StatusName: "Pending Approved"},
+		{StatusName: "Pending Payment"},
+		{StatusName: "Partially Paid"},
+		{StatusName: "Awaiting Receipt"},
+		{StatusName: "Complete"},
 		{StatusName: "Cancelled"},
-		{StatusName: "Completed"},
 	}
 	for _, bs := range bookingStatus {
 		db.FirstOrCreate(&bs, entity.BookingStatus{StatusName: bs.StatusName})
