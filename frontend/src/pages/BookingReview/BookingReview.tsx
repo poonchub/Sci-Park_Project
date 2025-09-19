@@ -206,7 +206,7 @@ function combineOverallPaymentStatus(installments: InstallmentStep[]): StepperPa
 
 function InfoCard({ icon, title, children }: { icon: JSX.Element; title: string; children: React.ReactNode; }) {
   return (
-    <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", mb: 3, backgroundColor: "grey.50" }}>
+    <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", mb: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Box sx={{ color: "primary.main", mr: 2, display: "flex" }}>{icon}</Box>
         <Typography fontWeight={600} sx={{ color: "text.primary", fontSize: 16 }}>{title}</Typography>
@@ -218,7 +218,7 @@ function InfoCard({ icon, title, children }: { icon: JSX.Element; title: string;
 function PaymentGrid({ installments }: { installments: InstallmentStep[] }) {
   if (!installments.length) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 250, backgroundColor: "grey.100", borderRadius: 2, border: "2px dashed", borderColor: "grey.300" }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 250, borderRadius: 2, border: "2px dashed", borderColor: "grey.300" }}>
         <Typography color="text.secondary" sx={{ fontSize: 14 }}>ยังไม่มีสลิป</Typography>
       </Box>
     );
@@ -237,7 +237,7 @@ function PaymentGrid({ installments }: { installments: InstallmentStep[] }) {
             <Card sx={{ p: 2.25, borderRadius: 2, borderLeft: `4px solid ${color.fg}`, height: "100%" }}>
               <Typography fontWeight={700} sx={{ mb: 0.5 }}>{it.label}</Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                <Chip label={it.status} size="small" sx={{ bgcolor: color.bg, color: color.fg, fontWeight: 700, borderRadius: 2 }} />
+                <Chip label={it.status} size="small" sx={{  color: color.fg, fontWeight: 700, borderRadius: 2 }} />
                 {typeof it.amount === "number" && (
                   <Typography variant="body2" color="text.secondary">• Amount: {it.amount.toLocaleString()} THB</Typography>
                 )}
@@ -542,7 +542,7 @@ export default function BookingReview() {
                         icon={<Icon size={16} />}
                         label={`Booking: ${cfg.label}`}
                         sx={{
-                          bgcolor: cfg.colorLite,
+                    
                           color: cfg.color,
                           fontWeight: 700,
                           borderRadius: 2,
@@ -565,7 +565,7 @@ export default function BookingReview() {
                     return (
                       <Chip
                         label={`Payment: ${meta.label}`}
-                        sx={{ bgcolor: meta.bg, color: meta.fg, fontWeight: 700, borderRadius: 2 }}
+                        sx={{  color: meta.fg, fontWeight: 700, borderRadius: 2 }}
                       />
                     );
                   })()}
@@ -593,7 +593,7 @@ export default function BookingReview() {
 
 
           {/* LEFT */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}  bgcolor="background.default">
             <InfoCard icon={<MapPin size={18} />} title="Room Location">
               <Typography sx={{ color: "text.secondary", fontSize: 15, ml: 5 }}>
                 Room {booking.Room?.RoomNumber ?? "—"} • Floor {booking.Room?.Floor?.Number ?? "—"}
@@ -633,7 +633,7 @@ export default function BookingReview() {
 
           {/* RIGHT */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", textAlign: "left", mb: 3, backgroundColor: "grey.50", minHeight: 300 }}>
+            <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", textAlign: "left", mb: 3, minHeight: 300 }}>
               <Typography fontWeight={600} sx={{ color: "text.primary", fontSize: 16, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
                 <FileText size={18} color="secondary.main" />
                 Payment
@@ -644,7 +644,7 @@ export default function BookingReview() {
             {/* Approver / Approved At */}
             <Grid container spacing={2}>
               <Grid size={6}>
-                <Box sx={{ p: 2.5, borderRadius: 2, border: 1, borderColor: "grey.200", backgroundColor: "grey.50", height: "100%" }}>
+                <Box sx={{ p: 2.5, borderRadius: 2, border: 1, borderColor: "grey.200", height: "100%" }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                     <Box sx={{ color: "secondary.main", mr: 1.5, display: "flex" }}><CheckCircle size={16} /></Box>
                     <Typography fontWeight={600} sx={{ color: "text.primary", fontSize: 14 }}>Approver</Typography>
@@ -655,7 +655,7 @@ export default function BookingReview() {
                 </Box>
               </Grid>
               <Grid size={6}>
-                <Box sx={{ p: 2.5, borderRadius: 2, border: 1, borderColor: "grey.200", backgroundColor: "grey.50", height: "100%" }}>
+                <Box sx={{ p: 2.5, borderRadius: 2, border: 1, borderColor: "grey.200",  height: "100%" }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
                     <Box sx={{ color: "secondary.main", mr: 1.5, display: "flex" }}><Calendar size={16} /></Box>
                     <Typography fontWeight={600} sx={{ color: "text.primary", fontSize: 14 }}>Approved At</Typography>
@@ -668,7 +668,7 @@ export default function BookingReview() {
             </Grid>
 
             {/* Additional Info */}
-            <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", mt: 2, backgroundColor: "grey.50" }}>
+            <Box sx={{ p: 3, borderRadius: 2, border: 1, borderColor: "grey.200", mt: 2, }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Box sx={{ color: "secondary.main", mr: 2, display: "flex" }}><Settings size={18} /></Box>
                 <Typography fontWeight={600} sx={{ color: "text.primary", fontSize: 16 }}>Additional Information</Typography>

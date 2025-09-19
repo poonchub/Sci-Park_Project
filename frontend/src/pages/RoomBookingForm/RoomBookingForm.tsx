@@ -48,8 +48,8 @@ import {
   X,
   ChevronLeft,
   FileText,
-  BookOpenCheck ,
-  TicketPercent ,
+  BookOpenCheck,
+  TicketPercent,
 } from "lucide-react";
 import Carousel from "react-material-ui-carousel";
 import {
@@ -283,7 +283,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [openPopupInvoiceCondition, setOpenPopupInvoiceCondition] = useState(false);
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
   const [checkedCondition, setCheckedCondition] = useState(false);
-  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('en')
 
@@ -1593,8 +1593,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               onClick={onBack || (() => window.history.back())}
               variant="outlinedGray"
             >
-              <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px", marginBottom: "10px" }} />
-              <Typography variant="textButtonClassic">Back</Typography>
+              <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" , marginTop: "-2px"   }} />
+              Back
             </Button>
           </Grid>
 
@@ -1700,7 +1700,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     Select Duration & Time
                   </Typography>
                 </Box>
-Booking Details
+                Booking Details
                 {loading && !pricing.length ? (
                   <Box className="booking-loading-container">
                     <CircularProgress size={24} />
@@ -1806,7 +1806,7 @@ Booking Details
                   </Typography>
                   <NumberedLabel number={2} />
                 </Box>
-                
+
                 <Box sx={{ p: 2 }}>
                   {/* Select All */}
                   <Box sx={{ mb: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1891,17 +1891,17 @@ Booking Details
                 )}
               </Card>
             </Grid>
-            
+
             <Grid size={{ md: 6 }} sx={{ display: 'flex', flexDirection: 'column' }}>
 
-            {/* Booking Details Card */}
-            <Card className="booking-section-paper" sx={{ borderRadius: 3, mb: 2, flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Booking Details Card */}
+              <Card className="booking-section-paper" sx={{ borderRadius: 3, mb: 2, flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
                 <Box className="booking-section-header">
                   <FileText className="booking-section-icon" />
                   <Typography variant="h6" fontWeight="600" sx={{ marginRight: 1 }}>Booking Details</Typography>
                   <NumberedLabel number={4} />
                 </Box>
-                
+
                 <Box className="info-section-paper">
                   <Box className="info-fields">
                     <Grid container spacing={1}>
@@ -1958,40 +1958,40 @@ Booking Details
                         </FormControl>
                       </Grid>
 
-                      
 
 
-                      
+
+
                     </Grid>
                   </Box>
                 </Box>
               </Card>
 
-            {/* Your Information */}
-            <Card elevation={3} sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
-                      <Box className="booking-section-header" sx={{ flex: '0 0 auto' }}>
-                        <User size={24} className="booking-section-icon" />
-                        <Typography variant="h6" fontWeight="600" sx={{ marginRight: 1 }}>Your Information</Typography>
-                        <NumberedLabel number={5} />
-                      </Box>
-                    
-                      <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
+              {/* Your Information */}
+              <Card elevation={3} sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
+                <Box className="booking-section-header" sx={{ flex: '0 0 auto' }}>
+                  <User size={24} className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600" sx={{ marginRight: 1 }}>Your Information</Typography>
+                  <NumberedLabel number={5} />
+                </Box>
 
-                      
+                <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
 
-                      <Box className="info-fields">
-                      <Grid container spacing={1}>
-                        <Grid size={{ xs: 12 }} >
+
+
+                  <Box className="info-fields">
+                    <Grid container spacing={1}>
+                      <Grid size={{ xs: 12 }} >
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                        Full Name
-                            </Typography>
+                          Full Name
+                        </Typography>
                         <TextField
                           fullWidth
                           value={name}
                           variant="outlined"
                           InputProps={{
                             readOnly: true,
-                            sx: { 
+                            sx: {
                               color: 'text.secondary',
                               '& .MuiInputBase-input': {
                                 color: 'text.secondary'
@@ -2000,45 +2000,45 @@ Booking Details
                           }}
                           className="readonly-field"
                         />
-                        </Grid>
+                      </Grid>
 
-                          <Grid size={{ md: 12 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Tax ID
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.TaxID || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))}
-                              placeholder="Enter tax ID"
-                              error={!!errors.TaxID}
-                              helperText={
-                                errors.TaxID || 
-                                (addressFormData?.TaxID && addressFormData.TaxID.length === 13 && !errors.TaxID ? 
-                                  "✓ Valid Tax ID" : 
-                                  addressFormData?.TaxID && addressFormData.TaxID.length > 0 ? 
-                                    `${addressFormData.TaxID.length}/13 digits entered` : 
-                                    "")
-                              }
-                              sx={{
-                                '& .MuiFormHelperText-root': {
-                                  color: addressFormData?.TaxID && addressFormData.TaxID.length === 13 && !errors.TaxID ? 'green' : undefined
-                                }
-                              }}
-                            />
-                          </Grid>
-                          
-                        <Grid size={{ xs: 12 }} >
+                      <Grid size={{ md: 12 }}>
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                        Phone Number
-                            </Typography>
+                          Tax ID
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.TaxID || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, TaxID: e.target.value }))}
+                          placeholder="Enter tax ID"
+                          error={!!errors.TaxID}
+                          helperText={
+                            errors.TaxID ||
+                            (addressFormData?.TaxID && addressFormData.TaxID.length === 13 && !errors.TaxID ?
+                              "✓ Valid Tax ID" :
+                              addressFormData?.TaxID && addressFormData.TaxID.length > 0 ?
+                                `${addressFormData.TaxID.length}/13 digits entered` :
+                                "")
+                          }
+                          sx={{
+                            '& .MuiFormHelperText-root': {
+                              color: addressFormData?.TaxID && addressFormData.TaxID.length === 13 && !errors.TaxID ? 'green' : undefined
+                            }
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }} >
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Phone Number
+                        </Typography>
                         <TextField
                           fullWidth
                           value={phone}
                           variant="outlined"
                           InputProps={{
                             readOnly: true,
-                            sx: { 
+                            sx: {
                               color: 'text.secondary',
                               '& .MuiInputBase-input': {
                                 color: 'text.secondary'
@@ -2047,18 +2047,18 @@ Booking Details
                           }}
                           className="readonly-field"
                         />
-                        </Grid>
-                        <Grid size={{ xs: 12 }} >
+                      </Grid>
+                      <Grid size={{ xs: 12 }} >
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                        Email Address
-                            </Typography>
+                          Email Address
+                        </Typography>
                         <TextField
                           fullWidth
                           value={email}
                           variant="outlined"
                           InputProps={{
                             readOnly: true,
-                            sx: { 
+                            sx: {
                               color: 'text.secondary',
                               '& .MuiInputBase-input': {
                                 color: 'text.secondary'
@@ -2067,105 +2067,105 @@ Booking Details
                           }}
                           className="readonly-field"
                         />
-                        </Grid>
-                      
-                        
-                          <Grid size={{ xs: 6 }} >
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Address Number
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.AddressNumber || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))}
-                              placeholder="Enter your house/building number"
-                              error={!!errors.AddressNumber}
-                              helperText={errors.AddressNumber}
-                            />
-                          </Grid>
+                      </Grid>
 
-                          <Grid size={{ md: 6 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Street
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.Street || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))}
-                              placeholder="Enter street name (in Thai)"
-                              error={!!errors.Street}
-                              helperText={errors.Street}
-                            />
-                          </Grid>
 
-                          <Grid size={{ md: 6 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Sub-district
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.SubDistrict || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))}
-                              placeholder="Enter sub-district (in Thai)"
-                              error={!!errors.SubDistrict}
-                              helperText={errors.SubDistrict}
-                            />
-                          </Grid>
+                      <Grid size={{ xs: 6 }} >
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Address Number
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.AddressNumber || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, AddressNumber: e.target.value }))}
+                          placeholder="Enter your house/building number"
+                          error={!!errors.AddressNumber}
+                          helperText={errors.AddressNumber}
+                        />
+                      </Grid>
 
-                          <Grid size={{ md: 6 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              District
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.District || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))}
-                              placeholder="Enter district (in Thai)"
-                              error={!!errors.District}
-                              helperText={errors.District}
-                            />
-                          </Grid>
+                      <Grid size={{ md: 6 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Street
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.Street || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Street: e.target.value }))}
+                          placeholder="Enter street name (in Thai)"
+                          error={!!errors.Street}
+                          helperText={errors.Street}
+                        />
+                      </Grid>
 
-                          <Grid size={{ md: 6 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Province
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.Province || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Province: e.target.value }))}
-                              placeholder="Enter province name (in Thai)"
-                              error={!!errors.Province}
-                              helperText={errors.Province}
-                            />
-                          </Grid>
+                      <Grid size={{ md: 6 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Sub-district
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.SubDistrict || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, SubDistrict: e.target.value }))}
+                          placeholder="Enter sub-district (in Thai)"
+                          error={!!errors.SubDistrict}
+                          helperText={errors.SubDistrict}
+                        />
+                      </Grid>
 
-                          <Grid size={{ md: 6 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
-                              Postal Code
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              value={addressFormData?.PostalCode || ""}
-                              onChange={(e) => setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))}
-                              placeholder="Enter postal code"
-                              error={!!errors.PostalCode}
-                              helperText={errors.PostalCode}
-                            />
-                          </Grid>
+                      <Grid size={{ md: 6 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          District
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.District || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, District: e.target.value }))}
+                          placeholder="Enter district (in Thai)"
+                          error={!!errors.District}
+                          helperText={errors.District}
+                        />
+                      </Grid>
 
-                          
-                        </Grid>
-                      </Box>
-                    </Box>
+                      <Grid size={{ md: 6 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Province
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.Province || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, Province: e.target.value }))}
+                          placeholder="Enter province name (in Thai)"
+                          error={!!errors.Province}
+                          helperText={errors.Province}
+                        />
+                      </Grid>
 
-                  
-                  </Card>
+                      <Grid size={{ md: 6 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Postal Code
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          value={addressFormData?.PostalCode || ""}
+                          onChange={(e) => setAddressFormdata((prev) => ({ ...prev, PostalCode: e.target.value }))}
+                          placeholder="Enter postal code"
+                          error={!!errors.PostalCode}
+                          helperText={errors.PostalCode}
+                        />
+                      </Grid>
+
+
+                    </Grid>
+                  </Box>
+                </Box>
+
+
+              </Card>
             </Grid>
           </Grid>
 
           {/* Section 4: Your Information */}
-                  {/* Section 2: Booking Summary */}
+          {/* Section 2: Booking Summary */}
           <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 4, mx: 0, width: '100%' }} />
             <Card sx={{ backgroundColor: "secondary.main", borderRadius: 2, p: 3, mb: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -2261,7 +2261,7 @@ Booking Details
                   </Grid>
                 </Grid>
               </Box>
-              
+
               <Divider sx={{ mb: 2 }} />
 
               {/* Total */}
@@ -2287,7 +2287,7 @@ Booking Details
                   <IconButton size="small" color="primary"
                     disabled={discount.remaining <= 0 && !discount.used}
                   >
-                    <TicketPercent  />
+                    <TicketPercent />
                   </IconButton>
                   <Typography variant="body2" color="primary" flexGrow={1}>
                     You have {discount?.remaining ?? 0} free booking{(discount?.remaining ?? 0) === 1 ? "" : "s"} left for Meeting Room
@@ -2303,7 +2303,7 @@ Booking Details
                 </Box>
               )}
 
-              
+
 
               {/* Discounts Row 2: 50% Member Discount (toggle-able) */}
               {hasPackage && (
@@ -2317,7 +2317,7 @@ Booking Details
                       (currentCategory === "multifunctionroom" && !pkgBenefits.hallHalf)
                     }
                   >
-                    <TicketPercent  />
+                    <TicketPercent />
                   </IconButton>
 
                   <Typography variant="body2" color="primary" flexGrow={1}>
@@ -2366,24 +2366,24 @@ Booking Details
               </Box>
             </Card>
           </Grid>
-                
 
-                {/* Action Section */}
-                <Grid size={{ xs: 12 }}>
-                
-                <Box className="action-section">
-                  {selectedDates.length === 0 && (
-                    <Alert severity="warning" className="date-alert" icon={<AlertTriangle size={20} color="white" />}>
-                      Please select your booking dates from the calendar above to proceed
-                    </Alert>
-                  )}
 
-                  <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5, textAlign: 'center' }}>
-                    <Info size={16} /> Your booking will be confirmed immediately after payment
-                  </Typography>
-                </Box>
-                
-                </Grid>
+          {/* Action Section */}
+          <Grid size={{ xs: 12 }}>
+
+            <Box className="action-section">
+              {selectedDates.length === 0 && (
+                <Alert severity="warning" className="date-alert" icon={<AlertTriangle size={20} color="white" />}>
+                  Please select your booking dates from the calendar above to proceed
+                </Alert>
+              )}
+
+              <Typography variant="body2" color="text.secondary" className="confirmation-note" sx={{ display: "flex", alignItems: "center", gap: 0.5, textAlign: 'center' }}>
+                <Info size={16} /> Your booking will be confirmed immediately after payment
+              </Typography>
+            </Box>
+
+          </Grid>
 
         </Grid>
       </Container>
