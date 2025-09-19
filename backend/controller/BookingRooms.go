@@ -838,24 +838,91 @@ func CreateBookingRoom(c *gin.Context) {
 	})
 }
 
+// นับวันทำการ (จันทร์–ศุกร์) ระหว่าง now → start (ไม่รวมวันหยุดนักขัตฤกษ์)
+func businessDaysUntil(start time.Time, loc *time.Location) int {
+	now := time.Now().In(loc)
+	if start.Before(now) {
+		return 0
+	}
+	s := time.Date(now.Year(), now.Month(), now.Day(), 0,0,0,0, loc)
+	e := time.Date(start.Year(), start.Month(), start.Day(), 0,0,0,0, loc)
+	days := 0
+	for d := s; d.Before(e); d = d.Add(24 * time.Hour) {
+		switch d.Weekday() {
+		case time.Saturday, time.Sunday:
+			continue
+		default:
+			days++
+		}
+	}
+	return days
+}
+
+// มี payment ที่สถานะสำคัญจนผู้ใช้ยกเลิกเองไม่ได้หรือไม่
+func hasPaidLike(payments []entity.Payment) bool {
+	for _, p := range payments {
+		name := strings.TrimSpace(p.Status.Name)
+		if name == "Paid" || name == "Awaiting Receipt" || name == "Refunded" {
+			return true
+		}
+	}
+	return false
+}
+
+// วันที่แรกของการจอง (คุณอาจมีฟังก์ชันนี้แล้ว ถ้าไม่มีใส่ไว้)
+
+
 func CancelBookingRoom(c *gin.Context) {
 	db := config.DB()
 	bookingID := c.Param("id")
 
-	// optional: เหตุผลการยกเลิก
 	var body struct {
 		Note string `json:"Note"`
 	}
 	_ = c.ShouldBindJSON(&body)
 
-	// โหลด booking + วันจอง
+	// โหลด booking + วันจอง + สถานะ + ชำระเงิน
 	var booking entity.BookingRoom
-	if err := db.Preload("BookingDates").First(&booking, bookingID).Error; err != nil {
+	if err := db.Preload("Status").
+		Preload("Payments.Status").
+		Preload("BookingDates").
+		First(&booking, bookingID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบการจอง"})
 		return
 	}
 	if len(booking.BookingDates) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบวันจองในรายการนี้"})
+		return
+	}
+	// เคสซ้ำ/ปลายทาง
+	switch strings.TrimSpace(booking.Status.StatusName) {
+	case "Cancelled", "Complete":
+		c.JSON(http.StatusConflict, gin.H{"error": "รายการนี้สิ้นสุดหรือถูกยกเลิกแล้ว"})
+		return
+	}
+
+	// หา status Cancelled ที่มีอยู่ (อิงคอลัมน์ status_name)
+	var cancelledStatus entity.BookingStatus
+	if err := db.Where("LOWER(status_name) = ?", "cancelled").First(&cancelledStatus).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Cancelled ไม่สำเร็จ"})
+		return
+	}
+
+	// กฎ 1: ผู้ใช้ยกเลิกได้ >= 2 วันทำการก่อนวันเริ่ม
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+	firstDate, err := minBookingDate(booking)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลวันจองไม่ถูกต้อง"})
+		return
+	}
+	if businessDaysUntil(firstDate.In(loc), loc) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "สามารถยกเลิกได้อย่างน้อย 2 วันทำการก่อนวันใช้งาน"})
+		return
+	}
+
+	// กฎ 2: ถ้ามีชำระสำคัญแล้ว (Paid/Awaiting Receipt/Refunded) → ให้ติดต่อเจ้าหน้าที่
+	if hasPaidLike(booking.Payments) {
+		c.JSON(http.StatusConflict, gin.H{"error": "มีการชำระเงินแล้ว โปรดติดต่อเจ้าหน้าที่เพื่อดำเนินการยกเลิก/คืนเงิน"})
 		return
 	}
 
@@ -866,62 +933,16 @@ func CancelBookingRoom(c *gin.Context) {
 		}
 	}()
 
-	// หา/สร้างสถานะ Cancelled (case-insensitive)
-	var cancelledStatus entity.BookingStatus
-	if err := tx.Where("LOWER(status_name) = ?", "cancelled").First(&cancelledStatus).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			cancelledStatus = entity.BookingStatus{StatusName: "Cancelled"}
-			if e2 := tx.Create(&cancelledStatus).Error; e2 != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Cancelled ไม่สำเร็จ"})
-				return
-			}
-		} else {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "ดึงสถานะ Cancelled ไม่สำเร็จ"})
-			return
-		}
-	}
-
-	if booking.StatusID == cancelledStatus.ID {
-		tx.Rollback()
-		c.JSON(http.StatusConflict, gin.H{"error": "รายการนี้ถูกยกเลิกไปแล้ว"})
-		return
-	}
-
-	// คำนวณ 2 วันล่วงหน้า ด้วย Asia/Bangkok
-	loc, _ := time.LoadLocation("Asia/Bangkok")
-	firstDate, err := minBookingDate(booking)
-	if err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลวันจองไม่ถูกต้อง"})
-		return
-	}
-	firstDate = firstDate.In(loc)
-
 	now := time.Now().In(loc)
-	startToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	deadline := startToday.Add(48 * time.Hour) // ต้องยกเลิกอย่างน้อย 2 วันล่วงหน้า
-
-	if firstDate.Before(deadline) {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "สามารถยกเลิกได้อย่างน้อย 2 วันล่วงหน้าก่อนวันใช้งาน"})
-		return
-	}
-
-	// เตรียม fields อัปเดต (กัน schema ต่างกันด้วย HasColumn)
-	updates := map[string]any{
-		"status_id":    cancelledStatus.ID,
-		"cancelled_at": now,
-		"updated_at":   time.Now(),
-	}
-	if db.Migrator().HasColumn(&entity.BookingRoom{}, "cancelled_note") {
-		updates["cancelled_note"] = strings.TrimSpace(body.Note)
-	}
 
 	if err := tx.Model(&entity.BookingRoom{}).
 		Where("id = ?", booking.ID).
-		Updates(updates).Error; err != nil {
+		Updates(map[string]any{
+			"status_id":      cancelledStatus.ID,
+			"cancelled_at":   now,
+			"cancelled_note": strings.TrimSpace(body.Note),
+			"updated_at":     time.Now(),
+		}).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถยกเลิกการจองได้"})
 		return
@@ -935,9 +956,10 @@ func CancelBookingRoom(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "ยกเลิกการจองเรียบร้อยแล้ว",
 		"cancelledAt": now.Format("2006-01-02 15:04:05"),
-		"noteSaved":   strings.TrimSpace(body.Note) != "" && db.Migrator().HasColumn(&entity.BookingRoom{}, "cancelled_note"),
+		"noteSaved":   strings.TrimSpace(body.Note) != "",
 	})
 }
+
 
 // ==========================
 // AUTO-CANCEL (Policy B)

@@ -77,7 +77,8 @@ interface BookingPaymentPopupProps {
 
 // ===== Helpers =====
 const steps = ["Awaiting Payment", "Pending Verification", "Paid"] as const;
-const norm = (s?: string) => (s || "").trim().toLowerCase();
+const norm = (s?: string) =>
+  (s || "").trim().toLowerCase().replace(/\s+/g, "_");
 
 const ensureFile = (file?: File) => {
   if (!file) throw new Error("Please attach the slip.");
@@ -123,7 +124,7 @@ const getStepIndex = (status?: InstallmentUI["status"]) => {
 const slipUrl = (path?: string) =>
   !path ? "" : /^https?:\/\//i.test(path) ? path : `${apiUrl}/${path}`;
 
-const ownerUploadableStatuses = new Set(["unpaid", "pending_payment", "pending_verification", "rejected"]);
+
 const canShowAdminActions = (isAdmin?: boolean, status?: InstallmentUI["status"], hasSlip?: boolean) =>
   Boolean(isAdmin && hasSlip && norm(status) === "pending_verification");
 
@@ -196,7 +197,6 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   serviceConditions,
 
   onUploadFor,
-  onUpdateFor,
   onApproveFor,
   onRejectFor,
 
@@ -378,18 +378,18 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   const renderInstallment = (inst: InstallmentUI, idx: number, _length: number) => {
     const hasSlip = Boolean(inst.slipPath && inst.slipPath.trim() !== "");
     const url = slipUrl(inst.slipPath);
-    const statusN = norm(inst.status);
 
-    // ❗ ไม่อนุญาตอัปโหลดใน pending_verification อีกต่อไป
-    const ownerUploadableStatuses = new Set(["unpaid", "pending_payment", "rejected"]);
-    const canUpload = isOwner && !inst.locked && !hasSlip && ownerUploadableStatuses.has(statusN);
 
-    // ❗ อนุญาต Replace/Update เฉพาะตอนถูกปัดตกเท่านั้น
-    const canUpdate = isOwner && hasSlip && statusN === "rejected";
+    // ✅ อนุญาตอัปโหลดเฉพาะ: unpaid, pending_payment
+    // (จะคง 'rejected' ไว้ชั่วคราวก็ได้ เพื่อ backward-compat ถ้ามีข้อมูลเก่า)
+    const ownerUploadableStatuses = new Set(["unpaid", "pending_payment"]);
 
-    const canAdminAct = canShowAdminActions(isAdmin, inst.status, hasSlip);
+    // ❌ ไม่อนุญาต Update/Replace ใน pending_verification อีกต่อไป
+    // เดิม: const canUpdate = isOwner && hasSlip && (statusN === "pending_verification" || statusN === "rejected");
+    // ใหม่: ปิดความสามารถนี้ไปเลย (หรือเอาไว้เฉพาะ 'rejected' ถ้ามีข้อมูลเก่าค้าง)
+    const canUpdate = false; // หรือ: isOwner && hasSlip && statusN === "rejected"
 
-    const file = files[inst.key]?.[0];
+ 
     const chk = (slipCheck[inst.key] || {}) as SlipCheckState;
     const verified = !!chk.ok && !!chk.transTs;
 
@@ -539,7 +539,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   </Box>
                 )}
               </Box>
-            ) : canUpload && !inst.locked ? (
+            ) :  !inst.locked ? (
               /* No slip - show upload interface */
               files[inst.key]?.[0] ? (
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
@@ -570,45 +570,20 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             )}
           </Box>
 
+       
           {/* Actions */}
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
             {isOwner && !inst.locked && (
-              <>
-                {/* ✅ อนุญาต Update เฉพาะตอน rejected เท่านั้น */}
-                {(
-                  (replaceMode && files[inst.key]?.[0]) ||
-                  (files[inst.key]?.[0] && norm(inst.status) === "rejected")
-                ) ? (
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      onUpdateFor?.(inst.key, files[inst.key]?.[0], inst.paymentId);
-                      setReplaceMode(false);
-                    }}
-                    disabled={
-                      isLoading ||
-                      !files[inst.key]?.[0] ||
-                      !slipCheck[inst.key]?.ok ||
-                      norm(inst.status) !== "rejected" // กันเผื่อสถานะยังไม่ refresh
-                    }
-                    fullWidth
-                  >
-                    Update Slip
-                  </Button>
-                ) : (
-                  /* First-time upload: allowed only when unpaid/pending_payment/rejected & no slip */
-                  ownerUploadableStatuses.has(norm(inst.status)) && !hasSlip && (
-                    <Button
-                      variant="contained"
-                      onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
-                      disabled={isLoading || !files[inst.key]?.[0] || !slipCheck[inst.key]?.ok}
-                      fullWidth
-                    >
-                      Submit Slip
-                    </Button>
-                  )
-                )}
-              </>
+              ownerUploadableStatuses.has(norm(inst.status)) && !hasSlip ? (
+                <Button
+                  variant="contained"
+                  onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
+                  disabled={isLoading || !files[inst.key]?.[0] || !slipCheck[inst.key]?.ok}
+                  fullWidth
+                >
+                  Submit Slip
+                </Button>
+              ) : null
             )}
 
             {canShowAdminActions(isAdmin, inst.status, !!inst.slipPath) && (
@@ -627,9 +602,12 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   color="error"
                   onClick={async () => {
                     await onRejectFor?.(inst.key, inst.paymentId);
-                    setReplaceMode(false);
-                    setFiles((prev) => ({ ...prev, [inst.key]: [] })); // เคลียร์ไฟล์ค้าง
-                    await refreshBooking?.(); // ✅ ให้สถานะ/สลิปย้อนกลับเป็นรอสลิปจากเซิร์ฟเวอร์
+                    // เคลียร์สถานะ UI ให้กลับไปโหมดอัปโหลดใหม่
+                    setFiles((prev) => ({ ...prev, [inst.key]: [] }));
+                    // ถ้ามี replaceMode ใน state ให้ปิดด้วย
+                    setReplaceMode?.(false);
+                    // ขอข้อมูลล่าสุดจากเซิร์ฟเวอร์ (ที่ตอนนี้เป็น pending_payment + ไม่มีสลิป)
+                    await refreshBooking?.();
                   }}
                   disabled={isLoading}
                   fullWidth
@@ -639,6 +617,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
               </>
             )}
           </Box>
+
 
         </Card>
       </Grid>
@@ -700,7 +679,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   </Box>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 5 }}>
+                {/* <Grid size={{ xs: 12, md: 5 }}>
                   <Box
                     sx={{
                       bgcolor: invoiceUI.vis.lite,
@@ -720,7 +699,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                       {invoiceUI.vis.label}
                     </Typography>
                   </Box>
-                </Grid>
+                </Grid> */}
 
                 <Grid size={{ xs: 12 }}>
                   <Divider sx={{ my: 1.2 }} />
