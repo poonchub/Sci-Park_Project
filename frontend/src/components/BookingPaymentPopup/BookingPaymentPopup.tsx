@@ -389,7 +389,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     // ใหม่: ปิดความสามารถนี้ไปเลย (หรือเอาไว้เฉพาะ 'rejected' ถ้ามีข้อมูลเก่าค้าง)
     const canUpdate = false; // หรือ: isOwner && hasSlip && statusN === "rejected"
 
- 
+
     const chk = (slipCheck[inst.key] || {}) as SlipCheckState;
     const verified = !!chk.ok && !!chk.transTs;
 
@@ -526,7 +526,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
                     <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
                       <Button
-                        variant="outlined"
+                        variant="outlinedGray"
                         size="small"
                         onClick={() => {
                           setReplaceMode(false);
@@ -539,7 +539,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   </Box>
                 )}
               </Box>
-            ) :  !inst.locked ? (
+            ) : !inst.locked ? (
               /* No slip - show upload interface */
               files[inst.key]?.[0] ? (
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
@@ -570,7 +570,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
             )}
           </Box>
 
-       
+
           {/* Actions */}
           <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
             {isOwner && !inst.locked && (
@@ -704,166 +704,170 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 <Grid size={{ xs: 12 }}>
                   <Divider sx={{ my: 1.2 }} />
 
-                  {/* ===== Receipt & PDF rows: ทำให้เห็นชัดเจนว่ามี/ไม่มี ===== */}
+                  {/* ===== Receipt & PDF rows: unified look & feel ===== */}
                   <Grid container spacing={1.2}>
-                    {/* Receipt */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          p: 1.2,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                          borderColor: invoiceUI.fileName ? "rgba(46,125,50,.5)" : "rgba(211,47,47,.4)",
-                          bgcolor: invoiceUI.fileName ? "rgba(46,125,50,.05)" : "rgba(211,47,47,.04)",
-                        }}
-                      >
+                    {/* === Small helpers (ในสโคปนี้ได้เลย) === */}
+                    {(() => {
+                      const fileNameFromPath = (p?: string) => (p ? p.split("/").pop() || "" : "");
+                      const StatusHeader = ({
+                        ok,
+                        labelWhenOk,
+                        labelWhenNo,
+                      }: {
+                        ok: boolean;
+                        labelWhenOk: string;
+                        labelWhenNo: string;
+                      }) => (
                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
-                          {invoiceUI.fileName ? (
-                            <CheckCircle2 size={18} color="#2e7d32" />
-                          ) : (
-                            <AlertCircle size={18} color="#d32f2f" />
-                          )}
+                          {ok ? <CheckCircle2 size={18} color="#2e7d32" /> : <AlertCircle size={18} color="#d32f2f" />}
                           <Typography sx={{ fontWeight: 700 }}>
-                            Receipt {invoiceUI.fileName ? "(Attached)" : "(Not attached)"}
+                            {ok ? labelWhenOk : labelWhenNo}
                           </Typography>
                         </Box>
+                      );
 
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
-                          {invoiceUI.fileName ? (
-                            <>
-                              <Box
-                                sx={{
-                                  display: "inline-flex",
-                                  gap: 1,
-                                  border: "1px solid rgba(109,110,112,0.4)",
-                                  borderRadius: 1,
-                                  px: 1,
-                                  py: 0.5,
-                                  bgcolor: "#FFF",
-                                  cursor: "pointer",
-                                  transition: "all .3s",
-                                  alignItems: "center",
-                                  "&:hover": { color: "primary.main", borderColor: "primary.main" },
-                                  minWidth: 0,
-                                  maxWidth: "100%",
-                                }}
-                                onClick={() => invoiceUI.receiptPath && window.open(`${apiUrl}/${invoiceUI.receiptPath}`, "_blank")}
-                              >
-                                <FileText size={16} />
-                                <Typography variant="body1" sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 220 }}>
-                                  {invoiceUI.fileName}
-                                </Typography>
-                              </Box>
+                      const FilePill = ({
+                        label,
+                        onClick,
+                      }: {
+                        label: string;
+                        onClick?: () => void;
+                      }) => (
+                        <Box
+                          onClick={onClick}
+                          sx={{
+                            display: "inline-flex",
+                            gap: 1,
+                            border: "1px solid rgba(109,110,112,0.4)",
+                            borderRadius: 1,
+                            px: 1,
+                            py: 0.5,
+                            cursor: onClick ? "pointer" : "default",
+                            transition: "all .3s",
+                            alignItems: "center",
+                            "&:hover": onClick ? { color: "primary.main", borderColor: "primary.main" } : undefined,
+                            minWidth: 0,
+                            maxWidth: "100%",
+                          }}
+                        >
+                          <FileText size={16} />
+                          <Typography
+                            variant="body1"
+                            sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 240 }}
+                            title={label}
+                          >
+                            {label}
+                          </Typography>
+                        </Box>
+                      );
 
-                              {/* <Tooltip title="Open receipt">
-                                <span>
-                                  <Button
-                                    variant="outlined"
+                      const receiptFileName = invoiceUI.fileName || fileNameFromPath(invoiceUI.receiptPath);
+                      const invoicePdfName = fileNameFromPath(invoiceUI.invoicePDFPath);
+
+                      return (
+                        <>
+                          {/* ===== Receipt ===== */}
+                          <Grid size={{ xs: 12, md: 6}}>
+                            <Card variant="outlined" sx={{ p: 1.2, display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
+                              <StatusHeader
+                                ok={!!receiptFileName}
+                                labelWhenOk="Receipt (Attached)"
+                                labelWhenNo="Receipt (Not attached)"
+                              />
+
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
+                                {receiptFileName ? (
+                                  <FilePill
+                                    label={receiptFileName}
                                     onClick={() => invoiceUI.receiptPath && window.open(`${apiUrl}/${invoiceUI.receiptPath}`, "_blank")}
-                                  >
-                                    Open
-                                  </Button>
-                                </span>
-                              </Tooltip> */}
-                            </>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              No file uploaded
-                            </Typography>
-                          )}
+                                  />
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    No file uploaded
+                                  </Typography>
+                                )}
 
-                          {/* Hidden input สำหรับอัปโหลดใบเสร็จ */}
-                          <input
-                            ref={receiptInputRef}
-                            type="file"
-                            accept=".pdf,image/*"
-                            hidden
-                            onChange={handleSelectReceipt}
-                          />
+                                {/* Hidden input สำหรับอัปโหลดใบเสร็จ */}
+                                <input
+                                  ref={receiptInputRef}
+                                  type="file"
+                                  accept=".pdf,image/*"
+                                  hidden
+                                  onChange={handleSelectReceipt}
+                                />
 
-                          {/* ปุ่ม Upload/Replace/Remove (เฉพาะแอดมิน + อนุมัติแล้ว) */}
-                          {isAdmin && (
-                            <>
-                              <Button
-                                variant="contained"
-                                startIcon={<Upload size={16} />}
-                                onClick={() => receiptInputRef.current?.click()}
-                                disabled={receiptUploading}
+                                {/* ปุ่ม Upload/Replace/Remove (เฉพาะแอดมิน) */}
+                                {isAdmin && (
+                                  <>
+                                    <Button
+                                      variant="contained"
+                                      startIcon={<Upload size={16} />}
+                                      onClick={() => receiptInputRef.current?.click()}
+                                      disabled={receiptUploading}
+                                    >
+                                      {receiptFileName ? "Replace Receipt" : "Upload Receipt"}
+                                    </Button>
+                                    {receiptFileName && onRemoveReceipt && (
+                                      <Button
+                                        variant="outlinedGray"
+                                        color="error"
+                                        startIcon={<Trash2 size={14} />}
+                                        onClick={handleRemoveReceipt}
+                                        disabled={receiptUploading}
+                                      >
+                                        Remove
+                                      </Button>
+                                    )}
+                                  </>
+                                )}
+                              </Box>
+                            </Card>
+                          </Grid>
 
-                              >
-                                {invoiceUI.fileName ? "Replace Receipt" : "Upload Receipt"}
-                              </Button>
-                              {invoiceUI.fileName && onRemoveReceipt && (
-                                <Button
-                                  variant="outlined"
-                                  color="error"
-                                  startIcon={<Trash2 size={16} />}
-                                  onClick={handleRemoveReceipt}
-                                  disabled={receiptUploading}
+                          {/* ===== Invoice PDF ===== */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Card variant="outlined" sx={{ p: 1.2, display: "flex", flexDirection: "column", gap: 1, height: "100%" }}>
+                              <StatusHeader
+                                ok={!!invoiceUI.invoicePDFPath}
+                                labelWhenOk="Invoice PDF (Available)"
+                                labelWhenNo="Invoice PDF (Not available)"
+                              />
 
-                                >
-                                  Remove
-
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </Box>
-                      </Card>
-                    </Grid>
-
-                    {/* Invoice PDF */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          p: 1.2,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                          borderColor: invoiceUI.invoicePDFPath ? "rgba(46,125,50,.5)" : "rgba(95,99,104,.4)",
-                          bgcolor: invoiceUI.invoicePDFPath ? "rgba(46,125,50,.05)" : "rgba(95,99,104,.05)",
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
-                          {invoiceUI.invoicePDFPath ? (
-                            <CheckCircle2 size={18} color="#2e7d32" />
-                          ) : (
-                            <AlertCircle size={18} color="#5f6368" />
-                          )}
-                          <Typography sx={{ fontWeight: 700 }}>
-                            Invoice PDF {invoiceUI.invoicePDFPath ? "(Available)" : "(Not available)"}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
-                          {invoiceUI.invoicePDFPath ? (
-                            <>
-                              <Tooltip title="Download PDF">
-                                <span>
-                                  <Button
-                                    variant="outlinedGray"
-                                    onClick={() => window.open(`${apiUrl}/${invoiceUI.invoicePDFPath}`, "_blank")}
-                                  >
-                                    <Download size={16} />
-                                    <Typography variant="textButtonClassic" className="text-btn" sx={{ ml: 0.5 }}>
-                                      Download PDF
-                                    </Typography>
-                                  </Button>
-                                </span>
-                              </Tooltip>
-                            </>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              No PDF generated yet
-                            </Typography>
-                          )}
-                        </Box>
-                      </Card>
-                    </Grid>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, flexWrap: "wrap" }}>
+                                {invoiceUI.invoicePDFPath ? (
+                                  <>
+                                    {/* แสดงเป็นพิลล์ให้เหมือน Receipt */}
+                                    <FilePill
+                                      label={invoicePdfName || "invoice.pdf"}
+                                      onClick={() => window.open(`${apiUrl}/${invoiceUI.invoicePDFPath}`, "_blank")}
+                                    />
+                                    <Tooltip title="Download PDF">
+                                      <span>
+                                        <Button
+                                          variant="outlinedGray"
+                                          onClick={() => window.open(`${apiUrl}/${invoiceUI.invoicePDFPath}`, "_blank")}
+                                        >
+                                          <Download size={16} />
+                                          <Typography variant="textButtonClassic" className="text-btn" sx={{ ml: 0.5 }}>
+                                            Download PDF
+                                          </Typography>
+                                        </Button>
+                                      </span>
+                                    </Tooltip>
+                                  </>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    No PDF generated yet
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Card>
+                          </Grid>
+                        </>
+                      );
+                    })()}
                   </Grid>
+
                 </Grid>
               </Grid>
             </Card>
@@ -923,7 +927,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 2 }}>
-        <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+        <Button variant="outlinedGray" onClick={onClose} disabled={isLoading}>
           Close
         </Button>
       </DialogActions>

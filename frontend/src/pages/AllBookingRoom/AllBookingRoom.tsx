@@ -47,7 +47,7 @@ import { isAdmin, isManager } from "../../routes";
 import { Base64 } from "js-base64";
 
 import {
- 
+
     CreateRoomBookingInvoice,
     CreateRoomBookingInvoiceItem,
     GetRoomBookingInvoiceByID,
@@ -448,7 +448,7 @@ function AllBookingRoom() {
         if (!row) return "";
         const room = row.Room?.RoomNumber ?? "-";
         const dates = row.BookingDates?.map((d) => dateFormat(d.Date)).join(", ") || "-";
-        return `ห้อง ${room} • วันที่ ${dates} • สถานะ: ${row.StatusName ?? "-"}`;
+        return `Room ${room} • Dates: ${dates} • Status: ${row.StatusName ?? "-"}`;
     };
 
     // ===== actions =====
@@ -1307,9 +1307,13 @@ function AllBookingRoom() {
                 isLoading={loading}
                 booking={selectedRow}
                 serviceConditions={{
-                    title: "โปรดอ่านเงื่อนไขการชำระเงิน",
-                    points: ["ชำระตามยอดที่ระบุในใบแจ้งหนี้ภายในกำหนด", "หากชำระมัดจำแล้ว ให้ชำระยอดคงเหลือก่อนวันใช้งาน"],
+                    title: "Please read the payment terms",
+                    points: [
+                        "Pay the amount stated on the invoice by the due date.",
+                        "If a deposit has been paid, settle the remaining balance before the booking date.",
+                    ],
                 }}
+
                 bookingSummary={bookingSummary(selectedRow || undefined)}
                 onApproveFor={async (_key, paymentId) => {
                     if (!paymentId) return;
