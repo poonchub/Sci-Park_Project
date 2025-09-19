@@ -4,6 +4,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -40,7 +41,6 @@ func getFormVal(c *gin.Context, keys ...string) string {
 	}
 	return ""
 }
-
 
 func lower(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
 
@@ -166,7 +166,6 @@ func updateBookingStatusAfterPayment(tx *gorm.DB, b *entity.BookingRoom) error {
 		return setBookingStatus(tx, b.ID, "Pending Payment")
 	}
 }
-
 
 /* ============== helpers ที่ฟังก์ชันนี้อ้างถึง ============== */
 
@@ -443,8 +442,8 @@ func SubmitPaymentSlip(c *gin.Context) {
 			"note":         noteIfNotEmpty(note, instKey),
 			"payment_date": paymentDate,
 			"amount":       amount,
-			"approver_id":  0,      // ตัดผลอนุมัติเดิม (ให้ตรวจใหม่)
-			"receipt_path": "",     // เคลียร์ใบเสร็จเก่า (กันสับสน)
+			"approver_id":  0,  // ตัดผลอนุมัติเดิม (ให้ตรวจใหม่)
+			"receipt_path": "", // เคลียร์ใบเสร็จเก่า (กันสับสน)
 			"updated_at":   time.Now(),
 		}
 		if paymentTypeID > 0 {
@@ -471,7 +470,6 @@ func SubmitPaymentSlip(c *gin.Context) {
 		"file":    destPath,
 	})
 }
-
 
 /* ==========================
    PATCH /payments/:id/approve
@@ -615,6 +613,9 @@ func ApprovePayment(c *gin.Context) {
 /* ==========================
    POST /payments/:id/reject
    ========================== */
+// แนะนำให้มีค่าคงที่ชื่อสถานะให้ตรงกับที่ฟรอนต์ใช้
+// ชื่อสถานะให้ตรงกับข้อมูลจริงใน DB ของคุณ
+const PaymentStatusPendingPayment = "Pending Payment"
 
 func RejectPayment(c *gin.Context) {
 	db := config.DB()
@@ -626,81 +627,183 @@ func RejectPayment(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&body)
 
-	// ใช้ทรานแซกชันเพื่อความปลอดภัยของข้อมูล
 	if err := db.Transaction(func(tx *gorm.DB) error {
-		// 1) ดึง/สร้างสถานะ "Pending Payment" (ชื่อให้ตรงกับระบบคุณ)
-		psPendingID, err := ensurePaymentStatusID(tx, "Pending Payment")
+		// 1) หา status_id สำหรับ "Pending Payment"
+		psPendingID, err := ensurePaymentStatusID(tx, PaymentStatusPendingPayment)
 		if err != nil {
-			return fmt.Errorf("cannot get pending payment status: %w", err)
+			// log แล้วส่งข้อความออกให้ client เห็น
+			log.Printf("[RejectPayment] ensurePaymentStatusID err: %v", err)
+			return fmt.Errorf("cannot get pending payment status")
 		}
 
-		// 2) อัปเดต Payment → ย้อนกลับไปรอสลิป และล้างหลักฐานเดิม
+		// 2) เตรียม updates — ใส่เฉพาะคอลัมน์ที่มีอยู่จริงใน struct/entity ของคุณ
 		updates := map[string]interface{}{
 			"status_id":   psPendingID,
 			"approver_id": body.ApproverID,
 			"note":        strings.TrimSpace(body.Note),
-			// ⬇️ ฟิลด์ที่เกี่ยวกับสลิป/การอนุมัติ ปรับชื่อให้ตรงกับโมเดลจริงของคุณ
-			"slip_path":    gorm.Expr("NULL"),
-			"receipt_path": gorm.Expr("NULL"),
-			"submitted_at": nil,
-			"approved_at":  nil,
-			"verified_at":  nil, // ถ้ามี
-			"updated_at":   time.Now(),
+			"updated_at":  time.Now(),
 		}
 
+		// ถ้า field เหล่านี้มีอยู่จริงและรับค่าว่างได้ ให้ใส่เพื่อล้างสลิปเก่า
+		// ถ้าเป็น NOT NULL แต่อยากล้าง ให้ใช้ "" แทน NULL
+		if tx.Migrator().HasColumn(&entity.Payment{}, "slip_path") {
+			updates["slip_path"] = "" // หรือ gorm.Expr("NULL") ถ้า column เป็น NULL ได้
+		}
+		if tx.Migrator().HasColumn(&entity.Payment{}, "receipt_path") {
+			updates["receipt_path"] = ""
+		}
+		if tx.Migrator().HasColumn(&entity.Payment{}, "submitted_at") {
+			updates["submitted_at"] = nil
+		}
+		if tx.Migrator().HasColumn(&entity.Payment{}, "approved_at") {
+			updates["approved_at"] = nil
+		}
+		if tx.Migrator().HasColumn(&entity.Payment{}, "verified_at") {
+			updates["verified_at"] = nil
+		}
+
+		// 3) อัปเดต payment
 		if err := tx.Model(&entity.Payment{}).
 			Where("id = ?", id).
 			Updates(updates).Error; err != nil {
-			return fmt.Errorf("reject payment failed: %w", err)
+			log.Printf("[RejectPayment] update err: %v", err)
+			return fmt.Errorf("reject payment failed")
 		}
-
-		// 3) (ออปชัน) ถ้าต้องการสะท้อนที่ Booking ให้กลับไปสเต็ป "ชำระเงิน"
-		//    เติมตามสคีมาที่คุณผูกระหว่าง Payment ↔ Booking
-		//    ตัวอย่าง:
-		// var p entity.Payment
-		// if err := tx.Preload("Invoice").First(&p, id).Error; err == nil {
-		//   if p.Invoice != nil && p.Invoice.BookingRoomID != nil {
-		//     _ = setBookingStatus(tx, *p.Invoice.BookingRoomID, "payment")
-		//   }
-		// }
 
 		return nil
 	}); err != nil {
+		// ให้ client เห็น error ที่อ่านรู้เรื่อง
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "payment reset to pending payment"})
+	c.JSON(http.StatusOK, gin.H{"message": "payment reset to Pending Payment"})
 }
-
 
 /* ==========================
    POST /payments/:id/refund
    ========================== */
 
-func RefundedBookingRoom(c *gin.Context) {
+// func RefundedBookingRoom(c *gin.Context) {
+// 	db := config.DB()
+// 	paymentID := c.Param("id")
+
+// 	var pay entity.Payment
+// 	if err := db.Preload("Status").First(&pay, paymentID).Error; err != nil {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
+// 		return
+// 	}
+
+// 	psID, err := ensurePaymentStatusID(db, "Refunded")
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Refunded ไม่สำเร็จ"})
+// 		return
+// 	}
+
+// 	if err := db.Model(&entity.Payment{}).Where("id = ?", pay.ID).Updates(map[string]interface{}{
+// 		"status_id":  psID,
+// 		"updated_at": time.Now(),
+// 	}).Error; err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
+// }
+
+// PUT /payments/:id/refund
+func RefundPaymentByAdmin(c *gin.Context) {
 	db := config.DB()
-	paymentID := c.Param("id")
+	id := c.Param("id")
+
+	type bodyT struct {
+		Reason        string `json:"reason"`        // optional
+		CancelBooking *bool  `json:"cancelBooking"` // default = true (nil -> true)
+	}
+	var body bodyT
+	_ = c.ShouldBindJSON(&body)
+
+	// default = true
+	cancel := true
+	if body.CancelBooking != nil {
+		cancel = *body.CancelBooking
+	}
+
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	var pay entity.Payment
-	if err := db.Preload("Status").First(&pay, paymentID).Error; err != nil {
+	if err := tx.Preload("BookingRoom.Status").First(&pay, id).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
 		return
 	}
 
-	psID, err := ensurePaymentStatusID(db, "Refunded")
+	// 1) set payment -> Refunded
+	psID, err := ensurePaymentStatusID(tx, "Refunded")
 	if err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Refunded ไม่สำเร็จ"})
 		return
 	}
-
-	if err := db.Model(&entity.Payment{}).Where("id = ?", pay.ID).Updates(map[string]interface{}{
-		"status_id":  psID,
-		"updated_at": time.Now(),
-	}).Error; err != nil {
+	if err := tx.Model(&entity.Payment{}).
+		Where("id = ?", pay.ID).
+		Updates(map[string]any{
+			"status_id":  psID,
+			"updated_at": time.Now(),
+		}).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
 		return
 	}
 
+	// 2) ถ้าต้องการยกเลิก booking ด้วย
+	if cancel {
+		var booking entity.BookingRoom
+		if err := tx.Preload("Status").First(&booking, pay.BookingRoomID).Error; err == nil {
+			// ข้ามถ้า Complete/Cancelled ไปแล้ว
+			cur := strings.ToLower(strings.TrimSpace(booking.Status.StatusName))
+			if cur != "complete" && cur != "cancelled" {
+				if err2 := setBookingStatus(tx, booking.ID, "Cancelled"); err2 != nil {
+					tx.Rollback()
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "ตั้งค่าสถานะ Cancelled ไม่สำเร็จ"})
+					return
+				}
+				note := strings.TrimSpace(body.Reason)
+				if note == "" {
+					note = "Refunded by admin"
+				}
+				now := time.Now()
+				if err := tx.Model(&entity.BookingRoom{}).
+					Where("id = ?", booking.ID).
+					Updates(map[string]any{
+						"cancelled_at":   now,
+						"cancelled_note": note,
+						"updated_at":     time.Now(),
+					}).Error; err != nil {
+					tx.Rollback()
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดต Booking เป็น Cancelled ไม่สำเร็จ"})
+					return
+				}
+			}
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกธุรกรรมไม่สำเร็จ"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
+}
+
+func valueOrZero(p *float64) float64 {
+	if p == nil {
+		return 0
+	}
+	return *p
 }

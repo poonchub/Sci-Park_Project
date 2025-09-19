@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -582,65 +583,114 @@ func UploadPaymentReceipt(c *gin.Context) {
 		totalDue = 0
 	}
 
-	// infer amount ถ้า payment.Amount==0
+	// ✅ ถ้าดิวเป็นศูนย์ ไม่ต้องรอใบเสร็จ -> Complete เลย
+	if totalDue == 0 {
+		tx := db.Begin()
+		if err := setBookingStatus(tx, b.ID, "Complete"); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "set status failed"})
+			return
+		}
+		_ = tx.Model(&entity.BookingRoom{}).
+			Where("id = ?", b.ID).
+			Updates(map[string]any{
+				"is_fully_prepaid": true,
+				"updated_at":       time.Now(),
+			}).Error
+		if err := tx.Commit().Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "commit failed"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message":        "receipt uploaded",
+			"path":           uploadedPath,
+			"booking_id":     b.ID,
+			"total_due":      totalDue,
+			"total_paid":     0,
+			"fully_paid":     true,
+			"missingReceipt": false,
+		})
+		return
+	}
+
+	// --- helper: ดึงชื่อสถานะจากทั้ง relation และ string ---
+	getPayStatus := func(p entity.Payment) string {
+		if s := strings.TrimSpace(p.Status.Name); s != "" {
+			return strings.ToLower(s)
+		}
+		// เผื่อมีฟิลด์ string ชื่อ Status/StatusName ใน struct/json
+		if v, ok := any(p).(interface{ GetStatus() string }); ok {
+			return strings.ToLower(strings.TrimSpace(v.GetStatus()))
+		}
+		// fallback: ถ้า entity.Payment มีฟิลด์ Status string ให้ใช้รีเฟล็กซ์ (กันพลาด)
+		if raw, ok := reflect.ValueOf(p).FieldByNameFunc(func(n string) bool { return n == "Status" || n == "StatusName" }).Interface().(string); ok {
+			return strings.ToLower(strings.TrimSpace(raw))
+		}
+		return ""
+	}
+
 	inferAmount := func(p entity.Payment) float64 {
 		if p.Amount > 0 {
 			return p.Amount
 		}
 		note := strings.ToLower(strings.TrimSpace(p.Note))
-		// เดามัดจำจาก note หรือประเภทงวด (ถ้าใช้ PaymentTypeID แยก deposit=1, balance=2 ก็เช็คเพิ่มได้)
 		if strings.Contains(note, "deposit") {
 			if b.DepositAmount > 0 {
 				return b.DepositAmount
 			}
-			// กันพลาด: ถ้าไม่ได้ตั้ง DepositAmount ให้ตีครึ่ง
 			if b.TotalAmount > 0 {
 				return b.TotalAmount / 2
 			}
 			return 0
 		}
-		// งวด balance หรือ full
 		if b.DepositAmount > 0 && b.TotalAmount >= b.DepositAmount {
 			return b.TotalAmount - b.DepositAmount
 		}
-		return b.TotalAmount // เคส full payment
+		return b.TotalAmount // full payment
 	}
 
 	var totalPaid float64
-	hasMissingReceipt := false
+	var totalPaidWithReceipt float64
 
 	for _, p := range b.Payments {
-		st := strings.ToLower(strings.TrimSpace(p.Status.Name))
+		st := getPayStatus(p) // "approved" | "paid" | "refunded" | ...
 		if st == "approved" || st == "paid" {
-			totalPaid += inferAmount(p)
-			if strings.TrimSpace(p.ReceiptPath) == "" {
-				hasMissingReceipt = true
+			amt := inferAmount(p)
+			totalPaid += amt
+			if strings.TrimSpace(p.ReceiptPath) != "" {
+				totalPaidWithReceipt += amt
 			}
 		}
 	}
 
-	fullyPaid := (totalDue == 0) || (totalPaid >= totalDue)
+	fullyPaid := totalPaid >= totalDue
+	fullyPaidWithReceipt := totalPaidWithReceipt >= totalDue
 
-	// ===== update status =====
 	tx := db.Begin()
-	if fullyPaid {
-		if hasMissingReceipt {
-			_ = setBookingStatus(tx, b.ID, "Awaiting Receipt")
-		} else {
-			if err := setBookingStatus(tx, b.ID, "Complete"); err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "set status failed"})
-				return
-			}
-			_ = tx.Model(&entity.BookingRoom{}).
-				Where("id = ?", b.ID).
-				Updates(map[string]any{
-					"is_fully_prepaid": true,
-					"updated_at":       time.Now(),
-				}).Error
+
+	switch {
+	case fullyPaidWithReceipt:
+		// ✅ ยอดที่มีใบเสร็จครอบคลุมหนี้ -> Complete
+		if err := setBookingStatus(tx, b.ID, "Complete"); err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "set status failed"})
+			return
 		}
-	} else {
+		_ = tx.Model(&entity.BookingRoom{}).
+			Where("id = ?", b.ID).
+			Updates(map[string]any{
+				"is_fully_prepaid": true,
+				"updated_at":       time.Now(),
+			}).Error
+
+	case fullyPaid:
+		// ✅ จ่ายครบแต่ใบเสร็จยังไม่ครบ -> Awaiting Receipt
 		_ = setBookingStatus(tx, b.ID, "Awaiting Receipt")
+
+	default:
+		// จ่ายยังไม่ครบ -> อยู่ในสถานะเดิม/รอชำระต่อ
+		// คุณจะตั้งเป็น "Payment" หรือ "Payment Review" ตาม flow ก็ได้
+		_ = setBookingStatus(tx, b.ID, "Payment")
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -654,8 +704,9 @@ func UploadPaymentReceipt(c *gin.Context) {
 		"booking_id":      b.ID,
 		"total_due":       totalDue,
 		"total_paid":      totalPaid,
+		"paid_with_rcpt":  totalPaidWithReceipt,
 		"fully_paid":      fullyPaid,
-		"missingReceipt":  hasMissingReceipt,
+		"fully_with_rcpt": fullyPaidWithReceipt,
 	})
 }
 

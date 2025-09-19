@@ -1801,30 +1801,27 @@ export async function DeleteRoomType(id: number) {
     return res;
 }
 
-export async function RefundedBookingRoom(data: any) {
-    const requestOptions = {
+// services/http.ts (หรือไฟล์ที่ประกาศ)
+export async function RefundedBookingRoom(paymentId: number, payload?: { reason?: string; cancelBooking?: boolean }) {
+    const res = await fetch(`${apiUrl}/payments/${paymentId}/refund`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(data),
-    };
-    console.log(data);
-    let res = await fetch(`${apiUrl}/payments/${data}/refund`, requestOptions).then((res) => {
-        if (res.status === 200) return res.json();
-        return false;
-    })
-    console.log(res);
+        body: JSON.stringify({
+            reason: payload?.reason ?? "",
+            cancelBooking: payload?.cancelBooking ?? true, // default true
+        }),
+    });
 
-    if (res) {
-        if (res.status === 200) {
-            return res.json();
-        } else {
-            return false;
-        }
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || `Refund failed (${res.status})`);
     }
+    return res.json();
 }
+
 
 // services/http.ts
 export async function CancelBookingRoom(id: number) {
@@ -3409,32 +3406,32 @@ export async function GetBookingRoomById(id: number) {
 
 // ✅ อนุมัติการจอง
 export async function ApproveBookingRoom(id: number) {
-  try {
-    const userId = localStorage.getItem("userId") || "";
-    const res = await axiosInstance.post(
-      `/booking-rooms/${id}/approve?approver_id=${encodeURIComponent(userId)}`
-    );
-    return res.data;
-  } catch (err) {
-    console.error(`Error approving booking room ${id}:`, err);
-    return false;
-  }
+    try {
+        const userId = localStorage.getItem("userId") || "";
+        const res = await axiosInstance.post(
+            `/booking-rooms/${id}/approve?approver_id=${encodeURIComponent(userId)}`
+        );
+        return res.data;
+    } catch (err) {
+        console.error(`Error approving booking room ${id}:`, err);
+        return false;
+    }
 }
 
 
 
 // ✅ ปฏิเสธการจอง
 export async function RejectBookingRoom(id: number, note: string) {
-  try {
-    const res = await axiosInstance.post(
-      `/booking-rooms/${id}/reject`,
-      { note: note?.trim() || "" } // ← ใช้ note จริง ส่งเป็น JSON body
-    );
-    return res.data;
-  } catch (err) {
-    console.error(`Error rejecting booking room ${id}:`, err);
-    return false;
-  }
+    try {
+        const res = await axiosInstance.post(
+            `/booking-rooms/${id}/reject`,
+            { note: note?.trim() || "" } // ← ใช้ note จริง ส่งเป็น JSON body
+        );
+        return res.data;
+    } catch (err) {
+        console.error(`Error rejecting booking room ${id}:`, err);
+        return false;
+    }
 }
 
 

@@ -86,7 +86,7 @@ func main() {
 		r.POST("/booking-rooms/:id/payments", controller.SubmitPaymentSlip)
 		r.POST("/payments/:id/approve", controller.ApprovePayment)
 		r.POST("/payments/:id/reject", controller.RejectPayment)
-		r.PUT("/payments/:id/refund", controller.RefundedBookingRoom)
+		r.PUT("/payments/:id/refund", controller.RefundPaymentByAdmin)
 		// r.POST("/payments/:id/mark-paid", controller.MarkPaymentPaid)
 		// routes.go
 		// routes.go
