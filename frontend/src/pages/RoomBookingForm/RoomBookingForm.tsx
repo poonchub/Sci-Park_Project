@@ -1584,184 +1584,308 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
           </Grid>
 
           <Grid size={{ md: 12 }} container spacing={2} sx={{ alignItems: 'stretch' }}>
-            <Grid size={{ md: 6 }}>
-          {/* Section 1: Select Room */}
-          <Grid size={{ md: 12 }}>
-            <Card className="booking-section-paper" sx={{ borderRadius: 3, mb: 3, height: '100%' }}>
-              <Box className="booking-section-header">
-                <Building2 className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Room
-                </Typography>
-              </Box>
-
-              <Box
-                className="booking-section paper-room-selection-paper"
-                sx={{ backgroundColor: "secondary.main", borderRadius: 2, p: 3 }}
-              >
-                <FormControl fullWidth>
-                  <Select
-                    value={selectedRoomId || 0}
-                    displayEmpty
-                    onChange={(e: any) => {
-                      const val = Number(e.target.value);
-                      setSelectedRoomId(val);
-                      if (!val) return;
-                      fetchBookingMapOnly(val);
-                      setSelectedDates([]);
-                      fetchRoomPricing(val);
-                      fetchRoomData(val);
-                    }}
-                  >
-                    <MenuItem value={0}>
-                      <em>-- Select a Room --</em>
-                    </MenuItem>
-                    {roomsOfSameType.map((r) => (
-                      <MenuItem
-                        key={r.id}
-                        value={r.id}
-                        disabled={r.RoomStatusID !== 1}
-                        title={r.RoomStatusID === 1 ? "Available" : "Not Available"}
-                      >
-                        {r.roomnumber} {r.RoomStatusID !== 1 ? `(${r.RoomStatus?.StatusName || "Unknown Status"})` : ""}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box className="booking-section-header">
-                <Clock className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Duration & Time
-                </Typography>
-              </Box>
-
-              {loading && !pricing.length ? (
-                <Box className="booking-loading-container">
-                  <CircularProgress size={24} />
-                  <Typography className="booking-loading-text">Loading Prices...</Typography>
+            <Grid size={{ md: 6 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+              {/* Section 1: Select Room + Duration & Time */}
+              <Card className="booking-section-paper" sx={{ borderRadius: 3, mb: 2, flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
+                <Box className="booking-section-header">
+                  <Building2 className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600">
+                    Select Room
+                  </Typography>
                 </Box>
-              ) : (
-                <>
-                  <FormControl component="fieldset" className="booking-duration-options">
-                    <RadioGroup
-                      value={timeOption}
-                      onChange={(e) => {
-                        const val = e.target.value as "hourly" | "half" | "full";
-                        setTimeOption(val);
-                        setTimeRange(null);
-                        setSelectedHours([]);
+
+                <Box
+                  className="booking-section paper-room-selection-paper"
+                  sx={{ backgroundColor: "secondary.main", borderRadius: 2, p: 3, mb: 3 }}
+                >
+                  <FormControl fullWidth>
+                    <Select
+                      value={selectedRoomId || 0}
+                      displayEmpty
+                      onChange={(e: any) => {
+                        const val = Number(e.target.value);
+                        setSelectedRoomId(val);
+                        if (!val) return;
+                        fetchBookingMapOnly(val);
                         setSelectedDates([]);
+                        fetchRoomPricing(val);
+                        fetchRoomData(val);
                       }}
                     >
-                      {isHourlyAllowed && (
-                        <FormControlLabel value="hourly" control={<Radio />} label={<Typography fontWeight={500}>Hourly</Typography>} />
-                      )}
-                      <FormControlLabel
-                        value="half"
-                        control={<Radio />}
-                        label={<Typography fontWeight={500}>Half Day (4 hours)</Typography>}
-                      />
-                      <FormControlLabel
-                        value="full"
-                        control={<Radio />}
-                        label={<Typography fontWeight={500}>Full Day (8 hours)</Typography>}
-                      />
-                    </RadioGroup>
+                      <MenuItem value={0}>
+                        <em>-- Select a Room --</em>
+                      </MenuItem>
+                      {roomsOfSameType.map((r) => (
+                        <MenuItem
+                          key={r.id}
+                          value={r.id}
+                          disabled={r.RoomStatusID !== 1}
+                          title={r.RoomStatusID === 1 ? "Available" : "Not Available"}
+                        >
+                          {r.roomnumber} {r.RoomStatusID !== 1 ? `(${r.RoomStatus?.StatusName || "Unknown Status"})` : ""}
+                        </MenuItem>
+                      ))}
+                    </Select>
                   </FormControl>
+                </Box>
 
-                  {isHourlyAllowed && timeOption === "hourly" && (
-                    <>
-                      <Divider className="booking-time-divider" />
-                      <FormControl component="fieldset">
-                        <Typography variant="subtitle1" className="booking-time-legend" sx={{ fontWeight: 600, mb: 2 }}>
-                          Select Hourly Slots
+                <Box className="booking-section-header">
+                  <Clock className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600">
+                    Select Duration & Time
+                  </Typography>
+                </Box>
+Booking Details
+                {loading && !pricing.length ? (
+                  <Box className="booking-loading-container">
+                    <CircularProgress size={24} />
+                    <Typography className="booking-loading-text">Loading Prices...</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <FormControl component="fieldset" className="booking-duration-options">
+                      <RadioGroup
+                        value={timeOption}
+                        onChange={(e) => {
+                          const val = e.target.value as "hourly" | "half" | "full";
+                          setTimeOption(val);
+                          setTimeRange(null);
+                          setSelectedHours([]);
+                          setSelectedDates([]);
+                        }}
+                        row
+                      >
+                        {isHourlyAllowed && (
+                          <FormControlLabel value="hourly" control={<Radio />} label={<Typography fontWeight={500}>Hourly</Typography>} />
+                        )}
+                        <FormControlLabel
+                          value="half"
+                          control={<Radio />}
+                          label={<Typography fontWeight={500}>Half Day (4 hours)</Typography>}
+                        />
+                        <FormControlLabel
+                          value="full"
+                          control={<Radio />}
+                          label={<Typography fontWeight={500}>Full Day (8 hours)</Typography>}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+
+                    {isHourlyAllowed && timeOption === "hourly" && (
+                      <>
+                        <Divider className="booking-time-divider" />
+                        <FormControl component="fieldset">
+                          <Typography variant="subtitle1" className="booking-time-legend" sx={{ fontWeight: 600, mb: 2 }}>
+                            Select Hourly Slots
+                          </Typography>
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                            {HOURLY_SLOTS.map((hour) => (
+                              <FormControlLabel
+                                key={hour}
+                                control={<Checkbox checked={selectedHours.includes(hour)} onChange={() => handleHourToggle(hour)} />}
+                                label={hour}
+                              />
+                            ))}
+                          </Box>
+                        </FormControl>
+                      </>
+                    )}
+
+                    {timeOption === "half" && (
+                      <>
+                        <Divider className="booking-time-divider" />
+                        <FormControl component="fieldset">
+                          <Typography variant="subtitle1" className="booking-time-legend" sx={{ fontWeight: 600, mb: 2 }}>
+                            Time Slot (Half Day)
+                          </Typography>
+                          <RadioGroup
+                            value={timeRange}
+                            onChange={(e) => {
+                              setTimeRange(e.target.value as "Morning" | "Afternoon");
+                              setSelectedDates([]);
+                            }}
+                          >
+                            <FormControlLabel value="Morning" control={<Radio />} label="Morning (08:30 - 12:30)" />
+                            <FormControlLabel value="Afternoon" control={<Radio />} label="Afternoon (12:30 - 16:30)" />
+                          </RadioGroup>
+                        </FormControl>
+                      </>
+                    )}
+
+                    {timeOption === "full" && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography fontWeight={600}>Full Day booking covers both Morning and Afternoon (08:30 - 16:30)</Typography>
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Card>
+
+              {/* Section 2: Select Dates */}
+              <Card className="booking-section-paper calendar-paper" sx={{ borderRadius: 2, flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
+                <Box className="booking-section-header" sx={{ flex: '0 0 auto' }}>
+                  <Calendar className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600">
+                    Select Dates
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    flex: '1 1 auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    opacity: selectedRoomId && timeOption ? 1 : 0.5,
+                    pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
+                  }}
+                >
+                  {renderCalendar()}
+                </Box>
+
+                {(!selectedRoomId || !timeOption) && (
+                  <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1, flex: '0 0 auto' }}>
+                    <AlertTriangle size={16} /> กรุณาเลือกห้องและช่วงเวลาก่อน
+                  </Typography>
+                )}
+              </Card>
+            </Grid>
+          <Grid size={{ sm: 6 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+
+            {/* Booking Details Card */}
+            <Grid size={{ sm: 12}} sx={{ flex: '0 0 auto' }}>
+              <Card className="booking-section-paper" sx={{ borderRadius: 3, flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
+                <Box className="booking-section-header">
+                  <Calendar className="booking-section-icon" />
+                  <Typography variant="h6" fontWeight="600">Booking Details</Typography>
+                </Box>
+                
+                <Box className="info-section-paper">
+                  <Box className="info-fields">
+                    <Grid container spacing={1}>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Purpose of Booking
                         </Typography>
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
-                          {HOURLY_SLOTS.map((hour) => (
+                        <TextField
+                          fullWidth
+                          required
+                          rows={2}
+                          value={purpose}
+                          onChange={(e) => setPurpose(e.target.value)}
+                          placeholder="e.g. team planning meeting, client presentation, training session, etc."
+                          error={!!formErrors.purpose}
+                          helperText={formErrors.purpose}
+                          className="textarea-field"
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Room Setup Style
+                        </Typography>
+                        <FormControl fullWidth>
+                          <Select
+                            value={selectedStyle || ""}
+                            displayEmpty
+                            onChange={(e) => setSelectedStyle(e.target.value as string)}
+                          >
+                            <MenuItem value="">
+                              <em>-- Room Setup Style --</em>
+                            </MenuItem>
+                            {setupStyles?.map((item) => (
+                              <MenuItem key={item.ID} value={item.LayoutName}>
+                                {item.LayoutName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Additional Special Requests (Optional)
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          rows={2}
+                          value={additionalNote}
+                          onChange={(e) => setAdditionalNote(e.target.value)}
+                          placeholder="Special equipment, catering arrangements, or other requests"
+                          className="textarea-field"
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Divider sx={{ my: 2 }} />
+                      </Grid>
+
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
+                          Required Equipment
+                        </Typography>
+                        
+                        {/* Select All */}
+                        <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
+                                indeterminate={selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length}
+                                onChange={(e) => (e.target.checked ? setSelectedEquipment(equipmentList) : setSelectedEquipment([]))}
+                              />
+                            }
+                            label="Select All"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </Box>
+
+                        {/* Equipment Grid */}
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                            gap: 2,
+                            maxHeight: 200,
+                            overflowY: "auto",
+                            pr: 1,
+                          }}
+                        >
+                          {equipmentList.map((item: string) => (
                             <FormControlLabel
-                              key={hour}
-                              control={<Checkbox checked={selectedHours.includes(hour)} onChange={() => handleHourToggle(hour)} />}
-                              label={hour}
+                              key={item}
+                              control={
+                                <Checkbox
+                                  checked={selectedEquipment.includes(item)}
+                                  onChange={(e) =>
+                                    e.target.checked
+                                      ? setSelectedEquipment([...selectedEquipment, item])
+                                      : setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item))
+                                  }
+                                />
+                              }
+                              label={item}
                             />
                           ))}
                         </Box>
-                      </FormControl>
-                    </>
-                  )}
+                      </Grid>
 
-                  {timeOption === "half" && (
-                    <>
-                      <Divider className="booking-time-divider" />
-                      <FormControl component="fieldset">
-                        <Typography variant="subtitle1" className="booking-time-legend" sx={{ fontWeight: 600, mb: 2 }}>
-                          Time Slot (Half Day)
-                        </Typography>
-                        <RadioGroup
-                          value={timeRange}
-                          onChange={(e) => {
-                            setTimeRange(e.target.value as "Morning" | "Afternoon");
-                            setSelectedDates([]);
-                          }}
-                        >
-                          <FormControlLabel value="Morning" control={<Radio />} label="Morning (08:30 - 12:30)" />
-                          <FormControlLabel value="Afternoon" control={<Radio />} label="Afternoon (12:30 - 16:30)" />
-                        </RadioGroup>
-                      </FormControl>
-                    </>
-                  )}
+                      
+                    </Grid>
+                  </Box>
+                </Box>
+              </Card>
+            </Grid>
+          
 
-                  {timeOption === "full" && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography fontWeight={600}>Full Day booking covers both Morning and Afternoon (08:30 - 16:30)</Typography>
-                    </Box>
-                  )}
-                </>
-              )}
-            
-            </Card>
-
-          </Grid>
-
-          {/* Section 4: Select Dates */}
-          <Grid size={{ md: 12 }}>
-            <Card className="booking-section-paper calendar-paper" sx={{ borderRadius: 2, mb: 3, height: '100%' }}>
-              <Box className="booking-section-header">
-                <Calendar className="booking-section-icon" />
-                <Typography variant="h6" fontWeight="600">
-                  Select Dates
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  opacity: selectedRoomId && timeOption ? 1 : 0.5,
-                  pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
-                }}
-              >
-                {renderCalendar()}
-              </Box>
-
-              {(!selectedRoomId || !timeOption) && (
-                <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
-                  <AlertTriangle size={16} /> กรุณาเลือกห้องและช่วงเวลาก่อน
-                </Typography>
-              )}
-            </Card>
-          </Grid>
-
-          </Grid>
-          <Grid size={{ sm: 6 }}>
-
-            {/* Left: Contact */}
-            <Grid size={{ sm: 12}} >
-                    <Card elevation={3} className="contact-form-paper" sx={{ mb: 3 }}>
-                      <Box className="booking-section-header">
+            {/* Right: Your Information */}
+            <Grid size={{ sm: 12}} sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
+                    <Card elevation={3} className="contact-form-paper" sx={{ mt: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Box className="booking-section-header" sx={{ flex: '0 0 auto' }}>
                         <User size={24} className="booking-section-icon" />
                         <Typography variant="h6" fontWeight="600">Your Information</Typography>
                       </Box>
                     
-                      <Box className="info-section-paper">
+                      <Box className="info-section-paper" sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
 
                       
 
@@ -1772,11 +1896,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         Full Name
                             </Typography>
                         <TextField
-
                           fullWidth
                           value={name}
                           variant="outlined"
-                          
+                          InputProps={{
+                            readOnly: true,
+                            sx: { 
+                              color: 'text.secondary',
+                              '& .MuiInputBase-input': {
+                                color: 'text.secondary'
+                              }
+                            }
+                          }}
                           className="readonly-field"
                         />
                         </Grid>
@@ -1785,11 +1916,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         Phone Number
                             </Typography>
                         <TextField
-                          
                           fullWidth
                           value={phone}
                           variant="outlined"
-
+                          InputProps={{
+                            readOnly: true,
+                            sx: { 
+                              color: 'text.secondary',
+                              '& .MuiInputBase-input': {
+                                color: 'text.secondary'
+                              }
+                            }
+                          }}
                           className="readonly-field"
                         />
                         </Grid>
@@ -1798,11 +1936,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         Email Address
                             </Typography>
                         <TextField
-                          
                           fullWidth
                           value={email}
                           variant="outlined"
-                          
+                          InputProps={{
+                            readOnly: true,
+                            sx: { 
+                              color: 'text.secondary',
+                              '& .MuiInputBase-input': {
+                                color: 'text.secondary'
+                              }
+                            }
+                          }}
                           className="readonly-field"
                         />
                         </Grid>
@@ -1909,110 +2054,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                       </Box>
                     </Box>
 
-                     {/* Right: Booking details */}
-                   <Box className="booking-section-header">
-                     <Calendar size={24} className="booking-section-icon" />
-                     <Typography variant="h6" fontWeight="600">Booking Details</Typography>
-                   </Box>
-                   <Box className="info-section-paper">
-
-                      <Box className="details-fields">
-                        <TextField
-                          label="Purpose of Booking"
-                          fullWidth
-                          required
-                          rows={2}
-                          value={purpose}
-                          onChange={(e) => setPurpose(e.target.value)}
-                          placeholder="e.g. team planning meeting, client presentation, training session, etc."
-                          error={!!formErrors.purpose}
-                          helperText={formErrors.purpose}
-                          className="textarea-field"
-                        />
-
-                        <FormControl fullWidth>
-                          <Select
-                            value={selectedStyle || ""}
-                            displayEmpty
-                            onChange={(e) => setSelectedStyle(e.target.value as string)}
-                          >
-                            <MenuItem value="">
-                              <em>-- Room Setup Style --</em>
-                            </MenuItem>
-                            {setupStyles?.map((item) => (
-                              <MenuItem key={item.ID} value={item.LayoutName}>
-                                {item.LayoutName}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        
-                          <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>Required Equipment</Typography>
-
-                            {/* Select All */}
-                            <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={selectedEquipment.length === equipmentList.length && equipmentList.length > 0}
-                                    indeterminate={selectedEquipment.length > 0 && selectedEquipment.length < equipmentList.length}
-                                    onChange={(e) => (e.target.checked ? setSelectedEquipment(equipmentList) : setSelectedEquipment([]))}
-                                  />
-                                }
-                                label="Select All"
-                                sx={{ fontWeight: 600 }}
-                              />
-                            </Box>
-
-                            {/* Equipment Grid */}
-                            <Box
-                              sx={{
-                                display: "grid",
-                                gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
-                                gap: 2,
-                                maxHeight: 200,
-                                overflowY: "auto",
-                                pr: 1,
-                              }}
-                            >
-                              {equipmentList.map((item: string) => (
-                                <FormControlLabel
-                                  key={item}
-                                  control={
-                                    <Checkbox
-                                      checked={selectedEquipment.includes(item)}
-                                      onChange={(e) =>
-                                        e.target.checked
-                                          ? setSelectedEquipment([...selectedEquipment, item])
-                                          : setSelectedEquipment(selectedEquipment.filter((eq) => eq !== item))
-                                      }
-                                    />
-                                  }
-                                  label={item}
-                                />
-                              ))}
-                            </Box>
-                          </FormControl>
-                        
-
-                        <TextField
-                          label="Additional Special Requests (Optional)"
-                          fullWidth
-                          rows={2}
-                          value={additionalNote}
-                          onChange={(e) => setAdditionalNote(e.target.value)}
-                          placeholder="Special equipment, catering arrangements, or other requests"
-                          className="textarea-field"
-                          sx={{ mt: 2 }}
-                        />
-                      </Box>
-                    </Box>
                   
                   </Card>
                    
                   </Grid>
+
+            
           
           </Grid>
 
