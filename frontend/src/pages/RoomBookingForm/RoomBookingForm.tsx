@@ -2070,10 +2070,12 @@ Booking Details
                   {/* Section 2: Booking Summary */}
           <Grid size={{ xs: 12 }}>
             <Card sx={{ backgroundColor: "secondary.main", borderRadius: 2, p: 3, mb: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Typography variant="h6" fontWeight="bold" mb={3} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box className="booking-section-header" sx={{ mb: 3 }}>
                 <Calendar className="booking-section-icon" />
-                Booking Summary
-              </Typography>
+                <Typography variant="h6" fontWeight="600">
+                  Booking Summary
+                </Typography>
+              </Box>
 
               <Box sx={{ paddingX: 2 }}>
                 <Box mb={2}>

@@ -73,6 +73,11 @@
 .booking-container .booking-section-icon {
     margin-right: 8px;
     color: var(--color-secondary);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

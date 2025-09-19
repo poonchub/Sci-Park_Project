@@ -29,10 +29,19 @@
 .calendar-container .nav-button {
   min-width: 36px;
   border-radius: 16px;
+  border-color: var(--color-secondary) !important;
+  color: var(--color-secondary) !important;
 }
 
 .calendar-container .nav-button:hover {
-  background-color: #e3f2fd;
+  background-color: rgba(242, 101, 34, 0.1);
+  border-color: var(--color-secondary) !important;
+  color: var(--color-secondary) !important;
+}
+
+.calendar-container .nav-button:disabled {
+  border-color: #ccc !important;
+  color: #ccc !important;
 }
 
 .calendar-container .month-select {
