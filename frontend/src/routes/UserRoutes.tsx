@@ -16,6 +16,7 @@ import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 import CancelRequestServiceArea from "../pages/CancelRequestServiceArea/CancelRequestServiceArea";
 import ServiceAreaDetails from "../pages/ServiceAreaDetails/ServiceAreaDetails";
+import BookingReview from "../pages/BookingReview/BookingReview";
 
 const UserRoutes = (): RouteObject => {
 	return {
@@ -24,71 +25,75 @@ const UserRoutes = (): RouteObject => {
 		children: [
 			{
 				path: "/home",
-				element: <Home/>
+				element: <Home />
 			},
 			{
 				path: "/booking-room",
-				element: <BookingRoom/>
+				element: <BookingRoom />
 			},
 			{
 				path: "/room-booking-form",
-				element: <RoomBookingForm/>
+				element: <RoomBookingForm />
 			},
-            {
+			{
 				path: "/my-booking-room",
-				element: <MyBookingRoom/>
+				element: <MyBookingRoom />
+			},
+			{
+				path: "/booking/review",
+				element: <BookingReview />
 			},
 			{
 				path: "/maintenance/my-maintenance-request",
-				element: <MyMaintenanceRequest/>
+				element: <MyMaintenanceRequest />
 			},
 			{
 				path: "/maintenance/create-maintenance-request",
-				element: <CreateMaintenanceRequestPage/>
+				element: <CreateMaintenanceRequestPage />
 			},
 			{
 				path: "/maintenance/check-requests",
-				element: <CheckRequests/>
+				element: <CheckRequests />
 			},
 			{
 				path: "/about-developer",
-				element: <AboutDeveloper/>
+				element: <AboutDeveloper />
 			},
 			{
 				path: "/my-account",
-				element: <MyAccount/>
+				element: <MyAccount />
 			},
 			{
 				path: "/my-account/edit-profile",
-				element: <EditProfile/>
+				element: <EditProfile />
 			},
 			{
 				path: "/news",
-				element: <News/>
+				element: <News />
 			},
 			{
 				path: "/create-service-area-request",
-				element: <CreateServiceAreaForm/>
+				element: <CreateServiceAreaForm />
 			},
 			{
 				path: "/service-area/cancel-request",
-				element: <CancelRequestServiceArea/>
+				element: <CancelRequestServiceArea />
 			},
 			{
 				path: "/room/rental-space",
-				element: <RoomRentalSpace/>
+				element: <RoomRentalSpace />
 			},
 			{
 				path: "/service-area/service-area-details",
-				element: <ServiceAreaDetails/>
+				element: <ServiceAreaDetails />
 			},
 			{
 				path: "",
-				element: <Home/>
+				element: <Home />
 			},
 			{
 				path: "*",
-				element: <Home/>
+				element: <Home />
 			},
 		]
 	}
