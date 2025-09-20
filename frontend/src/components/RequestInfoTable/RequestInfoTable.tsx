@@ -100,7 +100,7 @@ const RequestInfoTable = ({ data }: RequestInfoTableProps) => {
                     </TableCell>
                     <TableCell>
                         <Typography>
-                            {`${data.User?.FirstName} ${data.User?.LastName} - ${data.User?.CompanyName} (${data.User?.EmployeeID})`}
+                            {`${data.User?.FirstName} ${data.User?.LastName} - ${data.User?.CompanyName} ${data.User?.EmployeeID ? `(${data.User?.EmployeeID})` : '' }`}
                         </Typography>
                     </TableCell>
                 </TableRow>

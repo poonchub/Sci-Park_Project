@@ -109,7 +109,7 @@ function CheckRequest() {
     const isPending = RequestStatus === "Pending";
     const isApproved = RequestStatus === "Approved";
     const isInProgress = RequestStatus === "In Progress";
-    const isWaitingForReview = RequestStatus === "Waiting For Review";
+    const isWaitingForReview = RequestStatus === "Waiting for Review";
     const isRework = RequestStatus === "Rework Requested";
     const isUnsuccessful = RequestStatus === "Unsuccessful";
 
@@ -164,7 +164,7 @@ function CheckRequest() {
             return;
         }
 
-        const statusID = requestStatuses?.find((item) => item.Name === "Waiting For Review")?.ID || 0;
+        const statusID = requestStatuses?.find((item) => item.Name === "Waiting for Review")?.ID || 0;
         handleSubmitWork(statusID, {
             selectedTask: maintenanceRequest.MaintenanceTask,
             setAlerts,
@@ -404,7 +404,7 @@ function CheckRequest() {
                     </Grid>
                     <Grid container size={{ xs: 7, md: 7 }} sx={{ justifyContent: "flex-end" }}>
                         <Box>
-                            <Button variant="outlined" onClick={handleBack}>
+                            <Button variant="outlinedGray" onClick={handleBack}>
                                 <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
                                 <Typography variant="textButtonClassic">Back</Typography>
                             </Button>

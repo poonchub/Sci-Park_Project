@@ -31,7 +31,7 @@ export const statusConfig: Record<string, StatusConfig> = {
         colorLite: "rgba(0, 123, 255, 0.18)",
         icon: RotateCcw
     },
-    "Waiting For Review": {
+    "Waiting for Review": {
         color: "#17A2B8",
         colorLite: "rgba(23, 163, 184, 0.18)",
         icon: ClipboardCheck

@@ -8,7 +8,7 @@ import (
 
 type RoomType struct {
 	gorm.Model
-	TypeName string `json:"type_name" gorm:"not null;uniqueIndex"`
+	TypeName string `gorm:"not null;uniqueIndex"`
 
 	RoomSize         float32
 	ForRental        bool

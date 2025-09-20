@@ -142,7 +142,7 @@ function AcceptWork() {
                         const isApproved = params.row.RequestStatus?.Name === "Approved";
                         const isRework = params.row.RequestStatus?.Name === "Rework Requested";
                         const isInProgress = params.row.RequestStatus?.Name === "In Progress";
-                        const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting For Review";
+                        const isWaitingForReview = params.row.RequestStatus?.Name === "Waiting for Review";
 
                         const notification = params.row.Notifications ?? [];
                         const hasNotificationForUser = notification.some(
@@ -767,7 +767,7 @@ function AcceptWork() {
                     : valueTab === 1
                       ? ["In Progress"]
                       : valueTab === 2
-                        ? ["Waiting For Review", "Completed"]
+                        ? ["Waiting for Review", "Completed"]
                         : [""];
 
             const statusIDs = statusNames
@@ -827,7 +827,7 @@ function AcceptWork() {
                 const statusName = res.RequestStatus.Name;
 
                 if (
-                    statusName === "Waiting For Review" ||
+                    statusName === "Waiting for Review" ||
                     statusName === "In Progress" ||
                     statusName === "Unsuccessful" ||
                     statusName === "Rework Requested"
@@ -887,7 +887,7 @@ function AcceptWork() {
             ]);
             return;
         }
-        const statusID = requestStatuses?.find((item) => item.Name === "Waiting For Review")?.ID || 0;
+        const statusID = requestStatuses?.find((item) => item.Name === "Waiting for Review")?.ID || 0;
 
         handleSubmitWork(statusID, {
             selectedTask,

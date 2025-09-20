@@ -131,15 +131,8 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
 
             {/* Confirm/Cancel buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant='text' 
+                <Button variant='outlinedGray' 
                     onClick={onClose}
-                    sx={{
-                        color: 'customBlue',
-                        "&:hover": {
-                            background: 'none',
-                            boxShadow: 'none'
-                        }
-                    }}
                 >
                     Cancel
                 </Button>

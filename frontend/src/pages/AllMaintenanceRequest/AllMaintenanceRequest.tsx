@@ -9,7 +9,6 @@ import {
     GetMaintenanceRequestsForAdmin,
     GetOperators,
     GetRequestStatuses,
-    GetUserById,
     socketUrl,
 } from "../../services/http";
 
@@ -37,8 +36,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
-import { Check, ClipboardList, Clock, Eye, FileQuestion, HelpCircle, Trash2, UserRound, X } from "lucide-react";
-import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
+import { Check, ClipboardList, Clock, Eye, HelpCircle, Trash2, UserRound, X } from "lucide-react";
 import { useUserStore } from "../../store/userStore";
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
@@ -71,6 +69,37 @@ function AllMaintenanceRequest() {
     const [isLoadingData, setIsLoadingData] = useState(true);
 
     const navigate = useNavigate();
+
+    const showStatuses = [
+        "Pending", 
+        "Approved", 
+        "In Progress", 
+        "Waiting for Review", 
+        "Completed",
+        "Rework Requested",
+        "Unsuccessful"
+    ]
+
+    const filteredStatuses = requestStatuses.filter((item) => {
+        return showStatuses.includes(item.Name || "")
+    })
+    
+    const filteredRequests = maintenanceRequests.filter((request) => {
+        const requestId = request.ID ? Number(request.ID) : null;
+        const firstName = request.User?.FirstName?.toLowerCase() || "";
+        const lastName = request.User?.LastName?.toLowerCase() || "";
+        const roomType = (request.Room?.RoomType?.TypeName ?? "").toLowerCase() || "";
+
+        const matchText =
+            !searchText ||
+            requestId === Number(searchText) ||
+            firstName.includes(searchText.toLowerCase()) ||
+            lastName.includes(searchText.toLowerCase()) ||
+            roomType.includes(searchText.toLowerCase());
+
+        // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
+        return matchText;
+    });
 
     const getColumns = (): GridColDef[] => {
         if (isSmallScreen) {
@@ -883,23 +912,6 @@ function AllMaintenanceRequest() {
         }
     };
 
-    const filteredRequests = maintenanceRequests.filter((request) => {
-        const requestId = request.ID ? Number(request.ID) : null;
-        const firstName = request.User?.FirstName?.toLowerCase() || "";
-        const lastName = request.User?.LastName?.toLowerCase() || "";
-        const roomType = (request.Room?.RoomType?.TypeName ?? "").toLowerCase() || "";
-
-        const matchText =
-            !searchText ||
-            requestId === Number(searchText) ||
-            firstName.includes(searchText.toLowerCase()) ||
-            lastName.includes(searchText.toLowerCase()) ||
-            roomType.includes(searchText.toLowerCase());
-
-        // คืนค่าเฉพาะรายการที่ตรงกับทุกเงื่อนไข
-        return matchText;
-    });
-
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -1050,7 +1062,7 @@ function AllMaintenanceRequest() {
                                     selectedStatuses={selectedStatuses}
                                     setSelectedStatuses={setSelectedStatuses}
                                     handleClearFilter={handleClearFillter}
-                                    requestStatuses={requestStatuses}
+                                    requestStatuses={filteredStatuses}
                                 />
                             </Grid>
                             {/* Chart Section */}

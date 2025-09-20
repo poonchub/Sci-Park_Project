@@ -17,7 +17,7 @@ interface Props {
 }
 
 const RequestStatusCards: React.FC<Props> = ({ statusCounts, size, customDisplayStatuses }) => {
-    const displayStatuses = customDisplayStatuses || ["Pending", "Approved", "In Progress", "Waiting For Review", "Completed", "Unsuccessful"];
+    const displayStatuses = customDisplayStatuses || ["Pending", "Approved", "In Progress", "Waiting for Review", "Completed", "Unsuccessful"];
 
     const statusCards = displayStatuses.map((status) => {
         let count = statusCounts?.[status] ?? 0;

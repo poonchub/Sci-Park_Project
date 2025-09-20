@@ -29,7 +29,7 @@ function RequestStatusStack({ statusCounts, size }: Props) {
         }
 
         // แสดงสถานะอื่นที่เหลือ ยกเว้น Created
-        const includeStatuses = ["Waiting For Review", "Completed", "Unsuccessful"];
+        const includeStatuses = ["Waiting for Review", "Completed", "Unsuccessful"];
         includeStatuses.forEach(status => {
             const count = statusCounts[status];
             if (count !== undefined) {
