@@ -113,7 +113,7 @@ fi
 
 print_step "Starting Go server with test database..."
 cd ..
-DB_NAME="sci-park_test.db" go run main.go > /dev/null 2>&1 &
+DB_NAME="sci-park_test.db" go run main.go -test > /dev/null 2>&1 &
 GO_PID=$!
 cd API_Test
 

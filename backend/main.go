@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"sci-park_web-application/config"
@@ -15,10 +16,22 @@ import (
 const PORT = "8000"
 
 func main() {
+	// Parse command line flags
+	testMode := flag.Bool("test", false, "Run in test mode (empty database, no mockup data)")
+	flag.Parse()
+
 	// โหลดค่าจาก .env ก่อนเชื่อมต่อฐานข้อมูล
 	config.LoadEnv()
 	config.ConnectDB()
-	config.SetupDatabase()
+
+	// Setup database with or without mockup data
+	if *testMode {
+		log.Println("🧪 Running in TEST MODE - Database will be empty (migrations only)")
+		config.SetupDatabaseTestMode()
+	} else {
+		log.Println("🔄 Running in NORMAL MODE - Database with mockup data")
+		config.SetupDatabase()
+	}
 
 	// ตั้งค่า CORS Middleware
 	r := gin.Default()
@@ -322,7 +335,7 @@ func main() {
 		protected.GET("/booking-room-option-for-admin", controller.ListBookingRoomsForAdmin)
 
 		//-------------------------------------------------------------------
-		
+
 		protected.POST("/booking-rooms/:id/approve", controller.ApproveBookingRoom)
 		protected.POST("/booking-rooms/:id/reject", controller.RejectBookingRoom)
 		protected.POST("/payments/:id/approve", controller.ApprovePayment)

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 	"sci-park_web-application/entity"
 	"strings"
 	"time"
@@ -21,12 +22,19 @@ func DB() *gorm.DB {
 // ฟังก์ชันเชื่อมต่อฐานข้อมูล
 func ConnectDB() {
 	var err error
-	database, err := gorm.Open(sqlite.Open("sci-park_web-application.db?cache=shared"), &gorm.Config{})
+
+	// อ่าน DB_NAME จาก environment variable
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "sci-park_web-application.db" // default
+	}
+
+	database, err := gorm.Open(sqlite.Open(dbName+"?cache=shared"), &gorm.Config{})
 	if err != nil {
 		log.Fatal("❌ Failed to connect database:", err)
 	}
 
-	fmt.Println("✅ Connected to database")
+	fmt.Printf("✅ Connected to database: %s\n", dbName)
 	db = database
 }
 
@@ -124,6 +132,82 @@ func SetupDatabase() {
 
 	SeedDatabase()
 
+}
+
+// ฟังก์ชันสร้างตารางในฐานข้อมูลสำหรับ Test Mode (ไม่มีข้อมูล mockup)
+func SetupDatabaseTestMode() {
+	if db == nil {
+		log.Fatal("❌ Database connection is nil. Please call ConnectDB() first.")
+	}
+
+	err := db.AutoMigrate(
+		&entity.User{},
+		&entity.UserPackage{},
+		&entity.RoomType{},
+		&entity.RoomStatus{},
+		&entity.Room{},
+		&entity.Role{},
+		&entity.JobPosition{},
+		&entity.RequestStatus{},
+		&entity.Package{},
+		&entity.ManagerApproval{},
+		&entity.MaintenanceTask{},
+		&entity.MaintenanceRequest{},
+		&entity.MaintenanceImage{},
+		&entity.Inspection{},
+		&entity.Gender{},
+		&entity.Floor{},
+		&entity.Area{},
+		&entity.HandoverImage{},
+		&entity.RequestType{},
+		&entity.RoomLayout{},
+		&entity.RoomTypeLayout{},
+		&entity.Notification{},
+		&entity.TimeSlot{},
+		&entity.RoomPrice{},
+		&entity.BookingRoom{},
+		&entity.Payment{},
+		&entity.RoomTypeImage{},
+		&entity.Equipment{},
+		&entity.RoomEquipment{},
+		&entity.Analytics{},
+		&entity.UserAnalyticsSummary{},
+		&entity.PageAnalytics{},
+		&entity.SystemAnalytics{},
+		&entity.News{},
+		&entity.NewsImage{},
+		&entity.OrganizationInfo{},
+		&entity.Contributor{},
+		&entity.ContributorType{},
+		&entity.RequestServiceArea{},
+		&entity.BusinessGroup{},
+		&entity.CompanySize{},
+		&entity.AboutCompany{},
+		&entity.PaymentStatus{},
+		&entity.BusinessGroup{},
+		&entity.CompanySize{},
+		&entity.ServiceUserType{},
+		&entity.ServiceAreaDocument{},
+		&entity.CancelRequestServiceArea{},
+		&entity.RentalRoomInvoice{},
+		&entity.RentalRoomInvoiceItem{},
+		&entity.TitlePrefix{},
+		&entity.BookingDate{},
+		&entity.BookingStatus{},
+		&entity.CollaborationPlan{},
+		&entity.ServiceAreaApproval{},
+		&entity.ServiceAreaTask{},
+		&entity.RoomBookingInvoice{},
+		&entity.RoomBookingInvoiceItem{},
+		&entity.PaymentType{},
+		&entity.PaymentOption{},
+	)
+
+	if err != nil {
+		log.Fatal("❌ Failed to migrate database:", err)
+	}
+
+	fmt.Println("✅ Database migrated successfully! (Test Mode - No mockup data)")
 }
 
 // ฟังก์ชันเพิ่มข้อมูลตัวอย่าง

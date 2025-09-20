@@ -92,7 +92,7 @@ if exist "..\sci-park_web-application.db" (
 
 echo [INFO] Starting Go server with test database...
 cd ..
-start /B powershell -Command "& {$env:DB_NAME='sci-park_test.db'; go run main.go}" >nul 2>&1
+start /B powershell -Command "& {$env:DB_NAME='sci-park_test.db'; go run main.go -test}" >nul 2>&1
 cd API_Test
 
 REM Wait for server to start
@@ -178,24 +178,6 @@ echo ==================================================
 echo Testing Summary
 echo ==================================================
 echo [SUCCESS] All tests completed!
-echo.
-echo What was tested:
-echo   - Go Unit Tests (Validation Logic)
-echo   - API Integration Tests (Mock Strategy)  
-echo   - Complete User API Flow
-echo   - Transaction-based Tests
-echo.
-echo Database Status:
-echo   - Original database restored
-echo   - Test database preserved for inspection
-echo.
-echo Next Steps:
-echo   - Review test outputs above for any failures
-echo   - Check Go server logs for any issues
-echo   - Run individual tests if needed:
-echo     * node mock_test_strategy.js
-echo     * node complete_user_api_test.js
-echo     * node transaction_test.js
 echo.
 echo [SUCCESS] Testing automation completed!
 echo.
