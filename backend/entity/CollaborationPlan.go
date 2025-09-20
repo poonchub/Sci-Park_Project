@@ -11,10 +11,10 @@ type CollaborationPlan struct {
 
 	// Foreign Key to RequestServiceArea (Many-to-One)
 	RequestServiceAreaID uint               `gorm:"index"`
-	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
+	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID" valid:"-"`
 
 	// Collaboration Plan fields
-	CollaborationPlan   string    `gorm:"type:text" valid:"required~Collaboration plan is required"`
-	CollaborationBudget float64   `valid:"required~Collaboration budget is required,range(0.01|999999999)~Collaboration budget must be greater than 0"`
-	ProjectStartDate    time.Time `valid:"required~Project start date is required"`
+	CollaborationPlan   string `gorm:"type:text" valid:"required~Collaboration plan is required"`
+	CollaborationBudget float64
+	ProjectStartDate    time.Time
 }

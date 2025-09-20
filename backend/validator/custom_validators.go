@@ -32,6 +32,14 @@ func init() {
 		}
 		return validatePhone(phone)
 	}))
+
+	govalidator.CustomTypeTagMap.Set("employeecount", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
+		count, ok := i.(int)
+		if !ok {
+			return false
+		}
+		return validateEmployeeCount(count)
+	}))
 }
 
 // validatePassword checks if password meets requirements:
@@ -78,4 +86,9 @@ func validateEmployeeID(employeeID string) bool {
 func validatePhone(phone string) bool {
 	matched, _ := regexp.MatchString(`^0\d{9}$`, phone)
 	return matched
+}
+
+// validateEmployeeCount checks if employee count is greater than 0
+func validateEmployeeCount(count int) bool {
+	return count > 0
 }

@@ -9,7 +9,7 @@ import (
 type ServiceAreaDocument struct {
 	gorm.Model
 	RequestServiceAreaID uint               `gorm:"uniqueIndex"` // 1:1 relationship
-	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
+	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID" valid:"-"`
 
 	// เอกสารต่างๆ (เก็บเป็น file path)
 	ServiceContractDocument string `gorm:"type:varchar(500)"` // แนบเอกสารสัญญาการใช้บริการพื้นที่
@@ -28,8 +28,8 @@ type ServiceAreaDocument struct {
 
 	// Foreign Keys
 	RoomID uint `gorm:"index"`
-	Room   Room `gorm:"foreignKey:RoomID"`
+	Room   Room `gorm:"foreignKey:RoomID" valid:"-"`
 
 	ServiceUserTypeID uint            `gorm:"index"`
-	ServiceUserType   ServiceUserType `gorm:"foreignKey:ServiceUserTypeID"`
+	ServiceUserType   ServiceUserType `gorm:"foreignKey:ServiceUserTypeID" valid:"-"`
 }

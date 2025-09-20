@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -69,6 +70,18 @@ func CreateRequestServiceAreaAndAboutCompany(c *gin.Context) {
 		NumberOfEmployees:                  parseInt(c.PostForm("number_of_employees")),
 		ActivitiesInBuilding:               c.PostForm("activities_in_building"),
 		SupportingActivitiesForSciencePark: c.PostForm("supporting_activities_for_science_park"),
+	}
+
+	// Validate RequestServiceArea data using govalidator
+	ok, err := govalidator.ValidateStruct(requestServiceArea)
+	if !ok {
+		fmt.Printf("Validation failed: %v\n", err)
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
+		return
 	}
 
 	// บันทึก RequestServiceArea (สร้างใหม่เสมอ) ก่อนเพื่อได้ ID

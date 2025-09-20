@@ -205,6 +205,160 @@ if errorlevel 1 (
 )
 echo.
 
+REM Session 6: Request Service Area Tests
+echo [INFO] === REQUEST SERVICE AREA SESSION ===
+echo [INFO] 11. Request Service Area Unit Tests...
+cd ..\test
+go test -v ./RequestServiceArea_test.go
+if errorlevel 1 (
+    echo [WARNING] Request Service Area unit tests had issues
+) else (
+    echo [SUCCESS] Request Service Area unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 12. Request Service Area API Tests...
+call node complete_request_service_area_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Request Service Area API tests had some issues
+) else (
+    echo [SUCCESS] Request Service Area API tests finished!
+)
+echo.
+
+REM Session 7: Cancel Request Service Area Tests
+echo [INFO] === CANCEL REQUEST SERVICE AREA SESSION ===
+echo [INFO] 13. Cancel Request Service Area Unit Tests...
+cd ..\test
+go test -v ./CancelRequestServiceArea_test.go
+if errorlevel 1 (
+    echo [WARNING] Cancel Request Service Area unit tests had issues
+) else (
+    echo [SUCCESS] Cancel Request Service Area unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 14. Cancel Request Service Area API Tests...
+call node complete_cancel_request_service_area_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Cancel Request Service Area API tests had some issues
+) else (
+    echo [SUCCESS] Cancel Request Service Area API tests finished!
+)
+echo.
+
+REM Session 8: Collaboration Plan Tests
+echo [INFO] === COLLABORATION PLAN SESSION ===
+echo [INFO] 15. Collaboration Plan Unit Tests...
+cd ..\test
+go test -v ./CollaborationPlan_test.go
+if errorlevel 1 (
+    echo [WARNING] Collaboration Plan unit tests had issues
+) else (
+    echo [SUCCESS] Collaboration Plan unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 16. Collaboration Plan API Tests...
+call node complete_collaboration_plan_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Collaboration Plan API tests had some issues
+) else (
+    echo [SUCCESS] Collaboration Plan API tests finished!
+)
+echo.
+
+REM Session 9: Service Area Document Tests
+echo [INFO] === SERVICE AREA DOCUMENT SESSION ===
+echo [INFO] 17. Service Area Document Unit Tests...
+cd ..\test
+go test -v ./ServiceAreaDocument_test.go
+if errorlevel 1 (
+    echo [WARNING] Service Area Document unit tests had issues
+) else (
+    echo [SUCCESS] Service Area Document unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 18. Service Area Document API Tests...
+call node complete_service_area_document_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Service Area Document API tests had some issues
+) else (
+    echo [SUCCESS] Service Area Document API tests finished!
+)
+echo.
+
+REM Session 10: Service Area Task Tests
+echo [INFO] === SERVICE AREA TASK SESSION ===
+echo [INFO] 19. Service Area Task Unit Tests...
+cd ..\test
+go test -v ./ServiceAreaTask_test.go
+if errorlevel 1 (
+    echo [WARNING] Service Area Task unit tests had issues
+) else (
+    echo [SUCCESS] Service Area Task unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 20. Service Area Task API Tests...
+call node complete_service_area_task_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Service Area Task API tests had some issues
+) else (
+    echo [SUCCESS] Service Area Task API tests finished!
+)
+echo.
+
+REM Session 11: Service Area Approval Tests
+echo [INFO] === SERVICE AREA APPROVAL SESSION ===
+echo [INFO] 21. Service Area Approval Unit Tests...
+cd ..\test
+go test -v ./ServiceAreaApproval_test.go
+if errorlevel 1 (
+    echo [WARNING] Service Area Approval unit tests had issues
+) else (
+    echo [SUCCESS] Service Area Approval unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 22. Service Area Approval API Tests...
+call node complete_service_area_approval_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Service Area Approval API tests had some issues
+) else (
+    echo [SUCCESS] Service Area Approval API tests finished!
+)
+echo.
+
+REM Session 12: Request Status Tests
+echo [INFO] === REQUEST STATUS SESSION ===
+echo [INFO] 23. Request Status Unit Tests...
+cd ..\test
+go test -v ./RequestStatus_test.go
+if errorlevel 1 (
+    echo [WARNING] Request Status unit tests had issues
+) else (
+    echo [SUCCESS] Request Status unit tests passed!
+)
+cd ..\API_Test
+echo.
+
+echo [INFO] 24. Request Status API Tests...
+call node complete_request_status_api_test.js
+if errorlevel 1 (
+    echo [WARNING] Request Status API tests had some issues
+) else (
+    echo [SUCCESS] Request Status API tests finished!
+)
+echo.
+
 echo ==================================================
 echo Additional Integration Tests
 echo ==================================================
@@ -276,27 +430,49 @@ echo.
 echo ==========================================
 echo UNIT TESTS SUMMARY
 echo ==========================================
-echo Entity Test Cases (Exact Count):
+echo Core Entity Test Cases (Exact Count):
 echo   • User Entity:        25 test cases (validation, edge cases, passwords, emails, phones)
 echo   • Role Entity:        7 test cases (name validation, business logic, Thai names)
 echo   • Package Entity:     8 test cases (limits, validation, edge cases, zero values)
 echo   • JobPosition Entity: 6 test cases (name validation, special chars, long names)
 echo   • Gender Entity:      7 test cases (name validation, multilingual support)
 echo.
-echo   Total Unit Test Cases: 53 test cases
+echo Request Service Area System Test Cases (Exact Count):
+echo   • Request Service Area Entity:        12 test cases (purpose, employees, activities validation)
+echo   • Cancel Request Service Area Entity: 12 test cases (cancellation purpose, annual income validation)
+echo   • Collaboration Plan Entity:          8 test cases (plan validation, budget, date handling)
+echo   • Service Area Document Entity:       10 test cases (contract numbers, dates, foreign keys)
+echo   • Service Area Task Entity:           11 test cases (user/request IDs, notes, cancellation)
+echo   • Service Area Approval Entity:       12 test cases (approval notes, user/request validation)
+echo   • Request Status Entity:              3 test cases (name/description validation)
+echo.
+echo   Core Entities Total:    53 test cases
+echo   Service Area System:    68 test cases
+echo   Total Unit Test Cases:  121 test cases
 echo.
 
 echo ==========================================
 echo API TESTS SUMMARY  
 echo ==========================================
-echo Entity API Test Cases (Exact Count):
+echo Core Entity API Test Cases (Exact Count):
 echo   • User API:        8 test cases (register valid/invalid, login, protected routes)
 echo   • Role API:        2 test cases (GET with/without auth)
 echo   • Package API:     2 test cases (GET with/without auth)
 echo   • JobPosition API: 8 test cases (full CRUD: GET, CREATE, UPDATE, DELETE + validation)
 echo   • Gender API:      2 test cases (GET public/authenticated)
 echo.
-echo   Total API Test Cases: 22 test cases
+echo Request Service Area System API Test Cases (Exact Count):
+echo   • Request Service Area API:        7 test cases (GET all, CREATE valid/invalid, GET by user)
+echo   • Cancel Request Service Area API: 7 test cases (CREATE cancel, validation, GET/PATCH edit)
+echo   • Collaboration Plan API:          3 test cases (GET via request service areas)
+echo   • Service Area Document API:       9 test cases (full CRUD operations, validation)
+echo   • Service Area Task API:           7 test cases (CREATE cancellation/assign tasks)
+echo   • Service Area Approval API:       10 test cases (CREATE approvals, validation, edge cases)
+echo   • Request Status API:              2 test cases (GET with/without auth)
+echo.
+echo   Core Entities Total:    22 test cases
+echo   Service Area System:    45 test cases
+echo   Total API Test Cases:   67 test cases
 echo.
 
 echo ==========================================
@@ -312,22 +488,29 @@ echo.
 echo ==========================================
 echo OVERALL TESTING SUMMARY
 echo ==========================================
-echo [INFO] Total Test Cases Executed: 83 test cases
-echo   ├── Unit Tests:        53 test cases
-echo   ├── API Tests:         22 test cases  
+echo [INFO] Total Test Cases Executed: 196 test cases
+echo   ├── Unit Tests:        121 test cases (53 Core + 68 Service Area System)
+echo   ├── API Tests:         67 test cases (22 Core + 45 Service Area System)
 echo   └── Integration Tests: 8 test cases
 echo.
 
 REM Note: Actual pass/fail counts would need to be captured during execution
 REM This is a template for the comprehensive summary structure
 
-echo Test Execution Pattern:
-echo   1. USER SESSION:        Unit Tests => API Tests
-echo   2. ROLE SESSION:        Unit Tests => API Tests
-echo   3. PACKAGE SESSION:     Unit Tests => API Tests
-echo   4. JOB POSITION SESSION: Unit Tests => API Tests
-echo   5. GENDER SESSION:      Unit Tests => API Tests
-echo   6. ADDITIONAL TESTS:    Mock + Transaction Tests
+echo Test Execution Pattern (Alternating Unit/API):
+echo   1. USER SESSION:                    Unit Tests => API Tests
+echo   2. ROLE SESSION:                    Unit Tests => API Tests
+echo   3. PACKAGE SESSION:                 Unit Tests => API Tests
+echo   4. JOB POSITION SESSION:            Unit Tests => API Tests
+echo   5. GENDER SESSION:                  Unit Tests => API Tests
+echo   6. REQUEST SERVICE AREA SESSION:    Unit Tests => API Tests
+echo   7. CANCEL REQUEST SERVICE AREA SESSION: Unit Tests => API Tests
+echo   8. COLLABORATION PLAN SESSION:     Unit Tests => API Tests
+echo   9. SERVICE AREA DOCUMENT SESSION:  Unit Tests => API Tests
+echo   10. SERVICE AREA TASK SESSION:     Unit Tests => API Tests
+echo   11. SERVICE AREA APPROVAL SESSION: Unit Tests => API Tests
+echo   12. REQUEST STATUS SESSION:        Unit Tests => API Tests
+echo   13. ADDITIONAL TESTS:               Mock + Transaction Tests
 echo.
 
 echo ==========================================
@@ -344,18 +527,37 @@ echo ==========================================
 echo [INFO] Review the detailed output above for specific failed test cases
 echo.
 echo Common Unit Test Failure Patterns:
+echo   Core Entities:
 echo   • User Tests: Email validation, password complexity, phone format
 echo   • Role Tests: Empty name validation, special character handling
 echo   • Package Tests: Negative limit values, range validation
 echo   • JobPosition Tests: Name validation, empty field handling
 echo   • Gender Tests: Required field validation, multilingual support
+echo   
+echo   Service Area System:
+echo   • Request Service Area: Purpose validation, employee count validation
+echo   • Cancel Request: Cancellation purpose, annual income range validation
+echo   • Collaboration Plan: Plan text validation, budget/date handling
+echo   • Service Area Document: Contract number validation, date constraints
+echo   • Service Area Task: Required IDs validation, note handling
+echo   • Service Area Approval: User/request ID validation, note requirements
+echo   • Request Status: Name/description required field validation
 echo.
 echo Common API Test Failure Patterns:
+echo   Core Issues:
 echo   • Authentication: 401 Unauthorized (missing/invalid token)
 echo   • Validation: 400 Bad Request (empty fields, invalid formats)
 echo   • Endpoints: 404 Not Found (incorrect API paths)
 echo   • Server: Connection refused (server not running)
 echo   • Database: Foreign key constraints, unique violations
+echo   
+echo   Service Area System Specific:
+echo   • Request Service Area: FormData vs JSON content type issues
+echo   • Cancel Request: Missing request service area ID references
+echo   • Service Area Document: File upload validation, contract conflicts
+echo   • Service Area Task: Manager/operator role permission issues
+echo   • Service Area Approval: Manager-only endpoint access restrictions
+echo   • Collaboration Plan: Nested data retrieval via parent entities
 echo.
 echo Troubleshooting Steps:
 echo   1. Check server logs for detailed error messages
