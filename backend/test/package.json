@@ -1,0 +1,15 @@
+{
+  "name": "sci-park-api-tests",
+  "version": "1.0.0",
+  "description": "API Tests for Sci-Park Project",
+  "main": "api_test.js",
+  "scripts": {
+    "test": "node api_test.js",
+    "test:users": "node api_test.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "keywords": ["api", "test", "sci-park"],
+  "author": "Sci-Park Team"
+}

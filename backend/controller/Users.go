@@ -246,6 +246,15 @@ func CreateUserExternalOnly(c *gin.Context) {
 	user.IsEmployee = false // เฉพาะ External User
 	user.RoleID = 1
 
+	ok, err := govalidator.ValidateStruct(user)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	// รับ GenderID (เพศ)
 	genderIDStr := c.DefaultPostForm("gender_id", "1")
 	genderID, err := strconv.ParseUint(genderIDStr, 10, 32)
@@ -425,9 +434,20 @@ func GetUserByID(c *gin.Context) {
 }
 
 func ChangePassword(c *gin.Context) {
+
+	
 	var changePasswordRequest struct {
 		ID          uint   `json:"id" binding:"required"`
 		NewPassword string `json:"password" binding:"required"`
+	}
+
+	ok, err := govalidator.ValidateStruct(changePasswordRequest)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
+		return
 	}
 
 	// รับข้อมูลจาก JSON request
