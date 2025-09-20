@@ -48,7 +48,7 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
 
             <DialogContent >
                 <Box display={'flex'}>
-                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach image</Typography>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach Images</Typography>
                     <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'text.secondary' }}>(maximum 3 files)</Typography>
                 </Box>
 
@@ -65,15 +65,8 @@ const SubmitPopup: React.FC<SubmitPopupProps> = ({
 
             {/* Confirm/Cancel buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button variant='text'
+                <Button variant='outlinedGray'
                     onClick={onClose}
-                    sx={{
-                        color: 'customBlue',
-                        "&:hover": {
-                            background: 'none',
-                            boxShadow: 'none'
-                        }
-                    }}
                 >
                     Cancel
                 </Button>

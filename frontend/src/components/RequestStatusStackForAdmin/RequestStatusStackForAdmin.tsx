@@ -19,7 +19,7 @@ const RequestStatusStackForAdmin: React.FC<Props> = ({ statusCounts, size }) => 
         "Pending",
         "Approved",
         "In Progress",
-        "Waiting For Review",
+        "Waiting for Review",
         "Completed",
         "Unsuccessful"
     ];

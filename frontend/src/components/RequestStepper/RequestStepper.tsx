@@ -30,7 +30,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 ...baseFlowAdmin,
                 ...(includeRework ? ["Rework Requested"] : []),
                 "In Progress",
-                "Waiting For Review",
+                "Waiting for Review",
                 "Completed"
             ];
         } else {
@@ -38,7 +38,7 @@ const RequestStepper: React.FC<RequestStepperProps> = ({ requestStatuses, reques
                 ...baseFlowUser,
                 ...(includeRework ? ["Rework Requested"] : []),
                 "In Process",
-                "Waiting For Review",
+                "Waiting for Review",
                 "Completed"
             ];
         }

@@ -80,7 +80,7 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
                 )}
 
                 <Box display={'flex'}>
-                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Attach image</Typography>
+                    <Typography sx={{ fontWeight: 500, mb: 1 }}>Request Images</Typography>
                     <Typography sx={{ fontWeight: 400, ml: 0.5, color: 'gray' }}>(maximum 3 files)</Typography>
                 </Box>
 
@@ -98,14 +98,8 @@ const ReworkPopup: React.FC<ReworkPopupProps> = ({
             {/* Action buttons */}
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button
+                    variant="outlinedGray"
                     onClick={() => setOpenConfirm(false)}
-                    sx={{
-                        color: 'customBlue',
-                        "&:hover": {
-                            background: 'none',
-                            boxShadow: 'none'
-                        }
-                    }}
                 >Cancel</Button>
                 <Button
                     onClick={() => {

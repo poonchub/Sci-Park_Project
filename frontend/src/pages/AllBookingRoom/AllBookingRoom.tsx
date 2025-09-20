@@ -1181,7 +1181,7 @@ function AllBookingRoom() {
                     <Grid container className="title-box" direction="row" size={{ xs: 12 }} sx={{ gap: 1 }}>
                         <ClipboardList size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            Booking Rooms List
+                            Room Booking List
                         </Typography>
                     </Grid>
 

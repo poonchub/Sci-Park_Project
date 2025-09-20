@@ -541,6 +541,14 @@ func DeleteInvoiceByID(c *gin.Context) {
 		return
 	}
 
+	if invoice.InvoicePDFPath != "" {
+		if err := os.Remove(invoice.InvoicePDFPath); err != nil && !os.IsNotExist(err) {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice PDF file"})
+			return
+		}
+	}
+
 	if err := tx.Delete(&entity.RentalRoomInvoice{}, ID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete invoice"})
