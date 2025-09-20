@@ -5,6 +5,7 @@ import (
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,6 +49,16 @@ func CreateJobPosition(c *gin.Context) {
 		return
 	}
 
+	// Validate job position data using govalidator
+	ok, err := govalidator.ValidateStruct(jobPosition)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
+		return
+	}
+
 	if err := config.DB().Create(&jobPosition).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create job position"})
 		return
@@ -74,6 +85,16 @@ func UpdateJobPositionByID(c *gin.Context) {
 	// รับข้อมูลใหม่
 	if err := c.ShouldBindJSON(&jobPosition); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate job position data using govalidator
+	ok, err := govalidator.ValidateStruct(jobPosition)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Validation failed",
+			"details": err.Error(),
+		})
 		return
 	}
 

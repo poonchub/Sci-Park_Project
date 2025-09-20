@@ -14,7 +14,7 @@ type CollaborationPlan struct {
 	RequestServiceArea   RequestServiceArea `gorm:"foreignKey:RequestServiceAreaID"`
 
 	// Collaboration Plan fields
-	CollaborationPlan   string    `gorm:"type:text" valid:"required~กรุณาระบุแผนการร่วมมือ"`
-	CollaborationBudget float64   `valid:"required~กรุณาระบุงบประมาณการร่วมมือ"`
-	ProjectStartDate    time.Time `valid:"required~กรุณาระบุวันที่เริ่มโครงการ"`
+	CollaborationPlan   string    `gorm:"type:text" valid:"required~Collaboration plan is required"`
+	CollaborationBudget float64   `valid:"required~Collaboration budget is required,range(0.01|999999999)~Collaboration budget must be greater than 0"`
+	ProjectStartDate    time.Time `valid:"required~Project start date is required"`
 }

@@ -2,23 +2,23 @@ const axios = require('axios');
 
 const BASE_URL = 'http://localhost:8000';
 
-// Test cases for Package API
-const packageTestCases = [
+// Test cases for Gender API
+const genderTestCases = [
     {
-        name: 'Test: Get all packages (protected endpoint)',
+        name: 'Test: Get all genders (public endpoint)',
         method: 'GET',
-        url: '/packages',
-        requiresAuth: true,
+        url: '/genders',
+        requiresAuth: false,
         expectedStatus: 200,
-        description: 'Should return list of all packages with ID, PackageName, and room limits'
+        description: 'Should return list of all genders without authentication (public endpoint)'
     },
     {
-        name: 'Test: Get packages without authentication',
+        name: 'Test: Get genders with authentication token',
         method: 'GET', 
-        url: '/packages',
-        requiresAuth: false,
-        expectedStatus: 401,
-        description: 'Should return unauthorized error when no token provided'
+        url: '/genders',
+        requiresAuth: true,
+        expectedStatus: 200,
+        description: 'Should also work with authentication token'
     }
 ];
 
@@ -50,25 +50,25 @@ async function login() {
 }
 
 // Main test runner function
-async function runPackageAPITests() {
+async function runGenderAPITests() {
     console.log('='.repeat(60));
-    console.log('PACKAGE API INTEGRATION TESTS');
+    console.log('GENDER API INTEGRATION TESTS');
     console.log('='.repeat(60));
     
-    // Get authentication token
+    // Get authentication token (for authenticated test case)
     let token;
     try {
         token = await login();
     } catch (error) {
-        console.log('[ERROR] Failed to get authentication token:', error.message);
-        console.log('[ERROR] Cannot run protected endpoint tests');
-        return false;
+        console.log('[WARNING] Failed to get authentication token for authenticated tests');
+        console.log('[INFO] Will skip authenticated test cases');
+        token = null;
     }
     
     let passedTests = 0;
-    let totalTests = packageTestCases.length;
+    let totalTests = genderTestCases.length;
     
-    for (const testCase of packageTestCases) {
+    for (const testCase of genderTestCases) {
         console.log(`\n[TEST] ${testCase.name}`);
         console.log(`[INFO] Description: ${testCase.description}`);
         
@@ -81,10 +81,15 @@ async function runPackageAPITests() {
             };
             
             // Add authorization header if required
-            if (testCase.requiresAuth && token) {
-                config.headers = {
-                    'Authorization': `Bearer ${token}`
-                };
+            if (testCase.requiresAuth) {
+                if (token) {
+                    config.headers = {
+                        'Authorization': `Bearer ${token}`
+                    };
+                } else {
+                    console.log(`[INFO] Skipping authenticated test (no token available)`);
+                    continue;
+                }
             }
             
             const response = await axios(config);
@@ -98,35 +103,37 @@ async function runPackageAPITests() {
                     const data = response.data;
                     
                     if (Array.isArray(data)) {
-                        console.log(`[SUCCESS] Response: Array with ${data.length} packages`);
+                        console.log(`[SUCCESS] Response: Array with ${data.length} genders`);
                         
-                        // Check structure of first package if exists
+                        // Check structure of first gender if exists
                         if (data.length > 0) {
-                            const firstPackage = data[0];
-                            const requiredFields = ['ID', 'PackageName', 'MeetingRoomLimit', 'TrainingRoomLimit', 'MultiFunctionRoomLimit'];
-                            const hasAllFields = requiredFields.every(field => firstPackage.hasOwnProperty(field));
-                            
-                            if (hasAllFields) {
-                                console.log(`[SUCCESS] Structure: Contains all required fields`);
-                                console.log(`[INFO] Sample: ID=${firstPackage.ID}, Name="${firstPackage.PackageName}"`);
-                                console.log(`[INFO] Limits: Meeting=${firstPackage.MeetingRoomLimit}, Training=${firstPackage.TrainingRoomLimit}, Multi=${firstPackage.MultiFunctionRoomLimit}`);
+                            const firstGender = data[0];
+                            if (firstGender.ID && firstGender.Name) {
+                                console.log(`[SUCCESS] Structure: Contains ID and Name fields`);
+                                console.log(`[INFO] Sample: ID=${firstGender.ID}, Name="${firstGender.Name}"`);
                                 
-                                // Validate room limits are non-negative numbers
-                                const limits = [firstPackage.MeetingRoomLimit, firstPackage.TrainingRoomLimit, firstPackage.MultiFunctionRoomLimit];
-                                const validLimits = limits.every(limit => typeof limit === 'number' && limit >= 0);
+                                // Check for common gender values
+                                const genderNames = data.map(gender => gender.Name.toLowerCase());
+                                const commonGenders = ['male', 'female', 'other', 'ชาย', 'หญิง'];
+                                const foundCommonGenders = commonGenders.filter(common => 
+                                    genderNames.some(name => name.includes(common))
+                                );
                                 
-                                if (validLimits) {
-                                    console.log(`[SUCCESS] Validation: All room limits are valid non-negative numbers`);
+                                if (foundCommonGenders.length > 0) {
+                                    console.log(`[SUCCESS] Content: Found common gender types: ${foundCommonGenders.join(', ')}`);
                                 } else {
-                                    console.log(`[WARNING] Validation: Some room limits are invalid`);
+                                    console.log(`[INFO] Content: Available genders: ${genderNames.join(', ')}`);
                                 }
                             } else {
-                                console.log(`[WARNING] Structure: Missing required fields`);
-                                console.log(`[INFO] Available fields: ${Object.keys(firstPackage).join(', ')}`);
+                                console.log(`[WARNING] Structure: Missing expected fields (ID, Name)`);
+                                console.log(`[INFO] Available fields: ${Object.keys(firstGender).join(', ')}`);
                             }
+                        } else {
+                            console.log(`[WARNING] Response: Empty gender list`);
                         }
                     } else {
                         console.log(`[WARNING] Response: Not an array (${typeof data})`);
+                        console.log(`[INFO] Response type: ${JSON.stringify(data)}`);
                     }
                 }
                 
@@ -158,15 +165,15 @@ async function runPackageAPITests() {
     
     // Test Summary
     console.log('\n' + '='.repeat(60));
-    console.log(`PACKAGE API TEST SUMMARY`);
+    console.log(`GENDER API TEST SUMMARY`);
     console.log('='.repeat(60));
     console.log(`[SUCCESS] Passed: ${passedTests}/${totalTests}`);
     console.log(`[ERROR] Failed: ${totalTests - passedTests}/${totalTests}`);
     
     if (passedTests === totalTests) {
-        console.log(`[SUCCESS] All Package API tests passed!`);
+        console.log(`[SUCCESS] All Gender API tests passed!`);
     } else {
-        console.log(`[WARNING] Some Package API tests failed. Check the logs above.`);
+        console.log(`[WARNING] Some Gender API tests failed. Check the logs above.`);
     }
     
     return passedTests === totalTests;
@@ -174,14 +181,14 @@ async function runPackageAPITests() {
 
 // Run tests if this file is executed directly
 if (require.main === module) {
-    runPackageAPITests()
+    runGenderAPITests()
         .then(success => {
             process.exit(success ? 0 : 1);
         })
         .catch(error => {
-            console.error('[ERROR] Package API tests crashed:', error.message);
+            console.error('[ERROR] Gender API tests crashed:', error.message);
             process.exit(1);
         });
 }
 
-module.exports = { runPackageAPITests };
+module.exports = { runGenderAPITests };

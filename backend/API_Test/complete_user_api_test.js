@@ -13,7 +13,7 @@ let testUserId = '';
 
 const publicApiTests = [
     {
-        name: "✅ Register - ข้อมูลถูกต้องครบทุกฟิลด์",
+        name: "Test: Register - Valid data with all fields",
         method: "POST",
         url: "/register",
         data: {
@@ -36,7 +36,7 @@ const publicApiTests = [
         expectedStatus: 201
     },
     {
-        name: "✅ Register - ข้อมูลถูกต้อง มีแค่ฟิลด์จำเป็น",
+        name: "Test: Register - Valid data with required fields only",
         method: "POST", 
         url: "/register",
         data: {
@@ -54,7 +54,7 @@ const publicApiTests = [
         expectedStatus: 201
     },
     {
-        name: "✅ Register - EmployeeID ว่าง (คนนอก)",
+        name: "Test: Register - Empty EmployeeID (External user)",
         method: "POST",
         url: "/register",
         data: {
@@ -76,7 +76,7 @@ const publicApiTests = [
         expectedStatus: 201
     },
     {
-        name: "❌ Register - อีเมลผิดรูปแบบ",
+        name: "Test: Register - Invalid email format",
         method: "POST",
         url: "/register",
         data: {
@@ -94,7 +94,7 @@ const publicApiTests = [
         expectedStatus: 400
     },
     {
-        name: "❌ Register - รหัสผ่านสั้นเกินไป",
+        name: "Test: Register - Password too short",
         method: "POST",
         url: "/register",
         data: {
@@ -112,7 +112,7 @@ const publicApiTests = [
         expectedStatus: 400
     },
     {
-        name: "❌ Register - เบอร์โทรไม่ขึ้นต้นด้วย 0",
+        name: "Test: Register - Phone number not starting with 0",
         method: "POST",
         url: "/register",
         data: {
@@ -130,7 +130,7 @@ const publicApiTests = [
         expectedStatus: 400
     },
     {
-        name: "❌ Register - ไม่มีชื่อจริง",
+        name: "Test: Register - Missing first name",
         method: "POST",
         url: "/register",
         data: {
@@ -153,7 +153,7 @@ const publicApiTests = [
 // ===============================
 
 const loginTest = {
-    name: "🔑 Login - เข้าสู่ระบบ",
+    name: "Test: Login - User authentication",
     method: "POST",
     url: "/auth/login",
     data: {
@@ -169,14 +169,14 @@ const loginTest = {
 
 const protectedApiTests = [
     {
-        name: "🔒 Get User By ID - ดูข้อมูลผู้ใช้",
+        name: "Test: Get User By ID - View user data",
         method: "GET",
         url: "/user/{userId}",
         needsAuth: true,
         expectedStatus: 200
     },
     {
-        name: "🔒 Update User - แก้ไขข้อมูลผู้ใช้",
+        name: "Test: Update User - Modify user data",
         method: "PATCH",
         url: "/user/{userId}",
         needsAuth: true,
@@ -187,7 +187,7 @@ const protectedApiTests = [
         expectedStatus: 200
     },
     {
-        name: "🔒 List Users (Admin) - ดูรายการผู้ใช้ทั้งหมด",
+        name: "Test: List Users (Admin) - View all users",
         method: "GET",
         url: "/users",
         needsAuth: true,
@@ -202,7 +202,7 @@ const protectedApiTests = [
 
 async function runTest(testCase, token = null) {
     try {
-        console.log(`\n🧪 ${testCase.name}`);
+        console.log(`\n[TEST] ${testCase.name}`);
         
         // เตรียม URL (แทนที่ {userId} ด้วย testUserId)
         let url = testCase.url;
@@ -266,30 +266,30 @@ async function runTest(testCase, token = null) {
         const response = await axios(config);
         
         if (response.status === testCase.expectedStatus) {
-            console.log(`✅ PASS - Status: ${response.status}`);
+            console.log(`[SUCCESS] PASS - Status: ${response.status}`);
             if (response.data.message) {
-                console.log(`📝 Message: ${response.data.message}`);
+                console.log(`[INFO] Message: ${response.data.message}`);
             }
             return { success: true, testCase: testCase.name, status: response.status, data: response.data };
         } else {
-            console.log(`❌ FAIL - Expected: ${testCase.expectedStatus}, Got: ${response.status}`);
-            console.log(`📝 Response:`, response.data);
+            console.log(`[ERROR] FAIL - Expected: ${testCase.expectedStatus}, Got: ${response.status}`);
+            console.log(`[INFO] Response:`, response.data);
             return { success: false, testCase: testCase.name, reason: `Wrong status code`, expected: testCase.expectedStatus, actual: response.status };
         }
         
     } catch (error) {
         if (error.response && error.response.status === testCase.expectedStatus) {
-            console.log(`✅ PASS - Status: ${error.response.status}`);
+            console.log(`[SUCCESS] PASS - Status: ${error.response.status}`);
             if (error.response.data) {
                 const errorMsg = error.response.data.message || error.response.data.error || JSON.stringify(error.response.data);
-                console.log(`📝 Error Message: ${errorMsg}`);
+                console.log(`[INFO] Error Message: ${errorMsg}`);
             }
             return { success: true, testCase: testCase.name, status: error.response.status };
         } else {
-            console.log(`❌ FAIL - Error: ${error.message}`);
+            console.log(`[ERROR] FAIL - Error: ${error.message}`);
             if (error.response) {
-                console.log(`📝 Response Status: ${error.response.status}`);
-                console.log(`📝 Response Data:`, error.response.data);
+                console.log(`[INFO] Response Status: ${error.response.status}`);
+                console.log(`[INFO] Response Data:`, error.response.data);
             }
             return { 
                 success: false, 
@@ -304,16 +304,16 @@ async function runTest(testCase, token = null) {
 
 async function checkServerHealth() {
     try {
-        console.log('🔍 ตรวจสอบสถานะ Server...');
+        console.log('[INFO] Checking server status...');
         const response = await axios.get(`${BASE_URL}/`, { timeout: 5000 });
-        console.log('✅ Server พร้อมใช้งาน');
-        console.log(`📝 Response: ${response.data}`);
+        console.log('[SUCCESS] Server is ready');
+        console.log(`[INFO] Response: ${response.data}`);
         return true;
     } catch (error) {
-        console.log('❌ Server ไม่พร้อมใช้งาน');
-        console.log('💡 กรุณาตรวจสอบ:');
-        console.log('   1. Go server ทำงานอยู่หรือไม่? (go run main.go)');
-        console.log('   2. Port 8000 ถูกต้องหรือไม่?');
+        console.log('[ERROR] Server is not ready');
+        console.log('[INFO] Please check:');
+        console.log('   1. Go server is running? (go run main.go)');
+        console.log('   2. Port 8000 is correct?');
         console.log(`   3. URL: ${BASE_URL}`);
         return false;
     }
@@ -324,22 +324,22 @@ async function checkServerHealth() {
 // ===============================
 
 async function runAllTests() {
-    console.log('🚀 เริ่มทดสอบ Complete User API Integration Tests');
+    console.log('USER API INTEGRATION TESTS');
     console.log('='.repeat(70));
-    console.log(`📡 Base URL: ${BASE_URL}`);
+    console.log(`[INFO] Base URL: ${BASE_URL}`);
     console.log('='.repeat(70));
     
     // 1. ตรวจสอบ Server
     const serverReady = await checkServerHealth();
     if (!serverReady) {
-        console.log('\n⚠️  Server ไม่พร้อม - หยุดการทดสอบ');
+        console.log('\n[WARNING] Server not ready - stopping tests');
         return;
     }
 
     const allResults = [];
     
     // 2. ทดสอบ Public APIs
-    console.log('\n🌍 ทดสอบ PUBLIC APIs (ไม่ต้อง Token)');
+    console.log('\n[INFO] Testing PUBLIC APIs (no token required)');
     console.log('-'.repeat(50));
     
     for (let i = 0; i < publicApiTests.length; i++) {
@@ -351,14 +351,14 @@ async function runAllTests() {
         // เก็บ User ID จาก Register ที่สำเร็จ
         if (result.success && testCase.url === '/register' && result.data && result.data.user) {
             testUserId = result.data.user.ID || result.data.user.id;
-            console.log(`💾 เก็บ Test User ID: ${testUserId}`);
+            console.log(`[INFO] Saved Test User ID: ${testUserId}`);
         }
         
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     // 3. ทดสอบ Login
-    console.log('\n🔑 ทดสอบ LOGIN');
+    console.log('\n[INFO] Testing LOGIN');
     console.log('-'.repeat(50));
     
     const loginResult = await runTest(loginTest);
@@ -367,12 +367,12 @@ async function runAllTests() {
     // เก็บ Token จาก Login
     if (loginResult.success && loginResult.data && loginResult.data.token) {
         authToken = loginResult.data.token;
-        console.log(`🔑 เก็บ Auth Token: ${authToken.substring(0, 20)}...`);
+        console.log(`[INFO] Saved Auth Token: ${authToken.substring(0, 20)}...`);
     }
     
     // 4. ทดสอบ Protected APIs
     if (authToken) {
-        console.log('\n🔒 ทดสอบ PROTECTED APIs (ต้องใช้ Token)');
+        console.log('\n[INFO] Testing PROTECTED APIs (token required)');
         console.log('-'.repeat(50));
         
         for (let i = 0; i < protectedApiTests.length; i++) {
@@ -380,7 +380,7 @@ async function runAllTests() {
             console.log(`\n[${i + 1}/${protectedApiTests.length}]`);
             
             if (testCase.needsAdmin) {
-                console.log('⚠️  ข้าม: ต้องใช้ Admin Token (ไม่มีในการทดสอบนี้)');
+                console.log('[WARNING] Skip: Requires Admin Token (not available in this test)');
                 continue;
             }
             
@@ -390,24 +390,24 @@ async function runAllTests() {
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
     } else {
-        console.log('\n⚠️  ข้าม Protected APIs: ไม่มี Auth Token');
+        console.log('\n[WARNING] Skip Protected APIs: No Auth Token');
     }
     
     // 5. สรุปผลลัพธ์
     console.log('\n' + '='.repeat(70));
-    console.log('📊 สรุปผลการทดสอบ Complete User API');
+    console.log('USER API TEST SUMMARY');
     console.log('='.repeat(70));
     
     const passed = allResults.filter(r => r.success).length;
     const failed = allResults.filter(r => !r.success).length;
     const successRate = ((passed / allResults.length) * 100).toFixed(2);
     
-    console.log(`✅ ผ่าน: ${passed}/${allResults.length}`);
-    console.log(`❌ ไม่ผ่าน: ${failed}/${allResults.length}`);
-    console.log(`🎯 อัตราความสำเร็จ: ${successRate}%`);
+    console.log(`[SUCCESS] Passed: ${passed}/${allResults.length}`);
+    console.log(`[ERROR] Failed: ${failed}/${allResults.length}`);
+    console.log(`[INFO] Success Rate: ${successRate}%`);
     
     if (failed > 0) {
-        console.log('\n❌ Test cases ที่ไม่ผ่าน:');
+        console.log('\n[ERROR] Failed test cases:');
         allResults.filter(r => !r.success).forEach((r, index) => {
             console.log(`   ${index + 1}. ${r.testCase}`);
             console.log(`      Expected: ${r.expected}, Got: ${r.actual}`);
@@ -418,11 +418,11 @@ async function runAllTests() {
     console.log('\n' + '='.repeat(70));
     
     if (successRate == 100) {
-        console.log('🎉 ยินดีด้วย! ทุก test cases ผ่านหมดแล้ว!');
+        console.log('[SUCCESS] Congratulations! All test cases passed!');
     } else if (successRate >= 80) {
-        console.log('👍 ผลการทดสอบดี มี test cases บางตัวที่ต้องแก้ไข');
+        console.log('[SUCCESS] Good test results, some test cases need fixing');
     } else {
-        console.log('⚠️  ต้องแก้ไข API หรือ test cases ให้มากขึ้น');
+        console.log('[WARNING] Need to fix API or test cases');
     }
     
     return allResults;

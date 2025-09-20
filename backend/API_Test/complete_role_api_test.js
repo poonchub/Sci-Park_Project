@@ -24,42 +24,53 @@ const roleTestCases = [
 
 // Login function to get authentication token
 async function login() {
-    const loginData = new FormData();
-    loginData.append('email', 'test@example.com');
-    loginData.append('password', 'password123');
+    const loginData = {
+        email: 'admin@gmail.com',
+        password: '123456'
+    };
     
     try {
         const response = await axios.post(`${BASE_URL}/auth/login`, loginData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'application/json'
             }
         });
         
-        if (response.status === 200 && response.data.token) {
-            console.log('[SUCCESS] Login successful');
-            return response.data.token;
+        if (response.status === 200 && response.data.Token) {
+            console.log('[SUCCESS] Login successful, got real token');
+            return response.data.Token;
+        } else {
+            console.log('[ERROR] Login response missing token:', response.data);
+            throw new Error('Login successful but no token received');
         }
     } catch (error) {
-        console.log('[WARNING] Login failed, using mock token for protected endpoint tests');
-        return 'mock_token_for_testing';
+        console.log('[ERROR] Login failed:', error.response?.data || error.message);
+        throw new Error('Cannot proceed without valid authentication token');
     }
 }
 
 // Main test runner function
 async function runRoleAPITests() {
     console.log('='.repeat(60));
-    console.log('🧪 ROLE API INTEGRATION TESTS');
+    console.log('ROLE API INTEGRATION TESTS');
     console.log('='.repeat(60));
     
     // Get authentication token
-    const token = await login();
+    let token;
+    try {
+        token = await login();
+    } catch (error) {
+        console.log('[ERROR] Failed to get authentication token:', error.message);
+        console.log('[ERROR] Cannot run protected endpoint tests');
+        return false;
+    }
     
     let passedTests = 0;
     let totalTests = roleTestCases.length;
     
     for (const testCase of roleTestCases) {
-        console.log(`\n📋 ${testCase.name}`);
-        console.log(`   Description: ${testCase.description}`);
+        console.log(`\n[TEST] ${testCase.name}`);
+        console.log(`[INFO] Description: ${testCase.description}`);
         
         try {
             // Prepare request config
@@ -80,33 +91,33 @@ async function runRoleAPITests() {
             
             // Check response status
             if (response.status === testCase.expectedStatus) {
-                console.log(`   ✅ Status: ${response.status} (Expected: ${testCase.expectedStatus})`);
+                console.log(`[SUCCESS] Status: ${response.status} (Expected: ${testCase.expectedStatus})`);
                 
                 // Additional checks for successful responses
                 if (response.status === 200) {
                     const data = response.data;
                     
                     if (Array.isArray(data)) {
-                        console.log(`   ✅ Response: Array with ${data.length} roles`);
+                        console.log(`[SUCCESS] Response: Array with ${data.length} roles`);
                         
                         // Check structure of first role if exists
                         if (data.length > 0) {
                             const firstRole = data[0];
                             if (firstRole.ID && firstRole.Name) {
-                                console.log(`   ✅ Structure: Contains ID and Name fields`);
-                                console.log(`   📄 Sample: ID=${firstRole.ID}, Name="${firstRole.Name}"`);
+                                console.log(`[SUCCESS] Structure: Contains ID and Name fields`);
+                                console.log(`[INFO] Sample: ID=${firstRole.ID}, Name="${firstRole.Name}"`);
                             } else {
-                                console.log(`   ⚠️  Structure: Missing expected fields (ID, Name)`);
+                                console.log(`[WARNING] Structure: Missing expected fields (ID, Name)`);
                             }
                         }
                     } else {
-                        console.log(`   ⚠️  Response: Not an array (${typeof data})`);
+                        console.log(`[WARNING] Response: Not an array (${typeof data})`);
                     }
                 }
                 
                 passedTests++;
             } else {
-                console.log(`   ❌ Status: ${response.status} (Expected: ${testCase.expectedStatus})`);
+                console.log(`[ERROR] Status: ${response.status} (Expected: ${testCase.expectedStatus})`);
             }
             
         } catch (error) {
@@ -114,33 +125,33 @@ async function runRoleAPITests() {
                 // Server responded with error status
                 const status = error.response.status;
                 if (status === testCase.expectedStatus) {
-                    console.log(`   ✅ Status: ${status} (Expected: ${testCase.expectedStatus})`);
-                    console.log(`   ✅ Error Response: ${JSON.stringify(error.response.data)}`);
+                    console.log(`[SUCCESS] Status: ${status} (Expected: ${testCase.expectedStatus})`);
+                    console.log(`[SUCCESS] Error Response: ${JSON.stringify(error.response.data)}`);
                     passedTests++;
                 } else {
-                    console.log(`   ❌ Status: ${status} (Expected: ${testCase.expectedStatus})`);
-                    console.log(`   📄 Error Response: ${JSON.stringify(error.response.data)}`);
+                    console.log(`[ERROR] Status: ${status} (Expected: ${testCase.expectedStatus})`);
+                    console.log(`[INFO] Error Response: ${JSON.stringify(error.response.data)}`);
                 }
             } else if (error.request) {
-                console.log(`   ❌ Network Error: No response received`);
-                console.log(`   📄 Details: ${error.message}`);
+                console.log(`[ERROR] Network Error: No response received`);
+                console.log(`[INFO] Details: ${error.message}`);
             } else {
-                console.log(`   ❌ Request Error: ${error.message}`);
+                console.log(`[ERROR] Request Error: ${error.message}`);
             }
         }
     }
     
     // Test Summary
     console.log('\n' + '='.repeat(60));
-    console.log(`📊 ROLE API TEST SUMMARY`);
+    console.log(`ROLE API TEST SUMMARY`);
     console.log('='.repeat(60));
-    console.log(`✅ Passed: ${passedTests}/${totalTests}`);
-    console.log(`❌ Failed: ${totalTests - passedTests}/${totalTests}`);
+    console.log(`[SUCCESS] Passed: ${passedTests}/${totalTests}`);
+    console.log(`[ERROR] Failed: ${totalTests - passedTests}/${totalTests}`);
     
     if (passedTests === totalTests) {
-        console.log(`🎉 All Role API tests passed!`);
+        console.log(`[SUCCESS] All Role API tests passed!`);
     } else {
-        console.log(`⚠️  Some Role API tests failed. Check the logs above.`);
+        console.log(`[WARNING] Some Role API tests failed. Check the logs above.`);
     }
     
     return passedTests === totalTests;

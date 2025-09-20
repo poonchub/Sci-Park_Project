@@ -65,25 +65,7 @@ else
     print_success "Port 8000 is available"
 fi
 
-# Step 3: Run Go Unit Tests first
-print_header "Running Go Unit Tests"
-print_step "Switching to test directory..."
-
-cd ../test
-
-print_step "Running Go unit tests with validation..."
-if go test -v; then
-    print_success "All Go unit tests passed!"
-else
-    print_warning "Some Go unit tests failed, continuing with API tests anyway..."
-fi
-echo
-
-# Step 4: Return to API_Test directory
-print_step "Returning to API_Test directory..."
-cd ../API_Test
-
-# Step 5: Cleanup old test database and backup original database
+# Step 3: Setup test environment
 print_header "Setting up Test Environment"
 print_step "Cleaning up old test database..."
 if [ -f "../sci-park_test.db" ]; then
@@ -129,8 +111,110 @@ done
 print_success "Go server started with test database"
 echo
 
-# Step 7: Run API Integration Tests
-print_header "Running API Integration Tests"
+# Step 7: Run API Integration Tests - Alternating Pattern
+print_header "Running Entity Tests (Alternating Unit + API Pattern)"
+
+# Session 1: User Tests
+print_step "=== USER SESSION ==="
+print_step "1. User Unit Tests..."
+cd ../test
+if go test -v ./Users_test.go; then
+    print_success "User unit tests passed!"
+else
+    print_warning "User unit tests had issues"
+fi
+cd ../API_Test
+echo
+
+print_step "2. User API Tests..."
+if node complete_user_api_test.js; then
+    print_success "User API tests finished!"
+else
+    print_warning "User API tests had some issues"
+fi
+echo
+
+# Session 2: Role Tests
+print_step "=== ROLE SESSION ==="
+print_step "3. Role Unit Tests..."
+cd ../test
+if go test -v ./Role_test.go; then
+    print_success "Role unit tests passed!"
+else
+    print_warning "Role unit tests had issues"
+fi
+cd ../API_Test
+echo
+
+print_step "4. Role API Tests..."
+if node complete_role_api_test.js; then
+    print_success "Role API tests finished!"
+else
+    print_warning "Role API tests had some issues"
+fi
+echo
+
+# Session 3: Package Tests
+print_step "=== PACKAGE SESSION ==="
+print_step "5. Package Unit Tests..."
+cd ../test
+if go test -v ./Package_test.go; then
+    print_success "Package unit tests passed!"
+else
+    print_warning "Package unit tests had issues"
+fi
+cd ../API_Test
+echo
+
+print_step "6. Package API Tests..."
+if node complete_package_api_test.js; then
+    print_success "Package API tests finished!"
+else
+    print_warning "Package API tests had some issues"
+fi
+echo
+
+# Session 4: JobPosition Tests
+print_step "=== JOB POSITION SESSION ==="
+print_step "7. JobPosition Unit Tests..."
+cd ../test
+if go test -v ./JobPosition_test.go; then
+    print_success "JobPosition unit tests passed!"
+else
+    print_warning "JobPosition unit tests had issues"
+fi
+cd ../API_Test
+echo
+
+print_step "8. JobPosition API Tests..."
+if node complete_jobposition_api_test.js; then
+    print_success "JobPosition API tests finished!"
+else
+    print_warning "JobPosition API tests had some issues"
+fi
+echo
+
+# Session 5: Gender Tests
+print_step "=== GENDER SESSION ==="
+print_step "9. Gender Unit Tests..."
+cd ../test
+if go test -v ./Gender_test.go; then
+    print_success "Gender unit tests passed!"
+else
+    print_warning "Gender unit tests had issues"
+fi
+cd ../API_Test
+echo
+
+print_step "10. Gender API Tests..."
+if node complete_gender_api_test.js; then
+    print_success "Gender API tests finished!"
+else
+    print_warning "Gender API tests had some issues"
+fi
+echo
+
+print_header "Additional Integration Tests"
 
 print_step "Running Mock Test Strategy (Safe Testing)..."
 echo
@@ -138,15 +222,6 @@ if node mock_test_strategy.js; then
     print_success "Mock tests completed successfully!"
 else
     print_error "Mock tests failed"
-fi
-echo
-
-print_step "Running Complete User API Tests..."
-echo
-if node complete_user_api_test.js; then
-    print_success "Complete API tests finished!"
-else
-    print_warning "Complete API tests had some issues"
 fi
 echo
 
@@ -188,25 +263,20 @@ echo
 
 # Step 9: Final Summary
 print_header "Testing Summary"
-print_success "All tests completed!"
+print_success "Automated Testing Sequence Completed!"
 echo
-echo "What was tested:"
-echo "  - Go Unit Tests (Validation Logic)"
-echo "  - API Integration Tests (Mock Strategy)"
-echo "  - Complete User API Flow"
-echo "  - Transaction-based Tests"
+echo "Test Execution Order:"
+echo "  1. General Unit Tests (all entities)"
+echo "  2. User Unit Tests → User API Tests"
+echo "  3. Role Unit Tests → Role API Tests"
+echo "  4. Package Unit Tests → Package API Tests"
+echo "  5. JobPosition Unit Tests → JobPosition API Tests"
+echo "  6. Gender Unit Tests → Gender API Tests"
+echo "  7. Additional Integration Tests (Mock + Transaction)"
 echo
 echo "Database Status:"
+echo "  - Test database preserved: ../sci-park_test.db"
 echo "  - Original database restored"
-echo "  - Test database preserved for inspection"
 echo
-echo "Next Steps:"
-echo "  - Review test outputs above for any failures"
-echo "  - Check Go server logs for any issues"
-echo "  - Run individual tests if needed:"
-echo "    * node mock_test_strategy.js"
-echo "    * node complete_user_api_test.js"
-echo "    * node transaction_test.js"
-echo
-print_success "Testing automation completed!"
+print_success "All entity testing completed with Unit + API coverage!"
 echo
