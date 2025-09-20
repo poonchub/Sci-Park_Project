@@ -198,7 +198,7 @@ echo "  - Transaction-based Tests"
 echo
 echo "Database Status:"
 echo "  - Original database restored"
-echo "  - Test artifacts cleaned up"
+echo "  - Test database preserved for inspection"
 echo
 echo "Next Steps:"
 echo "  - Review test outputs above for any failures"
