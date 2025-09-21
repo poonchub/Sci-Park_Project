@@ -1444,3 +1444,30 @@ func fetchBookingMonthlyCounts(start, end time.Time) []struct {
 
 	return monthlyCounts
 }
+
+// PATCH /booking-room/:id
+func UpdateBookingRoomByID(c *gin.Context) {
+	ID := c.Param("id")
+
+	var booking entity.BookingRoom
+
+	db := config.DB()
+	result := db.First(&booking, ID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "id not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&booking); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request, unable to map payload"})
+		return
+	}
+
+	result = db.Save(&booking)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Updated successful"})
+}

@@ -365,6 +365,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                         display: "flex",
                         gap: 1,
                         alignItems: "center",
+                        color: "primary.main"
                     }}
                 >
                     <Newspaper />
@@ -857,7 +858,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                             handleResetData();
                             setAlerts([]);
                         }}
-                        variant="outlined"
+                        variant="outlinedGray"
                         startIcon={<CircleX size={18} />}
                     >
                         Close

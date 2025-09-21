@@ -18,7 +18,7 @@ import {
     Newspaper,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { analyticsService, KEY_PAGES } from '../../services/analyticsService';
 import { useInteractionTracker } from '../../hooks/useInteractionTracker';
 import { GetOrganizationInfo, ListPinnedNewsPeriod, ListUnpinnedNewsPeriod } from '../../services/http';
@@ -346,9 +346,9 @@ export default function SciparkHomePage() {
                             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                                 <Link to='/news'>
                                     <Button
-                                        variant="outlined"
+                                        variant="outlinedGray"
                                         color="primary"
-                                        endIcon={<ArrowRight />}
+                                        endIcon={<ArrowRight size={18} style={{ minWidth: '18px', minHeight: '18px' }}/>}
                                     >
                                         View All News
                                     </Button>

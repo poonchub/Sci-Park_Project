@@ -144,7 +144,6 @@ function RoomRentalSpace() {
     const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
     const [isLoadingInvoice, setIsLoadingInvoice] = useState<boolean>(true);
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
-    const [invoiceNumber, setInvoiceNumber] = useState()
 
     const [searchTextRoom, setSearchTextRoom] = useState("");
     const [searchTextInvoice, setSearchTextInvoice] = useState("");

@@ -1695,6 +1695,20 @@ async function ListBookingRoomsForUser(
         throw error;
     }
 }
+async function UpdateBookingRoomByID(booking_id: number, data: BookingRoomsInterface) {
+    try {
+        const response = await axiosInstance.patch(`/booking-room/${booking_id}`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error uploading invoice PDF:", error);
+        throw error;
+    }
+}
 
 
 // ---------------- ROOM TYPES ----------------
@@ -2160,7 +2174,6 @@ async function GetRoomsByRoomTypeID(roomTypeId?: number): Promise<RoomsInterface
 }
 
 async function CreateBookingRoom(data: BookingRoomsInterface) {
-    console.log("56", data);
     const requestOptions = {
         method: "POST",
         headers: {
@@ -3892,6 +3905,7 @@ export {
     ListBookingRoomsByUser,
     ListBookingRoomsForAdmin,
     ListBookingRoomsForUser,
+    UpdateBookingRoomByID,
 
     // News
     ListNews,

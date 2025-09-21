@@ -1,7 +1,7 @@
-import { Box, Button, Card, CardContent, CardMedia, Chip, Collapse, Container, Fade, FormControlLabel, Grid, InputAdornment, MenuItem, Stack, Switch, Typography } from '@mui/material'
+import { Box, Button, Card, Collapse, Container, FormControlLabel, Grid, InputAdornment, MenuItem, Stack, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { NewsInterface } from '../../interfaces/News'
-import { apiUrl, CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, GetUserById, ListNews, ListNewsOrdered, ListNewsOrderedPeriod, ListPinnedNews, ListUnpinnedNews, socketUrl } from '../../services/http';
+import { CreateNews, CreateNewsImages, DeleteNewsByID, DeleteNewsImagesByNewsID, ListNewsOrdered, ListNewsOrderedPeriod, ListPinnedNews, ListUnpinnedNews } from '../../services/http';
 import { TextField } from '../../components/TextField/TextField';
 
 import { BrushCleaning, CirclePlus, Newspaper, SquarePlus, TextSearch } from 'lucide-react';
@@ -9,16 +9,14 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '../../components/DatePicker/DatePicker';
 import { CalendarMonth } from '@mui/icons-material';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import ImageUploader from '../../components/ImageUploader/ImageUploader';
 import { Android12Switch } from '../../components/Android12Switch/Android12Switch ';
 import AlertGroup from '../../components/AlertGroup/AlertGroup';
-import { UserInterface } from '../../interfaces/IUser';
 import { isAdmin, isManager } from '../../routes';
 import NewsCard from '../../components/NewsCard/NewsCard';
 import NewsDetailPopup from '../../components/NewsDetailPopup/NewsDetailPopup';
 import { MaterialUISwitch } from '../../components/MaterialUISwitch/MaterialUISwitch';
-import { io } from 'socket.io-client';
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog';
 import { handleDeleteNews } from '../../utils/handleDeleteNews';
 import { Select } from '../../components/Select/Select';
@@ -313,15 +311,6 @@ function News() {
             sendAnalyticsOnLeave(false);
         };
     }, []);
-
-    // จัดการ focus management แทนการใช้ inert attribute เพื่อป้องกัน aria-hidden warning
-    useEffect(() => {
-        if (openPopupCard) {
-            // ไม่ต้องทำอะไรเมื่อเปิด popup เพราะ Dialog จะจัดการ focus management เอง
-        } else {
-            // เมื่อปิด popup ไม่ต้องทำอะไร
-        }
-    }, [openPopupCard]);
 
     useEffect(() => {
         getNewsForAdmin()
@@ -623,6 +612,7 @@ function News() {
                             </Grid>
                         </Card>
                     </Collapse>
+                    
                     <Grid
                         container
                         size={{ xs: 12 }}
@@ -650,21 +640,22 @@ function News() {
                         </Collapse>
                     </Grid>
 
-
-                    <Grid container size={{ xs: 12 }} spacing={3}>
-                        {news.map((news) => (
-                            <NewsCard
-                                key={JSON.stringify(news)}
-                                news={news}
-                                gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
-                                isEditMode={isEditMode}
-                                onOpenPopup={() => setOpenPopupCard(true)}
-                                setSelectedNews={setSelectedNews}
-                                setIsClickEdit={setIsClickEdit}
-                                setOpenDelete={setOpenDelete}
-                            />
-                        ))}
-                    </Grid>
+                    <Collapse in={!isLoadingData} timeout={400} unmountOnExit>
+                        <Grid container size={{ xs: 12 }} spacing={3}>
+                            {news.map((news) => (
+                                <NewsCard
+                                    key={JSON.stringify(news)}
+                                    news={news}
+                                    gridSize={{ xs: 12, sm: 12, lg: 6, xl: 4 }}
+                                    isEditMode={isEditMode}
+                                    onOpenPopup={() => setOpenPopupCard(true)}
+                                    setSelectedNews={setSelectedNews}
+                                    setIsClickEdit={setIsClickEdit}
+                                    setOpenDelete={setOpenDelete}
+                                />
+                            ))}
+                        </Grid>
+                    </Collapse>
                 </Grid>
             </Container>
         </Box>
