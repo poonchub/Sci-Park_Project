@@ -216,7 +216,7 @@ const WindowsLayout: React.FC = (props: any) => {
                 },
                 {
                     segment: "all-booking-room",   // 👈 segment ตรงไปตรงมา
-                    title: "All Booking Room",
+                    title: "Room Booking",
                     icon: < Hotel size={iconSize} />,
                     action:
                         notificationCounts?.UnreadBookingRoom &&

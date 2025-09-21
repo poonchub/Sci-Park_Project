@@ -264,7 +264,7 @@ function PaymentGrid({ installments }: { installments: InstallmentStep[] }) {
 
 /* ----------------------- Action policy (ศูนย์รวม) ----------------------- */
 
-type ActionKey = "approve" | "reject" | "approvePayment" | "rejectPayment" | "complete" | "uploadSlip";
+type ActionKey = "approve" | "reject" | "approvePayment" | "rejectPayment" | "completed" | "uploadSlip";
 type ActionItem = { key: ActionKey; label: string; color?: "primary" | "error" | "inherit"; disabled?: boolean; };
 
 function computeActions(params: {
@@ -304,7 +304,7 @@ function computeActions(params: {
       actions.push({ key: "rejectPayment", label: "Reject Payment", color: "error", disabled: !pay?.id });
       actions.push({ key: "approvePayment", label: "Approve Payment", color: "primary", disabled: !pay?.id });
     } else if (disp === "payment") {
-      actions.push({ key: "complete", label: "Finish Booking", color: "primary" });
+      actions.push({ key: "completed", label: "Finish Booking", color: "primary" });
     }
   }
 
@@ -416,7 +416,7 @@ export default function BookingReview() {
             await RejectPayment(paymentSummary.id);
             setAlerts((p) => [...p, { type: "warning", message: "Payment rejected" }]);
             break;
-          case "complete":
+          case "completed":
             await CompleteBookingRoom(bookingId);
             setAlerts((p) => [...p, { type: "success", message: "Booking marked completed" }]);
             break;
@@ -719,8 +719,8 @@ export default function BookingReview() {
                     sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600, px: 3, py: 1.2 }}
                     onClick={() => (a.key === "reject" ? setOpenReject(true) : handleAction(a.key))}
                   >
-                    {(a.key === "approve" || a.key === "approvePayment" || a.key === "complete") && <Check size={16} />}
-                    <Typography sx={{ ml: (a.key === "approve" || a.key === "approvePayment" || a.key === "complete") ? 0.5 : 0 }}>
+                    {(a.key === "approve" || a.key === "approvePayment" || a.key === "completed") && <Check size={16} />}
+                    <Typography sx={{ ml: (a.key === "approve" || a.key === "approvePayment" || a.key === "completed") ? 0.5 : 0 }}>
                       {a.label}
                     </Typography>
                   </Button>

@@ -1,6 +1,6 @@
 // Importing necessary Lucide React icons
 import { Hourglass, LucideIcon, Repeat } from "lucide-react";
-import { RotateCcw, Check, X, ClipboardCheck, Flag, Clock, RotateCcw as Redo, AlertTriangle, Ban, UserCheck } from "lucide-react";
+import { RotateCcw, Check, X, ClipboardCheck, Flag, AlertTriangle, Ban, UserCheck } from "lucide-react";
 
 // Interface defining the configuration for each status type
 export interface StatusConfig {
@@ -31,7 +31,7 @@ export const statusConfig: Record<string, StatusConfig> = {
         colorLite: "rgba(0, 123, 255, 0.18)",
         icon: RotateCcw
     },
-    "Waiting For Review": {
+    "Waiting for Review": {
         color: "#17A2B8",
         colorLite: "rgba(23, 163, 184, 0.18)",
         icon: ClipboardCheck

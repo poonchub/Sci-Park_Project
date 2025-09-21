@@ -795,7 +795,7 @@ function MyBookingRoom() {
 
             // สถานะ booking โดยรวม (ไว้เช็คว่าได้รับการอนุมัติหรือยัง)
             const dStatus = flowFromBackend(data);
-            const awaitingApproval = lower(dStatus) === "pending approved";
+            const awaitingApproval = lower(dStatus) === "pending approvel";
 
 
 
@@ -1112,7 +1112,7 @@ function MyBookingRoom() {
 
             // เพิ่มหลังจากคำนวณ statusKey และ before return
             // const dStatus = flowFromBackend(data);
-            // const awaitingApproval = lower(dStatus) === "pending approved";
+            // const awaitingApproval = lower(dStatus) === "pending approvel";
             // const isViewSlip = ((primary?.label ?? "") as string).toLowerCase().includes("view slip");
             // const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
             // const primaryTooltip = awaitingApproval
@@ -1358,7 +1358,7 @@ function MyBookingRoom() {
           const locked = isRowReadOnly(row); // <<< ล็อกเมื่อ refunded/cancelled
 
           const dStatus = flowFromBackend(row);
-          const awaitingApproval = lower(dStatus) === "pending approved";
+          const awaitingApproval = lower(dStatus) === "pending approvel";
           const isViewSlip = (canPayNow ? "" : "view slip").toLowerCase().includes("view slip");
           // ถ้า upstream ตั้ง primary.label ได้ จะดีกว่า: const isViewSlip = (primary.label||"").toLowerCase().includes("view slip")
           const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");

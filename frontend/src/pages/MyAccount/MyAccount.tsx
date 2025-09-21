@@ -12,9 +12,6 @@ import {
     ListPaymentStatus,
     socketUrl,
     UpdateInvoiceByID,
-    UpdateMaintenanceRequestByID,
-    UpdateNotificationsByRequestID,
-    UpdateNotificationsByServiceAreaRequestID,
     GetRequestServiceAreasByUserID,
     ListPaymentType,
 } from "../../services/http";
@@ -50,14 +47,11 @@ import {
     Eye,
     Pencil,
     FileText,
-    FileText as FilePdf,
     Mail,
     Phone,
-    Briefcase,
     Calendar,
     ShieldUser,
     Wallet,
-    ReceiptText,
     Repeat,
     HandCoins,
     File,
@@ -88,7 +82,6 @@ import { formatToMonthYear } from "../../utils/formatToMonthYear";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
 import PaymentPopup from "../../components/PaymentPopup/PaymentPopup";
 import { PaymentStatusInterface } from "../../interfaces/IPaymentStatuses";
-import PDFPopup from "../../components/PDFPopup/PDFPopup";
 // import { generateInvoicePDF } from "../../utils/generateInvoicePDF";
 import "./MyAccount.css"
 import { useNotificationStore } from "../../store/notificationStore";
@@ -103,7 +96,6 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import { isAdmin, isManager } from "../../routes";
 import MyBooking from "../MyBookingRoom/MyBookingRoom"; // หรือ AllBookingRoom
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
-import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import { PaymentTypeInterface } from "../../interfaces/IPaymentType";
 
 
@@ -155,9 +147,7 @@ const MyAccount: React.FC = () => {
 
     const [openConfirmInspection, setOpenConfirmInspection] = useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
-    const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openPopupPayment, setOpenPopupPayment] = useState(false);
-    const [openPDF, setOpenPDF] = useState(false);
     const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
@@ -167,6 +157,20 @@ const MyAccount: React.FC = () => {
 
     const navigate = useNavigate();
     const { getNewUnreadNotificationCounts } = useNotificationStore();
+
+    const showStatuses = [
+        "Pending", 
+        "Approved", 
+        "In Progress", 
+        "Waiting for Review", 
+        "Completed",
+        "Rework Requested",
+        "Unsuccessful"
+    ]
+
+    const filteredStatuses = requestStatuses.filter((item) => {
+        return showStatuses.includes(item.Name || "")
+    })
 
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
@@ -832,7 +836,7 @@ const MyAccount: React.FC = () => {
                         };
                         const TypeIcon = typeIcon
 
-                        const showButtonConfirm = params.row.RequestStatus?.Name === "Waiting For Review";
+                        const showButtonConfirm = params.row.RequestStatus?.Name === "Waiting for Review";
                         const showButtonCancel = params.row.RequestStatus?.Name === "Pending";
 
                         const cardItem = document.querySelector(".card-item-container") as HTMLElement;
@@ -1191,8 +1195,8 @@ const MyAccount: React.FC = () => {
                     },
                 },
                 {
-                    field: "Date Submitted",
-                    headerName: "Date Submitted",
+                    field: "Date Created",
+                    headerName: "Date Created",
                     type: "string",
                     flex: 1,
                     renderCell: (params) => {
@@ -1297,7 +1301,7 @@ const MyAccount: React.FC = () => {
                     flex: 1,
                     renderCell: (item) => {
                         const data = item.row;
-                        const showButtonConfirm = item.row.RequestStatus?.Name === "Waiting For Review";
+                        const showButtonConfirm = item.row.RequestStatus?.Name === "Waiting for Review";
                         const showButtonCancel = item.row.RequestStatus?.Name === "Pending";
                         return (
                             <Box
@@ -2893,7 +2897,7 @@ const MyAccount: React.FC = () => {
 
                         <Grid container size={{ xs: 7, sm: 7 }} sx={{ justifyContent: "flex-end" }}>
                             <Link to="/my-account/edit-profile">
-                                <Button variant="contained">
+                                <Button variant="outlinedGray">
                                     <Pencil size={20} />
                                     <Typography variant="textButtonClassic">Edit Profile</Typography>
                                 </Button>
@@ -3091,7 +3095,7 @@ const MyAccount: React.FC = () => {
                                         !(user?.IsEmployee) && user?.Role?.Name === "User" &&
                                         <Tab label={
                                             <Badge badgeContent={notificationCounts.UnreadInvoice} color="primary">
-                                                Invoice
+                                                Rental Room Invoice
                                             </Badge>
                                         } {...a11yProps(2)} />
                                     }
@@ -3130,7 +3134,7 @@ const MyAccount: React.FC = () => {
                                             selectedStatuses={selectedStatuses}
                                             setSelectedStatuses={setSelectedStatuses}
                                             handleClearFilter={handleClearFillter}
-                                            requestStatuses={requestStatuses}
+                                            requestStatuses={filteredStatuses}
                                         />
                                     )}
                                 </Grid>

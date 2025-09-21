@@ -387,7 +387,7 @@ function AllBookingRoom() {
                 if (setTotalFlag) setTotal(res.total);
             }
             const counts = (res?.data ?? []).reduce((acc: Record<string, number>, it: any) => {
-                const key = flowFromBackend(it); // "pending approved" | "pending payment" | "partially paid" | "awaiting receipt" | "complete" | "cancelled" | "unknown"
+                const key = flowFromBackend(it); // "pending approvel" | "pending payment" | "partially paid" | "awaiting receipt" | "completed" | "cancelled" | "unknown"
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
             }, {});
@@ -544,7 +544,7 @@ function AllBookingRoom() {
                     await RejectPayment((row.Payment?.id ?? row.Payment?.ID)!);
                     break;
 
-                case "complete":
+                case "completed":
                     await CompleteBookingRoom(row.ID);
                     break;
 
@@ -722,7 +722,7 @@ function AllBookingRoom() {
                         const payKey = toKey(statusRaw);
                         const canPayNow = payKey === "Pending Payment" || payKey === "Rejected";
 
-                        const isPendingApprove = display === "pending approved" && (isManager() || isAdmin());
+                        const isPendingApprove = display === "pending approvel" && (isManager() || isAdmin());
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} rowSpacing={1.2} className="card-item-container">
@@ -999,7 +999,7 @@ function AllBookingRoom() {
 
                     return (
                         <Box className="container-btn" sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", alignItems: "center", height: "100%" }}>
-                            {isAdminLike && dStatus === "pending approved" && (
+                            {isAdminLike && dStatus === "pending approvel" && (
                                 <>
                                     <Tooltip title="Approve">
                                         <span>
@@ -1181,7 +1181,7 @@ function AllBookingRoom() {
                     <Grid container className="title-box" direction="row" size={{ xs: 12 }} sx={{ gap: 1 }}>
                         <ClipboardList size={26} />
                         <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>
-                            Booking Rooms List
+                            Room Booking List
                         </Typography>
                     </Grid>
 

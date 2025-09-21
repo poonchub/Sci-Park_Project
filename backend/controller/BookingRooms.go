@@ -643,10 +643,10 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// ----- สถานะตั้งต้น = Pending Approved -----
+	// ----- สถานะตั้งต้น = Pending Approvel -----
 	var bs entity.BookingStatus
-	if err := tx.Where("LOWER(status_name) = ?", "pending approved").First(&bs).Error; err != nil {
-		bs = entity.BookingStatus{StatusName: "Pending Approved"}
+	if err := tx.Where("LOWER(status_name) = ?", "pending approvel").First(&bs).Error; err != nil {
+		bs = entity.BookingStatus{StatusName: "Pending Approvel"}
 		if e2 := tx.Create(&bs).Error; e2 != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "init booking status failed"})
@@ -905,7 +905,7 @@ func CancelBookingRoom(c *gin.Context) {
 	}
 	// เคสซ้ำ/ปลายทาง
 	switch strings.TrimSpace(booking.Status.StatusName) {
-	case "Cancelled", "Complete":
+	case "Cancelled", "Completed":
 		c.JSON(http.StatusConflict, gin.H{"error": "รายการนี้สิ้นสุดหรือถูกยกเลิกแล้ว"})
 		return
 	}

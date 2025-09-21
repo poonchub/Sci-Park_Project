@@ -68,6 +68,7 @@ import {
     NotebookPen,
     Pencil,
     PencilLine,
+    PlusCircle,
     ReceiptText,
     Save,
     ScrollText,
@@ -239,7 +240,6 @@ function RoomRentalSpace() {
     };
 
     const getInvoiceNumber = async () => {
-        setIsLoadingInvoice(true);
         try {
             const resInvoice = await GetNextInvoiceNumber();
             if (resInvoice) {
@@ -1090,7 +1090,7 @@ function RoomRentalSpace() {
                                                         }}
                                                         disabled={statusName === "Available"}
                                                     >
-                                                        <NotebookPen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                                        <PlusCircle size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                                         <Typography variant="textButtonClassic" className="text-btn">
                                                             Create Invoice
                                                         </Typography>
@@ -1363,7 +1363,7 @@ function RoomRentalSpace() {
                                         }}
                                         disabled={statusName === "Available"}
                                     >
-                                        <NotebookPen size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
+                                        <PlusCircle size={18} style={{ minWidth: '18px', minHeight: '18px' }} />
                                         {/* <Typography variant="textButtonClassic" className="text-btn">
                                             Create Invoice
                                         </Typography> */}
@@ -1764,7 +1764,7 @@ function RoomRentalSpace() {
                                                 </Grid>
                                             }
                                             <Grid size={{ xs: statusName === "Pending Payment" ? 6 : 6 }}>
-                                                <Tooltip title="Download PDF">
+                                                <Tooltip title="Download Invoice PDF">
                                                     <Button
                                                         variant="outlinedGray"
                                                         // onClick={async () => {
@@ -1778,7 +1778,7 @@ function RoomRentalSpace() {
                                                         {
                                                             (width && width > 350) &&
                                                             <Typography variant="textButtonClassic" className="text-btn">
-                                                                Download PDF
+                                                                Download Invoice PDF
                                                             </Typography>
                                                         }
                                                     </Button>
@@ -2220,7 +2220,7 @@ function RoomRentalSpace() {
                                     </Tooltip>
                                 )}
 
-                                <Tooltip title="Download PDF">
+                                <Tooltip title="Download Invoice PDF">
                                     <Button
                                         variant="outlinedGray"
                                         // onClick={async () => {
@@ -2882,10 +2882,13 @@ function RoomRentalSpace() {
                     </Box>
 
                     <Button variant="contained"
-                        onClick={() => setOpenCreatePopup(true)}
+                        onClick={() => {
+                            setOpenCreatePopup(true)
+                            getInvoiceNumber();
+                        }}
                         disabled={selectedRoom?.RoomStatus?.status_name === "Available"}
                     >
-                        <NotebookPen size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
+                        <PlusCircle size={20} style={{ minWidth: '20px', minHeight: '20px' }} />
                         <Typography variant="textButtonClassic">Create Invoice</Typography>
                     </Button>
                     <IconButton

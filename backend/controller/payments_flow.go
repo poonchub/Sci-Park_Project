@@ -155,7 +155,7 @@ func updateBookingStatusAfterPayment(tx *gorm.DB, b *entity.BookingRoom) error {
 	switch {
 	case total == 0:
 		// กรณีฟรี/ส่วนลดเต็ม
-		return setBookingStatus(tx, b.ID, "Complete")
+		return setBookingStatus(tx, b.ID, "Completed")
 	case remaining <= 0:
 		// จ่ายครบ → รอใบเสร็จ
 		return setBookingStatus(tx, b.ID, "Awaiting Receipt")
