@@ -641,7 +641,7 @@ const MyAccount: React.FC = () => {
             try {
                 const resGetQuota = await GetQuota();
                 console.log(resGetQuota.data.quota)
-                if (resGetQuota.success && resGetQuota.data.quota > 0 && false) {
+                if (resGetQuota.success && resGetQuota.data.quota > 0) {
                     const formData = new FormData();
                     formData.append("files", slipfile[0]);
 

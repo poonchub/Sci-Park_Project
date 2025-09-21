@@ -1279,7 +1279,7 @@ func SeedDatabase() {
 	// Request Service Area
 	requestServiceAreas := []entity.RequestServiceArea{
 		{
-			UserID:                             9,
+			UserID:                             10,
 			RequestStatusID:                    2, // Pending
 			PurposeOfUsingSpace:                "Project Alpha - AI Research Lab",
 			NumberOfEmployees:                  5,

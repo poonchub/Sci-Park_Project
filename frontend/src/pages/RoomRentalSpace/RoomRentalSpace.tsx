@@ -2771,7 +2771,7 @@ function RoomRentalSpace() {
 
                         <Grid size={{ xs: 12 }} sx={{ textAlign: "end" }}>
                             <Button
-                                variant="outlined"
+                                variant="outlinedGray"
                                 startIcon={<CirclePlus size={20} />}
                                 onClick={() => handleIncreaseItem()}
                             >
