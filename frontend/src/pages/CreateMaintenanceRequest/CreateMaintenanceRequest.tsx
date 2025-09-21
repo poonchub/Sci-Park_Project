@@ -1278,7 +1278,7 @@ function CreateMaintenanceRequestPage() {
                                             >
                                                 {!onEdit ? (
                                                     <Button
-                                                        variant="outlined"
+                                                        variant="outlinedGray"
                                                         onClick={() =>
                                                             setOnEdit(!onEdit)
                                                         }
