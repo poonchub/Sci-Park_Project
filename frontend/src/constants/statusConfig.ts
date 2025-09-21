@@ -1,6 +1,6 @@
 // Importing necessary Lucide React icons
 import { Hourglass, LucideIcon, Repeat } from "lucide-react";
-import { RotateCcw, Check, X, ClipboardCheck, Flag, Clock, RotateCcw as Redo, AlertTriangle, Ban, UserCheck } from "lucide-react";
+import { RotateCcw, Check, X, ClipboardCheck, Flag, AlertTriangle, Ban, UserCheck } from "lucide-react";
 
 // Interface defining the configuration for each status type
 export interface StatusConfig {

@@ -976,11 +976,11 @@ func SeedDatabase() {
 	}
 
 	bookingStatus := []entity.BookingStatus{
-		{StatusName: "Pending Approved"},
+		{StatusName: "Pending Approvel"},
 		{StatusName: "Pending Payment"},
 		{StatusName: "Partially Paid"},
 		{StatusName: "Awaiting Receipt"},
-		{StatusName: "Complete"},
+		{StatusName: "Completed"},
 		{StatusName: "Cancelled"},
 	}
 	for _, bs := range bookingStatus {
