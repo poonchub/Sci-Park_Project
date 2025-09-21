@@ -6,14 +6,12 @@ import {
   CreateRequestServiceAreaAndAboutCompany, 
   ListBusinessGroups, 
   ListCompanySizes,
-  ListServiceUserTypes,
   GetUserById,
   UpdateUserbyID,
   GetAboutCompanyByUserID
 } from '../../services/http';
 import { BusinessGroupInterface } from '../../interfaces/IBusinessGroup';
 import { CompanySizeInterface } from '../../interfaces/ICompanySize';
-import { ServiceUserTypeInterface } from '../../interfaces/IServiceUserType';
 import { ServiceAreaFormData } from '../../interfaces/IServiceAreaForm';
 import { CollaborationPlanData } from '../../interfaces/ICollaborationPlan';
 import { GetUserInterface } from '../../interfaces/IGetUser';
@@ -27,7 +25,6 @@ import { TextArea } from '../../components/TextField/TextArea';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight, faFileUpload } from "@fortawesome/free-solid-svg-icons";
 import { Building2 } from "lucide-react";
-import { DatePicker } from '../../components/DatePicker/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -500,7 +497,7 @@ const CreateServiceAreaForm: React.FC = () => {
     formData.append('supporting_activities_for_science_park', data.SupportingActivitiesForSciencePark);
     
     // Add collaboration plans as arrays
-    collaborationPlans.forEach((plan, index) => {
+    collaborationPlans.forEach((plan, _index) => {
       if (plan.plan.trim()) {
         formData.append('collaboration_plan[]', plan.plan);
         formData.append('collaboration_budgets[]', plan.budget.toString());

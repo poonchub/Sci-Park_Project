@@ -15,25 +15,22 @@ import {
     Avatar,
 } from '@mui/material';
 import {
-    LineChart,
-    Line,
+
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
+
     ResponsiveContainer,
     Bar,
     BarChart,
-    PieChart,
-    Pie,
-    Cell,
+
 } from 'recharts';
 
-import ApexLineChart from '../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart';
+
 import PopularPagesDonutChart from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
 import {
-    Sparkles,
+
     TrendingUp,
     Users,
     Eye,
@@ -57,7 +54,7 @@ import {
     SystemAnalyticsData, 
     PageAnalyticsData,
     PerformanceAnalyticsData,
-    KEY_PAGES 
+
 } from '../../services/analyticsService';
 
 import { pageConfig, normalizePageName } from '../../components/PopularPagesDonutChart/PopularPagesDonutChart';
@@ -70,7 +67,7 @@ const Analytics: React.FC = () => {
     const theme = useTheme();
     const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
     const [systemAnalyticsData, setSystemAnalyticsData] = useState<SystemAnalyticsData | null>(null);
-    const [pageData, setPageData] = useState<PageAnalyticsData[]>([]);
+    const [_pageData, setPageData] = useState<PageAnalyticsData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [valueTab, setValueTab] = useState(0);
@@ -222,11 +219,7 @@ const Analytics: React.FC = () => {
         return timeSlot;
     };
 
-    // Filter tracked pages only (optional feature)
-    const getTrackedPagesData = () => {
-        const trackedPagePaths = Object.values(KEY_PAGES);
-        return pageData.filter(page => trackedPagePaths.includes(page.page_path as any));
-    };
+
 
     // New component for visits chart using ApexCharts
     const VisitsApexChart: React.FC<{

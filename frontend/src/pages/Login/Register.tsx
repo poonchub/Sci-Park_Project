@@ -26,7 +26,7 @@ import './LoginPage.css'; // Reusing LoginPage.css for the container and motion 
 const RegisterPage: React.FC = () => {
     const { control, handleSubmit, reset, formState: { errors }, trigger, getValues } = useForm({ mode: "onBlur" }); // <--- เพิ่ม getValues
     const [genders, setGenders] = useState<GendersInterface[]>([]);
-    const [file, setFile] = useState<File | null>(null);
+    const [_file, setFile] = useState<File | null>(null);
 
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
     const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +63,7 @@ const RegisterPage: React.FC = () => {
         }
     };
 
-    const onSubmit = async (data: UserInterface) => {
+    const onSubmit = async (_data: UserInterface) => {
         // Trigger validation only for fields in Step 2
         const isStep2Valid = await trigger(["GenderID", "Phone", "Email", "Password"]);
         if (!isStep2Valid) {

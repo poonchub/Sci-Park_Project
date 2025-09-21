@@ -241,7 +241,7 @@ const MyAccount: React.FC = () => {
     };
 
     // Refresh function for Service Area requests
-    const getUpdateServiceAreaRequest = async (requestServiceAreaId: number) => {
+    const getUpdateServiceAreaRequest = async () => {
         try {
             const userId = localStorage.getItem("userId");
             if (!userId) return;
@@ -730,7 +730,7 @@ const MyAccount: React.FC = () => {
             console.log("✅ Your service area request approved:", data);
             if (data.user_id === userId) {
                 setTimeout(() => {
-                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getUpdateServiceAreaRequest();
                     getNewUnreadNotificationCounts();
                 }, 1500);
             }
@@ -740,7 +740,7 @@ const MyAccount: React.FC = () => {
             console.log("🎉 Your service area request completed:", data);
             if (data.user_id === userId) {
                 setTimeout(() => {
-                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getUpdateServiceAreaRequest();
                     getNewUnreadNotificationCounts();
                 }, 1500);
             }
@@ -750,7 +750,7 @@ const MyAccount: React.FC = () => {
             console.log("📋 Your cancellation request assigned:", data);
             if (data.user_id === userId) {
                 setTimeout(() => {
-                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getUpdateServiceAreaRequest();
                     getNewUnreadNotificationCounts();
                 }, 1500);
             }
@@ -760,7 +760,7 @@ const MyAccount: React.FC = () => {
             console.log("✅ Your cancellation request completed:", data);
             if (data.user_id === userId) {
                 setTimeout(() => {
-                    getUpdateServiceAreaRequest(data.request_service_area_id);
+                    getUpdateServiceAreaRequest();
                     getNewUnreadNotificationCounts();
                 }, 1500);
             }

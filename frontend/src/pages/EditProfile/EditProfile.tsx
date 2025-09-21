@@ -55,13 +55,12 @@ import {
     Crown, 
     Shield, 
     Info, 
-    ChevronLeft, 
     EyeOff,
     User,
     Trash2,
     MoreVertical
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
 import { Close } from "@mui/icons-material";
 import SignatureCanvas from "react-signature-canvas";
 import PrivacyPolicyPopup from "../../components/PrivacyPolicyPopup/PrivacyPolicyPopup";
@@ -69,20 +68,20 @@ import PrivacyPolicyPopup from "../../components/PrivacyPolicyPopup/PrivacyPolic
 const EditProfile: React.FC = () => {
     const theme = useTheme();
     const { control, handleSubmit, reset, formState: { errors }, watch, setValue, trigger } = useForm();
-    const [file, setFile] = useState<File | null>(null); // Store single file
+    const [_file, setFile] = useState<File | null>(null); // Store single file
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [alerts, setAlerts] = useState<{ type: string; message: string }[]>([]); // Fetch data when component mounts
     const [user, setUser] = useState<GetUserInterface | null>();
     const [userType, setUserType] = useState<string>("internal");
-    const [img, setImg] = useState<MaintenaceImagesInterface | null>();
-    const navigate = useNavigate();
+    const [_img, setImg] = useState<MaintenaceImagesInterface | null>();
+    
     const [openPopup, setOpenPopup] = useState(false);
     const [openPrivacyPolicy, setOpenPrivacyPolicy] = useState(false);
     const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('th');
-    const [isButtonActive, setIsButtonActive] = useState(false);
+    const [isButtonActive, _setIsButtonActive] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const sigRef = useRef<SignatureCanvas>(null);
-    const [signatureFile, setSignatureFile] = useState<File | null>(null);
+    const [_signatureFile, setSignatureFile] = useState<File | null>(null);
     const [signatureImage, setSignatureImage] = useState<string | null>(null);
     const [isSignatureBlurred, setIsSignatureBlurred] = useState(true);
     const [genders, setGenders] = useState<GendersInterface[]>([]);
@@ -92,7 +91,7 @@ const EditProfile: React.FC = () => {
     // Initialize interaction tracker
     const { getInteractionCount } = useInteractionTracker({
         pagePath: KEY_PAGES.MY_ACCOUNT,
-        onInteractionChange: (count) => {},
+        onInteractionChange: (_count) => {},
     });
 
     // Load genders data

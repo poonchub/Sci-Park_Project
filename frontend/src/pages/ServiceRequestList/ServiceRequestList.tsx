@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 import theme from "../../styles/Theme";
 import { statusConfig } from "../../constants/statusConfig";
-import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups, UpdateRequestServiceAreaStatus, RejectServiceAreaRequest, AssignCancellationTask } from "../../services/http";
+import { ListRequestServiceAreas, GetRequestStatuses, ListBusinessGroups,  RejectServiceAreaRequest } from "../../services/http";
 import { RequestServiceAreaListInterface } from "../../interfaces/IRequestServiceArea";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
@@ -42,7 +42,7 @@ const ServiceRequestList: React.FC = () => {
     // Assign Cancellation popup state
     const [openAssignCancellationPopup, setOpenAssignCancellationPopup] = useState(false);
     const [requestIdPendingAssign, setRequestIdPendingAssign] = useState<number | null>(null);
-    const [isAssigning, setIsAssigning] = useState(false);
+    
 
     // Search and filter states
     const [searchText, setSearchText] = useState("");
@@ -927,7 +927,7 @@ const ServiceRequestList: React.FC = () => {
     };
 
     // Refresh functions for Service Area notifications
-    const getNewServiceAreaRequest = async (id: number) => {
+    const getNewServiceAreaRequest = async (_id: number) => {
         try {
             // เรียก API เพื่อดึงข้อมูล Service Area Request ใหม่
             const response = await ListRequestServiceAreas("0", 0, 20, undefined, undefined);
@@ -940,7 +940,7 @@ const ServiceRequestList: React.FC = () => {
         }
     };
 
-    const getUpdateServiceAreaRequest = async (id: number) => {
+    const getUpdateServiceAreaRequest = async (_id: number) => {
         try {
             // เรียก API เพื่อดึงข้อมูล Service Area Request ที่อัพเดท
             const response = await ListRequestServiceAreas("0", 0, 20, undefined, undefined);

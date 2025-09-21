@@ -253,7 +253,7 @@ class AnalyticsService {
     /**
      * Update page visit duration (deprecated - use trackPageVisit with duration instead)
      */
-    updatePageVisitDuration(duration: number): void {
+    updatePageVisitDuration(_duration: number): void {
         console.warn('updatePageVisitDuration is deprecated. Use trackPageVisit with duration parameter instead.');
     }
 }
