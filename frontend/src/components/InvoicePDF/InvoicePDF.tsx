@@ -53,8 +53,6 @@ export default function InvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
     const noticeRef = useRef<HTMLDivElement>(null);
     const paymentRef = useRef<HTMLDivElement>(null);
 
-    console.log('invoice in PDF:', invoice);
-
     useEffect(() => {
         const targets = [
             subjectRef.current,
@@ -120,7 +118,6 @@ export default function InvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
 
                 // อัปโหลดไป backend
                 await UploadInvoicePDF(formData);
-                console.log("Upload invoice pdf file success");
 
                 // เรียก callback หลัง upload เสร็จ
                 if (onComplete) onComplete();

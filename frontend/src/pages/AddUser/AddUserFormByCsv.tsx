@@ -495,18 +495,6 @@ const AddUserFormByCsv: React.FC = () => {
         is_business_owner: isBusinessOwner
       };
 
-      // Debug: Print data before sending
-      console.log('🔍 Data being sent to API:', userData);
-      console.log('🔍 Selected values:', {
-        selectedGender,
-        selectedRole,
-        selectedJobPosition,
-        selectedPrefix,
-        selectedPackage,
-        selectedRequestType,
-        isEmployee,
-        isBusinessOwner
-      });
 
       const response = await CreateUser(userData);
 

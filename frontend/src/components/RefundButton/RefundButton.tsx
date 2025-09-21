@@ -16,7 +16,6 @@ export default function RefundButton({ paymentId, onSuccess, onError }: RefundBu
     try {
       setLoading(true);
       const res = await RefundedBookingRoom({ paymentId }); // ✅ เรียก API Refund.ID }); // 🔗 เรียก API refund
-      console.log("Refund result:", res);
       onSuccess?.(res);
     } catch (err) {
       console.error("Refund error:", err);

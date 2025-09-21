@@ -45,7 +45,6 @@ export default function ApproveServiceAreaController({ open, onClose, requestId,
             if (!requestId) return;
             try {
                 const details = await GetServiceAreaDetailsByID(requestId);
-                console.log('[ApproveServiceAreaController] details fetched:', details);
                 // Support both nested and flat response shapes
                 const nameFromDetails = details?.AboutCompany?.CompanyName ?? details?.CompanyName;
                 

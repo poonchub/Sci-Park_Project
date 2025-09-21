@@ -60,11 +60,9 @@ const ToolbarActions = () => {
         open={showCookieSettings}
         onClose={() => setShowCookieSettings(false)}
         onAccept={(preferences) => {
-          console.log('Cookie preferences updated:', preferences);
           setShowCookieSettings(false);
         }}
         onDecline={() => {
-          console.log('Cookies declined');
           setShowCookieSettings(false);
         }}
       />

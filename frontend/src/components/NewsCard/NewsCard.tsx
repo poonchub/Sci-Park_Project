@@ -41,11 +41,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                     IsPinned: !prev.IsPinned
                 }));
 
-                if (news.IsPinned) {
-                    console.log("The news has been unpinned from the top.")
-                } else {
-                    console.log("The news has been pinned to the top.")
-                }
+                // Pin status updated successfully
             } else {
                 console.error("Failed to update news.")
             }

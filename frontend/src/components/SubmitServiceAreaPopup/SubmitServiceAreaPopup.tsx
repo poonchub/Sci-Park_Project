@@ -247,7 +247,6 @@ const SubmitServiceAreaPopup: React.FC<SubmitServiceAreaPopupProps> = ({
             } catch (error: any) {
                 // ถ้าได้ 409 Conflict แสดงว่ามีอยู่แล้ว ให้ใช้ Update แทน
                 if (error.response?.status === 409) {
-                    console.log('Service area document already exists, updating instead...');
                     result = await UpdateServiceAreaDocument(requestServiceAreaID, submitFormData);
                     setAlerts(prev => [...prev, { type: 'success', message: 'Service area document updated successfully!' }]);
                 } else {

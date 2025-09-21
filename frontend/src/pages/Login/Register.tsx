@@ -307,7 +307,7 @@ const RegisterPage: React.FC = () => {
                                                 <Button
                                                     type="button"
                                                     fullWidth
-                                                    variant="outlined"
+                                                    variant="outlinedGray"
                                                     color="secondary"
                                                     onClick={() => { setStep(1); }}
                                                 >

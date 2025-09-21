@@ -135,7 +135,6 @@ function ServiceAreaDetails() {
 
             const res = await GetServiceAreaDetailsByID(Number(serviceAreaID));
             if (res) {
-                console.log(res);
                 setServiceAreaDetails(res);
                 setRequestStatusID(res.RequestStatusId);
             }
@@ -281,7 +280,6 @@ function ServiceAreaDetails() {
             }));
 
             // เรียก API สำหรับอัปเดต Collaboration Plans
-            console.log("Updated plans:", formattedPlans);
             await PatchCollaborationPlans(serviceAreaDetails?.RequestNo || 0, formattedPlans);
 
             // Refresh data

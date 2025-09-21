@@ -105,7 +105,6 @@ const Analytics: React.FC = () => {
 
                 // Fetch performance data
                 const perfData = await analyticsService.getPerformanceAnalytics(start, end);
-                console.log('Performance data received:', perfData);
                 if (perfData) {
                     setPerformanceData(perfData);
                 } else {
@@ -129,14 +128,12 @@ const Analytics: React.FC = () => {
 
             // Load dashboard analytics
             const dashboardData = await analyticsService.getDashboardAnalytics();
-            console.log('Dashboard Analytics Data:', dashboardData);
             if (dashboardData) {
                 setAnalyticsData(dashboardData);
             }
 
             // Load system analytics
             const systemData = await analyticsService.getSystemAnalytics();
-            console.log('System Analytics Data:', systemData);
             if (systemData) {
                 setSystemAnalyticsData(systemData);
             }

@@ -250,17 +250,13 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
 
     useEffect(() => {
         if (data) {
-            console.log("PopularPagesDonutChart data:", data.map(d => d.page_name));
-            console.log("PopularPagesDonutChart full data:", data);
             // ดูว่า page_name ที่ backend ส่งมาตรงกับ key ใน pageConfig หรือ normalizePageName หรือไม่
             data.forEach(item => {
                 const key = normalizePageName(item.page_name);
                 const config = pageConfig[key];
-                console.log('key:', key, 'config:', config);
             });
         }
         if (periodData) {
-            console.log("PopularPagesDonutChart periodData:", periodData);
         }
     }, [data, periodData]);
 

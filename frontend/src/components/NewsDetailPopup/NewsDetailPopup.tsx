@@ -102,11 +102,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                     IsPinned: !prev.IsPinned,
                 }));
 
-                if (initialNews.IsPinned) {
-                    console.log("The news has been unpinned from the top.");
-                } else {
-                    console.log("The news has been pinned to the top.");
-                }
+                // Update pin status successfully
             } else {
                 console.error("Failed to update news.");
             }
@@ -193,7 +189,7 @@ const NewsDetailPopup: React.FC<NewsDetailPopupProps> = ({
                 }
             }
 
-            console.log("The news has been update successfully.");
+            // News updated successfully
 
             setTimeout(() => {
                 setLoadingStatus("success");

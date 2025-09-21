@@ -113,7 +113,6 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
 
                 // อัปโหลดไป backend
                 await UploadRoomBookingInvoicePDF(formData);
-                console.log("✅ Upload invoice pdf file success");
 
                 // เรียก callback หลัง upload เสร็จ
                 if (onComplete) onComplete();

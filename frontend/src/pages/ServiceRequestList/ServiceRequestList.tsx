@@ -987,7 +987,6 @@ const ServiceRequestList: React.FC = () => {
         const socket = io(socketUrl);
 
         socket.on("service_area_created", (data) => {
-            console.log("📦 New service area request:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getNewServiceAreaRequest(data.ID);
@@ -995,7 +994,6 @@ const ServiceRequestList: React.FC = () => {
         });
 
         socket.on("service_area_approved", (data) => {
-            console.log("✅ Service area approved:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getUpdateServiceAreaRequest(data.request_service_area_id);
@@ -1003,7 +1001,6 @@ const ServiceRequestList: React.FC = () => {
         });
 
         socket.on("service_area_completed", (data) => {
-            console.log("🎉 Service area completed:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getUpdateServiceAreaRequest(data.request_service_area_id);
@@ -1011,7 +1008,6 @@ const ServiceRequestList: React.FC = () => {
         });
 
         socket.on("service_area_cancellation_requested", (data) => {
-            console.log("❌ Service area cancellation requested:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getUpdateServiceAreaRequest(data.request_service_area_id);
@@ -1019,7 +1015,6 @@ const ServiceRequestList: React.FC = () => {
         });
 
         socket.on("service_area_cancellation_assigned", (data) => {
-            console.log("📋 Cancellation assigned:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getUpdateServiceAreaRequest(data.request_service_area_id);
@@ -1027,7 +1022,6 @@ const ServiceRequestList: React.FC = () => {
         });
 
         socket.on("service_area_cancellation_completed", (data) => {
-            console.log("✅ Cancellation completed:", data);
             // รีเฟรชรายการ Service Area Requests
             setTimeout(() => {
                 getUpdateServiceAreaRequest(data.request_service_area_id);

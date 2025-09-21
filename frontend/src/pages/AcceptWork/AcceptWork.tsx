@@ -810,7 +810,6 @@ function AcceptWork() {
     const getNewMaintenanceTask = async (ID: number) => {
         try {
             const res = await GetMaintenanceTaskByID(ID);
-            console.log("res: ", res)
             if (res) {
                 setMaintenanceTasks((prev) => [res, ...prev]);
                 setTotal((prev) => prev + 1);

@@ -24,7 +24,6 @@ import CancelServiceAreaPopup from "../../components/CancelServiceAreaPopup/Canc
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { io } from "socket.io-client";
 import { useNotificationStore } from "../../store/notificationStore";
-import { NotificationsInterface } from "../../interfaces/INotifications";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
@@ -110,7 +109,6 @@ function AcceptWorkDocument() {
             if (currentUserId && selectedTaskForReject.ServiceAreaTaskID) {
                 try {
                     await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, selectedTaskForReject.ServiceAreaTaskID);
-                    console.log("✅ ServiceAreaTask notification marked as read");
                 } catch (error) {
                     console.error("Error marking notification as read:", error);
                 }
@@ -144,7 +142,6 @@ function AcceptWorkDocument() {
             if (requestServiceAreaID) {
                 try {
                     await UpdateRequestServiceAreaStatus(requestServiceAreaID, 6);
-                    console.log("Status updated to Complete (ID: 6) for RequestServiceAreaID:", requestServiceAreaID);
                 } catch (error) {
                     console.error("Error updating status to Complete:", error);
                     throw error; // Throw error เพื่อให้ catch block จัดการ
@@ -155,7 +152,6 @@ function AcceptWorkDocument() {
             if (currentUserId && selectedTaskForSubmit.ServiceAreaTaskID) {
                 try {
                     await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, selectedTaskForSubmit.ServiceAreaTaskID);
-                    console.log("✅ ServiceAreaTask notification marked as read");
                 } catch (error) {
                     console.error("Error marking notification as read:", error);
                 }
@@ -205,7 +201,6 @@ function AcceptWorkDocument() {
             // const result = await SubmitCancelServiceAreaRequest(selectedTaskForCancel.RequestServiceAreaID, data);
 
             // จำลองการส่งข้อมูลสำเร็จ
-            console.log('Cancellation data submitted');
 
             // ไม่ต้องอัพเดท status ที่นี่ เพราะ Backend Controller จะอัพเดทเป็น "Successfully Cancelled" (ID: 11) แล้ว
 
@@ -321,7 +316,6 @@ function AcceptWorkDocument() {
                             if (currentUserId && data.ServiceAreaTaskID) {
                                 try {
                                     await handleUpdateNotification(currentUserId, true, undefined, undefined, undefined, undefined, data.ServiceAreaTaskID);
-                                    console.log("✅ ServiceAreaTask notification marked as read");
                                 } catch (error) {
                                     console.error("Error marking notification as read:", error);
                                 }
@@ -563,7 +557,6 @@ function AcceptWorkDocument() {
             options.limit = limit;
 
             const res = await GetServiceAreaTasksByUserID(currentUserId, options);
-            console.log("Status updated to Complete (ID: 6) for RequestServiceAreaID:", res);
 
             if (res && res.data) {
                 setRows(res.data);
@@ -597,34 +590,29 @@ function AcceptWorkDocument() {
         const socket = io(socketUrl);
 
         // Listen for Service Area approval notifications
-        socket.on("service_area_approved", (data) => {
-            console.log("📦 Service area approved for operator:", data);
+        socket.on("service_area_approved", (_data) => {
             fetchServiceAreaTasks();
             getNewUnreadNotificationCounts();
         });
 
         // Listen for Service Area completion notifications
-        socket.on("service_area_completed", (data) => {
-            console.log("🎉 Service area completed:", data);
+        socket.on("service_area_completed", (_data) => {
             fetchServiceAreaTasks();
             getNewUnreadNotificationCounts();
         });
 
         // Listen for Service Area cancellation notifications
-        socket.on("service_area_cancellation_requested", (data) => {
-            console.log("❌ Service area cancellation requested:", data);
+        socket.on("service_area_cancellation_requested", (_data) => {
             fetchServiceAreaTasks();
             getNewUnreadNotificationCounts();
         });
 
-        socket.on("service_area_cancellation_assigned", (data) => {
-            console.log("📋 Cancellation assigned to operator:", data);
+        socket.on("service_area_cancellation_assigned", (_data) => {
             fetchServiceAreaTasks();
             getNewUnreadNotificationCounts();
         });
 
-        socket.on("service_area_cancellation_completed", (data) => {
-            console.log("✅ Cancellation completed:", data);
+        socket.on("service_area_cancellation_completed", (_data) => {
             fetchServiceAreaTasks();
             getNewUnreadNotificationCounts();
         });

@@ -39,7 +39,6 @@ const LoginPage: React.FC = () => {
       const responseData: any = await UserLogin(data);
       const response = responseData?.data;
       
-      console.log(response);
       if (response && response.Token && response.Role) {
         localStorage.setItem("isLogin", "true");
         localStorage.setItem("role", response.Role || "Outsider");
