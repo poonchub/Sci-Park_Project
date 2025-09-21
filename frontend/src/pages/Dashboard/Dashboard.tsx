@@ -93,7 +93,7 @@ import ApexBookingRoomRevenueBarChart from "../../components/ApexBookingRoomReve
 import ApexInvoiceRevenueBarChart from "../../components/ApexInvoiceRevenueBarChart/ApexInvoiceRevenueBarChart";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
-import { bookingStatusConfig } from "../../constants/bookingStatusConfig";
+import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import ApexBookingLineChart from "../../components/ApexBookingLineChart/ApexBookingLineChart";
 
 function Dashboard() {
@@ -1191,18 +1191,18 @@ function Dashboard() {
                                     <SummaryCard
                                         title="Pending Approvals"
                                         value={bookingRoomSummaryThisMonth?.status_summary?.find((item) => item.StatusName === "Pending")?.Count ?? 0}
-                                        icon={bookingStatusConfig["pending"].icon}
-                                        color={bookingStatusConfig["pending"].color}
-                                        colorLite={bookingStatusConfig["pending"].colorLite}
+                                        icon={getBookingStatusConfig("pending").icon}
+                                        color={getBookingStatusConfig("pending").color}
+                                        colorLite={getBookingStatusConfig("pending").colorLite}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Completed Bookings"
                                         value={bookingRoomSummaryThisMonth?.status_summary?.find((item) => item.StatusName === "Completed")?.Count ?? 0}
-                                        icon={bookingStatusConfig["completed"].icon}
-                                        color={bookingStatusConfig["completed"].color}
-                                        colorLite={bookingStatusConfig["completed"].colorLite}
+                                        icon={getBookingStatusConfig("completed").icon}
+                                        color={getBookingStatusConfig("completed").color}
+                                        colorLite={getBookingStatusConfig("completed").colorLite}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 6 }}>
