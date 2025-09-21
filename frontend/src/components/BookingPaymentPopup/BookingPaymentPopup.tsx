@@ -1050,7 +1050,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
           {fullyPaid && (
             <Grid size={{ xs: 12 }}>
-              <Card sx={{ p: 2, bgcolor: "rgba(111,66,193,.10)", border: "1px solid rgba(111,66,193,.35)" }}>
+              <Card sx={{ p: 2, border: "1px solid rgba(111,66,193,.35)" }}>
                 <Typography sx={{ fontWeight: 600, color: "#6F42C1" }}>
                   Fully paid — awaiting receipt/tax invoice issuance.
                 </Typography>

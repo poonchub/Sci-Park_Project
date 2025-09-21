@@ -727,7 +727,7 @@ func UploadPaymentReceipt(c *gin.Context) {
 	// ✅ ถ้าดิวเป็นศูนย์ ไม่ต้องรอใบเสร็จ -> Complete เลย
 	if totalDue == 0 {
 		tx := db.Begin()
-		if err := setBookingStatus(tx, b.ID, "Complete"); err != nil {
+		if err := setBookingStatus(tx, b.ID, "Completed"); err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "set status failed"})
 			return
@@ -812,7 +812,7 @@ func UploadPaymentReceipt(c *gin.Context) {
 	switch {
 	case fullyPaidWithReceipt:
 		// ✅ ยอดที่มีใบเสร็จครอบคลุมหนี้ -> Complete
-		if err := setBookingStatus(tx, b.ID, "Complete"); err != nil {
+		if err := setBookingStatus(tx, b.ID, "Completed"); err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "set status failed"})
 			return
