@@ -4,8 +4,6 @@ import {
     Typography, Button, MenuItem, InputAdornment,
     Grid,
 } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestionCircle, faUserTie } from '@fortawesome/free-solid-svg-icons';
 
 import { MaintenanceRequestsInterface } from '../../interfaces/IMaintenanceRequests';
 import { UserInterface } from "../../interfaces/IUser";
@@ -47,12 +45,16 @@ const ApprovePopup: React.FC<ApprovePopupProps> = ({
         <Dialog open={open} onClose={onClose}>
             {/* Dialog title */}
             <DialogTitle 
-                sx={{ 
-                    fontWeight: 700, 
-                    color: 'primary.main', 
-                    textAlign: 'center' 
+                sx={{
+                    display: 'flex',
+                    fontWeight: 700,
+                    color: 'primary.main',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 0.6
                 }}
             >
+                <HelpCircle size={22} strokeWidth={2.5} style={{ minWidth: '22px', minHeight: '22px'}}/>
                 Approve Maintenance Request
             </DialogTitle>
 

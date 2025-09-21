@@ -1086,6 +1086,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
       (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
 
+    console.log("DepositAmount", calculatedPrice / 2)
+    console.log("TotalAmount", calculatedPrice)
     const bookingData = {
       UserID: userId,
       RoomID: selectedRoomId,

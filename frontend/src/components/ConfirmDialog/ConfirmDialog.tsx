@@ -1,5 +1,3 @@
-import { faCircleExclamation } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     Button,
     Dialog,
@@ -10,6 +8,7 @@ import {
 } from "@mui/material";
 import { TextField } from "../TextField/TextField";
 import { useState, useEffect, useRef } from "react";
+import { HelpCircle } from "lucide-react";
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -70,12 +69,15 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {/* Dialog title with warning icon */}
             <DialogTitle
                 sx={{
+                    display: 'flex',
                     fontWeight: 700,
                     color: 'primary.main',
-                    textAlign: 'center'
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 0.6
                 }}
             >
-                <FontAwesomeIcon icon={faCircleExclamation} size="lg" style={{ marginRight: '10px' }} />
+                <HelpCircle size={22} strokeWidth={2.5} style={{ minWidth: '22px', minHeight: '22px'}}/>
                 {title}
             </DialogTitle>
 

@@ -445,6 +445,9 @@ func main() {
 		protected.DELETE("/equipments/:id", controller.DeleteEquipment)
 		//--------------------------------------------------------------
 
+		// BookingRooms
+		protected.PATCH("/booking-room/:id", controller.UpdateBookingRoomByID)
+
 	}
 
 	// 🌍 Root Route

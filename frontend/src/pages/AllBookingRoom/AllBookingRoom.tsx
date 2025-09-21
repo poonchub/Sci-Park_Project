@@ -63,6 +63,7 @@ import {
     GetBookingRoomById,
     UpdateNotificationsByBookingRoomID,
     ListBookingRoomsForAdmin,
+    UpdateBookingRoomByID,
 } from "../../services/http";
 
 import { TextField } from "../../components/TextField/TextField";
@@ -91,6 +92,7 @@ import { NotificationsInterface } from "../../interfaces/INotifications";
 import BookingPaymentPopup, { type InstallmentUI } from "../../components/BookingPaymentPopup/BookingPaymentPopup";
 import { io } from "socket.io-client";
 import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
+import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
 
 
 /* =========================
@@ -292,7 +294,7 @@ function buildInstallmentsFromBooking(row?: any): {
 /* =========================
  * Types
  * ========================= */
-interface BookingRoomsInterface {
+interface BookingRoomsInterfaceUse {
     ID: number;
     CreatedAt?: string;
     Room?: { RoomNumber?: number | string; Floor?: { Number?: number } };
@@ -328,6 +330,7 @@ interface BookingRoomsInterface {
         TotalAmount?: number;
         IsFullyPaid?: boolean;
         DepositAmount?: number;
+        DiscountAmount?: number;
     };
     Notifications?: NotificationsInterface[];
     PaymentOption?: { OptionName?: string };
@@ -345,10 +348,11 @@ function AllBookingRoom() {
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     // ===== state =====
-    const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([]);
+    const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterfaceUse[]>([]);
     const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isLoadingApprove, setIsLoadingApprove] = useState(false)
 
     // filters
     const [searchText, setSearchText] = useState("");
@@ -364,7 +368,7 @@ function AllBookingRoom() {
     // dialogs
     const [openConfirmApprove, setOpenConfirmApprove] = useState(false);
     const [openConfirmReject, setOpenConfirmReject] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<BookingRoomsInterface | null>(null);
+    const [selectedRow, setSelectedRow] = useState<BookingRoomsInterfaceUse | null>(null);
 
     // payment popup
     const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
@@ -383,7 +387,6 @@ function AllBookingRoom() {
             const res = await ListBookingRoomsForAdmin("", pageNum, limit, selectedDate ? selectedDate.format("YYYY-MM") : "");
             if (res) {
                 setBookingRooms(res.data);
-                console.log(res);
                 if (setTotalFlag) setTotal(res.total);
             }
             const counts = (res?.data ?? []).reduce((acc: Record<string, number>, it: any) => {
@@ -444,7 +447,7 @@ function AllBookingRoom() {
         setAlerts((prev) => [...prev, { type, message }]);
     };
 
-    const bookingSummary = (row?: BookingRoomsInterface) => {
+    const bookingSummary = (row?: BookingRoomsInterfaceUse) => {
         if (!row) return "";
         const room = row.Room?.RoomNumber ?? "-";
         const dates = row.BookingDates?.map((d) => dateFormat(d.Date)).join(", ") || "-";
@@ -452,7 +455,7 @@ function AllBookingRoom() {
     };
 
     // ===== actions =====
-    const handlePrimaryAction = async (key: ActionKey, row: BookingRoomsInterface, invoiceNumber?: string) => {
+    const handlePrimaryAction = async (key: ActionKey, row: BookingRoomsInterfaceUse, invoiceNumber?: string, discountAmount?: number) => {
         setSelectedRow(row);
         try {
             switch (key) {
@@ -465,6 +468,16 @@ function AllBookingRoom() {
                         handleSetAlert("warning", "Customer signature not found. Please contact the customer to upload their signature.");
                         return;
                     }
+
+                    setIsLoadingApprove(true)
+
+                    const newTotalAmount = (row.Finance?.TotalAmount! + row.Finance?.DiscountAmount!) - (discountAmount!)
+                    const bookingData: BookingRoomsInterface = {
+                        DiscountAmount: discountAmount,
+                        TotalAmount: newTotalAmount,
+                        DepositAmount: newTotalAmount / 2
+                    }
+                    await UpdateBookingRoomByID(row.ID, bookingData)
 
                     const resApprove = await ApproveBookingRoom(row.ID);
                     const userId = Number(localStorage.getItem("userId"));
@@ -512,8 +525,8 @@ function AllBookingRoom() {
                             date.Date ?? ""
                         )} ห้อง ${resApprove.data.Room.RoomNumber}`,
                         Quantity: 1,
-                        UnitPrice: resApprove.data.TotalAmount / BookingDate.length,
-                        Amount: resApprove.data.TotalAmount / BookingDate.length,
+                        UnitPrice: (resApprove.data.Finance.TotalAmount + resApprove.data.Finance.DiscountAmount)/ BookingDate.length,
+                        Amount: (resApprove.data.Finance.TotalAmount + resApprove.data.Finance.DiscountAmount) / BookingDate.length,
                     }));
 
                     const items = invoiceItemData.map((it) => ({ ...it, RoomBookingInvoiceID: resInvoice.data.ID }));
@@ -526,10 +539,12 @@ function AllBookingRoom() {
                     if (!resUpdateNotification || resUpdateNotification.error)
                         throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
-                    await handleUpdateNotification(resApprove.data.UserID ?? 0, false, undefined, undefined, undefined, undefined, undefined, resApprove.data.ID);
+                    await handleUpdateNotification(resApprove.data.User.ID ?? 0, false, undefined, undefined, undefined, undefined, undefined, resApprove.data.ID);
 
                     await handleUploadPDF(resInvoice.data.ID);
-                    await handleUploadPDF(resInvoice.data.ID);
+
+                    setIsLoadingApprove(false)
+                    setOpenConfirmApprove(false)
                     break;
                 }
 
@@ -585,6 +600,8 @@ function AllBookingRoom() {
                     root.unmount();
                     container.remove();
                     resolve();
+
+
                 };
 
                 const resInvoice = await GetRoomBookingInvoiceByID(invoiceId);
@@ -674,7 +691,7 @@ function AllBookingRoom() {
     const getColumns = (): GridColDef[] => {
         // utils เฉพาะในฟังก์ชันนี้
         const lower = (s?: string) => (s || "").trim().toLowerCase();
-        const isRowLocked = (row: BookingRoomsInterface) => {
+        const isRowLocked = (row: BookingRoomsInterfaceUse) => {
             // ล็อคถ้า booking ถูก cancel หรือ payment ล่าสุดเป็น refunded
             const disp = lower(flowFromBackend(row as any));
             if (disp === "cancelled") return true;
@@ -693,7 +710,7 @@ function AllBookingRoom() {
                     sortable: false,
                     filterable: false,
                     renderCell: (params) => {
-                        const data = params.row as BookingRoomsInterface;
+                        const data = params.row as BookingRoomsInterfaceUse;
 
                         // ----- lock rule (refund/cancel ฯลฯ ห้ามกด)
                         const locked = isRowLocked(data);
@@ -901,7 +918,7 @@ function AllBookingRoom() {
                 headerName: "Title",
                 flex: 0.4,
                 renderCell: (params) => {
-                    const d = params.row as BookingRoomsInterface;
+                    const d = params.row as BookingRoomsInterfaceUse;
                     const room = `Room ${d.Room?.RoomNumber ?? "-"}`;
                     const floor = `Floor ${d.Room?.Floor?.Number ?? "-"}`;
                     return (
@@ -923,7 +940,7 @@ function AllBookingRoom() {
                 headerName: "Booking Date",
                 flex: 0.4,
                 renderCell: (params) => {
-                    const d = params.row as BookingRoomsInterface;
+                    const d = params.row as BookingRoomsInterfaceUse;
                     const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
                     const date = dateFormat(bookingDate || "");
                     const time = timeFormat(bookingDate || "");
@@ -940,7 +957,7 @@ function AllBookingRoom() {
                 headerName: "Status",
                 flex: 0.4,
                 renderCell: (params) => {
-                    const row = params.row as BookingRoomsInterface;
+                    const row = params.row as BookingRoomsInterfaceUse;
                     const display = flowFromBackend(row);
                     const cfg = getBookingStatusConfig(display);
 
@@ -971,7 +988,7 @@ function AllBookingRoom() {
                 headerName: "Actions",
                 flex: 0.7,
                 renderCell: (params) => {
-                    const row = params.row as BookingRoomsInterface;
+                    const row = params.row as BookingRoomsInterfaceUse;
                     const dStatus = flowFromBackend(row as any);
                     const locked = isRowLocked(row); // <<< ใช้ล็อคปุ่ม
 
@@ -1157,13 +1174,13 @@ function AllBookingRoom() {
             <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
             <ConfirmDialogRoomBookingInvoice
+                bookingRoomData={selectedRow!}
                 open={openConfirmApprove}
                 setOpenConfirm={setOpenConfirmApprove}
-                handleFunction={(invoiceNumber) => handlePrimaryAction("approve", selectedRow!, invoiceNumber)}
+                handleFunction={(invoiceNumber, discountAmount) => handlePrimaryAction("approve", selectedRow!, invoiceNumber, discountAmount)}
                 title="Confirm Booking Approval"
-                message="Approve this booking?"
                 showInvoiceNumberField
-                buttonActive={false}
+                buttonActive={isLoadingApprove}
             />
 
             <ConfirmDialog

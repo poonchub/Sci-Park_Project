@@ -1,7 +1,6 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import html2pdf from "html2pdf.js";
 import { apiUrl, UploadRoomBookingInvoicePDF } from "../../services/http";
-import { Button, CircularProgress, Grid } from "@mui/material";
 
 import tinymce from "tinymce/tinymce";
 import "tinymce/themes/silver/theme";
@@ -9,7 +8,6 @@ import "tinymce/icons/default/icons";
 import "tinymce/plugins/advlist";
 import "tinymce/plugins/lists";
 import "tinymce/models/dom/model";
-import { Download, Loader } from "lucide-react";
 import { RoomBookingInvoiceInterface } from "../../interfaces/IRoomBookingInvoice";
 import { numberToThaiBahtText } from "../../utils/numberToThaiBahtText";
 
@@ -441,7 +439,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 }}
                                 className="text-bold"
                             >
-                                ({numberToThaiBahtText(invoice.BookingRoom?.TotalAmount ?? 0)})
+                                ({numberToThaiBahtText(((invoice.BookingRoom?.TotalAmount || 0) - (invoice.BookingRoom?.DiscountAmount || 0)))})
                             </td>
                             <td
                                 style={{
@@ -459,7 +457,7 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                                 className="text-bold"
                                 colSpan={2}
                             >
-                                {invoice.BookingRoom?.TotalAmount?.toLocaleString("en-US", {
+                                {((invoice.BookingRoom?.TotalAmount || 0) - (invoice.BookingRoom?.DiscountAmount || 0))?.toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                 })}
