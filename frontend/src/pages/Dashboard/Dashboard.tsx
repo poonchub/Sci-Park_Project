@@ -8,20 +8,14 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
-    Divider,
     FormControl,
     Grid,
     IconButton,
     InputAdornment,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     MenuItem,
     Tab,
     Tabs,
     Typography,
-    useTheme,
 } from "@mui/material";
 import {
     GetBookingRoomSummaryThisMonth,
@@ -29,15 +23,11 @@ import {
     GetMeetingRoomSummaryToday,
     GetPreviousMonthInvoiceSummary,
     GetRentalSpaceRoomSummary,
-    GetUserById,
     ListBookingRoomByDateRange,
-    // ListBookingRoomByDateRange,
     ListBookingRoomPaymentsByDateRange,
-    ListInvoiceByDateRange,
     ListInvoicePaymentsByDateRange,
     ListMaintenanceRequestsByDateRange,
 } from "../../services/http";
-import { UserInterface } from "../../interfaces/IUser";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 
 import "./DashBoard.css";
@@ -64,22 +54,16 @@ import {
     BrushCleaning,
     ChartArea,
     ChartColumnStacked,
-
     Check,
     CheckCircle,
-
     Clock,
-
-
     DoorClosed,
-
     FileText,
     HelpCircle,
     LayoutDashboard,
     LineChart,
     LucideIcon,
     TrendingUp,
-
     Wrench,
     X,
 } from "lucide-react";
@@ -87,23 +71,20 @@ import {
 import { PaymentInterface } from "../../interfaces/IPayments";
 
 import { BookingRoomsInterface } from "../../interfaces/IBookingRooms";
-import { RentalRoomInvoiceInterface } from "../../interfaces/IRentalRoomInvoices";
 import ApexMaintenanceLineChart from "../../components/ApexMaintenanceLineChart/ApexMaintenanceLineChart";
 import ApexBookingRoomRevenueBarChart from "../../components/ApexBookingRoomRevenueBarChart/ApexBookingRoomRevenueBarChart";
 import ApexInvoiceRevenueBarChart from "../../components/ApexInvoiceRevenueBarChart/ApexInvoiceRevenueBarChart";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
-import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
+import { bookingStatusConfig, getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import ApexBookingLineChart from "../../components/ApexBookingLineChart/ApexBookingLineChart";
 
 function Dashboard() {
-    const [user, setUser] = useState<UserInterface>();
     const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequestsInterface[]>(
         []
     );
     const [bookingRoomPayments, setBookingRoomPayments] = useState<PaymentInterface[]>([])
     const [invoicePayments, setInvoicePayments] = useState<PaymentInterface[]>([])
-    const [invoices, setInvoices] = useState<RentalRoomInvoiceInterface[]>([])
     const [filteredRequest, setFilteredRequest] = useState<MaintenanceRequestsInterface[]>([]);
     const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceTypesInteface[]>([]);
     const [bookingRooms, setBookingRooms] = useState<BookingRoomsInterface[]>([])
@@ -130,6 +111,7 @@ function Dashboard() {
             Count: number;
         }[];
         total_bookings: number;
+        total_revenue: number;
     }>()
 
     const [groupedData, setGroupedData] = useState<
@@ -183,17 +165,6 @@ function Dashboard() {
 
     const { t } = useTranslation();
 
-    const getUser = async () => {
-        try {
-            const res = await GetUserById(Number(localStorage.getItem("userId")));
-            if (res) {
-                setUser(res);
-            }
-        } catch (error) {
-            console.error("Error fetching user:", error);
-        }
-    };
-
     const getMaintenanceRequests = async () => {
         try {
             const res = await ListMaintenanceRequestsByDateRange(
@@ -227,30 +198,15 @@ function Dashboard() {
     const getInvoicePayments = async () => {
         try {
             const res = await ListInvoicePaymentsByDateRange(
-                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
+                dateRangeRentalRoom.start ? dateRangeRentalRoom.start.format("YYYY-MM-DD") : "",
+                dateRangeRentalRoom.end ? dateRangeRentalRoom.end.format("YYYY-MM-DD") : ""
             );
-
+            
             if (res) {
                 setInvoicePayments(res);
             }
         } catch (error) {
             console.error("Error fetching payment:", error);
-        }
-    };
-
-    const getInvoices = async () => {
-        try {
-            const res = await ListInvoiceByDateRange(
-                dateRangeBookingRoom.start ? dateRangeBookingRoom.start.format("YYYY-MM-DD") : "",
-                dateRangeBookingRoom.end ? dateRangeBookingRoom.end.format("YYYY-MM-DD") : ""
-            );
-
-            if (res) {
-                setInvoices(res);
-            }
-        } catch (error) {
-            console.error("Error fetching invoices:", error);
         }
     };
 
@@ -381,7 +337,6 @@ function Dashboard() {
             try {
                 await Promise.all([
                     getMaintenanceRequests(),
-                    getUser(),
                     getMaintenanceTypes(),
                 ]);
             } catch (error) {
@@ -453,7 +408,6 @@ function Dashboard() {
                 (!dateRangeRentalRoom.start && !dateRangeRentalRoom.end)
             ) {
                 getInvoicePayments();
-                getInvoices();
                 getPreviousMonthInvoiceSummary()
                 getRentalSpaceRoomSummary()
             }
@@ -766,8 +720,6 @@ function Dashboard() {
             "Adjust the time range or filters to get a clearer view of the data.",
         ],
     };
-
-    console.log("bookingRoomPayments", bookingRoomPayments)
 
     return (
         <Box className="dashboard-page">
@@ -1208,7 +1160,7 @@ function Dashboard() {
                                 <Grid size={{ xs: 6 }}>
                                     <SummaryCard
                                         title="Total Revenue"
-                                        value={0}
+                                        value={bookingRoomSummaryThisMonth?.total_revenue ?? 0}
                                         icon={TrendingUp}
                                         color="#FFA500"
                                         colorLite="rgba(255, 166, 0, 0.21)"

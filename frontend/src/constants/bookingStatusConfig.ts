@@ -22,7 +22,7 @@ export interface BookingStatusConfig {
 
 export const bookingStatusConfig: Record<string, BookingStatusConfig> = {
   // ── Booking flow (ตาม BF) ──
-  "pending approvel": {  color: "#10a605",colorLite: "rgba(0, 255, 60, 0.18)", icon: Clock, label: "Pending Approvel" },
+  "pending approved": {  color: "#10a605",colorLite: "rgba(0, 255, 60, 0.18)", icon: Clock, label: "Pending Approvel" },
   "pending payment": { color: "#2563EB", colorLite: "rgba(0, 123, 255, 0.18)", icon: CircleDollarSign, label: "Pending Payment" },
   "partially paid": { color: "#A16207", colorLite: "rgba(235, 202, 12, 0.22)", icon: CreditCard, label: "Partially Paid" },
   "awaiting receipt": { color: "#0EA5E9", colorLite: "rgba(23, 163, 184, 0.18)", icon: FileText, label: "Awaiting Receipt" },

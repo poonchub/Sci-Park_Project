@@ -313,29 +313,33 @@ func GetPreviousMonthInvoiceSummary(c *gin.Context) {
 		return
 	}
 
-	// // คำนวณสถิติ
-	// paidStatuses := map[string]bool{
-	// 	"Awaiting Receipt": true,
-	// 	"Paid":             true,
-	// }
-
+	// คำนวณสถิติ
 	paidCount, overdueCount := 0, 0
 	var totalRevenue float64
-	// nowTime := time.Now().In(loc)
 
-	// for _, inv := range invoices {
-	// 	switch strings.ToLower(inv.Status.Name) {
-	// 	case "paid":
-	// 		paidCount++
-	// 		totalRevenue += inv.PaidAmount // ✅ นับตามที่จ่ายจริง
-	// 	case "partially paid", "unpaid":
-	// 		if inv.DueDate.Before(nowTime) {
-	// 			overdueCount++
-	// 		}
-	// 	case "overdue":
-	// 		overdueCount++
-	// 	}
-	// }
+	for _, inv := range invoices {
+		status := inv.Status.Name
+
+		// จ่ายแล้ว
+		if strings.EqualFold(status, "Paid") || strings.EqualFold(status, "Awaiting Receipt") {
+			paidCount++
+			totalRevenue += inv.TotalAmount
+			continue
+		}
+
+		// ยังไม่จ่าย หรือสถานะไม่สำเร็จ
+		if strings.EqualFold(status, "Pending Payment") ||
+			strings.EqualFold(status, "Pending Verification") ||
+			strings.EqualFold(status, "Rejected") ||
+			strings.EqualFold(status, "Refunded") {
+
+			// ถ้า DueDate หมดอายุแล้ว
+			if inv.DueDate.In(loc).Before(now) {
+				overdueCount++
+			}
+			continue
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"billing_period":   previousMonthEnd.Format("2006-01-02"),

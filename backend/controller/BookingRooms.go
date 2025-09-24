@@ -268,7 +268,7 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
 		switch list[i].Status {
 		case "Awaiting payment", "Pending verification":
 			active = &list[i]
-		
+
 		}
 		if active != nil {
 			break
@@ -465,7 +465,6 @@ func buildPaymentSummaries(src []entity.Payment) ([]PaymentSummary, *PaymentSumm
    ============================================================ */
 
 // FE ใส่มาใน AdditionalInfo
-
 
 /* =========================
  * Payload/Helpers/Policies
@@ -846,15 +845,14 @@ func CreateBookingRoom(c *gin.Context) {
 	})
 }
 
-
 // นับวันทำการ (จันทร์–ศุกร์) ระหว่าง now → start (ไม่รวมวันหยุดนักขัตฤกษ์)
 func businessDaysUntil(start time.Time, loc *time.Location) int {
 	now := time.Now().In(loc)
 	if start.Before(now) {
 		return 0
 	}
-	s := time.Date(now.Year(), now.Month(), now.Day(), 0,0,0,0, loc)
-	e := time.Date(start.Year(), start.Month(), start.Day(), 0,0,0,0, loc)
+	s := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	e := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, loc)
 	days := 0
 	for d := s; d.Before(e); d = d.Add(24 * time.Hour) {
 		switch d.Weekday() {
@@ -879,7 +877,6 @@ func hasPaidLike(payments []entity.Payment) bool {
 }
 
 // วันที่แรกของการจอง (คุณอาจมีฟังก์ชันนี้แล้ว ถ้าไม่มีใส่ไว้)
-
 
 func CancelBookingRoom(c *gin.Context) {
 	db := config.DB()
@@ -968,7 +965,6 @@ func CancelBookingRoom(c *gin.Context) {
 		"noteSaved":   strings.TrimSpace(body.Note) != "",
 	})
 }
-
 
 // ==========================
 // AUTO-CANCEL (Policy B)
@@ -1156,6 +1152,7 @@ func GetBookingRoomSummary(c *gin.Context) {
 
 	var statusCounts []StatusCount
 	var totalBookings int64
+	var totalRevenue float64
 
 	db := config.DB()
 
@@ -1187,13 +1184,40 @@ func GetBookingRoomSummary(c *gin.Context) {
 		Distinct("booking_rooms.id").
 		Count(&totalBookings)
 
+	// Query หา bookings ที่เกี่ยวข้องกับเดือนนี้
+	var bookings []entity.BookingRoom
+	if err := db.Preload("Status").Preload("Payments").
+		Joins("JOIN booking_dates ON booking_dates.booking_room_id = booking_rooms.id").
+		Where("booking_dates.date >= ? AND booking_dates.date <= ?", startOfMonth, endOfMonth).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// คำนวณรายได้
+	for _, b := range bookings {
+		status := b.Status.StatusName
+
+		switch {
+		case strings.EqualFold(status, "Completed"), strings.EqualFold(status, "Awaiting Receipt"):
+			// จ่ายครบแล้ว → ใช้ TotalAmount
+			totalRevenue += b.TotalAmount
+
+		case strings.EqualFold(status, "Partially Paid"):
+			// Partial → รวมยอดที่จ่ายแล้วจริงจาก Payments
+			for _, p := range b.Payments {
+				totalRevenue += p.Amount
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status_summary": statusCounts,
 		"total_bookings": totalBookings,
+		"total_revenue":  totalRevenue,
 	})
 }
 
-// GET /booking-room-option-for-admin
 // GET /booking-room-option-for-admin
 func ListBookingRoomsForAdmin(c *gin.Context) {
 	db, start, end, err := buildBookingBaseQuery(c)
