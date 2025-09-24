@@ -190,3 +190,103 @@ func computeDisplayStatus(b entity.BookingRoom) string {
     // เผื่อสะกดอื่น ๆ
     return "pending"
 }
+
+
+func getDiscountFlags(raw string) (usedFreeCredit, appliedMember50 bool) {
+    if strings.TrimSpace(raw) == "" { return false, false }
+
+    var m map[string]any
+    if err := json.Unmarshal([]byte(raw), &m); err != nil { return false, false }
+
+    src := m
+    if v, ok := m["Discounts"]; ok {
+        if mm, ok2 := v.(map[string]any); ok2 { src = mm }
+    }
+
+    toBool := func(keys ...string) bool {
+        for _, want := range keys {
+            for k, v := range src {
+                if strings.EqualFold(k, want) {
+                    switch x := v.(type) {
+                    case bool: return x
+                    case string:
+                        lx := strings.ToLower(strings.TrimSpace(x))
+                        return lx == "true" || lx == "1" || lx == "yes"
+                    case float64: return x != 0
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    used := toBool("UsedFreeCredit","usedFreeCredit","use_free_credit","useFree")
+    half := toBool("AppliedMember50","appliedMember50","member50","half_discount")
+    return used, half
+}
+
+func upsertAdditionalFlag(raw string, key string, val bool) string {
+    var m map[string]any
+    if strings.TrimSpace(raw) == "" { m = map[string]any{} } else {
+        if err := json.Unmarshal([]byte(raw), &m); err != nil { m = map[string]any{} }
+    }
+    m[key] = val
+    b, _ := json.Marshal(m)
+    return string(b)
+}
+
+func isEmployeeOrAbove(u *entity.User) bool {
+    return u != nil && u.IsEmployee
+}
+
+// ปรับให้เข้ากับสคีมาของ TimeSlot คุณ:
+// - ถ้ามี DurationMinutes ให้ใช้ ≤ 60
+// - ถ้ามี StartTime/EndTime ให้คำนวณต่าง ≤ 60m
+// ให้ถือว่า "รายชั่วโมง" หมายถึงแต่ละ slot มีความยาว ≤ 60 นาที (เผื่อ tolerance 1 นาที)
+const maxHourlyMinutes = 60
+const toleranceMinutes = 1
+
+func slotDurationMinutes(ts entity.TimeSlot) int {
+	// กรณี End < Start (ข้ามเที่ยงคืน) ให้ถือว่า end + 24h
+	start := ts.StartTime
+	end := ts.EndTime
+	if end.Before(start) {
+		end = end.Add(24 * time.Hour)
+	}
+	dur := end.Sub(start)
+	return int(dur / time.Minute)
+}
+
+func isHourlyBooking(slots []entity.TimeSlot) bool {
+	if len(slots) == 0 { return false }
+	for _, ts := range slots {
+		mins := slotDurationMinutes(ts)
+		if mins > maxHourlyMinutes + toleranceMinutes {
+			return false
+		}
+	}
+	return true
+}
+
+
+type pkgQuota struct {
+    Limit int
+    Used  int
+}
+func quotaForPolicy(up *entity.UserPackage, policy string) pkgQuota {
+    if up == nil { return pkgQuota{Limit: 0, Used: 0} }
+    switch strings.ToLower(policy) {
+    case "meeting":
+        return pkgQuota{Limit: up.Package.MeetingRoomLimit, Used: up.MeetingRoomUsed}
+    case "training", "hall":
+        return pkgQuota{Limit: 0, Used: 0} // ตอนนี้ยังไม่เปิดฟรี
+    default:
+        return pkgQuota{Limit: 0, Used: 0}
+    }
+}
+func remaining(q pkgQuota) int {
+    if q.Limit <= 0 { return 0 }
+    if q.Used  <  0 { return q.Limit }
+    if q.Used  >= q.Limit { return 0 }
+    return q.Limit - q.Used
+}

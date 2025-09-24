@@ -214,7 +214,7 @@ func SubmitPaymentSlip(c *gin.Context) {
 			return
 		}
 	}
-	// ยอมรับ jpg/png/pdf
+	// validate นามสกุลไฟล์
 	{
 		n := strings.ToLower(fileHeader.Filename)
 		if !(strings.HasSuffix(n, ".jpg") || strings.HasSuffix(n, ".jpeg") || strings.HasSuffix(n, ".png") || strings.HasSuffix(n, ".pdf")) {
@@ -263,7 +263,7 @@ func SubmitPaymentSlip(c *gin.Context) {
 	}
 
 	// ---- save file ----
-	saveDir := fmt.Sprintf("images/payments/booking_%d", bookingID)
+	saveDir := fmt.Sprintf("images/users_%d/slips", payerID)
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot create directory"})
 		return

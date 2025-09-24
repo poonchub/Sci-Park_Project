@@ -1,6 +1,6 @@
 // utils/getBookingStep.ts
 export const BOOKING_STEPS = [
-  "Pending Approvel",
+  "pending approval",
   "Pending Payment",
   "Partially Paid",
   "Awaiting Receipt",
@@ -19,7 +19,7 @@ export function getBookingActiveStep(statusName?: string) {
 
   // รองรับคำเก่า/ผิดสะกดเล็กน้อย
   const map: Record<string, number> = {
-    "pending approvel": 0,
+    "pending approval": 0,
     "pending payment": 1,
     "partially paid": 2,
     "awaiting receipt": 3,

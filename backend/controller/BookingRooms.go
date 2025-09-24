@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
@@ -537,6 +538,9 @@ func classifyPolicyRoom(r *entity.Room) (string, error) {
 /* ================
  * Handler
  * ================ */
+/* ================
+ * Handler
+ * ================ */
 
 func CreateBookingRoom(c *gin.Context) {
 	db := config.DB()
@@ -556,7 +560,7 @@ func CreateBookingRoom(c *gin.Context) {
 		PaymentOptionID uint     `json:"PaymentOptionID"`
 	}
 
-	// (optional) debug raw body
+	// debug raw body (คงไว้ตามเดิม)
 	bodyBytes, _ := io.ReadAll(c.Request.Body)
 	log.Println("Raw request body:", string(bodyBytes))
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -578,7 +582,7 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}()
 
-	// ----- ห้อง + ราคา -----
+	// ห้อง + ราคา
 	var room entity.Room
 	if err := tx.
 		Preload("RoomStatus").
@@ -595,7 +599,7 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ----- ผู้ใช้ -----
+	// ผู้ใช้
 	var user entity.User
 	if err := tx.Preload("Role").First(&user, input.UserID).Error; err != nil {
 		tx.Rollback()
@@ -603,7 +607,7 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ----- TimeSlots -----
+	// TimeSlots
 	var timeSlots []entity.TimeSlot
 	if err := tx.Where("id IN ?", input.TimeSlotIDs).Find(&timeSlots).Error; err != nil || len(timeSlots) == 0 {
 		tx.Rollback()
@@ -611,7 +615,7 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ----- กันจองซ้ำ (ยกเว้นสถานะยกเลิก) -----
+	// กันจองซ้ำ (ยกเว้นยกเลิก)
 	const cancelledStatusID = 3
 	for _, dateStr := range input.Dates {
 		parsedDate, err := time.Parse("2006-01-02", dateStr)
@@ -642,10 +646,10 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// ----- สถานะตั้งต้น = Pending Approvel -----
+	// สถานะตั้งต้น
 	var bs entity.BookingStatus
-	if err := tx.Where("LOWER(status_name) = ?", "pending approvel").First(&bs).Error; err != nil {
-		bs = entity.BookingStatus{StatusName: "Pending Approvel"}
+	if err := tx.Where("LOWER(status_name) = ?", "pending approval").First(&bs).Error; err != nil {
+		bs = entity.BookingStatus{StatusName: "pending approval"}
 		if e2 := tx.Create(&bs).Error; e2 != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "init booking status failed"})
@@ -653,33 +657,66 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// ----- AdditionalInfo (ส่วนลดที่ FE ติ๊ก) -----
+	// AdditionalInfo (ของเดิม)
 	var addInfo additionalInfoPayload
 	if input.AdditionalInfo != "" {
 		_ = json.Unmarshal([]byte(input.AdditionalInfo), &addInfo)
 	}
 
-	// ----- Map ราคา timeSlot -> ราคา -----
+	// helper: อ่าน AutoEmployeeHourlyFree จาก AdditionalInfo แบบทนเคส/ตำแหน่ง
+	asBool := func(v any) bool {
+		switch x := v.(type) {
+		case bool:
+			return x
+		case string:
+			lx := strings.TrimSpace(strings.ToLower(x))
+			return lx == "true" || lx == "1" || lx == "yes"
+		case float64:
+			return x != 0
+		default:
+			return false
+		}
+	}
+	// สิทธิ์พนักงาน: รายชั่วโมงใช้ฟรี (ไม่กินโควตาแพ็กเกจ)
+	employeeHourlyFree := user.IsEmployee && isHourlyBooking(timeSlots)
+	if input.AdditionalInfo != "" {
+		var raw map[string]any
+		if err := json.Unmarshal([]byte(input.AdditionalInfo), &raw); err == nil {
+			if v, ok := raw["AutoEmployeeHourlyFree"]; ok {
+				employeeHourlyFree = employeeHourlyFree || asBool(v)
+			}
+			if d, ok := raw["Discounts"].(map[string]any); ok {
+				if v, ok2 := d["AutoEmployeeHourlyFree"]; ok2 {
+					employeeHourlyFree = employeeHourlyFree || asBool(v)
+				}
+			}
+		}
+	}
+	// เปิดสิทธิ์พนักงานเฉพาะเมื่อเป็นพนักงานจริง
+	if !user.IsEmployee {
+		employeeHourlyFree = false
+	}
+
+	// แผนที่ราคา
 	priceByTimeSlot := make(map[uint]float64)
 	for _, rp := range room.RoomType.RoomPrices {
 		priceByTimeSlot[rp.TimeSlotID] = float64(rp.Price)
 	}
 
-	// ----- baseTotal = ผลรวมราคา slot ที่เลือก * จำนวนวัน -----
+	// baseTotal = (ผลรวมราคาช่วงเวลาที่เลือก) * จำนวนวัน
 	baseTotal := 0.0
 	for _, tsID := range input.TimeSlotIDs {
 		baseTotal += priceByTimeSlot[tsID]
 	}
 	baseTotal *= float64(len(input.Dates))
 
-	// ----- ดึงแพ็กเกจของผู้ใช้ผ่าน user_packages (ฐานเท่านั้น) -----
+	// โหลดแพ็กเกจล่าสุดของผู้ใช้
 	var up entity.UserPackage
 	_ = tx.Preload("Package").
 		Where("user_id = ?", user.ID).
 		Order("created_at DESC").
-		First(&up).Error // ถ้าไม่เจอ => ไม่ใช่สมาชิก
+		First(&up).Error
 
-	// pl = nil ถ้าไม่ใช่สมาชิก (ไม่มี user_packages)
 	var pl *packageLite
 	if up.Package.ID != 0 {
 		pl = &packageLite{
@@ -690,10 +727,7 @@ func CreateBookingRoom(c *gin.Context) {
 		}
 	}
 
-	// **สำคัญ**: ไม่ fallback จาก FE เพื่อกันการสวมสิทธิ์
-	// (จงอย่ากลับไปเติม pl จาก addInfo.Package)
-
-	// ----- policy/หมวดจาก RoomType.Category -----
+	// จัดหมวดจาก RoomType.Category
 	policy, err := classifyPolicyRoom(&room)
 	if err != nil {
 		tx.Rollback()
@@ -701,46 +735,48 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ----- ส่วนลด/โควตา -----
 	benefit := benefitsFromPackage(pl)
 
+	// โควต้าฟรีเฉพาะ meeting (training/hall = 0 ตามสเปกปัจจุบัน)
 	nz := func(x int) int {
 		if x < 0 {
 			return 0
 		}
 		return x
 	}
-
 	meetingRemaining := 0
 	if pl != nil && up.ID != 0 {
-		// นับเฉพาะสมาชิกจริง
 		meetingRemaining = nz(pl.MeetingRoomLimit - nz(up.MeetingRoomUsed))
 	}
 
+	// ตัดสินใจส่วนลด
 	appliedFree := false
 	applied50 := false
 
-	switch policy {
-	case "meeting":
-		// ใช้สิทธิ์ฟรีเฉพาะ “สมาชิก” ที่ยังมีโควตา และ FE ต้องติ๊กขอใช้
-		if pl != nil && addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
-			appliedFree = true
-		} else if pl != nil && meetingRemaining <= 0 && benefit.meetingHalf {
-			// โควต้าหมดแล้ว แต่ยังลด 50% สำหรับ “สมาชิก”
-			applied50 = true
-		} else if pl != nil && addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
-			// “สมาชิก” เท่านั้นที่จะติ๊กใช้ลด 50% เองได้
-			applied50 = true
-		}
-	case "training":
-		// ลด 50% เฉพาะสมาชิก
-		if pl != nil && benefit.trainingHalf {
-			applied50 = true
-		}
-	case "hall":
-		// ลด 50% เฉพาะสมาชิก
-		if pl != nil && benefit.hallHalf {
-			applied50 = true
+	// สิทธิ์พนักงานรายชั่วโมง (ชนะทุกอย่าง)
+	if employeeHourlyFree {
+		appliedFree = true
+	} else {
+		switch policy {
+		case "meeting":
+			// ใช้สิทธิ์ฟรี เฉพาะสมาชิกที่ยังมีโควตา และ FE กดใช้จริง
+			if pl != nil && addInfo.Discounts.UsedFreeCredit && meetingRemaining > 0 {
+				appliedFree = true
+			}
+			// ลด 50% เฉพาะสมาชิก และ FE ติ๊กจริง ๆ เท่านั้น
+			if !appliedFree && pl != nil && addInfo.Discounts.AppliedMember50 && benefit.meetingHalf {
+				applied50 = true
+			}
+		case "training":
+			// ตอนนี้ไม่มีสิทธิ์ฟรี แต่ลด 50% ได้ (อิงสิทธิ์แพ็กเกจ)
+			if pl != nil && addInfo.Discounts.AppliedMember50 && benefit.trainingHalf {
+				applied50 = true
+			}
+		case "hall":
+			// ตอนนี้ไม่มีสิทธิ์ฟรี แต่ลด 50% ได้ (อิงสิทธิ์แพ็กเกจ)
+			if pl != nil && addInfo.Discounts.AppliedMember50 && benefit.hallHalf {
+				applied50 = true
+			}
 		}
 	}
 
@@ -753,12 +789,16 @@ func CreateBookingRoom(c *gin.Context) {
 	if finalTotal < 0 {
 		finalTotal = 0
 	}
-	discountAmount := baseTotal - finalTotal
-	if discountAmount < 0 {
-		discountAmount = 0
+	discountAmount := math.Max(0, baseTotal-finalTotal)
+
+	// อนุญาตยอด 0 เฉพาะกรณีใช้ฟรี (รวมสิทธิ์พนักงาน)
+	if finalTotal == 0 && !(appliedFree) {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ยอดรวมเป็น 0 ได้เฉพาะกรณีใช้สิทธิ์ฟรีเท่านั้น"})
+		return
 	}
 
-	// ----- ตรวจวิธีจ่าย และ normalize มัดจำ -----
+	// ตรวจวิธีชำระ & normalize มัดจำ
 	var opt entity.PaymentOption
 	if err := tx.First(&opt, input.PaymentOptionID).Error; err != nil {
 		tx.Rollback()
@@ -767,37 +807,51 @@ func CreateBookingRoom(c *gin.Context) {
 	}
 	plan := strings.ToLower(strings.TrimSpace(opt.OptionName))
 
+	normalizeDeposit := func(dep, total float64) float64 {
+		if dep < 0 {
+			dep = 0
+		}
+		if dep > total {
+			dep = total
+		}
+		return dep
+	}
+
+	// เคารพ FE เมื่อค่าตรงสูตรเซิร์ฟเวอร์
+	const eps = 1.0 // THB tolerance
+	useFETotals := math.Abs(input.TotalAmount-finalTotal) <= eps &&
+		math.Abs(input.DiscountAmount-discountAmount) <= eps
+
+	writeDiscount := discountAmount
+	writeTotal := finalTotal
+	if useFETotals {
+		writeDiscount = input.DiscountAmount
+		writeTotal = input.TotalAmount
+	}
+
+	// deposit: ถ้า Full ต้องเป็น 0; ถ้า Deposit ให้ normalize (ต้องอิง writeTotal เสมอ)
 	deposit := input.DepositAmount
 	switch plan {
 	case "full":
 		deposit = 0
-	case "deposit":
-		if deposit < 0 {
-			deposit = 0
-		}
-		if deposit > finalTotal {
-			deposit = finalTotal
-		}
 	default:
-		if deposit < 0 {
-			deposit = 0
-		}
-		if deposit > finalTotal {
-			deposit = finalTotal
-		}
+		deposit = normalizeDeposit(deposit, writeTotal)
 	}
 
-	// ----- บันทึก Booking -----
+	// เขียนลง DB — เก็บครบ 4 ค่า Base/Discount/Total/Deposit
 	booking := entity.BookingRoom{
-		Purpose:         input.Purpose,
-		UserID:          input.UserID,
-		RoomID:          input.RoomID,
-		TimeSlots:       timeSlots,
-		StatusID:        bs.ID,
-		AdditionalInfo:  input.AdditionalInfo,
-		DepositAmount:   deposit,
-		DiscountAmount:  discountAmount,
-		TotalAmount:     finalTotal,
+		Purpose:        input.Purpose,
+		UserID:         input.UserID,
+		RoomID:         input.RoomID,
+		TimeSlots:      timeSlots,
+		StatusID:       bs.ID,
+		AdditionalInfo: input.AdditionalInfo,
+
+		BaseTotal:      baseTotal,     // ✅ เก็บราคาฐาน
+		DiscountAmount: writeDiscount, // ✅
+		TotalAmount:    writeTotal,    // ✅
+		DepositAmount:  deposit,       // ✅
+
 		Address:         input.Address,
 		TaxID:           input.TaxID,
 		PaymentOptionID: input.PaymentOptionID,
@@ -808,7 +862,7 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ----- บันทึก BookingDate -----
+	// BookingDate
 	var bds []entity.BookingDate
 	for _, dateStr := range input.Dates {
 		parsedDate, _ := time.Parse("2006-01-02", dateStr)
@@ -823,7 +877,6 @@ func CreateBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ไม่สร้าง Payment ที่นี่ — ไปสร้างตอน ApproveBookingRoom
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกข้อมูลไม่สำเร็จ"})
 		return
@@ -831,18 +884,23 @@ func CreateBookingRoom(c *gin.Context) {
 
 	services.NotifySocketEvent("booking_room_created", booking)
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":          "จองห้องสำเร็จ",
-		"booking_id":       booking.ID,
-		"category":         policy,
-		"base_total":       baseTotal,
-		"final_total":      finalTotal,
-		"discount":         discountAmount,
-		"appliedFree":      appliedFree,
-		"applied50pct":     applied50,
-		"is_member":        pl != nil, // ให้ FE รู้สถานะเพื่อแสดง UI ให้ถูก
-		"payment_creation": "deferred_to_approval",
-	})
+	resp := gin.H{
+		"message":              "จองห้องสำเร็จ",
+		"booking_id":           booking.ID,
+		"category":             policy,
+		"base_total":           baseTotal,
+		"final_total":          writeTotal,
+		"discount":             writeDiscount,
+		"deposit":              deposit,
+		"appliedFree":          appliedFree,
+		"applied50pct":         applied50,
+		"employee_hourly_free": employeeHourlyFree,
+		"is_member":            pl != nil,
+	}
+	if !useFETotals {
+		resp["warning"] = "FE totals mismatched; server normalized totals"
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // นับวันทำการ (จันทร์–ศุกร์) ระหว่าง now → start (ไม่รวมวันหยุดนักขัตฤกษ์)

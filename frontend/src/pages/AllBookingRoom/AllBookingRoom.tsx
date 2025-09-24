@@ -302,6 +302,8 @@ interface BookingRoomsInterfaceUse {
     Merged_time_slots?: Array<{ start_time: string; end_time: string }>;
     StatusName?: string;
     Purpose?: string;
+    BaseTotal?: number;
+    DiscountAmount?: number;
     User?: UserInterface;
     DisplayStatus?: string;
     Payment?: {
@@ -331,6 +333,8 @@ interface BookingRoomsInterfaceUse {
         IsFullyPaid?: boolean;
         DepositAmount?: number;
         DiscountAmount?: number;
+        BaseTotal?: number;
+
     };
     Notifications?: NotificationsInterface[];
     PaymentOption?: { OptionName?: string };
@@ -469,85 +473,128 @@ function AllBookingRoom() {
                         return;
                     }
 
-                    setIsLoadingApprove(true)
+                    setIsLoadingApprove(true);
 
-                    const newTotalAmount = (row.Finance?.TotalAmount! + row.Finance?.DiscountAmount!) - (discountAmount!)
-                    const bookingData: BookingRoomsInterface = {
-                        DiscountAmount: discountAmount,
-                        TotalAmount: newTotalAmount,
-                        DepositAmount: newTotalAmount / 2
-                    }
-                    await UpdateBookingRoomByID(row.ID, bookingData)
-
-                    const resApprove = await ApproveBookingRoom(row.ID);
-                    const userId = Number(localStorage.getItem("userId"));
-                    const today = new Date();
-                    let invoiceData: RoomBookingInvoiceInterface = {};
-
-                    if ((resApprove.data.PaymentOption?.OptionName || "").toLowerCase() === "deposit") {
-                        const BookingDates = resApprove.data.BookingDates;
-                        const maxDate = new Date(Math.max(...BookingDates.map((d: BookingDateInterface) => new Date(d.Date ?? "").getTime())));
-                        const depositDue = new Date();
-                        depositDue.setDate(today.getDate() + 7);
-                        depositDue.setHours(23, 59, 59, 999);
-                        const dueDate = new Date(maxDate);
-                        dueDate.setDate(maxDate.getDate() + 7);
-                        dueDate.setHours(23, 59, 59, 999);
-
-                        invoiceData = {
-                            InvoiceNumber: invoiceNumber,
-                            IssueDate: today.toISOString(),
-                            DepositeDueDate: depositDue.toISOString(),
-                            DueDate: dueDate.toISOString(),
-                            BookingRoomID: resApprove.data.ID,
-                            ApproverID: userId,
-                            CustomerID: resApprove.data.UserID,
-                        };
-                    } else {
-                        const dueDate = new Date();
-                        dueDate.setDate(today.getDate() + 7);
-                        dueDate.setHours(23, 59, 59, 999);
-                        invoiceData = {
-                            InvoiceNumber: invoiceNumber,
-                            IssueDate: today.toISOString(),
-                            DueDate: dueDate.toISOString(),
-                            BookingRoomID: resApprove.data.ID,
-                            ApproverID: userId,
-                            CustomerID: resApprove.data.UserID,
-                        };
-                    }
-
-                    const resInvoice = await CreateRoomBookingInvoice(invoiceData);
-
-                    const BookingDate: BookingDateInterface[] = resApprove.data.BookingDates || [];
-                    const invoiceItemData: RoomBookingInvoiceItemInterface[] = BookingDate.map((date) => ({
-                        Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(
-                            date.Date ?? ""
-                        )} ห้อง ${resApprove.data.Room.RoomNumber}`,
-                        Quantity: 1,
-                        UnitPrice: (resApprove.data.Finance.TotalAmount + resApprove.data.Finance.DiscountAmount)/ BookingDate.length,
-                        Amount: (resApprove.data.Finance.TotalAmount + resApprove.data.Finance.DiscountAmount) / BookingDate.length,
-                    }));
-
-                    const items = invoiceItemData.map((it) => ({ ...it, RoomBookingInvoiceID: resInvoice.data.ID }));
-                    await Promise.all(items.map((it) => CreateRoomBookingInvoiceItem(it).catch(() => null)));
-
-                    const notificationDataUpdate: NotificationsInterface = {
-                        IsRead: true,
+                    const normalizeDeposit = (dep: number, total: number) => {
+                        if (!Number.isFinite(dep)) dep = 0;
+                        if (dep < 0) dep = 0;
+                        if (dep > total) dep = total;
+                        return dep;
                     };
-                    const resUpdateNotification = await UpdateNotificationsByBookingRoomID(notificationDataUpdate, resApprove.data.ID);
-                    if (!resUpdateNotification || resUpdateNotification.error)
-                        throw new Error(resUpdateNotification?.error || "Failed to update notification.");
 
-                    await handleUpdateNotification(resApprove.data.User.ID ?? 0, false, undefined, undefined, undefined, undefined, undefined, resApprove.data.ID);
+                    try {
+                        // 1) ราคาเต็ม (BaseTotal) + ส่วนลดสิทธิ์เดิม + ส่วนลดพิเศษ
+                        const baseTotal =
+                            Number(row?.BaseTotal ??
+                                row?.Finance?.BaseTotal ??
+                                ((row?.Finance?.TotalAmount ?? 0) + (row?.Finance?.DiscountAmount ?? 0))) || 0;
 
-                    await handleUploadPDF(resInvoice.data.ID);
+                        const privilegeDiscount =
+                            Number(row?.DiscountAmount ?? row?.Finance?.DiscountAmount ?? 0) || 0; // ส่วนลดสิทธิ์ที่มีอยู่แล้ว
 
-                    setIsLoadingApprove(false)
-                    setOpenConfirmApprove(false)
+                        const specialDiscount = Math.max(0, Number(discountAmount ?? 0));        // ส่วนลดพิเศษที่กรอกใน dialog
+
+                        const newDiscountAmount = Math.min(baseTotal, privilegeDiscount + specialDiscount);
+                        const newTotalAmount = Math.max(0, baseTotal - newDiscountAmount);
+
+                        // 2) เซฟยอด (มัดจำใส่ครึ่งชั่วคราว เดี๋ยวอัปเดตหลังรู้ PaymentOption)
+                        const firstPatch: BookingRoomsInterface = {
+                            DiscountAmount: newDiscountAmount,
+                            TotalAmount: newTotalAmount,
+                            DepositAmount: normalizeDeposit(newTotalAmount / 2, newTotalAmount),
+                        };
+                        await UpdateBookingRoomByID(row.ID, firstPatch);
+
+                        // 3) อนุมัติ
+                        const resApprove = await ApproveBookingRoom(row.ID);
+
+                        // 4) ปรับมัดจำตาม PaymentOption
+                        const optName = String(resApprove?.data?.PaymentOption?.OptionName || "").toLowerCase();
+                        let deposit = newTotalAmount / 2;
+                        if (optName === "full") deposit = 0;
+                        deposit = normalizeDeposit(deposit, newTotalAmount);
+                        await UpdateBookingRoomByID(row.ID, { DepositAmount: deposit } as BookingRoomsInterface);
+
+                        // 5) สร้างใบแจ้งหนี้
+                        const userId = Number(localStorage.getItem("userId"));
+                        const today = new Date();
+                        let invoiceData: RoomBookingInvoiceInterface = {};
+
+                        if (optName === "deposit") {
+                            const bookingDates: BookingDateInterface[] = resApprove.data.BookingDates || [];
+                            const maxDate = new Date(Math.max(...bookingDates.map(d => new Date(d.Date ?? "").getTime())));
+                            const depositDue = new Date(); depositDue.setDate(today.getDate() + 7); depositDue.setHours(23, 59, 59, 999);
+                            const dueDate = new Date(maxDate); dueDate.setDate(maxDate.getDate() + 7); dueDate.setHours(23, 59, 59, 999);
+
+                            invoiceData = {
+                                InvoiceNumber: invoiceNumber,
+                                IssueDate: today.toISOString(),
+                                DepositeDueDate: depositDue.toISOString(),
+                                DueDate: dueDate.toISOString(),
+                                BookingRoomID: resApprove.data.ID,
+                                ApproverID: userId,
+                                CustomerID: resApprove.data.UserID,
+                            };
+                        } else {
+                            const dueDate = new Date(); dueDate.setDate(today.getDate() + 7); dueDate.setHours(23, 59, 59, 999);
+                            invoiceData = {
+                                InvoiceNumber: invoiceNumber,
+                                IssueDate: today.toISOString(),
+                                DueDate: dueDate.toISOString(),
+                                BookingRoomID: resApprove.data.ID,
+                                ApproverID: userId,
+                                CustomerID: resApprove.data.UserID,
+                            };
+                        }
+
+                        const resInvoice = await CreateRoomBookingInvoice(invoiceData);
+
+                        // 6) สร้างรายการใบแจ้งหนี้โดยอิง "ราคาเต็มต่อวัน"
+                        const bookingDates: BookingDateInterface[] = resApprove.data.BookingDates || [];
+                        const approvedBaseTotal =
+                            Number(resApprove?.data?.BaseTotal ??
+                                resApprove?.data?.Finance?.BaseTotal ??
+                                ((resApprove?.data?.Finance?.TotalAmount ?? 0) + (resApprove?.data?.Finance?.DiscountAmount ?? 0))) || 0;
+
+                        const perDayBase = bookingDates.length ? approvedBaseTotal / bookingDates.length : 0;
+
+                        const invoiceItemData: RoomBookingInvoiceItemInterface[] = bookingDates.map((date) => ({
+                            Description: `ค่าบริการอาคารอำนวยการอุทยานวิทยาศาสตร์ภูมิภาค ภาคตะวันออกเฉียงเหนือ 2 วันที่ ${thaiDateFull(
+                                date.Date ?? ""
+                            )} ห้อง ${resApprove.data.Room.RoomNumber}`,
+                            Quantity: 1,
+                            UnitPrice: perDayBase,
+                            Amount: perDayBase,
+                        }));
+
+                        const items = invoiceItemData.map(it => ({ ...it, RoomBookingInvoiceID: resInvoice.data.ID }));
+                        await Promise.all(items.map(it => CreateRoomBookingInvoiceItem(it).catch(() => null)));
+
+                        // 7) ปิดแจ้งเตือน/ทำงานต่อ
+                        const notificationDataUpdate: NotificationsInterface = { IsRead: true };
+                        const resUpdateNotification = await UpdateNotificationsByBookingRoomID(notificationDataUpdate, resApprove.data.ID);
+                        if (!resUpdateNotification || (resUpdateNotification as any).error) {
+                            throw new Error((resUpdateNotification as any)?.error || "Failed to update notification.");
+                        }
+
+                        await handleUpdateNotification(
+                            resApprove.data.User.ID ?? 0,
+                            false,
+                            undefined, undefined, undefined, undefined, undefined,
+                            resApprove.data.ID
+                        );
+
+                        await handleUploadPDF(resInvoice.data.ID);
+
+                        setOpenConfirmApprove(false);
+                    } catch (err) {
+                        console.error("Approve booking error:", err);
+                        handleSetAlert("error", (err as Error)?.message || "An unexpected error occurred during approval.");
+                    } finally {
+                        setIsLoadingApprove(false);
+                    }
                     break;
                 }
-
                 case "approvePayment": {
                     const encodedId = Base64.encode(String(row.ID));
                     navigate(`/booking/review?booking_id=${encodeURIComponent(encodedId)}`);
@@ -739,7 +786,7 @@ function AllBookingRoom() {
                         const payKey = toKey(statusRaw);
                         const canPayNow = payKey === "Pending Payment" || payKey === "Rejected";
 
-                        const isPendingApprove = display === "pending approvel" && (isManager() || isAdmin());
+                        const isPendingApprove = display === "pending approval" && (isManager() || isAdmin());
 
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} rowSpacing={1.2} className="card-item-container">
@@ -941,17 +988,47 @@ function AllBookingRoom() {
                 flex: 0.4,
                 renderCell: (params) => {
                     const d = params.row as BookingRoomsInterfaceUse;
-                    const bookingDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
-                    const date = dateFormat(bookingDate || "");
-                    const time = timeFormat(bookingDate || "");
+
+                    // วันที่จาก BookingDates ตัวแรก
+                    const rawDate = d.BookingDates?.[0]?.Date || d.CreatedAt;
+                    const dateStr = dayjs(rawDate).format("DD/MM/YYYY");
+
+                    // ฟังก์ชันช่วย: รับได้ทั้ง "12:30" หรือ "2025-09-27T12:30:00+07:00"
+                    const toTime = (v?: string) => {
+                        if (!v) return "";
+                        if (v.includes("T")) return dayjs(v).format("HH:mm");
+                        // กรณีเป็น "12:30:00" ก็หั่นเหลือ HH:mm
+                        const m = v.match(/^(\d{2}:\d{2})/);
+                        return m ? m[1] : v;
+                    };
+
+                    // รองรับ 2 แหล่งเวลา:
+                    // 1) มี Merged_time_slots เป็น [{start_time, end_time}]
+                    // 2) หรือมี start/end แบบรวมมาเป็นสตริง "start - end"
+                    let start = "";
+                    let end = "";
+
+                    if (Array.isArray(d.Merged_time_slots) && d.Merged_time_slots.length > 0) {
+                        start = d.Merged_time_slots[0].start_time;
+                        end = d.Merged_time_slots[d.Merged_time_slots.length - 1].end_time;
+                    } else if (typeof (d as any).TimeRange === "string") {
+                        // เผื่อกรณี FE/BE ส่งมาแบบ "start - end"
+                        const [s, e] = (d as any).TimeRange.split(" - ").map((x: string) => x.trim());
+                        start = s; end = e;
+                    }
+
+                    const timeStr =
+                        start || end ? `${toTime(start)} - ${toTime(end)}` : "-";
+
                     return (
                         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
-                            <Typography sx={{ fontSize: 14 }}>{date}</Typography>
-                            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{time}</Typography>
+                            <Typography sx={{ fontSize: 14 }}>{dateStr}</Typography>
+                            <Typography sx={{ fontSize: 14, color: "text.secondary" }}>{timeStr}</Typography>
                         </Box>
                     );
                 },
-            },
+            }
+            ,
             {
                 field: "Status",
                 headerName: "Status",
@@ -1013,10 +1090,10 @@ function AllBookingRoom() {
                         isRowOwner &&
                         (statusKey === "Pending Payment" || statusKey === "Rejected");
                     const canRefund = isAdminLike && statusKey === "Paid"; // paid / awaiting receipt
-
+                    const approved = dStatus !== "pending approval";
                     return (
                         <Box className="container-btn" sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", alignItems: "center", height: "100%" }}>
-                            {isAdminLike && dStatus === "pending approvel" && (
+                            {isAdminLike && dStatus === "pending approval" && (
                                 <>
                                     <Tooltip title="Approve">
                                         <span>
@@ -1055,29 +1132,32 @@ function AllBookingRoom() {
                                 </>
                             )}
 
-                            <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
-                                <span>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => { setSelectedRow(row); setOpenPaymentDialog(true); }}
-                                        sx={{ minWidth: 42 }}
-                                        disabled={locked}
-                                    >
-                                        {canPayNow ? (
-                                            <>
-                                                <HandCoins size={18} />
-                                                <Typography variant="textButtonClassic" className="text-btn">Pay Now</Typography>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Wallet size={18} />
-                                                <Typography variant="textButtonClassic" className="text-btn">View Slip</Typography>
-                                            </>
-                                        )}
-                                    </Button>
+                            {(canPayNow || approved) && (
+                                <Tooltip title={canPayNow ? "Pay Now" : "View Slip"}>
+                                    <span>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => { setSelectedRow(row); setOpenPaymentDialog(true); }}
+                                            sx={{ minWidth: 42 }}
+                                            disabled={locked}
+                                        >
+                                            {canPayNow ? (
+                                                <>
+                                                    <HandCoins size={18} />
+                                                    <Typography variant="textButtonClassic" className="text-btn">Pay Now</Typography>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Wallet size={18} />
+                                                    <Typography variant="textButtonClassic" className="text-btn">View Slip</Typography>
+                                                </>
+                                            )}
+                                        </Button>
 
-                                </span>
-                            </Tooltip>
+                                    </span>
+                                </Tooltip>
+                            )}
+
 
                             <Tooltip title="Details">
                                 <Button className="btn-detail" variant="outlinedGray" onClick={() => handleClickCheck(row)} sx={{ minWidth: "42px" }}>

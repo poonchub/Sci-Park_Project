@@ -28,7 +28,8 @@ import {
   Camera,
   X,
   Wrench,
-  LayoutPanelLeft
+  LayoutPanelLeft,
+  Building2
 } from 'lucide-react';
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
@@ -97,6 +98,20 @@ const SectionHeader = ({ variant, title }: { variant: SectionVariant; title: str
     </Box>
   );
 };
+
+// 🔧 NEW helper (วางไว้ตอนต้นไฟล์ ใกล้ๆ helper อื่นๆ)
+const clampMin0 = (v: any) => {
+  const n = Number(v);
+  if (Number.isNaN(n)) return 0;
+  return Math.max(0, Math.round(n)); // ปัดเศษและกันค่าติดลบ
+};
+
+// เพิ่มทีละจำนวนที่สมเหตุสมผลตามช่วงราคา
+const moneyStep = (v: any) => {
+  const n = Number(v) || 0;
+  return n < 200 ? 10 : n < 2000 ? 50 : n < 10000 ? 100 : 500;
+};
+
 
 const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open, onClose }) => {
 
@@ -343,12 +358,14 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
       TransitionProps={{ direction: 'up' } as any}
     >
       <DialogTitle sx={{ borderRadius: '12px 12px 0 0', mb: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, flexWrap: 'wrap' }}>
+        {/* ตั้งสีที่ parent แล้วให้ไอคอน/ตัวอักษร inherit ผ่าน currentColor */}
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, flexWrap: 'wrap', color: 'primary.main' }}>
+          <Building2 size={28} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, color: 'primary.main' }}>
               Edit Room Type
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            <Typography variant="body2" sx={{ color: 'primary.main', opacity: 0.9 }}>
               Manage room type settings and configurations
             </Typography>
           </Box>
@@ -361,555 +378,583 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
 
               {/* Basic Information */}
-              <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <SectionHeader variant="basic" title="Basic Information" />
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <SectionHeader variant="basic" title="Basic Information" />
 
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
-                      Room Type Name *
-                    </Typography>
-                    <Controller
-                      name="TypeName"
-                      control={control}
-                      defaultValue={roomType.TypeName || ''}
-                      rules={{ required: 'Please enter room type name' }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          placeholder="Enter room type name"
-                          error={!!errors.TypeName}
-                          helperText={String(errors.TypeName?.message) || ''}
-                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        />
-                      )}
-                    />
-                  </Grid>
+                  <Grid container spacing={3}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
+                        Room Type Name *
+                      </Typography>
+                      <Controller
+                        name="TypeName"
+                        control={control}
+                        defaultValue={roomType.TypeName || ''}
+                        rules={{ required: 'Please enter room type name' }}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            fullWidth
+                            placeholder="Enter room type name"
+                            error={!!errors.TypeName}
+                            helperText={String(errors.TypeName?.message) || ''}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                          />
+                        )}
+                      />
+                    </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
-                      Room Size (sq.m.)
-                    </Typography>
-                    <Controller
-                      name="RoomSize"
-                      control={control}
-                      defaultValue={roomType.RoomSize ?? 1}
-                      rules={{
-                        required: 'Please enter room size',
-                        min: { value: 1, message: 'Minimum value is 1' },
-                      }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          type="number"
-                          fullWidth
-                          placeholder="Enter room size"
-                          inputProps={{ min: 1 }}
-                          onKeyDown={blockNonNumericKeys}
-                          onChange={(e) => field.onChange(clampMin1(e.target.value))}
-                          error={!!errors.RoomSize}
-                          helperText={String(errors.RoomSize?.message) || ''}
-                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        />
-                      )}
-                    />
-                  </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, }}>
+                        Room Size (sq.m.)
+                      </Typography>
+                      <Controller
+                        name="RoomSize"
+                        control={control}
+                        defaultValue={roomType.RoomSize ?? 1}
+                        rules={{
+                          required: 'Please enter room size',
+                          min: { value: 1, message: 'Minimum value is 1' },
+                        }}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            type="number"
+                            fullWidth
+                            placeholder="Enter room size"
+                            inputProps={{ min: 1 }}
+                            onKeyDown={blockNonNumericKeys}
+                            onChange={(e) => field.onChange(clampMin1(e.target.value))}
+                            error={!!errors.RoomSize}
+                            helperText={String(errors.RoomSize?.message) || ''}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                          />
+                        )}
+                      />
+                    </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                      For Rental
-                    </Typography>
-                    <Controller
-                      name="ForRental"
-                      control={control}
-                      defaultValue={roomType.ForRental}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value ? "yes" : "no"}
-                          onChange={(e) => field.onChange(e.target.value === "yes")}
-                          fullWidth
-                          sx={{ borderRadius: 2 }}
-                        >
-                          <MenuItem value="yes">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label="Yes" color="success" size="small" />
-                            </Box>
-                          </MenuItem>
-                          <MenuItem value="no">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label="No" color="default" size="small" />
-                            </Box>
-                          </MenuItem>
-                        </Select>
-                      )}
-                    />
-                  </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                        For Rental
+                      </Typography>
+                      <Controller
+                        name="ForRental"
+                        control={control}
+                        defaultValue={roomType.ForRental}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ? "yes" : "no"}
+                            onChange={(e) => field.onChange(e.target.value === "yes")}
+                            fullWidth
+                            sx={{ borderRadius: 2 }}
+                          >
+                            <MenuItem value="yes">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip label="Yes" color="success" size="small" />
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="no">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip label="No" color="default" size="small" />
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                        )}
+                      />
+                    </Grid>
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                      Multiple Sizes
-                    </Typography>
-                    <Controller
-                      name="HasMultipleSizes"
-                      control={control}
-                      defaultValue={roomType.HasMultipleSizes}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value ? "yes" : "no"}
-                          onChange={(e) => field.onChange(e.target.value === "yes")}
-                          fullWidth
-                          sx={{ borderRadius: 2 }}
-                        >
-                          <MenuItem value="yes">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label="Yes" color="success" size="small" />
-                            </Box>
-                          </MenuItem>
-                          <MenuItem value="no">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label="No" color="default" size="small" />
-                            </Box>
-                          </MenuItem>
-                        </Select>
-                      )}
-                    />
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                        Multiple Sizes
+                      </Typography>
+                      <Controller
+                        name="HasMultipleSizes"
+                        control={control}
+                        defaultValue={roomType.HasMultipleSizes}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value ? "yes" : "no"}
+                            onChange={(e) => field.onChange(e.target.value === "yes")}
+                            fullWidth
+                            sx={{ borderRadius: 2 }}
+                          >
+                            <MenuItem value="yes">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip label="Yes" color="success" size="small" />
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value="no">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip label="No" color="default" size="small" />
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                        )}
+                      />
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Paper>
+                </CardContent>
+              </Card>
+
 
               {/* Equipment Section */}
-              <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'stretch', sm: 'flex-start' },
-                    mb: 2,
-                    gap: 1,
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <SectionHeader variant="equipments" title="Equipments" />
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="outlinedGray"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
-                          return next;
-                        });
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      Add Equipment
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        const idx = (roomType?.RoomEquipments?.length ?? 0);
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
-                          return next;
-                        });
-                        openCreate('equipment', idx);
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      New
-                    </Button>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomEquipments ?? []).map((eq: any, index: number) => (
-                    <Card key={index} sx={{ borderRadius: 2 }}>
-                      <CardContent sx={{ p: 2 }}>
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid size={{ xs: 12, md: 5 }}>
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Equipment Type
-                            </Typography>
-                            <Select
-                              value={eq.EquipmentID || ""}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomEquipments ?? [])];
-                                updated[index].EquipmentID = Number(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
-                              }}
-                              fullWidth
-                              sx={{ borderRadius: 2 }}
-                            >
-                              {equipmentsMaster.map((item) => (
-                                <MenuItem key={item.ID} value={item.ID}>
-                                  {item.EquipmentName}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 5 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Quantity
-                            </Typography>
-                            <TextField
-                              type="number"
-                              value={eq.Quantity}
-                              fullWidth
-                              inputProps={{ min: 1 }}
-                              onKeyDown={blockNonNumericKeys}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomEquipments ?? [])];
-                                updated[index].Quantity = clampMin1(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
-                              }}
-                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <IconButton
-                              color="error"
-                              onClick={() => {
-                                const updated = (roomType.RoomEquipments ?? []).filter((_: any, i: number) => i !== index);
-                                setRoomType({ ...(roomType as any), RoomEquipments: updated });
-                              }}
-                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
-                            >
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              </Paper>
-
-              {/* Pricing Section */}
-              <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'stretch', sm: 'flex-start' },
-                    mb: 2,
-                    gap: 1,
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <SectionHeader variant="pricing" title="Pricing" />
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="outlinedGray"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
-                          return next;
-                        });
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      Add Price
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        const idx = (roomType?.RoomPrices?.length ?? 0);
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
-                          return next;
-                        });
-                        openCreate('timeslot', idx);
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      New
-                    </Button>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomPrices ?? []).map((price: any, index: number) => (
-                    <Card key={index} sx={{ borderRadius: 2 }}>
-                      <CardContent sx={{ p: 2 }}>
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid size={{ xs: 12, md: 6 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Time Slot
-                            </Typography>
-                            <Select
-                              value={price.TimeSlotID || ""}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomPrices ?? [])];
-                                updated[index].TimeSlotID = Number(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomPrices: updated });
-                              }}
-                              fullWidth
-                              sx={{ borderRadius: 2 }}
-                            >
-                              {timeSlotsMaster.map((ts) => (
-                                <MenuItem key={ts.ID} value={ts.ID}>
-                                  {ts.TimeSlotName}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 1 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Price (THB)
-                            </Typography>
-                            <TextField
-                              type="number"
-                              value={price.Price}
-                              fullWidth
-                              inputProps={{ min: 1 }}
-                              onKeyDown={blockNonNumericKeys}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomPrices ?? [])];
-                                updated[index].Price = clampMin1(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomPrices: updated });
-                              }}
-                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <IconButton
-                              color="error"
-                              onClick={() => {
-                                const updated = (roomType.RoomPrices ?? []).filter((_: any, i: number) => i !== index);
-                                setRoomType({ ...(roomType as any), RoomPrices: updated });
-                              }}
-                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
-                            >
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              </Paper>
-
-              {/* Layouts Section */}
-              <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'stretch', sm: 'flex-start' },
-                    mb: 2,
-                    gap: 1,
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <SectionHeader variant="layouts" title="Layouts" />
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="outlinedGray"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
-                          return next;
-                        });
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      Add Layout
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<Plus size={16} />}
-                      onClick={() => {
-                        const idx = (roomType?.RoomTypeLayouts?.length ?? 0);
-                        setRoomType(prev => {
-                          const next = { ...(prev as any) };
-                          next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
-                          return next;
-                        });
-                        openCreate('layout', idx);
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      New
-                    </Button>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(roomType.RoomTypeLayouts ?? []).map((layout: any, index: number) => (
-                    <Card key={index} sx={{ borderRadius: 2 }}>
-                      <CardContent sx={{ p: 2 }}>
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid size={{ xs: 12, md: 4 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Layout Type
-                            </Typography>
-                            <Select
-                              value={layout.RoomLayoutID || ""}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomTypeLayouts ?? [])];
-                                updated[index].RoomLayoutID = Number(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
-                              }}
-                              fullWidth
-                              sx={{ borderRadius: 2 }}
-                            >
-                              {layoutsMaster.map((lt) => (
-                                <MenuItem key={lt.ID} value={lt.ID}>
-                                  {lt.LayoutName}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 3 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Capacity
-                            </Typography>
-                            <TextField
-                              type="number"
-                              value={layout.Capacity}
-                              fullWidth
-                              inputProps={{ min: 1 }}
-                              onKeyDown={blockNonNumericKeys}
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomTypeLayouts ?? [])];
-                                updated[index].Capacity = clampMin1(e.target.value);
-                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
-                              }}
-                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 4 }} >
-                            <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
-                              Note
-                            </Typography>
-                            <TextField
-                              value={layout.Note || ""}
-                              fullWidth
-                              placeholder="Optional note"
-                              onChange={(e) => {
-                                const updated = [...(roomType.RoomTypeLayouts ?? [])];
-                                updated[index].Note = e.target.value;
-                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
-                              }}
-                              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <IconButton
-                              color="error"
-                              onClick={() => {
-                                const updated = (roomType.RoomTypeLayouts ?? []).filter((_: any, i: number) => i !== index);
-                                setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
-                              }}
-                              sx={{ backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
-                            >
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              </Paper>
-
-              {/* Images Section */}
-              <Paper sx={{ p: 3, borderRadius: 3 }}>
-                <SectionHeader variant="images" title="Images" />
-
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
-                  {(roomType.RoomTypeImages ?? []).map((img: any, index: number) => (
-                    <Fade in={true} key={index}>
-                      <Card sx={{ position: 'relative', borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }}>
-                        <Box sx={{ position: 'relative' }}>
-                          <img
-                            src={
-                              img.file
-                                ? URL.createObjectURL(img.file)
-                                : `${apiUrl}/${img.FilePath?.replace(/^uploads/, "images")}`
-                            }
-                            alt="room"
-                            style={{ width: 120, height: 100, objectFit: "cover", display: 'block' }}
-                          />
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              const updated = (roomType.RoomTypeImages ?? []).filter((_: any, i: number) => i !== index);
-                              setRoomType({ ...(roomType as any), RoomTypeImages: updated });
-                            }}
-                            sx={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(244, 67, 54, 0.9)', color: 'white', width: 24, height: 24, '&:hover': { backgroundColor: 'rgba(244, 67, 54, 1)', transform: 'scale(1.1)' } }}
-                          >
-                            <X size={12} />
-                          </IconButton>
-                        </Box>
-                      </Card>
-                    </Fade>
-                  ))}
-
-                  {/* Drag & Drop Zone */}
-                  <Card
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleDrop}
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box
                     sx={{
-                      borderRadius: 3,
-                      border: '2px dashed #e0e0e0',
-                      width: 240,
-                      height: 100,
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#666',
+                      justifyContent: 'space-between',
+                      alignItems: { xs: 'stretch', sm: 'flex-start' },
+                      mb: 2, gap: 1, flexWrap: 'wrap'
                     }}
                   >
-                    <Typography variant="body2" align="center">
-                      ลากรูป/โฟลเดอร์มาวางที่นี่
-                    </Typography>
-                  </Card>
+                    <SectionHeader variant="equipments" title="Equipments" />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="outlinedGray"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
+                            return next;
+                          });
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        Add Equipment
+                      </Button>
+                      <Button
+                        variant="contained"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          const idx = (roomType?.RoomEquipments?.length ?? 0);
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomEquipments = [...(prev?.RoomEquipments || []), { Quantity: 1, EquipmentID: 0 } as any];
+                            return next;
+                          });
+                          openCreate('equipment', idx);
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        New
+                      </Button>
+                    </Box>
+                  </Box>
 
-                  {/* Add Images (หลายไฟล์) */}
-                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
-                    <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
-                      <Camera size={24} />
-                      <Typography variant="overline">Add Images</Typography>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        hidden
-                        onChange={handleInputChange}
-                      />
-                    </Button>
-                  </Card>
 
-                  {/* Add Folder (ทั้งโฟลเดอร์) */}
-                  <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
-                    <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
-                      <Typography variant="overline">Add Folder</Typography>
-                      <input
-                        ref={dirInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        hidden
-                        onChange={handleInputChange}
-                      />
-                    </Button>
-                  </Card>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {(roomType.RoomEquipments ?? []).map((eq: any, index: number) => (
+                      <Card key={index} sx={{ borderRadius: 2 }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid size={{ xs: 12, md: 5 }}>
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Equipment Type
+                              </Typography>
+                              <Select
+                                value={eq.EquipmentID || ""}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomEquipments ?? [])];
+                                  updated[index].EquipmentID = Number(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomEquipments: updated });
+                                }}
+                                fullWidth
+                                sx={{ borderRadius: 2 }}
+                              >
+                                {equipmentsMaster.map((item) => (
+                                  <MenuItem key={item.ID} value={item.ID}>
+                                    {item.EquipmentName}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 5 }}>
+                              {/* Quantity */}
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Quantity
+                              </Typography>
+                              <TextField
+                                type="number"
+                                value={eq.Quantity}
+                                fullWidth
+                                inputProps={{ min: 1, step: 1 }}
+                                onKeyDown={blockNonNumericKeys}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomEquipments ?? [])];
+                                  updated[index].Quantity = clampMin1(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomEquipments: updated });
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                              />
+                            </Grid>
+                            <Grid
+                              size={{ xs: 12, md: 1 }}
+                              sx={{ ml: 'auto', display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}
+                            >
+                              <IconButton
+                                color="error"
+                                onClick={() => {
+                                  const updated = (roomType.RoomEquipments ?? []).filter((_: any, i: number) => i !== index);
+                                  setRoomType({ ...(roomType as any), RoomEquipments: updated });
+                                }}
 
-                </Box>
-              </Paper>
+                              >
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+
+
+              {/* Pricing Section */}
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: { xs: 'stretch', sm: 'flex-start' },
+                      mb: 2, gap: 1, flexWrap: 'wrap'
+                    }}
+                  >
+                    <SectionHeader variant="pricing" title="Pricing" />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="outlinedGray"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
+                            return next;
+                          });
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        Add Price
+                      </Button>
+                      <Button
+                        variant="contained"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          const idx = (roomType?.RoomPrices?.length ?? 0);
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomPrices = [...(prev?.RoomPrices || []), { Price: 1, TimeSlotID: 0 } as any];
+                            return next;
+                          });
+                          openCreate('timeslot', idx);
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        New
+                      </Button>
+                    </Box>
+                  </Box>
+
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {(roomType.RoomPrices ?? []).map((price: any, index: number) => (
+                      <Card key={index} sx={{ borderRadius: 2 }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Time Slot
+                              </Typography>
+                              <Select
+                                value={price.TimeSlotID || ""}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomPrices ?? [])];
+                                  updated[index].TimeSlotID = Number(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomPrices: updated });
+                                }}
+                                fullWidth
+                                sx={{ borderRadius: 2 }}
+                              >
+                                {timeSlotsMaster.map((ts) => (
+                                  <MenuItem key={ts.ID} value={ts.ID}>
+                                    {ts.TimeSlotName}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 5 }}>
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Price (THB)
+                              </Typography>
+                              <TextField
+                                type="number"
+                                value={price.Price ?? 0}
+                                fullWidth
+                                inputProps={{
+                                  min: 0,                                // ห้ามติดลบ
+                                  step: moneyStep(price.Price),          // เพิ่มเป็นช่วงที่สมเหตุสมผล
+                                }}
+                                onKeyDown={blockNonNumericKeys}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomPrices ?? [])];
+                                  updated[index].Price = clampMin0(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomPrices: updated });
+                                }}
+                                onBlur={(e) => {
+                                  // กันค่าว่าง/NaN ตอน blur
+                                  const updated = [...(roomType.RoomPrices ?? [])];
+                                  updated[index].Price = clampMin0(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomPrices: updated });
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                              />
+                            </Grid>
+                            <Grid
+                              size={{ xs: 12, md: 1 }}
+                              sx={{ ml: 'auto', display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}
+                            >
+                              <IconButton
+                                color="error"
+                                onClick={() => {
+                                  const updated = (roomType.RoomPrices ?? []).filter((_: any, i: number) => i !== index);
+                                  setRoomType({ ...(roomType as any), RoomPrices: updated });
+                                }}
+
+                              >
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Layouts Section */}
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: { xs: 'stretch', sm: 'flex-start' },
+                      mb: 2, gap: 1, flexWrap: 'wrap'
+                    }}
+                  >
+                    <SectionHeader variant="layouts" title="Layouts" />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="outlinedGray"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
+                            return next;
+                          });
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        Add Layout
+                      </Button>
+                      <Button
+                        variant="contained"
+                        startIcon={<Plus size={16} />}
+                        onClick={() => {
+                          const idx = (roomType?.RoomTypeLayouts?.length ?? 0);
+                          setRoomType(prev => {
+                            const next = { ...(prev as any) };
+                            next.RoomTypeLayouts = [...(prev?.RoomTypeLayouts || []), { Capacity: 1, Note: "", RoomLayoutID: 0 } as any];
+                            return next;
+                          });
+                          openCreate('layout', idx);
+                        }}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        New
+                      </Button>
+                    </Box>
+                  </Box>
+
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {(roomType.RoomTypeLayouts ?? []).map((layout: any, index: number) => (
+                      <Card key={index} sx={{ borderRadius: 2 }}>
+                        <CardContent sx={{ p: 2 }}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid size={{ xs: 12, md: 4 }} >
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Layout Type
+                              </Typography>
+                              <Select
+                                value={layout.RoomLayoutID || ""}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomTypeLayouts ?? [])];
+                                  updated[index].RoomLayoutID = Number(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
+                                }}
+                                fullWidth
+                                sx={{ borderRadius: 2 }}
+                              >
+                                {layoutsMaster.map((lt) => (
+                                  <MenuItem key={lt.ID} value={lt.ID}>
+                                    {lt.LayoutName}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }} >
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Capacity
+                              </Typography>
+                              <TextField
+                                type="number"
+                                value={layout.Capacity}
+                                fullWidth
+                                inputProps={{ min: 1 }}
+                                onKeyDown={blockNonNumericKeys}
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomTypeLayouts ?? [])];
+                                  updated[index].Capacity = clampMin1(e.target.value);
+                                  setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 4 }} >
+                              <Typography variant="caption" sx={{ mb: 0.5, display: 'block' }}>
+                                Note
+                              </Typography>
+                              <TextField
+                                value={layout.Note || ""}
+                                fullWidth
+                                placeholder="Optional note"
+                                onChange={(e) => {
+                                  const updated = [...(roomType.RoomTypeLayouts ?? [])];
+                                  updated[index].Note = e.target.value;
+                                  setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
+                                }}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                              />
+                            </Grid>
+                            <Grid
+                              size={{ xs: 12, md: 1 }}
+                              sx={{ ml: 'auto', display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}
+                            >
+                              <IconButton
+                                color="error"
+                                onClick={() => {
+                                  const updated = (roomType.RoomTypeLayouts ?? []).filter((_: any, i: number) => i !== index);
+                                  setRoomType({ ...(roomType as any), RoomTypeLayouts: updated });
+                                }}
+
+                              >
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+
+
+              {/* Images Section */}
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <SectionHeader variant="images" title="Images" />
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
+                    {(roomType.RoomTypeImages ?? []).map((img: any, index: number) => (
+                      <Fade in={true} key={index}>
+                        <Card sx={{ position: 'relative', borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.02)' } }}>
+                          <Box sx={{ position: 'relative' }}>
+                            <img
+                              src={
+                                img.file
+                                  ? URL.createObjectURL(img.file)
+                                  : `${apiUrl}/${img.FilePath?.replace(/^uploads/, "images")}`
+                              }
+                              alt="room"
+                              style={{ width: 120, height: 100, objectFit: "cover", display: 'block' }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                const updated = (roomType.RoomTypeImages ?? []).filter((_: any, i: number) => i !== index);
+                                setRoomType({ ...(roomType as any), RoomTypeImages: updated });
+                              }}
+                              sx={{ position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(244, 67, 54, 0.9)', color: 'white', width: 24, height: 24, '&:hover': { backgroundColor: 'rgba(244, 67, 54, 1)', transform: 'scale(1.1)' } }}
+                            >
+                              <X size={12} />
+                            </IconButton>
+                          </Box>
+                        </Card>
+                      </Fade>
+                    ))}
+
+                    {/* Drag & Drop Zone */}
+                    <Card
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleDrop}
+                      sx={{
+                        borderRadius: 3,
+                        border: '2px dashed #e0e0e0',
+                        width: 240,
+                        height: 100,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#666',
+                      }}
+                    >
+                      <Typography variant="body2" align="center">
+                        ลากรูป/โฟลเดอร์มาวางที่นี่
+                      </Typography>
+                    </Card>
+
+                    {/* Add Images (หลายไฟล์) */}
+                    <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
+                      <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
+                        <Camera size={24} />
+                        <Typography variant="overline">Add Images</Typography>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          hidden
+                          onChange={handleInputChange}
+                        />
+                      </Button>
+                    </Card>
+
+                    {/* Add Folder (ทั้งโฟลเดอร์) */}
+                    <Card sx={{ borderRadius: 3, border: '2px dashed #e0e0e0' }}>
+                      <Button component="label" sx={{ width: 120, height: 100, display: 'flex', flexDirection: 'column', gap: 1, color: '#666' }}>
+                        <Typography variant="overline">Add Folder</Typography>
+                        <input
+                          ref={dirInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          hidden
+                          onChange={handleInputChange}
+                        />
+                      </Button>
+                    </Card>
+
+                  </Box>
+                </CardContent>
+              </Card>
             </Box>
           </form>
         )}
@@ -997,7 +1042,7 @@ const EditRoomTypePopup: React.FC<EditRoomTypePopupProps> = ({ roomTypeID, open,
           variant="contained"
           startIcon={loading ? undefined : <Save size={16} />}
           disabled={loading}
-          sx={{ borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontWeight: 600, background: 'linear-gradient(to right, #f44336ff, #d25d19ff)' }}
+          sx={{ borderRadius: 2, px: 3, py: 1, textTransform: 'none', fontWeight: 600 }}
         >
           {loading ? 'Saving...' : 'Save Changes'}
         </Button>

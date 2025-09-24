@@ -12,7 +12,7 @@ export type UIPaymentStatus =
 
 /** สถานะตาม Flow ใหม่ (canonical) */
 export type BookingDisplayStatus =
-  | "pending approvel"   // รออนุมัติการจอง
+  | "pending approval"   // รออนุมัติการจอง
   | "pending payment"    // อนุมัติแล้ว รอชำระ/รอส่งสลิป/รอตรวจสลิป
   | "partially paid"     // แผนมัดจำ: จ่ายบางงวดแล้ว แต่ยังไม่ครบ
   | "awaiting receipt"   // fully-paid แล้ว รอปิดงาน (ตาม BF)
@@ -126,14 +126,14 @@ const hasPendingVerificationOrSlip = (b?: Partial<BookingAny> | null) => {
  * --------------------------------------- */
 const ALIAS_TO_CANONICAL: Record<string, BookingDisplayStatus> = {
   // ชุดใหม่ตาม BF
-  "pending approvel": "pending approvel",
+  "pending approval": "pending approval",
   "pending payment": "pending payment",
   "partially paid": "partially paid",
   "awaiting receipt": "awaiting receipt",
   "completed": "completed",
   "cancelled": "cancelled",
   // ค่าเก่า/คำพ้อง
-  // "pending": "pending approvel",
+  // "pending": "pending approval",
   // "confirmed": "pending payment",
   // "payment review": "pending payment",
   // "payment": "pending payment",
@@ -159,7 +159,7 @@ export function flowFromBackend(b?: Partial<BookingAny> | null): BookingDisplayS
   if (raw.includes("completed")) return "completed";
   if (raw.includes("awaiting") && raw.includes("receipt")) return "awaiting receipt";
   if (raw.includes("partial")) return "partially paid";
-  if (raw.includes("pending")) return "pending approvel";
+  if (raw.includes("pending")) return "pending approval";
   if (raw.includes("payment")) return "pending payment";
 
   // 2) ถ้า BF ไม่ส่ง/ส่งค่าแปลก → อนุมานเบา ๆ (อย่า override BF)
@@ -196,7 +196,7 @@ export function getDisplayStatus(b?: Partial<BookingAny> | null): BookingDisplay
  * Next action (เฉพาะฝั่ง Admin)
  * ------------------------------- */
 export type ActionKey =
-  | "approve"         // อนุมัติ booking (Pending Approvel -> Pending Payment)
+  | "approve"         // อนุมัติ booking (pending approval -> Pending Payment)
   | "reject"
   | "refund"
   | "approvePayment"  // อนุมัติสลิป/การชำระ (งวดที่กำลังตรวจ)
@@ -215,7 +215,7 @@ export function getNextAction(row?: Partial<BookingAny> | null): NextAction | nu
   const disp = flowFromBackend(row); // ✅ ยึด BF
 
   switch (disp) {
-    case "pending approvel":
+    case "pending approval":
       return { key: "approve", label: "Approve", icon: Check };
 
     case "pending payment":

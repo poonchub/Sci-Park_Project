@@ -1143,9 +1143,9 @@ function Dashboard() {
                                     <SummaryCard
                                         title="Pending Approvals"
                                         value={bookingRoomSummaryThisMonth?.status_summary?.find((item) => item.StatusName === "Pending")?.Count ?? 0}
-                                        icon={bookingStatusConfig["pending approved"].icon}
-                                        color={bookingStatusConfig["pending approved"].color}
-                                        colorLite={bookingStatusConfig["pending approved"].colorLite}
+                                        icon={getBookingStatusConfig("pending").icon}
+                                        color={getBookingStatusConfig("pending").color}
+                                        colorLite={getBookingStatusConfig("pending").colorLite}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 6 }}>

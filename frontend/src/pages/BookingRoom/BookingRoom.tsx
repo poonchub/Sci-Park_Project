@@ -408,7 +408,7 @@ const BookingRoom = () => {
                                         placeholder="ค้นหาประเภทห้องประชุม"
                                     />
                                 </Grid>
-                                <Grid size={{ xs: 12, md: 3 }}>
+                                {/* <Grid size={{ xs: 12, md: 3 }}>
                                     <FormControl fullWidth>
                                         <Select name="price" value={filters.price} onChange={handleFilterChange}>
                                             <MenuItem value="all">ทั้งหมด</MenuItem>
@@ -426,7 +426,7 @@ const BookingRoom = () => {
                                             <MenuItem value="large">{">"}100</MenuItem>
                                         </Select>
                                     </FormControl>
-                                </Grid>
+                                </Grid> */}
                             </Grid>
                         </Card>
                     </Grid>

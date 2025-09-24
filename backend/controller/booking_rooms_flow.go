@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -80,19 +81,19 @@ func ensurePaymentType(tx *gorm.DB, name string) (entity.PaymentType, error) {
 // แยกยอด deposit/balance:
 // 1) ถ้ามี DepositAmount บน booking → ใช้อันนั้น
 // 2) มิฉะนั้น → กติกา default 50/50
-func splitDepositBalance(b *entity.BookingRoom) (deposit, balance float64) {
-	total := b.TotalAmount - b.DiscountAmount
-	if total < 0 {
-		total = 0
+func splitDepositBalance(b *entity.BookingRoom) (dep, bal float64) {
+	net := b.TotalAmount
+	if net <= 0 {
+		net = (b.BaseTotal) - b.DiscountAmount
+		if net < 0 {
+			net = 0
+		}
 	}
-
-	if b.DepositAmount > 0 && b.DepositAmount < total {
-		deposit = round2(b.DepositAmount)
-	} else {
-		// default: 50/50
-		deposit = round2(total / 2.0)
+	dep = b.DepositAmount
+	if dep <= 0 || dep > net {
+		dep = net / 2
 	}
-	balance = round2(total - deposit)
+	bal = math.Max(net-dep, 0)
 	return
 }
 
@@ -333,6 +334,21 @@ func ApproveBookingRoom(c *gin.Context) {
 		}
 	}
 
+	// ===== ใช้โมเดล Base/Total ใหม่ =====
+	// base = ราคาเต็ม (fallback จากข้อมูลเก่า)
+	base := b.BaseTotal
+	if base <= 0 {
+		base = b.TotalAmount + b.DiscountAmount
+		if base < 0 {
+			base = 0
+		}
+	}
+	// net = ยอดสุทธิที่ต้องจ่ายจริง (ต้องใช้ค่านี้ในการสร้าง payments)
+	net := b.TotalAmount
+	if net < 0 {
+		net = 0
+	}
+
 	// ตั้งสถานะ booking → Pending Payment (+ approver_id ถ้ามี)
 	upd := map[string]interface{}{"updated_at": time.Now()}
 	if aid != nil && *aid > 0 {
@@ -395,7 +411,6 @@ func ApproveBookingRoom(c *gin.Context) {
 		return
 	}
 
-	
 	markZeroAsPaid := func(p *entity.Payment) {
 		// สำหรับยอด 0: ตั้งเป็น Paid และปิดการจ่ายทันที
 		p.StatusID = paidID
@@ -412,19 +427,24 @@ func ApproveBookingRoom(c *gin.Context) {
 	created := false
 
 	if len(existingPays) == 0 {
-		// ยังไม่เคยสร้าง → สร้างตามแผน
+		// ยังไม่เคยสร้าง → สร้างตามแผน จาก "net"
 		option := strings.ToLower(strings.TrimSpace(b.PaymentOption.OptionName))
 
 		switch option {
 		case "deposit":
-			dep, bal := splitDepositBalance(&b)
+			// ใช้ net แท้จริงในการแบ่ง deposit/balance
+			dep := b.DepositAmount
+			if dep <= 0 || dep > net {
+				dep = math.Max(net/2, 0) // default 50% ถ้า backend ยังไม่ได้เซ็ต
+			}
+			bal := math.Max(net-dep, 0)
 
 			p1 := entity.Payment{
 				BookingRoomID: b.ID,
 				Amount:        round2(dep),
 				StatusID:      awaitID,
 				PaymentTypeID: ptDep.ID,
-				PayerID:       b.UserID, // ใส่ผู้จองเป็น payer เริ่มต้น
+				PayerID:       b.UserID,
 			}
 			if p1.Amount <= 0 {
 				markZeroAsPaid(&p1)
@@ -454,13 +474,9 @@ func ApproveBookingRoom(c *gin.Context) {
 			created = true
 
 		case "full", "":
-			total := b.TotalAmount - b.DiscountAmount
-			if total < 0 {
-				total = 0
-			}
 			p := entity.Payment{
 				BookingRoomID: b.ID,
-				Amount:        round2(total),
+				Amount:        round2(net), // ใช้ net ตรงๆ
 				StatusID:      awaitID,
 				PaymentTypeID: ptFull.ID,
 				PayerID:       b.UserID,
@@ -477,13 +493,9 @@ func ApproveBookingRoom(c *gin.Context) {
 
 		default:
 			// treat as full
-			total := b.TotalAmount - b.DiscountAmount
-			if total < 0 {
-				total = 0
-			}
 			p := entity.Payment{
 				BookingRoomID: b.ID,
-				Amount:        round2(total),
+				Amount:        round2(net),
 				StatusID:      awaitID,
 				PaymentTypeID: ptFull.ID,
 				PayerID:       b.UserID,
@@ -546,27 +558,21 @@ func ApproveBookingRoom(c *gin.Context) {
 		return
 	}
 
-	// ตรวจว่า “ทุกงวด” เป็นยอด 0 (หรือทุกงวดเป็น Paid หมดแล้ว)
-	allZero := len(pays) > 0
-	allPaid := len(pays) > 0
+	// เงื่อนไขข้ามไป Awaiting Receipt (เวอร์ชันใหม่)
+	// - กรณีฟรีจริง: net == 0
+	// - หรือ: จ่ายครบแล้ว sum(Approved/Paid) >= net
+	sumApproved := 0.0
 	for _, p := range pays {
-		if p.Amount > 0 {
-			allZero = false
-		}
-		// ตรวจสถานะ paid
 		var st entity.PaymentStatus
 		if err := tx.First(&st, p.StatusID).Error; err == nil {
-			if !strings.EqualFold(strings.TrimSpace(st.Name), "Paid") {
-				allPaid = false
+			name := strings.ToLower(strings.TrimSpace(st.Name))
+			if name == "paid" || name == "approved" {
+				sumApproved += p.Amount
 			}
-		} else {
-			allPaid = false
 		}
 	}
 
-	// ถ้าทุกงวด 0 บาท (จึงถูก mark เป็น Paid ไปแล้วทั้งหมด)
-	// ให้ข้ามขั้นตอนจ่าย → ตั้ง booking = Awaiting Receipt
-	if allZero || allPaid {
+	if net == 0 || sumApproved >= net {
 		if err := setBookingStatus(tx, b.ID, "Awaiting Receipt"); err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set booking status to Awaiting Receipt"})
@@ -601,8 +607,8 @@ func ApproveBookingRoom(c *gin.Context) {
 	}
 
 	msg := "booking approved & payments initialized"
-	if created && (allZero || allPaid) {
-		msg = "booking approved; zero-amount payments marked Paid; moved to Awaiting Receipt"
+	if (net == 0 || sumApproved >= net) && created {
+		msg = "booking approved; zero/net-paid condition met; moved to Awaiting Receipt"
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -610,6 +616,7 @@ func ApproveBookingRoom(c *gin.Context) {
 		"data":    buildBookingRoomResponse(b),
 	})
 }
+
 
 // POST /booking-rooms/:id/reject
 func RejectBookingRoom(c *gin.Context) {
@@ -688,7 +695,7 @@ func UploadPaymentReceipt(c *gin.Context) {
 		return
 	}
 
-	dir := fmt.Sprintf("images/payments/booking_%d", pay.BookingRoomID)
+	dir := fmt.Sprintf("images/users_%d/", pay.PayerID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot create dir"})
 		return

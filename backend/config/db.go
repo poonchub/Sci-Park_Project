@@ -976,7 +976,7 @@ func SeedDatabase() {
 	}
 
 	bookingStatus := []entity.BookingStatus{
-		{StatusName: "Pending Approved"},
+		{StatusName: "pending approval"},
 		{StatusName: "Pending Payment"},
 		{StatusName: "Partially Paid"},
 		{StatusName: "Awaiting Receipt"},
