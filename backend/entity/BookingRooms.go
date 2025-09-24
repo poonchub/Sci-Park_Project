@@ -38,6 +38,7 @@ type BookingRoom struct {
 	DepositAmount  float64
 	DiscountAmount float64
 	TotalAmount    float64
+	BaseTotal      float64 `json:"base_total"`
 	TaxID          string
 	Address        string
 	Notifications  []Notification `gorm:"foreignKey:BookingRoomID"`

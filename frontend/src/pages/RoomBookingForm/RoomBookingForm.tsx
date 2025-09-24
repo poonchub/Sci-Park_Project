@@ -10,7 +10,6 @@ import {
   RadioGroup,
   FormControlLabel,
   FormControl,
-
   CircularProgress,
   Divider,
   Chip,
@@ -22,22 +21,19 @@ import {
   DialogContent,
   DialogTitle,
   MenuItem,
-
   Checkbox,
-
   IconButton,
   Container,
   Alert,
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
-import { Select } from "../../components/Select/Select"; // ⬅️ select ของโปรเจกต์ (ใช้ในส่วนทั่วไป)
+import { Select } from "../../components/Select/Select";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
   Calendar,
   Clock,
   User,
-
   Check,
   Building2,
   AlertTriangle,
@@ -74,12 +70,10 @@ import AlertGroup from "../../components/AlertGroup/AlertGroup";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import "./RoomBookingForm.css";
 import "./Calendar.css";
-
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";
 import { PaymentOptionInterface } from "../../interfaces/IPaymentOption";
 import { useUserStore } from "../../store/userStore";
-import { NotificationsInterface } from "../../interfaces/INotifications";
 import { validateCorporateRegistrationNumber } from "../../utils/corporateRegistrationValidator";
 import NumberedLabel from "../../components/NumberedLabel/NumberedLabel";
 
@@ -168,7 +162,7 @@ interface BookingDetail {
   time: string;
   bookedBy: string;
   status: string;
-  type: "Fullday" | "Morning" | "Afternoon" | "hourly" | "half";
+  type: "Fullday" | "Morning" | "Afternoon" | "hourly";
   hours?: string[];
 }
 interface BookedDate {
@@ -203,16 +197,16 @@ type AddressProps = {
 
 type UserPackageLite = {
   package_name?: string;
-  meeting_room_limit?: number;            // ฟรีห้องประชุม/ปี
-  training_room_limit?: number;           // โควตา 50% สำหรับ training
-  multi_function_room_limit?: number;     // โควตา 50% สำหรับ hall
+  meeting_room_limit?: number;
+  training_room_limit?: number;
+  multi_function_room_limit?: number;
 };
 
 type PackageBenefits = {
   meetingFreePerYear: number;
-  meetingHalf: boolean;       // เปิดสิทธิ์ 50% สำหรับ meeting (จะยังถูกปิดถ้ามีสิทธิ์ฟรีเหลือ)
-  trainingHalf: boolean;      // เปิดสิทธิ์ 50% สำหรับ training
-  hallHalf: boolean;          // เปิดสิทธิ์ 50% สำหรับ hall
+  meetingHalf: boolean;
+  trainingHalf: boolean;
+  hallHalf: boolean;
   trainingHalfQuota: number;
   hallHalfQuota: number;
 };
@@ -226,18 +220,88 @@ function benefitsFromPackage(pkg?: UserPackageLite | null): PackageBenefits {
 
   return {
     meetingFreePerYear,
-    // อนุญาต 50% สำหรับ meeting ตั้งแต่ Silver ขึ้นไป (tier !== 'none')
-    // การ "บังคับใช้สิทธิ์ฟรีก่อน" ยังควบคุมด้วย disabled เงื่อนไข quotas.meeting.remaining > 0
     meetingHalf: tier !== "none",
-
-    // เปิดตามโควตา
     trainingHalf: trainingHalfQuota > 0,
     hallHalf: hallHalfQuota > 0,
-
     trainingHalfQuota,
     hallHalfQuota,
   };
 }
+
+type PriceBreakdown = {
+  baseTotal: number;
+  finalTotal: number;
+  discountAmount: number;
+  appliedFree: boolean;
+  appliedMember50: boolean;
+};
+type TimeOption = "hourly" | "half" | "full" | "none";
+
+const computePricing = (
+  dates: string[],
+  timeOpt: TimeOption,
+  timeRng: "Morning" | "Afternoon" | null,
+  selHours: string[],
+  priceList: RoomPriceInterface[],
+  hasPackage: boolean,
+  isMeetingCategory: boolean,
+  currentCategory: "meetingroom" | "trainingroom" | "multifunctionroom",
+  pkgBenefits: { meetingFreePerYear: number; meetingHalf: boolean; trainingHalf: boolean; hallHalf: boolean },
+  quotas: { meeting: { remaining: number } },
+  discount: { used: boolean },
+  applyMemberDiscount: boolean
+): PriceBreakdown => {
+  if (!dates.length || priceList.length === 0 || timeOpt === "none") {
+    return { baseTotal: 0, finalTotal: 0, discountAmount: 0, appliedFree: false, appliedMember50: false };
+  }
+
+  const findPrice = (name: string) =>
+    priceList.find(p => p.TimeSlot?.TimeSlotName === name)?.Price ?? 0;
+
+  let baseTotal = 0;
+  if (timeOpt === "full") {
+    baseTotal = findPrice("Fullday") * dates.length;
+  } else if (timeOpt === "half" && timeRng) {
+    baseTotal = findPrice(timeRng) * dates.length;
+  } else if (timeOpt === "hourly" && selHours.length > 0) {
+    const perDay = selHours.reduce((sum, h) => sum + findPrice(h), 0);
+    baseTotal = perDay * dates.length;
+  }
+
+  const canHalf =
+    (isMeetingCategory && pkgBenefits.meetingHalf) ||
+    (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
+    (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
+
+  const meetingHasFreeQuota =
+    isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && quotas.meeting.remaining > 0;
+
+  let appliedFree = false;
+  let appliedMember50 = false;
+
+  if (hasPackage && isMeetingCategory && meetingHasFreeQuota && discount.used) {
+    appliedFree = true;
+  }
+  if (
+    !appliedFree &&
+    hasPackage &&
+    applyMemberDiscount &&
+    canHalf &&
+    // กันกรณี meeting: ต้องไม่มีโควตาฟรีคงเหลือ ถึงจะใช้ 50% ได้
+    (!isMeetingCategory || !meetingHasFreeQuota)
+  ) {
+    appliedMember50 = true;
+  }
+
+  let finalTotal = baseTotal;
+  if (appliedFree) finalTotal = 0;
+  else if (appliedMember50) finalTotal = baseTotal * 0.5;
+
+  if (finalTotal < 0) finalTotal = 0;
+  const discountAmount = Math.max(0, baseTotal - finalTotal);
+
+  return { baseTotal, finalTotal, discountAmount, appliedFree, appliedMember50 };
+};
 
 /* ========= Component ========= */
 const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
@@ -252,6 +316,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
   /* --- booking data --- */
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown>({
+    baseTotal: 0,
+    finalTotal: 0,
+    discountAmount: 0,
+    appliedFree: false,
+    appliedMember50: false,
+  });
+
   const [bookedDates, setBookedDates] = useState<BookedDates>({});
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [roomsOfSameType, setRoomsOfSameType] = useState<
@@ -267,13 +339,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [additionalNote, setAdditionalNote] = useState("");
   const [equipmentList, setEquipmentList] = useState<string[]>([]);
   const [pricing, setPricing] = useState<RoomPriceInterface[]>([]);
-  const [timeOption, setTimeOption] = useState<"hourly" | "half" | "full" | "none">("none");
+  const [timeOption, setTimeOption] = useState<TimeOption>("none");
   const [selectedHours, setSelectedHours] = useState<string[]>([]);
 
   /* --- user/org --- */
   const [isEmployee, setIsEmployee] = useState(false);
   const isHourlyAllowed = isEmployee;
-  const [, setOrgInfo] = useState<OrganizationInfoInterface | null>(null); // ไม่ใช้ค่าอ่านตรง ๆ เพื่อกัน warning
+  const [, setOrgInfo] = useState<OrganizationInfoInterface | null>(null);
   const [errors, setErrors] = useState<AddressProps>({});
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -284,7 +356,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const [checkedPrivacy, setCheckedPrivacy] = useState(false);
   const [checkedCondition, setCheckedCondition] = useState(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-
   const [currentLanguage, setCurrentLanguage] = useState<'th' | 'en'>('en')
 
   const [userPackage, setUserPackage] = useState<UserPackageLite | null>(null);
@@ -325,46 +396,29 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   };
 
   /* ========= Real-time Validation ========= */
-  // Real-time validation for Tax ID
   useEffect(() => {
     if (addressFormData?.TaxID && addressFormData.TaxID.length === 13) {
       const isValidFormat = /^\d{13}$/.test(addressFormData.TaxID);
       if (isValidFormat) {
         const isValidTaxID = validateCorporateRegistrationNumber(addressFormData.TaxID);
         if (isValidTaxID) {
-          // Clear error if valid
           setErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.TaxID;
-            return newErrors;
+            const n = { ...prev }; delete n.TaxID; return n;
           });
           setFormErrors(prev => {
-            const newFormErrors = { ...prev };
-            delete newFormErrors.TaxID;
-            return newFormErrors;
+            const n = { ...prev }; delete n.TaxID; return n;
           });
         } else {
-          // Set error if invalid
           setErrors(prev => ({ ...prev, TaxID: "Invalid Tax ID. Please check the 13-digit number." }));
           setFormErrors(prev => ({ ...prev, TaxID: "Invalid Tax ID. Please check the 13-digit number." }));
         }
       } else {
-        // Set error if format is invalid
         setErrors(prev => ({ ...prev, TaxID: "Please enter a valid 13-digit Tax ID" }));
         setFormErrors(prev => ({ ...prev, TaxID: "Please enter a valid 13-digit Tax ID" }));
       }
     } else if (addressFormData?.TaxID && addressFormData.TaxID.length > 0 && addressFormData.TaxID.length < 13) {
-      // Show progress message while typing
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.TaxID;
-        return newErrors;
-      });
-      setFormErrors(prev => {
-        const newFormErrors = { ...prev };
-        delete newFormErrors.TaxID;
-        return newFormErrors;
-      });
+      setErrors(prev => { const n = { ...prev }; delete n.TaxID; return n; });
+      setFormErrors(prev => { const n = { ...prev }; delete n.TaxID; return n; });
     }
   }, [addressFormData?.TaxID]);
 
@@ -544,19 +598,45 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     loadQuota();
   }, []);
 
-  // หาหมวดจาก roomType (ถ้า backend ยังไม่มี Category ให้เดาเบา ๆ จากชื่อ)
-  const inferCategory = (name: string): "meetingroom" | "trainingroom" | "multifunctionroom" => {
+  type Category = "meetingroom" | "trainingroom" | "multifunctionroom";
+  const isCategory = (s: string): s is Category =>
+    s === "meetingroom" || s === "trainingroom" || s === "multifunctionroom";
+  const inferCategory = (name: string): Category => {
     const n = (name || "").toLowerCase();
     if (/training|seminar/.test(n)) return "trainingroom";
     if (/hall/.test(n)) return "multifunctionroom";
     return "meetingroom";
   };
-  const currentCategory = (roomType as any)?.Category
-    ? String((roomType as any).Category).toLowerCase()
-    : inferCategory(roomType?.TypeName || roomData?.TypeName || "");
-  const isMeetingCategory = currentCategory === "meetingroom";
 
-  // ตั้งค่า default ของปุ่ม “Apply 50% Member Discount”
+  const currentCategory: Category = React.useMemo(() => {
+    const raw = String((roomType as any)?.Category ?? "").toLowerCase().trim();
+    if (isCategory(raw)) return raw;
+    return inferCategory(roomType?.TypeName || roomData?.TypeName || "");
+  }, [roomType?.Category, roomType?.TypeName, roomData?.TypeName]);
+
+  const isMeetingCategory = currentCategory === "meetingroom";
+  // ปุ่ม 50% ใช้ได้เมื่อมีแพ็กเกจ + มีสิทธิ์ตามหมวด
+  // กรณี meeting ต้อง “หมดโควตาฟรีแล้ว” และไม่ได้กดใช้ free credit อยู่
+  const canUseMember50 = React.useMemo(() => {
+    if (!hasPackage) return false;
+
+    if (isMeetingCategory) {
+      const canHalf = pkgBenefits.meetingHalf === true;
+      const freeQuotaLeft = quotas.meeting.remaining > 0;
+      const usingFreeNow = discount.used === true;
+      // ใช้ 50% ได้ก็ต่อเมื่อ: มีสิทธิ์ half, ไม่มีโควตาฟรีคงเหลือ, และไม่ได้ใช้ free credit อยู่
+      return canHalf && !freeQuotaLeft && !usingFreeNow;
+    }
+
+    if (currentCategory === "trainingroom") {
+      return pkgBenefits.trainingHalf === true;
+    }
+    if (currentCategory === "multifunctionroom") {
+      return pkgBenefits.hallHalf === true;
+    }
+    return false;
+  }, [hasPackage, isMeetingCategory, currentCategory, pkgBenefits, quotas.meeting.remaining, discount.used]);
+
   useEffect(() => {
     let def = false;
     if (hasPackage) {
@@ -565,7 +645,15 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       else if (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) def = true;
     }
     setApplyMemberDiscount(def);
-  }, [currentCategory, quotas, hasPackage, pkgBenefits, isMeetingCategory]);
+  }, [
+    hasPackage,
+    currentCategory,
+    isMeetingCategory,
+    pkgBenefits.trainingHalf,
+    pkgBenefits.hallHalf,
+    pkgBenefits.meetingHalf,
+    quotas.meeting.remaining,
+  ]);
 
   /* ========= Price calc ========= */
   const slotIdByName = useMemo<Record<string, number>>(() => {
@@ -603,53 +691,45 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     return [];
   };
 
-  const calculatePrice = (
-    dates: string[],
-    timeOpt: "hourly" | "half" | "full",
-    timeRng: "Morning" | "Afternoon" | null,
-    selHours: string[],
-    priceList: RoomPriceInterface[]
-  ): number => {
-    if (!dates.length || priceList.length === 0) return 0;
+  const halfDayRange: "Morning" | "Afternoon" | null =
+    timeOption === "half" ? (timeRange ?? null) : null;
 
-    // Meeting: ใช้สิทธิ์ฟรี → 0 บาท
-    if (hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used) return 0;
+  // ถ้าไม่มีแพ็กเกจ => ปิด 50% ทันที
+  useEffect(() => {
+    if (!hasPackage && applyMemberDiscount) setApplyMemberDiscount(false);
+  }, [hasPackage]);
 
-    // 1) base price
-    let totalPrice = 0;
-    if (timeOpt === "full") {
-      const slot = priceList.find((p) => p.TimeSlot?.TimeSlotName === "Fullday");
-      if (slot?.Price) totalPrice = slot.Price * dates.length;
-    } else if (timeOpt === "half" && timeRng) {
-      const slotName = timeRng === "Morning" ? "Morning" : "Afternoon";
-      const slot = priceList.find((p) => p.TimeSlot?.TimeSlotName === slotName);
-      if (slot?.Price) totalPrice = slot.Price * dates.length;
-    } else if (timeOpt === "hourly" && selHours.length > 0) {
-      for (const hourName of selHours) {
-        const slot = priceList.find((p) => p.TimeSlot?.TimeSlotName === hourName);
-        if (slot?.Price) totalPrice += slot.Price;
-      }
-      totalPrice *= dates.length;
-    }
-
-    // 2) membership 50% (toggle)
-    const canHalf =
-      (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) ||
-      (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
-      (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
-
-    if (hasPackage && applyMemberDiscount && canHalf) {
-      totalPrice *= 0.5;
-    }
-
-    return totalPrice;
-  };
+  // ถ้า user เลือกใช้สิทธิ์ฟรี (discount.used=true) => ปิด 50% เสมอ
+  useEffect(() => {
+    if (discount.used && applyMemberDiscount) setApplyMemberDiscount(false);
+  }, [discount.used]);
 
   useEffect(() => {
     if (selectedDates.length > 0 && timeOption !== "none") {
-      const totalPrice = calculatePrice(selectedDates, timeOption, timeRange, selectedHours, pricing);
-      setCalculatedPrice(totalPrice);
+      const r = computePricing(
+        selectedDates,
+        timeOption,
+        halfDayRange,
+        selectedHours,
+        pricing,
+        hasPackage,
+        isMeetingCategory,
+        currentCategory,
+        pkgBenefits,
+        quotas,
+        discount,
+        applyMemberDiscount
+      );
+      setPriceBreakdown(r);
+      setCalculatedPrice(r.finalTotal);
     } else {
+      setPriceBreakdown({
+        baseTotal: 0,
+        finalTotal: 0,
+        discountAmount: 0,
+        appliedFree: false,
+        appliedMember50: false,
+      });
       setCalculatedPrice(0);
     }
   }, [
@@ -660,10 +740,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
     pricing,
     discount.used,
     applyMemberDiscount,
-    quotas,
+    quotas.meeting.remaining,
     currentCategory,
     hasPackage,
     isMeetingCategory,
+    halfDayRange
   ]);
 
   useEffect(() => {
@@ -871,7 +952,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
   function showDateDetails(dateString: string) {
     const details = getBookingDetails(dateString);
-    // Modal functionality removed for now
     console.log("Date details:", dateString, details);
   }
 
@@ -1008,9 +1088,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    const thaiRegex = /^[\u0E00-\u0E7F\s]+$/; // Allow only Thai characters + spaces
+    const thaiRegex = /^[\u0E00-\u0E7F\s]+$/;
 
-    // Validate purpose field
     if (!purpose?.trim()) {
       newErrors.purpose = "Please describe the purpose of your booking.";
     }
@@ -1072,22 +1151,18 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
       return;
     }
 
-    // 🚫 ราคาเป็น 0 ต้องเป็นกรณีใช้สิทธิ์ฟรี meeting เท่านั้น
-    if (
-      calculatedPrice === 0 &&
-      !(hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used)
-    ) {
+    const pricingResult = priceBreakdown;
+
+    if (pricingResult.finalTotal === 0 && !(hasPackage && isMeetingCategory && discount.used)) {
       alert("The calculated price is 0. Please check the discount or booking information");
       return;
     }
 
-    const canHalf =
-      (isMeetingCategory && pkgBenefits.meetingHalf && quotas.meeting.remaining <= 0) ||
-      (currentCategory === "trainingroom" && pkgBenefits.trainingHalf) ||
-      (currentCategory === "multifunctionroom" && pkgBenefits.hallHalf);
+    const optName = paymentOptions?.find(o => o.ID === selectedOption)?.OptionName?.toLowerCase();
+    let deposit = pricingResult.finalTotal / 2;
+    if (optName === "full") deposit = 0;
+    else if (optName === "deposit") deposit = Math.min(pricingResult.finalTotal / 2, pricingResult.finalTotal);
 
-    console.log("DepositAmount", calculatedPrice / 2)
-    console.log("TotalAmount", calculatedPrice)
     const bookingData = {
       UserID: userId,
       RoomID: selectedRoomId,
@@ -1098,10 +1173,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         equipment: selectedEquipment,
         additionalNote,
         discounts: {
-          usedFreeCredit:
-            hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 ? discount.used : false,
-          appliedMember50:
-            hasPackage && canHalf ? applyMemberDiscount : false,
+          usedFreeCredit: hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 ? discount.used : false,
+          appliedMember50: hasPackage ? applyMemberDiscount : false,
         },
         package: {
           name: userPackage?.package_name || "none",
@@ -1111,9 +1184,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         },
       }),
       Dates: selectedDates,
-      DepositAmount: calculatedPrice / 2,
-      DiscountAmount: 0,
-      TotalAmount: calculatedPrice,
+
+      // ส่งค่าตรงสูตรให้ BF
+      BaseTotal: pricingResult.baseTotal,
+      DiscountAmount: pricingResult.discountAmount,
+      TotalAmount: pricingResult.finalTotal,
+      DepositAmount: deposit,
+
       Address: `${addressFormData.AddressName} - ${addressFormData?.AddressNumber} ${addressFormData?.Street} ${addressFormData?.SubDistrict} ${addressFormData?.District} ${addressFormData?.Province} ${addressFormData?.PostalCode}`,
       TaxID: addressFormData?.TaxID,
       PaymentOptionID: selectedOption,
@@ -1127,14 +1204,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         return;
       }
 
-      // Meeting: ตัดโควตาเฉพาะเมื่อกดใช้สิทธิ์ฟรีจริง ๆ
-      if (hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && discount.used) {
+      if (hasPackage && isMeetingCategory && discount.used) {
         const quotaRes = await UseRoomQuota({ user_id: userId, room_type: "meeting" });
         if (quotaRes.status === 200) {
           const refreshed = await GetRoomQuota(userId);
           if (refreshed?.meeting) {
-            setQuotas((q) => ({ ...q, meeting: refreshed.meeting }));
-            setDiscount((prev) => ({
+            setQuotas(q => ({ ...q, meeting: refreshed.meeting }));
+            setDiscount(prev => ({
               ...prev,
               totalAllowed: refreshed.meeting.total,
               usedCount: refreshed.meeting.used,
@@ -1147,16 +1223,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         }
       }
 
-      const notificationData: NotificationsInterface = {
-        BookingRoomID: resBooking.data.booking_id,
-      };
-
-      await CreateNotification(notificationData);
-
-      // refresh หน้าปฏิทิน
+      await CreateNotification({ BookingRoomID: resBooking.data.booking_id });
       await fetchBookingMapOnly(roomData.ID as number);
-
-      // reset บางส่วน
       setSelectedDates([]);
       setAdditionalNote("");
       setPurpose("");
@@ -1166,7 +1234,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
         await fetchBookingMapOnly(val);
       }
       setOpenPopupInvoiceCondition(false);
-
       handleSetAlert("success", "Booking created successfully.");
     } catch (err) {
       console.error("Booking Error:", err);
@@ -1503,7 +1570,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               <X size={20} style={{ minWidth: "20px", minHeight: "20px" }} />
             </IconButton>
           </Box>
-
         </DialogTitle>
 
         <DialogContent dividers sx={{ px: 5 }}>
@@ -1595,7 +1661,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               onClick={onBack || (() => window.history.back())}
               variant="outlinedGray"
             >
-              <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px" , marginTop: "-2px"   }} />
+              <ChevronLeft size={20} style={{ minWidth: "20px", minHeight: "20px", marginTop: "-2px" }} />
               Back
             </Button>
           </Grid>
@@ -1702,7 +1768,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     Select Duration & Time
                   </Typography>
                 </Box>
-                Booking Details
+
                 {loading && !pricing.length ? (
                   <Box className="booking-loading-container">
                     <CircularProgress size={24} />
@@ -1879,14 +1945,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     flex: '1 1 auto',
                     display: 'flex',
                     flexDirection: 'column',
-                    opacity: selectedRoomId && timeOption ? 1 : 0.5,
-                    pointerEvents: selectedRoomId && timeOption ? "auto" : "none",
+                    opacity: selectedRoomId && timeOption !== "none" ? 1 : 0.5,
+                    pointerEvents: selectedRoomId && timeOption !== "none" ? "auto" : "none",
                   }}
                 >
                   {renderCalendar()}
                 </Box>
 
-                {(!selectedRoomId || !timeOption) && (
+                {(!selectedRoomId || timeOption !== "none") && (
                   <Typography color="error" sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1, flex: '0 0 auto' }}>
                     <AlertTriangle size={16} /> Please select room and time first
                   </Typography>
@@ -1959,11 +2025,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           </Select>
                         </FormControl>
                       </Grid>
-
-
-
-
-
                     </Grid>
                   </Box>
                 </Box>
@@ -1978,9 +2039,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 </Box>
 
                 <Box sx={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', p: 3 }}>
-
-
-
                   <Box className="info-fields">
                     <Grid container spacing={1}>
                       <Grid size={{ xs: 12 }} >
@@ -2071,7 +2129,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                         />
                       </Grid>
 
-
                       <Grid size={{ xs: 6 }} >
                         <Typography variant="body1" sx={{ fontWeight: 600 }} gutterBottom>
                           Address Number
@@ -2155,18 +2212,13 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                           helperText={errors.PostalCode}
                         />
                       </Grid>
-
-
                     </Grid>
                   </Box>
                 </Box>
-
-
               </Card>
             </Grid>
           </Grid>
 
-          {/* Section 4: Your Information */}
           {/* Section 2: Booking Summary */}
           <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 4, mx: 0, width: '100%' }} />
@@ -2181,7 +2233,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
               <Box sx={{ paddingX: 2 }}>
                 <Grid container spacing={2}>
-                  {/* Left Column - 3 items */}
+                  {/* Left Column */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Box mb={2}>
                       <Typography variant="body2" color="text.secondary">Meeting Room Type</Typography>
@@ -2214,7 +2266,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     </Box>
                   </Grid>
 
-                  {/* Right Column - 3 items */}
+                  {/* Right Column */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Box mb={2}>
                       <Typography variant="body2" color="text.secondary">Number of Days</Typography>
@@ -2266,8 +2318,8 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
 
               <Divider sx={{ mb: 2 }} />
 
-              {/* Total */}
-              <Box sx={{ px: 2, py: 1.2, backgroundColor: "background.paper", borderRadius: 2 }}>
+              {/* Pricing Breakdown */}
+              <Box sx={{ px: 2, py: 1.5, backgroundColor: "background.paper", borderRadius: 2 }}>
                 {loading ? (
                   <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" gap={2} py={4}>
                     <CircularProgress size={60} />
@@ -2275,10 +2327,26 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   </Box>
                 ) : (
                   <>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>Total Price</Typography>
-                    <Typography variant="h4" fontWeight="bold" color="primary" mb={1}>
-                      ฿{calculatedPrice?.toLocaleString() || "0"}
-                    </Typography>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography color="text.secondary">Base</Typography>
+                      <Typography>฿{priceBreakdown.baseTotal.toLocaleString()}</Typography>
+                    </Box>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography color="text.secondary">Discount</Typography>
+                      <Typography>- ฿{priceBreakdown.discountAmount.toLocaleString()}</Typography>
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="subtitle1" fontWeight={700}>Total</Typography>
+                      <Typography variant="h5" fontWeight={800} color="primary">
+                        ฿{priceBreakdown.finalTotal.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    {(priceBreakdown.appliedFree || priceBreakdown.appliedMember50) && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                        {priceBreakdown.appliedFree ? "Applied: Free Meeting Room Credit" : "Applied: 50% Member Discount"}
+                      </Typography>
+                    )}
                   </>
                 )}
               </Box>
@@ -2286,9 +2354,7 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
               {/* Discounts Row 1: Free credit (Meeting only) */}
               {hasPackage && isMeetingCategory && pkgBenefits.meetingFreePerYear > 0 && (
                 <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                  <IconButton size="small" color="primary"
-                    disabled={discount.remaining <= 0 && !discount.used}
-                  >
+                  <IconButton size="small" color="primary" disabled={discount.remaining <= 0 && !discount.used}>
                     <TicketPercent />
                   </IconButton>
                   <Typography variant="body2" color="primary" flexGrow={1}>
@@ -2305,20 +2371,11 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 </Box>
               )}
 
+              {/* Discounts Row 2: 50% Member Discount */}
 
-
-              {/* Discounts Row 2: 50% Member Discount (toggle-able) */}
               {hasPackage && (
                 <Box display="flex" alignItems="center" gap={1} sx={{ mt: 'auto' }}>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    disabled={
-                      (isMeetingCategory && (!pkgBenefits.meetingHalf || quotas.meeting.remaining > 0 || discount.used)) ||
-                      (currentCategory === "trainingroom" && !pkgBenefits.trainingHalf) ||
-                      (currentCategory === "multifunctionroom" && !pkgBenefits.hallHalf)
-                    }
-                  >
+                  <IconButton size="small" color="primary" disabled={!canUseMember50}>
                     <TicketPercent />
                   </IconButton>
 
@@ -2332,15 +2389,12 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                   <Button
                     size="small"
                     variant={applyMemberDiscount ? "contained" : "outlined"}
-                    onClick={() => setApplyMemberDiscount(v => !v)}
-                    disabled={
-                      (isMeetingCategory && (!pkgBenefits.meetingHalf || quotas.meeting.remaining > 0 || discount.used)) ||
-                      (currentCategory === "trainingroom" && !pkgBenefits.trainingHalf) ||
-                      (currentCategory === "multifunctionroom" && !pkgBenefits.hallHalf)
-                    }
+                    onClick={() => { if (canUseMember50) setApplyMemberDiscount(v => !v); }}
+                    disabled={!canUseMember50}
                   >
                     {applyMemberDiscount ? "Using 50% Off" : "Don't Use 50% Off"}
                   </Button>
+
                 </Box>
               )}
 
@@ -2359,23 +2413,19 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                     !selectedRoomId ||
                     purpose.trim() === "" ||
                     (timeOption === "hourly" && !isHourlyAllowed) ||
-                    (timeOption === "half" && !timeRange)  ||
-                    additionalNote.trim() === "" ||
-                    selectedStyle.length === 0 
-                
+                    (timeOption === "half" && !timeRange) ||
+                    timeOption === "none" ||
+                    selectedStyle.length === 0
                   }
-                  startIcon={loading ? <CircularProgress size={20} sx={{ color: "white" }} /> : <CheckCircle2 size={20} />}
-                >
+                  startIcon={loading ? <CircularProgress size={20} sx={{ color: "white" }} /> : <CheckCircle2 size={20} />}>
                   {loading ? "Processing Your Booking..." : `Confirm Booking • ฿${calculatedPrice?.toLocaleString() || "0"}`}
                 </Button>
               </Box>
             </Card>
           </Grid>
 
-
           {/* Action Section */}
           <Grid size={{ xs: 12 }}>
-
             <Box className="action-section">
               {selectedDates.length === 0 && (
                 <Alert severity="warning" className="date-alert" icon={<AlertTriangle size={20} color="white" />}>
@@ -2387,7 +2437,6 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ onBack }) => {
                 <Info size={16} /> Your booking will be confirmed immediately after payment
               </Typography>
             </Box>
-
           </Grid>
 
         </Grid>
