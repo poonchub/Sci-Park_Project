@@ -1378,7 +1378,7 @@ function Dashboard() {
                                     <ApexBookingLineChart
                                         selectedDateOption={selectedDateOptionBookingRoom}
                                         data={bookingRooms ?? []}
-                                        height={250}
+                                        height={300}
                                         dateRange={dateRangeBookingRoom}
                                     />
 
