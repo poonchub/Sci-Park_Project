@@ -1210,6 +1210,7 @@ func GetBookingRoomSummary(c *gin.Context) {
 
 	var statusCounts []StatusCount
 	var totalBookings int64
+	var totalRevenue float64
 
 	db := config.DB()
 
@@ -1241,13 +1242,40 @@ func GetBookingRoomSummary(c *gin.Context) {
 		Distinct("booking_rooms.id").
 		Count(&totalBookings)
 
+	// Query หา bookings ที่เกี่ยวข้องกับเดือนนี้
+	var bookings []entity.BookingRoom
+	if err := db.Preload("Status").Preload("Payments").
+		Joins("JOIN booking_dates ON booking_dates.booking_room_id = booking_rooms.id").
+		Where("booking_dates.date >= ? AND booking_dates.date <= ?", startOfMonth, endOfMonth).
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// คำนวณรายได้
+	for _, b := range bookings {
+		status := b.Status.StatusName
+
+		switch {
+		case strings.EqualFold(status, "Completed"), strings.EqualFold(status, "Awaiting Receipt"):
+			// จ่ายครบแล้ว → ใช้ TotalAmount
+			totalRevenue += b.TotalAmount
+
+		case strings.EqualFold(status, "Partially Paid"):
+			// Partial → รวมยอดที่จ่ายแล้วจริงจาก Payments
+			for _, p := range b.Payments {
+				totalRevenue += p.Amount
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status_summary": statusCounts,
 		"total_bookings": totalBookings,
+		"total_revenue":  totalRevenue,
 	})
 }
 
-// GET /booking-room-option-for-admin
 // GET /booking-room-option-for-admin
 func ListBookingRoomsForAdmin(c *gin.Context) {
 	db, start, end, err := buildBookingBaseQuery(c)
