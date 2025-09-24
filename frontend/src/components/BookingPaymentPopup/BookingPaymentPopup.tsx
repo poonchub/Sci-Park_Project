@@ -1,7 +1,8 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
   Box, Button, Card, CardMedia, Dialog, DialogActions, DialogContent,
-  DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid, Divider, Tooltip
+  DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid, Divider, Tooltip,
+  useMediaQuery
 } from "@mui/material";
 import {
   Calendar, Clock, FileText, HelpCircle, Wallet, X,
@@ -194,8 +195,6 @@ interface BookingPaymentPopupProps {
 
 // ===== Helpers =====
 const steps = ["Awaiting Payment", "Pending Verification", "Paid"] as const;
-const norm = (s?: string) =>
-  (s || "").trim().toLowerCase().replace(/\s+/g, "_");
 
 const ensureFile = (file?: File) => {
   if (!file) throw new Error("Please attach the slip.");
@@ -238,9 +237,6 @@ const getStepIndex = (status?: InstallmentUI["status"]) => {
   return 0;
 };
 
-const slipUrl = (path?: string) =>
-  !path ? "" : /^https?:\/\//i.test(path) ? path : `${apiUrl}/${path}`;
-
 
 const canShowAdminActions = (isAdmin?: boolean, status?: InstallmentUI["status"], hasSlip?: boolean) =>
   Boolean(isAdmin && hasSlip && norm(status) === "pending_verification");
@@ -255,7 +251,18 @@ const orderInstallments = (plan: "full" | "deposit", items?: InstallmentUI[]) =>
 };
 
 // ===== Helpers for "Invoice Overview" (ย้ายมาจาก All Invoice) =====
+// --- helpers (ประกาศก่อนที่จะถูกเรียกใช้) ---
 const lower = (s?: string) => (s || "").trim().toLowerCase();
+const norm = (s?: string) => lower(s).replace(/\s+/g, "_");
+
+const statusNameOf = (p?: any) => (p?.Status?.Name ?? p?.status ?? "").toString();
+
+const isImgUrl = (u?: string) => !!u && /\.(png|jpe?g|gif|webp|gif)$/i.test((u.split("?")[0] || ""));
+const isPdfUrl = (u?: string) => !!u && /\.pdf$/i.test((u.split("?")[0] || ""));
+
+const slipUrl = (path?: string) =>
+  !path ? "" : /^https?:\/\//i.test(path) ? path : `${apiUrl}/${path}`;
+
 const paymentStatusKey = (raw?: string) => {
   const v = lower(raw);
   if (v === "unpaid" || v === "pending payment") return "Pending Payment";
@@ -277,7 +284,7 @@ const pickReceiptPaymentFromBooking = (data: any) => {
   );
   return approved || pays[pays.length - 1];
 };
-const statusNameOf = (p?: any) => (p?.Status?.Name ?? p?.status ?? "").toString();
+
 const asSlipString = (s?: string) => (s || "").replace(/^\/+/, "");
 const formatToMonthYear = (d?: string) => {
   if (!d) return "-";
@@ -294,6 +301,7 @@ const statusVisuals = {
   Rejected: { color: "#d32f2f", lite: "rgba(211,47,47,0.12)", icon: HelpCircle, label: "Rejected" },
   Refunded: { color: "#6a1b9a", lite: "rgba(106,27,154,0.12)", icon: HelpCircle, label: "Refunded" },
 } as const;
+
 
 const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   open,
@@ -353,6 +361,11 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   }, [planResolved, booking, installments]);
 
   const list = useMemo(() => orderInstallments(planResolved, computedInstallments), [planResolved, computedInstallments]);
+  // lightbox viewer state (ต้องอยู่ "ใน" component เท่านั้น)
+  const [viewer, setViewer] = useState<{ open: boolean; url: string }>({ open: false, url: "" });
+  const fullScreen = useMediaQuery("(max-width:900px)");
+  const openViewer = (url: string) => setViewer({ open: true, url });
+  const closeViewer = () => setViewer({ open: false, url: "" });
 
   const [replaceMode, setReplaceMode] = useState(false);
   const openSlip = (path?: string) => {
@@ -615,15 +628,15 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                 {/* Current slip display */}
                 {!replaceMode ? (
                   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                    {isImage(url) ? (
+                    {isImgUrl(url) ? (
                       <CardMedia
                         component="img"
                         image={url}
-                        onClick={() => openSlip(url)}
+                        onClick={() => openViewer(url)}
                         sx={{ borderRadius: 2, maxHeight: 200, objectFit: "contain", cursor: "zoom-in" }}
                       />
                     ) : (
-                      <Button variant="outlined" onClick={() => openSlip(url)}>
+                      <Button variant="outlined" onClick={() => openViewer(url)}>
                         Open attached slip
                       </Button>
                     )}
@@ -782,9 +795,9 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
       <AlertGroup alerts={alerts} setAlerts={setAlerts} />
 
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: 'primary.main' }}>
           <Wallet size={22} />
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" fontWeight={700} >
             Payment
           </Typography>
         </Box>
@@ -806,12 +819,12 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                     </Typography>
                   </Box>
 
-                  <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
+                  {/* <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
                     <Calendar size={14} style={{ minHeight: 14, minWidth: 14 }} />
                     <Typography sx={{ fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {`Billing Period: ${invoiceUI.billingPeriod}`}
                     </Typography>
-                  </Box>
+                  </Box> */}
 
                   <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.6 }}>
                     <Clock size={14} style={{ minHeight: 14, minWidth: 14 }} />
@@ -1078,6 +1091,77 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
           Close
         </Button>
       </DialogActions>
+
+      {/* Fullscreen viewer for slip (image/pdf) */}
+      <Dialog
+        open={viewer.open}
+        onClose={closeViewer}
+        fullScreen={fullScreen}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { backgroundColor: "#000" } }}
+      >
+        <Box sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: fullScreen ? "100vh" : "85vh",
+          position: "relative",
+          background: "#000"
+        }}>
+          <IconButton
+            onClick={closeViewer}
+            sx={{ position: "absolute", top: 8, right: 8, color: "#fff" }}
+            aria-label="close viewer"
+          >
+            <X />
+          </IconButton>
+
+          <Box sx={{ position: "absolute", top: 8, right: 56, display: "flex", gap: 1 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => window.open(viewer.url, "_blank", "noopener,noreferrer")}
+              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}
+            >
+              Open
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = viewer.url;
+                a.download = viewer.url.split("/").pop() || "file";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              }}
+              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.5)" }}
+            >
+              Download
+            </Button>
+          </Box>
+
+          {isImgUrl(viewer.url) ? (
+            <img
+              src={viewer.url}
+              alt="slip"
+              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }}
+            />
+          ) : isPdfUrl(viewer.url) ? (
+            <iframe
+              title="pdf"
+              src={viewer.url}
+              style={{ width: "100%", height: "100%", border: "none", background: "#000" }}
+            />
+          ) : (
+            <Typography color="#fff">Cannot preview this file type.</Typography>
+          )}
+        </Box>
+      </Dialog>
+
     </Dialog>
   );
 };

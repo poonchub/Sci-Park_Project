@@ -164,7 +164,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
       <DialogTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
           <ManageAccountsOutlinedIcon style={{ fontSize: '32px', color: '#ff6f00' }} />
-          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600, color: 'primary.main'}}>
             Edit Room Information
           </Typography>
         </div>
@@ -277,7 +277,7 @@ const EditRoomPopup: React.FC<EditRoomPopupProps> = ({ roomID, open, onClose }) 
             </Grid>
 
             <DialogActions sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <Button onClick={onClose} color="secondary">Cancel</Button>
+              <Button onClick={onClose} color="secondary"  variant="outlinedGray">Cancel</Button>
               <Button type="submit" variant="contained" startIcon={<SaveIcon />}>Save</Button>
             </DialogActions>
           </form>

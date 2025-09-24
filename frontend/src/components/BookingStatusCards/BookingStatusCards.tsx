@@ -12,7 +12,7 @@ interface Props {
     lg?: number;
     xl?: number;
   };
-  /** ระบุลิสต์สถานะที่จะโชว์ (เช่น "Pending Approvel","Pending Payment","Partially Paid","Awaiting Receipt","Completed","Cancelled") */
+  /** ระบุลิสต์สถานะที่จะโชว์ (เช่น "pending approval","Pending Payment","Partially Paid","Awaiting Receipt","Completed","Cancelled") */
   customDisplayStatuses?: string[];
 }
 
@@ -22,7 +22,7 @@ const BookingStatusCards: React.FC<Props> = ({
   customDisplayStatuses,
 }) => {
   const displayStatuses =
-    customDisplayStatuses || ["Pending Approvel", "Pending Payment", "Partially Paid", "Awaiting Receipt", "Completed", "Cancelled"];
+    customDisplayStatuses || ["pending approval", "Pending Payment", "Partially Paid", "Awaiting Receipt", "Completed", "Cancelled"];
 
   const statusCards = displayStatuses.map((label) => {
     const keyLower = label.toLowerCase();

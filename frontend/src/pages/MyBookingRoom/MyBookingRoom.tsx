@@ -795,7 +795,7 @@ function MyBookingRoom() {
 
             // สถานะ booking โดยรวม (ไว้เช็คว่าได้รับการอนุมัติหรือยัง)
             const dStatus = flowFromBackend(data);
-            const awaitingApproval = lower(dStatus) === "pending approvel";
+            const awaitingApproval = lower(dStatus) === "pending approval";
 
 
 
@@ -1112,7 +1112,7 @@ function MyBookingRoom() {
 
             // เพิ่มหลังจากคำนวณ statusKey และ before return
             // const dStatus = flowFromBackend(data);
-            // const awaitingApproval = lower(dStatus) === "pending approvel";
+            // const awaitingApproval = lower(dStatus) === "pending approval";
             // const isViewSlip = ((primary?.label ?? "") as string).toLowerCase().includes("view slip");
             // const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
             // const primaryTooltip = awaitingApproval
@@ -1321,25 +1321,16 @@ function MyBookingRoom() {
           );
         },
       },
-
       {
         field: "Actions",
         headerName: "Actions",
         flex: 0.7,
         renderCell: (params) => {
           const row = params.row as BookingRoomsInterface;
-          const storeUser = useUserStore.getState().user as UserInterface | null;
-          const isRowOwner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
 
+          // ---------- helpers ----------
           const lower = (s?: string) => (s || "").trim().toLowerCase();
           const statusNameOf = (p?: any) => (p?.Status?.Name ?? p?.status ?? "").toString();
-          const pickReceiptPayment = (data: any) => {
-            const pays = Array.isArray(data?.Payments) ? data.Payments
-              : Array.isArray((data as any)?.Payment) ? (data as any).Payment : [];
-            if (!pays.length) return undefined;
-            const approved = pays.find((p: any) => ["approved", "paid"].includes(lower(p?.Status?.Name ?? p?.status)));
-            return approved || pays[pays.length - 1];
-          };
           const toConfigKey = (raw?: string) => {
             const v = lower(raw);
             if (v === "unpaid" || v === "pending payment") return "Pending Payment";
@@ -1349,40 +1340,87 @@ function MyBookingRoom() {
             if (v === "refunded") return "Refunded";
             return "Pending Payment";
           };
+          const pickReceiptPayment = (data: any) => {
+            const pays = Array.isArray(data?.Payments)
+              ? data.Payments
+              : Array.isArray((data as any)?.Payment)
+                ? (data as any).Payment
+                : [];
+            if (!pays.length) return undefined;
+            const approvedPay = pays.find((p: any) =>
+              ["approved", "paid"].includes(lower(p?.Status?.Name ?? p?.status))
+            );
+            return approvedPay || pays[pays.length - 1];
+          };
+          const firstSlipPath = (p?: string | string[]) =>
+            Array.isArray(p) ? p[0] : p;
 
+          // ---------- derive ----------
+          const storeUser = useUserStore.getState().user as UserInterface | null;
+          const isOwner = !!storeUser?.ID && !!row.User?.ID && storeUser.ID === row.User.ID;
+
+          const locked = isRowReadOnly(row); // มักล็อกเมื่อ refunded/cancelled
+          const dStatus = flowFromBackend(row);
+          const nStatus = lower(dStatus);
+
+          // robust pending approval (กันสะกดผิด: approvel/aporoval ฯลฯ)
+          const awaitingApproval =
+            nStatus === "pending approval" ||
+            /pending.*approv/.test(nStatus) ||
+            /pending.*aproval/.test(nStatus) ||
+            /pending.*approvel/.test(nStatus) ||
+            /pending.*aporoval/.test(nStatus);
+
+          const isCancelled = nStatus === "cancelled";
+          const approved = !awaitingApproval && !isCancelled;
+
+          // payment status + slip
           const selectedPay: any = pickReceiptPayment(row);
           const statusRaw = statusNameOf(selectedPay);
           const statusKey = toConfigKey(statusRaw);
-          const canPayNow = statusKey === "Pending Payment" || statusKey === "Rejected";
+          const slipPathRaw = firstSlipPath(selectedPay?.SlipPath);
+          const hasSlip = !!slipPathRaw;
 
-          const locked = isRowReadOnly(row); // <<< ล็อกเมื่อ refunded/cancelled
+          // ✅ กติกาใหม่:
+          // - Pay Now ⇒ รอแนบสลิปเท่านั้น (Pending Payment && !hasSlip) หรือ Rejected
+          // - View Slip ⇒ แนบแล้ว (hasSlip) ไม่ว่าจะรอตรวจ/เสร็จแล้ว
+          const canPayNow =
+            approved &&
+            isOwner &&
+            (!locked) &&
+            (
+              (statusKey === "Pending Payment" && !hasSlip) ||
+              statusKey === "Rejected"
+            );
 
-          const dStatus = flowFromBackend(row);
-          const awaitingApproval = lower(dStatus) === "pending approvel";
-          const isViewSlip = (canPayNow ? "" : "view slip").toLowerCase().includes("view slip");
-          // ถ้า upstream ตั้ง primary.label ได้ จะดีกว่า: const isViewSlip = (primary.label||"").toLowerCase().includes("view slip")
-          const canTriggerPayment = isViewSlip || (!awaitingApproval && statusKey === "Pending Payment");
-          const primaryTooltip = awaitingApproval
-            ? "Awaiting approval. You can pay after the booking is approved."
-            : (!isViewSlip && statusKey !== "Pending Payment")
-              ? "Payment is not open for this booking."
-              : "";
+          const canViewSlip =
+            approved &&
+            isOwner &&
+            !locked &&
+            hasSlip 
+        
 
+          const showPrimaryPaymentBtn = canPayNow || canViewSlip;
+
+          const primaryTooltip = !approved
+            ? "Awaiting approval. You can pay or view slip after the booking is approved."
+            : (canPayNow ? "Pay Now" : "View Slip");
 
           return (
-            <Box sx={{ display: "flex", gap: 0.8, alignItems: "center", flexWrap: "wrap" }} className="container-btn">
-              {/* Pay/View — ซ่อนเมื่อ locked */}
-              {(!locked) && (
-                <Tooltip title={primaryTooltip || (canPayNow ? "Pay Now" : "View Slip")}>
+            <Box
+              sx={{ display: "flex", gap: 0.8, alignItems: "center", flexWrap: "wrap" }}
+              className="container-btn"
+            >
+              {/* Pay Now / View Slip */}
+              {showPrimaryPaymentBtn && (
+                <Tooltip title={primaryTooltip}>
                   <span>
                     <Button
                       variant="contained"
                       onClick={() => {
-                        if (!canTriggerPayment) return;  // กันคลิก
                         setSelectedRow(row);
-                        setOpenPaymentDialog(true);
+                        setOpenPaymentDialog(true); // dialog เดิม: ภายในตัดสินใจโชว์ส่วนจ่ายหรือสลิป
                       }}
-                      disabled={!canTriggerPayment}      // ปิดปุ่ม
                       sx={{ minWidth: 42 }}
                     >
                       {canPayNow ? (
@@ -1401,16 +1439,19 @@ function MyBookingRoom() {
                 </Tooltip>
               )}
 
-
-              {/* Details — ยังดูได้เสมอ */}
+              {/* Details */}
               <Tooltip title="Details">
-                <Button variant="outlinedGray" onClick={() => handleClickCheck(row)} sx={{ minWidth: 42 }}>
+                <Button
+                  variant="outlinedGray"
+                  onClick={() => handleClickCheck(row)}
+                  sx={{ minWidth: 42 }}
+                >
                   <Eye size={18} />
                 </Button>
               </Tooltip>
 
-              {/* Cancel — ซ่อนเมื่อ locked */}
-              {isRowOwner && canCancel(row) && !locked && (
+              {/* Cancel (เฉพาะเจ้าของ และไม่ถูกล็อก) */}
+              {isOwner && canCancel(row) && !locked && (
                 <Tooltip title="Cancel Booking">
                   <Button
                     className="btn-reject"
@@ -1422,17 +1463,12 @@ function MyBookingRoom() {
                   </Button>
                 </Tooltip>
               )}
-
-              {/* ข้อความแจ้งถ้าจ่ายแล้วแต่ยกเลิกเองไม่ได้ */}
-              {/* {!canCancel(row) && hasPaidLike(collectPays(row)) && (
-                <Typography sx={{ mt: 0.5, fontSize: 12, color: "text.secondary" }}>
-                  ชำระแล้ว หากต้องการยกเลิก/ขอคืนเงิน กรุณาติดต่อเจ้าหน้าที่
-                </Typography>
-              )} */}
             </Box>
           );
         },
-      },
+      }
+
+      ,
     ];
 
   };
