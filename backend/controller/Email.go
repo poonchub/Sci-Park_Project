@@ -587,34 +587,37 @@ func SendMaintenanceStatusEmail(c *gin.Context) {
 	// สร้างข้อความตามสถานะ
 	var subject, header, detail string
 
-	if status == "Waiting For Review" {
+	switch status {
+	case "Waiting for Review":
 		subject = "งานซ่อมของคุณเสร็จสมบูรณ์แล้ว"
 		header = "งานซ่อมของคุณเสร็จสิ้นแล้ว"
 		detail = fmt.Sprintf(`
-			<p>เรียนคุณ %s,</p>
-			<p>งานซ่อมที่ห้อง <strong>%s</strong> เสร็จเรียบร้อยแล้ว</p>
-			<ul>
-				<li>รหัสงาน: %d</li>
-				<li>วันที่เสร็จ: %s</li>
-			</ul>
-			<p><a href="#">คลิกดูรายละเอียด</a></p>
-			<p>ขอบคุณที่ใช้บริการ</p>
-		`, name, roomNumber, request.ID, updatedAt)
-	} else if status == "Unsuccessful" {
+		<p>เรียนคุณ %s,</p>
+		<p>งานซ่อมที่ห้อง <strong>%s</strong> เสร็จเรียบร้อยแล้ว</p>
+		<ul>
+			<li>รหัสงาน: %d</li>
+			<li>วันที่เสร็จ: %s</li>
+		</ul>
+		<p><a href="#">คลิกดูรายละเอียด</a></p>
+		<p>ขอบคุณที่ใช้บริการ</p>
+	`, name, roomNumber, request.ID, updatedAt)
+
+	case "Unsuccessful":
 		subject = "งานซ่อมของคุณถูกยกเลิก"
 		header = "ขออภัย งานซ่อมของคุณถูกยกเลิก"
 		detail = fmt.Sprintf(`
-			<p>เรียนคุณ %s,</p>
-			<p>คำขอซ่อมที่ห้อง <strong>%s</strong> ได้ถูกยกเลิกแล้ว</p>
-			<ul>
-				<li>รหัสงาน: %d</li>
-				<li>วันที่ยกเลิก: %s</li>
-				<li>หมายเหตุการยกเลิก: %s</li>
-			</ul>
-			<p>หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่</p>
-			<p>ขอบคุณที่ใช้บริการ</p>
-		`, name, roomNumber, request.ID, updatedAt, description)
-	} else {
+		<p>เรียนคุณ %s,</p>
+		<p>คำขอซ่อมที่ห้อง <strong>%s</strong> ได้ถูกยกเลิกแล้ว</p>
+		<ul>
+			<li>รหัสงาน: %d</li>
+			<li>วันที่ยกเลิก: %s</li>
+			<li>หมายเหตุการยกเลิก: %s</li>
+		</ul>
+		<p>หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่</p>
+		<p>ขอบคุณที่ใช้บริการ</p>
+	`, name, roomNumber, request.ID, updatedAt, description)
+
+	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่สามารถส่งอีเมลในสถานะนี้ได้"})
 		return
 	}

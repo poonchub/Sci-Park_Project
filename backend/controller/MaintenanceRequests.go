@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -229,6 +230,13 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 	}
 
 	if len(request.MaintenanceImages) > 0 {
+		for _, img := range request.MaintenanceImages {
+			if img.FilePath != "" {
+				if err := os.Remove(img.FilePath); err != nil {
+					fmt.Printf("⚠️ Failed to delete file: %s, error: %v\n", img.FilePath, err)
+				}
+			}
+		}
 		db.Delete(&request.MaintenanceImages)
 	}
 	if len(request.Notifications) > 0 {
@@ -241,6 +249,16 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 		db.Delete(&request.ManagerApproval)
 	}
 	if request.MaintenanceTask != nil {
+		if len(request.MaintenanceTask.HandoverImages) > 0 {
+			for _, img := range request.MaintenanceTask.HandoverImages {
+				if img.FilePath != "" {
+					if err := os.Remove(img.FilePath); err != nil {
+						fmt.Printf("⚠️ Failed to delete handover file: %s, error: %v\n", img.FilePath, err)
+					}
+				}
+			}
+			db.Delete(&request.MaintenanceTask.HandoverImages)
+		}
 		db.Delete(&request.MaintenanceTask)
 	}
 
@@ -249,7 +267,10 @@ func DeleteMaintenanceRequestByID(c *gin.Context) {
 		return
 	}
 
-	services.NotifySocketEvent("maintenance_deleted", request)
+	services.NotifySocketEvent("maintenance_deleted", gin.H{
+		"ID":     request.ID,
+		"UserID": request.UserID,
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "Maintenance request deleted successfully"})
 }
@@ -582,7 +603,7 @@ func ListMaintenanceRequestsByDateRange(c *gin.Context) {
 				return
 			}
 			endDate = endDate.AddDate(0, 0, 1)
-    		query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
+			query = query.Where("created_at >= ? AND created_at < ?", startDate, endDate)
 		}
 	}
 

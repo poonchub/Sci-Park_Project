@@ -945,6 +945,7 @@ function AllMaintenanceRequest() {
 
         socket.on("maintenance_created", (data) => {
             console.log("📦 New maintenance request:", data);
+            console.log("User: ", user)
             if (
                 (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
                 (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||

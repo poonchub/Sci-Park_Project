@@ -49,7 +49,6 @@ const AdminRoutes = (): RouteObject => {
 				path: "/room-booking-form",
 				element: <RoomBookingForm />
 			},
-
 			{
 				path: "/requests",
 				element: <AllMaintenanceRequest/>
@@ -57,14 +56,6 @@ const AdminRoutes = (): RouteObject => {
 			{
 				path: "/requests/maintenance/all-maintenance-request",
 				element: <AllMaintenanceRequest/>
-			},
-			{
-				path: "/maintenance/all-maintenance-request",
-				element: <AllMaintenanceRequest/>
-			},
-			{
-				path: "/maintenance/my-maintenance-request",
-				element: <MyMaintenanceRequest/>
 			},
 			{
 				path: "/maintenance/create-maintenance-request",

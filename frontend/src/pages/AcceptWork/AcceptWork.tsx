@@ -53,13 +53,11 @@ import theme from "../../styles/Theme";
 import { io } from "socket.io-client";
 import CustomTabPanel from "../../components/CustomTabPanel/CustomTabPanel";
 import { NotificationsInterface } from "../../interfaces/INotifications";
-import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 import { Base64 } from "js-base64";
 import AnimatedBell from "../../components/AnimatedIcons/AnimatedBell";
 import { UserInterface } from "../../interfaces/IUser";
 import { Briefcase, BrushCleaning, Check, Clock, Eye, HardHat, HelpCircle, Search, Send, X } from "lucide-react";
-import { handleUpdateNotification } from "../../utils/handleUpdateNotification";
 
 export function a11yProps(index: number) {
     return {
@@ -83,7 +81,6 @@ function AcceptWork() {
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
 
-    const [openConfirmAccepted, setOpenConfirmAccepted] = useState<boolean>(false);
     const [openConfirmCancelled, setOpenConfirmCancelled] = useState<boolean>(false);
     const [openPopupSubmit, setOpenPopupSubmit] = useState(false);
 
@@ -890,6 +887,7 @@ function AcceptWork() {
 
         handleSubmitWork(statusID, {
             selectedTask,
+            createrID: selectedTask.MaintenanceRequest?.UserID,
             setAlerts,
             setOpenPopupSubmit,
             files,
