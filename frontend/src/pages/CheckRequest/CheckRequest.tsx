@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./CheckRequest.css";
 
-import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, socketUrl, UpdateMaintenanceRequestByID } from "../../services/http";
+import { apiUrl, GetMaintenanceRequestByID, GetOperators, GetRequestStatuses, socketUrl } from "../../services/http";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { RequestStatusesInterface } from "../../interfaces/IRequestStatuses";
 import { UserInterface } from "../../interfaces/IUser";
@@ -167,6 +167,7 @@ function CheckRequest() {
         const statusID = requestStatuses?.find((item) => item.Name === "Waiting for Review")?.ID || 0;
         handleSubmitWork(statusID, {
             selectedTask: maintenanceRequest.MaintenanceTask,
+            createrID: maintenanceRequest.UserID,
             setAlerts,
             setOpenPopupSubmit,
             files: submitfiles,
@@ -220,32 +221,6 @@ function CheckRequest() {
             files: requestfiles,
         });
         setIsButtonActive(false);
-    };
-
-    const handleClickCancel = async () => {
-        try {
-            setIsButtonActive(true);
-            const statusID = requestStatuses?.find((item) => item.Name === "Unsuccessful")?.ID || 0;
-
-            const request: MaintenanceRequestsInterface = {
-                RequestStatusID: statusID,
-            };
-
-            const resRequest = await UpdateMaintenanceRequestByID(request, maintenanceRequest?.ID);
-            if (!resRequest || resRequest.error) throw new Error(resRequest?.error || "Failed to update request status");
-
-            setTimeout(() => {
-                setAlerts((prev) => [...prev, { type: "success", message: "Request cancelled successfully" }]);
-
-                setOpenConfirmCancelledFromOwnRequest(false);
-                setIsButtonActive(false);
-            }, 500);
-        } catch (error) {
-            console.error("API Error:", error);
-            const errMessage = (error as Error).message || "Unknown error!";
-            setAlerts((prev) => [...prev, { type: "error", message: errMessage }]);
-            setIsButtonActive(false);
-        }
     };
 
     const handleClickDeleteRequest = () => {
@@ -304,8 +279,6 @@ function CheckRequest() {
             socket.off("maintenance_updated");
         };
     }, []);
-
-    console.log(maintenanceRequest)
 
     return (
         <Box className="check-requests-page">

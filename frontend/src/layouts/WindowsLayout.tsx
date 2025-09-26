@@ -7,7 +7,6 @@ import {
     GetUserById,
     socketUrl,
 } from "../services/http";
-import { UserInterface } from "../interfaces/IUser";
 import Footer from "../components/Footer/Footer";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -29,7 +28,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { io } from "socket.io-client";
-import { isAdmin, isManager, isMaintenanceOperator, isDocumentOperator } from "../routes";
+import { isAdmin, isManager, isMaintenanceOperator } from "../routes";
 import {
     ClipboardList,
     DoorOpen,
@@ -45,7 +44,6 @@ import {
     Building2,
     NotebookPen,
     DoorClosed,
-    NotepadText,
     ClipboardCheck
 } from "lucide-react";
 import { setupSmartSessionMonitoring } from "../utils/sessionManager";
@@ -414,10 +412,13 @@ const WindowsLayout: React.FC = (props: any) => {
             "my-account",
             "news",
             "organization-info",
+            "room",
 
             "requests",
             "maintenance/all-maintenance-request",
             "rental-space",
+            "manage-room-type",
+            "manage-room",
             // เพิ่มเงื่อนไขสำหรับ Service Area
             ...(localStorage.getItem('requestType') === 'External' || localStorage.getItem('requestType') === 'Both' ? ["service-area/service-request-list"] : []),
         ],

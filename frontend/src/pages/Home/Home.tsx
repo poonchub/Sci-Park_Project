@@ -33,7 +33,7 @@ const mainFeatures = [
         icon: <Wrench size={40} />,
         title: "Maintenance Request",
         description: "Quickly report issues with equipment and facilities, and track repair status in real-time.",
-        path: "/maintenance/my-maintenance-request"
+        path: "/maintenance/create-maintenance-request"
     },
     {
         icon: <DoorOpen size={40} />,

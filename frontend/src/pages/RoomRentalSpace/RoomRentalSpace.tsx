@@ -457,6 +457,7 @@ function RoomRentalSpace() {
                 if (!openInvoicePopup) {
                     setSelectedRoom(null);
                 }
+                setIsEditMode(false)
                 getInvoice()
             }, 500);
         } catch (error: any) {
@@ -486,7 +487,7 @@ function RoomRentalSpace() {
                 };
 
                 const resInvoice = await GetInvoiceByID(invoiceId);
-            root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+                root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
             } catch (error) {
                 console.error("🚨 Error creating invoice:", error);
                 reject(error);
@@ -579,8 +580,13 @@ function RoomRentalSpace() {
                 }
             }
 
+            await handleUploadPDF(selectedInvoice?.ID ?? 0);
+
             handleSetAlert("success", "The invoice has been updated successfully.");
+            
             setTimeout(() => {
+                setOpenCreatePopup(false)
+                setIsEditMode(false)
                 setIsButtonActive(false);
                 setSelectedInvoice(null);
                 handleClearForm();
@@ -706,7 +712,6 @@ function RoomRentalSpace() {
             )
 
             handleSetAlert("success", "Receipt deleted successfully");
-
 
             setTimeout(() => {
                 setAnchorEl(null);
@@ -1458,6 +1463,33 @@ function RoomRentalSpace() {
                         const notification = data.Notifications ?? [];
                         const hasNotificationForUser = notification.some((n: NotificationsInterface) => n.UserID === Number(userID) && !n.IsRead);
 
+                        const dueDateCheck = new Date(data.DueDate);
+                        const today = new Date();
+
+                        // หาว่าต่างกันกี่วัน
+                        const diffTime = dueDateCheck.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let dueText: string;
+                        let dueColor: string;
+                        let fontWeight: "normal" | "bold" = "normal";
+
+                        if (diffDays < 0) {
+                            // เลยกำหนดแล้ว
+                            dueText = "Overdue";
+                            dueColor = "error.main";
+                            fontWeight = "bold";
+                        } else if (diffDays <= 2) {
+                            // ใกล้ถึงกำหนด
+                            dueText = `Due Date: ${dueDate}`;
+                            dueColor = "warning.main";
+                            fontWeight = "bold";
+                        } else {
+                            // ปกติ
+                            dueText = `Due Date: ${dueDate}`;
+                            dueColor = "text.secondary";
+                        }
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
@@ -1489,7 +1521,7 @@ function RoomRentalSpace() {
                                             {`Billing Period: ${billingPeriod}`}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                    <Box sx={{ color: dueColor, display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
                                         <Clock
                                             size={14}
                                             style={{
@@ -1503,9 +1535,10 @@ function RoomRentalSpace() {
                                                 whiteSpace: "nowrap",
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
+                                                fontWeight,
                                             }}
                                         >
-                                            {`Due Date: ${dueDate}`}
+                                            {dueText}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -1873,6 +1906,32 @@ function RoomRentalSpace() {
                     type: "string",
                     flex: 1.8,
                     renderCell: (params) => {
+                        const dueDate = new Date(params.row.DueDate);
+                        const today = new Date();
+
+                        // หาว่าต่างกันกี่วัน
+                        const diffTime = dueDate.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let dueText: string;
+                        let dueColor: string;
+                        let fontWeight: "normal" | "bold" = "normal";
+
+                        if (diffDays < 0) {
+                            // เลยกำหนดแล้ว
+                            dueText = "Overdue";
+                            dueColor = "error.main";
+                            fontWeight = "bold";
+                        } else if (diffDays <= 2) {
+                            // ใกล้ถึงกำหนด
+                            dueText = `Due Date: ${dateFormat(params.row.DueDate)}`;
+                            dueColor = "warning.main";
+                            fontWeight = "bold";
+                        } else {
+                            // ปกติ
+                            dueText = `Due Date: ${dateFormat(params.row.DueDate)}`;
+                            dueColor = "text.secondary";
+                        }
                         return (
                             <Box
                                 sx={{
@@ -1898,10 +1957,11 @@ function RoomRentalSpace() {
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
-                                        color: "text.secondary"
+                                        color: dueColor,
+                                        fontWeight,
                                     }}
                                 >
-                                    {`Due Date: ${dateFormat(params.row.DueDate)}`}
+                                    {dueText}
                                 </Typography>
                             </Box>
                         );
@@ -2687,10 +2747,10 @@ function RoomRentalSpace() {
                                     name="BillingPeriod"
                                     value={invoiceFormData.BillingPeriod ? dayjs(invoiceFormData.BillingPeriod) : null}
                                     onChange={(newValue) => handleDateChange("BillingPeriod", newValue)}
-                                    // maxDate={invoiceFormData.DueDate ? dayjs(invoiceFormData.DueDate) : undefined}
                                     slots={{
                                         openPickerIcon: CalendarMonth,
                                     }}
+                                    views={["month"]}
                                     format="MMM YYYY"
                                     readOnly={isEditMode}
                                     sx={{ width: "100%" }}

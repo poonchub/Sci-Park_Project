@@ -46,12 +46,12 @@ const ManagerRoutes = (): RouteObject => {
                 element: <BookingReview />
             },
             {
-                path: "/maintenance/all-maintenance-request",
+                path: "/requests",
                 element: <AllMaintenanceRequest />
             },
             {
-                path: "/maintenance/my-maintenance-request",
-                element: <MyMaintenanceRequest />
+                path: "/requests/maintenance/all-maintenance-request",
+                element: <AllMaintenanceRequest />
             },
             {
                 path: "/maintenance/create-maintenance-request",

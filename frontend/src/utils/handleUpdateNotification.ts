@@ -24,6 +24,7 @@ export const handleUpdateNotification = async (
 
         // กรณี request
         if (request_id && request_id !== 0) {
+            console.log("sdfsdf: ", request_id, user_id)
             resNotification = await GetNotificationsByRequestAndUser(request_id, user_id);
         }
         // กรณี task
