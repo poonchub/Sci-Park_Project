@@ -90,7 +90,7 @@ const ServiceRequestList: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
-                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 9) statusName = "Cancellation in Progress";
                         else if (statusID === 10) statusName = "Cancellation Assigned";
                         else if (statusID === 11) statusName = "Successfully Cancelled";
                         
@@ -243,7 +243,7 @@ const ServiceRequestList: React.FC = () => {
                                             <Grid size={{ xs: 12 }}>
                                                 {(() => {
                                                     const showButtonApprove = statusID === 2; // StatusID 2 = Pending
-                                                    const showButtonAssign = statusID === 9; // StatusID 9 = Cancellation In Progress
+                                                    const showButtonAssign = statusID === 9; // StatusID 9 = Cancellation in Progress
                                                     return (
                                                         <Box
                                                             className="container-btn"
@@ -531,7 +531,7 @@ const ServiceRequestList: React.FC = () => {
                     else if (statusID === 4) statusName = "In Progress";
                     else if (statusID === 6) statusName = "Completed";
                     else if (statusID === 8) statusName = "Unsuccessful";
-                    else if (statusID === 9) statusName = "Cancellation In Progress";
+                    else if (statusID === 9) statusName = "Cancellation in Progress";
                     else if (statusID === 10) statusName = "Cancellation Assigned";
                     else if (statusID === 11) statusName = "Successfully Cancelled";
                     
@@ -649,7 +649,7 @@ const ServiceRequestList: React.FC = () => {
                 renderCell: (item) => {
                     const data = item.row;
                     const showButtonApprove = item.row.StatusID === 2; // StatusID 2 = Pending
-                    const showButtonAssign = item.row.StatusID === 9; // StatusID 9 = Cancellation In Progress
+                    const showButtonAssign = item.row.StatusID === 9; // StatusID 9 = Cancellation in Progress
                     return (
                         <Box
                             className="container-btn"
@@ -790,7 +790,7 @@ const ServiceRequestList: React.FC = () => {
 
             if (res) {
                 // Filter to only include the 8 statuses used for Service Request List
-                const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"];
+                const serviceRequestStatusNames = ["Pending", "Approved", "In Progress", "Completed", "Unsuccessful", "Cancellation in Progress", "Cancellation Assigned", "Successfully Cancelled"];
                 const filteredStatuses = res.filter((status: RequestStatusesInterface) =>
                     serviceRequestStatusNames.includes(status.Name || '')
                 );
@@ -886,7 +886,7 @@ const ServiceRequestList: React.FC = () => {
                     res.data.forEach((item: any) => {
                         const statusID = item.StatusID;
                         // Map status ID to status name based on actual database
-                        // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful, 9=Cancellation In Progress, 10=Cancellation Assigned, 11=Successfully Cancelled
+                        // From the RequestStatuses table: 1=Created, 2=Pending, 3=Approved, 4=In Progress, 5=Waiting For Review, 6=Completed, 7=Rework Requested, 8=Unsuccessful, 9=Cancellation in Progress, 10=Cancellation Assigned, 11=Successfully Cancelled
                         let statusName = "Unknown";
                         if (statusID === 1) statusName = "Created";
                         else if (statusID === 2) statusName = "Pending";
@@ -894,12 +894,12 @@ const ServiceRequestList: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
-                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 9) statusName = "Cancellation in Progress";
                         else if (statusID === 10) statusName = "Cancellation Assigned";
                         else if (statusID === 11) statusName = "Successfully Cancelled";
 
                         // Count individual statuses and combine cancellation statuses
-                        if (statusName === "Cancellation In Progress" || 
+                        if (statusName === "Cancellation in Progress" || 
                             statusName === "Cancellation Assigned" || 
                             statusName === "Successfully Cancelled") {
                             counts["Cancellation"]++;

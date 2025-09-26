@@ -402,12 +402,16 @@ async function UpdateUserSignature(data: any) {
 }
 
 async function CreateUserExternalOnly(data: any) {
+    // Debug: แสดงข้อมูลที่ได้รับ
+    console.log("=== CreateUserExternalOnly Service Debug ===");
+    console.log("Received data:", data);
+
     const formData = new FormData();
     formData.append("company_name", data.CompanyName || "");
     formData.append("business_detail", data.BusinessDetail || "");
     formData.append("first_name", data.FirstName || "");
     formData.append("last_name", data.LastName || "");
-    formData.append("gender_id", data.GenderID.toString());
+    formData.append("gender_id", data.GenderID?.toString() || "1");
     formData.append("email", data.Email || "");
     formData.append("password", data.Password || "");
     formData.append("phone", data.Phone || "");
@@ -415,13 +419,19 @@ async function CreateUserExternalOnly(data: any) {
 
     formData.append("package_id", data.UserPackageID?.toString() || "1");
 
+    // Debug: แสดง FormData ที่จะส่ง
+    console.log("FormData being sent:");
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
+
     const requestOptions = {
         headers: {},
     };
 
     try {
         // Send FormData with requestOptions
-
+        console.log("Sending POST request to:", `${apiUrl}/register`);
         const response = await axios.post(`${apiUrl}/register`, formData, requestOptions);
 
         // Handle the response and return a custom object
@@ -439,6 +449,13 @@ async function CreateUserExternalOnly(data: any) {
             };
         }
     } catch (error) {
+        // Debug: แสดง error details
+        console.error("CreateUserExternalOnly error:", error);
+        if (axios.isAxiosError(error)) {
+            console.error("Error response:", error.response?.data);
+            console.error("Error status:", error.response?.status);
+        }
+
         // If the error is from axios, it will be caught here
         if (axios.isAxiosError(error)) {
             // Check if the error has a response and message

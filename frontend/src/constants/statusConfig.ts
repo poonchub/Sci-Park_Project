@@ -51,7 +51,7 @@ export const statusConfig: Record<string, StatusConfig> = {
         colorLite: "rgba(255, 166, 0, 0.21)",
         icon: Repeat
     },
-    "Cancellation In Progress": {
+    "Cancellation in Progress": {
         color: "#FF6B35",
         colorLite: "rgba(255, 107, 53, 0.18)",
         icon: AlertTriangle

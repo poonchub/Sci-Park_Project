@@ -157,7 +157,7 @@ const CancelRequestServiceArea: React.FC = () => {
             
             setAlerts([{ 
                 type: 'success', 
-                message: `Service area request cancelled successfully! Status updated to: ${response.data?.status_name || 'Cancellation In Progress'}` 
+                message: `Service area request cancelled successfully! Status updated to: ${response.data?.status_name || 'Cancellation in Progress'}` 
             }]);
             
             // Navigate back to My Account after 2 seconds

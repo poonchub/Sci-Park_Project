@@ -233,6 +233,7 @@ func CreateUser(c *gin.Context) {
 }
 
 func CreateUserExternalOnly(c *gin.Context) {
+	fmt.Println("=== CreateUserExternalOnly called ===")
 	var user entity.User
 
 	// รับข้อมูลจาก form-data สำหรับ External User
@@ -245,6 +246,16 @@ func CreateUserExternalOnly(c *gin.Context) {
 	user.Phone = c.PostForm("phone")
 	user.IsEmployee = false // เฉพาะ External User
 	user.RoleID = 1
+
+	// Debug: แสดงข้อมูลที่ได้รับ
+	fmt.Printf("Received data:\n")
+	fmt.Printf("CompanyName: %s\n", user.CompanyName)
+	fmt.Printf("BusinessDetail: %s\n", user.BusinessDetail)
+	fmt.Printf("FirstName: %s\n", user.FirstName)
+	fmt.Printf("LastName: %s\n", user.LastName)
+	fmt.Printf("Email: %s\n", user.Email)
+	fmt.Printf("Phone: %s\n", user.Phone)
+	fmt.Printf("GenderID from form: %s\n", c.PostForm("gender_id"))
 
 	ok, err := govalidator.ValidateStruct(user)
 	if !ok {
@@ -265,11 +276,14 @@ func CreateUserExternalOnly(c *gin.Context) {
 	user.GenderID = uint(genderID)
 
 	// ตรวจสอบอีเมลซ้ำ
+	fmt.Printf("Checking if email exists: %s\n", user.Email)
 	var existingUser entity.User
 	if err := config.DB().Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		fmt.Printf("Email conflict found! Existing user ID: %d, Email: %s\n", existingUser.ID, existingUser.Email)
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
 		return
 	}
+	fmt.Println("Email is available, proceeding...")
 
 	// แฮชรหัสผ่าน
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -311,14 +325,19 @@ func CreateUserExternalOnly(c *gin.Context) {
 	}
 
 	// บันทึกข้อมูลผู้ใช้
+	fmt.Println("Attempting to create user in database...")
 	if err := config.DB().Create(&user).Error; err != nil {
+		fmt.Printf("Database error occurred: %v\n", err)
 		if err == gorm.ErrDuplicatedKey {
+			fmt.Println("Duplicate key error detected")
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		} else {
+			fmt.Printf("Other database error: %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user"})
 		}
 		return
 	}
+	fmt.Printf("User created successfully with ID: %d\n", user.ID)
 
 	// รับ package_id (optional)
 	packageIDStr := c.PostForm("package_id")
@@ -435,7 +454,6 @@ func GetUserByID(c *gin.Context) {
 
 func ChangePassword(c *gin.Context) {
 
-	
 	var changePasswordRequest struct {
 		ID          uint   `json:"id" binding:"required"`
 		NewPassword string `json:"password" binding:"required"`

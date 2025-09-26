@@ -1858,7 +1858,7 @@ func CancelRequestServiceArea(c *gin.Context) {
 	}
 
 	// ===== UPDATE REQUEST SERVICE AREA STATUS =====
-	// อัปเดตสถานะเป็น "Cancellation In Progress" (StatusID 9)
+	// อัปเดตสถานะเป็น "Cancellation in Progress" (StatusID 9)
 	requestServiceArea.RequestStatusID = 9
 	if err := tx.Save(&requestServiceArea).Error; err != nil {
 		fmt.Printf("Error updating RequestServiceArea status: %v\n", err)
@@ -1875,7 +1875,7 @@ func CancelRequestServiceArea(c *gin.Context) {
 
 	fmt.Printf("=== Success: Cancel request created and status updated ===\n")
 	fmt.Printf("CancelRequestServiceArea ID: %d\n", cancelRequest.ID)
-	fmt.Printf("RequestServiceArea Status updated to: %d (Cancellation In Progress)\n", requestServiceArea.RequestStatusID)
+	fmt.Printf("RequestServiceArea Status updated to: %d (Cancellation in Progress)\n", requestServiceArea.RequestStatusID)
 
 	// 🔔 ส่งแจ้งเตือน Admin/Manager เมื่อมีการสร้าง Cancellation Request
 	cancellationData := gin.H{
@@ -1923,7 +1923,7 @@ func CancelRequestServiceArea(c *gin.Context) {
 			"cancel_request_id":             cancelRequest.ID,
 			"request_service_area_id":       requestServiceArea.ID,
 			"new_status_id":                 requestServiceArea.RequestStatusID,
-			"status_name":                   "Cancellation In Progress",
+			"status_name":                   "Cancellation in Progress",
 			"company_name":                  requestServiceArea.User.CompanyName, // ดึงจาก User
 			"corporate_registration_number": aboutCompany.CorporateRegistrationNumber,
 		},

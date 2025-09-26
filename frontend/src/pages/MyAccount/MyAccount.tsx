@@ -2471,7 +2471,7 @@ const MyAccount: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
-                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 9) statusName = "Cancellation in Progress";
                         else if (statusID === 10) statusName = "Cancellation Assigned";
                         else if (statusID === 11) statusName = "Successfully Cancelled";
 
@@ -2717,7 +2717,7 @@ const MyAccount: React.FC = () => {
                         else if (statusID === 4) statusName = "In Progress";
                         else if (statusID === 6) statusName = "Completed";
                         else if (statusID === 8) statusName = "Unsuccessful";
-                        else if (statusID === 9) statusName = "Cancellation In Progress";
+                        else if (statusID === 9) statusName = "Cancellation in Progress";
                         else if (statusID === 10) statusName = "Cancellation Assigned";
                         else if (statusID === 11) statusName = "Successfully Cancelled";
 

@@ -326,7 +326,7 @@ func SeedDatabase() {
 			Description: "The maintenance was unsuccessful and could not be completed.",
 		},
 		{
-			Name:        "Cancellation In Progress", // Cancellation In Progress
+			Name:        "Cancellation in Progress", // Cancellation in Progress
 			Description: "The service area request cancellation is currently being processed.",
 		},
 		{

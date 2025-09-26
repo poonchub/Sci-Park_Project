@@ -22,14 +22,14 @@ const ServiceAreaStepper: React.FC<ServiceAreaStepperProps> = ({ requestStatuses
 
     // กำหนด status flow สำหรับการยกเลิก (Cancellation)
     const cancellationStatusFlow = useMemo(() => {
-        return ["Created", "Pending", "Cancellation In Progress", "Cancellation Assigned", "Successfully Cancelled"];
+        return ["Created", "Pending", "Cancellation in Progress", "Cancellation Assigned", "Successfully Cancelled"];
     }, []);
 
     const unsuccessfulFlow = ["Unsuccessful"];
 
     const getStatusGroup = (statusName: string): "Normal" | "Unsuccessful" | "Cancellation" => {
         if (statusName === "Unsuccessful") return "Unsuccessful";
-        if (statusName === "Cancellation In Progress" || statusName === "Cancellation Assigned" || statusName === "Successfully Cancelled") return "Cancellation";
+        if (statusName === "Cancellation in Progress" || statusName === "Cancellation Assigned" || statusName === "Successfully Cancelled") return "Cancellation";
         return "Normal";
     };
 

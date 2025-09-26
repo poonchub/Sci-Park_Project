@@ -82,6 +82,19 @@ const RegisterPage: React.FC = () => {
             // ไม่ต้องกำหนด role_id หรือ package_id ที่นี่ เพราะ CreateUserExternalOnly จัดการแล้ว
         };
 
+        // Debug: แสดงข้อมูลที่จะส่งไป
+        console.log("=== Frontend Debug: Data being sent ===");
+        console.log("Form data:", allFormData);
+        console.log("Individual fields:");
+        console.log("CompanyName:", (allFormData as any).CompanyName);
+        console.log("BusinessDetail:", (allFormData as any).BusinessDetail);
+        console.log("FirstName:", (allFormData as any).FirstName);
+        console.log("LastName:", (allFormData as any).LastName);
+        console.log("Email:", (allFormData as any).Email);
+        console.log("Phone:", (allFormData as any).Phone);
+        console.log("GenderID:", (allFormData as any).GenderID);
+        console.log("IsEmployee:", allFormData.IsEmployee);
+
         try {
             // เรียกใช้ CreateUserExternalOnly แทน CreateUser
             const response = await CreateUserExternalOnly(allFormData); // <--- แก้ไขตรงนี้
@@ -95,7 +108,9 @@ const RegisterPage: React.FC = () => {
             }
         } catch (error) {
             console.error('Error creating user', error);
-            setAlerts((prev) => [...prev, { type: 'error', message: 'An error occurred. Please try again.' }]);
+            // ใช้ error message จาก response ถ้ามี
+            const errorMessage = (error as any)?.response?.data?.error || response?.message || 'An error occurred. Please try again.';
+            setAlerts((prev) => [...prev, { type: 'error', message: errorMessage }]);
         } finally {
             setLoading(false);
         }

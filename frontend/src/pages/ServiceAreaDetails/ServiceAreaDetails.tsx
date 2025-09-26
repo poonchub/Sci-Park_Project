@@ -90,7 +90,7 @@ function ServiceAreaDetails() {
     const isApproved = RequestStatus === "Approved";
     const isInProgress = RequestStatus === "In Progress";
     const isCompleted = RequestStatus === "Completed";
-    const isCancellationInProgress = RequestStatus === "Cancellation In Progress";
+    const isCancellationInProgress = RequestStatus === "Cancellation in Progress";
     const isCancellationAssigned = RequestStatus === "Cancellation Assigned";
     const canShowAdminButtons = isAdmin() && isPending;
     const canShowDocumentOperatorButtons = isDocumentOperator() && (isApproved || isInProgress);
@@ -100,7 +100,7 @@ function ServiceAreaDetails() {
     const isRegularUser = userRole === 'User';
     const canShowCancellationRequestButton = isRegularUser && isCompleted;
 
-    // ตรวจสอบว่าเป็น DocumentOperator และสถานะเป็น Cancellation In Progress หรือ Cancellation Assigned
+    // ตรวจสอบว่าเป็น DocumentOperator และสถานะเป็น Cancellation in Progress หรือ Cancellation Assigned
     const canShowCancellationSubmitButton = isDocumentOperator() && (isCancellationInProgress || isCancellationAssigned);
 
     // เงื่อนไขการแก้ไข Edit buttons
@@ -112,14 +112,14 @@ function ServiceAreaDetails() {
     // Document Operator, Admin, Manager สามารถแก้ไขได้เสมอ
     const canEditAlways = isDocumentOperatorRole || isAdminRole || isManagerRole;
     
-    // External User (User role) สามารถแก้ไขได้เฉพาะเมื่อสถานะเป็น Pending หรือ Cancellation In Progress
+    // External User (User role) สามารถแก้ไขได้เฉพาะเมื่อสถานะเป็น Pending หรือ Cancellation in Progress
     const canEditForExternalUser = isExternalUser && (isPending || isCancellationInProgress);
     
     // สรุปเงื่อนไขการแก้ไข
     // Documents & Contract Information และ Collaboration Plans: Admin, Manager, DocumentOperator เท่านั้น
     const canEditDocuments = canEditAlways;
     
-    // Cancellation Details: Admin, Manager, DocumentOperator + User (เมื่อสถานะ Pending หรือ Cancellation In Progress)
+    // Cancellation Details: Admin, Manager, DocumentOperator + User (เมื่อสถานะ Pending หรือ Cancellation in Progress)
     const canEditCancellation = canEditAlways || canEditForExternalUser;
 
     // Fetch service area details by ID
@@ -1273,7 +1273,7 @@ function ServiceAreaDetails() {
                                             </Box>
                                         )}
 
-                                        {/* Action button for DocumentOperator when status is Cancellation In Progress or Cancellation Assigned */}
+                                        {/* Action button for DocumentOperator when status is Cancellation in Progress or Cancellation Assigned */}
                                         {canShowCancellationSubmitButton && (
                                             <Box sx={{ gap: 1, display: "flex" }}>
                                                 {/* Submit Cancellation button */}
