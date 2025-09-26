@@ -412,10 +412,13 @@ const WindowsLayout: React.FC = (props: any) => {
             "my-account",
             "news",
             "organization-info",
+            "room",
 
             "requests",
             "maintenance/all-maintenance-request",
             "rental-space",
+            "manage-room-type",
+            "manage-room",
             // เพิ่มเงื่อนไขสำหรับ Service Area
             ...(localStorage.getItem('requestType') === 'External' || localStorage.getItem('requestType') === 'Both' ? ["service-area/service-request-list"] : []),
         ],

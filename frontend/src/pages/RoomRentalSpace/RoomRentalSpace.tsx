@@ -457,6 +457,7 @@ function RoomRentalSpace() {
                 if (!openInvoicePopup) {
                     setSelectedRoom(null);
                 }
+                setIsEditMode(false)
                 getInvoice()
             }, 500);
         } catch (error: any) {
@@ -486,7 +487,7 @@ function RoomRentalSpace() {
                 };
 
                 const resInvoice = await GetInvoiceByID(invoiceId);
-            root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
+                root.render(<InvoicePDF invoice={resInvoice} onComplete={handlePDFCompleted} />);
             } catch (error) {
                 console.error("🚨 Error creating invoice:", error);
                 reject(error);
@@ -579,8 +580,13 @@ function RoomRentalSpace() {
                 }
             }
 
+            await handleUploadPDF(selectedInvoice?.ID ?? 0);
+
             handleSetAlert("success", "The invoice has been updated successfully.");
+            
             setTimeout(() => {
+                setOpenCreatePopup(false)
+                setIsEditMode(false)
                 setIsButtonActive(false);
                 setSelectedInvoice(null);
                 handleClearForm();
@@ -706,7 +712,6 @@ function RoomRentalSpace() {
             )
 
             handleSetAlert("success", "Receipt deleted successfully");
-
 
             setTimeout(() => {
                 setAnchorEl(null);
@@ -2687,10 +2692,10 @@ function RoomRentalSpace() {
                                     name="BillingPeriod"
                                     value={invoiceFormData.BillingPeriod ? dayjs(invoiceFormData.BillingPeriod) : null}
                                     onChange={(newValue) => handleDateChange("BillingPeriod", newValue)}
-                                    // maxDate={invoiceFormData.DueDate ? dayjs(invoiceFormData.DueDate) : undefined}
                                     slots={{
                                         openPickerIcon: CalendarMonth,
                                     }}
+                                    views={["month"]}
                                     format="MMM YYYY"
                                     readOnly={isEditMode}
                                     sx={{ width: "100%" }}
