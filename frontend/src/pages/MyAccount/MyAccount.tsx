@@ -159,10 +159,10 @@ const MyAccount: React.FC = () => {
     const { getNewUnreadNotificationCounts } = useNotificationStore();
 
     const showStatuses = [
-        "Pending", 
-        "Approved", 
-        "In Progress", 
-        "Waiting for Review", 
+        "Pending",
+        "Approved",
+        "In Progress",
+        "Waiting for Review",
         "Completed",
         "Rework Requested",
         "Unsuccessful"
@@ -245,7 +245,7 @@ const MyAccount: React.FC = () => {
         try {
             const userId = localStorage.getItem("userId");
             if (!userId) return;
-            
+
             // เรียก API เพื่อดึงข้อมูล Service Area Requests ของ user
             const res = await GetRequestServiceAreasByUserID(Number(userId), serviceAreaPage + 1, serviceAreaLimit);
             if (res && res.data) {
@@ -359,7 +359,7 @@ const MyAccount: React.FC = () => {
             // Get all unread Service Area notifications for this user
             const unreadNotifications = serviceAreaRequests.filter(request => {
                 // Check if this request has unread notifications
-                return request.Notifications && request.Notifications.some((n: any) => 
+                return request.Notifications && request.Notifications.some((n: any) =>
                     n.UserID === userId && !n.IsRead && n.ServiceAreaRequestID
                 );
             });
@@ -599,10 +599,10 @@ const MyAccount: React.FC = () => {
     }, [page, limit]);
 
     useEffect(() => {
-            if (user && requestStatuses) {
-                getMaintenanceRequests(1, true);
-            }
-        }, [user, selectedStatuses, selectedDate]);
+        if (user && requestStatuses) {
+            getMaintenanceRequests(1, true);
+        }
+    }, [user, selectedStatuses, selectedDate]);
 
     useEffect(() => {
         getInvoice();
@@ -1481,6 +1481,33 @@ const MyAccount: React.FC = () => {
 
                         const invoicePDFPath = data.InvoicePDFPath
 
+                        const dueDateCheck = new Date(data.DueDate);
+                        const today = new Date();
+
+                        // หาว่าต่างกันกี่วัน
+                        const diffTime = dueDateCheck.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let dueText: string;
+                        let dueColor: string;
+                        let fontWeight: "normal" | "bold" = "normal";
+
+                        if (diffDays < 0) {
+                            // เลยกำหนดแล้ว
+                            dueText = "Overdue";
+                            dueColor = "error.main";
+                            fontWeight = "bold";
+                        } else if (diffDays <= 2) {
+                            // ใกล้ถึงกำหนด
+                            dueText = `Due Date: ${dueDate}`;
+                            dueColor = "warning.main";
+                            fontWeight = "bold";
+                        } else {
+                            // ปกติ
+                            dueText = `Due Date: ${dueDate}`;
+                            dueColor = "text.secondary";
+                        }
+
                         return (
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, mobileS: 7 }}>
@@ -1517,7 +1544,7 @@ const MyAccount: React.FC = () => {
                                             {`Billing Period: ${billingPeriod}`}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
+                                    <Box sx={{ color: dueColor, display: "flex", alignItems: "center", gap: 0.6, my: 0.8 }}>
                                         <Clock
                                             size={14}
                                             style={{
@@ -1531,9 +1558,10 @@ const MyAccount: React.FC = () => {
                                                 whiteSpace: "nowrap",
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
+                                                fontWeight,
                                             }}
                                         >
-                                            {`Due Date: ${dueDate}`}
+                                            {dueText}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1.4, mb: 1 }}>
@@ -1764,6 +1792,32 @@ const MyAccount: React.FC = () => {
                     type: "string",
                     flex: 1.8,
                     renderCell: (params) => {
+                        const dueDate = new Date(params.row.DueDate);
+                        const today = new Date();
+
+                        // หาว่าต่างกันกี่วัน
+                        const diffTime = dueDate.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let dueText: string;
+                        let dueColor: string;
+                        let fontWeight: "normal" | "bold" = "normal";
+
+                        if (diffDays < 0) {
+                            // เลยกำหนดแล้ว
+                            dueText = "Overdue";
+                            dueColor = "error.main";
+                            fontWeight = "bold";
+                        } else if (diffDays <= 2) {
+                            // ใกล้ถึงกำหนด
+                            dueText = `Due Date: ${dateFormat(params.row.DueDate)}`;
+                            dueColor = "warning.main";
+                            fontWeight = "bold";
+                        } else {
+                            // ปกติ
+                            dueText = `Due Date: ${dateFormat(params.row.DueDate)}`;
+                            dueColor = "text.secondary";
+                        }
                         return (
                             <Box
                                 sx={{
@@ -1789,10 +1843,11 @@ const MyAccount: React.FC = () => {
                                         whiteSpace: "nowrap",
                                         overflow: "hidden",
                                         textOverflow: "ellipsis",
-                                        color: "text.secondary"
+                                        color: dueColor,
+                                        fontWeight,
                                     }}
                                 >
-                                    {`Due Date: ${dateFormat(params.row.DueDate)}`}
+                                    {dueText}
                                 </Typography>
                             </Box>
                         );
@@ -2485,7 +2540,7 @@ const MyAccount: React.FC = () => {
                             <Grid container size={{ xs: 12 }} sx={{ px: 1 }} className="card-item-container" rowSpacing={1}>
                                 <Grid size={{ xs: 12, sm: 7 }}>
                                     <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", width: "100%" }}>
-                                        {data.Notifications && data.Notifications.some((n: any) => 
+                                        {data.Notifications && data.Notifications.some((n: any) =>
                                             n.UserID === user?.ID && !n.IsRead && n.ServiceAreaRequestID
                                         ) && <AnimatedBell />}
                                         <Typography
@@ -2615,7 +2670,7 @@ const MyAccount: React.FC = () => {
                                                                     await handleUpdateNotification(userId, true, undefined, undefined, undefined, requestID);
                                                                     getNewUnreadNotificationCounts();
                                                                 }
-                                                                
+
                                                                 // Navigate to service area details page
                                                                 const encodedId = Base64.encode(String(requestID));
                                                                 navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
@@ -2708,7 +2763,7 @@ const MyAccount: React.FC = () => {
                     flex: 1,
                     renderCell: (params) => {
                         const statusID = params.value;
-                        
+
                         // Map status ID to status name (same as ServiceRequestList)
                         let statusName = "Unknown";
                         if (statusID === 1) statusName = "Created";
@@ -2801,7 +2856,7 @@ const MyAccount: React.FC = () => {
                                                 await handleUpdateNotification(userId, true, undefined, undefined, undefined, requestID);
                                                 getNewUnreadNotificationCounts();
                                             }
-                                            
+
                                             // Navigate to service area details page
                                             const encodedId = Base64.encode(String(requestID));
                                             navigate(`/service-area/service-area-details?service_area_id=${encodeURIComponent(encodedId)}`);
@@ -3101,7 +3156,7 @@ const MyAccount: React.FC = () => {
                                     }
 
                                     <Tab label="Payment" {...a11yProps(3)} />
-                                    
+
                                     {
                                         !(user?.IsEmployee) && user?.Role?.Name === "User" &&
                                         <Tab label={
