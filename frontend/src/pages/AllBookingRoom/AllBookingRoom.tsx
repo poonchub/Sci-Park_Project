@@ -629,6 +629,7 @@ function AllBookingRoom() {
             }
 
             await getBookingRooms();
+            await refreshSelectedRow(); 
             handleSetAlert("success", `Action ${key} success`);
         } catch {
             handleSetAlert("error", `Action ${key} failed`);
@@ -678,6 +679,7 @@ function AllBookingRoom() {
 
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
+            await refreshSelectedRow(); 
         } catch {
             handleSetAlert("error", "Reject failed");
         } finally {
@@ -699,6 +701,7 @@ function AllBookingRoom() {
             }
             handleSetAlert("success", "Receipt uploaded successfully");
             await getBookingRooms();
+            await refreshSelectedRow(); 
         } catch {
             handleSetAlert("error", "Upload receipt failed");
         } finally {
@@ -712,6 +715,7 @@ function AllBookingRoom() {
             await DeletePaymentReceipt(paymentId);
             handleSetAlert("success", "Receipt deleted");
             await getBookingRooms();
+            await refreshSelectedRow(); 
         } catch {
             handleSetAlert("error", "Delete receipt failed");
         } finally {
@@ -730,6 +734,15 @@ function AllBookingRoom() {
         setSelectedDate(null);
         setSelectedStatus("all");
         setSelectedFloor("all");
+    };
+
+    // ★ ใหม่
+    const refreshSelectedRow = async () => {
+        try {
+            if (!selectedRow?.ID) return;
+            const fresh = await GetBookingRoomById(selectedRow.ID);
+            if (fresh) setSelectedRow(fresh);
+        } catch { }
     };
 
     /* =========================
@@ -1179,6 +1192,7 @@ function AllBookingRoom() {
                                                     await RefundedBookingRoom(pid);
                                                     handleSetAlert("success", "Refunded successfully");
                                                     await getBookingRooms();
+                                                    await refreshSelectedRow(); 
                                                 } catch (e) {
                                                     handleSetAlert("error", "Refund failed");
                                                 }
@@ -1404,6 +1418,7 @@ function AllBookingRoom() {
                 isAdmin={isAdminLike}
                 isLoading={loading}
                 booking={selectedRow}
+                refreshBooking={refreshSelectedRow}   // ★ เพิ่ม
                 serviceConditions={{
                     title: "Please read the payment terms",
                     points: [
@@ -1420,6 +1435,7 @@ function AllBookingRoom() {
                         handleSetAlert("success", `Payment approved${selectedRow ? ` for #${selectedRow.ID}` : ""}`);
                         setOpenPaymentDialog(false);
                         await getBookingRooms();
+                        await refreshSelectedRow(); 
                     } catch {
                         handleSetAlert("error", "Approve payment failed");
                     }
@@ -1431,6 +1447,7 @@ function AllBookingRoom() {
                         handleSetAlert("warning", `Payment rejected${selectedRow ? ` for #${selectedRow.ID}` : ""}`);
                         setOpenPaymentDialog(false);
                         await getBookingRooms();
+                        await refreshSelectedRow(); 
                     } catch {
                         handleSetAlert("error", "Reject payment failed");
                     }
@@ -1438,10 +1455,12 @@ function AllBookingRoom() {
                 onUploadReceipt={async (file, paymentId) => {
                     await UploadPaymentReceipt(paymentId!, file);
                     await getBookingRooms();
+                    await refreshSelectedRow(); 
                 }}
                 onRemoveReceipt={async (paymentId) => {
                     await DeletePaymentReceipt(paymentId!);
                     await getBookingRooms();
+                    await refreshSelectedRow(); 
                 }}
             />
 

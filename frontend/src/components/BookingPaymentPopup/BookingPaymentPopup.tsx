@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   Box, Button, Card, CardMedia, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid, Divider, Tooltip,
@@ -337,6 +337,18 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     balance: {},
   });
 
+  const resetLocalStates = () => {
+    setFiles({ full: [], deposit: [], balance: [] });
+    setSlipCheck({ full: {}, deposit: {}, balance: {} });
+    setReplaceMode(false);
+  };
+
+  // ✅ รีเซ็ต state ทุกครั้งที่ booking เปลี่ยน หรือ dialog เปิดใหม่
+  useEffect(() => {
+    if (open) resetLocalStates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, booking]);
+
   const receiptInputRef = useRef<HTMLInputElement>(null);
   const [receiptUploading, setReceiptUploading] = useState(false);
   const allowOwnerUpload = isOwner && isFromMy;
@@ -393,16 +405,16 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
         const expired = Boolean(quota?.data?.expired ?? quota?.expired ?? false);
         if (remaining <= 0 || expired) {
           useFallbackNow = true;
-          setAlerts((a) => [
-            ...a,
-            {
-              type: "warning",
-              message:
-                remaining <= 0
-                  ? "Slip-check quota/credits exhausted — using current time instead."
-                  : "Slip-check package expired — using current time instead.",
-            },
-          ]);
+        //   setAlerts((a) => [
+        //     ...a,
+        //     {
+        //       type: "warning",
+        //       message:
+        //         remaining <= 0
+        //           ? "Slip-check quota/credits exhausted — using current time instead."
+        //           : "Slip-check package expired — using current time instead.",
+        //     },
+        //   ]);
         }
       } catch {
         useFallbackNow = true;
@@ -500,7 +512,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     try {
       setReceiptUploading(true);
       await onUploadReceipt(f, invoiceUI.paymentId);
-      refreshBooking?.();
+      await refreshBooking?.();            // ⬅️ รีเฟรชทันที
       setAlerts((a) => [...a, { type: "success", message: invoiceUI.fileName ? "เปลี่ยนใบเสร็จสำเร็จ" : "อัปโหลดใบเสร็จสำเร็จ" }]);
     } catch (err: any) {
       setAlerts((a) => [...a, { type: "error", message: err?.message || "อัปโหลดใบเสร็จล้มเหลว" }]);
@@ -518,7 +530,7 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
     try {
       setReceiptUploading(true);
       await onRemoveReceipt(invoiceUI.paymentId);
-      refreshBooking?.();
+      await refreshBooking?.();            // ⬅️ รีเฟรชทันที
       setAlerts((a) => [...a, { type: "success", message: "ลบใบเสร็จแล้ว" }]);
     } catch (err: any) {
       setAlerts((a) => [...a, { type: "error", message: err?.message || "ลบใบเสร็จล้มเหลว" }]);
@@ -533,14 +545,10 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 
 
     // ✅ อนุญาตอัปโหลดเฉพาะ: unpaid, pending_payment
-    // (จะคง 'rejected' ไว้ชั่วคราวก็ได้ เพื่อ backward-compat ถ้ามีข้อมูลเก่า)
     const ownerUploadableStatuses = new Set(["unpaid", "pending_payment"]);
 
-    // ❌ ไม่อนุญาต Update/Replace ใน pending_verification อีกต่อไป
-    // เดิม: const canUpdate = isOwner && hasSlip && (statusN === "pending_verification" || statusN === "rejected");
-    // ใหม่: ปิดความสามารถนี้ไปเลย (หรือเอาไว้เฉพาะ 'rejected' ถ้ามีข้อมูลเก่าค้าง)
-    const canUpdate = false; // หรือ: isOwner && hasSlip && statusN === "rejected"
-
+    // ❌ ไม่อนุญาต Update/Replace ใน pending_verification
+    const canUpdate = false;
 
     const chk = (slipCheck[inst.key] || {}) as SlipCheckState;
     const verified = !!chk.ok && !!chk.transTs;
@@ -736,7 +744,17 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
               ownerUploadableStatuses.has(norm(inst.status)) && !hasSlip ? (
                 <Button
                   variant="contained"
-                  onClick={() => onUploadFor?.(inst.key, files[inst.key]?.[0], inst.paymentId)}
+                  onClick={async () => {
+                    try {
+                      const file = files[inst.key]?.[0];
+                      await onUploadFor?.(inst.key, file as File, inst.paymentId);
+                      setAlerts((a) => [...a, { type: "success", message: "ส่งสลิปสำเร็จ" }]);
+                      resetLocalStates();            // ⬅️ ล้างไฟล์/สถานะชั่วคราว
+                      await refreshBooking?.();      // ⬅️ รีเฟรชข้อมูลสด
+                    } catch (err: any) {
+                      setAlerts((a) => [...a, { type: "error", message: err?.message || "ส่งสลิปล้มเหลว" }]);
+                    }
+                  }}
                   disabled={isLoading || !files[inst.key]?.[0] || !slipCheck[inst.key]?.ok}
                   fullWidth
                 >
@@ -745,13 +763,20 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
               ) : null
             )}
 
-
             {canShowAdminActions(isAdmin, inst.status, !!inst.slipPath) && (
               <>
                 <Button
                   variant="contained"
                   color="success"
-                  onClick={() => onApproveFor?.(inst.key, inst.paymentId)}
+                  onClick={async () => {
+                    try {
+                      await onApproveFor?.(inst.key, inst.paymentId);
+                      await refreshBooking?.();    // ⬅️ รีเฟรชทันที
+                      setAlerts((a) => [...a, { type: "success", message: "อนุมัติการชำระเงินแล้ว" }]);
+                    } catch (err: any) {
+                      setAlerts((a) => [...a, { type: "error", message: err?.message || "อนุมัติไม่สำเร็จ" }]);
+                    }
+                  }}
                   disabled={isLoading}
                   fullWidth
                 >
@@ -761,13 +786,16 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
                   variant="outlined"
                   color="error"
                   onClick={async () => {
-                    await onRejectFor?.(inst.key, inst.paymentId);
-                    // เคลียร์สถานะ UI ให้กลับไปโหมดอัปโหลดใหม่
-                    setFiles((prev) => ({ ...prev, [inst.key]: [] }));
-                    // ถ้ามี replaceMode ใน state ให้ปิดด้วย
-                    setReplaceMode?.(false);
-                    // ขอข้อมูลล่าสุดจากเซิร์ฟเวอร์ (ที่ตอนนี้เป็น pending_payment + ไม่มีสลิป)
-                    await refreshBooking?.();
+                    try {
+                      await onRejectFor?.(inst.key, inst.paymentId);
+                      // เคลียร์สถานะ UI ให้กลับไปโหมดอัปโหลดใหม่
+                      resetLocalStates();
+                      // ขอข้อมูลล่าสุดจากเซิร์ฟเวอร์ (ที่ตอนนี้เป็น pending_payment + ไม่มีสลิป)
+                      await refreshBooking?.();
+                      setAlerts((a) => [...a, { type: "success", message: "ปฏิเสธการชำระเงินแล้ว" }]);
+                    } catch (err: any) {
+                      setAlerts((a) => [...a, { type: "error", message: err?.message || "ปฏิเสธไม่สำเร็จ" }]);
+                    }
                   }}
                   disabled={isLoading}
                   fullWidth
@@ -1167,4 +1195,3 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
 };
 
 export default BookingPaymentPopup;
-
