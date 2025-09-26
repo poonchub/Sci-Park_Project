@@ -1,6 +1,6 @@
 // utils/getBookingStep.ts
 export const BOOKING_STEPS = [
-  "pending approval",
+  "Pending approval",
   "Pending Payment",
   "Partially Paid",
   "Awaiting Receipt",
