@@ -942,10 +942,10 @@ function AllMaintenanceRequest() {
 
     useEffect(() => {
         const socket = io(socketUrl);
+        if (!user) return;
 
         socket.on("maintenance_created", (data) => {
             console.log("📦 New maintenance request:", data);
-            console.log("User: ", user)
             if (
                 (user?.RequestType?.TypeName === "Internal" && data.User.IsEmployee) ||
                 (user?.RequestType?.TypeName === "External" && !(data.User.IsEmployee)) ||
@@ -988,7 +988,7 @@ function AllMaintenanceRequest() {
             socket.off("maintenance_updated");
             socket.off("maintenance_deleted");
         };
-    }, []);
+    }, [user]);
 
     return (
         <Box className="all-maintenance-request-page">
