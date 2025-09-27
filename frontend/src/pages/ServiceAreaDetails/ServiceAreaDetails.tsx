@@ -20,7 +20,7 @@ import EditCancellationDetailsPopup from "../../components/EditCancellationDetai
 import { ServiceAreaDetailsInterface } from "../../interfaces/IServiceAreaDetailsInterface";
 
 import dateFormat from "../../utils/dateFormat";
-import { isAdmin, isDocumentOperator } from "../../routes";
+import { isAdmin, isDocumentOperator, isManager } from "../../routes";
 
 import { useSearchParams } from "react-router-dom";
 import { Base64 } from "js-base64";
@@ -92,7 +92,7 @@ function ServiceAreaDetails() {
     const isCompleted = RequestStatus === "Completed";
     const isCancellationInProgress = RequestStatus === "Cancellation in Progress";
     const isCancellationAssigned = RequestStatus === "Cancellation Assigned";
-    const canShowAdminButtons = isAdmin() && isPending;
+    const canShowAdminButtons = (isAdmin() || isManager()) && isPending;
     const canShowDocumentOperatorButtons = isDocumentOperator() && (isApproved || isInProgress);
 
     // ตรวจสอบว่าเป็น User ปกติ (ไม่ใช่ Admin หรือ Operator) และสถานะเป็น Completed
@@ -116,8 +116,8 @@ function ServiceAreaDetails() {
     const canEditForExternalUser = isExternalUser && (isPending || isCancellationInProgress);
     
     // สรุปเงื่อนไขการแก้ไข
-    // Documents & Contract Information และ Collaboration Plans: Admin, Manager, DocumentOperator เท่านั้น
-    const canEditDocuments = canEditAlways;
+    // Documents & Contract Information และ Collaboration Plans: Admin, Manager, DocumentOperator + External User (เมื่อสถานะ Pending)
+    const canEditDocuments = canEditAlways || (isExternalUser && isPending);
     
     // Cancellation Details: Admin, Manager, DocumentOperator + User (เมื่อสถานะ Pending หรือ Cancellation in Progress)
     const canEditCancellation = canEditAlways || canEditForExternalUser;
@@ -181,8 +181,9 @@ function ServiceAreaDetails() {
             setIsSubmitting(true);
             const userID = Number(localStorage.getItem('userId')) || 0;
 
-            // ใช้ API ที่รองรับทั้ง Operator และ Admin
-            await RejectServiceAreaRequest(serviceAreaDetails.RequestNo, userID, note || "", "Admin");
+            // ใช้ API ที่รองรับทั้ง Operator, Admin และ Manager
+            const role = isAdmin() ? "Admin" : isManager() ? "Manager" : "Admin";
+            await RejectServiceAreaRequest(serviceAreaDetails.RequestNo, userID, note || "", role);
 
             // Refresh data
             await getServiceAreaDetails();
@@ -302,8 +303,36 @@ function ServiceAreaDetails() {
             setIsUpdatingDocumentContract(true);
 
             // ดึงข้อมูล Document Contract สำหรับการแก้ไข
-            const response = await GetServiceAreaDocumentForEdit(serviceAreaDetails?.RequestNo || 0);
-            setDocumentContractData(response.data);
+            try {
+                const response = await GetServiceAreaDocumentForEdit(serviceAreaDetails?.RequestNo || 0);
+                setDocumentContractData(response.data);
+            } catch (error: any) {
+                // หาก API ส่งกลับ 404 หมายความว่ายังไม่มีข้อมูล Service Area Documents
+                // ให้สร้างข้อมูลเริ่มต้นจากข้อมูลที่มีอยู่
+                if (error.response?.status === 404) {
+                    const defaultData = {
+                        ContractNumber: serviceAreaDetails?.ContractNumber || '',
+                        FinalContractNumber: serviceAreaDetails?.FinalContractNumber || '',
+                        ContractStartAt: serviceAreaDetails?.ContractStartAt || '',
+                        ContractEndAt: serviceAreaDetails?.ContractEndAt || '',
+                        RoomID: 0, // Will be set in the popup
+                        ServiceUserTypeID: serviceAreaDetails?.ServiceUserTypeID || 0,
+                        ServiceContractDocument: null,
+                        AreaHandoverDocument: null,
+                        QuotationDocument: null,
+                        RequestDocument: null,
+                        // ส่งข้อมูล path ของเอกสารที่มีอยู่
+                        ServiceContractDocumentPath: serviceAreaDetails?.ServiceContractDocument || '',
+                        AreaHandoverDocumentPath: serviceAreaDetails?.AreaHandoverDocument || '',
+                        QuotationDocumentPath: serviceAreaDetails?.QuotationDocument || '',
+                        RequestDocumentPath: serviceAreaDetails?.ServiceRequestDocument || ''
+                    };
+                    setDocumentContractData(defaultData);
+                } else {
+                    throw error; // ถ้าเป็น error อื่นๆ ให้ throw ต่อไป
+                }
+            }
+            
             setOpenEditDocumentContractPopup(true);
         } catch (error) {
             console.error("Error fetching document contract data:", error);
@@ -1195,7 +1224,7 @@ function ServiceAreaDetails() {
                                         </Grid>
                                     )}
 
-                                    {/* Action buttons for Admin when status is Pending */}
+                                    {/* Action buttons for Admin/Manager when status is Pending */}
                                     <Grid container size={{ xs: 12, md: 12 }} spacing={2} sx={{ justifyContent: "flex-end", mt: 1 }}>
                                         {canShowAdminButtons && (
                                             <Box sx={{ gap: 1, display: "flex" }}>

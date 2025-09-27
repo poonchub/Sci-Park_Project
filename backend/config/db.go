@@ -512,7 +512,7 @@ func SeedDatabase() {
 			JobPositionID:  3, // Project Manager
 			GenderID:       1,
 			IsEmployee:     true,
-			RequestTypeID:  1,
+			RequestTypeID:  2, // External - เพื่อให้ได้รับ notification สำหรับ Service Area Request
 		},
 		{
 			CompanyName:    "Regional Science Park Northeast 2",

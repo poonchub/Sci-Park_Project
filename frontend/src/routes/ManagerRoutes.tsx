@@ -18,6 +18,7 @@ import RoomBookingForm from "../pages/RoomBookingForm/RoomBookingForm";
 import EditProfile from "../pages/EditProfile/EditProfile";
 import RoomRentalSpace from "../pages/RoomRentalSpace/RoomRentalSpace";
 import ServiceRequestList from "../pages/ServiceRequestList/ServiceRequestList";
+import ServiceAreaDetails from "../pages/ServiceAreaDetails/ServiceAreaDetails";
 import MyBookingRoom from "../pages/MyBookingRoom/MyBookingRoom";
 import BookingReview from "../pages/BookingReview/BookingReview";
 const ManagerRoutes = (): RouteObject => {
@@ -105,6 +106,10 @@ const ManagerRoutes = (): RouteObject => {
             {
                 path: "/requests/service-area/service-request-list",
                 element: <ServiceRequestList />
+            },
+            {
+                path: "/service-area/details",
+                element: <ServiceAreaDetails />
             },
             {
                 path: "",

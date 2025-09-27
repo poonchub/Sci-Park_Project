@@ -414,7 +414,6 @@ function ManageUsers() {
                                 },
                             }}
                             rowCount={total}  // Set the total number of rows
-                            checkboxSelection
                             disableRowSelectionOnClick
                             onPaginationModelChange={(params) => {
                                 setPage(params.page + 1);  // Set the page based on pagination changes

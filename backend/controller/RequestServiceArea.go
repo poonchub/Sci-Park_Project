@@ -882,7 +882,7 @@ func RejectServiceAreaRequest(c *gin.Context) {
 	}
 
 	// บันทึกข้อมูลตาม Role
-	if requestBody.Role == "Admin" {
+	if requestBody.Role == "Admin" || requestBody.Role == "Manager" {
 		// Admin reject - บันทึกใน ServiceAreaApproval
 		var serviceAreaApproval entity.ServiceAreaApproval
 		if err := config.DB().Where("request_service_area_id = ?", requestID).First(&serviceAreaApproval).Error; err != nil {
@@ -907,7 +907,7 @@ func RejectServiceAreaRequest(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Service area request rejected by admin successfully",
+			"message": "Service area request rejected successfully",
 			"data": gin.H{
 				"id":                requestServiceArea.ID,
 				"request_status_id": requestServiceArea.RequestStatusID,

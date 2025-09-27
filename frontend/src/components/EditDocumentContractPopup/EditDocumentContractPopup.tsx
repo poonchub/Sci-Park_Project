@@ -172,52 +172,60 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
         setAlerts([]);
         let isValid = true;
 
-        if (!formData.ContractNumber.trim()) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please enter contract number' 
-            }]);
-            isValid = false;
+        // ตรวจสอบ Contract Information เฉพาะเมื่อมีการแสดงส่วนนี้
+        const hasContractInfo = formData.ContractNumber || formData.FinalContractNumber || formData.ContractStartAt || formData.ContractEndAt;
+        if (hasContractInfo) {
+            if (!formData.ContractNumber.trim()) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please enter contract number' 
+                }]);
+                isValid = false;
+            }
+
+            if (!formData.FinalContractNumber.trim()) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please enter final contract number' 
+                }]);
+                isValid = false;
+            }
+
+            if (!formData.ContractStartAt) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please select contract start date' 
+                }]);
+                isValid = false;
+            }
+
+            if (!formData.ContractEndAt) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please select contract end date' 
+                }]);
+                isValid = false;
+            }
         }
 
-        if (!formData.FinalContractNumber.trim()) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please enter final contract number' 
-            }]);
-            isValid = false;
-        }
+        // ตรวจสอบ Room & Service Information เฉพาะเมื่อมีการแสดงส่วนนี้
+        const hasRoomServiceInfo = formData.RoomID > 0 || formData.ServiceUserTypeID > 0;
+        if (hasRoomServiceInfo) {
+            if (formData.RoomID === 0) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please select room' 
+                }]);
+                isValid = false;
+            }
 
-        if (!formData.ContractStartAt) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please select contract start date' 
-            }]);
-            isValid = false;
-        }
-
-        if (!formData.ContractEndAt) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please select contract end date' 
-            }]);
-            isValid = false;
-        }
-
-        if (formData.RoomID === 0) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please select room' 
-            }]);
-            isValid = false;
-        }
-
-        if (formData.ServiceUserTypeID === 0) {
-            setAlerts(prev => [...prev, { 
-                type: 'error', 
-                message: 'Please select service user type' 
-            }]);
-            isValid = false;
+            if (formData.ServiceUserTypeID === 0) {
+                setAlerts(prev => [...prev, { 
+                    type: 'error', 
+                    message: 'Please select service user type' 
+                }]);
+                isValid = false;
+            }
         }
 
         return isValid;
@@ -418,177 +426,185 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                     </Typography>
 
                     <Grid container spacing={2}>
-                        {/* Contract Information */}
-                        <Grid size={{ xs: 12 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                                Contract Information
-                            </Typography>
-                        </Grid>
+                        {/* Contract Information - แสดงเฉพาะเมื่อมีข้อมูล Contract */}
+                        {(formData.ContractNumber || formData.FinalContractNumber || formData.ContractStartAt || formData.ContractEndAt) && (
+                            <>
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                                        Contract Information
+                                    </Typography>
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Contract Number *
-                            </Typography>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                value={formData.ContractNumber}
-                                onChange={(e) => handleInputChange('ContractNumber', e.target.value)}
-                                placeholder="Enter contract number"
-                                error={hasSubmitted && !formData.ContractNumber.trim()}
-                                helperText={hasSubmitted && !formData.ContractNumber.trim() ? "Please enter contract number" : ""}
-                            />
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Contract Number *
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        value={formData.ContractNumber}
+                                        onChange={(e) => handleInputChange('ContractNumber', e.target.value)}
+                                        placeholder="Enter contract number"
+                                        error={hasSubmitted && !formData.ContractNumber.trim()}
+                                        helperText={hasSubmitted && !formData.ContractNumber.trim() ? "Please enter contract number" : ""}
+                                    />
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Final Contract Number *
-                            </Typography>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                value={formData.FinalContractNumber}
-                                onChange={(e) => handleInputChange('FinalContractNumber', e.target.value)}
-                                placeholder="Enter final contract number"
-                                error={hasSubmitted && !formData.FinalContractNumber.trim()}
-                                helperText={hasSubmitted && !formData.FinalContractNumber.trim() ? "Please enter final contract number" : ""}
-                            />
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Final Contract Number *
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        value={formData.FinalContractNumber}
+                                        onChange={(e) => handleInputChange('FinalContractNumber', e.target.value)}
+                                        placeholder="Enter final contract number"
+                                        error={hasSubmitted && !formData.FinalContractNumber.trim()}
+                                        helperText={hasSubmitted && !formData.FinalContractNumber.trim() ? "Please enter final contract number" : ""}
+                                    />
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Contract Start Date *
-                            </Typography>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    value={formData.ContractStartAt ? dayjs(formData.ContractStartAt) : null}
-                                    onChange={(newValue: Dayjs | null) => handleInputChange('ContractStartAt', newValue?.format('YYYY-MM-DD') || '')}
-                                    format="DD/MM/YYYY"
-                                    sx={{
-                                        width: "100%",
-                                        '& .MuiInputBase-root': {
-                                            height: '40px',
-                                        },
-                                        '& .MuiInputBase-input': {
-                                            padding: '8px 14px',
-                                        }
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Contract Start Date *
+                                    </Typography>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            value={formData.ContractStartAt ? dayjs(formData.ContractStartAt) : null}
+                                            onChange={(newValue: Dayjs | null) => handleInputChange('ContractStartAt', newValue?.format('YYYY-MM-DD') || '')}
+                                            format="DD/MM/YYYY"
+                                            sx={{
+                                                width: "100%",
+                                                '& .MuiInputBase-root': {
+                                                    height: '40px',
+                                                },
+                                                '& .MuiInputBase-input': {
+                                                    padding: '8px 14px',
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Contract End Date *
-                            </Typography>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    value={formData.ContractEndAt ? dayjs(formData.ContractEndAt) : null}
-                                    onChange={(newValue: Dayjs | null) => handleInputChange('ContractEndAt', newValue?.format('YYYY-MM-DD') || '')}
-                                    format="DD/MM/YYYY"
-                                    sx={{
-                                        width: "100%",
-                                        '& .MuiInputBase-root': {
-                                            height: '40px',
-                                        },
-                                        '& .MuiInputBase-input': {
-                                            padding: '8px 14px',
-                                        }
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Contract End Date *
+                                    </Typography>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            value={formData.ContractEndAt ? dayjs(formData.ContractEndAt) : null}
+                                            onChange={(newValue: Dayjs | null) => handleInputChange('ContractEndAt', newValue?.format('YYYY-MM-DD') || '')}
+                                            format="DD/MM/YYYY"
+                                            sx={{
+                                                width: "100%",
+                                                '& .MuiInputBase-root': {
+                                                    height: '40px',
+                                                },
+                                                '& .MuiInputBase-input': {
+                                                    padding: '8px 14px',
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
+                                </Grid>
 
-                        <Grid size={{ xs: 12 }}>
-                            <Divider sx={{ my: 1.5 }} />
-                        </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <Divider sx={{ my: 1.5 }} />
+                                </Grid>
+                            </>
+                        )}
 
-                        {/* Room and Service Information */}
-                        <Grid size={{ xs: 12 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                                Room & Service Information
-                            </Typography>
-                        </Grid>
+                        {/* Room and Service Information - แสดงเฉพาะเมื่อมีข้อมูล Room หรือ ServiceUserType */}
+                        {(formData.RoomID > 0 || formData.ServiceUserTypeID > 0) && (
+                            <>
+                                <Grid size={{ xs: 12 }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                                        Room & Service Information
+                                    </Typography>
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Room *
-                            </Typography>
-                            <FormControl
-                                fullWidth
-                                error={hasSubmitted && formData.RoomID === 0}
-                            >
-                                <Select
-                                    name="roomID"
-                                    displayEmpty
-                                    defaultValue={0}
-                                    value={formData.RoomID}
-                                    onChange={(e) => handleInputChange('RoomID', Number(e.target.value))}
-                                    disabled={isLoading}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 300, // ความสูงสูงสุดของ dropdown
-                                            },
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value={0}>
-                                        <em>{isLoading ? 'Loading rooms...' : '-- Select Room --'}</em>
-                                    </MenuItem>
-                                    {rooms.map((room) => (
-                                        <MenuItem key={room.roomID} value={room.roomID}>
-                                            {room.roomNumber}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {hasSubmitted && formData.RoomID === 0 && (
-                                    <FormHelperText>Please select a room</FormHelperText>
-                                )}
-                            </FormControl>
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Room *
+                                    </Typography>
+                                    <FormControl
+                                        fullWidth
+                                        error={hasSubmitted && formData.RoomID === 0}
+                                    >
+                                        <Select
+                                            name="roomID"
+                                            displayEmpty
+                                            defaultValue={0}
+                                            value={formData.RoomID}
+                                            onChange={(e) => handleInputChange('RoomID', Number(e.target.value))}
+                                            disabled={isLoading}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    style: {
+                                                        maxHeight: 300, // ความสูงสูงสุดของ dropdown
+                                                    },
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem value={0}>
+                                                <em>{isLoading ? 'Loading rooms...' : '-- Select Room --'}</em>
+                                            </MenuItem>
+                                            {rooms.map((room) => (
+                                                <MenuItem key={room.roomID} value={room.roomID}>
+                                                    {room.roomNumber}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {hasSubmitted && formData.RoomID === 0 && (
+                                            <FormHelperText>Please select a room</FormHelperText>
+                                        )}
+                                    </FormControl>
+                                </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Service User Type *
-                            </Typography>
-                            <FormControl
-                                fullWidth
-                                error={hasSubmitted && formData.ServiceUserTypeID === 0}
-                            >
-                                <Select
-                                    name="serviceUserTypeID"
-                                    displayEmpty
-                                    defaultValue={0}
-                                    value={formData.ServiceUserTypeID}
-                                    onChange={(e) => handleInputChange('ServiceUserTypeID', Number(e.target.value))}
-                                    disabled={isLoading}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            style: {
-                                                maxHeight: 300, // ความสูงสูงสุดของ dropdown
-                                            },
-                                        },
-                                    }}
-                                >
-                                    <MenuItem value={0}>
-                                        <em>{isLoading ? 'Loading types...' : '-- Select Type --'}</em>
-                                    </MenuItem>
-                                    {serviceUserTypes.map((type) => (
-                                        <MenuItem key={type.id} value={type.id}>
-                                            {type.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                                {hasSubmitted && formData.ServiceUserTypeID === 0 && (
-                                    <FormHelperText>Please select service user type</FormHelperText>
-                                )}
-                            </FormControl>
-                        </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Service User Type *
+                                    </Typography>
+                                    <FormControl
+                                        fullWidth
+                                        error={hasSubmitted && formData.ServiceUserTypeID === 0}
+                                    >
+                                        <Select
+                                            name="serviceUserTypeID"
+                                            displayEmpty
+                                            defaultValue={0}
+                                            value={formData.ServiceUserTypeID}
+                                            onChange={(e) => handleInputChange('ServiceUserTypeID', Number(e.target.value))}
+                                            disabled={isLoading}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    style: {
+                                                        maxHeight: 300, // ความสูงสูงสุดของ dropdown
+                                                    },
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem value={0}>
+                                                <em>{isLoading ? 'Loading types...' : '-- Select Type --'}</em>
+                                            </MenuItem>
+                                            {serviceUserTypes.map((type) => (
+                                                <MenuItem key={type.id} value={type.id}>
+                                                    {type.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {hasSubmitted && formData.ServiceUserTypeID === 0 && (
+                                            <FormHelperText>Please select service user type</FormHelperText>
+                                        )}
+                                    </FormControl>
+                                </Grid>
 
-                        <Grid size={{ xs: 12 }}>
-                            <Divider sx={{ my: 1.5 }} />
-                        </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <Divider sx={{ my: 1.5 }} />
+                                </Grid>
+                            </>
+                        )}
 
                         {/* Document Uploads */}
                         <Grid size={{ xs: 12 }}>
@@ -597,21 +613,50 @@ const EditDocumentContractPopup: React.FC<EditDocumentContractPopupProps> = ({
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            {renderFileUpload('ServiceContractDocument', 'Service Contract Document')}
-                        </Grid>
+                        {/* แสดงเฉพาะเอกสารที่มีอยู่แล้ว */}
+                        {formData.ServiceContractDocumentPath && (
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                {renderFileUpload('ServiceContractDocument', 'Service Contract Document')}
+                            </Grid>
+                        )}
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            {renderFileUpload('AreaHandoverDocument', 'Area Handover Document')}
-                        </Grid>
+                        {formData.AreaHandoverDocumentPath && (
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                {renderFileUpload('AreaHandoverDocument', 'Area Handover Document')}
+                            </Grid>
+                        )}
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            {renderFileUpload('QuotationDocument', 'Quotation Document')}
-                        </Grid>
+                        {formData.QuotationDocumentPath && (
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                {renderFileUpload('QuotationDocument', 'Quotation Document')}
+                            </Grid>
+                        )}
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            {renderFileUpload('RequestDocument', 'Request Document')}
-                        </Grid>
+                        {formData.RequestDocumentPath && (
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                {renderFileUpload('RequestDocument', 'Request Document')}
+                            </Grid>
+                        )}
+
+                        {/* แสดงข้อความเมื่อไม่มีเอกสารใดๆ */}
+                        {!formData.ServiceContractDocumentPath && 
+                         !formData.AreaHandoverDocumentPath && 
+                         !formData.QuotationDocumentPath && 
+                         !formData.RequestDocumentPath && (
+                            <Grid size={{ xs: 12 }}>
+                                <Box sx={{ 
+                                    textAlign: 'center', 
+                                    py: 3, 
+                                    color: 'text.secondary',
+                                    border: '1px dashed #e0e0e0',
+                                    borderRadius: 2
+                                }}>
+                                    <Typography variant="body2">
+                                        No documents available for editing
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        )}
                     </Grid>
                 </DialogContent>
 
