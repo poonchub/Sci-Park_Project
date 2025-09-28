@@ -1142,6 +1142,21 @@ async function GetJobPositionByID(id: number) {
     return res;
 }
 
+async function CreateJobPosition(data: { Name: string; NameTH: string }) {
+    try {
+        const response = await axiosInstance.post(`/create-job-position`, data, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error creating job position:", error);
+        throw error;
+    }
+}
+
 async function ListRequestTypes() {
     const requestOptions = {
         method: "GET",
@@ -3874,6 +3889,7 @@ export {
     // JobPositions
     ListJobPositions,
     GetJobPositionByID,
+    CreateJobPosition,
 
     // TitlePrefixes
     ListTitlePrefixes,

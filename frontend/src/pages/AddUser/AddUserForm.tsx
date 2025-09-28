@@ -3,6 +3,7 @@ import { Button, MenuItem, Container, FormControl, FormHelperText, Avatar, Typog
 import { Controller, useForm } from 'react-hook-form';
 import './AddUserForm.css';  // Import the updated CSS
 import { ListRoles, ListGenders, ListPackages, CreateUser, ListRequestTypes, ListTitlePrefixes, ListJobPositions } from '../../services/http';  // Assuming these are your API functions
+import CreateJobPositionPopup from '../../components/CreateJobPositionPopup/CreateJobPositionPopup';
 import { GendersInterface } from '../../interfaces/IGenders';
 import { RolesInterface } from '../../interfaces/IRoles';
 import { PackagesInterface } from '../../interfaces/IPackages';
@@ -41,6 +42,7 @@ const AddUserForm: React.FC = () => {
   // Fetch data when component mounts
   const [showPassword, setShowPassword] = useState(false); // สถานะของการเปิด/ปิดการแสดงรหัสผ่าน
   const [userType, setUserType] = useState<string>('internal');
+  const [openCreateJobPositionPopup, setOpenCreateJobPositionPopup] = useState(false);
   const roleID = watch('RoleID');  // Watching RoleID value
 
   const handleClickShowPassword = () => {
@@ -70,6 +72,20 @@ const AddUserForm: React.FC = () => {
         setFile(selectedFiles[0]);  // เก็บไฟล์เดียว
       }
     }
+  };
+
+  const handleCreateJobPositionSuccess = (newJobPosition: any) => {
+    // Add the new job position to the existing list
+    setJobPositions(prev => [...prev, newJobPosition]);
+    setAlerts(prev => [...prev, { type: 'success', message: 'Job position created successfully!' }]);
+  };
+
+  const handleOpenCreateJobPositionPopup = () => {
+    setOpenCreateJobPositionPopup(true);
+  };
+
+  const handleCloseCreateJobPositionPopup = () => {
+    setOpenCreateJobPositionPopup(false);
   };
 
   useEffect(() => {
@@ -603,11 +619,40 @@ const AddUserForm: React.FC = () => {
               )}
 
 
-              
+              {/* Create New Job Position button */}
+              {userType === 'internal' && (
+                <Grid size={{ xs: 12, sm: 1 }}>
+                  <Typography variant="body1" className="title-field" sx={{ opacity: 0 }}>Action</Typography>
+                  <Button
+                    variant="outlined"
+                    onClick={handleOpenCreateJobPositionPopup}
+                    sx={{
+                      borderRadius: 2,
+                      px: 1,
+                      py: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minWidth: "auto",
+                      width: "100%",
+                      height: "45px",
+                      border: '1px solid rgb(109, 110, 112, 0.4)',
+                      backgroundColor: '#FFFFFF',
+                      color: '#6D6E70',
+                      '&:hover': {
+                        backgroundColor: '#F26522',
+                      },
+                    }}
+                    title="Create New Job Position"
+                  >
+                    <UserRoundPlus size={20} />
+                  </Button>
+                </Grid>
+              )}
 
 
               {/* Package Dropdown */}
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 2 }}>
                 <Typography variant="body1" className="title-field">Privileges</Typography>
                 <Controller
                   name="UserPackageID"
@@ -689,6 +734,13 @@ const AddUserForm: React.FC = () => {
           </form>
         </div>
       </Container>
+
+      {/* Create Job Position Popup */}
+      <CreateJobPositionPopup
+        open={openCreateJobPositionPopup}
+        onClose={handleCloseCreateJobPositionPopup}
+        onSuccess={handleCreateJobPositionSuccess}
+      />
     </>
   );
 };
