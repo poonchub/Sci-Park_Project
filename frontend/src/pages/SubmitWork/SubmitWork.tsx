@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Card, Container, Grid, Skeleton, Typography, useMediaQuery, InputAdornment, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { Box, Card, Container, Grid, Skeleton, Typography, InputAdornment, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { DatePicker } from "../../components/DatePicker/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -7,7 +7,7 @@ import { TextField } from "../../components/TextField/TextField";
 import dayjs, { Dayjs } from "dayjs";
 import { GridColDef } from "@mui/x-data-grid";
 import CustomDataGrid from "../../components/CustomDataGrid/CustomDataGrid";
-import theme from "../../styles/Theme";
+
 import { GetServiceAreaTasksByUserID, ListBusinessGroups } from "../../services/http";
 import { BusinessGroupInterface } from "../../interfaces/IBusinessGroup";
 import { Search } from "lucide-react";
@@ -38,7 +38,7 @@ function SubmitWork() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    // const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     // Mock user ID - ในระบบจริงควรได้จาก authentication
     const currentUserId = 6; // ตัวอย่าง User ID

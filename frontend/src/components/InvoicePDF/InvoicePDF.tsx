@@ -440,7 +440,7 @@ export default function InvoicePDF({ invoice, onComplete }: InvoicePDFProps) {
                             {invoice.Creater?.FirstName} {invoice.Creater?.LastName})
                         </span>
                         <br />
-                        <span>{invoice.Creater?.JobPosition?.Name}</span>
+                        <span>{invoice.Creater?.JobPosition?.NameTH}</span>
                     </div>
                 </div>
             </div>

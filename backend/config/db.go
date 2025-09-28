@@ -235,22 +235,22 @@ func SeedDatabase() {
 
 	// 🔹 ข้อมูล JobPosition
 	jobPositions := []entity.JobPosition{
-		{Name: "Head of Central Administration and Infrastructure Development Unit"},
-		{Name: "Central Administration and Infrastructure Development Unit"},
-		{Name: "Head of Innovation and Key Account Services Unit (IKD)"},
-		{Name: "Innovation and Key Account Services Unit (IKD)"},
-		{Name: "Head of Network Coordination Unit"},
-		{Name: "Network Coordination Unit"},
-		{Name: "Head of Business Development and Innovation Cluster Unit (BCD)"},
-		{Name: "Business Development and Innovation Cluster Unit (BCD)"},
-		{Name: "Head of Future Learning and Skills Innovation Unit"},
-		{Name: "Future Learning and Skills Innovation Unit"},
-		{Name: "Head of Marketing, Customer Service and Public Relations Unit"},
-		{Name: "Marketing, Customer Service and Public Relations Unit"},
-		{Name: "Regional Operations Support Unit"},
+		{Name: "Head of Central Administration and Infrastructure Development Unit", NameTH: "หัวหน้าหน่วยบริหารกลางและพัฒนาระบบโครงสร้างพื้นฐาน"},
+		{Name: "Central Administration and Infrastructure Development Unit", NameTH: "หน่วยบริหารกลางและพัฒนาระบบโครงสร้างพื้นฐาน"},
+		{Name: "Head of Innovation and Key Account Services Unit (IKD)", NameTH: "หัวหน้าหน่วยนวัตกรรมและบริการลูกค้ารายสำคัญ (IKD)"},
+		{Name: "Innovation and Key Account Services Unit (IKD)", NameTH: "หน่วยนวัตกรรมและบริการลูกค้ารายสำคัญ (IKD)"},
+		{Name: "Head of Network Coordination Unit", NameTH: "หัวหน้าหน่วยประสานงานเครือข่าย"},
+		{Name: "Network Coordination Unit" , NameTH: "หน่วยประสานงานเครือข่าย"},
+		{Name: "Head of Business Development and Innovation Cluster Unit (BCD)", NameTH: "หัวหน้าหน่วยพัฒนาธุรกิจและคลัสเตอร์นวัตกรรม (BCD)"},
+		{Name: "Business Development and Innovation Cluster Unit (BCD)" , NameTH: "หน่วยพัฒนาธุรกิจและคลัสเตอร์นวัตกรรม (BCD)"},
+		{Name: "Head of Future Learning and Skills Innovation Unit", NameTH: "หัวหน้าหน่วยนวัตกรรมการเรียนรู้และทักษะแห่งอนาคต"},
+		{Name: "Future Learning and Skills Innovation Unit", NameTH: "หน่วยนวัตกรรมการเรียนรู้และทักษะแห่งอนาคต"},
+		{Name: "Head of Marketing, Customer Service and Public Relations Unit", NameTH: "หัวหน้าหน่วยการตลาด บริการลูกค้า และประชาสัมพันธ์"},
+		{Name: "Marketing, Customer Service and Public Relations Unit", NameTH: "หน่วยการตลาด บริการลูกค้า และประชาสัมพันธ์"},
+		{Name: "Regional Operations Support Unit", NameTH: "หน่วยสนับสนุนการปฏิบัติการระดับภูมิภาค"},
 	}
 	for _, jobPosition := range jobPositions {
-		db.FirstOrCreate(&jobPosition, entity.JobPosition{Name: jobPosition.Name})
+		db.FirstOrCreate(&jobPosition, entity.JobPosition{Name: jobPosition.Name, NameTH: jobPosition.NameTH})
 	}
 
 	// 🔹 ข้อมูล TitlePrefix

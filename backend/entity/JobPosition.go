@@ -6,5 +6,6 @@ import "gorm.io/gorm"
 type JobPosition struct {
 	gorm.Model
 	Name  string `json:"Name" valid:"required~Name is required"`
+	NameTH string `json:"NameTH"`
 	Users []User `gorm:"foreignKey:JobPositionID"`
 }

@@ -17,7 +17,7 @@ interface NotificationStore {
     getNewUnreadNotificationCounts: (userId?: number) => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
+export const useNotificationStore = create<NotificationStore>((set, _get) => ({
     notificationCounts: { UnreadRequests: 0, UnreadTasks: 0, UnreadInvoice: 0, UnreadServiceAreaRequests: 0, UnreadBookingRoom: 0 },
 
     setNotificationCounts: (notificationCounts) => set({ notificationCounts }),

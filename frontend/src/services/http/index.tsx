@@ -2983,6 +2983,7 @@ async function GetPreviousMonthInvoiceSummary() {
 async function GetInvoiceByID(id: number) {
     try {
         const response = await axiosInstance.get(`/invoice/${id}`);
+        console.log("🔍 [DEBUG] GetInvoiceByID response:", response.data);
         return response.data;
     } catch (error) {
         console.error("Error fetching invoice by id:", error);
