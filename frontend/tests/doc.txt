@@ -1,0 +1,9 @@
+// เก็บ State การ login เพื่อไม่ต้อง login ใหม่
+npx tsx scripts/login-admin.ts
+npx tsx scripts/login-external-user.ts
+
+// เปิด codegen
+npx playwright codegen --load-storage=authState.json http://localhost:5173
+
+// ทดสอบ
+npx playwright test tests/[file name]
