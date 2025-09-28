@@ -16,12 +16,10 @@ import {
     Divider,
     Alert,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import {
     getUserPreferences,
     saveUserPreferences,
-    updatePreference,
     clearUserPreferences,
     UserPreferences,
 } from '../../utils/cookieManager';
@@ -32,8 +30,7 @@ interface UserPreferencesProps {
 }
 
 const UserPreferencesDialog: React.FC<UserPreferencesProps> = ({ open, onClose }) => {
-    const theme = useTheme();
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const [preferences, setPreferences] = useState<UserPreferences>(getUserPreferences());
     const [hasChanges, setHasChanges] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);

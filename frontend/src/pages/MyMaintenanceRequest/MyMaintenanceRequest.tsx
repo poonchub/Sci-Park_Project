@@ -20,8 +20,6 @@ import {
     GetMaintenanceRequestsForUser,
     GetRequestStatuses,
     socketUrl,
-    UpdateMaintenanceRequestByID,
-    UpdateNotificationsByRequestID,
 } from "../../services/http";
 import dayjs from "dayjs";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
@@ -44,10 +42,7 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import handleActionInspection from "../../utils/handleActionInspection";
 import ReworkPopup from "../../components/ReworkPopup/ReworkPopup";
 import AlertGroup from "../../components/AlertGroup/AlertGroup";
-import { NotificationsInterface } from "../../interfaces/INotifications";
 import { MaintenaceImagesInterface } from "../../interfaces/IMaintenaceImages";
-import { analyticsService, KEY_PAGES } from "../../services/analyticsService";
-import { useInteractionTracker } from "../../hooks/useInteractionTracker";
 import { Check, Eye, FileText, HelpCircle, Repeat, Wrench, X } from "lucide-react";
 import handleDeleteMaintenanceRequest from "../../utils/handleDeleteMaintenanceRequest";
 
@@ -79,8 +74,6 @@ function MyMaintenanceRequest() {
     const [openConfirmInspection, setOpenConfirmInspection] =
         useState<boolean>(false);
     const [openConfirmRework, setOpenConfirmRework] = useState<boolean>(false);
-    const [openConfirmCancelled, setOpenConfirmCancelled] =
-        useState<boolean>(false);
     const [openConfirmDelete, setOpenConfirmDelete] = useState<boolean>(false);
 
     const [requestfiles, setRequestFiles] = useState<File[]>([]);
@@ -378,9 +371,6 @@ function MyMaintenanceRequest() {
                                                         <Button
                                                             variant="outlinedCancel"
                                                             onClick={() => {
-                                                                setOpenConfirmCancelled(
-                                                                    true
-                                                                );
                                                                 setSelectedRequest(
                                                                     data
                                                                 );

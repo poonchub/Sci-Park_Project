@@ -4,10 +4,9 @@ import {
     faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Email, Facebook, GitHub, LinkedIn, Phone } from "@mui/icons-material";
+import { Email, Facebook, GitHub, Phone } from "@mui/icons-material";
 import {
     Avatar,
-    Badge,
     Button,
     Card,
     CardContent,

@@ -1,7 +1,6 @@
 import { Box, Button } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
 import { useState } from "react";
-import { handleDownloadInvoice } from "../../utils/handleDownloadInvoice";
 
 function CreateInvoice() {
     const [searchText, setSearchText] = useState<String>()

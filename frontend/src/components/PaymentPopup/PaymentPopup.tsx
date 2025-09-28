@@ -1,12 +1,9 @@
 import {
     Box,
-    Button,
     Card,
     CardMedia,
     CircularProgress,
-    Collapse,
     Dialog,
-    DialogActions,
     DialogContent,
     DialogTitle,
     Divider,
@@ -15,17 +12,12 @@ import {
     Typography,
     Zoom,
 } from "@mui/material";
-import { CircleAlert, CircleX, CreditCard, HelpCircle, Landmark, ReceiptText, Wallet, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import QRCode from "react-qr-code";
-import generatePayload from "promptpay-qr";
+import { CircleAlert, HelpCircle, Landmark, ReceiptText, Wallet, X } from "lucide-react";
+import React, { useState } from "react";
 import { PaymentInterface } from "../../interfaces/IPayments";
 import { apiUrl } from "../../services/http";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
-import { faImage, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import dateFormat from "../../utils/dateFormat";
-import { Close } from "@mui/icons-material";
 import ImageUploader from "../ImageUploader/ImageUploader";
 import AlertGroup from "../AlertGroup/AlertGroup";
 
