@@ -155,6 +155,8 @@ const MyAccount: React.FC = () => {
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
+    const [responseSlip, setResponseSlip] = useState<any>()
+
     const navigate = useNavigate();
     const { getNewUnreadNotificationCounts } = useNotificationStore();
 
@@ -473,7 +475,7 @@ const MyAccount: React.FC = () => {
         }
     };
 
-    const handleClickUpdatePayment = async () => {
+    const handleClickUpdatePayment = async (resCheckSlip?: any) => {
         if (!selectedInvoice?.ID) {
             handleSetAlert("error", "Invoice not found");
             setIsButtonActive(false);
@@ -494,7 +496,9 @@ const MyAccount: React.FC = () => {
                 statusID,
                 undefined,
                 undefined,
-                slipfile[0]
+                slipfile[0],
+                undefined,
+                resCheckSlip
             );
 
             await handleUpdateNotification(selectedInvoice.CustomerID ?? 0, true, undefined, undefined, selectedInvoice?.ID);
@@ -640,7 +644,7 @@ const MyAccount: React.FC = () => {
             setIsButtonActive(true);
             try {
                 const resGetQuota = await GetQuota();
-                console.log(resGetQuota.data.quota)
+                console.log("Quota:", resGetQuota.data.quota)
                 if (resGetQuota.success && resGetQuota.data.quota > 0) {
                     const formData = new FormData();
                     formData.append("files", slipfile[0]);
@@ -649,20 +653,29 @@ const MyAccount: React.FC = () => {
 
                     console.log("resCheckSlip: ", resCheckSlip)
 
+                    setResponseSlip(resCheckSlip)
                     const statusName = selectedInvoice?.Status?.Name;
                     if (resCheckSlip.success && statusName === "Pending Payment") {
                         handleUploadSlip(resCheckSlip);
                     } else if (resCheckSlip.success && statusName === "Rejected") {
-                        handleClickUpdatePayment();
+                        handleClickUpdatePayment(resCheckSlip);
                     }
                 }
                 else {
                     const data = {
                         data: {
-                            transTimestamp: new Date().toISOString()
-                        }
+                            transTimestamp: new Date().toISOString(),
+                            
+                        },
+                        success: true
                     }
-                    handleUploadSlip(data);
+                    setResponseSlip(data)
+                    const statusName = selectedInvoice?.Status?.Name;
+                    if (data.success && statusName === "Pending Payment") {
+                        handleUploadSlip(data);
+                    } else if (data.success && statusName === "Rejected") {
+                        handleClickUpdatePayment(data);
+                    }
                 }
             } catch (error: any) {
                 setAlerts([]);

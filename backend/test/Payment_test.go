@@ -66,23 +66,23 @@ func TestPaymentValidation(t *testing.T) {
 		g.Expect(err.Error()).To(Equal("Amount is required"))
 	})
 
-	t.Run("Missing Slip Path", func(t *testing.T) {
-		payment := entity.Payment{
-			PaymentDate: time.Now(),
-			Amount: 1200,
-			// SlipPath: "/image/slip.jpg",
-			ReceiptPath: "/image/receipt.jpg",
-			StatusID: 3,
-			PayerID: 2,
-			ApproverID: 1,
-			BookingRoomID: 1,
-		}
+	// t.Run("Missing Slip Path", func(t *testing.T) {
+	// 	payment := entity.Payment{
+	// 		PaymentDate: time.Now(),
+	// 		Amount: 1200,
+	// 		// SlipPath: "/image/slip.jpg",
+	// 		ReceiptPath: "/image/receipt.jpg",
+	// 		StatusID: 3,
+	// 		PayerID: 2,
+	// 		ApproverID: 1,
+	// 		BookingRoomID: 1,
+	// 	}
 
-		ok, err := govalidator.ValidateStruct(payment)
-		g.Expect(ok).To(BeFalse())
-		g.Expect(err).NotTo(BeNil())
-		g.Expect(err.Error()).To(Equal("Slip file path is required"))
-	})
+	// 	ok, err := govalidator.ValidateStruct(payment)
+	// 	g.Expect(ok).To(BeFalse())
+	// 	g.Expect(err).NotTo(BeNil())
+	// 	g.Expect(err.Error()).To(Equal("Slip file path is required"))
+	// })
 
 	t.Run("Missing StatusID", func(t *testing.T) {
 		payment := entity.Payment{

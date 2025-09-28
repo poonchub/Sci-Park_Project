@@ -9,12 +9,14 @@ export const handleUpdatePaymentAndInvoice = async (
     approverId?: number,
     note?: string,
     slipFile?: File,
-    receiptFile?: File
+    receiptFile?: File,
+    resCheckSlip?: any
 ) => {
     const paymentData: PaymentInterface = {
         StatusID: statusID,
         Note: note,
         ApproverID: approverId,
+        PaymentDate: resCheckSlip?.data?.transTimestamp ?? null, 
     };
 
     const formData = new FormData();
