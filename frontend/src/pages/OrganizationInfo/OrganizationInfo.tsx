@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo"
 import { apiUrl, GetOrganizationInfo, UpdateOrganizationInfo } from "../../services/http"
-import { Avatar, Box, Button, Card, CardMedia, Collapse, Container, Fab, Grid, IconButton, Stack, Typography, Zoom } from "@mui/material"
+import { Box, Button, Card, CardMedia, Container, Fab, Grid, Stack, Typography, Zoom } from "@mui/material"
 import { TextField } from "../../components/TextField/TextField"
 import "./OrganizationInfo.css"
-import { Building2, Save } from "lucide-react"
+import { Building2, Pencil, Save } from "lucide-react"
 import { MaterialUISwitch } from "../../components/MaterialUISwitch/MaterialUISwitch"
 import AlertGroup from "../../components/AlertGroup/AlertGroup"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faImage, faPencil } from "@fortawesome/free-solid-svg-icons"
 
 function OrganizationInfo() {
     const [organizationInfo, setOrganizationInfo] = useState<OrganizationInfoInterface>({})
@@ -283,7 +281,7 @@ function OrganizationInfo() {
                                                     fileInputRef.current?.click();
                                                 }}
                                             >
-                                                <FontAwesomeIcon icon={faPencil} size="lg" />
+                                                <Pencil size={18} style={{ minWidth: '18px', minHeight: '18px'}}/>
                                             </Fab>
                                         </Zoom>
                                     </Box>

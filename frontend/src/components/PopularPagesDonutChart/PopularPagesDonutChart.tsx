@@ -12,7 +12,7 @@ import {
     ToggleButton,
     ToggleButtonGroup,
 } from '@mui/material';
-import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, User, Building2, ChartPie } from 'lucide-react';
+import { Home, CalendarCheck, Wrench, UserCircle, HelpCircle, FileText, Building2, ChartPie } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { analyticsService, PopularPagesByPeriodData } from '../../services/analyticsService';
 
@@ -88,6 +88,8 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
     const [mode, setMode] = useState<"light" | "dark">(getModeFromClass());
     const [period, setPeriod] = useState<string>("today");
     const [periodData, setPeriodData] = useState<PopularPagesByPeriodData | null>(null);
+
+    // @ts-ignore
     const [loading, setLoading] = useState(false);
 
     const [series, setSeries] = useState<number[]>([]);
@@ -130,11 +132,6 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
         return () => observer.disconnect();
     }, []);
-
-    // คำนวณ total visits สำหรับโดนัทกราฟ
-    const donutTotal = (usePeriodSelector && periodData)
-        ? periodData.data.reduce((sum, item) => sum + (typeof item.visits === 'number' ? item.visits : 0), 0)
-        : totalVisits || 0;
 
     // สร้าง options ใหม่เมื่อ mode, data, หรือ totalVisits เปลี่ยน
     const options: ApexOptions = useMemo(() => {
@@ -205,6 +202,7 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
                     background: 'none'
                 },
                 theme: mode,
+                // @ts-ignore
                 custom: ({ seriesIndex, w }) => {
                     if (usePeriodSelector && periodData) {
                         const item = periodData.data[seriesIndex];
@@ -247,18 +245,6 @@ function PopularPagesDonutChart({ data, height = 200, totalVisits, title = "Popu
             },
         };
     }, [mode, data, usePeriodSelector, periodData]);
-
-    useEffect(() => {
-        if (data) {
-            // ดูว่า page_name ที่ backend ส่งมาตรงกับ key ใน pageConfig หรือ normalizePageName หรือไม่
-            data.forEach(item => {
-                const key = normalizePageName(item.page_name);
-                const config = pageConfig[key];
-            });
-        }
-        if (periodData) {
-        }
-    }, [data, periodData]);
 
     return (
         <Card sx={{ borderRadius: 2, height: '100%', px: 1 }}>

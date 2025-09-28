@@ -321,6 +321,27 @@ func main() {
 	{
 		// Service Area Tasks
 		protected.GET("/service-area-tasks/user/:user_id", controller.GetServiceAreaTasksByUserID)
+
+		// Payments
+		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
+		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
+		protected.GET("/invoice-payments/by-date", controller.ListInvoicePaymentsByDateRange)
+
+		// Invoice
+		protected.GET("/invoices", controller.ListInvoices)
+		protected.GET("/invoices/next-number", controller.GetNextInvoiceNumber)
+		protected.POST("/invoice", controller.CreateInvoice)
+		protected.POST("/invoice/upload-pdf", controller.UploadInvoicePDF)
+		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
+		protected.GET("/invoices/by-date", controller.ListInvoiceByDateRange)
+		protected.GET("/invoices/previous-month-summary", controller.GetPreviousMonthInvoiceSummary)
+
+		// InvoiceItems
+		protected.GET("/invoice-items", controller.ListInvoiceItems)
+		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
+		protected.POST("/invoice-items", controller.CreateInvoiceItem)
+		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
+		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Manager)) // ✅ Middleware ตรวจสอบ Token
@@ -371,30 +392,9 @@ func main() {
 		protected.GET("/user-package-usage-stats", controller.GetUserPackageUsageStats)
 		protected.POST("/test-reset-user-packages", controller.TestResetUserPackages)
 
-		// Payments
-		protected.DELETE("/payment-receipt/:id", controller.DeletePaymentReceiptByID)
-		protected.GET("/booking-room-payments/by-date", controller.ListBookingRoomPaymentsByDateRange)
-		protected.GET("/invoice-payments/by-date", controller.ListInvoicePaymentsByDateRange)
-
 		// Rooms
 		protected.GET("/rooms/meeting-room-summary-today", controller.GetMeetingRoomSummaryToday)
 		protected.GET("/booking-rooms/summary-current-month", controller.GetBookingRoomSummary)
-
-		// Invoice
-		protected.GET("/invoices", controller.ListInvoices)
-		protected.GET("/invoices/next-number", controller.GetNextInvoiceNumber)
-		protected.POST("/invoice", controller.CreateInvoice)
-		protected.POST("/invoice/upload-pdf", controller.UploadInvoicePDF)
-		protected.DELETE("/invoice/:id", controller.DeleteInvoiceByID)
-		protected.GET("/invoices/by-date", controller.ListInvoiceByDateRange)
-		protected.GET("/invoices/previous-month-summary", controller.GetPreviousMonthInvoiceSummary)
-
-		// InvoiceItems
-		protected.GET("/invoice-items", controller.ListInvoiceItems)
-		protected.GET("/invoice-item/:id", controller.GetInvoiceItemByID)
-		protected.POST("/invoice-items", controller.CreateInvoiceItem)
-		protected.PATCH("/invoice-item/:id", controller.UpdateInvoiceItemsByID)
-		protected.DELETE("/invoice-item/:id", controller.DeleteInvoiceItemByID)
 
 		// RoomBookingInvoices
 		protected.GET("/room-booking-invoice/:id", controller.GetRoomBookingInvoiceByID)
@@ -404,7 +404,6 @@ func main() {
 
 		// RoomBookingInvoiceItems
 		protected.POST("/room-booking-invoice-item", controller.CreateRoomBookingInvoiceItem)
-
 	}
 
 	protected.Use(middlewares.Authorizes(middlewares.Admin)) // ✅ Middleware ตรวจสอบ Token

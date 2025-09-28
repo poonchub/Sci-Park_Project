@@ -1208,7 +1208,7 @@ func SeedDatabase() {
 			Phone:             "",
 			ProfilePath:       "images/organization/supervisors/Komsan_Srivisut.jpg",
 			Role:              "Supervisor",
-			Bio:               "",
+			Bio:               "Chief, Office of Engineering Education Innovation, Suranaree University of Technology, Thailand",
 			ContributorTypeID: 2,
 		},
 		{

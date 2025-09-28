@@ -49,7 +49,7 @@ interface EditUserPopupProps {
 }
 
 const EditUserPopup: React.FC<EditUserPopupProps> = ({ userId, open, onClose }) => {
-  const { control, handleSubmit, formState: { errors }, setValue, watch } = useForm();
+  const { control, handleSubmit, formState: { errors }, setValue } = useForm();
   const [user, setUser] = useState<UserInterface | null>(null);
   const [roles, setRoles] = useState<RolesInterface[]>([]);
   const [selectedRole, setSelectedRole] = useState<number | null>(null);

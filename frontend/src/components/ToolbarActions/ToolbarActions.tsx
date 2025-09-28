@@ -59,7 +59,7 @@ const ToolbarActions = () => {
       <CookieConsent 
         open={showCookieSettings}
         onClose={() => setShowCookieSettings(false)}
-        onAccept={(preferences) => {
+        onAccept={() => {
           setShowCookieSettings(false);
         }}
         onDecline={() => {

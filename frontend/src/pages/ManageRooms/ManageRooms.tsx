@@ -1,5 +1,3 @@
-
-
 import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography, Container } from "@mui/material";
 import { faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
@@ -23,7 +21,6 @@ import InfoAlert from '../../components/Alert/InfoAlert';
 import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import EditRoomPopup from './EditRoomPopup';
-import { analyticsService } from "../../services/analyticsService";
 import { GridPaginationModel } from '@mui/x-data-grid';
 import { House } from "lucide-react";
 

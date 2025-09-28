@@ -5,7 +5,7 @@ import {
   useMediaQuery
 } from "@mui/material";
 import {
-  Calendar, Clock, FileText, HelpCircle, Wallet, X,
+  Clock, FileText, HelpCircle, Wallet, X,
   CheckCircle2, AlertCircle, Upload, Trash2, Download
 } from "lucide-react";
 import { apiUrl, CheckSlip, GetQuota } from "../../services/http";
@@ -223,12 +223,6 @@ const verifySlip = async (file: File) => {
   }
 };
 
-const isImage = (url?: string) => {
-  if (!url) return false;
-  const u = url.toLowerCase();
-  return [".png", ".jpg", ".jpeg", ".gif", ".webp"].some((ext) => u.includes(ext));
-};
-
 const getStepIndex = (status?: InstallmentUI["status"]) => {
   const s = norm(status);
   if (s === "pending_payment" || s === "unpaid" || s === "overdue") return 0;
@@ -380,10 +374,6 @@ const BookingPaymentPopup: React.FC<BookingPaymentPopupProps> = ({
   const closeViewer = () => setViewer({ open: false, url: "" });
 
   const [replaceMode, setReplaceMode] = useState(false);
-  const openSlip = (path?: string) => {
-    const url = slipUrl(path || "");
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
-  };
 
   // ===== ใส่ไฟล์สลิป + ตรวจสิทธิ์โควต้า + verify SlipOK (เหมือนเดิม) =====
   const setFileFor = (key: InstallmentUI["key"]) => async (fList: File[]) => {

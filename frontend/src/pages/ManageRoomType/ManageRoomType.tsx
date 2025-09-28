@@ -1,11 +1,10 @@
-import { Container, Dialog, Grid, IconButton, Tooltip } from "@mui/material";
-import { Box, Button, Card, FormControl, InputAdornment, MenuItem, Typography } from "@mui/material";
+import { Container, Dialog, Grid, IconButton } from "@mui/material";
+import { Box, Button, Card, InputAdornment, Typography } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField";
-import { Select } from "../../components/Select/Select";
-import { Search, RefreshCw, Check, HousePlus, } from "lucide-react";
+import { Search, RefreshCw, HousePlus, } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { ListRoomTypes, GetRoomTypes, apiUrl } from "../../services/http";
+import { ListRoomTypes, apiUrl } from "../../services/http";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { SearchOff } from "@mui/icons-material";
 import EditRoomPopup from "./EditRoomTypePopup";

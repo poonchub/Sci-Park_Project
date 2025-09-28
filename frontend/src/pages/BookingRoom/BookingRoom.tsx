@@ -1,5 +1,5 @@
 // src/pages/BookingRoom/BookingRoom.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Container,
     Typography,
@@ -10,8 +10,6 @@ import {
     CardMedia,
     CardActions,
     Button,
-    FormControl,
-    MenuItem,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -26,7 +24,6 @@ import Carousel from "react-material-ui-carousel";
 import { useNavigate } from "react-router-dom";
 import { Base64 } from "js-base64";
 
-import { Select } from "../../components/Select/Select";
 import { TextField } from "../../components/TextField/TextField";
 import { ListRoomTypesForBooking } from "../../services/http";
 import { equipmentConfig } from "../../constants/equipmentConfig";

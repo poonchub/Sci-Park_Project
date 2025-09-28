@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { UserInterface } from '../../interfaces/IUser';
 import { AppBar } from '../AppBar/AppBar';
 import { getCurrentSectionKey } from '../../constants/navigationConfig';
-import { role } from '../../routes';
 
 // Define types for the props of the AppBarMenu component
 interface AppBarMenuProps {
@@ -87,7 +86,7 @@ export default function AppBarMenu({
 				{/* User's full name */}
 				<Box sx={{ textAlign: 'end' }}>
 					<Typography>{`${user?.FirstName} ${user?.LastName}`}</Typography>
-					<Typography sx={{ fontSize: 12, color: 'gray' }}>{`${role}`}</Typography>
+					<Typography sx={{ fontSize: 12, color: 'gray' }}>{`${user?.Role?.Name}`}</Typography>
 				</Box>
 				
 				{/* User profile avatar and settings menu */}

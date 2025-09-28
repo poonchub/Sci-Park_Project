@@ -155,6 +155,7 @@ const MyAccount: React.FC = () => {
 
     const [alerts, setAlerts] = useState<{ type: "warning" | "error" | "success"; message: string }[]>([]);
 
+    // @ts-ignore
     const [responseSlip, setResponseSlip] = useState<any>()
 
     const navigate = useNavigate();
@@ -1483,12 +1484,6 @@ const MyAccount: React.FC = () => {
                             currency: "THB",
                         })
 
-                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
-                        let width;
-                        if (cardItem) {
-                            width = cardItem.offsetWidth;
-                        }
-
                         const receiptPath = data.Payments?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""
 
@@ -2136,12 +2131,6 @@ const MyAccount: React.FC = () => {
                             style: "currency",
                             currency: "THB",
                         })
-
-                        const cardItem = document.querySelector(".card-item-container") as HTMLElement;
-                        let width;
-                        if (cardItem) {
-                            width = cardItem.offsetWidth;
-                        }
 
                         const receiptPath = data?.ReceiptPath
                         const fileName = receiptPath ? receiptPath?.split("/").pop() : ""

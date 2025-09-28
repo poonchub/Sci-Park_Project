@@ -3,7 +3,6 @@ import { Button, Typography, Divider, Link, IconButton, InputAdornment } from '@
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import './LoginPage.css'; // ใช้ CSS ที่มีอยู่
-import { useNavigate } from 'react-router-dom';
 import { UserLogin } from '../../services/http';
 import { UserInterface } from '../../interfaces/IUser';
 import SuccessAlert from '../../components/Alert/SuccessAlert';
@@ -20,7 +19,6 @@ const LoginPage: React.FC = () => {
   const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
   const [showWarning, setShowWarning] = useState(false);  // For Warning
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

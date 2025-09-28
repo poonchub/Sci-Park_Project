@@ -76,7 +76,7 @@ import ApexBookingRoomRevenueBarChart from "../../components/ApexBookingRoomReve
 import ApexInvoiceRevenueBarChart from "../../components/ApexInvoiceRevenueBarChart/ApexInvoiceRevenueBarChart";
 import { roomStatusConfig } from "../../constants/roomStatusConfig";
 import { paymentStatusConfig } from "../../constants/paymentStatusConfig";
-import { bookingStatusConfig, getBookingStatusConfig } from "../../constants/bookingStatusConfig";
+import { getBookingStatusConfig } from "../../constants/bookingStatusConfig";
 import ApexBookingLineChart from "../../components/ApexBookingLineChart/ApexBookingLineChart";
 
 function Dashboard() {

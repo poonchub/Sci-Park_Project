@@ -20,7 +20,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff'; // Import icons
 
 const ResetPasswordPage: React.FC = () => {
     const navigate = useNavigate();
-    const { control, handleSubmit, formState: { errors }, watch, reset: resetForm } = useForm({
+    const { control, handleSubmit, formState: { errors }, watch } = useForm({
         defaultValues: {
             newPassword: '',
             confirmPassword: '',
@@ -119,10 +119,8 @@ const ResetPasswordPage: React.FC = () => {
 
     // This function will now be called by react-hook-form's handleSubmit
     const handleChangePasswordSubmit = async (data: { newPassword: string, confirmPassword: string }) => {
-        const { newPassword, confirmPassword } = data; // Destructure values from react-hook-form data
-
+        const { newPassword } = data; // Destructure values from react-hook-form data
         
-
         const id = Number(localStorage.getItem("id"));
         if (isNaN(id)) {
             setAlerts([{ type: 'error', message: "User ID not found. Please restart the process." }]);
