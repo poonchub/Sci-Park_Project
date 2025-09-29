@@ -1,370 +1,247 @@
+// pages/ManageRooms/index.tsx (ไฟล์เดิมของคุณ — โค้ดเต็มพร้อมคลีน)
 import { Box, Button, Card, FormControl, Grid, InputAdornment, MenuItem, Typography, Container } from "@mui/material";
 import { faRotateRight, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TextField } from "../../components/TextField/TextField";
 import { Select } from "../../components/Select/Select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
-import PublishedWithChangesOutlinedIcon from '@mui/icons-material/PublishedWithChangesOutlined';
-import VerticalSplitOutlinedIcon from '@mui/icons-material/VerticalSplitOutlined';
-import React, { useEffect, useState } from "react";
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { ListSetRooms, GetRoomTypes, GetRoomStatus, GetFloors } from "../../services/http";  // Import ListUsers service 
+import PublishedWithChangesOutlinedIcon from "@mui/icons-material/PublishedWithChangesOutlined";
+import VerticalSplitOutlinedIcon from "@mui/icons-material/VerticalSplitOutlined";
+import React, { useEffect, useMemo, useState } from "react";
+import { DataGrid, GridColDef, GridPaginationModel } from "@mui/x-data-grid";
+import { ListSetRooms, GetRoomTypes, GetRoomStatus, GetFloors } from "../../services/http";
 import { RoomsInterface } from "../../interfaces/IRooms";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { RoomStatusInterface } from "../../interfaces/IRoomStatus";
 import { SearchOff } from "@mui/icons-material";
-import SuccessAlert from '../../components/Alert/SuccessAlert';
-import ErrorAlert from '../../components/Alert/ErrorAlert';
-import WarningAlert from '../../components/Alert/WarningAlert';
-import InfoAlert from '../../components/Alert/InfoAlert';
-import { roomStatusConfig } from "../../constants/roomStatusConfig";  // Import the room status configuration
-import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
-import EditRoomPopup from './EditRoomPopup';
-import { GridPaginationModel } from '@mui/x-data-grid';
-import { House } from "lucide-react";
-
-
-
-
+import SuccessAlert from "../../components/Alert/SuccessAlert";
+import ErrorAlert from "../../components/Alert/ErrorAlert";
+import WarningAlert from "../../components/Alert/WarningAlert";
+import InfoAlert from "../../components/Alert/InfoAlert";
+import { roomStatusConfig } from "../../constants/roomStatusConfig";
+import LayersOutlinedIcon from "@mui/icons-material/LayersOutlined";
+import EditRoomPopup from "./EditRoomPopup";
+import CreateRoomPopup from "./CreateRoomPopup";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import { DeleteRoom as DeleteRoomAPI } from "../../services/http";
+import { House, Plus } from "lucide-react";
 
 function ManageRooms() {
-    const [rooms, setRooms] = useState<RoomsInterface[]>([])
+    const [rooms, setRooms] = useState<RoomsInterface[]>([]);
     const [floors, setFloors] = useState<FloorsInterface[]>([]);
     const [roomTypes, setRoomTypes] = useState<RoomtypesInterface[]>([]);
     const [roomStatus, setRoomStatus] = useState<RoomStatusInterface[]>([]);
     const [selectRoomType, setSelectRoomType] = useState(0);
     const [selectRoomStatus, setSelectRoomStatus] = useState(0);
     const [selectFloor, setSelectFloors] = useState(0);
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
     const [total, setTotal] = useState(0);
-    const [openPopup, setOpenPopup] = useState(false);
-    const [searchText, setSearchText] = useState('');
+    const [openEditPopup, setOpenEditPopup] = useState(false);
+    const [openCreatePopup, setOpenCreatePopup] = useState(false);
+    const [searchText, setSearchText] = useState("");
+    const [debouncedSearchText, setDebouncedSearchText] = useState("");
     const [selectedRoomID, setSelectedRoomID] = useState<number | null>(null);
-    const [debouncedSearchText, setDebouncedSearchText] = useState('');
     const [alerts, setAlerts] = useState<{ type: string, message: string }[]>([]);
-
-    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-        page: 0,
-        pageSize: 10,
-    });
+    const [openConfirm, setOpenConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
 
-    // Columns definition
-    const columns: GridColDef[] = [
-        // {
-        //     field: 'ID',
-        //     headerName: 'ID',
-        //     flex: 0.5,
-        // },
-        {
-            field: 'RoomNumber',
-            headerName: 'Room Number',
-            type: 'string',
-            flex: 1,
-            valueGetter: (params: RoomsInterface) => params || '-',  // Default value if EmployeeID is missing
-        },
-        {
-            field: 'RoomType',
-            headerName: 'Room Type',
-            type: 'string',
-            flex: 1,
-            valueGetter: (params: RoomsInterface) => params || '-',
-        },
-        {
-            field: 'RoomStatus', // Field name from the data
-            headerName: 'Room Status', // Header for the column
-            sortable: false,  // Prevent sorting on this column
-            flex: 1.2,  // Make the column flexible
-            valueGetter: (params: RoomsInterface) => params.RoomStatus || '-', // Default value if RoomStatus is missing
-            renderCell: (params) => {
-                const statusName = params.row.RoomStatus || "Not Reserved";  // Default to "Not Reserved" if not found
-                const statusKey = params.row.RoomStatus as keyof typeof roomStatusConfig;
-                const { color, colorLite, } = roomStatusConfig[statusKey] ?? {
-                    color: "#FFF",
-                    colorLite: "#000",
-                    icon: faCircleXmark,
-
-                };
-
-                return (
-                    <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',  // Vertically center the content
-                        justifyContent: 'left', // Horizontally center the content
-                        height: '100%'  // Ensure the cell height is fully utilized
-                    }}>
-                        <Box sx={{
-                            bgcolor: colorLite,
-                            borderRadius: 10,
-                            px: 1.5,
-                            py: 0.5,
-                            display: 'flex',
-                            gap: 1,
-                            color: color,
-                            alignItems: 'center',
-                        }}>
-                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-                                {statusName}
-                            </Typography>
-                        </Box>
-                    </Box>
-                );
-            },
-
-        },
-
-        {
-            field: 'Capacity',
-            headerName: 'Room Capacity (persons)',
-            type: 'string',
-            flex: 1.2,
-            valueGetter: (params: RoomsInterface) => params || '-',  // Default value if Role is missing
-        },
-        {
-            field: 'assigned',
-            headerName: 'Actions',
-            renderCell: (params) => (
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center', // Center buttons horizontally
-                        alignItems: 'center', // Center buttons vertically
-                        height: '100%', // Make Box expand to full height of cell
-                    }}
-                >
-                    <Button
-                        onClick={() => handleOpenPopup(params.row.ID)}
-                        variant="outlinedGray"
-                        sx={{
-
-
-                            fontSize: '14px',
-
-                            mr: 0.6,
-                            "&:hover": {
-                                borderColor: 'transparent'
-                            }
-                        }}
-                    >
-                        Edit
-                    </Button>
-                </Box>
-            ),
-        }
-
-    ];
-
-    // Search function
-    const handleSearch = () => {
-        let filteredRoom = rooms;
-
-        // Filter data by search text
-        if (searchText !== '') {
-            filteredRoom = filteredRoom.filter((room) =>
-                (room.RoomNumber && room.RoomNumber.toLowerCase().includes(searchText.toLowerCase())));
-        }
-
-        // Filter data by floor if floor is selected
-        if (selectFloor !== 0) {
-            filteredRoom = filteredRoom.filter((floor) => floor.FloorID === selectFloor);
-        }
-
-        // Filter data by room type if room type is selected
-        if (selectRoomType !== 0) {
-            filteredRoom = filteredRoom.filter((roomtype) => roomtype.RoomTypeID === selectRoomType);
-        }
-
-        setRooms(filteredRoom);  // Set filtered results
-    };
-
-    const handleOpenPopup = (roomID: number) => {
-        setSelectedRoomID(roomID);  // Set selectedRoomID to the room to be edited
-        setOpenPopup(true);  // Open Pop-up
-    };
-
-    // 1) mount: โหลด masters ครั้งเดียว + preload หน้าแรก
+    // Debounce search 500ms
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchText(searchText);
-            setPage(1); // ✅ กลับไปหน้าแรก
-        }, 500);
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => setDebouncedSearchText(searchText.trim()), 500);
+        return () => clearTimeout(t);
     }, [searchText]);
 
+    // โหลด master ครั้งแรก
     useEffect(() => {
-        FecthFloors();
-        FecthRoomTypes();
-        FecthRoomStatus();
-        Listrooms();
+        (async () => {
+            try {
+                const [rs, ft, st] = await Promise.all([GetRoomTypes(), GetFloors(), GetRoomStatus()]);
+                setRoomTypes(normalizeArray<RoomtypesInterface>(rs));
+                setFloors(normalizeArray<FloorsInterface>(ft));
+                setRoomStatus(normalizeArray<RoomStatusInterface>(st));
+            } catch {
+                setAlerts(prev => [...prev, { type: "error", message: "Failed to load master data." }]);
+            }
+        })();
     }, []);
 
-
-    // 2) ดึงรายการตามตัวกรอง/เพจ/ค้นหา
+    // โหลดรายการตาม filter/pagination/search
     useEffect(() => {
-        Listrooms();
-    }, [selectFloor, selectRoomStatus, selectRoomType, paginationModel, debouncedSearchText]);
+        listRooms();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectFloor, selectRoomStatus, selectRoomType, paginationModel.page, paginationModel.pageSize, debouncedSearchText]);
 
-    const FecthFloors = async () => {
-        try {
-            const res = await GetFloors();  // Fetch floor data from API
-            if (res) {
-                setFloors(res);  // Set fetched floor data
-                console.log(res); // Log the fetched data
-            }
-        } catch (error) {
-            console.error("Error fetching floors:", error);
+    function normalizeArray<T>(input: unknown): T[] {
+        if (Array.isArray(input)) return input as T[];
+        if (input && typeof input === "object" && Array.isArray((input as any).data)) {
+            return (input as any).data as T[];
         }
-    }
-    const FecthRoomTypes = async () => {
-        try {
-            const res = await GetRoomTypes();  // Fetch room type data from API
-            if (res) {
-                setRoomTypes(res);  // Set fetched room type data
-                console.log(res); // Log the fetched data
-            }
-        } catch (error) {
-            console.error("Error fetching room types:", error);
-        }
-    }
-    const FecthRoomStatus = async () => {
-        try {
-            const res = await GetRoomStatus();  // Fetch room status data from API
-            if (res) {
-                setRoomStatus(res);  // Set fetched room status data
-                console.log("romstatus", res); // Log the fetched data
-            }
-        } catch (error) {
-            console.error("Error fetching room status:", error);
-        }
+        return [];
     }
 
-    // const FecthRoomCapacity = async () => {
-    //     try {
-    //         const res = await GetRoomCapacity();  // Fetch room capacity data from API
-    //         if (res) {
-    //             setRoomCapacity(res);  // Set fetched room capacity data
-    //             console.log(res); // Log the fetched data
-    //         }
-    //     } catch (error) {
-    //         console.error("Error fetching room capacity:", error);
-    //     }
-    // }
-
-
-
-    const handleClosePopup = () => {
-        setOpenPopup(false);  // Close Pop-up
-        setSelectedRoomID(null); // Reset selectedRoomID
-        setSearchText('');  // Reset search text if needed
-        setSelectRoomType(0);  // Reset room type selection
-        setSelectRoomStatus(0);  // Reset room status selection
-        setSelectFloors(0);  // Reset floor selection
-        setPage(1);  // Reset to page 1
-        setLimit(10);  // Reset page size to default
-        Listrooms();  // Call function to fetch new data
-        console.log(alerts); // Log message when popup is closed
-    };
-
-
-    // Fetch users from the API
-    const Listrooms = async () => {
+    const listRooms = async () => {
         try {
+            const page = paginationModel.page + 1; // API 1-based
+            const limit = paginationModel.pageSize;
             const res = await ListSetRooms({
                 floor: selectFloor,
                 roomType: selectRoomType,
                 roomStatus: selectRoomStatus,
-                page,                  // ✅ มาจากข้อ 1
-                limit,                 // ✅ มาจากข้อ 1
-                search: debouncedSearchText?.trim() || "",
+                page,
+                limit,
+                search: debouncedSearchText,
             });
             setRooms(res?.data ?? []);
             setTotal(res?.total ?? res?.data?.length ?? 0);
-            if (res) {
-                console.log("API response:", res);
-                setRooms(res.data);  // Set the fetched users to state
-                console.log(res.data); // Log the fetched data
-                setTotal(res.total);  // Set the total number of users
-            }
-            console.log(res);
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Error fetching rooms:", error);
+            setAlerts(prev => [...prev, { type: "error", message: "Failed to fetch rooms." }]);
+        }
+    };
+
+    const handleOpenEdit = (roomID: number) => {
+        setSelectedRoomID(roomID);
+        setOpenEditPopup(true);
+    };
+
+    const handleCloseEdit = () => {
+        setOpenEditPopup(false);
+        setSelectedRoomID(null);
+        listRooms();
+    };
+
+    const handleOpenCreate = () => setOpenCreatePopup(true);
+    const handleCloseCreate = () => setOpenCreatePopup(false);
+    const handleCreated = () => {
+        setOpenCreatePopup(false);
+        // reset paging กลับหน้าแรกเพื่อให้เห็น record ล่าสุดง่าย ๆ
+        setPaginationModel(p => ({ ...p, page: 0 }));
+        setTimeout(() => listRooms(), 0);
+    };
+
+    // กดปุ่มลบ -> เปิดไดอะล็อก
+    const askDelete = (id: number) => {
+        setDeleteId(id);
+        setOpenConfirm(true);
+    };
+    const doDelete = async (_note?: string) => {
+        if (!deleteId) return;
+        try {
+            setDeleting(true);
+            const res = await DeleteRoomAPI(deleteId);
+            if (res.ok) {
+                setAlerts(prev => [...prev, { type: "success", message: "Room deleted successfully." }]);
+                setPaginationModel(p => ({ ...p, page: 0 }));
+                await listRooms();
+            } else {
+                setAlerts(prev => [...prev, { type: "error", message: res.message || "Delete failed." }]);
+            }
+        } finally {
+            setDeleting(false);
+            setDeleteId(null);
         }
     };
 
 
+    const handleClearFilter = () => {
+        setSelectRoomType(0);
+        setSelectRoomStatus(0);
+        setSelectFloors(0);
+        setSearchText("");
+        setPaginationModel({ page: 0, pageSize: paginationModel.pageSize });
+    };
 
+    const columns: GridColDef[] = useMemo(() => ([
+        {
+            field: "RoomNumber",
+            headerName: "Room Number",
+            flex: 1,
+            valueGetter: (_val, row: RoomsInterface) => row.RoomNumber ?? "-",
+        },
+        {
+            field: "RoomType",
+            headerName: "Room Type",
+            flex: 1,
+            valueGetter: (_val, row: RoomsInterface) => (row as any)?.RoomType?.TypeName || row.RoomType || "-",
+        },
+        {
+            field: "RoomStatus",
+            headerName: "Room Status",
+            flex: 1.2,
+            sortable: false,
+            renderCell: (params) => {
+                const statusName = (params.row as any)?.RoomStatus?.StatusName || params.row.RoomStatus || "Not Reserved";
+                const statusKey = statusName as keyof typeof roomStatusConfig;
+                const { color, colorLite } = roomStatusConfig[statusKey] ?? { color: "#FFF", colorLite: "#000" };
+                return (
+                    <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                        <Box sx={{ bgcolor: colorLite, borderRadius: 10, px: 1.5, py: 0.5, display: "flex", gap: 1, color, alignItems: "center" }}>
+                            <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{statusName}</Typography>
+                        </Box>
+                    </Box>
+                );
+            },
+        },
+        {
+            field: "Capacity",
+            headerName: "Room Capacity (persons)",
+            flex: 1.2,
+            valueGetter: (_val, row: RoomsInterface) => (row as any)?.Capacity ?? "-",
+        },
+        {
+            field: "actions",
+            headerName: "Actions",
+            sortable: false,
+            filterable: false,
+            width: 160,
+            renderCell: (params) => (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Button
+                        onClick={() => handleOpenEdit(params.row.ID)}
+                        variant="contained"
+                        sx={{ fontSize: "14px", "&:hover": { borderColor: "transparent" } }}
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        variant="outlinedGray"
+                        sx={{ fontSize: "14px", "&:hover": { borderColor: "transparent" } }}
+                        onClick={() => askDelete(params.row.ID)}>
+                        Delete
+                    </Button>
+                </Box >
 
-
-    useEffect(() => {
-        const t = setTimeout(() => {
-            setDebouncedSearchText(searchText);
-            setPage(1);                         // ✅ หน้า API = 1
-            setPaginationModel(p => ({          // ✅ หน้า UI = 0
-                ...p,
-                page: 0
-            }));
-        }, 500);
-        return () => clearTimeout(t);
-    }, [searchText]);
-
-    useEffect(() => {
-        Listrooms();  // Call the function to fetch users when the component mounts
-    }, [selectFloor, selectRoomStatus, selectRoomType, page, limit]);
-
-    useEffect(() => {
-        handleSearch();
-    }, [debouncedSearchText]);
-    useEffect(() => {
-        console.log("Rooms data:", rooms);
-    }, [rooms]);
-
-
-    const handleClearFillter = () => {
-        setSelectRoomType(0);  // Reset the selected role to 0 (default value)
-        setSelectRoomStatus(0);  // Reset the selected package to 0 (default value)
-        setSelectFloors(0);  // Reset the selected floor to 0 (default value)
-        setSearchText('');  // Clear the search text
-        setPage(0);         // Reset to page 1
-        Listrooms();  // Call the function to fetch users when the component mounts
-    }
-
+            ),
+        },
+    ]), []);
 
     return (
-        <Container maxWidth={"xl"} sx={{ padding: "0px 0px !important" }}>
+        <Container maxWidth="xl" sx={{ padding: "0px 0px !important" }}>
             <div className="manage-users-page">
                 {alerts.map((alert, index) => (
                     <React.Fragment key={index}>
-                        {alert.type === 'success' && (
-                            <SuccessAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                        )}
-                        {alert.type === 'error' && (
-                            <ErrorAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                        )}
-                        {alert.type === 'warning' && (
-                            <WarningAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                        )}
-                        {alert.type === 'info' && (
-                            <InfoAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />
-                        )}
+                        {alert.type === "success" && <SuccessAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />}
+                        {alert.type === "error" && <ErrorAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />}
+                        {alert.type === "warning" && <WarningAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />}
+                        {alert.type === "info" && <InfoAlert message={alert.message} onClose={() => setAlerts(alerts.filter((_, i) => i !== index))} index={index} totalAlerts={alerts.length} />}
                     </React.Fragment>
                 ))}
 
                 <Grid container spacing={3}>
-                    <Grid container className="title-box" direction={"row"} size={{ xs: 12 }} sx={{ gap: 1 }}>
-                         <House size={26} />
-                        <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Rooms</Typography>
+                    <Grid container className="title-box" direction="row" size={{ xs: 12 }} sx={{ gap: 1, alignItems: "center", justifyContent: "space-between" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <House size={26} />
+                            <Typography variant="h5" className="title" sx={{ fontWeight: 700 }}>Manage Rooms</Typography>
+                        </Box>
+                        <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleOpenCreate}>
+                            Add Room
+                        </Button>
                     </Grid>
 
-
                     <Grid container size={{ xs: 10, md: 12 }} spacing={3}>
-
-                        <Grid container
-                            spacing={2}
-                            className='filter-section'
-                            size={{ xs: 10, md: 12 }}
-                            sx={{ alignItems: "flex-end", height: 'auto' }}>
+                        <Grid container spacing={2} className="filter-section" size={{ xs: 10, md: 12 }} sx={{ alignItems: "flex-end" }}>
                             <Grid size={{ xs: 10, md: 5 }}>
                                 <TextField
                                     fullWidth
@@ -373,10 +250,7 @@ function ManageRooms() {
                                     placeholder="Search (Room Number)"
                                     margin="none"
                                     value={searchText}
-                                    onChange={(e) => {
-                                        setSearchText(e.target.value);  // set searchText value
-                                        //handleSearch();  // call search function
-                                    }}
+                                    onChange={(e) => setSearchText(e.target.value)}
                                     slotProps={{
                                         input: {
                                             startAdornment: (
@@ -384,7 +258,7 @@ function ManageRooms() {
                                                     <FontAwesomeIcon icon={faMagnifyingGlass} size="xl" />
                                                 </InputAdornment>
                                             ),
-                                        }
+                                        },
                                     }}
                                 />
                             </Grid>
@@ -393,24 +267,15 @@ function ManageRooms() {
                                 <FormControl fullWidth>
                                     <Select
                                         value={selectFloor}
-                                        onChange={(e) => {
-                                            setSelectFloors(Number(e.target.value));  // update selectrole
-                                            handleSearch();  // call filter function
-                                        }}
+                                        onChange={(e) => setSelectFloors(Number(e.target.value))}
                                         displayEmpty
-                                        startAdornment={
-                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                <LayersOutlinedIcon />
-                                            </InputAdornment>
-                                        }
+                                        startAdornment={<InputAdornment position="start" sx={{ pl: 0.5 }}><LayersOutlinedIcon /></InputAdornment>}
                                         sx={{ borderRadius: 2 }}
                                     >
-                                        <MenuItem value={0}>{'All Floors'}</MenuItem>
-                                        {
-                                            floors.length > 0 ? floors.map((item, index) => (
-                                                <MenuItem key={index} value={item.ID}>{item.ID}</MenuItem>
-                                            )) : null
-                                        }
+                                        <MenuItem value={0}>All Floors</MenuItem>
+                                        {floors.map((f) => (
+                                            <MenuItem key={f.ID} value={f.ID}>{f.Number ? `Floor ${f.Number}` : f.ID}</MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -419,73 +284,48 @@ function ManageRooms() {
                                 <FormControl fullWidth>
                                     <Select
                                         value={selectRoomType}
-                                        onChange={(e) => {
-                                            setSelectRoomType(Number(e.target.value));  // update selectrole
-                                            handleSearch();  // call filter function
-                                        }}
+                                        onChange={(e) => setSelectRoomType(Number(e.target.value))}
                                         displayEmpty
-                                        startAdornment={
-                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                <VerticalSplitOutlinedIcon />
-                                            </InputAdornment>
-                                        }
+                                        startAdornment={<InputAdornment position="start" sx={{ pl: 0.5 }}><VerticalSplitOutlinedIcon /></InputAdornment>}
                                         sx={{ borderRadius: 2 }}
                                     >
-                                        <MenuItem value={0}>{'All Types'}</MenuItem>
-                                        {
-                                            roomTypes.length > 0 ? roomTypes.map((item, index) => (
-                                                <MenuItem key={index} value={item.ID}>{item.TypeName}</MenuItem>
-                                            )) : null
-                                        }
+                                        <MenuItem value={0}>All Types</MenuItem>
+                                        {roomTypes.map((t) => (
+                                            <MenuItem key={t.ID} value={t.ID}>{t.TypeName}</MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
-
-
 
                             <Grid size={{ xs: 10, md: 2 }}>
                                 <FormControl fullWidth>
                                     <Select
                                         value={selectRoomStatus}
-                                        onChange={(e) => {
-                                            setSelectRoomStatus(Number(e.target.value));  // update selectrole
-                                            handleSearch();  // call filter function
-                                        }}
+                                        onChange={(e) => setSelectRoomStatus(Number(e.target.value))}
                                         displayEmpty
-                                        startAdornment={
-                                            <InputAdornment position="start" sx={{ pl: 0.5 }}>
-                                                <PublishedWithChangesOutlinedIcon />
-                                            </InputAdornment>
-                                        }
+                                        startAdornment={<InputAdornment position="start" sx={{ pl: 0.5 }}><PublishedWithChangesOutlinedIcon /></InputAdornment>}
                                         sx={{ borderRadius: 2 }}
                                     >
-                                        <MenuItem value={0}>{'All Status'}</MenuItem>
-                                        {
-                                            roomStatus.length > 0 ? roomStatus.map((item, index) => (
-                                                <MenuItem key={index} value={item.ID} style={{ color: 'gray' }}>{item.StatusName} </MenuItem>
-                                            )) : null
-                                        }
+                                        <MenuItem value={0}>All Status</MenuItem>
+                                        {roomStatus.map((s) => (
+                                            <MenuItem key={s.ID} value={s.ID} style={{ color: "gray" }}>{s.StatusName}</MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
 
                             <Grid size={{ xs: 10, md: 1 }}>
-                                <Button onClick={handleClearFillter}
+                                <Button
+                                    onClick={handleClearFilter}
                                     sx={{
-                                        minWidth: 0,
-                                        width: '100%',
-                                        height: '45px',
-                                        borderRadius: '10px',
-                                        border: '1px solid rgb(109, 110, 112, 0.4)',
-                                        "&:hover": {
-                                            boxShadow: 'none',
-                                            borderColor: 'primary.main',
-                                            backgroundColor: 'transparent'
-                                        },
+                                        minWidth: 0, width: "100%", height: 45, borderRadius: 2,
+                                        border: "1px solid rgb(109,110,112,0.4)",
+                                        "&:hover": { boxShadow: "none", borderColor: "primary.main", backgroundColor: "transparent" },
                                     }}
-                                ><FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: 'gray' }} /></Button>
+                                >
+                                    <FontAwesomeIcon icon={faRotateRight} size="lg" style={{ color: "gray" }} />
+                                </Button>
                             </Grid>
-
                         </Grid>
                     </Grid>
 
@@ -498,40 +338,47 @@ function ManageRooms() {
                                 paginationMode="server"
                                 rowCount={total}
                                 paginationModel={paginationModel}
-                                onPaginationModelChange={(m) => {
-                                    setPaginationModel(m);     // คุม UI
-                                    setPage(m.page + 1);       // ✅ คุมพารามิเตอร์ API (0-based -> 1-based)
-                                    setLimit(m.pageSize);      // ✅ คุมพารามิเตอร์ API
-                                }}
+                                onPaginationModelChange={(m) => setPaginationModel(m)}
+                                pageSizeOptions={[5, 10, 20]}
                                 slots={{
                                     noRowsOverlay: () => (
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'gray' }}>
-                                            <SearchOff sx={{ fontSize: 50, color: 'gray' }} />
-                                            <Typography variant="body1" sx={{ mt: 1 }}>
-                                                No details match your search
-                                            </Typography>
+                                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "gray" }}>
+                                            <SearchOff sx={{ fontSize: 50, color: "gray" }} />
+                                            <Typography variant="body1" sx={{ mt: 1 }}>No details match your search</Typography>
                                         </Box>
                                     ),
                                 }}
-                                pageSizeOptions={[5, 10, 20]}
                             />
-
                         </Card>
                     </Grid>
-
-                    {/* Pop-up for editing room */}
-                    {openPopup && selectedRoomID !== null && (
-                        <EditRoomPopup
-                            roomID={selectedRoomID}  // Pass the selected room ID to the popup
-                            open={openPopup}
-                            onClose={handleClosePopup}
-                        />
-                    )}
-
-
                 </Grid>
+
+                {/* Popups */}
+                {openEditPopup && selectedRoomID !== null && (
+                    <EditRoomPopup roomID={selectedRoomID} open={openEditPopup} onClose={handleCloseEdit} />
+                )}
+
+                {openCreatePopup && (
+                    <CreateRoomPopup open={openCreatePopup} onClose={handleCloseCreate} onCreated={handleCreated} />
+                )}
             </div>
+
+
+            <ConfirmDialog
+                open={openConfirm}
+                setOpenConfirm={setOpenConfirm}
+                handleFunction={doDelete}            // จะถูกเรียกเมื่อกด Confirm
+                title="Delete this room?"
+                message="ห้องนี้จะถูกซ่อนออกจากรายการ และไม่สามารถใช้งานได้จนกว่าจะกู้คืน"
+                buttonActive={deleting}              // ใช้ปิดปุ่มระหว่างกำลังลบ
+                showNoteField={false}                // ถ้าอยากให้ใส่เหตุผล ลอง true ได้
+            />
+
+
+
         </Container>
+
+
     );
 }
 

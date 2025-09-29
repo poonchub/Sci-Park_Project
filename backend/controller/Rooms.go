@@ -1,51 +1,174 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sci-park_web-application/config"
 	"sci-park_web-application/entity"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
+// DTO สำหรับรับคำขอสร้างห้อง
+type CreateRoomRequest struct {
+	RoomNumber   string `json:"room_number" binding:"required"`
+	RoomStatusID uint   `json:"room_status_id" binding:"required"`
+	FloorID      uint   `json:"floor_id" binding:"required"`
+	RoomTypeID   uint   `json:"room_type_id" binding:"required"`
+}
+
 func CreateRoom(c *gin.Context) {
-	var room entity.Room
+	var req CreateRoomRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body: " + err.Error()})
+		return
+	}
+
+	req.RoomNumber = strings.TrimSpace(req.RoomNumber)
+	if req.RoomNumber == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "room_number is required"})
+		return
+	}
+
 	db := config.DB()
 
-	// Bind JSON จาก request body
-	if err := c.ShouldBindJSON(&room); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// ---- กันซ้ำ RoomNumber (ไม่นับ soft delete)
+	var count int64
+	if err := db.Model(&entity.Room{}).
+		Where("room_number = ? AND deleted_at IS NULL", req.RoomNumber).
+		Count(&count).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check room uniqueness"})
+		return
+	}
+	if count > 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "room_number already exists"})
 		return
 	}
 
-	// ตรวจสอบว่า RoomNumber ซ้ำในฐานข้อมูลหรือไม่
-	var existingRoom entity.Room
-	if err := db.Where("room_number = ?", room.RoomNumber).First(&existingRoom).Error; err == nil {
-		// ถ้าพบห้องที่มี RoomNumber ซ้ำ
-		c.JSON(http.StatusConflict, gin.H{"error": "RoomNumber already exists"})
+	// ---- เช็ค FK มีจริง
+	if err := mustExistRoomStatus(db, req.RoomStatusID); err != nil {
+		writeExistErr(c, err, "room_status_id")
+		return
+	}
+	if err := mustExistFloor(db, req.FloorID); err != nil {
+		writeExistErr(c, err, "floor_id")
+		return
+	}
+	if err := mustExistRoomType(db, req.RoomTypeID); err != nil {
+		writeExistErr(c, err, "room_type_id")
 		return
 	}
 
-	// ตรวจสอบข้อมูลที่ต้องการ
-	if room.RoomNumber == "" || room.RoomStatusID == 0 || room.FloorID == 0 || room.RoomTypeID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
-		return
+	// ---- สร้างห้อง (ไม่รับ/ไม่เก็บ RoomSize/Capacity ที่ระดับ Room)
+	room := entity.Room{
+		RoomNumber:   req.RoomNumber,
+		RoomStatusID: req.RoomStatusID,
+		FloorID:      req.FloorID,
+		RoomTypeID:   req.RoomTypeID,
 	}
 
-	// บันทึกห้องใหม่ลงในฐานข้อมูล
 	if err := db.Create(&room).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Unable to create room: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create room: %v", err)})
 		return
 	}
 
-	// ส่ง response กลับเมื่อห้องถูกสร้างสำเร็จ
+	// ---- Preload ความสัมพันธ์สำหรับ response
+	_ = db.
+		Preload("RoomStatus").
+		Preload("Floor").
+		Preload("RoomType").
+		First(&room, room.ID).Error
+
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Room created successfully",
+		"message": "room created successfully",
 		"room":    room,
 	})
+}
+
+// DELETE /delete-room/:id   (ให้ตรงกับสไตล์ create-room ที่คุณใช้อยู่)
+func DeleteRoom(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room id"})
+		return
+	}
+
+	db := config.DB()
+
+	// เช็คว่ามีห้องนี้จริง (และยังไม่ถูกลบ)
+	var room entity.Room
+	if err := db.First(&room, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "room not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check room"})
+		return
+	}
+
+	// หมายเหตุ: ถ้าต้องกันลบกรณีมีการจองอนาคต ควรเช็คความสัมพันธ์ก่อนลบ
+	// ตัวอย่าง (เอาออกถ้าไม่ต้องการ):
+	var cnt int64
+	if err := db.Model(&entity.BookingRoom{}).
+	  Where("room_id = ? AND deleted_at IS NULL", id).
+	  Count(&cnt).Error; err == nil && cnt > 0 {
+	  c.JSON(http.StatusBadRequest, gin.H{"error": "cannot delete: room has related bookings"})
+	  return
+	}
+
+	if err := db.Delete(&room).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete room"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "room deleted successfully",
+		"id":      id,
+	})
+}
+
+// ---------- helpers ----------
+func mustExistRoomStatus(db *gorm.DB, id uint) error {
+	var v entity.RoomStatus
+	return db.Select("id").First(&v, id).Error
+}
+func mustExistFloor(db *gorm.DB, id uint) error {
+	var v entity.Floor
+	return db.Select("id").First(&v, id).Error
+}
+func mustExistRoomType(db *gorm.DB, id uint) error {
+	var v entity.RoomType
+	return db.Select("id").First(&v, id).Error
+}
+
+func writeExistErr(c *gin.Context, err error, field string) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid " + field})
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to validate " + field})
+	}
+}
+
+// helper generic: เช็คว่ามี record ตาม id จริง
+func requireExists[T any](db *gorm.DB, id uint) error {
+	var v any
+	switch any(*new(T)).(type) {
+	case entity.RoomStatus:
+		v = &entity.RoomStatus{}
+	case entity.Floor:
+		v = &entity.Floor{}
+	case entity.RoomType:
+		v = &entity.RoomType{}
+	default:
+		return fmt.Errorf("unsupported type")
+	}
+	return db.First(v, id).Error
 }
 
 func UpdateRoom(c *gin.Context) {
@@ -405,8 +528,8 @@ func GetRentalSpaceRoomSummary(c *gin.Context) {
 		Count(&maintenanceRooms)
 
 	c.JSON(http.StatusOK, gin.H{
-		"total_rooms":            totalRooms,
-		"available_rooms":        availableRooms,
+		"total_rooms":             totalRooms,
+		"available_rooms":         availableRooms,
 		"rooms_under_maintenance": maintenanceRooms,
 	})
 }

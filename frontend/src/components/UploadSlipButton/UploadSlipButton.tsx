@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { TextField } from "../../components/TextField/TextField"; // ถ้าอยากใช้ของ MUI แท้: import { TextField } from "@mui/material"
 import dayjs from "dayjs";
-import type { AxiosProgressEvent } from "axios";
 import { SubmitPaymentSlip } from "../../services/http";
 import {
   Upload as UploadIcon,
@@ -126,13 +125,13 @@ export default function UploadSlipButton({
         bookingId,
         file,
         {
-          Amount: parsedAmount,                                   // ← ใช้ค่าที่แปลงแล้ว
-          PaymentDate: dayjs(paymentDateLocal).toISOString(),     // แปลงจาก datetime-local -> ISO
-          Note: note,
+          amount: parsedAmount,
+          transTimestamp: dayjs(paymentDateLocal).toISOString(),
           PayerID: payerId,
+          note,
         },
         {
-          onUploadProgress: (evt: AxiosProgressEvent) => {
+          onUploadProgress: (evt) => {
             if (typeof evt.total === "number" && evt.total > 0) {
               setProgress(Math.round((evt.loaded * 100) / evt.total));
             } else if (typeof evt.progress === "number") {
@@ -275,7 +274,7 @@ export default function UploadSlipButton({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   fullWidth
-              
+
                   minRows={3}
                   InputProps={{
                     startAdornment: (

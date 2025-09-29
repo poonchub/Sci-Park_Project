@@ -4,8 +4,7 @@ import {
   DialogTitle, IconButton, Step, StepLabel, Stepper, Typography, Grid, Divider, Tooltip,
   useMediaQuery
 } from "@mui/material";
-import {
-  Clock, FileText, HelpCircle, Wallet, X,
+import { Clock, FileText, HelpCircle, Wallet, X,
   CheckCircle2, AlertCircle, Upload, Trash2, Download
 } from "lucide-react";
 import { apiUrl, CheckSlip, GetQuota } from "../../services/http";
@@ -222,6 +221,8 @@ const verifySlip = async (file: File) => {
     }
   }
 };
+
+
 
 const getStepIndex = (status?: InstallmentUI["status"]) => {
   const s = norm(status);

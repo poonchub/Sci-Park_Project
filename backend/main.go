@@ -425,6 +425,7 @@ func main() {
 		protected.GET("/listset-room", controller.ListSetRooms)
 		protected.POST("/create-room", controller.CreateRoom)
 		protected.PATCH("/update-room/:id", controller.UpdateRoom)
+		protected.DELETE("/delete-room/:id", controller.DeleteRoom)
 
 		// Floors
 		protected.POST("/create-floor", controller.CreateFloor)

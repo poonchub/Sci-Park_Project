@@ -122,9 +122,35 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
         }, 500);
     };
 
-    const amountBeforeDiscount = invoice.Items?.reduce((sum, item) => {
-        return sum + (item.Amount ?? 0)
-    }, 0)
+// ==== helpers (วางไว้เหนือ return) ====
+const toNum = (v: any, fb = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fb;
+};
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+const fmt  = new Intl.NumberFormat("en-US",{ minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ใช้ Amount เป็นแหล่งความจริงก่อน ถ้าไม่มีค่อยคำนวณจาก qty*unit
+const lineAmountOf = (it: any) => {
+  const qty  = toNum(it?.Quantity, 1);
+  const unit = Number.isFinite(Number(it?.UnitPrice))
+    ? Number(it.UnitPrice)
+    : 0;
+  const amt  = Number.isFinite(Number(it?.Amount))
+    ? Number(it.Amount)
+    : round2(qty * unit);
+  return round2(amt);
+};
+
+// รวมยอดจริงของแต่ละแถว (fallback BaseTotal ถ้าไม่มี Items)
+const subtotal = (invoice.Items?.length ? invoice.Items : []).reduce(
+  (s, it) => s + lineAmountOf(it),
+  0
+);
+
+// ส่วนลด/ยอดสุทธิอ่านจาก BookingRoom (รองรับกรณีไม่มีให้ fallback)
+const discount = toNum(invoice.BookingRoom?.DiscountAmount, 0);
+const totalDue = toNum(invoice.BookingRoom?.TotalAmount, round2(subtotal - discount));
 
     return (
         <div
@@ -351,119 +377,69 @@ export default function RoomBookingInvoicePDF({ invoice, onComplete }: InvoicePD
                         </tr>
                     </thead>
                     <tbody>
-                        {invoice.Items?.map((item, index) => (
-                            <tr key={index}>
-                                <td style={{ border: "1px solid #999" }} colSpan={2}>
-                                    {item.Description}
-                                </td>
-                                <td style={{ border: "1px solid #999", textAlign: 'center' }}>
-                                    {item.Quantity}
-                                </td>
-                                <td style={{ border: "1px solid #999", textAlign: 'center' }}>
-                                    {item.UnitPrice?.toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </td>
-                                <td style={{ border: "1px solid #999", textAlign: 'center' }}>
-                                    {item.Amount?.toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </td>
-                            </tr>
-                        ))}
+                        {invoice.Items?.map((item, index) => {
+                            const qty = toNum(item?.Quantity, 1);
+                            // แสดง unitPrice: ถ้ามีให้ใช้เลย, ถ้าไม่มีให้ถอดจาก Amount/qty
+                            const unit = Number.isFinite(Number(item?.UnitPrice))
+                                ? Number(item.UnitPrice)
+                                : (qty ? round2(toNum(item?.Amount, 0) / qty) : 0);
+
+                            const line = lineAmountOf(item);
+
+                            return (
+                                <tr key={index}>
+                                    <td style={{ border: "1px solid #999" }} colSpan={2}>
+                                        {item?.Description}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                                        {Number.isInteger(qty) ? qty.toString() : fmt.format(qty)}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                                        {fmt.format(unit)}
+                                    </td>
+                                    <td style={{ border: "1px solid #999", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                                        {fmt.format(line)}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+
                         <tr>
-                            <td
-                                style={{
-                                    width: "46%"
-                                }}
-                                className="text-normal"
-                                rowSpan={2}
-                            >
+                            <td style={{ width: "46%" }} className="text-normal" rowSpan={2}>
                                 โอนเงินเข้าบัญชีเลขที่ 662-1-84151-5<br />
                                 ชื่อบัญชี RSP นครราชสีมา โดย เทคโนธานี<br />
                                 ธนาคารกรุงไทย สาขามหาวิทยาลัยเทคโนโลยีสุรนารี
                             </td>
-                            <td
-                                style={{
-                                    textAlign: 'center',
-                                    verticalAlign: "middle",
-                                }}
-                                className="text-bold"
-                                colSpan={2}
-                            >
+                            <td className="text-bold" style={{ textAlign: "center", verticalAlign: "middle" }} colSpan={2}>
                                 ยอดรวม (บาท)
                             </td>
-                            <td
-                                style={{
-                                    textAlign: 'center',
-                                    verticalAlign: "middle",
-                                }}
-                                colSpan={2}
-                            >
-                                {amountBeforeDiscount?.toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
+                            <td style={{ textAlign: "right", verticalAlign: "middle", fontVariantNumeric: "tabular-nums" }} colSpan={2}>
+                                {fmt.format(subtotal)}
                             </td>
                         </tr>
+
                         <tr>
-                            <td
-                                style={{
-                                    textAlign: 'center',
-                                    verticalAlign: "middle",
-                                }}
-                                className="text-bold"
-                                colSpan={2}
-                            >
+                            <td className="text-bold" style={{ textAlign: "center", verticalAlign: "middle" }} colSpan={2}>
                                 ส่วนลด (บาท)
                             </td>
-                            <td
-                                style={{
-                                    textAlign: 'center',
-                                    verticalAlign: "middle",
-                                }}
-                                colSpan={2}
-                            >
-                                {invoice.BookingRoom?.DiscountAmount?.toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
+                            <td style={{ textAlign: "right", verticalAlign: "middle", fontVariantNumeric: "tabular-nums" }} colSpan={2}>
+                                {fmt.format(discount)}
                             </td>
                         </tr>
+
                         <tr>
-                            <td
-                                style={{
-                                    textAlign: 'center'
-                                }}
-                                className="text-bold"
-                            >
-                                ({numberToThaiBahtText(((invoice.BookingRoom?.TotalAmount || 0) - (invoice.BookingRoom?.DiscountAmount || 0)))})
+                            <td className="text-bold" style={{ textAlign: "center" }}>
+                                ({numberToThaiBahtText(totalDue)})
                             </td>
-                            <td
-                                style={{
-                                    textAlign: 'center'
-                                }}
-                                className="text-bold"
-                                colSpan={2}
-                            >
+                            <td className="text-bold" style={{ textAlign: "center" }} colSpan={2}>
                                 รวมเป็นเงินที่ต้องชำระ (บาท)
                             </td>
-                            <td
-                                style={{
-                                    textAlign: 'center'
-                                }}
-                                className="text-bold"
-                                colSpan={2}
-                            >
-                                {((invoice.BookingRoom?.TotalAmount || 0) - (invoice.BookingRoom?.DiscountAmount || 0))?.toLocaleString("en-US", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}
+                            <td className="text-bold" style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }} colSpan={2}>
+                                {fmt.format(totalDue)}
                             </td>
                         </tr>
                     </tbody>
+
                 </table>
 
                 {/* Condition Instruction */}
