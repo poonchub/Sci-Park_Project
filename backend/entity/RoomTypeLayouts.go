@@ -6,12 +6,12 @@ import (
 
 type RoomTypeLayout struct {
     gorm.Model
-	Capacity      	int  
-	Note			string
+    Capacity     int
+    Note         string
 
-    RoomLayoutID  uint     
-    RoomLayout    RoomLayout `gorm:"foreignKey:RoomLayoutID"`
+    RoomLayoutID uint
+    RoomLayout   RoomLayout `gorm:"foreignKey:RoomLayoutID" valid:"-"`
 
-	RoomTypeID  uint     
-    RoomType    RoomLayout `gorm:"foreignKey:RoomTypeID"`
+    RoomTypeID   uint
+    RoomType     RoomType   `gorm:"foreignKey:RoomTypeID" valid:"-"`
 }

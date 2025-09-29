@@ -7,7 +7,7 @@ import { ManagerApprovalsInterface } from "../../interfaces/IManagerApprovals";
 import { QuarryInterface } from "../../interfaces/IQuarry";
 import { UserInterface } from "../../interfaces/IUser";
 import { RoomsInterface } from "../../interfaces/IRooms";
-import axios from "axios";
+import axios, { AxiosProgressEvent } from "axios";
 import { FloorsInterface } from "../../interfaces/IFloors";
 import { RoomtypesInterface } from "../../interfaces/IRoomTypes";
 import { NotificationsInterface } from "../../interfaces/INotifications";
@@ -556,26 +556,50 @@ async function GetRentalSpaceRoomSummary() {
         return false;
     }
 }
-async function CreateRoom(roomData: RoomsInterface) {
-    const requestOptions = {
+// services/http.ts
+async function CreateRoom(payload: {
+    RoomNumber: string;
+    RoomStatusID: number;
+    FloorID: number;
+    RoomTypeID: number;
+}) {
+    const body = {
+        room_number: payload.RoomNumber,
+        room_status_id: payload.RoomStatusID,
+        floor_id: payload.FloorID,
+        room_type_id: payload.RoomTypeID,
+    };
+
+    const res = await fetch(`${apiUrl}/create-room`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
-        body: JSON.stringify(roomData),
-    };
-
-    let res = await fetch(`${apiUrl}/create-room`, requestOptions).then((res) => {
-        if (res) {
-            return res.json(); // Success: Return the created room data
-        } else {
-            return false; // Failure
-        }
+        body: JSON.stringify(body),
     });
 
-    return res;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, message: data?.error || data?.message || "Create room failed", data };
+    return { ok: true, message: data?.message || "Created", data };
 }
+
+// services/http.ts
+export async function DeleteRoom(id: number) {
+    const res = await fetch(`${apiUrl}/delete-room/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        return { ok: false, message: data?.error || data?.message || `Delete failed (${res.status})`, data };
+    }
+    return { ok: true, message: data?.message || "Deleted", data };
+}
+
 
 async function UpdateProfileImage(file: File) {
     const formData = new FormData();
@@ -3511,8 +3535,10 @@ export async function SubmitPaymentSlip(
         PayerID?: number;
         installment?: "full" | "deposit" | "balance";
         amount?: number;
-        transTimestamp?: string;  // จาก CheckSlip
-    }
+        transTimestamp?: string;
+        note?: string; // << เพิ่มถ้าต้องการ
+    },
+    opts?: { onUploadProgress?: (e: AxiosProgressEvent) => void } // << arg ที่ 4
 ) {
     const toFile = (input: any): File | null => {
         if (input instanceof File) return input;
@@ -3536,48 +3562,40 @@ export async function SubmitPaymentSlip(
     fd.append("slip", file, file.name);
     fd.append("file", file, file.name);
 
-
-    // ส่งทั้ง snake_case และ PascalCase เพื่อกันพลาดฝั่ง BE
     const map: Record<string, any> = {
         payment_id: extra?.PaymentID,
         PaymentID: extra?.PaymentID,
-
         payer_id: extra?.PayerID,
         PayerID: extra?.PayerID,
-
         booking_room_id: bookingId,
         BookingRoomID: bookingId,
-
         installment: extra?.installment,
         InstallmentKey: extra?.installment,
-
-        // 👇 เพิ่มสองบรรทัดนี้
         PaymentDate: extra?.transTimestamp,
         payment_date: extra?.transTimestamp,
-
         amount: extra?.amount,
         Amount: extra?.amount,
-
+        note: extra?.note,   // << ถ้าต้องการหมายเหตุ
+        Note: extra?.note,
     };
 
     Object.entries(map).forEach(([k, v]) => {
         if (v !== undefined && v !== null && v !== "") fd.append(k, String(v));
     });
 
-    const res = await fetch(`${apiUrl}/booking-rooms/${bookingId}/payments`, {
-        method: "POST", // upsert: มี PaymentID = update, ไม่มี = create
-        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
-        body: fd,
-    });
-
-    if (!res.ok) {
-        const msg = await res.text().catch(() => "upload failed");
-        throw new Error(msg);
-    }
-    return res.json();
+    const res = await axios.post(
+        `${apiUrl}/booking-rooms/${bookingId}/payments`,
+        fd,
+        {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+                "Content-Type": "multipart/form-data",
+            },
+            onUploadProgress: opts?.onUploadProgress, // << ใช้งาน progress ได้จริง
+        }
+    );
+    return res.data;
 }
-
-
 
 
 
@@ -3694,38 +3712,38 @@ async function ListPaymentOptions(): Promise<PaymentOptionInterface[]> {
 
 // services/http.ts
 function makeAuthHeaders(includeAccept = true): Record<string, string> {
-  const headers: Record<string, string> = {};
-  if (includeAccept) headers.Accept = "application/json";
-  const token = localStorage.getItem("token");
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return headers;
+    const headers: Record<string, string> = {};
+    if (includeAccept) headers.Accept = "application/json";
+    const token = localStorage.getItem("token");
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
 }
 
 export const UploadPaymentReceipt = async (paymentId: number, file: File) => {
-  const form = new FormData();
-  form.append("file", file);
+    const form = new FormData();
+    form.append("file", file);
 
-  const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
-    method: "POST",
-    // อย่าตั้ง Content-Type เองเมื่อใช้ FormData
-    headers: makeAuthHeaders(/* includeAccept */ true),
-    body: form,
-  });
+    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
+        method: "POST",
+        // อย่าตั้ง Content-Type เองเมื่อใช้ FormData
+        headers: makeAuthHeaders(/* includeAccept */ true),
+        body: form,
+    });
 
-  if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
-  if (!res.ok) throw new Error(`upload receipt failed: ${res.status} ${res.statusText}`);
-  return res.json();
+    if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
+    if (!res.ok) throw new Error(`upload receipt failed: ${res.status} ${res.statusText}`);
+    return res.json();
 };
 
 export const DeletePaymentReceipt = async (paymentId: number) => {
-  const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
-    method: "DELETE",
-    headers: makeAuthHeaders(true),
-  });
+    const res = await fetch(`${apiUrl}/payments/receipt/${paymentId}`, {
+        method: "DELETE",
+        headers: makeAuthHeaders(true),
+    });
 
-  if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
-  if (!res.ok) throw new Error(`delete receipt failed: ${res.status} ${res.statusText}`);
-  return res.json();
+    if (res.status === 401) throw new Error("Unauthorized: missing or invalid token");
+    if (!res.ok) throw new Error(`delete receipt failed: ${res.status} ${res.statusText}`);
+    return res.json();
 };
 
 

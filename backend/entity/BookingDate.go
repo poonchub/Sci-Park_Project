@@ -6,8 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// entity/booking_date.go
 type BookingDate struct {
 	gorm.Model
-	BookingRoomID uint
-	Date          time.Time
+    BookingRoomID uint      `valid:"required~BookingRoomID is required"`
+    Date          time.Time `valid:"required~Date is required"`
 }

@@ -499,6 +499,7 @@ function AllBookingRoom() {
 
                         // 2) เซฟยอด (มัดจำใส่ครึ่งชั่วคราว เดี๋ยวอัปเดตหลังรู้ PaymentOption)
                         const firstPatch: BookingRoomsInterface = {
+                            BaseTotal: baseTotal,
                             DiscountAmount: newDiscountAmount,
                             TotalAmount: newTotalAmount,
                             DepositAmount: normalizeDeposit(newTotalAmount / 2, newTotalAmount),
@@ -629,7 +630,7 @@ function AllBookingRoom() {
             }
 
             await getBookingRooms();
-            await refreshSelectedRow(); 
+            await refreshSelectedRow();
             handleSetAlert("success", `Action ${key} success`);
         } catch {
             handleSetAlert("error", `Action ${key} failed`);
@@ -679,7 +680,7 @@ function AllBookingRoom() {
 
             handleSetAlert("success", `Rejected booking #${selectedRow.ID}`);
             await getBookingRooms();
-            await refreshSelectedRow(); 
+            await refreshSelectedRow();
         } catch {
             handleSetAlert("error", "Reject failed");
         } finally {
@@ -701,7 +702,7 @@ function AllBookingRoom() {
             }
             handleSetAlert("success", "Receipt uploaded successfully");
             await getBookingRooms();
-            await refreshSelectedRow(); 
+            await refreshSelectedRow();
         } catch {
             handleSetAlert("error", "Upload receipt failed");
         } finally {
@@ -715,7 +716,7 @@ function AllBookingRoom() {
             await DeletePaymentReceipt(paymentId);
             handleSetAlert("success", "Receipt deleted");
             await getBookingRooms();
-            await refreshSelectedRow(); 
+            await refreshSelectedRow();
         } catch {
             handleSetAlert("error", "Delete receipt failed");
         } finally {
@@ -1192,7 +1193,7 @@ function AllBookingRoom() {
                                                     await RefundedBookingRoom(pid);
                                                     handleSetAlert("success", "Refunded successfully");
                                                     await getBookingRooms();
-                                                    await refreshSelectedRow(); 
+                                                    await refreshSelectedRow();
                                                 } catch (e) {
                                                     handleSetAlert("error", "Refund failed");
                                                 }
@@ -1422,6 +1423,12 @@ function AllBookingRoom() {
                 serviceConditions={{
                     title: "Please read the payment terms",
                     points: [
+
+
+                        "662-1-84151-5",
+                        "RSP นครราชสีมา โดย เทคโนธานี",
+                        "Krungthai Bank",
+
                         "Pay the amount stated on the invoice by the due date.",
                         "If a deposit has been paid, settle the remaining balance before the booking date.",
                     ],
@@ -1435,7 +1442,7 @@ function AllBookingRoom() {
                         handleSetAlert("success", `Payment approved${selectedRow ? ` for #${selectedRow.ID}` : ""}`);
                         setOpenPaymentDialog(false);
                         await getBookingRooms();
-                        await refreshSelectedRow(); 
+                        await refreshSelectedRow();
                     } catch {
                         handleSetAlert("error", "Approve payment failed");
                     }
@@ -1447,7 +1454,7 @@ function AllBookingRoom() {
                         handleSetAlert("warning", `Payment rejected${selectedRow ? ` for #${selectedRow.ID}` : ""}`);
                         setOpenPaymentDialog(false);
                         await getBookingRooms();
-                        await refreshSelectedRow(); 
+                        await refreshSelectedRow();
                     } catch {
                         handleSetAlert("error", "Reject payment failed");
                     }
@@ -1455,12 +1462,12 @@ function AllBookingRoom() {
                 onUploadReceipt={async (file, paymentId) => {
                     await UploadPaymentReceipt(paymentId!, file);
                     await getBookingRooms();
-                    await refreshSelectedRow(); 
+                    await refreshSelectedRow();
                 }}
                 onRemoveReceipt={async (paymentId) => {
                     await DeletePaymentReceipt(paymentId!);
                     await getBookingRooms();
-                    await refreshSelectedRow(); 
+                    await refreshSelectedRow();
                 }}
             />
 

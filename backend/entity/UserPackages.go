@@ -6,11 +6,10 @@ import "gorm.io/gorm"
 type UserPackage struct {
     gorm.Model
     UserID                *uint   `json:"user_id"`
-    User                  User    `gorm:"foreignKey:UserID"`
+    User                  User    `gorm:"foreignKey:UserID" valid:"-"`
     PackageID             uint    `json:"package_id"`
-    Package               Package `gorm:"foreignKey:PackageID"`
+    Package               Package `gorm:"foreignKey:PackageID" valid:"-"`
     MeetingRoomUsed       int     `json:"meeting_room_used"`
     TrainingRoomUsed      int     `json:"training_room_used"`
     MultiFunctionRoomUsed int     `json:"multi_function_room_used"`
 }
-     

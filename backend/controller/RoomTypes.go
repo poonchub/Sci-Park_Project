@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -151,14 +152,14 @@ func UpdateRoomType(c *gin.Context) {
 	// ---- ฟอร์มหลัก ----
 	type RoomTypeForm struct {
 		TypeName         string `form:"TypeName"`
-		RoomSize         string `form:"RoomSize"`        // เปลี่ยนเป็น string เพื่อรองรับทศนิยม แล้วค่อย parse
-		ForRental        string `form:"ForRental"`       // "true"/"false"
-		HasMultipleSizes string `form:"HasMultipleSizes"`// "true"/"false"
-		Category         string `form:"Category"`        // NEW: "meetingroom"|"trainingroom"|"multifunctionroom"
-		RoomEquipments   string `form:"RoomEquipments"`
-		RoomPrices       string `form:"RoomPrices"`
-		RoomTypeLayouts  string `form:"RoomTypeLayouts"`
-		RoomTypeImages   string `form:"RoomTypeImages"`
+		RoomSize         string `form:"RoomSize"`         // รับเป็น string เพื่อรองรับทศนิยม ค่อย parse
+		ForRental        string `form:"ForRental"`        // "true"/"false"
+		HasMultipleSizes string `form:"HasMultipleSizes"` // "true"/"false"
+		Category         string `form:"Category"`         // "meetingroom"|"trainingroom"|"multifunctionroom"
+		RoomEquipments   string `form:"RoomEquipments"`   // JSON string
+		RoomPrices       string `form:"RoomPrices"`       // JSON string
+		RoomTypeLayouts  string `form:"RoomTypeLayouts"`  // JSON string
+		RoomTypeImages   string `form:"RoomTypeImages"`   // JSON string
 	}
 
 	var form RoomTypeForm
@@ -167,25 +168,37 @@ func UpdateRoomType(c *gin.Context) {
 		return
 	}
 
-	// ---- แปลง JSON string -> struct ----
+	// ---- แปลง JSON string -> struct (ถ้าฟิลด์ถูกส่งมา ต้อง parse ให้ถูก) ----
 	var equipments []entity.RoomEquipment
 	if form.RoomEquipments != "" {
-		_ = json.Unmarshal([]byte(form.RoomEquipments), &equipments)
+		if err := json.Unmarshal([]byte(form.RoomEquipments), &equipments); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoomEquipments JSON", "detail": err.Error()})
+			return
+		}
 	}
 
 	var prices []entity.RoomPrice
 	if form.RoomPrices != "" {
-		_ = json.Unmarshal([]byte(form.RoomPrices), &prices)
+		if err := json.Unmarshal([]byte(form.RoomPrices), &prices); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoomPrices JSON", "detail": err.Error()})
+			return
+		}
 	}
 
 	var layouts []entity.RoomTypeLayout
 	if form.RoomTypeLayouts != "" {
-		_ = json.Unmarshal([]byte(form.RoomTypeLayouts), &layouts)
+		if err := json.Unmarshal([]byte(form.RoomTypeLayouts), &layouts); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoomTypeLayouts JSON", "detail": err.Error()})
+			return
+		}
 	}
 
 	var images []entity.RoomTypeImage
 	if form.RoomTypeImages != "" {
-		_ = json.Unmarshal([]byte(form.RoomTypeImages), &images)
+		if err := json.Unmarshal([]byte(form.RoomTypeImages), &images); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid RoomTypeImages JSON", "detail": err.Error()})
+			return
+		}
 	}
 
 	// ---- ตรวจ/แปลงค่าเบื้องต้น ----
@@ -198,12 +211,12 @@ func UpdateRoomType(c *gin.Context) {
 
 	var sizeParsed float64
 	if strings.TrimSpace(form.RoomSize) != "" {
-		if v, err := strconv.ParseFloat(form.RoomSize, 32); err == nil {
-			sizeParsed = v
-		} else {
+		v, err := strconv.ParseFloat(form.RoomSize, 32)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "RoomSize must be a number"})
 			return
 		}
+		sizeParsed = v
 	}
 
 	// ---- Transaction ----
@@ -243,8 +256,10 @@ func UpdateRoomType(c *gin.Context) {
 		existing.Category = form.Category
 	}
 
-	// ---- ลบ + Insert children เฉพาะที่มีข้อมูลใหม่ ----
-	if len(prices) > 0 {
+	// ---- Children: Replace-all เมื่อฟิลด์ถูกส่งมา (แม้จะเป็น "[]") ----
+
+	// Prices
+	if form.RoomPrices != "" {
 		if err := tx.Where("room_type_id = ?", existing.ID).Delete(&entity.RoomPrice{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to clear room prices"})
@@ -261,7 +276,8 @@ func UpdateRoomType(c *gin.Context) {
 		}
 	}
 
-	if len(equipments) > 0 {
+	// Equipments
+	if form.RoomEquipments != "" {
 		if err := tx.Where("room_type_id = ?", existing.ID).Delete(&entity.RoomEquipment{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to clear room equipments"})
@@ -278,7 +294,8 @@ func UpdateRoomType(c *gin.Context) {
 		}
 	}
 
-	if len(layouts) > 0 {
+	// Layouts
+	if form.RoomTypeLayouts != "" {
 		if err := tx.Where("room_type_id = ?", existing.ID).Delete(&entity.RoomTypeLayout{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to clear room layouts"})
@@ -295,13 +312,29 @@ func UpdateRoomType(c *gin.Context) {
 		}
 	}
 
-	// ---- จัดการรูปภาพ ----
-	if len(images) > 0 {
+	// ===============================
+	// Images: replace-all เมื่อฟิลด์ถูกส่งมา (แม้ "[]")
+	// ===============================
+	var filesToDelete []string
+
+	if form.RoomTypeImages != "" {
+		// โหลดรูปเดิมทั้งหมด
+		var oldImgs []entity.RoomTypeImage
+		if err := tx.Where("room_type_id = ?", existing.ID).Find(&oldImgs).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to load existing images"})
+			return
+		}
+
+		// ลบ records เดิม
 		if err := tx.Where("room_type_id = ?", existing.ID).Delete(&entity.RoomTypeImage{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to clear images"})
 			return
 		}
+
+		// ใส่ records ใหม่
+		keep := make(map[string]struct{})
 		for _, img := range images {
 			img.RoomTypeID = existing.ID
 			img.ID = 0
@@ -310,10 +343,22 @@ func UpdateRoomType(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to insert images"})
 				return
 			}
+			if strings.TrimSpace(img.FilePath) != "" {
+				keep[img.FilePath] = struct{}{}
+			}
+		}
+
+		// เก็บ path ไปลบทิ้งหลัง commit
+		for _, oi := range oldImgs {
+			if oi.FilePath != "" {
+				if _, ok := keep[oi.FilePath]; !ok {
+					filesToDelete = append(filesToDelete, oi.FilePath)
+				}
+			}
 		}
 	}
 
-	// ---- อัพโหลดไฟล์ใหม่ ----
+	// ---- อัปโหลดไฟล์ใหม่ (multipart: images) ----
 	formFiles, _ := c.MultipartForm()
 	if formFiles != nil {
 		files := formFiles.File["images"]
@@ -338,8 +383,8 @@ func UpdateRoomType(c *gin.Context) {
 
 	// ---- Save หลัก ----
 	if err := tx.Save(&existing).Error; err != nil {
-		// ดัก UNIQUE constraint ของ TypeName
-		if strings.Contains(strings.ToLower(err.Error()), "unique") && strings.Contains(strings.ToLower(err.Error()), "type_name") {
+		low := strings.ToLower(err.Error())
+		if strings.Contains(low, "unique") && strings.Contains(low, "type_name") {
 			tx.Rollback()
 			c.JSON(http.StatusConflict, gin.H{"error": "TypeName already exists"})
 			return
@@ -349,11 +394,18 @@ func UpdateRoomType(c *gin.Context) {
 		return
 	}
 
+	// ---- Commit ----
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction commit failed"})
 		return
 	}
 
+	// ---- ลบไฟล์ที่เลิกใช้งานแล้ว (หลัง commit) ----
+	for _, p := range filesToDelete {
+		_ = os.Remove(p) // จงใจไม่ error-out
+	}
+
+	// ---- ส่งข้อมูลที่อัปเดตกลับ ----
 	var updated entity.RoomType
 	db.Preload("RoomEquipments.Equipment").
 		Preload("RoomPrices.TimeSlot").
