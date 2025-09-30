@@ -1,4 +1,4 @@
-import { Email, Facebook, Instagram, Twitter } from "@mui/icons-material";
+import { Email, Facebook} from "@mui/icons-material";
 import {
     Box,
     CardMedia,
@@ -13,7 +13,6 @@ import {
     Typography,
 } from "@mui/material";
 import { Container } from "@mui/system";
-import { FlaskConical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { OrganizationInfoInterface } from "../../interfaces/IOrganizationInfo";

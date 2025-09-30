@@ -680,36 +680,6 @@ func RejectPayment(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "payment reset to Pending Payment"})
 }
 
-/* ==========================
-   POST /payments/:id/refund
-   ========================== */
-
-// func RefundedBookingRoom(c *gin.Context) {
-// 	db := config.DB()
-// 	paymentID := c.Param("id")
-
-// 	var pay entity.Payment
-// 	if err := db.Preload("Status").First(&pay, paymentID).Error; err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
-// 		return
-// 	}
-
-// 	psID, err := ensurePaymentStatusID(db, "Refunded")
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างสถานะ Refunded ไม่สำเร็จ"})
-// 		return
-// 	}
-
-// 	if err := db.Model(&entity.Payment{}).Where("id = ?", pay.ID).Updates(map[string]interface{}{
-// 		"status_id":  psID,
-// 		"updated_at": time.Now(),
-// 	}).Error; err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
-// }
 
 // PUT /payments/:id/refund
 func RefundPaymentByAdmin(c *gin.Context) {
@@ -799,11 +769,4 @@ func RefundPaymentByAdmin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Refunded successfully"})
-}
-
-func valueOrZero(p *float64) float64 {
-	if p == nil {
-		return 0
-	}
-	return *p
 }

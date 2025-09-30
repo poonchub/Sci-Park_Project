@@ -11,7 +11,6 @@ import AllMaintenanceRequest from "../pages/AllMaintenanceRequest/AllMaintenance
 import AddUserForm from "../pages/AddUser/AddUserForm";
 import ManageUsers from "../pages/ManageUsers/ManageUsers";
 import ManageRooms from "../pages/ManageRooms/ManageRooms";
-import AddRoomForm from "../pages/AddRoom/AddNewRoom";
 import AboutDeveloper from "../pages/AboutDeveloper/AboutDeveloper";
 import AllBookingRoom from "../pages/AllBookingRoom/AllBookingRoom";
 import MyAccount from "../pages/MyAccount/MyAccount";
@@ -93,10 +92,6 @@ const AdminRoutes = (): RouteObject => {
                 path: "/room/manage-room",
                 element: <ManageRooms/>
             },
-			{
-				path: "/room/add-room",
-				element: <AddRoomForm/>
-			},
 			{
 				path: "/analytics",
 				element: <Analytics/>

@@ -223,7 +223,7 @@ const BookingRoom = () => {
                     >
                         <Grid container spacing={2}>
                             {/* Room size */}
-                            <Grid size={{ xs: 12, md: 6 }} sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 2 }}>
+                            <Grid size={{ xs: 12, md: 6 }} sx={{ borderRadius: 2, p: 2 }}>
                                 <Typography gutterBottom fontWeight={500}>
                                     Room Size
                                 </Typography>
@@ -238,7 +238,7 @@ const BookingRoom = () => {
                             </Grid>
 
                             {/* Pricing */}
-                            <Grid size={{ xs: 12, md: 6 }} sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 2 }}>
+                            <Grid size={{ xs: 12, md: 6 }} sx={{ borderRadius: 2, p: 2 }}>
                                 <Typography gutterBottom fontWeight={500}>
                                     Pricing (THB)
                                 </Typography>
@@ -272,7 +272,7 @@ const BookingRoom = () => {
                             </Grid>
 
                             {/* Seating Capacity */}
-                            <Grid size={{ xs: 12, md: 6 }} sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 2 }}>
+                            <Grid size={{ xs: 12, md: 6 }} sx={{  borderRadius: 2, p: 2 }}>
                                 <Typography gutterBottom fontWeight={500} width="100%">
                                     Seating Capacity
                                 </Typography>
@@ -285,7 +285,6 @@ const BookingRoom = () => {
                                                 display: "flex",
                                                 flexDirection: "column",
                                                 alignItems: "center",
-                                                bgcolor: "#fff",
                                                 py: 1.4,
                                                 px: 0.6,
                                                 borderRadius: 1,
@@ -309,7 +308,7 @@ const BookingRoom = () => {
                             </Grid>
 
                             {/* Equipment */}
-                            <Grid size={{ xs: 12, md: 6 }} sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 2 }}>
+                            <Grid size={{ xs: 12, md: 6 }} sx={{  borderRadius: 2, p: 2 }}>
                                 <Typography gutterBottom fontWeight={500}>
                                     Available Equipment
                                 </Typography>
@@ -328,7 +327,6 @@ const BookingRoom = () => {
                                                         display: "flex",
                                                         alignItems: "center",
                                                         justifyContent: "space-between",
-                                                        bgcolor: "#fff",
                                                         px: 1.6,
                                                         py: 1,
                                                         borderRadius: 1,
@@ -350,9 +348,7 @@ const BookingRoom = () => {
                                             sx={{
                                                 display: "flex",
                                                 alignItems: "center",
-                                                gap: 1,
-                                                bgcolor: "#fff",
-                                                px: 1.6,
+                                                gap: 1,                                               px: 1.6,
                                                 py: 1,
                                                 borderRadius: 1,
                                             }}

@@ -1,7 +1,5 @@
 import React from "react";
 import { Typography, Button, Grid } from "@mui/material";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faImage } from "@fortawesome/free-solid-svg-icons";
 import { Image } from "lucide-react";
 
 interface Alert {

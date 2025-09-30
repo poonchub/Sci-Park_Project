@@ -197,7 +197,7 @@ function ManageRooms() {
             filterable: false,
             width: 160,
             renderCell: (params) => (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 , marginTop: 1}}>
                     <Button
                         onClick={() => handleOpenEdit(params.row.ID)}
                         variant="contained"
@@ -207,7 +207,7 @@ function ManageRooms() {
                     </Button>
                     <Button
                         variant="outlinedGray"
-                        sx={{ fontSize: "14px", "&:hover": { borderColor: "transparent" } }}
+                        sx={{ fontSize: "14px", "&:hover": { borderColor: "transparent" }}}
                         onClick={() => askDelete(params.row.ID)}>
                         Delete
                     </Button>
