@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Button, Box } from '@mui/material';
+import { Typography,  Box } from '@mui/material';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ExpandableTextProps {

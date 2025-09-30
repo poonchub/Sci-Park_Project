@@ -9,7 +9,7 @@ interface WarningAlertProps {
   totalAlerts: number; // Total number of active alerts
 }
 
-const WarningAlert: React.FC<WarningAlertProps> = ({ message, onClose, index, totalAlerts }) => {
+const WarningAlert: React.FC<WarningAlertProps> = ({ message, onClose, index}) => {
   const [progress, setProgress] = useState(100);
   const [isHovered, setIsHovered] = useState(false); // State to track hover
   const [_intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null); // Store interval ID to clear it

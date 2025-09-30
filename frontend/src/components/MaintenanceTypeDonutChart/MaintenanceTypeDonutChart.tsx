@@ -11,7 +11,6 @@ import {
     Avatar,
     Grid,
 } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { maintenanceTypeConfig } from '../../constants/maintenanceTypeConfig';
 import { ChartPie } from 'lucide-react';
 

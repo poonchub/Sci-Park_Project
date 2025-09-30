@@ -12,7 +12,7 @@ import {
     Link,
     Paper,
 } from '@mui/material';
-import { Info, Close } from '@mui/icons-material';
+import { Close } from '@mui/icons-material';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShieldAlt } from "@fortawesome/free-solid-svg-icons";
 

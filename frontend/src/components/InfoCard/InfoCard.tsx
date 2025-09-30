@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, Typography, Box, Grid } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCalendarDays, faUserTie } from "@fortawesome/free-solid-svg-icons";
+import { faUserTie } from "@fortawesome/free-solid-svg-icons";
 import { Calendar, UserRound } from "lucide-react";
 
 // Define the types for the props passed to the InfoCard component

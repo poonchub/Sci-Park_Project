@@ -109,7 +109,7 @@ const RegisterPage: React.FC = () => {
         } catch (error) {
             console.error('Error creating user', error);
             // ใช้ error message จาก response ถ้ามี
-            const errorMessage = (error as any)?.response?.data?.error || response?.message || 'An error occurred. Please try again.';
+            const errorMessage = (error as any)?.response?.data?.error || (error as any)?.response?.message || 'An error occurred. Please try again.';
             setAlerts((prev) => [...prev, { type: 'error', message: errorMessage }]);
         } finally {
             setLoading(false);
