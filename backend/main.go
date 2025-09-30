@@ -479,7 +479,8 @@ func main() {
 	}()
 
 	// 🚀 Start Server
-	r.Run("localhost:" + PORT) // ✅
+	// r.Run("localhost:" + PORT) // ✅
+	r.Run(":8000")
 
 }
 

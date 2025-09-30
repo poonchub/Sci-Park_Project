@@ -1,5 +1,9 @@
-export const apiUrl = "http://localhost:8000";
-export const socketUrl = "http://localhost:3001";
+export const apiUrl =
+    import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+export const socketUrl =
+    import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+
 import { InspectionsInterface } from "../../interfaces/IInspections";
 import { MaintenanceRequestsInterface } from "../../interfaces/IMaintenanceRequests";
 import { MaintenanceTasksInterface } from "../../interfaces/IMaintenanceTasks";

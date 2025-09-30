@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_data:/app/images
+    environment:
+      SOCKET_URL: "http://socket:3001"
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_SOCKET_URL: http://localhost:3001
+  
+  socket:
+    build: ./socket
+    container_name: socket
+    restart: always
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  backend_data:

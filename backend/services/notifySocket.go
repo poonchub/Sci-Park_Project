@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
+
+var socketURL = os.Getenv("SOCKET_URL")
 
 func NotifySocketEvent(event string, data interface{}) {
 	payload := map[string]interface{}{
@@ -19,7 +22,7 @@ func NotifySocketEvent(event string, data interface{}) {
 		return
 	}
 
-	resp, err := http.Post("http://localhost:3001/notify-maintenance", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(socketURL+"/notify-maintenance", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("notify error:", err)
 		return
