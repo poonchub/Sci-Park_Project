@@ -11,8 +11,8 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter room size').fill('148');
   await page.getByText('Microphone').click();
   await page.getByRole('option', { name: 'Whiteboard' }).click();
-  await page.locator('[id=":r55:"]').click();
-  await page.locator('[id=":r55:"]').fill('4');
+  await page.locator('[id=":r51:"]').click();
+  await page.locator('[id=":r51:"]').fill('4');
   await page.getByText('U-Shape').click();
   await page.getByRole('option', { name: 'Theater' }).click();
   await page.getByRole('button', { name: /add images/i }).click().catch(() => { });

@@ -240,9 +240,9 @@ func SeedDatabase() {
 		{Name: "Head of Innovation and Key Account Services Unit (IKD)", NameTH: "หัวหน้าหน่วยนวัตกรรมและบริการลูกค้ารายสำคัญ (IKD)"},
 		{Name: "Innovation and Key Account Services Unit (IKD)", NameTH: "หน่วยนวัตกรรมและบริการลูกค้ารายสำคัญ (IKD)"},
 		{Name: "Head of Network Coordination Unit", NameTH: "หัวหน้าหน่วยประสานงานเครือข่าย"},
-		{Name: "Network Coordination Unit" , NameTH: "หน่วยประสานงานเครือข่าย"},
+		{Name: "Network Coordination Unit", NameTH: "หน่วยประสานงานเครือข่าย"},
 		{Name: "Head of Business Development and Innovation Cluster Unit (BCD)", NameTH: "หัวหน้าหน่วยพัฒนาธุรกิจและคลัสเตอร์นวัตกรรม (BCD)"},
-		{Name: "Business Development and Innovation Cluster Unit (BCD)" , NameTH: "หน่วยพัฒนาธุรกิจและคลัสเตอร์นวัตกรรม (BCD)"},
+		{Name: "Business Development and Innovation Cluster Unit (BCD)", NameTH: "หน่วยพัฒนาธุรกิจและคลัสเตอร์นวัตกรรม (BCD)"},
 		{Name: "Head of Future Learning and Skills Innovation Unit", NameTH: "หัวหน้าหน่วยนวัตกรรมการเรียนรู้และทักษะแห่งอนาคต"},
 		{Name: "Future Learning and Skills Innovation Unit", NameTH: "หน่วยนวัตกรรมการเรียนรู้และทักษะแห่งอนาคต"},
 		{Name: "Head of Marketing, Customer Service and Public Relations Unit", NameTH: "หัวหน้าหน่วยการตลาด บริการลูกค้า และประชาสัมพันธ์"},
@@ -1007,12 +1007,22 @@ func SeedDatabase() {
 		{RoomTypeID: 2, EquipmentID: 5, Quantity: 20}, // A303 มีเก้าอี้ 20 ตัว
 	}
 	for _, re := range roomEquipments {
-		db.FirstOrCreate(&re, entity.RoomEquipment{
+		var row entity.RoomEquipment
+		err := db.Where(entity.RoomEquipment{
 			RoomTypeID:  re.RoomTypeID,
-			EquipmentID: re.EquipmentID,
-			Quantity:    re.Quantity,
-		})
+			EquipmentID: re.EquipmentID, // เงื่อนไขค้นหา = key เดียว
+		}).
+			Attrs(entity.RoomEquipment{
+				Quantity: re.Quantity, // ค่า default ตอน create
+			}).
+			FirstOrCreate(&row).Error
+		if err != nil { /* handle */
+		}
 
+		// ถ้าอยาก “อัปเดต Quantity” ทุกครั้ง ให้ทำต่อ
+		if row.ID != 0 && row.Quantity != re.Quantity {
+			db.Model(&row).Update("quantity", re.Quantity)
+		}
 	}
 
 	// Payment
