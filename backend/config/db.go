@@ -934,27 +934,99 @@ func SeedDatabase() {
 		{Price: 200, TimeSlotID: 9, RoomTypeID: 1},
 		{Price: 200, TimeSlotID: 10, RoomTypeID: 1},
 		{Price: 200, TimeSlotID: 11, RoomTypeID: 1},
+		// ----- RoomTypeID 2 -----
+		{Price: 1000, TimeSlotID: 1, RoomTypeID: 2},  // เช้า
+		{Price: 1000, TimeSlotID: 2, RoomTypeID: 2},  // บ่าย
+		{Price: 2000, TimeSlotID: 3, RoomTypeID: 2}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 2},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 2},
+		// ----- RoomTypeID 3 -----
+		{Price: 7500, TimeSlotID: 1, RoomTypeID: 3},  // เช้า
+		{Price: 7500, TimeSlotID: 2, RoomTypeID: 3},  // บ่าย
+		{Price: 15000, TimeSlotID: 3, RoomTypeID: 3}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 3},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 3},
+		// ----- RoomTypeID 4 -----
+		{Price: 25000, TimeSlotID: 1, RoomTypeID: 4},  // เช้า
+		{Price: 25000, TimeSlotID: 2, RoomTypeID: 4},  // บ่าย
+		{Price: 50000, TimeSlotID: 3, RoomTypeID: 4}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 4},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 4},
+		// ----- RoomTypeID 5 -----
+		{Price: 32500, TimeSlotID: 1, RoomTypeID: 5},  // เช้า
+		{Price: 32500, TimeSlotID: 2, RoomTypeID: 5},  // บ่าย
+		{Price: 65000, TimeSlotID: 3, RoomTypeID: 5}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 5},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 5},
+		// ----- RoomTypeID 6 -----
+		{Price: 17500, TimeSlotID: 1, RoomTypeID: 6},  // เช้า
+		{Price: 17500, TimeSlotID: 2, RoomTypeID: 6},  // บ่าย
+		{Price: 35000, TimeSlotID: 3, RoomTypeID: 6}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 6},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 6},
 
+		// ----- RoomTypeID 7 -----
+		{Price: 500, TimeSlotID: 1, RoomTypeID: 7},  // เช้า
+		{Price: 500, TimeSlotID: 2, RoomTypeID: 7},  // บ่าย
+		{Price: 1000, TimeSlotID: 3, RoomTypeID: 7}, // เต็มวัน
+		{Price: 200, TimeSlotID: 4, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 5, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 6, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 7, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 8, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 9, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 10, RoomTypeID: 7},
+		{Price: 200, TimeSlotID: 11, RoomTypeID: 7},
 		// ----- RoomTypeID 2..7 (ราคาเท่ากัน) -----
 		// ถ้าต้องการแตกต่างในอนาคต แก้เฉพาะบล็อคของ rt นั้น ๆ ได้เลย
 	}
 
-	// เพิ่มรายการของ RoomType 2..7 (morning/afternoon/fullDay + hourly)
-	for rt := 2; rt <= 7; rt++ {
-		roomPrices = append(roomPrices,
-			entity.RoomPrice{Price: 1000, TimeSlotID: 1, RoomTypeID: uint(rt)}, // เช้า
-			entity.RoomPrice{Price: 1000, TimeSlotID: 2, RoomTypeID: uint(rt)}, // บ่าย
-			entity.RoomPrice{Price: 2000, TimeSlotID: 3, RoomTypeID: uint(rt)}, // เต็มวัน
-			entity.RoomPrice{Price: 400, TimeSlotID: 4, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 5, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 6, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 7, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 8, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 9, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 10, RoomTypeID: uint(rt)},
-			entity.RoomPrice{Price: 400, TimeSlotID: 11, RoomTypeID: uint(rt)},
-		)
-	}
+	// // เพิ่มรายการของ RoomType 2..7 (morning/afternoon/fullDay + hourly)
+	// for rt := 2; rt <= 7; rt++ {
+	// 	roomPrices = append(roomPrices,
+	// 		entity.RoomPrice{Price: 1000, TimeSlotID: 1, RoomTypeID: uint(rt)}, // เช้า
+	// 		entity.RoomPrice{Price: 1000, TimeSlotID: 2, RoomTypeID: uint(rt)}, // บ่าย
+	// 		entity.RoomPrice{Price: 2000, TimeSlotID: 3, RoomTypeID: uint(rt)}, // เต็มวัน
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 4, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 5, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 6, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 7, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 8, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 9, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 10, RoomTypeID: uint(rt)},
+	// 		entity.RoomPrice{Price: 400, TimeSlotID: 11, RoomTypeID: uint(rt)},
+	// 	)
+	// }
 
 	// เขียนลงฐาน: ถ้ามีอยู่แล้ว → อัปเดตราคา, ถ้าไม่มี → สร้าง
 	for _, rp := range roomPrices {
